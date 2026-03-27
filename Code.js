@@ -1,0 +1,1182 @@
+// Version history tracked in Notion deploy page. Do not add version comments here.
+// ════════════════════════════════════════════════════════════════════
+// Code.gs v47 — Apps Script Router (TBM Consolidated)
+// ════════════════════════════════════════════════════════════════════
+
+// TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
+// All .gs files share GAS global scope, so DE's TAB_MAP is available here.
+// DO NOT redeclare var TAB_MAP in this file.
+
+function getCodeGsVersion() { return 47; }
+
+// v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
+function leftPad2_(n) {
+  var s = String(n);
+  return s.length < 2 ? '0' + s : s;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// v41: CACHESERVICE — 15-min TTL payload cache
+// v46: Chunked cache — splits >90KB payloads across multiple keys
+//      to bypass CacheService's 100KB per-key limit
+// ════════════════════════════════════════════════════════════════════
+var DE_CACHE_KEY = 'DE_PAYLOAD';
+var DE_CACHE_TTL = 900; // 15 minutes
+var DE_CACHE_CHUNK_SIZE = 90000; // 90KB per chunk (safe margin under 100KB limit)
+
+// v47: KidsHub data cache — 60s TTL with heartbeat invalidation
+var KH_CACHE_KEY = 'KH_PAYLOAD';
+var KH_CACHE_TTL = 60; // 60 seconds
+var KH_CACHE_HB_KEY = 'KH_LAST_HB'; // stores last-seen heartbeat value
+
+/**
+ * v47: Get cached KH data if heartbeat hasn't changed.
+ * Returns raw JSON string or null (cache miss / stale).
+ */
+function getCachedKHPayload_() {
+  try {
+    var cache = CacheService.getScriptCache();
+    var keys = cache.getAll([KH_CACHE_KEY, KH_CACHE_HB_KEY]);
+    var raw = keys[KH_CACHE_KEY];
+    var cachedHB = keys[KH_CACHE_HB_KEY];
+    if (!raw || !cachedHB) return null;
+
+    // Check heartbeat — single cell read (fast)
+    var currentHB = getKHLastModified();
+    if (!currentHB || currentHB !== cachedHB) return null;
+
+    return raw; // return JSON string, not parsed
+  } catch(e) {
+    Logger.log('getCachedKHPayload_ error: ' + e.message);
+    return null;
+  }
+}
+
+/**
+ * v47: Store KH data + current heartbeat in cache.
+ */
+function setCachedKHPayload_(jsonStr) {
+  try {
+    var cache = CacheService.getScriptCache();
+    var currentHB = getKHLastModified();
+    if (!currentHB) return; // no heartbeat → don't cache stale
+    var payload = {};
+    payload[KH_CACHE_KEY] = jsonStr;
+    payload[KH_CACHE_HB_KEY] = currentHB;
+    cache.putAll(payload, KH_CACHE_TTL);
+    var size = jsonStr.length;
+    if (size > 50000) {
+      Logger.log('📦 KH cache payload: ' + Math.round(size / 1024) + 'KB');
+    }
+  } catch(e) {
+    Logger.log('setCachedKHPayload_ error (non-fatal): ' + e.message);
+  }
+}
+
+function getCachedPayload_(cacheKey) {
+  try {
+    var cache = CacheService.getScriptCache();
+    var raw = cache.get(cacheKey);
+    if (!raw) return null;
+
+    // Check if this is a chunked payload
+    if (raw.indexOf('"__chunked__":true') >= 0) {
+      var meta = JSON.parse(raw);
+      var chunks = [];
+      var keys = [];
+      for (var i = 0; i < meta.count; i++) {
+        keys.push(cacheKey + '_chunk_' + i);
+      }
+      var chunkMap = cache.getAll(keys);
+      for (var j = 0; j < keys.length; j++) {
+        var chunk = chunkMap[keys[j]];
+        if (!chunk) {
+          // Missing chunk — cache is incomplete, treat as miss
+          Logger.log('⚠ Cache chunk missing: ' + keys[j]);
+          return null;
+        }
+        chunks.push(chunk);
+      }
+      return JSON.parse(chunks.join(''));
+    }
+
+    // Non-chunked — parse directly
+    return JSON.parse(raw);
+  } catch(e) {
+    Logger.log('getCachedPayload_ error: ' + e.message);
+    return null;
+  }
+}
+
+function setCachedPayload_(cacheKey, payload, ttl) {
+  try {
+    var json = JSON.stringify(payload);
+    var size = json.length;
+    var effectiveTTL = ttl || DE_CACHE_TTL;
+    var cache = CacheService.getScriptCache();
+
+    // Log size for monitoring
+    if (size > 80000) {
+      Logger.log('📦 Cache payload size: ' + Math.round(size / 1024) + 'KB for key ' + cacheKey + (size > DE_CACHE_CHUNK_SIZE ? ' → CHUNKING' : ''));
+    }
+
+    if (size <= DE_CACHE_CHUNK_SIZE) {
+      // Fits in a single key
+      cache.put(cacheKey, json, effectiveTTL);
+    } else {
+      // Split into chunks
+      var chunks = [];
+      for (var i = 0; i < json.length; i += DE_CACHE_CHUNK_SIZE) {
+        chunks.push(json.substring(i, i + DE_CACHE_CHUNK_SIZE));
+      }
+
+      // Write chunk metadata to the primary key
+      var meta = { __chunked__: true, count: chunks.length, size: size };
+      cache.put(cacheKey, JSON.stringify(meta), effectiveTTL);
+
+      // Write chunks using putAll for efficiency
+      var chunkMap = {};
+      for (var c = 0; c < chunks.length; c++) {
+        chunkMap[cacheKey + '_chunk_' + c] = chunks[c];
+      }
+      cache.putAll(chunkMap, effectiveTTL);
+
+      Logger.log('📦 Cache chunked: ' + chunks.length + ' chunks (' + Math.round(size / 1024) + 'KB total)');
+    }
+  } catch(e) {
+    Logger.log('setCachedPayload_ error (non-fatal): ' + e.message);
+  }
+}
+
+/** Bust the DE payload cache. Call from dashboards via google.script.run. */
+function bustCache() {
+  try {
+    var cache = CacheService.getScriptCache();
+
+    // Remove primary keys
+    cache.remove(DE_CACHE_KEY);
+    var n = new Date();
+    var ym = n.getFullYear() + '-' + leftPad2_(n.getMonth() + 1);
+    var monthKey = DE_CACHE_KEY + '_' + ym + '-01';
+    cache.remove(monthKey);
+
+    // Clean up any chunk keys (up to 10 chunks should cover any payload)
+    var chunkKeys = [];
+    for (var i = 0; i < 10; i++) {
+      chunkKeys.push(DE_CACHE_KEY + '_chunk_' + i);
+      chunkKeys.push(monthKey + '_chunk_' + i);
+    }
+    // v47: Also bust KH cache
+    chunkKeys.push(KH_CACHE_KEY);
+    chunkKeys.push(KH_CACHE_HB_KEY);
+    cache.removeAll(chunkKeys);
+  } catch(e) {}
+  return { status: 'ok', busted: new Date().toISOString() };
+}
+
+/** Read KH heartbeat timestamp from Helpers!Z1. Lightweight single-cell read. */
+function getKHLastModified() {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var hn = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['Helpers'] || 'Helpers') : 'Helpers';
+    var sh = ss.getSheetByName(hn);
+    if (sh) {
+      var v = sh.getRange('Z1').getValue();
+      return v ? String(v) : '';
+    }
+  } catch(e) {}
+  return '';
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 1. doGet — UNIFIED ENTRY POINT
+// ════════════════════════════════════════════════════════════════════
+
+function doGet(e) {
+  var p = (e && e.parameter) || {};
+  if (p.page || !p.action) {
+    return servePage(p.page || 'vein', e);
+  }
+  return serveData(e);
+}
+
+
+function servePage(page, e) {
+  var routes = {
+    'vein':     { file: 'TheVein',         title: 'The Vein — Thompson Household Command Center' },
+    'pulse':    { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
+    'vault':    { file: 'Vault',          title: 'LT Watch Vault' },
+    'kidshub':  { file: 'KidsHub',        title: 'Kids Hub — Ring Quest' },
+    'spine':    { file: 'TheSpine',       title: 'The Spine — Thompson Office Display' },
+    'soul':     { file: 'TheSoul',        title: 'The Soul — Thompson Family Display' },
+    'debt':     { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
+    'jt':       { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
+    'weekly':   { file: 'ThePulse',        title: 'The Pulse — Thompson Household' }
+  };
+
+  var route = routes[page] || routes['pulse'];
+
+  try {
+    if (page === 'vault') {
+      var tmpl = HtmlService.createTemplateFromFile('Vault');
+      tmpl.sheetData = JSON.stringify(getAllVaultData());
+      return tmpl.evaluate()
+        .setTitle(route.title)
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
+    if (page === 'kidshub') {
+      var child = (e && e.parameter && e.parameter.child) || 'buggsy';
+      var view  = (e && e.parameter && e.parameter.view)  || 'kid';
+      var tmpl = HtmlService.createTemplateFromFile('KidsHub');
+      tmpl.INIT_CHILD = child.toLowerCase();
+      tmpl.INIT_VIEW  = view.toLowerCase();
+      var title = 'Kids Hub — Ring Quest';
+      if (child.toLowerCase() === 'jj')   title = '⭐ JJ\'s Sparkle Stars';
+      if (view.toLowerCase()  === 'parent') title = '⚙ Kids Hub — Parent Dashboard';
+      return tmpl.evaluate()
+        .setTitle(title)
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
+    return HtmlService.createHtmlOutputFromFile(route.file)
+      .setTitle(route.title)
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } catch (err) {
+    return HtmlService.createHtmlOutputFromFile('TheVein')
+      .setTitle('The Vein — Thompson Household Command Center')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  }
+}
+
+
+function serveData(e) {
+  var action = e.parameter.action || 'data';
+
+  try {
+    var result;
+
+    if (action === 'months') {
+      result = getAvailableMonths();
+    } else if (action === 'forecast') {
+      result = getCashFlowForecast();
+    } else if (action === 'simulator') {
+      result = getSimulatorData();
+    } else if (action === 'weekly') {
+      result = getWeeklyTrackerData();
+    } else if (action === 'cascade') {
+      refreshCascadeTabs();
+      result = { status: 'ok', refreshedAt: new Date().toISOString() };
+    } else if (action === 'kids') {
+      var khChild = (e.parameter.child || 'all').toLowerCase();
+      result = getKidsHubData(khChild);
+    } else if (action === 'kh_health') {
+      result = JSON.parse(khHealthCheck());
+    } else if (action === 'reconcile') {
+      result = reconcileVeinPulse();
+    } else if (action === 'board') {
+      result = getBoardData();
+    } else if (action === 'version') {
+      result = { codeGs: 'v' + getCodeGsVersion(), dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return 'unknown'; } })(), cascadeEngine: 'v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return 'unknown'; } })(), updated: new Date().toISOString().slice(0,10) };
+    } else if (action === 'loc') {
+      result = getLOCCapacity();
+    } else {
+      var start, end;
+      if (e.parameter.month) {
+        var ym = e.parameter.month;
+        if (ym === 'current') {
+          var n = new Date();
+          ym = n.getFullYear() + '-' + leftPad2_(n.getMonth() + 1);
+        }
+        var parts = ym.split('-');
+        var yr = parseInt(parts[0]);
+        var mo = parseInt(parts[1]);
+        start = ym + '-01';
+        end   = ym + '-' + new Date(yr, mo, 0).getDate();
+      } else {
+        start = e.parameter.start || null;
+        end   = e.parameter.end   || null;
+      }
+      if (!start || !end) {
+        var n2 = new Date();
+        var ym2 = n2.getFullYear() + '-' + leftPad2_(n2.getMonth() + 1);
+        start = ym2 + '-01';
+        end   = ym2 + '-' + new Date(n2.getFullYear(), n2.getMonth() + 1, 0).getDate();
+      }
+      result = getData(start, end, true);
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ error: err.message, stack: err.stack }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// 2. GOOGLE.SCRIPT.RUN WRAPPERS — wired with withMonitor_ (v38)
+// ════════════════════════════════════════════════════════════════════
+
+function getDataSafe(paramsOrStart, endArg, debtArg) {
+  return withMonitor_('getDataSafe', function() {
+    var start, end;
+    if (typeof paramsOrStart === 'string') {
+      start = paramsOrStart;
+      end = endArg || null;
+    } else {
+      var params = paramsOrStart || {};
+      if (params.month) {
+        var ym = params.month;
+        if (ym === 'current') {
+          var n = new Date();
+          ym = n.getFullYear() + '-' + leftPad2_(n.getMonth() + 1);
+        }
+        var parts = ym.split('-');
+        var yr = parseInt(parts[0]);
+        var mo = parseInt(parts[1]);
+        start = ym + '-01';
+        end   = ym + '-' + new Date(yr, mo, 0).getDate();
+      } else {
+        start = params.start || null;
+        end   = params.end   || null;
+      }
+    }
+    if (!start || !end) {
+      var n2 = new Date();
+      var ym2 = n2.getFullYear() + '-' + leftPad2_(n2.getMonth() + 1);
+      start = ym2 + '-01';
+      end   = ym2 + '-' + new Date(n2.getFullYear(), n2.getMonth() + 1, 0).getDate();
+    }
+    // v41: CacheService — only cache current month requests
+    var nowDate = new Date();
+    var currentYM = nowDate.getFullYear() + '-' + leftPad2_(nowDate.getMonth() + 1);
+    var isCurrentMonth = start === currentYM + '-01';
+    var cacheKey = DE_CACHE_KEY + '_' + start;
+    if (isCurrentMonth) {
+      var cached = getCachedPayload_(cacheKey);
+      if (cached) return cached;
+    }
+    try { SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TAB_MAP['Helpers'] || 'Helpers').getRange('Z1').setValue(new Date().toISOString()); } catch(e) {}
+    var raw = getData(start, end, true);
+    var result = JSON.parse(JSON.stringify(raw));
+    if (isCurrentMonth) {
+      setCachedPayload_(cacheKey, result);
+    }
+    return result;
+  });
+}
+
+function getMonthsSafe() {
+  return withMonitor_('getMonthsSafe', function() {
+    return JSON.parse(JSON.stringify(getAvailableMonths()));
+  });
+}
+
+function getSimulatorDataSafe() {
+  return withMonitor_('getSimulatorDataSafe', function() {
+    return JSON.parse(JSON.stringify(getSimulatorData()));
+  });
+}
+
+function getWeeklyTrackerDataSafe() {
+  return withMonitor_('getWeeklyTrackerDataSafe', function() {
+    return JSON.parse(JSON.stringify(getWeeklyTrackerData()));
+  });
+}
+
+function getCashFlowForecastSafe() {
+  return withMonitor_('getCashFlowForecastSafe', function() {
+    return JSON.parse(JSON.stringify(getCashFlowForecast()));
+  });
+}
+
+function getScriptUrl() {
+  return ScriptApp.getService().getUrl();
+}
+
+function getScriptUrlSafe() {
+  return ScriptApp.getService().getUrl();
+}
+
+// ── KidsHub safe wrappers ────────────────────────────────────────
+function getKidsHubDataSafe(child) {
+  return withMonitor_('getKidsHubDataSafe', function() {
+    var resolvedChild = child || 'all';
+    // v47: Cache only 'all' requests (ambient displays, parent dashboard, widget)
+    if (resolvedChild === 'all') {
+      var cached = getCachedKHPayload_();
+      if (cached) return cached;
+    }
+    var result = getKidsHubData(resolvedChild, Date.now());
+    if (resolvedChild === 'all') {
+      setCachedKHPayload_(result);
+    }
+    return result;
+  });
+}
+
+// v41: Kids Hub WIDGET transformer. scope='summary' strips task details for ThePulse compact widget.
+function getKidsHubWidgetDataSafe(scope) {
+  return withMonitor_('getKidsHubWidgetDataSafe', function() {
+    try {
+      var isSummary = scope === 'summary';
+      // v47: Use cached KH data if available
+      var cached = getCachedKHPayload_();
+      var raw;
+      if (cached) {
+        raw = typeof cached === 'string' ? JSON.parse(cached) : cached;
+      } else {
+        var freshStr = getKidsHubData('all', Date.now());
+        setCachedKHPayload_(freshStr);
+        raw = JSON.parse(freshStr);
+      }
+      if (raw.error) return { error: raw.error };
+      var tasks      = raw.tasks      || [];
+      var rewards    = raw.rewards    || [];
+      var balances   = raw.balances   || {};
+      var childCfg   = raw.childConfig|| {};
+      var allowance  = raw.allowance  || {};
+      var requests   = raw.requests   || [];
+      var pendingRequestCount = raw.pendingRequestCount || {};
+      var screenTime = raw.screenTime || {};
+      var levels     = raw.levels     || [];
+
+      function buildChild(key) {
+        var cfg = childCfg[key] || {};
+        var bal = balances[key] || { balance: 0, bankBalance: 0, earnedMoney: 0, bankOpening: 0 };
+        var childTasks = tasks.filter(function(t) {
+          return (t.child || '').toLowerCase() === key || (t.child || '').toUpperCase() === 'BOTH';
+        });
+        var childRewards = rewards.filter(function(r) {
+          return (r.child || '').toLowerCase() === key || (r.child || '').toUpperCase() === 'BOTH';
+        });
+        var completed = childTasks.filter(function(t) { return t.completed; });
+        var approved  = childTasks.filter(function(t) { return t.completed && t.parentApproved; });
+        var pending   = childTasks.filter(function(t) { return t.completed && !t.parentApproved; });
+        var totalPts  = bal.balance || 0;
+        var tvMin = 0, moneyEarned = 0, approvedMoney = 0, snacksEarned = 0;
+        for (var ci = 0; ci < completed.length; ci++) {
+          tvMin += completed[ci].tvMinutes || 0;
+          moneyEarned += completed[ci].money || 0;
+          snacksEarned += completed[ci].snacks || 0;
+        }
+        for (var ai = 0; ai < approved.length; ai++) {
+          approvedMoney += approved[ai].money || 0;
+        }
+        var sorted = childRewards.slice().sort(function(a, b) { return a.cost - b.cost; });
+        var nextReward = null;
+        for (var ri = 0; ri < sorted.length; ri++) {
+          if (sorted[ri].cost > totalPts) { nextReward = sorted[ri]; break; }
+        }
+        if (!nextReward && sorted.length > 0) nextReward = sorted[sorted.length - 1];
+        var requiredStatus = typeof getRequiredStatus_ === 'function' ? getRequiredStatus_(key) : null;
+
+        var childRequests = requests.filter(function(r) {
+          return (r.child || '').toLowerCase() === key;
+        });
+        var pendingAsks = childRequests.filter(function(r) { return r.status === 'Pending'; });
+
+        return {
+          name:  cfg.displayName || cfg.child || key,
+          emoji: cfg.icon || (key === 'jj' ? '⭐' : '⭕'),
+          allowanceMTD: moneyEarned,
+          approvedMTD: approvedMoney,
+          requiredStatus: requiredStatus,
+          bankBalance: bal.bankBalance || 0,
+          screenTime: screenTime[key] || { TV: { balance: 0 }, Gaming: { balance: 0 } },
+          pendingRequestCount: pendingRequestCount[key] || 0,
+          stats: {
+            earnedPoints:    totalPts,
+            totalTasks:      childTasks.length,
+            completedCount:  completed.length,
+            approvedCount:   approved.length,
+            completionPct:   childTasks.length > 0 ? Math.round(completed.length / childTasks.length * 100) : 0,
+            tvMinutesEarned: tvMin,
+            snacksEarned:    snacksEarned,
+            pendingCount:    pending.length,
+            pendingApprovals: isSummary ? [] : pending.map(function(t) {
+              return { icon: t.icon, task: t.task, points: t.points, money: t.money || 0, rowIndex: t.rowIndex };
+            }),
+            pendingAsks: isSummary ? [] : pendingAsks.map(function(r) {
+              return { requestUID: r.requestUID, type: r.type, title: r.title, amount: r.amount };
+            }),
+            nextReward: nextReward ? { icon: nextReward.icon, name: nextReward.name, cost: nextReward.cost } : null
+          }
+        };
+      }
+
+      var buggsy = buildChild('buggsy');
+      var jj     = buildChild('jj');
+      var alwB   = allowance.buggsy || {};
+      var alwJ   = allowance.jj     || {};
+
+      return {
+        buggsy: buggsy,
+        jj:     jj,
+        levels: levels,
+        requiredStatus: {
+          buggsy: buggsy.requiredStatus || null,
+          jj: jj.requiredStatus || null
+        },
+        screenTime: {
+          buggsy: buggsy.screenTime || { TV: { balance: 0 }, Gaming: { balance: 0 } },
+          jj: jj.screenTime || { TV: { balance: 0 }, Gaming: { balance: 0 } }
+        },
+        household: {
+          totalPendingApprovals: (buggsy.stats.pendingCount || 0) + (jj.stats.pendingCount || 0),
+          totalPendingAsks:      (buggsy.pendingRequestCount || 0) + (jj.pendingRequestCount || 0),
+          totalOwedMTD:          (buggsy.allowanceMTD || 0) + (jj.allowanceMTD || 0),
+          totalApprovedMTD:      (buggsy.approvedMTD || 0) + (jj.approvedMTD || 0),
+          weeklyBudgetImpact:    (alwB.weeklyAmount || 0) + (alwJ.weeklyAmount || 0)
+        }
+      };
+    } catch (e) {
+      Logger.log('getKidsHubWidgetDataSafe error: ' + e.message);
+      return { error: 'Widget data error: ' + e.message };
+    }
+  });
+}
+
+function getCategoryTransactionsSafe(cat, start, end) {
+  return withMonitor_('getCategoryTransactionsSafe', function() {
+    return JSON.parse(JSON.stringify(getCategoryTransactions(cat, start, end)));
+  });
+}
+function getCloseHistoryDataSafe() {
+  return withMonitor_('getCloseHistoryDataSafe', function() {
+    return JSON.parse(JSON.stringify(getCloseHistoryData()));
+  });
+}
+function getSubscriptionDataSafe(start, end) {
+  return withMonitor_('getSubscriptionDataSafe', function() {
+    return JSON.parse(JSON.stringify(getSubscriptionData(start || null, end || null)));
+  });
+}
+
+// ── KidsHub write wrappers ───────────────────────────────────────
+function _khDiag_(label, args, e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var hn = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['KH_History'] || 'KH_History') : 'KH_History';
+    var sh = ss ? ss.getSheetByName(hn) : null;
+    if (sh) sh.appendRow(['ERROR_DIAG', label, JSON.stringify(args), e.message, 0, 0, 0, 'error', '',
+      Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss")]);
+  } catch(e2) { Logger.log('_khDiag_ failed: ' + e2.message); }
+}
+function khCompleteTaskSafe(rowIndex) {
+  return withMonitor_('khCompleteTaskSafe', function() {
+    try { return JSON.parse(khCompleteTask(rowIndex)); }
+    catch(e) { _khDiag_('khCompleteTaskSafe', {rowIndex: rowIndex}, e); throw e; }
+  });
+}
+function khCompleteTaskWithBonusSafe(rowIndex, multiplier) {
+  return withMonitor_('khCompleteTaskWithBonusSafe', function() {
+    try { return JSON.parse(khCompleteTaskWithBonus(rowIndex, multiplier)); }
+    catch(e) { _khDiag_('khCompleteTaskWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier}, e); throw e; }
+  });
+}
+function khApproveTaskSafe(rowIndex) {
+  return withMonitor_('khApproveTaskSafe', function() {
+    try { return JSON.parse(khApproveTask(rowIndex)); }
+    catch(e) { _khDiag_('khApproveTaskSafe', {rowIndex: rowIndex}, e); throw e; }
+  });
+}
+function khUncompleteTaskSafe(rowIndex) {
+  return withMonitor_('khUncompleteTaskSafe', function() {
+    try { return JSON.parse(khUncompleteTask(rowIndex)); }
+    catch(e) { _khDiag_('khUncompleteTaskSafe', {rowIndex: rowIndex}, e); throw e; }
+  });
+}
+function khRejectTaskSafe(rowIndex) {
+  return withMonitor_('khRejectTaskSafe', function() {
+    try { return JSON.parse(khRejectTask(rowIndex)); }
+    catch(e) { _khDiag_('khRejectTaskSafe', {rowIndex: rowIndex}, e); throw e; }
+  });
+}
+function khApproveWithBonusSafe(rowIndex, multiplier) {
+  return withMonitor_('khApproveWithBonusSafe', function() {
+    try { return JSON.parse(khApproveWithBonus(rowIndex, multiplier)); }
+    catch(e) { _khDiag_('khApproveWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier}, e); throw e; }
+  });
+}
+function khOverrideTaskSafe(rowIndex) {
+  return withMonitor_('khOverrideTaskSafe', function() {
+    try { return JSON.parse(khOverrideTask(rowIndex)); }
+    catch(e) { _khDiag_('khOverrideTaskSafe', {rowIndex: rowIndex}, e); throw e; }
+  });
+}
+function khRedeemRewardSafe(child, rewardID, quantity) {
+  return withMonitor_('khRedeemRewardSafe', function() {
+    try { return JSON.parse(khRedeemReward(child, rewardID, quantity || 1)); }
+    catch(e) { _khDiag_('khRedeemRewardSafe', {child: child, rewardID: rewardID, quantity: quantity}, e); throw e; }
+  });
+}
+function khAddDeductionSafe(child, reason, amount) {
+  return withMonitor_('khAddDeductionSafe', function() {
+    try { return JSON.parse(khAddDeduction(child, reason, amount)); }
+    catch(e) { _khDiag_('khAddDeductionSafe', {child: child, reason: reason, amount: amount}, e); throw e; }
+  });
+}
+function khResetTasksSafe(mode, child) {
+  return withMonitor_('khResetTasksSafe', function() {
+    try { return JSON.parse(khResetTasks(mode, child)); }
+    catch(e) { _khDiag_('khResetTasksSafe', {mode: mode, child: child}, e); throw e; }
+  });
+}
+function khVerifyPinSafe(pin) {
+  return khVerifyPin(pin);
+}
+function getKHAppUrlsSafe() {
+  return getKHAppUrls();
+}
+function khHealthCheckSafe() {
+  return JSON.parse(khHealthCheck());
+}
+
+// v36: Ask System safe wrappers
+function khSubmitRequestSafe(child, type, title, amount, notes) {
+  return withMonitor_('khSubmitRequestSafe', function() {
+    try { return JSON.parse(khSubmitRequest(child, type, title, amount, notes)); }
+    catch(e) { _khDiag_('khSubmitRequestSafe', {child: child, type: type, title: title}, e); throw e; }
+  });
+}
+function khApproveRequestSafe(requestUID) {
+  return withMonitor_('khApproveRequestSafe', function() {
+    try { return JSON.parse(khApproveRequest(requestUID)); }
+    catch(e) { _khDiag_('khApproveRequestSafe', {requestUID: requestUID}, e); throw e; }
+  });
+}
+function khDenyRequestSafe(requestUID, parentNote) {
+  return withMonitor_('khDenyRequestSafe', function() {
+    try { return JSON.parse(khDenyRequest(requestUID, parentNote)); }
+    catch(e) { _khDiag_('khDenyRequestSafe', {requestUID: requestUID}, e); throw e; }
+  });
+}
+function khSetBankOpeningSafe(child, amount) {
+  return withMonitor_('khSetBankOpeningSafe', function() {
+    try { return JSON.parse(khSetBankOpening(child, amount)); }
+    catch(e) { _khDiag_('khSetBankOpeningSafe', {child: child, amount: amount}, e); throw e; }
+  });
+}
+
+// v37: Screen Time Bank safe wrapper
+function khDebitScreenTimeSafe(child, screenType, minutes) {
+  return withMonitor_('khDebitScreenTimeSafe', function() {
+    try { return JSON.parse(khDebitScreenTime(child, screenType, minutes)); }
+    catch(e) { _khDiag_('khDebitScreenTimeSafe', {child: child, screenType: screenType, minutes: minutes}, e); throw e; }
+  });
+}
+
+// v39: Bonus Task safe wrapper
+function khAddBonusTaskSafe(child, taskName, points, icon, timeOfDay) {
+  return withMonitor_('khAddBonusTaskSafe', function() {
+    try { return JSON.parse(khAddBonusTask(child, taskName, points, icon, timeOfDay)); }
+    catch(e) { _khDiag_('khAddBonusTaskSafe', {child: child, task: taskName, points: points}, e); throw e; }
+  });
+}
+
+// v43: Story Factory safe wrapper — runs full pipeline (~60s), returns {success, title, pdfUrl, bookNumber}
+function runStoryFactorySafe(topic, character, tone) {
+  return withMonitor_('runStoryFactorySafe', function() {
+    return runStoryFactory(topic, character, tone);
+  });
+}
+
+// v44: Deployed versions — calls all get*Version() functions from GASHardening
+function getDeployedVersionsSafe() {
+  return withMonitor_('getDeployedVersionsSafe', function() {
+    return JSON.parse(JSON.stringify(getDeployedVersions()));
+  });
+}
+
+
+function getAppUrls() {
+  var base = ScriptApp.getService().getUrl();
+  return JSON.stringify({
+    buggsy: base + '?page=kidshub&child=buggsy',
+    jj:     base + '?page=kidshub&child=jj',
+    parent: base + '?page=kidshub&view=parent'
+  });
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// 2b. THEBOARD DATA WRAPPER
+// ════════════════════════════════════════════════════════════════════
+function getBoardDataSafe() {
+  return withMonitor_('getBoardDataSafe', function() {
+    try {
+      return JSON.parse(JSON.stringify(getBoardData()));
+    } catch(e) {
+      Logger.log('getBoardDataSafe error: ' + e.message);
+      return { error: 'Board data error: ' + e.message };
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════
+// 3. MER GATE STATUS
+// ════════════════════════════════════════════════════════════════════
+
+function getMERGateStatus() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var qa = ss.getSheetByName(TAB_MAP['QA_Gates']);
+  if (!qa) return { error: true, message: 'QA_Gates sheet not found' };
+  var data = qa.getRange('A1:G15').getValues();
+  var total = 0, passCount = 0, warnCount = 0, failCount = 0;
+  for (var i = 1; i <= 10; i++) {
+    var gate = data[i][0];
+    if (!gate && gate !== 0) continue;
+    total++;
+    var status = String(data[i][6] || '');
+    if (status.indexOf('\uD83D\uDD34') >= 0 || status.indexOf('FAIL') >= 0) {
+      failCount++;
+    } else if (status.indexOf('\u26A0') >= 0 || status.indexOf('WARN') >= 0) {
+      warnCount++;
+    } else {
+      passCount++;
+    }
+  }
+  return {
+    allGreen: failCount === 0 && warnCount === 0 && total > 0,
+    allPassing: failCount === 0 && total > 0,
+    total: total, passCount: passCount, warnCount: warnCount, failCount: failCount
+  };
+}
+
+function getMERGateStatusSafe() {
+  return withMonitor_('getMERGateStatusSafe', function() {
+    return JSON.parse(JSON.stringify(getMERGateStatus()));
+  });
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// 3b. WATCH VAULT DATA
+// ════════════════════════════════════════════════════════════════════
+function getAllVaultData() {
+  var sheets = ['LT_Collection', 'JT_Collection', 'Kids_Collection', 'Wishlist'];
+  var result = {};
+  for (var i = 0; i < sheets.length; i++) {
+    result[sheets[i]] = readVaultSheet(sheets[i]);
+  }
+  return result;
+}
+function readVaultSheet(sheetName) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(TAB_MAP[sheetName] || sheetName);
+    if (!sheet) return [];
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) return [];
+    var headers = data[0];
+    var rows = [];
+    for (var i = 1; i < data.length; i++) {
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) {
+        obj[headers[j]] = data[i][j];
+      }
+      rows.push(obj);
+    }
+    return rows;
+  } catch(e) {
+    Logger.log('readVaultSheet(' + sheetName + ') error: ' + e.message);
+    return [];
+  }
+}
+function getVaultDataSafe() {
+  return withMonitor_('getVaultDataSafe', function() {
+    return JSON.parse(JSON.stringify(getAllVaultData()));
+  });
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// 4. HEALTH CHECK
+// ════════════════════════════════════════════════════════════════════
+
+function healthCheck() {
+  Logger.log('═══ Code.gs v47 Health Check ═══');
+
+  var fns = [
+    'doGet', 'servePage', 'serveData', 'getDataSafe', 'getMonthsSafe',
+    'getData', 'getSimulatorData', 'getWeeklyTrackerData',
+    'getAvailableMonths', 'getCashFlowForecast', 'parseDebtExport',
+    'getSimulatorDataSafe', 'getWeeklyTrackerDataSafe', 'getCashFlowForecastSafe',
+    'getScriptUrl', 'getScriptUrlSafe',
+    'getMERGateStatus', 'getMERGateStatusSafe',
+    'refreshCascadeTabs', 'refreshCascadeTabsSafe', 'testCascade',
+    'getLOCCapacity', 'getLOCCapacitySafe',
+    'getCascadeResultsSafe',
+    'getKidsHubData', 'getKidsHubDataSafe',
+    'getAppUrls',
+    'getCategoryTransactionsSafe', 'getCloseHistoryDataSafe', 'getSubscriptionDataSafe',
+    'getDataEngineVersion',
+    'getAllVaultData', 'readVaultSheet', 'getVaultDataSafe',
+    'khCompleteTask', 'khApproveTask', 'khUncompleteTask',
+    'khCompleteTaskWithBonus', 'khRedeemReward', 'khAddDeduction',
+    'khResetTasks', 'khVerifyPin', 'khHealthCheck',
+    'khRejectTask', 'khApproveWithBonus', 'khOverrideTask',
+    'khRejectTaskSafe', 'khApproveWithBonusSafe', 'khOverrideTaskSafe',
+    'getKHAppUrls', 'setupKHSheets', 'validateTaskIDs',
+    'runDailyGateCheck', 'installDailyGateAlert', 'removeDailyGateAlert',
+    'notionApi_', 'pushQAResult', 'testNotionConnection',
+    'reconcileVeinPulse', 'reconcileVeinPulseSafe', 'resolveNestedKey_',
+    'getCodeGsVersion',
+    'getBoardData', 'getBoardDataSafe',
+    'writeReconcileStatus_', 'getReconcileStatusSafe',
+    'installReconciliationTrigger', 'removeReconciliationTrigger',
+    // v36: Ask System + Parents Bank
+    'khSubmitRequest', 'khSubmitRequestSafe',
+    'khApproveRequest', 'khApproveRequestSafe',
+    'khDenyRequest', 'khDenyRequestSafe',
+    'khSetBankOpening', 'khSetBankOpeningSafe',
+    // v37: Screen Time Bank
+    'khDebitScreenTime', 'khDebitScreenTimeSafe',
+    // v39: Bonus Task
+    'khAddBonusTask', 'khAddBonusTaskSafe',
+    // v38: GAS Hardening
+    'withMonitor_', 'logError_', 'logPerf_',
+    'auditTriggers', 'checkTillerSyncHealth', 'monthClosePreflight',
+    'writeWeeklySnapshot', 'fullSystemDiagnostic',
+    // v41: CacheService + heartbeat + widget scope
+    'getCachedPayload_', 'setCachedPayload_', 'bustCache',
+    'getKHLastModified', 'getKidsHubWidgetDataSafe',
+    // v43: Story Factory
+    'runStoryFactory', 'runStoryFactorySafe',
+    // v44: Deployed Versions
+    'getDeployedVersions', 'getDeployedVersionsSafe'
+  ];
+  var allOk = true;
+  for (var fi = 0; fi < fns.length; fi++) {
+    var name = fns[fi];
+    var exists = false;
+    try { exists = typeof eval(name) === 'function'; } catch(e) {}
+    Logger.log('  ' + name + ': ' + (exists ? '✓' : '✗ MISSING'));
+    if (!exists) allOk = false;
+  }
+
+  Logger.log('─── HTML Files (2-Surface Architecture) ───');
+  var activeFiles = ['TheVein', 'ThePulse', 'Vault', 'KidsHub', 'TheSpine', 'TheSoul'];
+  for (var ai = 0; ai < activeFiles.length; ai++) {
+    var fname = activeFiles[ai];
+    try {
+      HtmlService.createHtmlOutputFromFile(fname);
+      Logger.log('  ' + fname + '.html: ✓ ACTIVE');
+    } catch(e) {
+      Logger.log('  ' + fname + '.html: ✗ NOT FOUND');
+      allOk = false;
+    }
+  }
+
+  var legacyFiles = ['Debt_Simulator', 'JTDashboard', 'WeeklyTracker', 'ThePulse_old', 'LTDashboard', 'AnalystConsole', 'OperatorDashboard', 'TheBoard'];
+  for (var li = 0; li < legacyFiles.length; li++) {
+    try {
+      HtmlService.createHtmlOutputFromFile(legacyFiles[li]);
+      Logger.log('  ' + legacyFiles[li] + '.html: ⚠ LEGACY (still exists)');
+    } catch(e) {
+      Logger.log('  ' + legacyFiles[li] + '.html: — removed (expected)');
+    }
+  }
+
+  Logger.log('─── Data Engine ───');
+  try {
+    var months = getAvailableMonths();
+    Logger.log('  getAvailableMonths(): ✓ (' + (months ? months.length : 0) + ' months)');
+  } catch(e) {
+    Logger.log('  getAvailableMonths(): ✗ ' + e.message);
+    allOk = false;
+  }
+
+  try {
+    var n = new Date();
+    var testStart = n.getFullYear() + '-' + leftPad2_(n.getMonth()+1) + '-01';
+    var testEnd = n.getFullYear() + '-' + leftPad2_(n.getMonth()+1) + '-' + leftPad2_(n.getDate());
+    var data = getData(testStart, testEnd, true);
+    Logger.log('  getData(): ✓');
+    Logger.log('    earnedIncome: $' + data.earnedIncome);
+    Logger.log('    debtCurrent: $' + data.debtCurrent);
+    Logger.log('    _meta.version: ' + (data._meta ? data._meta.version : 'MISSING'));
+    var raw = JSON.stringify(data);
+    var nanCount = (raw.match(/\bNaN\b/g) || []).length;
+    var undCount = (raw.match(/\bundefined\b/g) || []).length;
+    if (nanCount > 0 || undCount > 0) {
+      Logger.log('  ⚠ WARNING: ' + nanCount + ' NaN and ' + undCount + ' undefined');
+    } else {
+      Logger.log('  ✓ No NaN/undefined');
+    }
+  } catch(e) {
+    Logger.log('  getData(): ✗ ' + e.message);
+    allOk = false;
+  }
+
+  Logger.log('─── Navigation ───');
+  try {
+    Logger.log('  Script URL: ' + ScriptApp.getService().getUrl());
+  } catch(e) {
+    Logger.log('  Script URL: ✗ ' + e.message);
+  }
+
+  Logger.log('─── Cascade Engine ───');
+  try {
+    var parsed = parseDebtExport();
+    Logger.log('  parseDebtExport(): ✓ (active: ' + parsed.active.length + ', excluded: ' + parsed.excluded.length + ')');
+  } catch(e) {
+    Logger.log('  parseDebtExport(): ✗ ' + e.message);
+    allOk = false;
+  }
+
+  Logger.log('─── Legacy Checks ───');
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var pe = ss.getSheetByName(TAB_MAP['Partner_Export'] || 'Partner_Export');
+  Logger.log('  Partner_Export: ' + (pe ? '✓ (' + pe.getLastRow() + ' rows)' : '✗ NOT FOUND'));
+
+  Logger.log('─── GAS Hardening (v38) ───');
+  var hardeningSheets = ['💻 ErrorLog', '💻 PerfLog', '💻 Snapshots'];
+  for (var hi = 0; hi < hardeningSheets.length; hi++) {
+    var hSheet = ss.getSheetByName(hardeningSheets[hi]);
+    Logger.log('  ' + hardeningSheets[hi] + ': ' + (hSheet ? '✓ (' + hSheet.getLastRow() + ' rows)' : '— not created yet'));
+  }
+
+  var triggers = ScriptApp.getProjectTriggers();
+  Logger.log('  Triggers installed: ' + triggers.length + '/20');
+  for (var ti = 0; ti < triggers.length; ti++) {
+    Logger.log('    → ' + triggers[ti].getHandlerFunction());
+  }
+
+  try {
+    pushQAResult({
+      surface: 'System', version: 'v' + getCodeGsVersion(),
+      gate: 'Health Check', status: allOk ? 'PASS' : 'FAIL',
+      details: allOk ? 'All checks passed' : 'Issues found',
+      values: { codeGs: 'v' + getCodeGsVersion() }
+    });
+    Logger.log('📤 Results pushed to Notion QA Log');
+  } catch (e) {
+    Logger.log('⚠️ Notion push failed (non-blocking): ' + e.message);
+  }
+  Logger.log('═══════════════════════════════');
+  Logger.log(allOk ? '✓ ALL CHECKS PASSED' : '✗ ISSUES FOUND');
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// 5. AUTOMATED GATE ALERTING
+// ════════════════════════════════════════════════════════════════════
+
+function runDailyGateCheck() {
+  try {
+    try { runMERGates(); } catch(e) { Logger.log('runMERGates error (non-fatal): ' + e.message); }
+    var status = getMERGateStatus();
+    if (!status || status.error) return;
+    if (status.allPassing) { Logger.log('Gate check: all passing ✓'); return; }
+    var subject = '\uD83D\uDD34 Thompson Dashboard: ' + status.failCount + ' QA gate(s) failing';
+    var body = 'Daily Gate Check — ' + new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric', year:'numeric'}) + '\n\n'
+      + 'RESULT: ' + status.failCount + ' FAILING · ' + status.warnCount + ' WARNING · ' + status.passCount + ' PASSING (of ' + status.total + ')\n\n'
+      + 'Action: Open QA_Gates sheet to review.';
+    MailApp.sendEmail({ to: Session.getActiveUser().getEmail(), subject: subject, body: body });
+    Logger.log('Gate check: alert sent — ' + status.failCount + ' failing');
+  } catch(e) {
+    Logger.log('runDailyGateCheck error: ' + e.message);
+  }
+}
+
+function installDailyGateAlert() {
+  removeDailyGateAlert();
+  ScriptApp.newTrigger('runDailyGateCheck').timeBased().everyDays(1).atHour(6).nearMinute(0).create();
+  Logger.log('✓ Daily gate alert installed');
+}
+
+function removeDailyGateAlert() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'runDailyGateCheck') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// 6. NOTION API BRIDGE
+// ════════════════════════════════════════════════════════════════════
+function notionApi_(endpoint, method, payload) {
+  var token = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+  if (!token) throw new Error('NOTION_API_KEY not found');
+  var options = {
+    method: method,
+    headers: { 'Authorization': 'Bearer ' + token, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+    muteHttpExceptions: true
+  };
+  if (payload && method !== 'get') options.payload = JSON.stringify(payload);
+  var response = UrlFetchApp.fetch('https://api.notion.com' + endpoint, options);
+  var code = response.getResponseCode();
+  var body = JSON.parse(response.getContentText());
+  if (code < 200 || code >= 300) throw new Error('Notion API ' + code + ': ' + (body.message || 'unknown'));
+  return body;
+}
+
+function pushQAResult(result) {
+  var dbId = PropertiesService.getScriptProperties().getProperty('NOTION_QA_DB_ID');
+  if (!dbId) throw new Error('NOTION_QA_DB_ID not found');
+  return notionApi_('/v1/pages', 'post', {
+    parent: { database_id: dbId },
+    properties: {
+      'Run': { title: [{ text: { content: result.surface + ' ' + result.version + ' — ' + new Date().toISOString() } }] },
+      'Surface': { select: { name: result.surface } },
+      'Version': { rich_text: [{ text: { content: result.version || '' } }] },
+      'Gate': { select: { name: result.gate || 'Health Check' } },
+      'Status': { select: { name: result.status } },
+      'Details': { rich_text: [{ text: { content: (result.details || '').substring(0, 2000) } }] },
+      'Run Date': { date: { start: new Date().toISOString() } },
+      'Values JSON': { rich_text: [{ text: { content: (result.values ? JSON.stringify(result.values) : '').substring(0, 2000) } }] }
+    }
+  });
+}
+
+function testNotionConnection() {
+  try {
+    var token = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+    if (!token) { Logger.log('❌ NOTION_API_KEY not found'); return; }
+    var me = notionApi_('/v1/users/me', 'get');
+    Logger.log('✅ Connected as: ' + me.name);
+    var dbId = PropertiesService.getScriptProperties().getProperty('NOTION_QA_DB_ID');
+    if (dbId) {
+      var db = notionApi_('/v1/databases/' + dbId, 'get');
+      Logger.log('✅ QA Log accessible: ' + db.title[0].plain_text);
+    }
+  } catch (e) { Logger.log('❌ Connection failed: ' + e.message); }
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// 7. VEIN/PULSE RECONCILIATION
+// ════════════════════════════════════════════════════════════════════
+function resolveNestedKey_(obj, key) {
+  if (obj == null || !key) return undefined;
+  if (obj.hasOwnProperty(key)) return obj[key];
+  var parts = key.split('.');
+  var cur = obj;
+  for (var i = 0; i < parts.length; i++) {
+    if (cur == null || typeof cur !== 'object') return undefined;
+    cur = cur[parts[i]];
+  }
+  return cur;
+}
+
+function reconcileVeinPulse() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var fmSheet = ss.getSheetByName(TAB_MAP['FIELD_MAP'] || 'FIELD_MAP');
+  if (!fmSheet) return _reconcileWithoutFieldMap();
+  var rows = fmSheet.getDataRange().getValues();
+  if (rows.length < 2) return { status: 'FAIL', error: 'FIELD_MAP empty' };
+  var n = new Date();
+  var ym = n.getFullYear() + '-' + leftPad2_(n.getMonth() + 1);
+  var start = ym + '-01';
+  var end = ym + '-' + new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate();
+  var data = getData(start, end, true);
+  var total = 0, passed = 0, failed = 0, failures = [];
+  for (var i = 1; i < rows.length; i++) {
+    var fieldKey = String(rows[i][0] || '').trim();
+    var surface  = String(rows[i][1] || '').trim().toLowerCase();
+    var label    = String(rows[i][2] || fieldKey);
+    if (!fieldKey) continue;
+    total++;
+    var val = resolveNestedKey_(data, fieldKey);
+    var valStr = JSON.stringify(val);
+    var isBad = (val === undefined || val === null || valStr === 'null' || (typeof val === 'number' && isNaN(val)));
+    if (isBad) { failed++; failures.push({ field: fieldKey, label: label, surface: surface, value: valStr }); }
+    else { passed++; }
+  }
+  var status = failed === 0 ? 'PASS' : 'FAIL';
+  var result = { status: status, total: total, passed: passed, failed: failed, failures: failures, checkedAt: new Date().toISOString(), dataMonth: ym };
+  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeGsVersion(), gate: 'Vein/Pulse Reconciliation', status: status, details: status === 'PASS' ? 'All ' + total + ' fields valid' : failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) {}
+  try { writeReconcileStatus_(result); } catch(e) {}
+  return result;
+}
+
+function _reconcileWithoutFieldMap() {
+  var n = new Date();
+  var ym = n.getFullYear() + '-' + leftPad2_(n.getMonth() + 1);
+  var start = ym + '-01';
+  var end = ym + '-' + new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate();
+  var data = getData(start, end, true);
+  var coreFields = ['earnedIncome','totalMoneyIn','operatingExpenses','netCashFlow','totalAssets','totalLiabilities','netWorth','liquidCash','debtCurrent','debtCurrentActive','debtPaymentsMTD','interestBurn.monthly','monthlySurplus','dscr','statusLevel'];
+  var total = coreFields.length, passed = 0, failed = 0, failures = [];
+  for (var i = 0; i < coreFields.length; i++) {
+    var key = coreFields[i];
+    var val = resolveNestedKey_(data, key);
+    var isBad = (val === undefined || val === null || (typeof val === 'number' && isNaN(val)));
+    if (isBad) { failed++; failures.push({ field: key, value: JSON.stringify(val) }); }
+    else { passed++; }
+  }
+  var status = failed === 0 ? 'PASS' : 'FAIL';
+  var result = { status: status, total: total, passed: passed, failed: failed, failures: failures, checkedAt: new Date().toISOString(), note: 'fallback' };
+  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeGsVersion(), gate: 'Reconciliation (fallback)', status: status, details: failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) {}
+  try { writeReconcileStatus_(result); } catch(e) {}
+  return result;
+}
+
+function reconcileVeinPulseSafe() {
+  return withMonitor_('reconcileVeinPulseSafe', function() {
+    try { return reconcileVeinPulse(); }
+    catch(e) { return { status: 'ERROR', error: e.message }; }
+  });
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// 8. RECONCILE STATUS SHEET + TRIGGER
+// ════════════════════════════════════════════════════════════════════
+function writeReconcileStatus_(result) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tabName = TAB_MAP['RECONCILE_STATUS'] || 'RECONCILE_STATUS';
+  var sheet = ss.getSheetByName(tabName);
+  if (!sheet) {
+    sheet = ss.insertSheet(tabName);
+    sheet.getRange('A1:A3').setValues([['LAST_RECONCILE_AT'],['LAST_RECONCILE_STATUS'],['LAST_RECONCILE_VERSIONS']]);
+    sheet.setColumnWidth(1, 220); sheet.setColumnWidth(2, 400);
+  }
+  var versions = 'DE v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })()
+    + ' · Code v' + getCodeGsVersion()
+    + ' · CE v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return '?'; } })();
+  sheet.getRange('B1').setValue(new Date().toISOString());
+  sheet.getRange('B2').setValue(result.status || 'UNKNOWN');
+  sheet.getRange('B3').setValue(versions);
+}
+
+function getReconcileStatusSafe() {
+  return withMonitor_('getReconcileStatusSafe', function() {
+    try {
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var sheet = ss.getSheetByName(TAB_MAP['RECONCILE_STATUS'] || 'RECONCILE_STATUS');
+      if (!sheet) return { lastReconcileAt: null, lastReconcileStatus: 'UNKNOWN', lastReconcileVersions: '' };
+      return {
+        lastReconcileAt: sheet.getRange('B1').getValue() || null,
+        lastReconcileStatus: sheet.getRange('B2').getValue() || 'UNKNOWN',
+        lastReconcileVersions: sheet.getRange('B3').getValue() || ''
+      };
+    } catch(e) {
+      return { lastReconcileAt: null, lastReconcileStatus: 'ERROR', error: e.message };
+    }
+  });
+}
+
+function installReconciliationTrigger() {
+  removeReconciliationTrigger();
+  ScriptApp.newTrigger('reconcileVeinPulse').timeBased().everyDays(1).atHour(2).nearMinute(0).create();
+  Logger.log('✓ Nightly reconciliation trigger installed');
+}
+
+function removeReconciliationTrigger() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'reconcileVeinPulse') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+}
+// END OF FILE — Code.gs v47

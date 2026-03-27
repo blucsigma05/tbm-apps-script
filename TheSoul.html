@@ -1,0 +1,1651 @@
+<!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<title>TheSoul v38 — Thompson Family Display</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+:root{
+  --real-h:100vh;
+  --glass-1:rgba(72,64,56,.70);
+  --glass-2:rgba(78,68,58,.64);
+  --glass-3:rgba(68,62,56,.68);
+  --border:rgba(255,255,255,.12);
+  --text:#f0f2f8;
+  --text-mid:#d6d8e6;
+  --text-dim:rgba(232,228,240,.62);
+  --gold:#f6d05e;
+  --gold-soft:#fde68a;
+  --cyan:#7dd3fc;
+  --mint:#6ee7b7;
+  --pink:#f9a8d4;
+  --rose:#f472b6;
+  --purple:#c084fc;
+  --ink:#10081f;
+  --shadow:0 10px 28px rgba(20,16,34,.18), 0 2px 10px rgba(0,0,0,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-tap-highlight-color:transparent;overflow:hidden;height:100%}
+body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C0;color:var(--text);font-family:'Barlow Condensed',sans-serif;transition:background 2s ease}
+
+.parent-body{
+  background:
+    radial-gradient(ellipse 60% 50% at 14% 14%, rgba(140,168,220,.38) 0%, transparent 56%),
+    radial-gradient(ellipse 46% 40% at 36% 30%, rgba(160,180,218,.26) 0%, transparent 54%),
+    radial-gradient(ellipse 42% 34% at 70% 20%, rgba(180,196,228,.22) 0%, transparent 54%),
+    radial-gradient(ellipse 50% 42% at 82% 66%, rgba(216,180,120,.18) 0%, transparent 58%),
+    radial-gradient(ellipse 64% 42% at 50% 86%, rgba(156,172,208,.16) 0%, transparent 56%),
+    linear-gradient(160deg, #7B8DC0 0%, #839AC6 22%, #8BA4CC 44%, #92AACC 66%, #96AEC8 88%, #9AB2C4 100%);
+  position:relative;
+}
+.parent-body.morning{
+  background:
+    radial-gradient(ellipse 62% 52% at 14% 14%, rgba(150,178,230,.42) 0%, transparent 56%),
+    radial-gradient(ellipse 48% 42% at 36% 30%, rgba(170,192,232,.28) 0%, transparent 54%),
+    radial-gradient(ellipse 42% 34% at 70% 20%, rgba(168,196,240,.18) 0%, transparent 54%),
+    radial-gradient(ellipse 50% 42% at 82% 66%, rgba(204,184,128,.10) 0%, transparent 58%),
+    radial-gradient(ellipse 64% 42% at 50% 86%, rgba(156,176,220,.16) 0%, transparent 56%),
+    linear-gradient(160deg, #8498CC 0%, #8CA2D0 22%, #94ACD4 44%, #98B0D4 66%, #9CB4D0 88%, #A0B6CC 100%);
+}
+.parent-body.evening{
+  background:
+    radial-gradient(ellipse 60% 50% at 14% 14%, rgba(130,156,210,.32) 0%, transparent 56%),
+    radial-gradient(ellipse 46% 40% at 36% 30%, rgba(152,168,208,.22) 0%, transparent 54%),
+    radial-gradient(ellipse 44% 36% at 70% 20%, rgba(172,186,220,.22) 0%, transparent 54%),
+    radial-gradient(ellipse 52% 44% at 82% 66%, rgba(216,178,116,.24) 0%, transparent 58%),
+    radial-gradient(ellipse 64% 42% at 50% 86%, rgba(148,164,200,.18) 0%, transparent 56%),
+    linear-gradient(160deg, #7080B4 0%, #7C90BC 22%, #849AC2 44%, #8CA0C0 66%, #90A4BC 88%, #94A8B8 100%);
+}
+.parent-body::before,
+.parent-body::after{
+  content:'';
+  position:fixed;
+  pointer-events:none;
+  z-index:0;
+}
+.parent-body::before{
+  top:-14%;
+  left:-10%;
+  width:54%;
+  height:54%;
+  background:radial-gradient(ellipse,rgba(160,180,230,.16),rgba(140,160,210,.06) 45%,transparent 72%);
+  animation:driftA 24s ease-in-out infinite alternate;
+}
+.parent-body::after{
+  right:-9%;
+  bottom:-10%;
+  width:48%;
+  height:48%;
+  background:radial-gradient(ellipse,rgba(216,180,120,.14),rgba(200,172,108,.06) 40%,transparent 66%);
+  animation:driftB 28s ease-in-out infinite alternate;
+}
+@keyframes driftA{0%{transform:translate(0,0)}100%{transform:translate(3%,2%)}}
+@keyframes driftB{0%{transform:translate(0,0)}100%{transform:translate(-2%,-3%)}}
+@keyframes fadeInSoft{0%{opacity:.45;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes crestFloat{0%{transform:scale(1.96) translateY(0)}100%{transform:scale(1.96) translateY(-3px)}}
+@keyframes shimmerBar{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes glowPulse{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.05);opacity:1}}
+@keyframes noteDrift{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-2px) rotate(-6deg)}}
+@keyframes allClearPulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}50%{box-shadow:0 0 12px 4px rgba(34,197,94,.3)}}
+
+#loading{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  background:#8898C0;
+}
+.load-ring{
+  width:32px;
+  height:32px;
+  border-radius:50%;
+  border:3px solid transparent;
+  border-top-color:#d4a843;
+  border-right-color:var(--pink);
+  animation:spin .9s linear infinite;
+}
+.load-text{
+  font-size:10px;
+  color:#ddd5e4;
+  font-weight:700;
+  letter-spacing:1px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.error-banner{
+  position:fixed;
+  top:8px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(127,29,29,.94);
+  color:#fff;
+  padding:6px 12px;
+  border-radius:8px;
+  font-size:10px;
+  font-weight:700;
+  z-index:9998;
+  display:none;
+}
+
+.page{
+  position:relative;
+  z-index:1;
+  height:var(--real-h);
+  padding:10px 16px 4px 12px;
+  display:grid;
+  grid-template-rows:minmax(130px,.78fr) auto 1.22fr;
+  gap:3px;
+  overflow:hidden;
+}
+
+.glass{
+  position:relative;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:linear-gradient(155deg,rgba(72,64,56,.70),rgba(78,68,58,.64) 55%,rgba(68,62,56,.68));
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.glass::before{
+  content:'';
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+}
+
+.hero-zone{
+  display:grid;
+  grid-template-columns:minmax(300px,40%) minmax(420px,60%);
+  gap:4px;
+  min-height:0;
+}
+
+.identity-card{
+  display:grid;
+  grid-template-columns:minmax(168px,40%) minmax(0,1fr);
+  min-height:0;
+}
+.identity-photo{
+  padding:0;
+  min-height:0;
+}
+.identity-photo-inner{
+  height:100%;
+  border-radius:12px;
+  overflow:hidden;
+  background:radial-gradient(ellipse at center,rgba(62,52,42,.7),rgba(52,44,36,.95));
+  border:1px solid rgba(200,160,255,.16);
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.family-crest{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:6px;
+}
+.family-crest svg{
+  width:100%;
+  height:100%;
+  max-width:none;
+  max-height:none;
+  filter:drop-shadow(0 10px 22px rgba(16,8,31,.28));
+  animation:crestFloat 45s linear infinite alternate;
+  transform-origin:center center;
+}
+.identity-photo-inner > img{
+  animation:crestFloat 45s linear infinite alternate;
+  transform-origin:center 51%;
+}
+.identity-photo-inner::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.03),transparent 40%,rgba(35,27,36,.18) 100%);
+  pointer-events:none;
+}
+.identity-photo-inner img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center center;
+  display:block;
+  transform:scale(1.96);
+  transform-origin:center 51%;
+}
+.identity-copy{
+  padding:10px 14px 10px 8px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:6px;
+  min-width:0;
+}
+.identity-kicker{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--gold);
+}
+.identity-greeting{
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(18px,2.2vw,26px);
+  line-height:1.08;
+  background:linear-gradient(135deg,#fde68a,#fbbf24,#f9a8d4,#7dd3fc);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  overflow:hidden;
+  animation:fadeInSoft .7s ease;
+}
+.identity-date{
+  font-size:15px;
+  font-weight:800;
+  color:#e0d4c0;
+}
+.identity-parents{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+}
+.parent-avatar{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:4px 10px 4px 4px;
+  border-radius:999px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+}
+.parent-avatar img{
+  width:30px;
+  height:30px;
+  border-radius:50%;
+  object-fit:cover;
+  border:1px solid rgba(255,255,255,.16);
+}
+.parent-avatar-label{
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.9px;
+  text-transform:uppercase;
+  color:var(--text-mid);
+}
+.identity-note-wrap{
+  margin-top:1px;
+  padding:4px 0;
+  min-height:0;
+  overflow:hidden;
+}
+.identity-note-label{
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:1.1px;
+  text-transform:uppercase;
+  color:rgba(253,230,138,.72);
+  margin-bottom:4px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.note-icon{
+  display:inline-flex;
+  animation:noteDrift 3.4s ease-in-out infinite;
+}
+.identity-note{
+  font-size:14px;
+  line-height:1.14;
+  font-weight:800;
+  color:#f5ecff;
+  overflow:hidden;
+}
+
+.schedule-card-shell{
+  padding:8px 10px;
+  display:grid;
+  grid-template-rows:auto 1fr;
+  min-height:0;
+}
+.schedule-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:12px;
+  margin-bottom:6px;
+}
+.schedule-title{
+  font-family:'Fredoka One',cursive;
+  font-size:18px;
+  line-height:1;
+  color:#f4e9ff;
+}
+.schedule-sub{
+  font-size:11px;
+  font-weight:800;
+  color:var(--text-dim);
+  text-align:right;
+  white-space:nowrap;
+}
+.schedule-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr 130px;
+  gap:6px;
+  min-height:0;
+}
+.schedule-comic{
+  border-radius:14px;
+  overflow:hidden;
+  background:radial-gradient(ellipse at center,rgba(62,52,42,.6),rgba(52,44,36,.85));
+  border:1px solid rgba(212,168,67,.14);
+  display:flex;
+  align-items:stretch;
+}
+.schedule-comic img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center top;
+  display:block;
+}
+.schedule-comic .comic-fallback{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  font-size:40px;
+  opacity:.3;
+}
+.schedule-pane{
+  position:relative;
+  border-radius:14px;
+  padding:8px 9px 7px;
+  overflow:hidden;
+  min-height:0;
+}
+.schedule-pane.household{
+  background:linear-gradient(160deg,rgba(42,48,52,.88),rgba(36,42,46,.92));
+  border:1px solid rgba(125,211,252,.14);
+}
+.schedule-pane.kids{
+  background:linear-gradient(160deg,rgba(42,50,44,.86),rgba(36,44,38,.92));
+  border:1px solid rgba(110,231,183,.13);
+}
+.schedule-pane::before{
+  content:'';
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:3px;
+}
+.schedule-pane.household::before{
+  background:linear-gradient(90deg,#38bdf8,#7dd3fc,#38bdf8);
+}
+.schedule-pane.kids::before{
+  background:linear-gradient(90deg,#34d399,#6ee7b7,#34d399);
+}
+.sched-kicker{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.schedule-pane.household .sched-kicker{color:#7dd3fc}
+.schedule-pane.kids .sched-kicker{color:#6ee7b7}
+
+.sched-feature{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  padding:6px 9px;
+  border-radius:10px;
+  min-height:72px;
+}
+.schedule-pane.household .sched-feature{
+  background:rgba(56,189,248,.10);
+  border-left:3px solid #38bdf8;
+}
+.schedule-pane.kids .sched-feature{
+  background:rgba(52,211,153,.10);
+  border-left:3px solid #34d399;
+}
+.sched-time{
+  font-size:13px;
+  font-weight:800;
+  letter-spacing:.4px;
+  text-transform:uppercase;
+}
+.schedule-pane.household .sched-time{color:#8fddff}
+.schedule-pane.kids .sched-time{color:#7cf2c6}
+.sched-title{
+  font-size:21px;
+  line-height:1.02;
+  font-weight:800;
+  color:var(--gold-soft);
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  overflow-wrap:break-word;
+  word-break:break-word;
+}
+.sched-meta{
+  font-size:10px;
+  font-weight:700;
+  color:rgba(219,203,244,.56);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.sched-list{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  margin-top:8px;
+}
+.sched-row{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  padding:4px 2px 0;
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.sched-row:first-child{border-top:none;padding-top:0}
+.sched-row-name{
+  font-size:13px;
+  font-weight:800;
+  color:#f4ecff;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.sched-row-time{
+  flex-shrink:0;
+  font-size:11px;
+  font-weight:800;
+  color:var(--text-dim);
+}
+.sched-empty{
+  height:100%;
+  min-height:96px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:4px;
+  padding:8px 4px;
+}
+.sched-empty-main{
+  font-family:'Fredoka One',cursive;
+  font-size:16px;
+  line-height:1.05;
+  color:#f4ecff;
+}
+.sched-empty-sub{
+  font-size:12px;
+  font-weight:700;
+  color:var(--text-dim);
+}
+
+.utility-rail{
+  display:grid;
+  grid-template-columns:.9fr 1fr 1fr 1.1fr .8fr;
+  gap:4px;
+  min-height:0;
+}
+.util-chip.refresh{display:none}
+.debug .util-chip.refresh{display:flex}
+.util-chip{
+  padding:7px 10px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(145deg,rgba(72,64,56,.62),rgba(78,68,58,.52),rgba(68,62,56,.60));
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-width:0;
+}
+.util-label{
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  color:rgba(220,200,180,.68);
+  margin-bottom:2px;
+}
+.util-main{
+  font-size:16px;
+  line-height:1.05;
+  font-weight:800;
+  color:#f8efff;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.util-sub{
+  font-size:10px;
+  font-weight:700;
+  color:var(--text-dim);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.util-chip.date .util-main{color:#e0d4c0}
+.util-chip.weather .util-main{color:var(--gold-soft)}
+.util-chip.summary .util-main{color:#c4f0ff}
+.util-chip.next .util-main{color:#fbcfe8}
+.util-chip.refresh .util-main{color:#d8b4fe}
+
+.kids-zone{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:4px;
+  min-height:0;
+}
+
+.kid-panel{
+  position:relative;
+  border-radius:16px;
+  overflow:hidden;
+  box-shadow:var(--shadow);
+  min-height:0;
+}
+.kid-shell{
+  height:100%;
+  display:grid;
+  grid-template-rows:auto auto auto auto 1fr;
+  gap:2px;
+  padding:5px 9px;
+  min-height:0;
+  position:relative;
+}
+.kid-shell.buggsy{
+  background:
+    radial-gradient(ellipse 58% 42% at 50% 100%, rgba(212,168,67,.10) 0%, transparent 65%),
+    linear-gradient(160deg,#3C3A30,#342E26 52%,#2C2820 100%);
+  border:1px solid rgba(212,168,67,.16);
+}
+.kid-shell.jj{
+  background:
+    radial-gradient(ellipse 65% 45% at 18% 8%, rgba(232,168,200,.14) 0%, transparent 54%),
+    radial-gradient(ellipse 58% 40% at 88% 82%, rgba(168,120,160,.14) 0%, transparent 52%),
+    linear-gradient(160deg,#4A3640,#3E2C36 55%,#342430 100%);
+  border:1px solid rgba(232,168,200,.14);
+}
+.kid-mascot{
+  width:40px;
+  height:40px;
+  object-fit:contain;
+  flex-shrink:0;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.28));
+  border-radius:8px;
+}
+.kid-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:10px;
+}
+.kid-head-main{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  min-width:0;
+}
+.kid-avatar{
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  object-fit:cover;
+  flex-shrink:0;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 2px 8px rgba(0,0,0,.24);
+}
+.kid-avatar.gold{border-color:rgba(245,158,11,.34)}
+.kid-avatar.rose{border-color:rgba(249,168,212,.34)}
+.kid-name-wrap{min-width:0}
+.kid-name{
+  font-size:24px;
+  line-height:1;
+  font-weight:800;
+}
+.kid-shell.buggsy .kid-name{
+  font-family:'Press Start 2P',monospace;
+  font-size:12px;
+  color:#f59e0b;
+  text-shadow:0 0 10px rgba(245,158,11,.28),1px 1px 0 #000;
+}
+.kid-shell.jj .kid-name{
+  font-family:'Fredoka One',cursive;
+  background:linear-gradient(135deg,#fde68a,#f9a8d4,#c084fc);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.kid-sub{
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.9px;
+  text-transform:uppercase;
+  margin-top:3px;
+}
+.kid-shell.buggsy .kid-sub{color:rgba(245,158,11,.56)}
+.kid-shell.jj .kid-sub{color:rgba(249,168,212,.72)}
+
+.kid-level{
+  flex-shrink:0;
+  padding:5px 8px;
+  border-radius:999px;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+  border:1px solid;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  max-width:150px;
+}
+.kid-shell.buggsy .kid-level{
+  color:#ffd39a;
+  background:rgba(245,158,11,.10);
+  border-color:rgba(245,158,11,.24);
+}
+.kid-shell.jj .kid-level{
+  color:#ffe0ef;
+  background:rgba(249,168,212,.10);
+  border-color:rgba(249,168,212,.22);
+}
+
+/* v34: 4 stat pills per kid (added Bank) */
+.kid-stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:3px;
+}
+.kid-stat{
+  padding:3px;
+  border-radius:10px;
+  text-align:center;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.05);
+}
+.kid-stat-val{
+  font-size:14px;
+  line-height:1;
+  font-weight:800;
+}
+.kid-shell.buggsy .kid-stat-val.primary{color:#fbbf24;animation:glowPulse 3s ease-in-out infinite}
+.kid-shell.buggsy .kid-stat-val.secondary{color:#7dd3fc}
+.kid-shell.jj .kid-stat-val.primary{color:#fde68a;animation:glowPulse 3s ease-in-out infinite}
+.kid-shell.jj .kid-stat-val.secondary{color:#f9a8d4}
+.kid-stat-val.bank{color:var(--mint)}
+.kid-stat-lbl{
+  margin-top:1px;
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  color:var(--text-dim);
+}
+.kid-gate{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:5px 8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.05);
+}
+.kid-gate.locked{
+  background:rgba(245,158,11,.10);
+  border-color:rgba(245,158,11,.22);
+}
+.kid-gate.clear{
+  background:rgba(110,231,183,.10);
+  border-color:rgba(110,231,183,.20);
+}
+.kid-gate.clear.pulse{
+  animation:allClearPulse 2s ease-in-out 1;
+}
+.kid-gate.yesterday{
+  background:rgba(245,158,11,.10);
+  border-color:rgba(245,158,11,.22);
+}
+.kid-gate-main{
+  font-size:11px;
+  font-weight:800;
+  color:#f5edff;
+}
+.kid-gate-sub{
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--text-dim);
+}
+/* v34: Ask count badge */
+.kid-ask-badge{
+  font-size:9px;
+  font-weight:800;
+  color:rgba(245,158,11,.74);
+  padding:2px 6px;
+  border-radius:6px;
+  background:rgba(245,158,11,.10);
+  border:1px solid rgba(245,158,11,.18);
+}
+
+.kid-progress{
+  padding:3px 8px;
+  border-radius:10px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.07);
+}
+.kid-progress-row{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  font-size:10px;
+  font-weight:800;
+  color:var(--text-mid);
+  margin-bottom:2px;
+}
+.kid-progress-row span:last-child{color:var(--gold-soft)}
+.kid-track{
+  height:6px;
+  border-radius:999px;
+  overflow:hidden;
+  background:rgba(0,0,0,.28);
+  border:1px solid rgba(255,255,255,.06);
+}
+.kid-fill{
+  height:100%;
+  border-radius:999px;
+}
+.kid-shell.buggsy .kid-fill{background:linear-gradient(90deg,#f59e0b,#fbbf24,#f59e0b);background-size:200% 100%;animation:shimmerBar 6s linear infinite}
+.kid-shell.jj .kid-fill{background:linear-gradient(90deg,#ec4899,#a855f7,#ec4899);background-size:200% 100%;animation:shimmerBar 6s linear infinite}
+
+.kid-section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+}
+.kid-shell.buggsy .kid-section-head{color:rgba(245,158,11,.74)}
+.kid-shell.jj .kid-section-head{color:rgba(249,168,212,.82)}
+
+.kid-task-zone{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:0;overflow:hidden}
+.kid-col{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.kid-col-head{font-size:9px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;margin-bottom:2px;flex-shrink:0}
+.kid-shell.buggsy .kid-col-head.active{color:#fbbf24}
+.kid-shell.jj .kid-col-head.active{color:#f9a8d4}
+.kid-col-head.pend-h{color:var(--cyan)}
+.kid-tasks{display:flex;flex-direction:column;gap:3px;overflow:hidden;flex:1;min-height:0}
+.kid-task{display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.kid-task.done{opacity:.5}
+.kid-task-icon{font-size:13px;flex-shrink:0;width:16px;text-align:center}
+.kid-task-name{font-size:12px;font-weight:700;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.kid-task.done .kid-task-name{text-decoration:line-through;color:var(--text-dim)}
+.kid-task-badge{font-size:8px;font-weight:800;padding:2px 5px;border-radius:4px;flex-shrink:0;letter-spacing:.04em;text-transform:uppercase}
+.kid-shell.buggsy .kid-task-badge.pts{background:rgba(245,158,11,.15);color:#fbbf24}
+.kid-shell.jj .kid-task-badge.pts{background:rgba(249,168,212,.12);color:#f9a8d4}
+.kid-task-badge.pend{background:rgba(125,211,252,.12);color:var(--cyan)}
+.kid-empty{font-size:10px;color:var(--text-dim);font-style:italic;padding:6px 0;text-align:center}
+
+.kid-footer{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:4px;
+}
+.kid-chip{
+  padding:3px 5px;
+  border-radius:8px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.07);
+}
+.kid-chip-label{
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  color:var(--text-dim);
+}
+.kid-chip-val{
+  margin-top:1px;
+  font-size:11px;
+  line-height:1;
+  font-weight:800;
+  color:#f5edff;
+}
+.kid-shell.buggsy .kid-chip-val.accent{color:#fbbf24}
+.kid-shell.jj .kid-chip-val.accent{color:#f9a8d4}
+
+.footer{
+  position:fixed;
+  bottom:2px;
+  right:8px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  z-index:2;
+  opacity:.5;
+}
+.footer-item{
+  display:flex;
+  align-items:center;
+  gap:3px;
+}
+.footer-label{
+  font-size:7px;
+  font-weight:800;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+  color:rgba(220,200,180,.50);
+}
+.footer-val{
+  font-size:7px;
+  font-weight:700;
+  color:var(--text-mid);
+}
+
+@media (max-width:980px){
+  .page{
+    grid-template-rows:minmax(130px,.76fr) auto 1.24fr;
+  }
+  .identity-greeting{font-size:clamp(18px,2.2vw,26px)}
+  .sched-title{font-size:18px}
+}
+</style>
+</head>
+<body class="parent-body">
+<div id="loading">
+  <div class="load-ring"></div>
+  <div class="load-text">Loading family display...</div>
+</div>
+
+<div class="error-banner" id="errorBanner"></div>
+
+<div class="page" id="soulPage" style="display:none;">
+  <section class="hero-zone">
+    <article class="glass identity-card">
+      <div class="identity-photo">
+        <div class="identity-photo-inner">
+          <img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson Family Crest" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(16,8,31,.28))" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="family-crest" style="display:none" aria-hidden="true">
+            <svg viewBox="0 0 240 280" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="soulCrestField" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#1e3f8a"/>
+                  <stop offset="100%" stop-color="#162d6a"/>
+                </linearGradient>
+                <linearGradient id="soulCrestGold" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#e8c050"/>
+                  <stop offset="100%" stop-color="#c49a38"/>
+                </linearGradient>
+              </defs>
+              <path d="M120 18 L192 46 V122 C192 176 163 220 120 248 C77 220 48 176 48 122 V46 Z" fill="url(#soulCrestField)" stroke="#c49a38" stroke-width="6"/>
+              <path d="M120 40 L172 61 V121 C172 158 153 190 120 214 C87 190 68 158 68 121 V61 Z" fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="2"/>
+              <path d="M120 61 V213" stroke="#ffffff" stroke-opacity=".3" stroke-width="2"/>
+              <path d="M68 124 H172" stroke="#ffffff" stroke-opacity=".3" stroke-width="2"/>
+              <circle cx="120" cy="124" r="24" fill="#0e1f45" stroke="#c49a38" stroke-width="4"/>
+              <path d="M120 108 V142" stroke="#c49a38" stroke-width="6" stroke-linecap="round"/>
+              <path d="M104 108 H136" stroke="#c49a38" stroke-width="6" stroke-linecap="round"/>
+              <path d="M88 82 l5 10 11 2-8 7 2 10-10-6-10 6 2-10-8-7 11-2z" fill="#ffffff"/>
+              <path d="M145 82 l5 10 11 2-8 7 2 10-10-6-10 6 2-10-8-7 11-2z" fill="#5a9ae0"/>
+              <path d="M88 147 l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z" fill="#ffffff"/>
+              <path d="M145 146 l12 23h-24z" fill="url(#soulCrestGold)"/>
+              <path d="M62 30 C84 8 156 8 178 30" fill="none" stroke="#d4a843" stroke-width="10" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="identity-copy">
+        <div class="identity-kicker" id="heroEyebrow">WEDNESDAY &middot; MARCH 18</div>
+        <div class="identity-greeting" id="heroGreeting">Good evening, Thompson Fam! &#x1F319;</div>
+        <div class="identity-note-wrap">
+          <div class="identity-note-label"><span class="note-icon">&#x2728;</span><span>Family Note</span></div>
+          <div class="identity-note" id="noteText">Welcome to the Thompson Board! &#x1F44B;&#x1F3FE;</div>
+        </div>
+      </div>
+    </article>
+
+    <article class="glass schedule-card-shell">
+      <div class="schedule-head">
+        <div class="schedule-title">Today's Flow</div>
+        <div class="schedule-sub" id="scheduleSummary">Loading day view&hellip;</div>
+      </div>
+      <div class="schedule-grid">
+        <section class="schedule-pane household">
+          <div class="sched-kicker">&#x1F3E0; Household</div>
+          <div id="householdSchedule"></div>
+        </section>
+        <section class="schedule-pane kids">
+          <div class="sched-kicker">&#x1F3C0; Kids Activities</div>
+          <div id="kidsSchedule"></div>
+        </section>
+        <div class="schedule-comic">
+          <img src="https://i.ibb.co/39qPSWQv/Gemini-Generated-Image-rf2astrf2astrf2a.png" alt="Thompson Family" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="comic-fallback" style="display:none">&#x1F46A;</div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="utility-rail">
+    <div class="util-chip date">
+      <div class="util-label">Date</div>
+      <div class="util-main" id="heroDate">&mdash;</div>
+      <div class="util-sub" id="heroDaySub">&mdash;</div>
+    </div>
+    <div class="util-chip weather">
+      <div class="util-label">Weather</div>
+      <div class="util-main" id="weatherMain">&mdash;</div>
+      <div class="util-sub" id="weatherSub">Waiting on board data</div>
+    </div>
+    <div class="util-chip summary">
+      <div class="util-label">Today</div>
+      <div class="util-main" id="todayMain">&mdash;</div>
+      <div class="util-sub" id="todaySub">Loading summary</div>
+    </div>
+    <div class="util-chip next">
+      <div class="util-label">Next Up</div>
+      <div class="util-main" id="nextMain">&mdash;</div>
+      <div class="util-sub" id="nextSub">Waiting on schedule</div>
+    </div>
+    <div class="util-chip refresh">
+      <div class="util-label">Updated</div>
+      <div class="util-main" id="refreshMain">&mdash;</div>
+      <div class="util-sub" id="refreshSub">Board + Kids</div>
+    </div>
+  </section>
+
+  <section class="kids-zone">
+    <div class="kid-panel" id="jjHost"></div>
+    <div class="kid-panel" id="bugHost"></div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-item">
+      <div class="footer-label">Board</div>
+      <div class="footer-val" id="boardStamp">&mdash;</div>
+    </div>
+    <div class="footer-item">
+      <div class="footer-label">Kids</div>
+      <div class="footer-val" id="kidsStamp">&mdash;</div>
+    </div>
+  </footer>
+</div>
+
+<script>
+// Version history tracked in Notion deploy page.
+(function(){
+  'use strict';
+
+  var REFRESH_MS = 120000;
+  var MAX_ACTIVE = 4;
+  var MAX_EXTRA_EVENTS = 2;
+  var MAX_CAL_EVENTS = 3;
+  var DEBUG = /(?:\?|&)debug=1(?:&|$)/.test(window.location.search);
+
+  var DAYS = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+  var MONTHS = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+
+  var LEVELS = [
+    {name:'Noob',min:0,color:'#9e9e9e'},
+    {name:'Sidekick',min:500,color:'#8bc34a'},
+    {name:'Warrior',min:1500,color:'#03a9f4'},
+    {name:'Knight',min:3500,color:'#9c27b0'},
+    {name:'Champion',min:7000,color:'#ff9800'},
+    {name:'Legend',min:12000,color:'#f44336'},
+    {name:'GOAT',min:20000,color:'#ffd700'}
+  ];
+
+  var LEVELS_JJ = [
+    {name:'Sprout',min:0,color:'#9e9e9e'},
+    {name:'Bloom',min:500,color:'#8bc34a'},
+    {name:'Sparkle',min:1500,color:'#03a9f4'},
+    {name:'Rainbow',min:3500,color:'#9c27b0'},
+    {name:'Princess',min:7000,color:'#ff9800'},
+    {name:'Queen',min:12000,color:'#f44336'},
+    {name:'GOAT',min:20000,color:'#ffd700'}
+  ];
+
+  function levelFor(pts, child) {
+    var arr = (child === 'jj') ? LEVELS_JJ : LEVELS;
+    var l = arr[0];
+    arr.forEach(function(lv) { if (pts >= lv.min) l = lv; });
+    return l;
+  }
+  function nextLevel(pts, child) {
+    var arr = (child === 'jj') ? LEVELS_JJ : LEVELS;
+    var l = levelFor(pts, child);
+    var i = arr.indexOf(l);
+    return arr[i + 1] || null;
+  }
+
+  var SOUL_CALENDARS_HOUSEHOLD = ['Thompson Household'];
+  var SOUL_CALENDARS_KIDS = ['Kids Activities'];
+
+  var state = {
+    board:null,
+    kids:null,
+    levels:null,
+    firstBoard:false,
+    firstKids:false
+  };
+
+  function $(id){ return document.getElementById(id); }
+
+  function safeParse(v){
+    try{
+      return typeof v === 'string' ? JSON.parse(v) : v;
+    }catch(e){
+      console.error('safeParse', e);
+      return {};
+    }
+  }
+
+  function esc(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
+  function showError(msg){
+    var el = $('errorBanner');
+    if(!el) return;
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(function(){ el.style.display = 'none'; }, 5000);
+  }
+
+  function measureViewport(){
+    var h = window.innerHeight;
+    document.documentElement.style.setProperty('--real-h', h + 'px');
+    var page = $('soulPage');
+    if(page && page.style.display !== 'none') page.style.height = h + 'px';
+  }
+
+  function reveal(){
+    if(state.firstBoard || state.firstKids){
+      $('loading').style.display = 'none';
+      $('soulPage').style.display = 'grid';
+      setTimeout(measureViewport, 50);
+    }
+  }
+
+  function stampTime(){
+    var t = new Date();
+    return t.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+  }
+
+  function updateRefreshStamp(){
+    if(state.board && state.board.spineStale){
+      $('refreshMain').textContent = 'Spine stale';
+      $('refreshSub').textContent = 'Check office display';
+      return;
+    }
+    $('refreshMain').textContent = stampTime();
+    $('refreshSub').textContent = 'Board + Kids';
+  }
+
+  function applyTimeTheme(){
+    var hour = new Date().getHours();
+    document.body.classList.remove('morning','evening');
+    if(hour >= 5 && hour <= 11){
+      document.body.classList.add('morning');
+    } else if(hour >= 17 || hour <= 4){
+      document.body.classList.add('evening');
+    }
+  }
+
+  function initDebugMode(){
+    if(DEBUG){ document.body.classList.add('debug'); }
+  }
+
+  function todayLabel(){
+    return new Date().toLocaleDateString('en-US', {weekday:'long', month:'long', day:'numeric'});
+  }
+
+  function eyebrowDate(){
+    var d = new Date();
+    return DAYS[d.getDay()] + ' \u00B7 ' + MONTHS[d.getMonth()] + ' ' + d.getDate();
+  }
+
+  function greeting(){
+    var h = new Date().getHours();
+    if(h >= 5 && h <= 11) return 'Good morning, Thompson Fam! \u2600\uFE0F';
+    if(h >= 12 && h <= 16) return 'Good afternoon, Thompson Fam! \uD83C\uDF24\uFE0F';
+    return 'Good evening, Thompson Fam! \uD83C\uDF19';
+  }
+
+  function dayNote(){
+    return [
+      '\uD83D\uDE4F Recharge day \u2014 rest up, Thompson Fam!',
+      '\uD83D\uDCAA New week energy. Let\u0027s be great!',
+      '\uD83D\uDD25 Keep the momentum going!',
+      '\u2728 Halfway there \u2014 stay locked in!',
+      '\uD83C\uDF89 Almost Friday, Team Thompson!',
+      '\uD83C\uDF8A We made it. Family time!',
+      '\u2600\uFE0F Weekend vibes. Enjoy, Thompson Fam!'
+    ][new Date().getDay()];
+  }
+
+  function evTime(ev){
+    return ev.timeStr || ev.time || ev.startTime || ev.when || 'All day';
+  }
+
+  function evTitle(ev){
+    return ev.title || ev.name || 'Untitled event';
+  }
+
+  function evMeta(ev){
+    var m = ev.location || ev.where || ev.calendarName || ev.calendar || '';
+    return /@/.test(m) ? '' : m;
+  }
+
+  function noteVal(b){
+    return b && (b.familyNote || b.note || b.boardNote || b.familyMessage || '');
+  }
+
+  function isFinanceEvent(ev){
+    return /(bill|payment|mortgage|loan|debt|finance|autopay|credit card|interest)/.test(
+      [ev && ev.title, ev && ev.name, ev && ev.calendar, ev && ev.calendarName, ev && ev.type].join(' ').toLowerCase()
+    );
+  }
+
+  function sortEventsToCalendars(events){
+    var household = [];
+    var kids = [];
+
+    (events || []).forEach(function(ev){
+      if(isFinanceEvent(ev)) return;
+      var cn = (ev.calendarName || ev.calendar || '').toLowerCase();
+      if(SOUL_CALENDARS_KIDS.some(function(n){ return cn.indexOf(n.toLowerCase()) >= 0; })){
+        kids.push(ev);
+      } else {
+        household.push(ev);
+      }
+    });
+
+    return {
+      household: household.slice(0, MAX_CAL_EVENTS),
+      kids: kids.slice(0, MAX_CAL_EVENTS),
+      all: household.concat(kids)
+    };
+  }
+
+  function scheduleCardHtml(events, emptyTitle, emptySub){
+    if(!events || !events.length){
+      return '<div class="sched-empty">' +
+        '<div class="sched-empty-main">' + esc(emptyTitle) + '</div>' +
+        '<div class="sched-empty-sub">' + esc(emptySub) + '</div>' +
+        '</div>';
+    }
+
+    var first = events[0];
+    var extras = events.slice(1, 1 + MAX_EXTRA_EVENTS);
+    var html = '<div class="sched-feature">' +
+      '<div class="sched-time">' + esc(evTime(first)) + '</div>' +
+      '<div class="sched-title">' + esc(evTitle(first)) + '</div>' +
+      (evMeta(first) ? '<div class="sched-meta">' + esc(evMeta(first)) + '</div>' : '') +
+      '</div>';
+
+    if(extras.length){
+      html += '<div class="sched-list">';
+      extras.forEach(function(ev){
+        html += '<div class="sched-row">' +
+          '<div class="sched-row-name">' + esc(evTitle(ev)) + '</div>' +
+          '<div class="sched-row-time">' + esc(evTime(ev)) + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+    }
+
+    return html;
+  }
+
+  function renderBoard(board){
+    state.board = board || {};
+
+    $('heroGreeting').textContent = greeting();
+    $('heroDate').textContent = new Date().toLocaleDateString('en-US', {weekday:'long'});
+    var _dd = new Date(), _day = _dd.getDate(), _sfx = (_day%10===1&&_day!==11)?'st':(_day%10===2&&_day!==12)?'nd':(_day%10===3&&_day!==13)?'rd':'th';
+    $('heroDaySub').textContent = _dd.toLocaleDateString('en-US', {month:'long'}) + ' ' + _day + _sfx + ', ' + _dd.getFullYear();
+    $('heroEyebrow').textContent = eyebrowDate();
+    $('noteText').textContent = noteVal(state.board) || dayNote();
+
+    var split = sortEventsToCalendars(state.board.events || []);
+    var householdEvents = split.household;
+    var kidsEvents = split.kids;
+    var totalEvents = householdEvents.length + kidsEvents.length;
+    var nextEvent = totalEvents ? (householdEvents[0] || kidsEvents[0]) : null;
+
+    $('householdSchedule').innerHTML = scheduleCardHtml(
+      householdEvents,
+      'Clear schedule \u2014 enjoy the quiet!',
+      'Nothing on deck for the house right now'
+    );
+
+    $('kidsSchedule').innerHTML = scheduleCardHtml(
+      kidsEvents,
+      'Nothing on deck \u2014 go play!',
+      'No kids activities lined up right now'
+    );
+
+    $('scheduleSummary').textContent = totalEvents
+      ? totalEvents + ' event' + (totalEvents !== 1 ? 's' : '') + ' today'
+      : 'Clear family calendar';
+
+    renderUtility(state.board, householdEvents, kidsEvents, nextEvent);
+
+    state.firstBoard = true;
+    $('boardStamp').textContent = stampTime();
+    updateRefreshStamp();
+    reveal();
+  }
+
+  function renderUtility(board, householdEvents, kidsEvents, nextEvent){
+    var w = board.weather || {};
+    var hasT = w.tempF != null || w.temp != null || w.temperature != null;
+
+    if(hasT){
+      var temp = w.tempF != null ? w.tempF : (w.temp != null ? w.temp : w.temperature);
+      var icon = w.icon || w.emoji || '\uD83C\uDF24\uFE0F';
+      var hi = w.highF != null ? w.highF : (w.high != null ? w.high : '\u2014');
+      var lo = w.lowF != null ? w.lowF : (w.low != null ? w.low : '\u2014');
+      var cond = w.condition || 'Live';
+      $('weatherMain').textContent = icon + ' ' + Math.round(temp) + '\u00B0';
+      $('weatherSub').textContent = cond + ' \u00B7 H ' + hi + '\u00B0 / L ' + lo + '\u00B0';
+    } else {
+      $('weatherMain').textContent = 'Weather paused';
+      $('weatherSub').textContent = 'No weather payload returned';
+    }
+
+    var total = householdEvents.length + kidsEvents.length;
+    $('todayMain').textContent = total ? total + ' event' + (total !== 1 ? 's' : '') : 'Clear day';
+    $('todaySub').textContent = 'Household ' + householdEvents.length + ' \u00B7 Kids ' + kidsEvents.length;
+
+    if(nextEvent){
+      $('nextMain').textContent = evTitle(nextEvent);
+      $('nextSub').textContent = evTime(nextEvent) + (evMeta(nextEvent) ? ' \u00B7 ' + evMeta(nextEvent) : '');
+    } else {
+      $('nextMain').textContent = 'Nothing queued';
+      $('nextSub').textContent = 'No upcoming non-finance events';
+    }
+
+    $('refreshSub').textContent = 'Board + Kids';
+  }
+
+  function childTasks(all, key){
+    return (all || []).filter(function(t){
+      return String(t.child || t.assignedTo || t.kid || '').toLowerCase() === key;
+    });
+  }
+
+  function childRewards(all, key){
+    return (all || []).filter(function(r){
+      var who = String(r.child || r.assignedTo || r.for || '').toLowerCase();
+      return !who || who === key;
+    }).sort(function(a, b){
+      return (Number(a.cost) || 0) - (Number(b.cost) || 0);
+    });
+  }
+
+  function childBalance(balances, key){
+    return Number((((balances || {})[key] || {}).balance) || 0);
+  }
+
+  /* v34: Read bankBalance from payload */
+  function childBankBalance(balances, key){
+    return Number((((balances || {})[key] || {}).bankBalance) || 0);
+  }
+
+  function completedCount(tasks){
+    return tasks.filter(function(t){ return t.completed || t.done; }).length;
+  }
+
+  function pendingApprovalCount(tasks){
+    return tasks.filter(function(t){ return t.completed && !t.parentApproved; }).length;
+  }
+
+  function activeCount(tasks){
+    return tasks.filter(function(t){ return !t.completed; }).length;
+  }
+
+  function earnedTV(tasks){
+    return tasks.filter(function(t){ return t.completed; }).reduce(function(sum, t){
+      return sum + (Number(t.tvMinutes) || 0);
+    }, 0);
+  }
+
+  function earnedMoney(tasks){
+    return Math.round(tasks.filter(function(t){ return t.completed; }).reduce(function(sum, t){
+      return sum + (Number(t.money) || 0);
+    }, 0) * 100) / 100;
+  }
+
+  function earnedSnack(tasks){
+    return tasks.filter(function(t){ return t.completed; }).reduce(function(sum, t){
+      return sum + (Number(t.snacks) || 0);
+    }, 0);
+  }
+
+  function rewardProgress(pts, rewards){
+    if(!rewards.length) return {nextReward:null,nextCost:pts,pct:100};
+    var next = null;
+    var i;
+    for(i = 0; i < rewards.length; i++){
+      if(pts < Number(rewards[i].cost || 0)){
+        next = rewards[i];
+        break;
+      }
+    }
+    if(!next) return {nextReward:null,nextCost:pts,pct:100};
+    var idx = rewards.indexOf(next);
+    var prev = idx > 0 ? Number(rewards[idx - 1].cost || 0) : 0;
+    var nextCost = Number(next.cost || prev || 10);
+    var pct = nextCost > prev ? Math.min(((pts - prev) / (nextCost - prev)) * 100, 100) : 100;
+    return {nextReward:next,nextCost:nextCost,pct:Math.max(0,pct)};
+  }
+
+  /* v34: sortTasks() REMOVED — server sends canonical order, render as-is */
+
+  function fmtMoney(v){
+    var n = Number(v || 0);
+    return '$' + n.toFixed(2);
+  }
+
+  function buildTaskZone(tasks, theme){
+    /* v34: No client sort — tasks arrive in canonical order from server */
+    var active = tasks.filter(function(t){ return !t.completed; });
+    var pending = tasks.filter(function(t){ return t.completed && !t.parentApproved; });
+    var done = tasks.filter(function(t){ return t.completed && t.parentApproved; });
+    var maxShow = 4;
+
+    function taskRow(t, badge){
+      var cls = t.completed ? ' done' : '';
+      return '<div class="kid-task' + cls + '">' +
+        '<div class="kid-task-icon">' + esc(t.icon || (theme === 'jj' ? '\u2B50' : '\u2B55')) + '</div>' +
+        '<div class="kid-task-name">' + esc(t.task || t.name || 'Task') + '</div>' +
+        badge + '</div>';
+    }
+
+    var leftItems = active.slice(0, maxShow);
+    var doneItems = done.slice(0, Math.max(0, maxShow - leftItems.length));
+    var leftH = '<div class="kid-col"><div class="kid-col-head active">\u2694 Active ' + active.length + '</div><div class="kid-tasks">';
+    if(leftItems.length || doneItems.length){
+      leftItems.forEach(function(t){
+        leftH += taskRow(t, '<div class="kid-task-badge pts">+' + esc(t.points || 0) + '</div>');
+      });
+      doneItems.forEach(function(t){
+        leftH += taskRow(t, '<div class="kid-task-badge pend" style="background:rgba(110,231,183,.12);color:var(--mint)">DONE</div>');
+      });
+    } else {
+      leftH += '<div class="kid-empty">' + (theme === 'jj' ? 'All caught up!' : 'Nothing on deck!') + '</div>';
+    }
+    leftH += '</div></div>';
+
+    var rightItems = pending.slice(0, maxShow);
+    var rightH = '<div class="kid-col"><div class="kid-col-head pend-h">\uD83D\uDCE6 Pending ' + pending.length + '</div><div class="kid-tasks">';
+    if(rightItems.length){
+      rightItems.forEach(function(t){
+        rightH += taskRow(t, '<div class="kid-task-badge pend">Review</div>');
+      });
+    } else {
+      var celebImg = theme === 'jj'
+        ? 'https://i.ibb.co/9md3x6zp/1773982606233.png'
+        : 'https://i.ibb.co/8L0ccf6p/1773982420674.png';
+      var celebText = theme === 'jj' ? 'All done! \u2728' : 'ALL CLEAR!';
+      if (done.length > 0) {
+        rightH += '<div class="kid-empty" style="text-align:center;padding:8px 4px">' +
+          '<img src="' + celebImg + '" style="width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 4px" onerror="this.style.display=\'none\'">' +
+          '<div>' + celebText + '</div></div>';
+      } else {
+        rightH += '<div class="kid-empty">None waiting</div>';
+      }
+    }
+    rightH += '</div></div>';
+
+    return '<div class="kid-task-zone">' + leftH + rightH + '</div>';
+  }
+
+  function buildKidPanel(theme, all){
+    var key = theme === 'jj' ? 'jj' : 'buggsy';
+    /* v34: No client sort — render tasks in arrival order */
+    var tasks = childTasks(all.tasks, key);
+    var rewards = childRewards(all.rewards, key);
+    var balance = childBalance(all.balances, key);
+    var bankBal = childBankBalance(all.balances, key);
+    var level = levelFor(balance, key);
+    var levelArr = (key === 'jj') ? LEVELS_JJ : LEVELS;
+    var levelIndex = levelArr.indexOf(level) + 1;
+    var prog = rewardProgress(balance, rewards);
+    var token = theme === 'jj' ? '\u2B50' : '\u2B55';
+
+    /* Gate logic with v34 overnight carry-forward */
+    var requiredMap = all.requiredStatus || {};
+    var req = requiredMap[key] || { total:0, done:0, allClear:true, currentPeriod:'day', pendingFromYesterday:0 };
+    var remainingRequired = Math.max(Number(req.total || 0) - Number(req.done || 0), 0);
+    var pendingYesterday = Number(req.pendingFromYesterday || 0);
+    var gateLabel, gateSub, gateClass;
+
+    if(pendingYesterday > 0){
+      gateLabel = '\u23F3 Yesterday\u0027s tasks need approval';
+      gateSub = pendingYesterday + ' pending from yesterday';
+      gateClass = 'yesterday';
+    } else if(req.total){
+      if(req.allClear){
+        gateLabel = '\u2705 All clear';
+        gateSub = (Number(req.done || 0)) + '/' + (Number(req.total || 0)) + ' ' + ((req.currentPeriod || 'day') === 'morning' ? 'morning' : (req.currentPeriod === 'afternoon' ? 'daytime' : 'daily'));
+        gateClass = 'clear pulse';
+      } else {
+        gateLabel = '\uD83D\uDD12 ' + remainingRequired + ' must-do' + (remainingRequired === 1 ? '' : 's') + ' left';
+        gateSub = (Number(req.done || 0)) + '/' + (Number(req.total || 0)) + ' ' + ((req.currentPeriod || 'day') === 'morning' ? 'morning' : (req.currentPeriod === 'afternoon' ? 'daytime' : 'daily'));
+        gateClass = 'locked';
+      }
+    } else {
+      gateLabel = '\u2705 All clear';
+      gateSub = 'No active must-dos';
+      gateClass = 'clear pulse';
+    }
+
+    /* v34: Ask count badge */
+    var pendingCounts = all.pendingRequestCount || {};
+    var askCount = Number(pendingCounts[key] || 0);
+    var askBadgeHtml = askCount > 0
+      ? '<span class="kid-ask-badge">\u270B ' + askCount + ' ask' + (askCount === 1 ? '' : 's') + ' pending</span>'
+      : '';
+
+    var gateHtml = '<div class="kid-gate ' + gateClass + '">' +
+      '<div class="kid-gate-main">' + esc(gateLabel) + '</div>' +
+      '<div style="display:flex;align-items:center;gap:6px">' + askBadgeHtml +
+      '<div class="kid-gate-sub">' + esc(gateSub) + '</div></div></div>';
+
+    var nextRewardLabel = prog.nextReward
+      ? (Math.max(prog.nextCost - balance, 0) + ' ' + token + ' to ' + esc(prog.nextReward.name || 'Reward') + ' ' + esc(prog.nextReward.icon || '\uD83C\uDF81'))
+      : 'Pick a reward! \uD83C\uDF81';
+    var nextRewardMeta = prog.nextReward ? (balance + ' / ' + prog.nextCost) : 'All unlocked';
+
+    var taskZoneHtml = buildTaskZone(tasks, theme);
+
+    /* v37: Screen Time Bank — combined TV + Gaming for ambient display */
+    var stChild = (all.screenTime && all.screenTime[key]) ? all.screenTime[key] : {};
+    var tvBankVal = (stChild.TV && typeof stChild.TV.balance === 'number') ? stChild.TV.balance : -1;
+    var gamingBankVal = (stChild.Gaming && typeof stChild.Gaming.balance === 'number') ? stChild.Gaming.balance : 0;
+    var screenVal = tvBankVal >= 0 ? (tvBankVal + gamingBankVal) : earnedTV(tasks);
+
+    /* v34: 4 stat pills — Bank added as 4th */
+    if(theme === 'jj'){
+      return '<div class="kid-shell jj">' +
+        '<div class="kid-top">' +
+          '<div class="kid-head-main">' +
+            '<img class="kid-avatar rose" src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" alt="JJ avatar">' +
+            '<div class="kid-name-wrap">' +
+              '<div class="kid-name">\uD83D\uDC51 JJ</div>' +
+              '<div class="kid-sub">Sparkle Stars board</div>' +
+            '</div>' +
+            '<img class="kid-mascot" src="https://i.ibb.co/9md3x6zp/1773982606233.png" alt="JJ dancing with unicorn" onerror="this.style.display=\'none\'">' +
+          '</div>' +
+          '<div class="kid-level">Level ' + esc(levelIndex) + ' \u00B7 ' + esc(level.name) + '</div>' +
+        '</div>' +
+        '<div class="kid-stats">' +
+          '<div class="kid-stat"><div class="kid-stat-val primary">' + esc(balance) + '</div><div class="kid-stat-lbl">Stars</div></div>' +
+          '<div class="kid-stat"><div class="kid-stat-val secondary">' + esc(screenVal) + 'm</div><div class="kid-stat-lbl">Screen</div></div>' +
+          '<div class="kid-stat"><div class="kid-stat-val secondary">' + esc(earnedSnack(tasks)) + '</div><div class="kid-stat-lbl">Snacks</div></div>' +
+          '<div class="kid-stat"><div class="kid-stat-val bank">' + esc(fmtMoney(bankBal)) + '</div><div class="kid-stat-lbl">Bank</div></div>' +
+        '</div>' +
+        gateHtml +
+        '<div class="kid-progress">' +
+          '<div class="kid-progress-row"><span>' + esc(nextRewardLabel) + '</span><span>' + esc(nextRewardMeta) + '</span></div>' +
+          '<div class="kid-track"><div class="kid-fill" style="width:' + prog.pct + '%"></div></div>' +
+        '</div>' +
+        taskZoneHtml +
+        '</div>';
+    }
+
+    return '<div class="kid-shell buggsy">' +
+      '<div class="kid-top">' +
+        '<div class="kid-head-main">' +
+          '<img class="kid-avatar gold" src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" alt="Buggsy avatar">' +
+          '<div class="kid-name-wrap">' +
+            '<div class="kid-name">BUGGSY</div>' +
+            '<div class="kid-sub">Ring Quest board</div>' +
+          '</div>' +
+          '<img class="kid-mascot" src="https://i.ibb.co/8L0ccf6p/1773982420674.png" alt="Wolfkid celebrating" onerror="this.style.display=\'none\'">' +
+        '</div>' +
+        '<div class="kid-level">Level ' + esc(levelIndex) + ' \u00B7 ' + esc(level.name) + '</div>' +
+      '</div>' +
+      '<div class="kid-stats">' +
+        '<div class="kid-stat"><div class="kid-stat-val primary">' + esc(balance) + '</div><div class="kid-stat-lbl">Rings</div></div>' +
+        '<div class="kid-stat"><div class="kid-stat-val secondary">' + esc(screenVal) + 'm</div><div class="kid-stat-lbl">Screen</div></div>' +
+        '<div class="kid-stat"><div class="kid-stat-val primary">' + esc(fmtMoney(earnedMoney(tasks))) + '</div><div class="kid-stat-lbl">Earned</div></div>' +
+        '<div class="kid-stat"><div class="kid-stat-val bank">' + esc(fmtMoney(bankBal)) + '</div><div class="kid-stat-lbl">Bank</div></div>' +
+      '</div>' +
+      gateHtml +
+      '<div class="kid-progress">' +
+        '<div class="kid-progress-row"><span>' + esc(nextRewardLabel) + '</span><span>' + esc(nextRewardMeta) + '</span></div>' +
+        '<div class="kid-track"><div class="kid-fill" style="width:' + prog.pct + '%"></div></div>' +
+      '</div>' +
+      taskZoneHtml +
+      '</div>';
+  }
+
+  function renderKids(raw){
+    var data = safeParse(raw) || {};
+
+    state.kids = {
+      tasks:data.tasks || [],
+      rewards:data.rewards || [],
+      balances:data.balances || {},
+      requiredStatus:data.requiredStatus || {},
+      pendingRequestCount:data.pendingRequestCount || {},
+      screenTime:data.screenTime || {}
+    };
+
+    try{
+      $('jjHost').innerHTML = buildKidPanel('jj', state.kids);
+    }catch(e){
+      console.error(e);
+      $('jjHost').innerHTML = '<div class="kid-shell jj"><div class="task-empty"><div class="task-empty-main">JJ unavailable</div><div class="task-empty-sub">Kid data did not render.</div></div></div>';
+    }
+
+    try{
+      $('bugHost').innerHTML = buildKidPanel('buggsy', state.kids);
+    }catch(e2){
+      console.error(e2);
+      $('bugHost').innerHTML = '<div class="kid-shell buggsy"><div class="task-empty"><div class="task-empty-main">Buggsy unavailable</div><div class="task-empty-sub">Kid data did not render.</div></div></div>';
+    }
+
+    state.firstKids = true;
+    $('kidsStamp').textContent = stampTime();
+    updateRefreshStamp();
+    reveal();
+  }
+
+  function loadBoard(){
+    google.script.run
+      .withSuccessHandler(renderBoard)
+      .withFailureHandler(function(e){
+        console.error(e);
+        showError('Family board failed.');
+        state.firstBoard = true;
+        $('boardStamp').textContent = 'ERR';
+        reveal();
+      })
+      .getBoardDataSafe();
+  }
+
+  function loadKids(){
+    google.script.run
+      .withSuccessHandler(renderKids)
+      .withFailureHandler(function(e){
+        console.error(e);
+        showError('Kids data failed.');
+        state.firstKids = true;
+        $('kidsStamp').textContent = 'ERR';
+        reveal();
+      })
+      .getKidsHubDataSafe('all');
+  }
+
+  measureViewport();
+  window.addEventListener('resize', measureViewport);
+  setTimeout(measureViewport, 500);
+  setTimeout(measureViewport, 2000);
+
+  applyTimeTheme();
+  initDebugMode();
+  $('heroGreeting').textContent = greeting();
+  $('heroDate').textContent = new Date().toLocaleDateString('en-US', {weekday:'long'});
+  var _dd2 = new Date(), _day2 = _dd2.getDate(), _sfx2 = (_day2%10===1&&_day2!==11)?'st':(_day2%10===2&&_day2!==12)?'nd':(_day2%10===3&&_day2!==13)?'rd':'th';
+  $('heroDaySub').textContent = _dd2.toLocaleDateString('en-US', {month:'long'}) + ' ' + _day2 + _sfx2 + ', ' + _dd2.getFullYear();
+  $('heroEyebrow').textContent = eyebrowDate();
+  $('noteText').textContent = dayNote();
+  $('refreshSub').textContent = 'Board + Kids';
+
+  loadBoard();
+  loadKids();
+
+  setTimeout(reveal, 15000);
+  setInterval(loadBoard, REFRESH_MS);
+  setInterval(loadKids, REFRESH_MS);
+  // v38: Track 8 — wake-from-sleep refresh
+  var _lastWake = 0;
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+      var now = Date.now();
+      if (now - _lastWake < 5000) return;
+      _lastWake = now;
+      loadBoard(); loadKids();
+    }
+  });
+})();
+</script>
+</body>
+</html>

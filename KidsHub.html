@@ -1,0 +1,2727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Kids Hub v26</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════
+   SHARED BASE
+   ════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-tap-highlight-color: transparent; }
+body { min-height: 100vh; }
+#loading {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+}
+.load-ring { width: 52px; height: 52px; border-radius: 50%; border: 4px solid transparent; animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.load-text { font-size: 14px; }
+
+/* ════════════════════════════════════════
+   BUGGSY THEME
+   ════════════════════════════════════════ */
+.buggsy-body {
+  background: #080c10;
+  background-image: linear-gradient(rgba(255,255,255,0.011) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.011) 1px, transparent 1px);
+  background-size: 24px 24px; color: #e2e8f0; font-family: 'Barlow Condensed', sans-serif; padding-bottom: 80px;
+}
+.buggsy-body::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9998; background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.055) 3px, rgba(0,0,0,0.055) 4px); }
+.b-float-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.b-float-bg span { position: absolute; font-size: 16px; opacity: 0; animation: b-float-drift var(--d, 10s) var(--delay, 0s) infinite linear; filter: drop-shadow(0 0 4px rgba(245,158,11,0.4)); }
+@keyframes b-float-drift { 0%{opacity:0;transform:translateY(100vh) rotate(0deg) scale(0.4)} 15%{opacity:0.45} 50%{opacity:0.3} 85%{opacity:0.2} 100%{opacity:0;transform:translateY(-15vh) rotate(540deg) scale(0.9)} }
+.buggsy-body #loading { background: #080c10; }
+.buggsy-body .load-ring { border-top-color: #f59e0b; border-right-color: #f59e0b; }
+.buggsy-body .load-text { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #4a6080; }
+.b-hdr { background: linear-gradient(180deg, #0a1520 0%, #060e18 100%); border-bottom: 2px solid #1e3347; padding: 16px 14px 13px; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 24px rgba(0,0,0,0.6); }
+.b-hdr-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+.b-title { font-family: 'Press Start 2P', monospace; font-size: clamp(10px,3vw,14px); color: #f59e0b; text-shadow: 0 0 20px rgba(245,158,11,0.45), 2px 2px 0 #000; }
+.b-title span { color: #e2e8f0; }
+.b-stats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; width: 100%; }
+.b-stat { background: linear-gradient(180deg,#0f1824 0%,#0b131d 100%); border: 1px solid #2b4258; border-radius: 18px; padding: 15px 16px; min-height: 74px; display: flex; align-items: center; gap: 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.26); }
+.b-stat-icon { font-size: 24px; flex-shrink: 0; }
+.b-stat-val { font-size: 30px; font-weight: 800; line-height: 1; color: #f59e0b; }
+.b-stat-lbl { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #6b85a3; margin-top: 3px; letter-spacing: 0.5px; }
+.b-level { padding: 14px 14px 0; max-width: 980px; margin: 0 auto; }
+.b-lvl-row { display: flex; align-items: center; gap: 9px; margin-bottom: 6px; }
+.b-lvl-badge { width: 32px; height: 32px; border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Press Start 2P', monospace; font-size: 10px; transition: all 0.3s; }
+.b-lvl-name { font-family: 'Press Start 2P', monospace; font-size: 9px; transition: color 0.3s; }
+.b-lvl-xp { font-size: 13px; font-weight: 600; color: #4a6080; margin-top: 1px; }
+.b-lvl-next { font-family: 'Press Start 2P', monospace; font-size: 6.5px; color: #4a6080; margin-left: auto; }
+.b-bar-track { height: 11px; background: #050a10; border: 1px solid #1e3347; border-radius: 6px; overflow: hidden; }
+.b-bar-fill { height: 100%; border-radius: 6px; transition: width 0.7s cubic-bezier(0.34,1.56,0.64,1); position: relative; }
+.b-bar-fill::after { content: ''; position: absolute; inset: 0; border-radius: 6px; background: linear-gradient(90deg,transparent,rgba(255,255,255,0.18) 50%,transparent); background-size: 200% 100%; animation: shimb 2.5s linear infinite; }
+@keyframes shimb { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.b-tabs { display: flex; gap: 10px; padding: 13px 14px 0; max-width: 980px; margin: 0 auto; }
+.b-tab { flex: 1; font-family: 'Press Start 2P', monospace; font-size: 6.5px; padding: 9px 4px; border: 1px solid #1e3347; border-radius: 6px; background: #0d1520; color: #4a6080; cursor: pointer; text-align: center; transition: all 0.15s; }
+.b-tab:hover { border-color: #f59e0b; color: #f59e0b; }
+.b-tab.active { background: linear-gradient(135deg,#1a1400,#241c00); border-color: #f59e0b; color: #f59e0b; box-shadow: 0 0 12px rgba(245,158,11,0.2); }
+.b-sec { display: flex; align-items: center; gap: 8px; padding: 15px 14px 8px; max-width: 720px; margin: 0 auto; }
+.b-sec-title { font-family: 'Press Start 2P', monospace; font-size: 7.5px; color: #4a6080; flex: 1; }
+.b-sec-badge { font-size: 13px; font-weight: 700; color: #f59e0b; background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); padding: 2px 8px; border-radius: 4px; }
+.b-tod-header { display:flex; align-items:center; gap:6px; padding:8px 0 4px; margin:0; }
+.b-tod-label { font-family:'Press Start 2P', monospace; font-size:6.5px; color:#4a6080; letter-spacing:0.5px; }
+.b-tod-label.morning { color:#f59e0b; }
+.b-tod-label.afternoon { color:#38bdf8; }
+.b-tod-label.evening { color:#a78bfa; }
+.b-tod-done { font-family:'Press Start 2P', monospace; font-size:6px; color:#22c55e; margin-left:auto; }
+.b-list { padding: 0 14px; max-width: 720px; margin: 0 auto; }
+.b-card { background: #0d1520; border: 1px solid #1e3347; border-radius: 8px; margin-bottom: 7px; display: flex; align-items: center; cursor: pointer; transition: all 0.14s; position: relative; overflow: hidden; }
+.b-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #f59e0b; opacity: 0.35; transition: opacity 0.2s; }
+.b-card:hover { border-color: rgba(245,158,11,0.3); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+.b-card:hover::before { opacity: 1; }
+.b-card.done { border-color: rgba(34,197,94,0.2); opacity: 0.72; cursor: default; }
+.b-card.done::before { background: #22c55e; opacity: 0.5; }
+.b-card:hover.done { transform: none; }
+.b-icon { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 23px; flex-shrink: 0; background: rgba(255,255,255,0.02); }
+.b-info { flex: 1; padding: 10px 10px 10px 4px; min-width: 0; }
+.b-name { font-size: 15px; font-weight: 700; color: #e2e8f0; line-height: 1.2; margin-bottom: 4px; }
+.b-card.done .b-name { text-decoration: line-through; color: #4a6080; }
+.b-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.b-tag { font-family: 'Press Start 2P', monospace; font-size: 7.5px; padding: 2px 5px; border-radius: 3px; border: 1px solid; }
+.b-right { display: flex; flex-direction: column; align-items: center; padding: 10px 13px 10px 5px; gap: 5px; flex-shrink: 0; }
+.b-pts { font-size: 25px; font-weight: 800; color: #f59e0b; line-height: 1; }
+.b-pts-lbl { font-family: 'Press Start 2P', monospace; font-size: 7.5px; color: #4a6080; }
+.b-claim { font-family: 'Press Start 2P', monospace; font-size: 7.5px; background: linear-gradient(135deg,#14532d,#166534); border: 1px solid #22c55e; color: #22c55e; padding: 5px 7px; cursor: pointer; border-radius: 3px; transition: all 0.1s; white-space: nowrap; }
+.b-claim:hover { box-shadow: 0 0 8px rgba(34,197,94,0.3); }
+.b-claim:active { transform: scale(0.94); }
+.b-done-stamp { font-family: 'Press Start 2P', monospace; font-size: 7.5px; color: #22c55e; border: 1px solid rgba(34,197,94,0.3); padding: 4px 5px; border-radius: 3px; text-align: center; }
+.b-pending { font-family: 'Press Start 2P', monospace; font-size: 7.5px; color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); padding: 4px 5px; border-radius: 3px; text-align: center; animation: pulse-g 2s ease infinite; }
+.b-approve { font-family: 'Press Start 2P', monospace; font-size: 7.5px; background: linear-gradient(135deg,#1a1000,#2a1900); border: 1px solid #f59e0b; color: #f59e0b; padding: 5px 7px; cursor: pointer; border-radius: 3px; transition: all 0.1s; white-space: nowrap; }
+@keyframes pulse-g { 0%,100%{border-color:rgba(245,158,11,0.3)}50%{border-color:rgba(245,158,11,0.85)} }
+.b-rewards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 0 14px; max-width: 720px; margin: 0 auto; }
+.b-reward { background: #0d1520; border: 1px solid #1e3347; border-radius: 8px; padding: 15px 11px; text-align: center; transition: all 0.2s; }
+.b-reward.unlocked { border-color: rgba(245,158,11,0.4); background: linear-gradient(135deg,#120f00,#1a1400); animation: reward-glow 3s ease infinite; }
+@keyframes reward-glow { 0%,100%{box-shadow:0 0 8px rgba(245,158,11,0.1)}50%{box-shadow:0 0 20px rgba(245,158,11,0.25)} }
+.b-reward-icon { font-size: 30px; margin-bottom: 7px; }
+.b-reward-name { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 4px; line-height: 1.2; }
+.b-reward-cost { font-family: 'Press Start 2P', monospace; font-size: 7.5px; color: #f59e0b; margin-bottom: 5px; }
+.b-reward-status { font-family: 'Press Start 2P', monospace; font-size: 6px; padding: 3px 7px; border-radius: 3px; border: 1px solid; display: inline-block; }
+.b-reward-status.locked { color: #4a6080; border-color: #4a6080; }
+.b-reward-status.unlocked { color: #22c55e; border-color: #22c55e; }
+.b-parent-panel { margin: 0 14px; max-width: 720px; margin-left: auto; margin-right: auto; }
+.b-pp-inner { background: linear-gradient(135deg,#0a1520,#0d1c2e); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 16px; }
+.b-pp-title { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #f59e0b; margin-bottom: 13px; text-align: center; }
+.b-pp-actions { display: flex; flex-direction: column; gap: 7px; }
+.b-pp-btn { font-family: 'Press Start 2P', monospace; font-size: 6.5px; padding: 11px; border-radius: 6px; border: 1px solid; cursor: pointer; background: transparent; transition: all 0.15s; }
+.b-pp-btn.blue { color: #38bdf8; border-color: #38bdf8; }
+.b-pp-btn.purple { color: #a78bfa; border-color: #a78bfa; }
+.b-pp-btn.red { color: #f87171; border-color: #f87171; }
+.b-pp-btn:hover { filter: brightness(1.3); }
+.xp-pop { position: fixed; font-family: 'Press Start 2P', monospace; font-size: 11px; color: #f59e0b; text-shadow: 1px 1px 0 #000; pointer-events: none; z-index: 500; animation: xp-float 1.2s ease forwards; }
+@keyframes xp-float { 0%{opacity:1;transform:translateY(0) scale(1)}50%{opacity:1;transform:translateY(-38px) scale(1.15)}100%{opacity:0;transform:translateY(-65px) scale(0.8)} }
+.pin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 300; }
+.pin-box { background: #0d1520; border: 2px solid #f59e0b; box-shadow: 0 0 40px rgba(245,158,11,0.2); border-radius: 10px; padding: 28px; text-align: center; width: 275px; }
+.pin-title { font-family: 'Press Start 2P', monospace; font-size: 9.5px; color: #f59e0b; margin-bottom: 14px; }
+.pin-input { font-family: 'Press Start 2P', monospace; font-size: 22px; letter-spacing: 7px; width: 100%; background: #080c10; border: 1px solid #1e3347; color: #e2e8f0; text-align: center; padding: 11px; border-radius: 6px; margin-bottom: 11px; outline: none; }
+.pin-input:focus { border-color: #f59e0b; }
+.pin-submit { font-family: 'Press Start 2P', monospace; font-size: 7.5px; background: linear-gradient(135deg,#1a1000,#261800); border: 1px solid #f59e0b; color: #f59e0b; padding: 9px 18px; cursor: pointer; border-radius: 4px; width: 100%; margin-bottom: 7px; }
+.pin-cancel { font-family: 'Press Start 2P', monospace; font-size: 6.5px; color: #4a6080; background: none; border: none; cursor: pointer; padding: 5px; }
+.pin-error { font-family: 'Press Start 2P', monospace; font-size: 6.5px; color: #f87171; margin-top: 5px; }
+.b-empty { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #4a6080; text-align: center; padding: 40px 20px; line-height: 2.2; }
+.b-error { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #f87171; text-align: center; padding: 20px; line-height: 2; }
+.b-bonus-badge { font-family: 'Press Start 2P', monospace; font-size: 7px; background: linear-gradient(135deg,#7c2d00,#a33800); border: 1px solid #f97316; color: #fed7aa; padding: 2px 5px; border-radius: 3px; display: inline-flex; align-items: center; gap: 3px; margin-top: 3px; }
+.b-pts-base { font-size: 11px; color: #4a6080; text-decoration: line-through; }
+.b-approve-bonus { font-family: 'Press Start 2P', monospace; font-size: 7px; background: linear-gradient(135deg,#7c2d00,#a33800); border: 1px solid #f97316; color: #fed7aa; padding: 5px 6px; cursor: pointer; border-radius: 3px; transition: all 0.1s; white-space: nowrap; margin-top: 4px; }
+.b-approve-bonus:hover { box-shadow: 0 0 8px rgba(249,115,22,0.4); }
+.b-parent-btn { font-family: 'Press Start 2P', monospace; font-size: 6.5px; background: transparent; border: 1px solid #1e3347; color: #4a6080; padding: 6px 9px; cursor: pointer; transition: all 0.14s; border-radius: 4px; }
+.b-parent-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+.b-parent-btn.active { border-color: #22c55e; color: #22c55e; }
+
+/* ════════════════════════════════════════
+   JJ THEME
+   ════════════════════════════════════════ */
+.jj-body { font-family: 'Nunito', sans-serif; min-height: 100vh; background: #1a0028; background-image: radial-gradient(ellipse 70% 50% at 20% 20%, rgba(255,105,180,0.35) 0%, transparent 55%), radial-gradient(ellipse 60% 40% at 80% 70%, rgba(147,51,234,0.3) 0%, transparent 50%), radial-gradient(ellipse 50% 60% at 50% 50%, rgba(219,39,119,0.15) 0%, transparent 65%); color: #fff; padding-bottom: 80px; overflow-x: hidden; }
+.jj-sparkle-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.jj-sparkle-bg span { position: absolute; font-size: 14px; opacity: 0; animation: sparkle-drift var(--d, 8s) var(--delay, 0s) infinite ease-in-out; }
+@keyframes sparkle-drift { 0%{opacity:0;transform:translateY(100vh) rotate(0deg) scale(0.5)} 20%{opacity:0.7} 80%{opacity:0.5} 100%{opacity:0;transform:translateY(-20vh) rotate(360deg) scale(1.2)} }
+.jj-body #loading { background: #1a0028; }
+.jj-body .load-ring { border-top-color: #ec4899; border-right-color: #a855f7; }
+.jj-body .load-text { font-family: 'Fredoka One', cursive; font-size: 18px; color: #f9a8d4; letter-spacing: 1px; }
+.jj-wrap { max-width: 480px; margin: 0 auto; padding: 0 14px; position: relative; z-index: 1; }
+.jj-hdr { text-align: center; padding: 28px 14px 20px; position: relative; }
+.jj-crown { font-size: 36px; display: block; margin-bottom: 4px; animation: crown-bob 2s ease-in-out infinite; }
+@keyframes crown-bob { 0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)} }
+.jj-title { font-family: 'Fredoka One', cursive; font-size: clamp(32px,8vw,46px); line-height: 1.1; background: linear-gradient(135deg,#fde68a,#f9a8d4,#c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.jj-sub { font-size: 16px; font-weight: 800; color: #f9a8d4; margin-top: 4px; letter-spacing: 1px; }
+.jj-stars-display { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 3px solid rgba(255,255,255,0.25); border-radius: 24px; padding: 14px 20px; margin: 0 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 32px rgba(236,72,153,0.25); }
+.jj-stars-left { display: flex; align-items: center; gap: 10px; }
+.jj-star-icon { font-size: 36px; animation: star-spin 4s linear infinite; }
+@keyframes star-spin { 0%{transform:rotate(0)}50%{transform:rotate(20deg)}100%{transform:rotate(0)} }
+.jj-star-count { font-family: 'Fredoka One', cursive; font-size: 52px; color: #fde68a; line-height: 1; text-shadow: 0 0 20px rgba(253,230,138,0.6); }
+.jj-star-label { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.6); letter-spacing: 2px; text-transform: uppercase; }
+.jj-stats-mini { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.jj-mini-stat { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.7); }
+.jj-mini-stat span { color: #a5f3fc; }
+/* ── JJ STAT PILLS — mirrors TheSoul v9 Currency/RewardA/RewardB ── */
+.jj-stat-pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 14px 16px; }
+.jj-stat-pill { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 2px solid rgba(255,255,255,0.22); border-radius: 18px; padding: 14px 8px; text-align: center; box-shadow: 0 4px 16px rgba(236,72,153,0.15); transition: all 0.2s; }
+.jj-stat-pill-icon { font-size: 24px; margin-bottom: 4px; }
+.jj-stat-pill-val { font-family: 'Fredoka One', cursive; font-size: 28px; color: #fde68a; line-height: 1; text-shadow: 0 0 12px rgba(253,230,138,0.5); }
+.jj-stat-pill-lbl { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+.jj-progress-wrap { margin: 0 14px 20px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2); border-radius: 18px; padding: 12px 16px; }
+.jj-prog-label { font-size: 12px; font-weight: 800; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; }
+.jj-prog-label span { color: #fde68a; }
+.jj-prog-track { height: 18px; background: rgba(0,0,0,0.3); border-radius: 9px; overflow: hidden; border: 2px solid rgba(255,255,255,0.15); }
+.jj-prog-fill { height: 100%; border-radius: 9px; background: linear-gradient(90deg,#ec4899,#a855f7,#ec4899); background-size: 200% 100%; animation: prog-shimmer 2s linear infinite; transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 0 12px rgba(236,72,153,0.5); }
+@keyframes prog-shimmer { 0%{background-position:0% 0}100%{background-position:200% 0} }
+.jj-sec-title { font-family: 'Fredoka One', cursive; font-size: 22px; color: #f9a8d4; padding: 8px 14px 10px; text-align: center; }
+.jj-list { padding: 0 14px; }
+.jj-card { background: rgba(255,255,255,0.12); backdrop-filter: blur(12px); border: 2px solid rgba(255,255,255,0.22); border-radius: 20px; margin-bottom: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+.jj-card:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 8px 24px rgba(236,72,153,0.3); }
+.jj-card:active { transform: scale(0.97); }
+.jj-card.done { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.35); opacity: 0.8; cursor: default; }
+.jj-card:hover.done { transform: none; }
+.jj-card-icon { font-size: 32px; flex-shrink: 0; width: 48px; text-align: center; }
+.jj-card-body { flex: 1; min-width: 0; }
+.jj-card-name { font-size: 17px; font-weight: 800; color: #fff; line-height: 1.2; margin-bottom: 4px; }
+.jj-card.done .jj-card-name { text-decoration: line-through; color: rgba(255,255,255,0.5); }
+.jj-card-cat { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; }
+.jj-card-right { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.jj-pts-badge { background: linear-gradient(135deg,#fde68a,#f59e0b); border-radius: 12px; padding: 5px 10px; text-align: center; }
+.jj-pts-num { font-family: 'Fredoka One', cursive; font-size: 22px; color: #000; line-height: 1; }
+.jj-pts-star { font-size: 11px; font-weight: 800; color: #92400e; }
+.jj-do-it-btn { background: linear-gradient(135deg,#ec4899,#a855f7); border: none; border-radius: 12px; padding: 8px 12px; cursor: pointer; font-family: 'Fredoka One', cursive; font-size: 13px; color: #fff; transition: all 0.15s; white-space: nowrap; box-shadow: 0 4px 12px rgba(168,85,247,0.4); }
+.jj-do-it-btn:hover { transform: scale(1.05); box-shadow: 0 6px 18px rgba(236,72,153,0.5); }
+.jj-do-it-btn:active { transform: scale(0.94); }
+.jj-done-badge { background: rgba(34,197,94,0.2); border: 1px solid rgba(34,197,94,0.5); border-radius: 10px; padding: 6px 10px; font-size: 12px; font-weight: 800; color: #86efac; text-align: center; white-space: nowrap; }
+.jj-approve-btn { background: linear-gradient(135deg,#fde68a,#f59e0b); border: none; border-radius: 10px; padding: 7px 10px; cursor: pointer; font-family: 'Fredoka One', cursive; font-size: 13px; color: #000; transition: all 0.15s; }
+.jj-pending-badge { background: rgba(253,230,138,0.15); border: 1px solid rgba(253,230,138,0.4); border-radius: 10px; padding: 6px 8px; font-size: 11px; font-weight: 800; color: #fde68a; text-align: center; animation: jj-pulse 2s ease infinite; }
+@keyframes jj-pulse { 0%,100%{opacity:0.6}50%{opacity:1} }
+.jj-bonus-badge { background: linear-gradient(135deg,rgba(249,115,22,0.2),rgba(234,88,12,0.2)); border: 1px solid rgba(249,115,22,0.5); border-radius: 8px; padding: 3px 8px; font-size: 11px; font-weight: 800; color: #fed7aa; display: inline-block; margin-top: 3px; }
+.jj-approve-bonus-btn { background: linear-gradient(135deg,#7c2d00,#9a3412); border: none; border-radius: 10px; padding: 7px 10px; cursor: pointer; font-family: 'Fredoka One', cursive; font-size: 13px; color: #fed7aa; transition: all 0.15s; margin-top: 4px; }
+.jj-rewards { padding: 0 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.jj-reward-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 16px 12px; text-align: center; transition: all 0.2s; }
+.jj-reward-card.unlocked { border-color: rgba(253,230,138,0.6); background: rgba(253,230,138,0.12); animation: jj-unlock-pulse 3s ease infinite; }
+@keyframes jj-unlock-pulse { 0%,100%{box-shadow:0 0 8px rgba(253,230,138,0.2)}50%{box-shadow:0 0 24px rgba(253,230,138,0.5)} }
+.jj-reward-emoji { font-size: 34px; display: block; margin-bottom: 7px; }
+.jj-reward-name { font-family: 'Fredoka One', cursive; font-size: 15px; color: #fff; margin-bottom: 5px; line-height: 1.2; }
+.jj-reward-cost { font-size: 12px; font-weight: 800; color: #fde68a; margin-bottom: 5px; }
+.jj-reward-status { display: inline-block; border-radius: 8px; padding: 3px 9px; font-size: 11px; font-weight: 800; border: 1px solid; }
+.jj-reward-status.locked { color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.2); }
+.jj-reward-status.unlocked { color: #86efac; border-color: rgba(134,239,172,0.5); background: rgba(134,239,172,0.1); }
+.jj-confetti { position: fixed; pointer-events: none; z-index: 999; font-size: 22px; animation: jj-fly var(--dur,2.5s) ease-out forwards; }
+@keyframes jj-fly { 0%{opacity:1;transform:translateY(0) rotate(0) scale(1)}100%{opacity:0;transform:translateY(-80vh) rotate(var(--rot,360deg)) scale(0.3)} }
+.jj-star-pop { position: fixed; pointer-events: none; z-index: 500; font-family: 'Fredoka One', cursive; font-size: 22px; color: #fde68a; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); animation: jj-pop 1.3s ease forwards; }
+@keyframes jj-pop { 0%{opacity:1;transform:translateY(0) scale(1)}50%{opacity:1;transform:translateY(-38px) scale(1.2)}100%{opacity:0;transform:translateY(-65px) scale(0.7)} }
+.jj-parent-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); font-family: 'Fredoka One', cursive; font-size: 13px; padding: 5px 12px; border-radius: 10px; cursor: pointer; transition: all 0.15s; }
+.jj-parent-btn.active { border-color: rgba(134,239,172,0.5); color: #86efac; }
+.jj-parent-wrap { padding: 0 14px; }
+.jj-parent-inner { background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 20px; }
+.jj-parent-title { font-family: 'Fredoka One', cursive; font-size: 20px; color: #fde68a; text-align: center; margin-bottom: 14px; }
+.jj-parent-actions { display: flex; flex-direction: column; gap: 8px; }
+.jj-pab { font-family: 'Fredoka One', cursive; font-size: 16px; padding: 12px; border-radius: 14px; border: 2px solid; cursor: pointer; background: transparent; transition: all 0.15s; }
+.jj-pab.pink { color: #f9a8d4; border-color: #f9a8d4; }
+.jj-pab.purple { color: #c084fc; border-color: #c084fc; }
+.jj-pab.red { color: #fca5a5; border-color: #fca5a5; }
+.jj-pab:hover { filter: brightness(1.3); transform: scale(1.02); }
+.jj-tabs { display: flex; gap: 6px; padding: 12px 14px 0; }
+.jj-tab { flex: 1; font-family: 'Fredoka One', cursive; font-size: 15px; padding: 10px; border: 2px solid rgba(255,255,255,0.15); border-radius: 14px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); cursor: pointer; text-align: center; transition: all 0.15s; }
+.jj-tab:hover { border-color: rgba(236,72,153,0.5); color: #f9a8d4; }
+.jj-tab.active { background: linear-gradient(135deg,rgba(236,72,153,0.25),rgba(168,85,247,0.25)); border-color: rgba(236,72,153,0.6); color: #fff; box-shadow: 0 0 14px rgba(236,72,153,0.2); }
+.jj-pin-overlay { position: fixed; inset: 0; background: rgba(26,0,40,0.9); display: flex; align-items: center; justify-content: center; z-index: 300; }
+.jj-pin-box { background: rgba(255,255,255,0.12); backdrop-filter: blur(20px); border: 3px solid rgba(253,230,138,0.5); border-radius: 24px; padding: 28px; text-align: center; width: 285px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.jj-pin-title { font-family: 'Fredoka One', cursive; font-size: 22px; color: #fde68a; margin-bottom: 12px; }
+.jj-pin-input { font-family: 'Press Start 2P', monospace; font-size: 22px; letter-spacing: 7px; width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.2); color: #fff; text-align: center; padding: 12px; border-radius: 12px; margin-bottom: 12px; outline: none; }
+.jj-pin-input:focus { border-color: rgba(236,72,153,0.7); }
+.jj-pin-submit { font-family: 'Fredoka One', cursive; font-size: 18px; background: linear-gradient(135deg,#ec4899,#a855f7); border: none; color: #fff; padding: 11px 20px; cursor: pointer; border-radius: 14px; width: 100%; margin-bottom: 8px; box-shadow: 0 4px 16px rgba(168,85,247,0.4); }
+.jj-pin-cancel { font-family: 'Fredoka One', cursive; font-size: 14px; color: rgba(255,255,255,0.4); background: none; border: none; cursor: pointer; padding: 6px; }
+.jj-pin-error { font-family: 'Fredoka One', cursive; font-size: 15px; color: #fca5a5; margin-top: 5px; }
+
+/* ════════════════════════════════════════
+   CHARACTER ART + IMAGE HANDLING
+   ════════════════════════════════════════ */
+.char-avatar {
+  width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
+  vertical-align: middle; flex-shrink: 0;
+}
+.char-empty-art {
+  width: 120px; height: 120px; object-fit: contain;
+  display: block; margin: 0 auto 12px;
+}
+.char-flavor {
+  position: fixed; bottom: 90px; left: 14px;
+  width: 64px; height: 64px; object-fit: contain;
+  pointer-events: none; z-index: 1; opacity: 0.3;
+}
+.char-stat-img {
+  width: 36px; height: 36px; object-fit: contain;
+  flex-shrink: 0; opacity: 0.85;
+}
+/* ════════════════════════════════════════
+   EVENTS TAB (SHARED)
+   ════════════════════════════════════════ */
+.ev-form { padding: 8px 0; }
+.ev-field { margin-bottom: 10px; }
+.ev-label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 5px; }
+.ev-row { display: flex; gap: 10px; }
+.ev-input { width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid; font-size: 14px; font-family: inherit; outline: none; -webkit-appearance: none; }
+.ev-status { margin-top: 10px; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: 700; text-align: center; }
+.buggsy-body .ev-label { font-family: 'Press Start 2P', monospace; font-size: 7.5px; color: #4a6080; }
+.buggsy-body .ev-input { background: #0d1520; border-color: #1e3347; color: #e2e8f0; }
+.buggsy-body .ev-input:focus { border-color: #f59e0b; }
+.buggsy-body .ev-status { background: rgba(245,158,11,0.1); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+.buggsy-body .ev-status.error { background: rgba(248,113,113,0.1); color: #f87171; border-color: rgba(248,113,113,0.3); }
+.jj-body .ev-label { font-family: 'Fredoka One', cursive; font-size: 13px; color: rgba(255,255,255,0.5); }
+.jj-body .ev-input { background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.2); color: #fff; border-radius: 12px; }
+.jj-body .ev-input:focus { border-color: rgba(236,72,153,0.7); }
+.jj-body .ev-status { background: rgba(236,72,153,0.15); color: #f9a8d4; border: 2px solid rgba(236,72,153,0.3); border-radius: 12px; }
+.jj-body .ev-status.error { background: rgba(252,165,165,0.15); color: #fca5a5; border-color: rgba(252,165,165,0.3); }
+.parent-body .ev-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.5px; }
+.parent-body .ev-input { background: rgba(20,20,40,0.3); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; }
+.parent-body .ev-input:focus { border-color: #d4a843; }
+.parent-body .ev-status { background: rgba(99,102,241,0.1); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); border-radius: 8px; }
+.parent-body .ev-status.error { background: rgba(220,38,38,0.1); color: #fca5a5; border-color: rgba(220,38,38,0.3); }
+/* ════════════════════════════════════════
+   ASK TAB SYSTEM
+   ════════════════════════════════════════ */
+.ask-section { padding: 0 14px; max-width: 720px; margin: 0 auto; }
+.ask-types { display: flex; gap: 6px; margin-bottom: 10px; }
+.ask-type-btn { flex: 1; padding: 9px 4px; border-radius: 6px; border: 1px solid; cursor: pointer; text-align: center; font-size: 13px; font-weight: 700; transition: all 0.15s; background: transparent; }
+.buggsy-body .ask-type-btn { font-family: 'Press Start 2P', monospace; font-size: 7px; border-color: #1e3347; color: #4a6080; background: #0d1520; }
+.buggsy-body .ask-type-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+.buggsy-body .ask-type-btn.active { background: linear-gradient(135deg,#1a1400,#241c00); border-color: #f59e0b; color: #f59e0b; box-shadow: 0 0 10px rgba(245,158,11,0.2); }
+.jj-body .ask-type-btn { font-family: 'Fredoka One', cursive; font-size: 13px; border: 2px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.08); border-radius: 12px; }
+.jj-body .ask-type-btn:hover { border-color: rgba(236,72,153,0.5); color: #f9a8d4; }
+.jj-body .ask-type-btn.active { background: linear-gradient(135deg,rgba(236,72,153,0.25),rgba(168,85,247,0.25)); border-color: rgba(236,72,153,0.6); color: #fff; box-shadow: 0 0 12px rgba(236,72,153,0.2); }
+.ask-amount-wrap { display: none; }
+.ask-amount-wrap.visible { display: block; }
+.ask-submit-btn { width: 100%; padding: 12px; border-radius: 6px; border: none; cursor: pointer; font-weight: 700; font-size: 14px; transition: all 0.15s; margin-top: 8px; }
+.buggsy-body .ask-submit-btn { font-family: 'Press Start 2P', monospace; font-size: 8px; background: linear-gradient(135deg,#1a1400,#261800); border: 1px solid #f59e0b; color: #f59e0b; }
+.buggsy-body .ask-submit-btn:hover { box-shadow: 0 0 14px rgba(245,158,11,0.35); }
+.buggsy-body .ask-submit-btn:active { transform: scale(0.96); }
+.buggsy-body .ask-submit-btn:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+.jj-body .ask-submit-btn { font-family: 'Fredoka One', cursive; font-size: 16px; background: linear-gradient(135deg,#ec4899,#a855f7); color: #fff; border-radius: 14px; box-shadow: 0 4px 16px rgba(168,85,247,0.4); }
+.jj-body .ask-submit-btn:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(236,72,153,0.45); }
+.jj-body .ask-submit-btn:active { transform: scale(0.96); }
+.jj-body .ask-submit-btn:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: none; }
+/* ── Recent Asks ── */
+.ask-recent-title { font-size: 13px; font-weight: 700; margin: 18px 0 8px; }
+.buggsy-body .ask-recent-title { font-family: 'Press Start 2P', monospace; font-size: 7.5px; color: #4a6080; }
+.jj-body .ask-recent-title { font-family: 'Fredoka One', cursive; font-size: 16px; color: #f9a8d4; }
+.ask-row { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 6px; margin-bottom: 5px; transition: all 0.12s; }
+.buggsy-body .ask-row { background: #0d1520; border: 1px solid #1e3347; border-radius: 6px; }
+.jj-body .ask-row { background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.12); border-radius: 14px; }
+.ask-row-icon { font-size: 18px; flex-shrink: 0; }
+.ask-row-info { flex: 1; min-width: 0; }
+.ask-row-title { font-size: 13px; font-weight: 700; line-height: 1.3; }
+.buggsy-body .ask-row-title { color: #e2e8f0; }
+.jj-body .ask-row-title { color: #fff; }
+.ask-row-amount { font-size: 12px; font-weight: 700; margin-left: 4px; }
+.buggsy-body .ask-row-amount { color: #f59e0b; }
+.jj-body .ask-row-amount { color: #fde68a; }
+.ask-status-badge { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px; flex-shrink: 0; white-space: nowrap; }
+.ask-status-badge.pending { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+.ask-status-badge.approved { background: rgba(34,197,94,0.12); color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+.ask-status-badge.denied { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+.jj-body .ask-status-badge { border-radius: 10px; }
+.ask-parent-note { font-size: 11px; padding: 5px 10px 5px 36px; line-height: 1.4; }
+.buggsy-body .ask-parent-note { color: #4a6080; font-family: 'Press Start 2P', monospace; font-size: 7px; }
+.jj-body .ask-parent-note { color: rgba(255,255,255,0.4); font-family: 'Fredoka One', cursive; font-size: 12px; }
+/* ── Reward Browse ── */
+.ask-rewards-hdr { font-size: 13px; font-weight: 700; margin: 18px 0 8px; }
+.buggsy-body .ask-rewards-hdr { font-family: 'Press Start 2P', monospace; font-size: 7.5px; color: #4a6080; }
+.jj-body .ask-rewards-hdr { font-family: 'Fredoka One', cursive; font-size: 16px; color: #f9a8d4; }
+.ask-reward-row { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px; margin-bottom: 5px; }
+.buggsy-body .ask-reward-row { background: #0d1520; border: 1px solid #1e3347; }
+.jj-body .ask-reward-row { background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.12); border-radius: 14px; }
+.ask-reward-icon { font-size: 22px; flex-shrink: 0; }
+.ask-reward-info { flex: 1; min-width: 0; }
+.ask-reward-name { font-size: 13px; font-weight: 700; }
+.buggsy-body .ask-reward-name { color: #e2e8f0; }
+.jj-body .ask-reward-name { color: #fff; }
+.ask-reward-cost { font-size: 11px; font-weight: 700; }
+.buggsy-body .ask-reward-cost { font-family: 'Press Start 2P', monospace; font-size: 7px; color: #f59e0b; }
+.jj-body .ask-reward-cost { font-family: 'Fredoka One', cursive; color: #fde68a; }
+.ask-want-btn { padding: 6px 10px; border-radius: 4px; border: none; cursor: pointer; font-weight: 700; font-size: 11px; transition: all 0.12s; flex-shrink: 0; }
+.buggsy-body .ask-want-btn { font-family: 'Press Start 2P', monospace; font-size: 6.5px; background: linear-gradient(135deg,#1a1400,#261800); border: 1px solid #f59e0b; color: #f59e0b; }
+.buggsy-body .ask-want-btn:hover { box-shadow: 0 0 8px rgba(245,158,11,0.3); }
+.jj-body .ask-want-btn { font-family: 'Fredoka One', cursive; font-size: 12px; background: linear-gradient(135deg,#ec4899,#a855f7); color: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(168,85,247,0.3); }
+.jj-body .ask-want-btn:hover { transform: scale(1.05); }
+/* ── Bank Display ── */
+.ask-bank-display { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; }
+.buggsy-body .ask-bank-display { background: linear-gradient(135deg,#0f1824,#0b131d); border: 1px solid #2b4258; }
+.jj-body .ask-bank-display { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 2px solid rgba(255,255,255,0.2); border-radius: 16px; }
+.ask-bank-icon { font-size: 20px; flex-shrink: 0; }
+.ask-bank-val { font-size: 22px; font-weight: 800; line-height: 1; }
+.buggsy-body .ask-bank-val { font-family: 'Press Start 2P', monospace; font-size: 14px; color: #f59e0b; }
+.jj-body .ask-bank-val { font-family: 'Fredoka One', cursive; font-size: 22px; color: #fde68a; text-shadow: 0 0 10px rgba(253,230,138,0.4); }
+.ask-bank-lbl { font-size: 11px; font-weight: 700; }
+.buggsy-body .ask-bank-lbl { font-family: 'Press Start 2P', monospace; font-size: 7px; color: #4a6080; }
+.jj-body .ask-bank-lbl { font-family: 'Fredoka One', cursive; color: rgba(255,255,255,0.5); }
+/* ── Ask Toast ── */
+.ask-toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); padding: 10px 22px; border-radius: 8px; font-size: 13px; font-weight: 700; z-index: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.buggsy-body .ask-toast { background: #0d1520; border: 1px solid #f59e0b; color: #f59e0b; font-family: 'Press Start 2P', monospace; font-size: 8px; }
+.jj-body .ask-toast { background: rgba(255,255,255,0.15); backdrop-filter: blur(12px); border: 2px solid rgba(236,72,153,0.5); color: #fff; font-family: 'Fredoka One', cursive; border-radius: 14px; }
+.ask-toast.show { opacity: 1; }
+.ask-empty { padding: 16px; text-align: center; font-size: 12px; font-weight: 700; }
+.buggsy-body .ask-empty { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #4a6080; }
+.jj-body .ask-empty { font-family: 'Fredoka One', cursive; font-size: 15px; color: rgba(255,255,255,0.4); }
+/* ════════════════════════════════════════
+   PARENT DASHBOARD THEME — SUNSET SKY
+   ════════════════════════════════════════ */
+.parent-body {
+  background: linear-gradient(180deg, #3a4870 0%, #443868 33%, #503858 66%, #583050 100%);
+  font-family: 'Barlow Condensed', sans-serif; color: #e2e8f0;
+  padding-bottom: 60px; min-height: 100vh;
+}
+.parent-body #loading { background: #3a4870; }
+.parent-body .load-ring { border-top-color: #d4a843; border-right-color: #d4a843; }
+.parent-body .load-text { font-size: 15px; color: #e2e8f0; font-weight: 700; letter-spacing: 1px; }
+.p-hdr {
+  background: rgba(20,20,40,0.55); backdrop-filter: blur(12px);
+  padding: 20px 20px 16px; position: relative; z-index: 1;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.p-hdr-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.p-hdr-title { font-family: 'Press Start 2P', monospace; font-size: 11px; color: #f8fafc; }
+.p-hdr-title span { color: #94a3b8; }
+.p-links { display: flex; gap: 8px; }
+.p-link-btn { font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); background: transparent; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-block; }
+.p-link-btn:hover { border-color: rgba(255,255,255,0.4); color: #fff; }
+.p-link-btn.buggsy { border-color: rgba(245,158,11,0.4); color: #f59e0b; }
+.p-link-btn.jj { border-color: rgba(236,72,153,0.4); color: #ec4899; }
+.p-body { max-width: 800px; margin: 0 auto; padding: 20px 16px 0; position: relative; z-index: 1; }
+.p-summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+.p-sum-card {
+  background: rgba(20,20,40,0.45); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  padding: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); text-align: center;
+}
+.p-sum-icon { font-size: 24px; margin-bottom: 6px; }
+.p-sum-val { font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 3px; }
+.p-sum-lbl { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 1px; text-transform: uppercase; }
+.p-kids { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.p-kid-col {
+  background: rgba(20,20,40,0.45); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2); overflow: hidden;
+}
+.p-kid-hdr { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
+.p-kid-hdr.buggsy { background: linear-gradient(135deg,#0f1923,#1a2635); }
+.p-kid-hdr.jj { background: linear-gradient(135deg,#2d0042,#4a0072); }
+.p-kid-name { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #fff; }
+.p-kid-score { font-size: 24px; font-weight: 800; }
+.p-kid-score.buggsy { color: #f59e0b; }
+.p-kid-score.jj { color: #ec4899; }
+.p-kid-score-lbl { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.5); }
+.p-kid-body { padding: 14px 16px; }
+.p-kid-section-title { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 10px; }
+.p-task-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.p-task-item:last-child { border-bottom: none; padding-bottom: 0; }
+.p-task-icon { font-size: 20px; flex-shrink: 0; }
+.p-task-info { flex: 1; min-width: 0; }
+.p-task-name { font-size: 14px; font-weight: 700; color: #e2e8f0; line-height: 1.2; }
+.p-task-meta { font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 600; margin-top: 2px; }
+.p-task-btns { display: flex; gap: 5px; flex-shrink: 0; }
+.p-appr-btn { font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.12s; }
+.p-appr-btn.yes { background: rgba(22,163,106,0.15); color: #86efac; }
+.p-appr-btn.yes:hover { background: #16a34a; color: #fff; }
+.p-appr-btn.no { background: rgba(220,38,38,0.15); color: #fca5a5; }
+.p-appr-btn.no:hover { background: #dc2626; color: #fff; }
+.p-empty-state { padding: 16px; text-align: center; font-size: 13px; color: rgba(255,255,255,0.4); font-weight: 700; }
+.p-done-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.p-done-item:last-child { border-bottom: none; }
+.p-done-icon { font-size: 16px; }
+.p-done-name { flex: 1; font-size: 13px; font-weight: 700; color: #94a3b8; }
+.p-done-pts { font-size: 12px; font-weight: 800; color: #86efac; }
+.p-done-ck { color: #86efac; font-size: 14px; }
+.p-reset-panel {
+  background: rgba(20,20,40,0.45); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+  padding: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); margin-bottom: 20px;
+}
+.p-reset-title { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #e2e8f0; margin-bottom: 14px; }
+.p-reset-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.p-reset-btn { font-size: 13px; font-weight: 700; padding: 11px 8px; border-radius: 8px; border: 1px solid; cursor: pointer; background: transparent; transition: all 0.14s; text-align: center; line-height: 1.4; }
+.p-reset-btn.blue-b { color: #93c5fd; border-color: rgba(59,130,246,0.3); }
+.p-reset-btn.pink-b { color: #f9a8d4; border-color: rgba(236,72,153,0.3); }
+.p-reset-btn.red-b  { color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+.p-reset-btn.all-b  { color: #c4b5fd; border-color: rgba(124,58,237,0.3); }
+.p-reset-btn:hover  { filter: brightness(1.3); transform: translateY(-1px); }
+.p-sheet-guide {
+  background: rgba(20,20,40,0.3); border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px; padding: 16px; margin-bottom: 20px;
+}
+.p-sheet-title { font-size: 13px; font-weight: 800; color: #93c5fd; margin-bottom: 10px; }
+.p-sheet-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 7px; font-size: 13px; color: #cbd5e1; line-height: 1.5; }
+.p-sheet-row:last-child { margin-bottom: 0; }
+.p-sheet-dot { width: 6px; height: 6px; background: #6090c8; border-radius: 50%; margin-top: 7px; flex-shrink: 0; }
+/* v25: Story Factory */
+.sf-panel { background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(236,72,153,0.15)); border: 1px solid rgba(124,58,237,0.25); border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+.sf-title { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #c4b5fd; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.sf-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.sf-select, .sf-input { flex: 1; padding: 10px 12px; border: 1px solid rgba(124,58,237,0.3); border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; background: rgba(20,20,40,0.4); color: #e2e8f0; }
+.sf-select:focus, .sf-input:focus { border-color: #a78bfa; }
+.sf-btn { padding: 12px; background: linear-gradient(135deg, #7c3aed, #ec4899); color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: all 0.15s; }
+.sf-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.sf-btn:disabled { opacity: 0.55; cursor: wait; transform: none; filter: none; }
+.sf-loading { text-align: center; padding: 20px 0; }
+.sf-loading-ring { width: 44px; height: 44px; border-radius: 50%; border: 3px solid rgba(124,58,237,0.2); border-top-color: #a78bfa; border-right-color: #ec4899; animation: spin 0.9s linear infinite; margin: 0 auto 12px; }
+.sf-loading-msg { font-size: 14px; font-weight: 700; color: #c4b5fd; min-height: 20px; }
+.sf-result { text-align: center; padding: 16px 0; }
+.sf-result-title { font-size: 18px; font-weight: 800; color: #fde68a; margin-bottom: 8px; }
+.sf-result-book { font-size: 12px; color: rgba(255,255,255,0.5); margin-bottom: 12px; }
+.sf-result-link { display: inline-block; padding: 10px 20px; background: linear-gradient(135deg, #7c3aed, #6d28d9); color: #fff; border-radius: 10px; font-size: 14px; font-weight: 700; text-decoration: none; transition: all 0.15s; }
+.sf-result-link:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.sf-error { font-size: 12px; color: #fca5a5; background: rgba(220,38,38,0.15); padding: 8px 12px; border-radius: 8px; margin-top: 10px; text-align: center; }
+.p-spinner { display: flex; align-items: center; justify-content: center; padding: 40px; }
+.p-spin-ring { width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.1); border-top-color: #d4a843; animation: spin 0.8s linear infinite; }
+#p-emboss { position: fixed; inset: -150px; z-index: 0; pointer-events: none; transform: rotate(-10deg); overflow: hidden; display: none; }
+.parent-body #p-emboss { display: block; }
+.p-emboss-row { display: flex; flex-wrap: nowrap; white-space: nowrap; line-height: 1; }
+.p-emboss-row.offset { margin-left: -110px; }
+.p-emboss-word {
+  font-family: 'Georgia', 'Times New Roman', serif; font-size: 14px;
+  font-weight: 700; font-style: italic; letter-spacing: 0.12em;
+  padding: 11px 18px; color: transparent; user-select: none; flex-shrink: 0;
+  text-shadow:
+    -1px -1px 0px rgba(160,170,200,0.55),
+    -0.5px -0.5px 0px rgba(140,150,180,0.35),
+    1px 1px 0px rgba(20,15,30,0.15),
+    1.5px 1.5px 0.5px rgba(15,10,25,0.08),
+    0px 0px 2px rgba(60,70,100,0.04);
+}
+@media (max-width: 480px) { .p-summary { grid-template-columns: 1fr 1fr; } .p-kids { grid-template-columns: 1fr; } .p-reset-grid { grid-template-columns: 1fr 1fr; } }
+/* ════════════════════════════════════════
+   V2 — PARENT ONE-TAP UX + WEEKLY GRID
+   ════════════════════════════════════════ */
+.p-v2-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.p-v2-tab {
+  flex: 1; font-size: 13px; font-weight: 700; padding: 10px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1); background: rgba(20,20,40,0.3);
+  color: #94a3b8; cursor: pointer; text-align: center; transition: all 0.15s;
+}
+.p-v2-tab:hover { border-color: #6366f1; color: #a5b4fc; }
+.p-v2-tab.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+.p-onetap { display: flex; gap: 5px; flex-shrink: 0; }
+.p-onetap-btn { font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+.p-onetap-btn.approve { background: rgba(22,163,106,0.15); color: #86efac; }
+.p-onetap-btn.approve:hover { background: #16a34a; color: #fff; }
+.p-onetap-btn.bonus15 { background: rgba(217,119,6,0.15); color: #fcd34d; }
+.p-onetap-btn.bonus15:hover { background: #d97706; color: #fff; }
+.p-onetap-btn.bonus2 { background: rgba(234,88,12,0.15); color: #fed7aa; }
+.p-onetap-btn.bonus2:hover { background: #ea580c; color: #fff; }
+.p-onetap-btn.reject { background: rgba(220,38,38,0.15); color: #fca5a5; }
+.p-onetap-btn.reject:hover { background: #dc2626; color: #fff; }
+.p-weekly {
+  background: rgba(20,20,40,0.45); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+  padding: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); margin-bottom: 20px;
+}
+.p-weekly-title { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #e2e8f0; margin-bottom: 6px; }
+.p-weekly-range { font-size: 12px; color: rgba(255,255,255,0.45); font-weight: 700; margin-bottom: 14px; }
+.p-weekly-kid-filter { display: flex; gap: 6px; margin-bottom: 14px; }
+.p-weekly-kid-btn { font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(20,20,40,0.3); color: #94a3b8; cursor: pointer; transition: all 0.12s; }
+.p-weekly-kid-btn.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+.p-weekly-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; }
+.p-weekly-day { background: rgba(20,20,40,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 8px; min-height: 80px; }
+.p-weekly-day-name { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.45); text-align: center; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+.p-weekly-day.today { border-color: #d4a843; background: rgba(212,168,67,0.08); }
+.p-weekly-entry { font-size: 10px; color: #cbd5e1; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; }
+.p-weekly-entry:last-child { border-bottom: none; }
+.p-weekly-entry-pts { font-weight: 800; color: #86efac; font-size: 10px; }
+.p-weekly-entry-pts.neg { color: #fca5a5; }
+.p-weekly-empty { font-size: 10px; color: rgba(255,255,255,0.2); text-align: center; padding: 8px 0; }
+.p-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(20,20,40,0.7); backdrop-filter: blur(12px);
+  color: #fff; padding: 12px 24px; border-radius: 10px; font-size: 14px;
+  font-weight: 700; z-index: 500; opacity: 0; transition: opacity 0.3s;
+  pointer-events: none; border: 1px solid rgba(255,255,255,0.1);
+}
+.p-toast.show { opacity: 1; }
+.b-streak { display: inline-flex; align-items: center; gap: 3px; font-family: 'Press Start 2P', monospace; font-size: 7px; color: #f59e0b; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); padding: 2px 6px; border-radius: 4px; }
+.jj-streak { display: inline-flex; align-items: center; gap: 3px; font-family: 'Fredoka One', cursive; font-size: 11px; color: #a855f7; background: rgba(168,85,247,0.1); border: 1px solid rgba(168,85,247,0.25); padding: 2px 8px; border-radius: 8px; }
+.b-redeem-btn { font-family: 'Press Start 2P', monospace; font-size: 7px; background: linear-gradient(135deg,#312e81,#4338ca); border: 1px solid #6366f1; color: #a5b4fc; padding: 6px 8px; cursor: pointer; border-radius: 4px; transition: all 0.12s; }
+.b-redeem-btn:hover { box-shadow: 0 0 10px rgba(99,102,241,0.4); }
+.jj-redeem-btn { font-family: 'Fredoka One', cursive; font-size: 13px; background: linear-gradient(135deg,#ec4899,#a855f7); border: none; color: #fff; padding: 8px 12px; cursor: pointer; border-radius: 12px; transition: all 0.15s; box-shadow: 0 4px 12px rgba(168,85,247,0.3); }
+.jj-redeem-btn:hover { transform: scale(1.05); }
+/* v22: Qty picker overlay */
+.qty-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;animation:qty-fade-in 0.2s ease }
+@keyframes qty-fade-in { from{opacity:0} to{opacity:1} }
+.qty-box { background:#0d1520;border:2px solid #f59e0b;border-radius:12px;padding:20px;min-width:260px;max-width:320px;text-align:center;box-shadow:0 0 30px rgba(245,158,11,0.3) }
+.qty-box.jj-qty { background:linear-gradient(135deg,#312e81,#1e1b4b);border-color:#a855f7 }
+.qty-title { font-family:'Press Start 2P',monospace;font-size:8px;color:#f59e0b;margin-bottom:12px }
+.qty-box.jj-qty .qty-title { font-family:'Fredoka One',cursive;font-size:16px;color:#f9a8d4 }
+.qty-icon { font-size:36px;margin-bottom:8px }
+.qty-name { font-size:16px;font-weight:700;color:#e2e8f0;margin-bottom:4px }
+.qty-cost { font-family:'Press Start 2P',monospace;font-size:7px;color:#4a6080;margin-bottom:14px }
+.qty-controls { display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px }
+.qty-btn { width:36px;height:36px;border-radius:50%;border:2px solid #f59e0b;background:rgba(245,158,11,0.1);color:#f59e0b;font-size:20px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center }
+.qty-btn:active { transform:scale(0.9);background:rgba(245,158,11,0.3) }
+.qty-val { font-family:'Press Start 2P',monospace;font-size:20px;color:#f59e0b;min-width:40px }
+.qty-total { font-family:'Press Start 2P',monospace;font-size:9px;color:#fbbf24;margin-bottom:14px }
+.qty-confirm { font-family:'Press Start 2P',monospace;font-size:8px;background:linear-gradient(135deg,#14532d,#166534);border:1px solid #22c55e;color:#22c55e;padding:10px 20px;cursor:pointer;border-radius:6px;margin-right:8px }
+.qty-confirm:active { transform:scale(0.95) }
+.qty-cancel { font-family:'Press Start 2P',monospace;font-size:7px;background:none;border:1px solid #4a6080;color:#4a6080;padding:8px 14px;cursor:pointer;border-radius:6px }
+.qty-cancel:active { opacity:0.7 }
+@media (max-width: 600px) { .p-weekly-grid { grid-template-columns: repeat(3,1fr); } }
+/* v26: Track 5 — responsive fixes */
+@media (max-width: 480px) { .sf-row { flex-wrap: wrap; } .sf-select { flex-basis: 100%; } .p-onetap { flex-wrap: wrap; gap: 4px; } .p-onetap-btn { padding: 5px 8px; font-size: 11px; } }
+@media (max-width: 420px) { .p-sum-val { font-size: 22px; } .p-sum-lbl { font-size: 10px; } }
+/* v26: Track 7 — sync strip */
+.sync-strip { position: fixed; bottom: 12px; left: 24px; display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 14px; z-index: 200; font-size: 11px; font-weight: 700; transition: opacity 0.3s; }
+.buggsy-body .sync-strip { background: rgba(13,21,32,0.85); border: 1px solid #1e3347; font-family: 'Press Start 2P', monospace; font-size: 7px; color: #4a6080; }
+.jj-body .sync-strip { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.2); }
+.parent-body .sync-strip { background: rgba(20,20,40,0.7); border: 1px solid rgba(255,255,255,0.1); color: #94a3b8; left: auto; right: 16px; top: 10px; bottom: auto; }
+.sync-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sync-dot.green { background: #22c55e; }
+.sync-dot.amber { background: #f59e0b; }
+.sync-dot.red { background: #ef4444; }
+.sync-dot.pulse { animation: sync-pulse 1s infinite; }
+@keyframes sync-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.jj-sync-star { font-size: 14px; display: inline-block; }
+.jj-sync-star.spinning { animation: jj-spin 1s linear infinite; }
+.jj-sync-star.green { filter: hue-rotate(0deg) brightness(1.2); }
+.jj-sync-star.red { filter: hue-rotate(-60deg) brightness(1); }
+@keyframes jj-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.jj-sync-star.shake { animation: jj-shake 0.4s ease 3; }
+@keyframes jj-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+/* v26: Track 9 — disabled buttons */
+.b-claim:disabled, .b-approve:disabled, .b-redeem-btn:disabled,
+.jj-do-it-btn:disabled, .jj-approve-btn:disabled, .jj-redeem-btn:disabled,
+.p-onetap-btn:disabled { opacity: 0.45; cursor: wait; pointer-events: none; transform: none; filter: none; }
+/* v26: Track 3 — Ask Queue on parent dashboard */
+.p-ask-section { margin-bottom: 20px; }
+.p-ask-hdr { font-size: 15px; font-weight: 800; color: #e2e8f0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.p-ask-badge { font-size: 11px; background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); padding: 2px 8px; border-radius: 10px; font-weight: 800; }
+.p-ask-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(20,20,40,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; margin-bottom: 8px; transition: opacity 0.3s, transform 0.3s; }
+.p-ask-icon { font-size: 22px; flex-shrink: 0; }
+.p-ask-info { flex: 1; min-width: 0; }
+.p-ask-name { font-size: 14px; font-weight: 700; color: #e2e8f0; }
+.p-ask-child { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.p-ask-amount { font-size: 13px; font-weight: 800; color: #fbbf24; margin-top: 2px; }
+.p-ask-notes { font-size: 11px; color: #94a3b8; margin-top: 4px; font-style: italic; }
+.p-ask-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.p-ask-btn { font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.12s; }
+.p-ask-btn.approve { background: rgba(22,163,106,0.15); color: #86efac; }
+.p-ask-btn.approve:hover { background: #16a34a; color: #fff; }
+.p-ask-btn.deny { background: rgba(220,38,38,0.15); color: #fca5a5; }
+.p-ask-btn.deny:hover { background: #dc2626; color: #fff; }
+.p-ask-btn:disabled { opacity: 0.45; cursor: wait; pointer-events: none; }
+/* ════════════════════════════════════════
+   V7 — REFRESH COIN (BUGGSY) + STAR (JJ)
+   ════════════════════════════════════════ */
+.b-refresh-coin {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fde68a, #f59e0b, #b45309);
+  border: 3px solid #fbbf24;
+  box-shadow: 0 0 20px rgba(245,158,11,0.4), inset 0 -3px 6px rgba(0,0,0,0.3), inset 0 3px 6px rgba(255,255,255,0.3);
+  cursor: pointer;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 900;
+  color: #92400e;
+  font-family: 'Press Start 2P', monospace;
+  transition: transform 0.15s;
+  animation: coin-float 3s ease-in-out infinite;
+}
+.b-refresh-coin:hover { transform: scale(1.1); }
+.b-refresh-coin:active { transform: scale(0.9); }
+.b-refresh-coin.spinning {
+  animation: coin-spin 0.9s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes coin-float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes coin-spin {
+  0%  { transform: rotateY(0deg) scale(1); }
+  30% { transform: rotateY(360deg) scale(1.28); }
+  65% { transform: rotateY(600deg) scale(1.1); }
+  100%{ transform: rotateY(720deg) scale(1); }
+}
+.b-refresh-whoosh {
+  position: fixed;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  color: #f59e0b;
+  text-shadow: 1px 1px 0 #000;
+  pointer-events: none;
+  z-index: 201;
+  animation: whoosh-up 0.8s ease-out forwards;
+  opacity: 0;
+}
+@keyframes whoosh-up {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-40px) scale(0.7); }
+}
+.jj-refresh-star {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #fde68a, #f9a8d4, #c084fc);
+  border: 3px solid rgba(255,255,255,0.4);
+  box-shadow: 0 0 20px rgba(236,72,153,0.4), 0 4px 16px rgba(168,85,247,0.3);
+  cursor: pointer;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  transition: transform 0.15s;
+  animation: star-bob 3s ease-in-out infinite;
+}
+.jj-refresh-star:hover { transform: scale(1.1); }
+.jj-refresh-star:active { transform: scale(0.9); }
+.jj-refresh-star.spinning { animation: jj-star-spin 0.9s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes star-bob {
+  0%,100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-6px) rotate(5deg); }
+}
+@keyframes jj-star-spin {
+  0%  { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(200deg) scale(1.45); }
+  60% { transform: rotate(560deg) scale(1.2); }
+  100%{ transform: rotate(720deg) scale(1); }
+}
+.jj-refresh-sparkle {
+  position: fixed;
+  font-family: 'Fredoka One', cursive;
+  font-size: 14px;
+  color: #fde68a;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
+  pointer-events: none;
+  z-index: 201;
+  animation: sparkle-up 0.8s ease-out forwards;
+  opacity: 0;
+}
+@keyframes sparkle-up {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-40px) scale(0.7); }
+}
+/* ── JJ: Glow ring expand on refresh ── */
+.jj-glow-ring {
+  position: fixed; border-radius: 50%;
+  border: 3px solid rgba(236,72,153,0.9);
+  box-shadow: 0 0 14px rgba(168,85,247,0.5);
+  pointer-events: none; z-index: 199;
+  width: 56px; height: 56px;
+  animation: jj-ring-expand 0.8s ease-out forwards;
+}
+@keyframes jj-ring-expand {
+  0%   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(4); }
+}
+/* ── JJ: Big points banner on approval ── */
+.jj-points-banner {
+  position: fixed; top: 36%; left: 50%;
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(44px,12vw,64px);
+  color: #fde68a;
+  text-shadow: 0 0 32px rgba(253,230,138,0.95), 0 0 64px rgba(236,72,153,0.5), 2px 2px 0 rgba(0,0,0,0.6);
+  pointer-events: none; z-index: 700;
+  white-space: nowrap;
+  animation: jj-banner-pop 2s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+@keyframes jj-banner-pop {
+  0%   { opacity: 0; transform: translateX(-50%) scale(0.3) rotate(-6deg); }
+  18%  { opacity: 1; transform: translateX(-50%) scale(1.2) rotate(2deg); }
+  55%  { opacity: 1; transform: translateX(-50%) scale(1) rotate(0deg); }
+  100% { opacity: 0; transform: translateX(-50%) scale(0.85) translateY(-55px); }
+}
+/* ── Buggsy: Gold ring burst particles ── */
+.b-ring-particle {
+  position: fixed;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 3px solid #ffd700;
+  box-shadow: 0 0 8px rgba(255,215,0,0.7), inset 0 0 4px rgba(255,215,0,0.2);
+  background: transparent;
+  pointer-events: none; z-index: 500;
+  animation: b-ring-fly 0.8s cubic-bezier(0.15,0,0.55,1) forwards;
+}
+@keyframes b-ring-fly {
+  0%   { opacity: 1; transform: translate(0,0) scale(1.3); }
+  60%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.2); }
+}
+/* ── Claim flair: fly rewards into the counter ── */
+.b-stat.collect-hit {
+  animation: b-collect-hit 0.48s ease-out;
+  box-shadow: 0 0 0 1px rgba(245,158,11,0.25), 0 0 18px rgba(245,158,11,0.35);
+}
+@keyframes b-collect-hit {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.b-claim-ring {
+  position: fixed;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 3px solid #ffd700;
+  background: rgba(255,235,140,0.08);
+  box-shadow: 0 0 10px rgba(255,215,0,0.75), inset 0 0 4px rgba(255,215,0,0.25);
+  pointer-events: none;
+  z-index: 520;
+  animation: b-claim-fly 0.78s cubic-bezier(0.22,0.8,0.25,1) forwards;
+}
+@keyframes b-claim-fly {
+  0%   { opacity: 1; transform: translate(-50%,-50%) scale(1.35); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.25); }
+}
+.jj-stat-pill.collect-hit {
+  animation: jj-collect-hit 0.52s ease-out;
+  box-shadow: 0 0 0 2px rgba(253,230,138,0.22), 0 0 24px rgba(236,72,153,0.28);
+}
+@keyframes jj-collect-hit {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+.jj-claim-star {
+  position: fixed;
+  font-family: 'Fredoka One', cursive;
+  font-size: 18px;
+  color: #fde68a;
+  text-shadow: 0 0 12px rgba(253,230,138,0.85), 1px 1px 0 rgba(0,0,0,0.3);
+  pointer-events: none;
+  z-index: 520;
+  animation: jj-claim-fly 0.82s cubic-bezier(0.22,0.8,0.25,1) forwards;
+}
+@keyframes jj-claim-fly {
+  0%   { opacity: 1; transform: translate(-50%,-50%) scale(1.3) rotate(0deg); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.35) rotate(320deg); }
+}
+</style>
+</head>
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<!-- CHUNK 2 OF 3 — HTML Templates + Scriptlet Config                   -->
+<!-- ════════════════════════════════════════════════════════════════════ -->
+<body>
+<div id="p-emboss"></div>
+
+<!-- v1 TBM: Scriptlet injection via createTemplateFromFile (Code.gs v20) -->
+<!-- Fixes parent dashboard blank page bug — config is server-injected   -->
+<script>
+var INIT_CHILD = "<?= INIT_CHILD ?>";
+var INIT_VIEW  = "<?= INIT_VIEW ?>";
+</script>
+
+<div id="pinOverlay" style="display:none">
+  <div class="pin-box">
+    <div class="pin-title" id="pinTitle">🔐 PARENT ACCESS</div>
+    <input class="pin-input" type="password" maxlength="6" id="pinInput" placeholder="••••">
+    <button class="pin-submit" id="pinSubmit">ENTER</button>
+    <button class="pin-cancel" id="pinCancel">cancel</button>
+    <div class="pin-error" id="pinError" style="display:none">WRONG PIN</div>
+  </div>
+</div>
+<div id="loading"><img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson Family Crest" style="width:280px;height:280px;object-fit:contain;margin-bottom:20px;opacity:0.85;filter:drop-shadow(0 8px 24px rgba(212,168,67,0.3))" onerror="this.remove()"><div class="load-ring"></div><div class="load-text" id="loadText">Loading...</div></div>
+<div id="app" style="display:none"></div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- CHUNK 3 OF 3 — JavaScript                 -->
+<!-- ══════════════════════════════════════════ -->
+<style>
+.b-two-col,.jj-two-col{display:block}
+.b-col-main,.jj-col-main,.b-col-pending,.jj-col-pending{width:100%}
+.b-col-pending,.jj-col-pending{margin-top:16px}
+.b-two-col .b-list,.jj-two-col .jj-list{max-width:none}
+@media(min-width:700px){
+.jj-wrap{max-width:720px}
+.b-two-col,.jj-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.b-col-pending,.jj-col-pending{margin-top:0}
+}
+</style>
+<script>
+// ── Config ────────────────────────────────────────────────────
+var IS_JJ     = INIT_CHILD === 'jj';
+var IS_PARENT = INIT_VIEW  === 'parent';
+
+// ── Levels — v17: read from payload, fallback for backward compat ────
+var LEVELS_FALLBACK = [
+  { name:'Noob', min:0, color:'#9e9e9e' },
+  { name:'Sidekick', min:500, color:'#8bc34a' },
+  { name:'Warrior', min:1500, color:'#03a9f4' },
+  { name:'Knight', min:3500, color:'#ff9800' },
+  { name:'Champion', min:7000, color:'#f44336' },
+  { name:'Legend', min:12000, color:'#ffd700' },
+  { name:'GOAT', min:20000, color:'#e5e5e5' },
+];
+// Legacy constants kept for getLevel() color lookup during deploy window
+var LEVELS_BUGGSY = LEVELS_FALLBACK;
+var LEVELS_JJ = [
+  { name:'Sprout', min:0, color:'#9e9e9e' },
+  { name:'Bloom', min:500, color:'#8bc34a' },
+  { name:'Sparkle', min:1500, color:'#03a9f4' },
+  { name:'Rainbow', min:3500, color:'#ff9800' },
+  { name:'Princess', min:7000, color:'#f44336' },
+  { name:'Queen', min:12000, color:'#ffd700' },
+  { name:'GOAT', min:20000, color:'#e5e5e5' },
+];
+var serverLevels = null; // v17: populated from data.levels in onKidData
+var serverLevelsJJ = null; // v19: populated from data.levelsJJ in onKidData
+
+// v1 TBM: Rewards loaded from KH_Rewards tab via getKidsHubData()
+// REMOVED: Hardcoded BUGGSY_REWARDS and JJ_REWARDS arrays
+
+var CAT = {
+  Morning:{c:'#fb923c',bg:'rgba(251,146,60,0.1)'}, Kitchen:{c:'#4ade80',bg:'rgba(74,222,128,0.1)'},
+  School:{c:'#38bdf8',bg:'rgba(56,189,248,0.1)'}, Household:{c:'#a78bfa',bg:'rgba(167,139,250,0.1)'},
+  Bedroom:{c:'#f87171',bg:'rgba(248,113,113,0.1)'}, Bathroom:{c:'#34d399',bg:'rgba(52,211,153,0.1)'},
+  Outside:{c:'#a3e635',bg:'rgba(163,230,53,0.1)'}, 'Clean Up':{c:'#f9a8d4',bg:'rgba(249,168,212,0.1)'},
+  'Good Habits':{c:'#fde68a',bg:'rgba(253,230,138,0.1)'}, General:{c:'#94a3b8',bg:'rgba(148,163,184,0.1)'},
+};
+var FREQ_C = { Daily:'#38bdf8', Weekdays:'#38bdf8', Weekends:'#f472b6', '2x Week':'#a78bfa', Weekly:'#a78bfa' };
+// v21: Sort priority for time-of-day — Required first, then morning→afternoon→evening, then points
+var TIME_ORDER = {'1-Morning':1,'2-Afternoon':2,'3-Evening':3};
+
+// ── State ─────────────────────────────────────────────────────
+var tasks      = [];
+var rewards    = [];   // v1 TBM: from server (KH_Rewards)
+var balances   = { earned:0, spent:0, deducted:0, balance:0 }; // v1 TBM: server-computed
+var streakData = {};   // v1 TBM: from KH_Streaks cache
+var parentMode = false;
+var currentTab = 'quests';
+var _fetching  = false;   // v5: fetch guard — prevents ghost taps during reload (#57)
+var _prevBalance = null;  // v23: Track previous balance for win animation
+var _lastHeartbeat = '';  // v24: Heartbeat timestamp for smart polling
+var jjRewardUnlockState = {}; // v9: reward unlock fanfare state
+var requiredStatus = null; // v15: Wave 8D must-do status payload
+var requests = []; // v17: Ask system requests
+var pendingRequestCount = {}; // v17: {buggsy: N, jj: N}
+var screenTimeBank = {}; // v22: Screen Time Bank {TV: {balance:N}, Gaming: {balance:N}}
+// v26: Track 7 — sync strip state
+var _syncState = 'idle';
+var _syncTimer = null;
+function setSyncState(state, msg) {
+  _syncState = state;
+  var el = document.getElementById('syncStrip');
+  if (!el) return;
+  el.style.display = 'flex';
+  if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
+  var dot = el.querySelector('.sync-dot');
+  var txt = el.querySelector('.sync-text');
+  if (IS_JJ && !IS_PARENT) {
+    // JJ: visual-only, no text
+    if (state === 'saving') { el.innerHTML = '<span class="jj-sync-star spinning">⭐</span>'; }
+    else if (state === 'synced') { el.innerHTML = '<span class="jj-sync-star green">⭐</span>'; }
+    else if (state === 'failed') {
+      el.innerHTML = '<span class="jj-sync-star red shake">⭐</span>';
+      el.onclick = function() { setSyncState('saving', 'Retrying...'); loadKidData(); };
+    }
+    return;
+  }
+  if (state === 'saving') {
+    if (dot) { dot.className = 'sync-dot amber pulse'; }
+    if (txt) { txt.textContent = msg || 'Saving...'; }
+  } else if (state === 'synced') {
+    if (dot) { dot.className = 'sync-dot green'; }
+    if (txt) { txt.textContent = msg || 'Synced'; }
+    _syncTimer = setTimeout(function() { if (txt && _syncState === 'synced') txt.textContent = 'Synced'; }, 3000);
+  } else if (state === 'failed') {
+    if (dot) { dot.className = 'sync-dot red'; }
+    if (txt) { txt.textContent = msg || 'Failed — tap to retry'; }
+    el.onclick = function() { setSyncState('saving', 'Retrying...'); loadKidData(); };
+  }
+}
+// v26: Track 10 — previous task states for approval celebration
+var _prevTaskStates = {};
+
+// ── v6: Safe JSON parse — *Safe wrappers stringify returns ───
+function safeParse(d) { return typeof d === 'string' ? JSON.parse(d) : d; }
+function getLevel(points, child) {
+  var levels = (child === 'jj')
+    ? (serverLevelsJJ || LEVELS_JJ)
+    : (serverLevels || LEVELS_BUGGSY);
+  var lvl = levels[0];
+  var pts = Number(points) || 0;
+  for (var i = levels.length - 1; i >= 0; i--) {
+    if (pts >= levels[i].min) { lvl = levels[i]; break; }
+  }
+  return { level: lvl, index: levels.indexOf(lvl) + 1, total: levels.length };
+}
+
+// ── v1 TBM: Field mapping (server → UI) ──────────────────────
+function mapTask(t) {
+  return {
+    task: t.task || '', icon: t.icon || '📋', category: t.category || 'General',
+    points: Number(t.points) || 0, tvMinutes: Number(t.tvMinutes) || 0, money: Number(t.money) || 0, snacks: Number(t.snacks) || 0,
+    frequency: t.frequency || 'Daily', completed: t.completed === true,
+    parentApproved: t.parentApproved === true,
+    taskID: t.taskID, child: (t.child || '').toLowerCase(),
+    basePoints: Number(t.basePoints) || 0, multiplier: Number(t.multiplier) || 1,
+    rowIndex: t.rowIndex,
+    required: t.required === true,
+    timeOfDay: t.timeOfDay || t.time_of_day || t.taskOrder || ''
+  };
+}
+function mapReward(r) {
+  return { icon: r.icon || '🎁', name: r.name || '', cost: Number(r.cost) || 0, id: r.rewardID, tier: '' };
+}
+
+// ── Boot ──────────────────────────────────────────────────────
+window.onload = function () {
+  applyBodyClass(); addSparkles(); setupPinEvents();
+  if (IS_PARENT) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    renderParent();
+  } else {
+    loadKidData();
+    // v24: Smart polling — check heartbeat timestamp before full fetch
+    // Only does full data load when something actually changed
+    setInterval(function() {
+      if (_fetching || document.hidden) return;
+      google.script.run
+        .withSuccessHandler(function(ts) {
+          if (ts && ts !== _lastHeartbeat) {
+            _lastHeartbeat = ts;
+            loadKidData();
+          }
+        })
+        .withFailureHandler(function() { /* heartbeat check failed, skip this cycle */ })
+        .getKHLastModified();
+    }, 60000);
+  }
+};
+// v26: Track 8 — wake-from-sleep refresh
+var _lastWake = 0;
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) {
+    var now = Date.now();
+    if (now - _lastWake < 5000) return;
+    _lastWake = now;
+    if (IS_PARENT && typeof window.renderParent === 'function') {
+      window.renderParent();
+    } else if (!IS_PARENT) {
+      setSyncState('saving', 'Refreshing...');
+      loadKidData();
+    }
+  }
+});
+
+function applyBodyClass() {
+  if (IS_PARENT) { document.body.className = 'parent-body'; document.getElementById('loadText').textContent = 'Loading dashboard...'; }
+  else if (IS_JJ) { document.body.className = 'jj-body'; document.getElementById('loadText').textContent = "Loading JJ's Stars..."; }
+  else { document.body.className = 'buggsy-body'; document.getElementById('loadText').textContent = 'LOADING QUESTS...'; }
+}
+
+function addSparkles() {
+  if (IS_JJ) {
+    var bg = document.createElement('div'); bg.className = 'jj-sparkle-bg';
+    var emojis = ['✨','⭐','💫','🌸','💖','🎀','💕'];
+    for (var i = 0; i < 18; i++) {
+      var s = document.createElement('span'); s.textContent = emojis[i % emojis.length];
+      s.style.left = (Math.random()*100)+'%'; s.style.setProperty('--d',(6+Math.random()*8)+'s'); s.style.setProperty('--delay',(Math.random()*6)+'s');
+      bg.appendChild(s);
+    }
+    document.body.prepend(bg);
+  } else if (!IS_PARENT) {
+    var bg = document.createElement('div'); bg.className = 'b-float-bg';
+    var items = ['⭕','⭕','⭕','💎','⚡','🌀','⭐','⭕','💎','⭕'];
+    for (var i = 0; i < 20; i++) {
+      var s = document.createElement('span'); s.textContent = items[i % items.length];
+      s.style.left = (Math.random()*100)+'%'; s.style.fontSize = (12+Math.random()*14)+'px';
+      s.style.setProperty('--d',(8+Math.random()*10)+'s'); s.style.setProperty('--delay',(Math.random()*8)+'s');
+      bg.appendChild(s);
+    }
+    document.body.prepend(bg);
+  }
+}
+
+// ── CHARACTER FLAVOR ART ──────────────────────────────────────
+function addFlavorArt(child) {
+  var wrap = document.querySelector(child === 'jj' ? '.jj-wrap' : '.b-hdr');
+  if (!wrap) return;
+  var art = document.createElement('div');
+  art.className = 'char-flavor';
+  var img = document.createElement('img');
+  img.style.cssText = 'width:48px;height:48px;border-radius:50%;object-fit:cover;opacity:0.7';
+  if (child === 'jj') {
+    img.src = 'https://i.ibb.co/cS2zHkMg/1773982793158.png';
+    img.onerror = function(){ art.innerHTML = getUnicornSVG(48); };
+  } else {
+    img.src = 'https://i.ibb.co/KxJzmZRQ/1773709914781.png';
+    img.onerror = function(){ art.style.display = 'none'; };
+  }
+  art.appendChild(img);
+  wrap.appendChild(art);
+}
+function getUnicornSVG(size) {
+  var s = size || 48;
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="22" fill="#f0e6f6" stroke="#e898b8" stroke-width="2"/><path d="M24 8l2 10h-4l2-10z" fill="#ffd700"/><circle cx="24" cy="26" r="10" fill="#fff" stroke="#e898b8" stroke-width="1.5"/><circle cx="20" cy="24" r="1.5" fill="#333"/><circle cx="28" cy="24" r="1.5" fill="#333"/><path d="M21 29q3 3 6 0" stroke="#e898b8" stroke-width="1" fill="none"/></svg>';
+}
+
+// ── KID DATA LOAD — v1 TBM: uses getKidsHubData() ────────────
+function loadKidData() {
+  _fetching = true;  // v5: lock actions during fetch (#57)
+  window._allClearCelebrated = false; // v19: reset celebration flag on data reload
+  setSyncState('saving', 'Loading...');
+  google.script.run
+    .withSuccessHandler(onKidData)
+    .withFailureHandler(function(e){ _fetching = false; setSyncState('failed'); console.log('KH_FAIL', e); onErr(e); })
+    .getKidsHubDataSafe(IS_PARENT ? 'all' : INIT_CHILD);
+}
+
+function onKidData(raw) {
+  var data = safeParse(raw);
+  console.log('KH_RAW', JSON.stringify(data && data.balances));
+  console.log('KH_INIT_CHILD', INIT_CHILD);
+  try {
+    if (!data) { showErr('No data received'); return; }
+    if (data && data.error) { showErr(data.error); return; }
+    // v1 TBM: Rich response — tasks, rewards, balances, streaks
+    tasks      = (data.tasks    || []).map(mapTask);
+    rewards    = (data.rewards  || []).map(mapReward);
+    balances   = (data.balances && data.balances[INIT_CHILD]) || { earned:0, spent:0, deducted:0, balance:0 };
+    streakData = data.streaks   || {};
+    requiredStatus = data.requiredStatus || null;
+    requests = data.requests || [];
+    pendingRequestCount = data.pendingRequestCount || {};
+    // v22: Screen Time Bank from server
+    screenTimeBank = (data.screenTime && data.screenTime[INIT_CHILD]) || {};
+    // v17: LEVELS from payload
+    if (data.levels && data.levels.length) { serverLevels = data.levels; }
+    if (data.levelsJJ && data.levelsJJ.length) { serverLevelsJJ = data.levelsJJ; }
+    console.log('KH_BALANCES', JSON.stringify(balances));
+    console.log('KH_TASKS', tasks.length, 'completed:', tasks.filter(function(t){return t.completed;}).length);
+  } catch(e) { console.log('KH_CATCH', e.message); tasks = []; rewards = []; }
+
+  // v26: Track 10 — detect newly approved tasks for celebration
+  var newlyApproved = [];
+  tasks.forEach(function(t) {
+    var prev = _prevTaskStates[t.taskID];
+    if (prev && prev.completed && !prev.parentApproved && t.parentApproved) {
+      newlyApproved.push(t);
+    }
+  });
+  _prevTaskStates = {};
+  tasks.forEach(function(t) {
+    _prevTaskStates[t.taskID] = { completed: t.completed, parentApproved: t.parentApproved };
+  });
+
+  setSyncState('synced', 'Synced');
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  if (IS_JJ) renderJJ(); else renderBuggsy();
+
+  // v26: Track 10 — celebrate newly approved tasks
+  if (newlyApproved.length > 0 && !IS_PARENT) {
+    setTimeout(function() {
+      newlyApproved.forEach(function(t) {
+        if (IS_JJ) {
+          jjConfetti(15);
+          jjPointsBanner('Mom/Dad said YES! +' + t.points + ' ⭐');
+        } else {
+          showBXP({clientX: window.innerWidth/2, clientY: window.innerHeight/3}, '✓ APPROVED! +' + t.points + ' RINGS!');
+        }
+      });
+    }, 300);
+  }
+
+  // v24: Capture heartbeat on load so smart poll can compare
+  google.script.run.withSuccessHandler(function(ts) { if (ts) _lastHeartbeat = ts; }).getKHLastModified();
+
+  // v23 Fix 5: Win animation — celebrate when balance increases after refresh
+  var newBal = Number(balances.balance) || 0;
+  if (_prevBalance !== null && newBal > _prevBalance && !IS_PARENT) {
+    var gained = newBal - _prevBalance;
+    if (IS_JJ) {
+      jjConfetti(12);
+      jjStarPop({clientX: window.innerWidth/2, clientY: 100}, '+' + gained + ' \u2B50!');
+    } else {
+      showBXP({clientX: window.innerWidth/2, clientY: 100}, '+' + gained + ' RINGS!');
+    }
+  }
+  _prevBalance = newBal;
+
+  // v23: Restore quest list opacity (cleared during refresh loading flash)
+  var ql = document.getElementById(IS_JJ ? 'jjQuestList' : 'bQuestList');
+  if (ql) ql.style.opacity = '1';
+
+  // v5: post-render cooldown — ghost-tap guard stays active through card animation (#57)
+  setTimeout(function(){ _fetching = false; }, 350);
+}
+
+function onErr(e) { showErr(e.message || 'Connection error'); }
+function showErr(msg) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  var cls = IS_JJ ? 'jj-wrap' : 'b-list';
+  document.getElementById('app').innerHTML = '<div class="'+cls+'"><div style="color:'+(IS_JJ?'#fca5a5':'#f87171')+';text-align:center;padding:30px;font-size:14px;line-height:1.8;">'+msg+'</div></div>';
+}
+
+// ══════════════════════════════════════════
+//  BUGGSY RENDER
+// ══════════════════════════════════════════
+function renderBuggsy() { document.getElementById('app').innerHTML = buildBuggsyUI(); updateBuggsy(); addFlavorArt('buggsy'); }
+
+function buildBuggsyUI() {
+  return '<div class="pin-overlay" id="bPinOverlay" style="display:none"><div class="pin-box"><div class="pin-title">🔐 PARENT ACCESS</div><input class="pin-input" type="password" maxlength="6" id="bPinInput" placeholder="••••"><button class="pin-submit" onclick="bSubmitPin()">ENTER</button><button class="pin-cancel" onclick="bCancelPin()">cancel</button><div class="pin-error" id="bPinError" style="display:none">WRONG PIN</div></div></div>'+
+  '<div class="b-hdr"><div style="max-width:720px;margin:0 auto"><div class="b-hdr-top"><div class="b-title"><img src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" class="char-avatar" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px"><span style="display:inline-block;width:16px;height:16px;border:3px solid #ffd700;border-radius:50%;box-shadow:0 0 6px rgba(255,215,0,0.4);vertical-align:middle;margin-right:6px"></span>RING<span> QUEST</span></div><button class="b-parent-btn" id="bParentBtn" onclick="bToggleParent()">⚙ PARENT</button></div>'+
+  '<div class="b-stats" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;align-items:stretch;width:100%"><div class="b-stat"><span class="b-stat-icon"><img src="https://i.ibb.co/d0KSS8zh/1773982478792.png" class="char-stat-img" style="width:28px;height:28px;border-radius:50%;object-fit:cover"></span><div><div class="b-stat-val" id="bRings">0</div><div class="b-stat-lbl">RINGS</div></div></div><div class="b-stat"><span class="b-stat-icon">📺</span><div><div class="b-stat-val" id="bTV" style="color:#38bdf8">0</div><div class="b-stat-lbl">TV MIN</div></div></div><div class="b-stat"><span class="b-stat-icon">💵</span><div><div class="b-stat-val" id="bMoney" style="color:#22c55e">$0</div><div class="b-stat-lbl">EARNED</div></div></div><div class="b-refresh-coin" id="bRefreshCoin" onclick="bRefresh()" style="position:static;width:36px;height:36px;border:5px solid #ffd700;border-radius:50%;box-shadow:0 0 10px rgba(255,215,0,0.5),inset 0 0 4px rgba(255,215,0,0.25);background:linear-gradient(135deg,rgba(255,235,100,0.25) 0%,transparent 50%);cursor:pointer;flex-shrink:0;margin-left:8px"></div></div></div></div>'+
+  '<div class="b-level"><div class="b-lvl-row"><div class="b-lvl-badge" id="bLvlBadge">1</div><div><div class="b-lvl-name" id="bLvlName">Noob</div><div class="b-lvl-xp" id="bLvlXP">0 rings</div></div><div class="b-lvl-next" id="bLvlNext"></div></div><div class="b-bar-track"><div class="b-bar-fill" id="bLvlBar" style="width:0%"></div></div></div>'+
+  '<div class="b-tabs"><button class="b-tab active" id="btab-quests" onclick="bTab(\'quests\')">⚔ QUESTS</button><button class="b-tab" id="btab-rewards" onclick="bTab(\'rewards\')">🏆 REWARDS</button><button class="b-tab" id="btab-events" onclick="bTab(\'events\')">✋ ASK</button><button class="b-tab" id="btab-parent" onclick="bTab(\'parent\')" style="display:none">👑 PARENT</button></div>'+
+  '<div id="bView-quests"><div class="b-sec"><span class="b-sec-title" id="bQLabel">QUESTS</span><span class="b-sec-badge" id="bQBadge">—</span></div><div class="b-two-col"><div class="b-col-main"><div class="b-sec"><span class="b-sec-title" style="color:#4ade80">⚔ CHALLENGES</span></div><div class="b-list" id="bQuestList"></div></div><div class="b-col-pending"><div class="b-sec"><span class="b-sec-title" style="color:#fbbf24">📦 PENDING</span><span class="b-sec-badge" id="bPendBadge">0</span></div><div class="b-list" id="bPendList"></div></div></div></div>'+
+  '<div id="bView-rewards" style="display:none"><div class="b-sec"><span class="b-sec-title">REWARD VAULT</span><span class="b-sec-badge" id="bRBadge">0 RINGS</span></div><div class="b-rewards-grid" id="bRewardGrid"></div></div>'+
+  '<div id="bView-events" style="display:none"><div class="b-sec"><span class="b-sec-title">✋ ASK YOUR PARENTS</span></div><div class="b-list"><div class="ask-bank-display" id="bAskBank">BANK: $0.00</div><div class="ev-form"><div class="ev-field"><label class="ev-label">TYPE</label><div class="ask-types" id="bAskTypes"><div class="ask-type-btn active" data-type="Money" onclick="pickAskType(\'b\',\'Money\',this)">💰 MONEY</div><div class="ask-type-btn" data-type="Purchase" onclick="pickAskType(\'b\',\'Purchase\',this)">🛒 BUY</div><div class="ask-type-btn" data-type="Activity" onclick="pickAskType(\'b\',\'Activity\',this)">🎯 DO</div><div class="ask-type-btn" data-type="Other" onclick="pickAskType(\'b\',\'Other\',this)">💬 OTHER</div></div></div><div class="ev-field"><label class="ev-label">WHAT DO YOU WANT?</label><input class="ev-input" type="text" id="bAskTitle" placeholder="What do you want to ask?"></div><div class="ev-field" id="bAskAmountWrap"><label class="ev-label">HOW MUCH?</label><input class="ev-input" type="number" id="bAskAmount" placeholder="$0.00" min="0" step="0.01"></div><div class="ev-field"><label class="ev-label">TELL YOUR PARENTS WHY</label><textarea class="ev-input" id="bAskNotes" rows="2" placeholder="Tell your parents why!" style="resize:none"></textarea></div><button class="b-claim" style="width:100%;padding:12px;font-size:9px;margin-top:6px" onclick="submitAsk(\'buggsy\')">✋ ASK!</button><div class="ev-status" id="bAskStatus" style="display:none"></div></div><div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title">📋 RECENT ASKS</span></div><div id="bRecentAsks"></div><div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title">🎁 I WANT THIS!</span></div><div id="bAskRewards"></div></div></div>'+
+'<div id="bView-parent" style="display:none;padding-top:8px"><div class="b-sec"><span class="b-sec-title">PARENT CONTROLS</span></div><div class="b-parent-panel"><div class="b-pp-inner"><div class="b-pp-title">⚙ MANAGE QUESTS — BUGGSY</div><div class="b-pp-actions"><button class="b-pp-btn blue" onclick="bReset(\'daily\',\'buggsy\')">🔄 RESET DAILY QUESTS</button><button class="b-pp-btn purple" onclick="bReset(\'weekly\',\'buggsy\')">📅 RESET WEEKLY QUESTS</button><button class="b-pp-btn red" onclick="bReset(\'all\',\'buggsy\')">⚠ RESET ALL — BUGGSY</button></div></div></div></div>'+
+  '';
+}
+
+function updateBuggsy() {
+  var done  = tasks.filter(function(t){return t.completed;});
+  var approved = tasks.filter(function(t){return t.completed && t.parentApproved;});
+  // v1 TBM: Use server-computed balance for ring count
+  // v10 FIX 5: || treats 0 as falsy — Buggsy showed client-computed points at zero balance
+  var rings = Number(balances.balance);
+  if (isNaN(rings)) rings = done.reduce(function(s,t){return s+t.points;},0);
+  // v8: TV + money only count APPROVED tasks — not just claimed
+  // v22: TV reads from Screen Time Bank (deposits - withdrawals), not task tvMinutes
+  var tvBank = (screenTimeBank.TV && typeof screenTimeBank.TV.balance === 'number') ? screenTimeBank.TV.balance : 0;
+  var gamingBank = (screenTimeBank.Gaming && typeof screenTimeBank.Gaming.balance === 'number') ? screenTimeBank.Gaming.balance : 0;
+  var tv    = tvBank + gamingBank;
+  var money = approved.reduce(function(s,t){return s+t.money;},0);
+
+  document.getElementById('bRings').textContent  = rings;
+  document.getElementById('bTV').textContent     = tv;
+  document.getElementById('bMoney').textContent  = '$' + money.toFixed(2);
+  document.getElementById('bRBadge').textContent = rings + ' RINGS';
+
+  // Level
+  var levelInfo = getLevel(rings, 'buggsy');
+  var lvl = levelInfo.level;
+  var idx  = levelInfo.index - 1;
+  var next = (serverLevels || LEVELS_BUGGSY)[idx + 1];
+  var prog = next ? (rings - lvl.min) / (next.min - lvl.min) : 1;
+  var badge = document.getElementById('bLvlBadge');
+  if (badge) {
+    badge.textContent = idx + 1;
+    badge.style.background = lvl.color + '22'; badge.style.color = lvl.color;
+    badge.style.boxShadow = '0 0 10px ' + lvl.color + '44';
+    document.getElementById('bLvlName').textContent = lvl.name;
+    document.getElementById('bLvlName').style.color = lvl.color;
+    document.getElementById('bLvlXP').textContent   = rings + ' rings earned';
+    document.getElementById('bLvlNext').textContent = next ? (next.min - rings) + ' to ' + next.name : '★ MAX';
+    var bar = document.getElementById('bLvlBar');
+    bar.style.width = (Math.min(prog,1) * 100) + '%';
+    bar.style.background = 'linear-gradient(90deg,' + lvl.color + '99,' + lvl.color + ')';
+    bar.style.boxShadow  = '0 0 8px ' + lvl.color + '66';
+  }
+
+  // Quests
+  var ql = document.getElementById('bQuestList');
+  if (ql) {
+    var qlHtml = '';
+    var available = tasks.filter(function(t){return !t.completed;}).sort(function(a,b){
+      if (!!a.required !== !!b.required) return a.required ? -1 : 1;
+      var ta = TIME_ORDER[a.timeOfDay] || 99;
+      var tb = TIME_ORDER[b.timeOfDay] || 99;
+      if (ta !== tb) return ta - tb;
+      return (b.points || 0) - (a.points || 0);
+    });
+    var mustDoAvailable = available.filter(function(t){ return t.required; });
+    var bonusAvailable = available.filter(function(t){ return !t.required; });
+    var pendingTasks = tasks.filter(function(t){return t.completed && !t.parentApproved;});
+    var approvedTasks = tasks.filter(function(t){return t.completed && t.parentApproved;});
+    var req = requiredStatus || { done:0, total:0, allClear:false, currentPeriod:'morning' };
+    var periodLabel = req.currentPeriod === 'morning' ? 'Morning must-dos' : (req.currentPeriod === 'afternoon' ? 'Morning + Afternoon' : 'All must-dos');
+    var leftCount = Math.max((req.total || 0) - (req.done || 0), 0);
+    if (document.getElementById('bQLabel')) {
+      document.getElementById('bQLabel').textContent = periodLabel;
+      document.getElementById('bQBadge').textContent = (req.done || 0) + ' / ' + (req.total || 0) + ' clear';
+    }
+    if (tasks.length === 0) {
+      qlHtml = '<div class="b-empty">NO TASKS FOUND<br>CHECK KH_CHORES TAB</div>';
+    } else {
+      var gateMsg = '';
+      if (req.allClear) {
+        gateMsg = '✅ All must-dos done! Bonus quests available!';
+      } else if (leftCount === 1 && mustDoAvailable.length > 0) {
+        var lastTask = mustDoAvailable[0].task || 'task';
+        var todHint = mustDoAvailable[0].timeOfDay ? mustDoAvailable[0].timeOfDay.replace(/^\d+-/,'') : '';
+        gateMsg = '⚡ Last one! ' + (todHint ? todHint + ': ' : '') + lastTask;
+      } else {
+        var periodHint = req.currentPeriod === 'morning' ? 'morning ' : (req.currentPeriod === 'afternoon' ? 'daytime ' : '');
+        gateMsg = '🔒 Clear ' + leftCount + ' of ' + mustDoAvailable.length + ' ' + periodHint + 'must-do' + (mustDoAvailable.length === 1 ? '' : 's') + ' to unlock rewards!';
+      }
+      qlHtml += '<div style="margin-bottom:10px;padding:10px 12px;border-radius:8px;border:1px solid ' + (req.allClear ? 'rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);color:#86efac' : 'rgba(245,158,11,0.35);background:rgba(245,158,11,0.08);color:#fbbf24') + ';font-family:\'Press Start 2P\', monospace;font-size:7px;line-height:1.8">' + gateMsg + '</div>';
+      qlHtml += '<div class="b-sec" style="padding:0 0 8px;max-width:none;margin:0"><span class="b-sec-title" style="color:#22c55e">✅ MUST DO</span><span class="b-sec-badge">' + mustDoAvailable.length + '</span></div>';
+      if (mustDoAvailable.length === 0) {
+        qlHtml += '<div class="b-empty">All must-dos clear ✅</div>';
+      } else {
+        // v22: Group must-dos by time-of-day with sub-headers
+        var todGroups = [
+          { key:'1-Morning', label:'🌅 MORNING', cls:'morning' },
+          { key:'2-Afternoon', label:'☀️ AFTERNOON', cls:'afternoon' },
+          { key:'3-Evening', label:'🌙 EVENING', cls:'evening' }
+        ];
+        var cardIdx = 0;
+        var ungrouped = [];
+        todGroups.forEach(function(grp) {
+          var grpTasks = mustDoAvailable.filter(function(t){ return t.timeOfDay === grp.key; });
+          if (grpTasks.length > 0) {
+            qlHtml += '<div class="b-tod-header"><span class="b-tod-label ' + grp.cls + '">' + grp.label + '</span></div>';
+            grpTasks.forEach(function(task) { qlHtml += buildBCardHTML(task, cardIdx++); });
+          }
+        });
+        // Tasks with no timeOfDay
+        ungrouped = mustDoAvailable.filter(function(t){ return !t.timeOfDay || !TIME_ORDER[t.timeOfDay]; });
+        if (ungrouped.length > 0) {
+          if (mustDoAvailable.length !== ungrouped.length) {
+            qlHtml += '<div class="b-tod-header"><span class="b-tod-label">📋 OTHER</span></div>';
+          }
+          ungrouped.forEach(function(task) { qlHtml += buildBCardHTML(task, cardIdx++); });
+        }
+      }
+      qlHtml += '<div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title" style="color:#fbbf24">⭐ BONUS QUESTS</span><span class="b-sec-badge">' + bonusAvailable.length + '</span></div>';
+      if (bonusAvailable.length === 0) {
+        qlHtml += '<div class="b-empty">No bonus quests right now</div>';
+      } else {
+        bonusAvailable.forEach(function(task, i) { qlHtml += buildBCardHTML(task, i + mustDoAvailable.length); });
+      }
+    }
+    ql.innerHTML = qlHtml;
+    // v19: Post-render stagger animation
+    var bCards = ql.querySelectorAll('.b-card');
+    for (var ci = 0; ci < bCards.length; ci++) {
+      (function(el, idx) {
+        el.style.opacity = '0'; el.style.transform = 'translateY(7px)';
+        setTimeout(function() {
+          el.style.transition = 'opacity 0.22s ease, transform 0.22s ease';
+          el.style.opacity = '1'; el.style.transform = 'translateY(0)';
+        }, idx * 32);
+      })(bCards[ci], ci);
+    }
+    // v19 Fix 3: Only pending tasks in pending column (no approved)
+    // v19 Fix 5A: Celebration image when pending is empty
+    var pl = document.getElementById('bPendList');
+    if (pl) {
+      var pendBadge = document.getElementById('bPendBadge');
+      if (pendBadge) pendBadge.textContent = pendingTasks.length;
+      if (pendingTasks.length === 0) {
+        pl.innerHTML = '<div style="text-align:center;padding:16px 8px"><img src="https://i.ibb.co/8L0ccf6p/1773982420674.png" alt="Wolfkid celebrating" style="width:80px;height:80px;object-fit:contain;margin-bottom:8px" onerror="this.style.display=\'none\'"><div style="font-family:\'Press Start 2P\',monospace;font-size:7px;color:#fbbf24;line-height:1.6">ALL CLEAR!<br>NO QUESTS WAITING!</div></div>';
+      } else {
+        var pendHtml = '';
+        pendingTasks.forEach(function(task, i) { pendHtml += buildBCardHTML(task, i); });
+        pl.innerHTML = pendHtml;
+      }
+    }
+    // v19 Fix 5B: One-time allClear celebration
+    if (req.allClear && !window._allClearCelebrated) {
+      window._allClearCelebrated = true;
+      showBXP({clientX: window.innerWidth/2, clientY: window.innerHeight/3}, 'ALL CLEAR!');
+    }
+  }
+
+  // v1 TBM: Rewards from server
+  var rg = document.getElementById('bRewardGrid');
+  if (rg) {
+    rg.innerHTML = '';
+    rewards.forEach(function(r) {
+      var u = rings >= r.cost;
+      var d = document.createElement('div');
+      d.className = 'b-reward ' + (u ? 'unlocked' : '');
+      d.innerHTML = '<div class="b-reward-icon">' + r.icon + '</div><div class="b-reward-name">' + r.name + '</div><div class="b-reward-cost">' + r.cost + ' RINGS</div><div class="b-reward-status ' + (u?'unlocked':'locked') + '">' + (u?'✓ UNLOCKED':rings+'/'+r.cost) + '</div>' + (u ? '<button class="b-redeem-btn" onclick="bRedeem(\'' + r.id + '\',event)">🎁 REDEEM</button>' : '');
+      rg.appendChild(d);
+    });
+  }
+  // v17: Update Ask tab
+  updateAskTab('buggsy', 'b');
+}
+
+// v19 Fix 1: Returns HTML string instead of DOM element
+function buildBCardHTML(task, i) {
+  var cat   = CAT[task.category] || CAT.General;
+  var freqC = FREQ_C[task.frequency] || '#94a3b8';
+  var cls = 'b-card' + (task.completed ? ' done' : '');
+  var hasBonus = task.multiplier && task.multiplier > 1;
+  var bonusBadge = hasBonus ? '<div class="b-bonus-badge">⚡ '+task.multiplier+'x BONUS</div>' : '';
+  var ptsDisplay = hasBonus ? '<div class="b-pts">'+task.points+'</div><div class="b-pts-base">'+task.basePoints+'</div>' : '<div class="b-pts">'+task.points+'</div>';
+  var action = '';
+  if (task.completed && task.parentApproved) { action = '<div class="b-done-stamp">✓ DONE<br>APPROVED</div>'; }
+  else if (task.completed && !task.parentApproved) {
+    action = parentMode
+      ? '<button class="b-approve" onclick="bApprove(\''+task.taskID+'\',event)" style="margin-bottom:4px">✓ APPROVE</button><button class="b-approve-bonus" onclick="bGrantBonus(\''+task.taskID+'\',2,event)">⚡ 2x BONUS</button><button class="b-approve-bonus" onclick="bGrantBonus(\''+task.taskID+'\',1.5,event)" style="margin-top:3px">⚡ 1.5x</button>'
+      : '<div class="b-pending">📦 CLAIMED<br>PENDING</div>';
+  } else {
+    action = parentMode
+      ? (task.required
+        ? '<button class="b-approve" onclick="bOverride(\''+task.taskID+'\',event)">↪ CLEAR</button>'
+        : '<div class="b-pending">⏳ NOT CLAIMED<br>YET</div>')
+      : '<button class="b-claim" onclick="bClaim(\''+task.taskID+'\',event)">CLAIM<br>RINGS</button>';
+  }
+  return '<div class="'+cls+'"><div class="b-icon">'+task.icon+'</div><div class="b-info"><div class="b-name">'+task.task+'</div><div class="b-tags"><span class="b-tag" style="color:'+cat.c+';border-color:'+cat.c+';background:'+cat.bg+'">'+task.category+'</span><span class="b-tag" style="color:'+freqC+';border-color:'+freqC+'40">'+task.frequency+'</span>' + (task.timeOfDay ? '<span class="b-tag" style="color:#818cf8;border-color:rgba(129,140,248,0.35);background:rgba(129,140,248,0.08)">' + task.timeOfDay.replace(/^\d+-/,'') + '</span>' : '') + (task.required ? '<span class="b-tag" style="color:#22c55e;border-color:rgba(34,197,94,0.35);background:rgba(34,197,94,0.08)">MUST DO</span>' : '') + '</div>'+bonusBadge+'</div><div class="b-right">'+ptsDisplay+'<div class="b-pts-lbl">RINGS</div>'+action+'</div></div>';
+}
+
+// v1 TBM: All write operations use kh* prefixed functions
+function bClaim(taskID, e) {
+  e.stopPropagation();
+  if (_fetching) return;
+  var t = tasks.find(function(t){return t.taskID === taskID;});
+  if (!t || t.completed) return;
+  _fetching = true;
+  var btn = e.target; if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  t.completed = true;
+  updateBuggsy();
+  showBXP(e, '📦 PENDING!');
+  bSendRingsToCounter(e, Math.max(3, Math.min(6, t.points || 3)));
+  setSyncState('saving', 'Claiming...');
+  google.script.run
+    .withSuccessHandler(function(){ _fetching = false; setSyncState('synced', 'Claimed!'); })
+    .withFailureHandler(function(err){ _fetching = false; setSyncState('failed', 'Try again'); showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.completed=false; updateBuggsy(); })
+    .khCompleteTaskSafe(t.rowIndex, t.taskID);
+}
+// ── v10 FIX 4: bApprove — added return value check for duplicate guard ──
+function bApprove(taskID, e) {
+  e.stopPropagation();
+  if (_fetching) return;
+  var t = tasks.find(function(t){return t.taskID === taskID;});
+  if (!t || t.parentApproved) return;
+  _fetching = true;
+  t.parentApproved = true; updateBuggsy();
+  google.script.run
+    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){t.parentApproved=false; updateBuggsy(); return;} showBXP(e, '✓ APPROVED!'); })
+    .withFailureHandler(function(err){ _fetching = false; showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.parentApproved=false; updateBuggsy(); })
+    .khApproveTaskSafe(t.rowIndex, t.taskID);
+}
+// ── v10 FIX 1: bGrantBonus — changed khCompleteTaskWithBonusSafe → khApproveWithBonusSafe ──
+function bGrantBonus(taskID, multiplier, e) {
+  e.stopPropagation();
+  if (_fetching) return;
+  var t = tasks.find(function(t){return t.taskID === taskID;});
+  if (!t || !t.completed || t.parentApproved) return;
+  _fetching = true;
+  var snap = { parentApproved: t.parentApproved, multiplier: t.multiplier, points: t.points };
+  t.parentApproved = true; t.multiplier = multiplier; t.points = Math.round(t.basePoints * multiplier);
+  updateBuggsy();
+  showBXP(e, '⚡ BONUS!');
+  google.script.run
+    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '↩ ALREADY DONE'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateBuggsy(); return;} })
+    .withFailureHandler(function(err){ _fetching = false; showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateBuggsy(); })
+    .khApproveWithBonusSafe(t.rowIndex, multiplier, t.taskID);
+}
+function bOverride(taskID, e) {
+  e.stopPropagation();
+  if (_fetching) return;
+  var t = tasks.find(function(t){return t.taskID === taskID;});
+  if (!t || t.completed || !t.required) return;
+  _fetching = true;
+  t.completed = true; t.parentApproved = true;
+  updateBuggsy();
+  showBXP(e, '↪ CLEARED');
+  google.script.run
+    .withSuccessHandler(function(){ _fetching = false; loadKidData(); })
+    .withFailureHandler(function(err){ _fetching = false; showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.completed = false; t.parentApproved = false; updateBuggsy(); })
+    .khOverrideTaskSafe(t.rowIndex, t.taskID);
+}
+function bReset(mode, child) {
+  if (!confirm('Reset ' + mode + ' quests for ' + child + '?')) return;
+  google.script.run.withSuccessHandler(function(){loadKidData();}).khResetTasksSafe(mode, child);
+}
+function showBXP(e, text) {
+  var p = document.createElement('div'); p.className = 'xp-pop'; p.textContent = text;
+  p.style.left = (e.clientX-30)+'px'; p.style.top = (e.clientY-10)+'px';
+  document.body.appendChild(p); setTimeout(function(){p.remove();}, 1300);
+}
+function bSendRingsToCounter(e, count) {
+  if (!e) return;
+  var target = document.getElementById('bRings');
+  if (!target) return;
+  var tr = target.getBoundingClientRect();
+  var tx = tr.left + tr.width / 2;
+  var ty = tr.top + tr.height / 2;
+  var stat = target.closest('.b-stat');
+  if (stat) {
+    stat.classList.add('collect-hit');
+    setTimeout(function(){ stat.classList.remove('collect-hit'); }, 520);
+  }
+  for (var i = 0; i < count; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var ring = document.createElement('div');
+        ring.className = 'b-claim-ring';
+        ring.style.left = e.clientX + 'px';
+        ring.style.top = e.clientY + 'px';
+        ring.style.setProperty('--dx', (tx - e.clientX + (Math.random() * 18 - 9)) + 'px');
+        ring.style.setProperty('--dy', (ty - e.clientY + (Math.random() * 14 - 7)) + 'px');
+        document.body.appendChild(ring);
+        setTimeout(function(){ ring.remove(); }, 820);
+      }, idx * 55);
+    })(i);
+  }
+}
+// v22: Qty picker for Buggsy rewards
+var _qtyState = { rewardId:null, qty:1, cost:0, max:1, child:'' };
+
+function bRedeem(rewardId, e) {
+  if (e) e.stopPropagation();
+  if (_fetching) return;
+  var r = rewards.find(function(r){return r.id === rewardId;});
+  if (!r || balances.balance < r.cost) return;
+  var maxQty = Math.min(10, Math.floor(balances.balance / r.cost));
+  _qtyState = { rewardId:rewardId, qty:1, cost:r.cost, max:maxQty, child:'buggsy', icon:r.icon, name:r.name };
+  showQtyPicker('buggsy');
+}
+function showQtyPicker(child) {
+  var s = _qtyState;
+  var isJJ = child === 'jj';
+  var cls = isJJ ? ' jj-qty' : '';
+  var currency = isJJ ? '⭐' : 'RINGS';
+  var d = document.createElement('div');
+  d.className = 'qty-overlay';
+  d.id = 'qtyOverlay';
+  d.onclick = function(ev){ if(ev.target === d) closeQtyPicker(); };
+  d.innerHTML = '<div class="qty-box' + cls + '">' +
+    '<div class="qty-title">HOW MANY?</div>' +
+    '<div class="qty-icon">' + (s.icon || '🎁') + '</div>' +
+    '<div class="qty-name">' + (s.name || 'Reward') + '</div>' +
+    '<div class="qty-cost">' + s.cost + ' ' + currency + ' each</div>' +
+    '<div class="qty-controls">' +
+      '<div class="qty-btn" onclick="qtyChange(-1)">−</div>' +
+      '<div class="qty-val" id="qtyVal">1</div>' +
+      '<div class="qty-btn" onclick="qtyChange(1)">+</div>' +
+    '</div>' +
+    '<div class="qty-total" id="qtyTotal">Total: ' + s.cost + ' ' + currency + '</div>' +
+    '<div><button class="qty-confirm" onclick="qtyConfirm()">🎁 REDEEM</button><button class="qty-cancel" onclick="closeQtyPicker()">CANCEL</button></div>' +
+  '</div>';
+  document.body.appendChild(d);
+}
+function qtyChange(delta) {
+  _qtyState.qty = Math.max(1, Math.min(_qtyState.max, _qtyState.qty + delta));
+  var currency = _qtyState.child === 'jj' ? '⭐' : 'RINGS';
+  document.getElementById('qtyVal').textContent = _qtyState.qty;
+  document.getElementById('qtyTotal').textContent = 'Total: ' + (_qtyState.qty * _qtyState.cost) + ' ' + currency;
+}
+function closeQtyPicker() {
+  var o = document.getElementById('qtyOverlay');
+  if (o) o.remove();
+}
+function qtyConfirm() {
+  var s = _qtyState;
+  closeQtyPicker();
+  if (!s.rewardId || s.qty < 1) return;
+  _fetching = true;
+  var totalCost = s.cost * s.qty;
+  var oldBal = balances.balance;
+  balances.balance -= totalCost;
+  if (s.child === 'jj') { updateJJ(); } else { updateBuggsy(); }
+  google.script.run
+    .withSuccessHandler(function(res){
+      _fetching = false;
+      if (res && res.status === 'insufficient') {
+        balances.balance = oldBal;
+        if (s.child === 'jj') { updateJJ(); jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Not enough! 😢'); } else { updateBuggsy(); showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ NOT ENOUGH!'); }
+        return;
+      }
+      // Success — reload to get fresh screen time balances
+      loadKidData();
+    })
+    .withFailureHandler(function(err){
+      _fetching = false;
+      if (s.child === 'jj') { jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); } else { showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); }
+      balances.balance = oldBal;
+      if (s.child === 'jj') { updateJJ(); } else { updateBuggsy(); }
+    })
+    .khRedeemRewardSafe(s.child, s.rewardId, s.qty);
+}
+function bRefresh() {
+  _fetching = false; // v23: Force-clear in case stuck from prior action
+  var coin = document.getElementById('bRefreshCoin');
+  if (coin) { coin.classList.add('spinning'); setTimeout(function(){ coin.classList.remove('spinning'); }, 950); }
+  var coinEl = document.getElementById('bRefreshCoin');
+  if (coinEl) {
+    var rc = coinEl.getBoundingClientRect();
+    var cx = rc.left + rc.width / 2, cy = rc.top + rc.height / 2;
+    for (var i = 0; i < 8; i++) {
+      (function(idx) {
+        setTimeout(function() {
+          var r = document.createElement('div'); r.className = 'b-ring-particle';
+          var angle = (idx / 8) * Math.PI * 2;
+          var dist = 52 + Math.random() * 38;
+          r.style.left = (cx - 9) + 'px'; r.style.top = (cy - 9) + 'px';
+          r.style.setProperty('--tx', (Math.cos(angle) * dist) + 'px');
+          r.style.setProperty('--ty', (Math.sin(angle) * dist) + 'px');
+          document.body.appendChild(r); setTimeout(function(){ r.remove(); }, 850);
+        }, idx * 32);
+      })(i);
+    }
+    var phrases = ['WHOOSH!','GOTTA GO FAST!','RING!','SPEED!','ZOOM!'];
+    var wOff = [[0,-58],[-58,-28],[58,-28],[-32,-72],[32,-72]];
+    wOff.forEach(function(off, i) {
+      setTimeout(function() {
+        var w = document.createElement('div'); w.className = 'b-refresh-whoosh';
+        w.textContent = phrases[i];
+        w.style.left = (cx + off[0] - 22) + 'px'; w.style.top = (cy + off[1]) + 'px';
+        document.body.appendChild(w); setTimeout(function(){ w.remove(); }, 900);
+      }, i * 60);
+    });
+  }
+  // v23: Loading flash so kid sees something is happening
+  var ql = document.getElementById('bQuestList');
+  if (ql) ql.style.opacity = '0.5';
+  loadKidData();
+}
+function bTab(tab) {
+  ['quests','rewards','events','parent'].forEach(function(t){
+    var btn = document.getElementById('btab-'+t); var view = document.getElementById('bView-'+t);
+    if(btn) btn.classList.toggle('active',t===tab); if(view) view.style.display=t===tab?'block':'none';
+  });
+}
+function bToggleParent() {
+  if (parentMode) {
+    parentMode = false; document.getElementById('bParentBtn').classList.remove('active');
+    document.getElementById('btab-parent').style.display = 'none'; bTab('quests'); updateBuggsy();
+  } else {
+    document.getElementById('bPinOverlay').style.display = 'flex';
+    setTimeout(function(){document.getElementById('bPinInput').focus();}, 80);
+  }
+}
+function bSubmitPin() {
+  var pin = document.getElementById('bPinInput').value;
+  document.getElementById('bPinInput').value = '';
+  document.getElementById('bPinError').style.display = 'none';
+  google.script.run.withSuccessHandler(function(raw) {
+    var ok = safeParse(raw);
+    if (ok) {
+      document.getElementById('bPinOverlay').style.display = 'none';
+      parentMode = true; document.getElementById('bParentBtn').classList.add('active');
+      document.getElementById('btab-parent').style.display = 'block'; bTab('parent'); updateBuggsy();
+    } else { document.getElementById('bPinError').style.display = 'block'; }
+  }).khVerifyPinSafe(pin);
+}
+function bCancelPin() { document.getElementById('bPinOverlay').style.display='none'; document.getElementById('bPinInput').value=''; }
+
+// ══════════════════════════════════════════
+//  JJ RENDER
+// ══════════════════════════════════════════
+function renderJJ() { document.getElementById('app').innerHTML = buildJJUI(); updateJJ(); addFlavorArt('jj'); }
+
+function buildJJUI() {
+  return '<div class="jj-pin-overlay" id="jjPinOverlay" style="display:none"><div class="jj-pin-box"><div class="jj-pin-title">🔐 Parent Access</div><input class="jj-pin-input" type="password" maxlength="6" id="jjPinInput" placeholder="••••"><button class="jj-pin-submit" onclick="jjSubmitPin()">Let Me In! ✨</button><button class="jj-pin-cancel" onclick="jjCancelPin()">never mind</button><div class="jj-pin-error" id="jjPinError" style="display:none">Hmm, try again! 💕</div></div></div>'+
+  '<div class="jj-wrap"><div class="jj-hdr"><div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="jj-parent-btn" id="jjParentBtn" onclick="jjToggleParent()">⚙ Parent</button></div><img src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" class="char-avatar" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-bottom:4px"><span class="jj-crown">👑</span><div class="jj-title">JJ\'s Sparkle Stars</div><div class="jj-sub">Little Diva Helper Board ✨</div></div>'+
+  '<div style="display:flex;align-items:center;gap:10px;margin:0 14px 16px"><div class="jj-stat-pills" style="flex:1;margin:0"><div class="jj-stat-pill"><div class="jj-stat-pill-icon">⭐</div><div class="jj-stat-pill-val" id="jjStars">0</div><div class="jj-stat-pill-lbl">Stars</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">📺</div><div class="jj-stat-pill-val" id="jjTV">0m</div><div class="jj-stat-pill-lbl">TV</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">🍪</div><div class="jj-stat-pill-val" id="jjSnack">0</div><div class="jj-stat-pill-lbl">Snacks</div></div></div><img src="https://i.ibb.co/5h2hYsNp/1773982672701.png" class="char-stat-img" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0"><div class="jj-refresh-star" id="jjRefreshStar" onclick="jjRefresh()" style="position:static;flex-shrink:0">✨</div></div>'+
+  '<div style="margin:0 14px 12px;text-align:center"><div id="jjLevelChip" style="display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.22);font-size:13px;font-weight:800;color:#fde68a;letter-spacing:1px;text-transform:uppercase">LEVEL 1 · SPROUT</div></div>'+
+  '<div class="jj-progress-wrap"><div class="jj-prog-label">Next reward unlocks at <span id="jjNextCost">10</span> ⭐<span id="jjProgNums">0 / 10</span></div><div class="jj-prog-track"><div class="jj-prog-fill" id="jjProgBar" style="width:0%"></div></div></div>'+
+  '<div class="jj-tabs"><button class="jj-tab active" id="jjtab-quests" onclick="jjTab(\'quests\')">🌸 Jobs</button><button class="jj-tab" id="jjtab-rewards" onclick="jjTab(\'rewards\')">🎀 Prizes</button><button class="jj-tab" id="jjtab-events" onclick="jjTab(\'events\')">✨ Ask</button><button class="jj-tab" id="jjtab-parent" onclick="jjTab(\'parent\')" style="display:none">⚙ Parent</button></div>'+
+  '<div id="jjView-quests" style="margin-top:12px"><div class="jj-sec-title">Your Sparkle Jobs! 💕</div><div class="jj-two-col"><div class="jj-col-main"><div class="jj-sec-title" style="color:#c084fc">🌸 Sparkle Jobs</div><div class="jj-list" id="jjTaskList"></div></div><div class="jj-col-pending"><div class="jj-sec-title" style="color:#f9a8d4">✨ Pending</div><div class="jj-list" id="jjPendList"></div></div></div></div>'+
+  '<div id="jjView-rewards" style="display:none;margin-top:12px"><div class="jj-sec-title">Princess Prizes! 👑</div><div class="jj-rewards" id="jjRewards"></div></div>'+
+  '<div id="jjView-events" style="display:none;margin-top:12px"><div class="jj-sec-title">Ask Your Parents! ✨</div><div class="jj-list" style="padding:0 14px"><div class="ask-bank-display" id="jjAskBank">Bank: $0.00</div><div class="ev-form"><div class="ev-field"><label class="ev-label">What kind of ask?</label><div class="ask-types" id="jjAskTypes"><div class="ask-type-btn active" data-type="Money" onclick="pickAskType(\'jj\',\'Money\',this)">💰 Money</div><div class="ask-type-btn" data-type="Purchase" onclick="pickAskType(\'jj\',\'Purchase\',this)">🛒 Buy</div><div class="ask-type-btn" data-type="Activity" onclick="pickAskType(\'jj\',\'Activity\',this)">🎯 Do</div><div class="ask-type-btn" data-type="Other" onclick="pickAskType(\'jj\',\'Other\',this)">💬 Other</div></div></div><div class="ev-field"><label class="ev-label">What do you want?</label><input class="ev-input" type="text" id="jjAskTitle" placeholder="What do you want to ask?"></div><div class="ev-field" id="jjAskAmountWrap"><label class="ev-label">How much?</label><input class="ev-input" type="number" id="jjAskAmount" placeholder="$0.00" min="0" step="0.01"></div><div class="ev-field"><label class="ev-label">Tell your parents why!</label><textarea class="ev-input" id="jjAskNotes" rows="2" placeholder="Tell your parents why!" style="resize:none"></textarea></div><button class="jj-do-it-btn" style="width:100%;padding:14px;font-size:15px;margin-top:6px" onclick="submitAsk(\'jj\')">✨ Ask!</button><div class="ev-status" id="jjAskStatus" style="display:none"></div></div><div class="jj-sec-title" style="padding-top:8px">Recent Asks 📋</div><div id="jjRecentAsks"></div><div class="jj-sec-title" style="padding-top:8px">I Want This! 🎁</div><div id="jjAskRewards"></div></div></div>'+
+'<div id="jjView-parent" style="display:none;margin-top:12px"><div class="jj-sec-title">Parent Controls 🔐</div><div class="jj-parent-wrap"><div class="jj-parent-inner"><div class="jj-parent-title">⚙ JJ\'s Chore Settings</div><div class="jj-parent-actions"><button class="jj-pab pink" onclick="jjReset(\'daily\',\'jj\')">🌸 Reset Today\'s Jobs</button><button class="jj-pab purple" onclick="jjReset(\'weekly\',\'jj\')">💜 Reset Weekly Jobs</button><button class="jj-pab red" onclick="jjReset(\'all\',\'jj\')">🗑️ Reset All of JJ\'s Jobs</button></div></div></div></div></div>'+
+  '';
+}
+
+function updateJJ() {
+  var approved = tasks.filter(function(t){return t.completed && t.parentApproved;});
+  var stars = Number(balances && balances.balance);
+  if (isNaN(stars)) stars = approved.reduce(function(s,t){return s+t.points;},0);
+  var earnedTV = approved.reduce(function(s,t){return s + (t.tvMinutes || 0);},0);
+  // v22: TV reads from Screen Time Bank, not task tvMinutes
+  var jjTvBank = (screenTimeBank.TV && typeof screenTimeBank.TV.balance === 'number') ? screenTimeBank.TV.balance : 0;
+  var jjGamingBank = (screenTimeBank.Gaming && typeof screenTimeBank.Gaming.balance === 'number') ? screenTimeBank.Gaming.balance : 0;
+  var displayTV = jjTvBank + jjGamingBank;
+  var earnedSnack = approved.reduce(function(s,t){return s + (t.snacks || 0);},0);
+  document.getElementById('jjStars').textContent    = stars;
+  document.getElementById('jjTV').textContent       = displayTV + 'm';
+  document.getElementById('jjSnack').textContent    = earnedSnack;
+  var jjLevelInfo = getLevel(stars, 'jj');
+  var jjLevel = jjLevelInfo.level;
+  var jjChip = document.getElementById('jjLevelChip');
+  if (jjChip) {
+    jjChip.textContent = 'LEVEL ' + jjLevelInfo.index + ' · ' + jjLevel.name.toUpperCase();
+    jjChip.style.color = jjLevel.color;
+    jjChip.style.borderColor = jjLevel.color + '66';
+    jjChip.style.boxShadow = '0 0 18px ' + jjLevel.color + '33';
+    jjChip.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.12), ' + jjLevel.color + '22)';
+  }
+  // Progress to next reward
+  var nextR = rewards.find(function(r){return stars < r.cost;}) || rewards[rewards.length - 1] || {cost:10};
+  var nextIdx = rewards.indexOf(nextR);
+  var prevCost = nextIdx > 0 ? rewards[nextIdx-1].cost : 0;
+  var prog = Math.min(((stars - prevCost) / (nextR.cost - prevCost)) * 100, 100);
+  document.getElementById('jjNextCost').textContent = nextR.cost;
+  document.getElementById('jjProgNums').textContent = '  ' + stars + ' / ' + nextR.cost;
+  document.getElementById('jjProgBar').style.width  = prog + '%';
+  // Task list
+  var tl = document.getElementById('jjTaskList');
+  if (tl) {
+    var tlHtml = '';
+    var available = tasks.filter(function(t){return !t.completed;}).sort(function(a,b){
+      if (!!a.required !== !!b.required) return a.required ? -1 : 1;
+      var ta = TIME_ORDER[a.timeOfDay] || 99;
+      var tb = TIME_ORDER[b.timeOfDay] || 99;
+      if (ta !== tb) return ta - tb;
+      return (b.points || 0) - (a.points || 0);
+    });
+    var mustDoAvailable = available.filter(function(t){ return t.required; });
+    var bonusAvailable = available.filter(function(t){ return !t.required; });
+    var pendingTasks = tasks.filter(function(t){return t.completed && !t.parentApproved;});
+    var approvedTasks = tasks.filter(function(t){return t.completed && t.parentApproved;});
+    var req = requiredStatus || { done:0, total:0, allClear:false, currentPeriod:'morning' };
+    var periodLabel = req.currentPeriod === 'morning' ? 'Morning must-dos' : (req.currentPeriod === 'afternoon' ? 'Morning + Afternoon' : 'All must-dos');
+    var leftCount = Math.max((req.total || 0) - (req.done || 0), 0);
+    if (tasks.length === 0) {
+      tlHtml = '<div style="text-align:center;padding:30px;font-size:16px;color:rgba(255,255,255,0.4);font-weight:800;">No jobs yet! Parent will add some 💕</div>';
+    } else {
+      var jjGateMsg = '', jjGateDetail = '';
+      if (req.allClear) {
+        jjGateMsg = periodLabel + ' · ' + (req.done || 0) + '/' + (req.total || 0) + ' clear ✅';
+        jjGateDetail = 'All must-dos done! Bonus jobs are open! ✨';
+      } else if (leftCount === 1 && mustDoAvailable.length > 0) {
+        var lastTask = mustDoAvailable[0].task || 'task';
+        var todHint = mustDoAvailable[0].timeOfDay ? mustDoAvailable[0].timeOfDay.replace(/^\d+-/,'') : '';
+        jjGateMsg = periodLabel + ' · ' + (req.done || 0) + '/' + (req.total || 0) + ' clear';
+        jjGateDetail = '⚡ Last one! ' + (todHint ? todHint + ': ' : '') + lastTask;
+      } else {
+        var periodHint = req.currentPeriod === 'morning' ? 'morning ' : (req.currentPeriod === 'afternoon' ? 'daytime ' : '');
+        jjGateMsg = periodLabel + ' · ' + (req.done || 0) + '/' + (req.total || 0) + ' clear';
+        jjGateDetail = 'Clear ' + leftCount + ' of ' + mustDoAvailable.length + ' ' + periodHint + 'must-do' + (mustDoAvailable.length === 1 ? '' : 's') + ' to unlock rewards!';
+      }
+      tlHtml += '<div style="margin:0 14px 10px;padding:12px 14px;border-radius:18px;border:2px solid ' + (req.allClear ? 'rgba(134,239,172,0.45);background:rgba(134,239,172,0.12);color:#86efac' : 'rgba(253,230,138,0.4);background:rgba(253,230,138,0.12);color:#fde68a') + ';font-size:14px;font-weight:800;text-align:center">' + jjGateMsg + '<div style="font-size:12px;font-weight:700;margin-top:4px">' + jjGateDetail + '</div></div>';
+      tlHtml += '<div class="jj-sec-title" style="color:#86efac;padding-top:0">✅ Must-Do</div>';
+      if (mustDoAvailable.length === 0) {
+        tlHtml += '<div style="text-align:center;padding:16px;font-size:14px;color:rgba(255,255,255,0.55);font-weight:800;">All must-dos clear ✅</div>';
+      } else {
+        // v22: Group must-dos by time-of-day with sub-headers
+        var jjTodGroups = [
+          { key:'1-Morning', label:'🌅 Morning', cls:'morning' },
+          { key:'2-Afternoon', label:'☀️ Afternoon', cls:'afternoon' },
+          { key:'3-Evening', label:'🌙 Evening', cls:'evening' }
+        ];
+        var jjCardIdx = 0;
+        jjTodGroups.forEach(function(grp) {
+          var grpTasks = mustDoAvailable.filter(function(t){ return t.timeOfDay === grp.key; });
+          if (grpTasks.length > 0) {
+            tlHtml += '<div style="padding:6px 14px 2px;font-size:15px;font-weight:800;color:' + (grp.cls === 'morning' ? '#fde68a' : grp.cls === 'afternoon' ? '#93c5fd' : '#c4b5fd') + '">' + grp.label + '</div>';
+            grpTasks.forEach(function(t) { tlHtml += buildJJCardHTML(t, jjCardIdx++); });
+          }
+        });
+        // Tasks with no timeOfDay
+        var jjUngrouped = mustDoAvailable.filter(function(t){ return !t.timeOfDay || !TIME_ORDER[t.timeOfDay]; });
+        if (jjUngrouped.length > 0) {
+          if (mustDoAvailable.length !== jjUngrouped.length) {
+            tlHtml += '<div style="padding:6px 14px 2px;font-size:15px;font-weight:800;color:#e2e8f0">📋 Other</div>';
+          }
+          jjUngrouped.forEach(function(t) { tlHtml += buildJJCardHTML(t, jjCardIdx++); });
+        }
+      }
+      tlHtml += '<div class="jj-sec-title" style="color:#fde68a">⭐ Bonus Jobs</div>';
+      if (bonusAvailable.length === 0) {
+        tlHtml += '<div style="text-align:center;padding:16px;font-size:14px;color:rgba(255,255,255,0.45);font-weight:800;">No bonus jobs right now 💕</div>';
+      } else {
+        bonusAvailable.forEach(function(t,i){ tlHtml += buildJJCardHTML(t, i + mustDoAvailable.length); });
+      }
+    }
+    tl.innerHTML = tlHtml;
+    // v19: Post-render stagger animation
+    var jCards = tl.querySelectorAll('.jj-card');
+    for (var ci = 0; ci < jCards.length; ci++) {
+      (function(el, idx) {
+        el.style.opacity = '0'; el.style.transform = 'translateY(8px)';
+        setTimeout(function() {
+          el.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+          el.style.opacity = '1'; el.style.transform = 'translateY(0)';
+        }, idx * 40);
+      })(jCards[ci], ci);
+    }
+    // v19 Fix 3: Only pending tasks in pending column (no approved)
+    // v19 Fix 5A: Celebration image when pending is empty
+    var jpl = document.getElementById('jjPendList');
+    if (jpl) {
+      if (pendingTasks.length === 0) {
+        jpl.innerHTML = '<div style="text-align:center;padding:16px 8px"><img src="https://i.ibb.co/9md3x6zp/1773982606233.png" alt="JJ celebrating" style="width:80px;height:80px;object-fit:contain;margin-bottom:8px" onerror="this.style.display=\'none\'"><div style="font-size:14px;color:rgba(255,255,255,0.55);font-weight:800;">All done! Nothing waiting! 💕</div></div>';
+      } else {
+        var jPendHtml = '';
+        pendingTasks.forEach(function(t,i){ jPendHtml += buildJJCardHTML(t, i); });
+        jpl.innerHTML = jPendHtml;
+      }
+      // v19 Fix 5B: One-time allClear celebration
+      if (req.allClear && !window._allClearCelebrated) {
+        window._allClearCelebrated = true;
+        jjConfetti(15);
+        jjPointsBanner('ALL CLEAR! ✨');
+      }
+    }
+  }
+  // v1 TBM: Rewards from server
+  var rg = document.getElementById('jjRewards');
+  if (rg) {
+    rg.innerHTML = '';
+    var unlockedNow = [];
+    var nextUnlockState = {};
+    var canCelebrateUnlocks = Object.keys(jjRewardUnlockState).length > 0;
+    rewards.forEach(function(r) {
+      var u = stars >= r.cost;
+      var wasUnlocked = jjRewardUnlockState[r.id] === true;
+      nextUnlockState[r.id] = u;
+      if (canCelebrateUnlocks && u && !wasUnlocked && stars > 0) unlockedNow.push(r);
+      var d = document.createElement('div'); d.className = 'jj-reward-card ' + (u?'unlocked':'');
+      d.innerHTML = '<span class="jj-reward-emoji">'+r.icon+'</span><div class="jj-reward-name">'+r.name+'</div><div class="jj-reward-cost">'+r.cost+' ⭐</div><div class="jj-reward-status '+(u?'unlocked':'locked')+'">'+(u?'🌟 UNLOCKED!':stars+' / '+r.cost)+'</div>' + (u ? '<button class="jj-redeem-btn" onclick="jjRedeem(\'' + r.id + '\',event)">🎁 Redeem!</button>' : '');
+      rg.appendChild(d);
+    });
+    jjRewardUnlockState = nextUnlockState;
+    if (unlockedNow.length) {
+      jjConfetti(22);
+      jjPointsBanner('🌟 UNLOCKED!');
+    }
+  }
+  // v17: Update Ask tab
+  updateAskTab('jj', 'jj');
+}
+
+// v19 Fix 1: Returns HTML string instead of DOM element
+function buildJJCardHTML(task, i) {
+  var cls = 'jj-card' + (task.completed ? ' done' : '');
+  var hasBonus = task.multiplier && task.multiplier > 1;
+  var bonusBadge = hasBonus ? '<div class="jj-bonus-badge">⚡ '+task.multiplier+'x Bonus!</div>' : '';
+  var action = '';
+  if (task.completed && task.parentApproved) { action = '<div class="jj-done-badge">🌟 Done!<br>Approved ✓</div>'; }
+  else if (task.completed && !task.parentApproved) {
+    action = parentMode
+      ? '<button class="jj-approve-btn" onclick="jjApprove(\''+task.taskID+'\',event)">✓ Approve!</button><button class="jj-approve-bonus-btn" onclick="jjGrantBonus(\''+task.taskID+'\',2,event)">⚡ 2x Bonus!</button><button class="jj-approve-bonus-btn" onclick="jjGrantBonus(\''+task.taskID+'\',1.5,event)" style="font-size:11px">⚡ 1.5x</button>'
+      : '<div class="jj-pending-badge">✨ LOOK AT ME! ✨</div>';
+  } else {
+    action = parentMode
+      ? (task.required
+        ? '<button class="jj-approve-btn" onclick="jjOverride(\''+task.taskID+'\',event)">↪ Clear</button>'
+        : '<div class="jj-pending-badge">⏳ Waiting on claim</div>')
+      : '<button class="jj-do-it-btn" onclick="jjClaim(\''+task.taskID+'\',event)">I Did It! ✨</button>';
+  }
+  var todLabel = task.timeOfDay ? task.timeOfDay.replace(/^\d+-/,'') : '';
+  return '<div class="'+cls+'"><div class="jj-card-icon">'+task.icon+'</div><div class="jj-card-body"><div class="jj-card-name">'+task.task+'</div><div class="jj-card-cat">'+task.category + (todLabel ? ' · ' + todLabel : '') + (task.required ? ' · MUST DO' : '') + '</div>'+bonusBadge+'</div><div class="jj-card-right"><div class="jj-pts-badge"><div class="jj-pts-num">'+task.points+'</div><div class="jj-pts-star">⭐ stars</div></div>'+action+'</div></div>';
+}
+
+function jjClaim(taskID, e) {
+  e.stopPropagation(); if (_fetching) return;
+  var t = tasks.find(function(t){return t.taskID===taskID;});
+  if (!t||t.completed) return;
+  _fetching = true;
+  var btn = e.target; if (btn) { btn.disabled = true; btn.innerHTML = '⭐'; btn.classList.add('spinning'); }
+  t.completed=true; updateJJ(); jjConfetti(8); jjStarPop(e,'✨ I did it!'); jjSendStarsToCounter(e, Math.max(3, Math.min(6, t.points || 3)));
+  setSyncState('saving', 'Claiming...');
+  google.script.run
+    .withSuccessHandler(function(){ _fetching = false; setSyncState('synced', 'Done!'); })
+    .withFailureHandler(function(err){ _fetching = false; setSyncState('failed'); jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.completed=false; updateJJ(); })
+    .khCompleteTaskSafe(t.rowIndex, t.taskID);
+}
+// ── v10 FIX 3: jjApprove — added return value check for duplicate guard ──
+function jjApprove(taskID, e) {
+  e.stopPropagation(); if (_fetching) return;
+  var t = tasks.find(function(t){return t.taskID===taskID;});
+  if(!t||t.parentApproved)return;
+  _fetching = true;
+  var pts = t.points;
+  t.parentApproved=true; updateJJ();
+  google.script.run
+    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){t.parentApproved=false; updateJJ(); return;} jjStarPop(e,'Parent said yes! ✨'); jjConfetti(22); jjPointsBanner('+'+pts+' ⭐'); })
+    .withFailureHandler(function(err){ _fetching = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.parentApproved=false; updateJJ(); })
+    .khApproveTaskSafe(t.rowIndex, t.taskID);
+}
+function jjPointsBanner(text) {
+  var b = document.createElement('div'); b.className = 'jj-points-banner';
+  b.textContent = text; document.body.appendChild(b);
+  setTimeout(function(){ b.remove(); }, 2100);
+}
+// ── v10 FIX 2: jjGrantBonus — changed khCompleteTaskWithBonusSafe → khApproveWithBonusSafe ──
+function jjGrantBonus(taskID, multiplier, e) {
+  e.stopPropagation(); if (_fetching) return;
+  var t = tasks.find(function(t){return t.taskID===taskID;});
+  if(!t||!t.completed||t.parentApproved)return;
+  _fetching = true;
+  var snap = {parentApproved:t.parentApproved, multiplier:t.multiplier, points:t.points};
+  t.parentApproved=true; t.multiplier=multiplier; t.points=Math.round(t.basePoints*multiplier);
+  updateJJ();
+  google.script.run
+    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Already done! ✨'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateJJ(); return;} jjStarPop(e,'Bonus stars! ✨'); jjConfetti(22); jjPointsBanner('+'+t.points+' ⭐'); })
+    .withFailureHandler(function(err){ _fetching = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateJJ(); })
+    .khApproveWithBonusSafe(t.rowIndex, multiplier, t.taskID);
+}
+function jjOverride(taskID, e) {
+  e.stopPropagation(); if (_fetching) return;
+  var t = tasks.find(function(t){return t.taskID===taskID;});
+  if(!t||t.completed||!t.required)return;
+  _fetching = true;
+  t.completed = true; t.parentApproved = true;
+  updateJJ();
+  jjStarPop(e,'Cleared ✨');
+  google.script.run
+    .withSuccessHandler(function(){ _fetching = false; loadKidData(); })
+    .withFailureHandler(function(err){ _fetching = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.completed = false; t.parentApproved = false; updateJJ(); })
+    .khOverrideTaskSafe(t.rowIndex, t.taskID);
+}
+function jjReset(mode, child) { if(!confirm('Reset '+mode+' for JJ?'))return; google.script.run.withSuccessHandler(function(){loadKidData();}).khResetTasksSafe(mode, child); }
+function jjConfetti(n) {
+  var emojis=['💖','✨','🌸','⭐','💫','🎀','💕'];
+  for(var i=0;i<n;i++){var p=document.createElement('div');p.className='jj-confetti';p.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+  p.style.left=(10+Math.random()*80)+'vw';p.style.top=(30+Math.random()*40)+'vh';p.style.setProperty('--dur',(1.5+Math.random()*1.5)+'s');
+  p.style.setProperty('--rot',(Math.random()>0.5?'':'-')+(180+Math.random()*360)+'deg');document.body.appendChild(p);setTimeout(function(){p.remove();},3500);}
+}
+function jjStarPop(e,text){var p=document.createElement('div');p.className='jj-star-pop';p.textContent=text;p.style.left=(e.clientX-30)+'px';p.style.top=(e.clientY-10)+'px';document.body.appendChild(p);setTimeout(function(){p.remove();},1400);}
+function jjSendStarsToCounter(e, count) {
+  if (!e) return;
+  var target = document.getElementById('jjStars');
+  if (!target) return;
+  var tr = target.getBoundingClientRect();
+  var tx = tr.left + tr.width / 2;
+  var ty = tr.top + tr.height / 2;
+  var pill = target.closest('.jj-stat-pill');
+  if (pill) {
+    pill.classList.add('collect-hit');
+    setTimeout(function(){ pill.classList.remove('collect-hit'); }, 560);
+  }
+  for (var i = 0; i < count; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var star = document.createElement('div');
+        star.className = 'jj-claim-star';
+        star.textContent = '⭐';
+        star.style.left = e.clientX + 'px';
+        star.style.top = e.clientY + 'px';
+        star.style.setProperty('--dx', (tx - e.clientX + (Math.random() * 16 - 8)) + 'px');
+        star.style.setProperty('--dy', (ty - e.clientY + (Math.random() * 14 - 7)) + 'px');
+        document.body.appendChild(star);
+        setTimeout(function(){ star.remove(); }, 860);
+      }, idx * 60);
+    })(i);
+  }
+}
+function jjRedeem(rewardId, e) {
+  if (e) e.stopPropagation();
+  if (_fetching) return;
+  var r = rewards.find(function(r){return r.id === rewardId;});
+  if (!r || balances.balance < r.cost) return;
+  var maxQty = Math.min(10, Math.floor(balances.balance / r.cost));
+  _qtyState = { rewardId:rewardId, qty:1, cost:r.cost, max:maxQty, child:'jj', icon:r.icon, name:r.name };
+  showQtyPicker('jj');
+}
+function jjRefresh() {
+  _fetching = false; // v23: Force-clear in case stuck from prior action
+  var star = document.getElementById('jjRefreshStar');
+  if (star) { star.classList.add('spinning'); setTimeout(function(){ star.classList.remove('spinning'); }, 950); }
+  var starEl = document.getElementById('jjRefreshStar');
+  if (starEl) {
+    var rs = starEl.getBoundingClientRect();
+    var cx = rs.left + rs.width / 2, cy = rs.top + rs.height / 2;
+    var ring = document.createElement('div'); ring.className = 'jj-glow-ring';
+    ring.style.left = cx + 'px'; ring.style.top = cy + 'px';
+    document.body.appendChild(ring); setTimeout(function(){ ring.remove(); }, 850);
+    var starOffsets = [[-65,-10],[-46,-52],[0,-70],[46,-52],[65,-10],[46,32],[0,50],[-46,32]];
+    starOffsets.forEach(function(off, i) {
+      setTimeout(function() {
+        var s = document.createElement('div'); s.className = 'jj-refresh-sparkle';
+        s.textContent = '\u2B50';
+        s.style.fontSize = (13 + Math.random() * 9) + 'px';
+        s.style.left = (cx + off[0] - 10) + 'px'; s.style.top = (cy + off[1]) + 'px';
+        document.body.appendChild(s); setTimeout(function(){ s.remove(); }, 900);
+      }, i * 50);
+    });
+  }
+  // v23: Loading flash
+  var ql = document.getElementById('jjQuestList');
+  if (ql) ql.style.opacity = '0.5';
+  jjConfetti(20);
+  loadKidData();
+}
+function jjTab(tab){['quests','rewards','events','parent'].forEach(function(t){var btn=document.getElementById('jjtab-'+t);var view=document.getElementById('jjView-'+t);if(btn)btn.classList.toggle('active',t===tab);if(view)view.style.display=t===tab?'block':'none';});}
+function jjToggleParent() {
+  if(parentMode){parentMode=false;document.getElementById('jjParentBtn').classList.remove('active');document.getElementById('jjtab-parent').style.display='none';jjTab('quests');updateJJ();
+  }else{document.getElementById('jjPinOverlay').style.display='flex';setTimeout(function(){document.getElementById('jjPinInput').focus();},80);}
+}
+function jjSubmitPin() {
+  var pin=document.getElementById('jjPinInput').value;
+  document.getElementById('jjPinInput').value='';
+  document.getElementById('jjPinError').style.display='none';
+  google.script.run.withSuccessHandler(function(raw){
+    var ok = safeParse(raw);
+    if(ok){
+      document.getElementById('jjPinOverlay').style.display='none';
+      parentMode=true; document.getElementById('jjParentBtn').classList.add('active');
+      document.getElementById('jjtab-parent').style.display='block'; jjTab('parent'); updateJJ();
+    } else { document.getElementById('jjPinError').style.display='block'; }
+  }).khVerifyPinSafe(pin);
+}
+function jjCancelPin(){document.getElementById('jjPinOverlay').style.display='none';document.getElementById('jjPinInput').value='';}
+// ── v17: ASK SYSTEM ──────────────────────────────────────────
+var _askType = { buggsy: 'Money', jj: 'Money' };
+
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function pickAskType(prefix, type, el) {
+  _askType[prefix === 'b' ? 'buggsy' : prefix] = type;
+  var row = el.parentElement;
+  var btns = row.querySelectorAll('.ask-type-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].classList.remove('active');
+  el.classList.add('active');
+  var amountWrap = document.getElementById((prefix === 'b' ? 'b' : prefix) + 'AskAmountWrap');
+  if (amountWrap) {
+    amountWrap.style.display = (type === 'Money' || type === 'Purchase') ? 'block' : 'none';
+  }
+}
+
+function submitAsk(child) {
+  var prefix = child === 'buggsy' ? 'b' : 'jj';
+  var type = _askType[child] || 'Other';
+  var titleEl = document.getElementById(prefix + 'AskTitle');
+  var amountEl = document.getElementById(prefix + 'AskAmount');
+  var notesEl = document.getElementById(prefix + 'AskNotes');
+  var statusEl = document.getElementById(prefix + 'AskStatus');
+  var title = (titleEl.value || '').trim();
+  var amount = parseFloat(amountEl.value) || 0;
+  var notes = (notesEl.value || '').trim();
+  if (!title) {
+    statusEl.style.display = 'block'; statusEl.className = 'ev-status error';
+    statusEl.textContent = '❌ Need to say what you want!';
+    return;
+  }
+  if ((type === 'Money' || type === 'Purchase') && amount <= 0) {
+    statusEl.style.display = 'block'; statusEl.className = 'ev-status error';
+    statusEl.textContent = '❌ How much do you need?';
+    return;
+  }
+  statusEl.style.display = 'block'; statusEl.className = 'ev-status';
+  statusEl.textContent = '⏳ Sending ask...';
+  google.script.run
+    .withSuccessHandler(function(raw) {
+      var r = safeParse(raw);
+      if (r && r.status === 'ok') {
+        statusEl.className = 'ev-status';
+        statusEl.textContent = '✅ Ask sent! Your parents will see it.';
+        titleEl.value = ''; amountEl.value = ''; notesEl.value = '';
+        setTimeout(function() { loadKidData(); }, 500);
+      } else {
+        statusEl.className = 'ev-status error';
+        statusEl.textContent = '❌ ' + ((r && r.error) || 'Something went wrong');
+      }
+    })
+    .withFailureHandler(function(e) {
+      statusEl.className = 'ev-status error';
+      statusEl.textContent = '❌ ' + (e.message || 'Connection error');
+    })
+    .khSubmitRequestSafe(child, type, title, amount, notes);
+}
+
+function askFromReward(child, rewardName, rewardCost) {
+  var prefix = child === 'buggsy' ? 'b' : child;
+  if (child === 'buggsy') bTab('events'); else jjTab('events');
+  _askType[child] = 'Purchase';
+  var row = document.getElementById(prefix + 'AskTypes');
+  if (row) {
+    var btns = row.querySelectorAll('.ask-type-btn');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].classList.toggle('active', btns[i].getAttribute('data-type') === 'Purchase');
+    }
+  }
+  var amountWrap = document.getElementById(prefix + 'AskAmountWrap');
+  if (amountWrap) amountWrap.style.display = 'block';
+  var titleEl = document.getElementById(prefix + 'AskTitle');
+  if (titleEl) titleEl.value = 'I want: ' + rewardName;
+  var amountEl = document.getElementById(prefix + 'AskAmount');
+  if (amountEl) amountEl.value = rewardCost;
+}
+
+function renderRecentAsks(child, containerId) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  var childRequests = requests.filter(function(r) {
+    return (r.child || '').toLowerCase() === child;
+  }).slice(0, 10);
+  if (!childRequests.length) {
+    el.innerHTML = '<div style="text-align:center;padding:12px;font-size:12px;color:rgba(255,255,255,0.35)">No asks yet!</div>';
+    return;
+  }
+  var TYPE_ICONS = { Money: '💰', Purchase: '🛒', Activity: '🎯', Other: '💬' };
+  var h = '';
+  childRequests.forEach(function(req) {
+    var statusCls = (req.status || '').toLowerCase() === 'approved' ? 'approved' : ((req.status || '').toLowerCase() === 'denied' ? 'denied' : 'pending');
+    var statusIcon = statusCls === 'approved' ? '✅' : (statusCls === 'denied' ? '❌' : '🟡');
+    var amountStr = (req.type === 'Money' || req.type === 'Purchase') && req.amount ? ' · $' + Number(req.amount).toFixed(2) : '';
+    h += '<div class="ask-row">';
+h += '<div class="ask-row-icon">' + (TYPE_ICONS[req.type] || '💬') + '</div>';
+h += '<div class="ask-row-info"><div class="ask-row-title">' + escHtml(req.title) + amountStr + '</div>';
+h += '<div class="ask-row-amount">' + escHtml(req.type) + '</div></div>';
+    h += '<div class="ask-status-badge ' + statusCls + '">' + statusIcon + ' ' + escHtml(req.status || 'Pending') + '</div>';
+    h += '</div>';
+    if (statusCls === 'denied' && req.parentNote) {
+      h += '<div class="ask-parent-note">💬 ' + escHtml(req.parentNote) + '</div>';
+    }
+  });
+  el.innerHTML = h;
+}
+
+function renderAskRewards(child, containerId) {
+  var el = document.getElementById(containerId);
+  if (!el) return;
+  var childRewards = rewards.filter(function(r) { return true; });
+  if (!childRewards.length) {
+    el.innerHTML = '<div style="text-align:center;padding:12px;font-size:12px;color:rgba(255,255,255,0.35)">No rewards set up yet!</div>';
+    return;
+  }
+  var h = '';
+  childRewards.forEach(function(r) {
+    h += '<div class="ask-reward-row" onclick="askFromReward(\'' + child + '\',\'' + escHtml(r.name).replace(/'/g,'\\\'') + '\',' + r.cost + ')">';
+    h += '<div class="ask-reward-icon">' + r.icon + '</div>';
+    h += '<div class="ask-reward-info"><div class="ask-reward-name">' + escHtml(r.name) + '</div>';
+    h += '<div class="ask-reward-cost">' + r.cost + ' ' + (child === 'jj' ? '⭐' : '⭕') + '</div></div>';
+    h += '<div class="ask-want-btn">I want this!</div>';
+    h += '</div>';
+  });
+  el.innerHTML = h;
+}
+
+function updateAskTab(child, prefix) {
+  var bankEl = document.getElementById(prefix + 'AskBank');
+  if (bankEl) {
+    var bankBal = Number((balances && balances.bankBalance) || 0);
+    bankEl.textContent = (child === 'buggsy' ? 'BANK: ' : 'Bank: ') + '$' + bankBal.toFixed(2);
+  }
+  renderRecentAsks(child, prefix + 'RecentAsks');
+  renderAskRewards(child, prefix + 'AskRewards');
+}
+// ── EVENTS TAB — Calendar bridge via CalendarSync.gs ──────
+function submitEvent(prefix) {
+  var title = document.getElementById(prefix + 'EvTitle').value.trim();
+  var date  = document.getElementById(prefix + 'EvDate').value;
+  var time  = document.getElementById(prefix + 'EvTime').value || '';
+  var child = document.getElementById(prefix + 'EvChild').value;
+  var repeat= document.getElementById(prefix + 'EvRepeat').value;
+  var cal   = document.getElementById(prefix + 'EvCal').value;
+  var statusEl = document.getElementById(prefix + 'EvStatus');
+  if (!title || !date) {
+    statusEl.style.display = 'block'; statusEl.className = 'ev-status error';
+    statusEl.textContent = '❌ Need a title and date!';
+    return;
+  }
+  statusEl.style.display = 'block'; statusEl.className = 'ev-status';
+  statusEl.textContent = '⏳ Adding to calendar...';
+  google.script.run
+    .withSuccessHandler(function(result) {
+      try {
+        var r = typeof result === 'string' ? JSON.parse(result) : result;
+        if (r && r.error) { statusEl.className = 'ev-status error'; statusEl.textContent = '❌ ' + r.error; return; }
+        statusEl.className = 'ev-status';
+        statusEl.textContent = '✅ Added! ' + title + (repeat !== 'none' ? ' (' + repeat + ')' : '');
+        document.getElementById(prefix + 'EvTitle').value = '';
+        document.getElementById(prefix + 'EvTime').value = '';
+      } catch(e) {
+        statusEl.className = 'ev-status'; statusEl.textContent = '✅ Event added!';
+        document.getElementById(prefix + 'EvTitle').value = '';
+      }
+    })
+    .withFailureHandler(function(e) {
+      statusEl.className = 'ev-status error';
+      statusEl.textContent = '❌ ' + (e.message || 'Something went wrong');
+    })
+    .addKidsEventSafe(title, date, time, cal, repeat, child);
+}
+// ── SHARED PIN SETUP ──────────────────────────────────────────
+function setupPinEvents() {
+  var inp = document.getElementById('pinInput');
+  if (inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') bSubmitPin(); });
+}
+// ══════════════════════════════════════════
+//  PARENT DASHBOARD
+// ══════════════════════════════════════════
+function renderParent() {
+  document.getElementById('app').innerHTML = buildParentUI();
+  loadParentData();
+}
+function buildParentUI() {
+  return '<div class="p-hdr"><div class="p-hdr-top"><div class="p-hdr-title">KIDS HUB <span>/ PARENT</span></div><div class="p-links" id="pLinks"><span style="font-size:11px;color:#64748b;font-weight:700;align-self:center">OPEN:</span></div></div></div>'+
+  '<div class="p-body"><div id="pSpinner" class="p-spinner"><div class="p-spin-ring"></div></div>'+
+  '<div id="pContent" style="display:none">'+
+  '<div class="p-summary" id="pSummary"></div>'+
+  '<div class="p-kids" id="pKids"></div>'+
+  '<div class="p-reset-panel" style="margin-bottom:20px"><div class="p-reset-title">📅 ADD CALENDAR EVENT</div>'+
+'<div style="display:flex;flex-direction:column;gap:10px">'+
+'<input type="text" id="pEvTitle" placeholder="Event title..." style="padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">'+
+'<div style="display:flex;gap:10px"><input type="date" id="pEvDate" style="flex:1;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none"><input type="time" id="pEvTime" style="flex:1;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none"></div>'+
+'<div style="display:flex;gap:10px"><select id="pEvChild" style="flex:1;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit"><option value="Both">Both Kids</option><option value="Buggsy">Buggsy</option><option value="JJ">JJ</option></select><select id="pEvRepeat" style="flex:1;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit"><option value="none">One-time</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>'+
+'<select id="pEvCal" style="padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit"><option value="kids">🟢 Kids Activities</option><option value="household">🔵 Thompson Household</option></select>'+
+'<button onclick="submitEvent(\'p\')" style="padding:12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">📅 Add to Calendar</button>'+
+'<div class="ev-status" id="pEvStatus" style="display:none"></div>'+
+'</div></div>'+
+'<div class="p-reset-panel"><div class="p-reset-title">⚙ QUICK RESET</div>'+
+  '<div class="p-reset-grid">'+
+  '<button class="p-reset-btn blue-b" onclick="pReset(\'daily\',\'buggsy\')">🔄 Buggsy<br>Daily Reset</button>'+
+  '<button class="p-reset-btn pink-b" onclick="pReset(\'daily\',\'jj\')">🌸 JJ<br>Daily Reset</button>'+
+  '<button class="p-reset-btn red-b" onclick="pReset(\'weekly\',\'buggsy\')">📅 Buggsy<br>Weekly Reset</button>'+
+  '<button class="p-reset-btn" style="color:#a855f7;border-color:#e9d5ff" onclick="pReset(\'weekly\',\'jj\')">💜 JJ<br>Weekly Reset</button>'+
+  '<button class="p-reset-btn all-b" onclick="pReset(\'all\',\'buggsy\')">⚠ Buggsy<br>Reset All</button>'+
+  '<button class="p-reset-btn all-b" onclick="pReset(\'all\',\'jj\')">⚠ JJ<br>Reset All</button>'+
+  '</div></div>'+
+  '<div class="p-sheet-guide"><div class="p-sheet-title">📋 How the KH_ Tabs work</div>'+
+  '<div class="p-sheet-row"><div class="p-sheet-dot"></div><b>KH_Chores</b> — add a row to create a task. It shows up in the app on next refresh.</div>'+
+  '<div class="p-sheet-row"><div class="p-sheet-dot"></div>Set <b>Active</b> to NO to hide a task without deleting it.</div>'+
+  '<div class="p-sheet-row"><div class="p-sheet-dot"></div>Edit <b>Points, TV_Minutes, or Money</b> columns to rebalance rewards.</div>'+
+  '<div class="p-sheet-row"><div class="p-sheet-dot"></div><b>KH_Rewards</b> — add/edit reward tiers. Cost column sets the unlock threshold.</div>'+
+  '<div class="p-sheet-row"><div class="p-sheet-dot"></div>Change <b>Child</b> column to move tasks between Buggsy and JJ.</div>'+
+  '</div></div></div>';
+}
+var parentAllData = { buggsy:[], jj:[], bBal:{}, jBal:{} };
+function loadParentData() {
+  google.script.run
+    .withSuccessHandler(function(raw){
+      try {
+        var data = safeParse(raw);
+        if (data && data.error) { var t=document.getElementById('p-toast');if(t){t.textContent=data.error;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);} return; }
+        var allTasks = (data.tasks || []).map(mapTask);
+        parentAllData.buggsy = allTasks.filter(function(t){return t.child==='buggsy';});
+        parentAllData.jj     = allTasks.filter(function(t){return t.child==='jj';});
+        var bDone = parentAllData.buggsy.filter(function(t){return t.completed;});
+        var jDone = parentAllData.jj.filter(function(t){return t.completed;});
+        parentAllData.bBal = data.balances || {};
+        parentAllData.jBal = data.balances || {};
+        buildParentContent(parentAllData.buggsy, parentAllData.jj, bDone, jDone);
+      } catch(e) { alert('Error loading parent data: ' + e.message); }
+    })
+    .withFailureHandler(function(e){ alert('Error: ' + e.message); })
+    .getKidsHubDataSafe('all');
+  google.script.run
+    .withSuccessHandler(function(raw){
+      try {
+        var urls = safeParse(raw);
+        var links = document.getElementById('pLinks');
+        if (links) {
+          links.innerHTML = '<span style="font-size:11px;color:#64748b;font-weight:700;align-self:center">OPEN:</span>'+
+            '<a class="p-link-btn buggsy" href="'+urls.buggsy+'" target="_blank">⭕ Buggsy</a>'+
+            '<a class="p-link-btn jj" href="'+urls.jj+'" target="_blank">⭐ JJ</a>';
+        }
+      } catch(e){}
+    })
+    .getKHAppUrlsSafe();
+}
+function buildParentContent(buggsyTasks, jjTasks, bDone, jDone) {
+  document.getElementById('pSpinner').style.display = 'none';
+  document.getElementById('pContent').style.display = 'block';
+  var bRings = bDone.reduce(function(s,t){return s+t.points;},0);
+  var jStars = jDone.reduce(function(s,t){return s+t.points;},0);
+  var bPend  = buggsyTasks.filter(function(t){return t.completed && !t.parentApproved;});
+  var jPend  = jjTasks.filter(function(t){return t.completed && !t.parentApproved;});
+  var totalPend = bPend.length + jPend.length;
+  document.getElementById('pSummary').innerHTML =
+    '<div class="p-sum-card"><div class="p-sum-icon">⭕</div><div class="p-sum-val" style="color:#f59e0b">'+bRings+'</div><div class="p-sum-lbl">Buggsy Rings</div></div>'+
+    '<div class="p-sum-card"><div class="p-sum-icon">⭐</div><div class="p-sum-val" style="color:#ec4899">'+jStars+'</div><div class="p-sum-lbl">JJ Stars</div></div>'+
+    '<div class="p-sum-card"><div class="p-sum-icon">⏳</div><div class="p-sum-val" style="color:'+(totalPend>0?'#f59e0b':'#22c55e')+'">'+totalPend+'</div><div class="p-sum-lbl">Need Approval</div></div>'+
+    '<div class="p-sum-card"><div class="p-sum-icon">✅</div><div class="p-sum-val" style="color:#22c55e">'+(bDone.length+jDone.length)+'</div><div class="p-sum-lbl">Total Done Today</div></div>';
+  document.getElementById('pKids').innerHTML =
+    buildKidColumn('Buggsy', buggsyTasks, bRings, 'buggsy', '⭕', '#f59e0b') +
+    buildKidColumn('JJ', jjTasks, jStars, 'jj', '⭐', '#ec4899');
+}
+function buildKidColumn(name, kidTasks, score, cls, icon, color) {
+  var pending = kidTasks.filter(function(t){return t.completed && !t.parentApproved;});
+  var done    = kidTasks.filter(function(t){return t.completed && t.parentApproved;});
+  var total   = kidTasks.length;
+  var doneCount = kidTasks.filter(function(t){return t.completed;}).length;
+  var pendHTML = '';
+  if (pending.length === 0) {
+    pendHTML = '<div class="p-empty-state">All clear! ✓<br>No approvals needed.</div>';
+  } else {
+    pending.forEach(function(t){
+      pendHTML += '<div class="p-task-item">'+
+        '<div class="p-task-icon">'+t.icon+'</div>'+
+        '<div class="p-task-info"><div class="p-task-name">'+t.task+'</div><div class="p-task-meta">'+t.points+' pts • '+t.frequency+'</div></div>'+
+        '<div class="p-task-btns">'+
+        '<button class="p-appr-btn yes" onclick="pApprove(\''+t.taskID+'\',\''+cls+'\')" >✓</button>'+
+        '<button class="p-appr-btn no" onclick="pUncomplete(\''+t.taskID+'\',\''+cls+'\')" >✕</button>'+
+        '</div></div>';
+    });
+  }
+  var doneHTML = '';
+  done.slice(0,5).forEach(function(t){
+    doneHTML += '<div class="p-done-item"><div class="p-done-icon">'+t.icon+'</div><div class="p-done-name">'+t.task+'</div><div class="p-done-pts">+'+t.points+'</div><div class="p-done-ck">✓</div></div>';
+  });
+  if (done.length === 0) doneHTML = '<div class="p-empty-state">Nothing approved yet today.</div>';
+  return '<div class="p-kid-col">'+
+    '<div class="p-kid-hdr '+cls+'">'+
+    '<div><div class="p-kid-name">'+icon+' '+name.toUpperCase()+'</div>'+
+    '<div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:700;margin-top:2px">'+doneCount+' / '+total+' done today</div></div>'+
+    '<div><div class="p-kid-score '+cls+'">'+score+'</div><div class="p-kid-score-lbl">'+(cls==='jj'?'stars':'rings')+'</div></div>'+
+    '</div>'+
+    '<div class="p-kid-body">'+
+    '<div class="p-kid-section-title">⏳ Needs Approval ('+pending.length+')</div>'+
+    pendHTML+
+    (done.length > 0 ? '<div class="p-kid-section-title" style="margin-top:14px">✅ Approved Today</div>'+doneHTML : '')+
+    '</div></div>';
+}
+function pApprove(taskID, child) {
+  var allTasks = child === 'jj' ? parentAllData.jj : parentAllData.buggsy;
+  var t = allTasks.find(function(x){return x.taskID === taskID;});
+  if (!t) return;
+  google.script.run.withSuccessHandler(function(){ loadParentData(); }).khApproveTaskSafe(t.rowIndex, t.taskID);
+}
+function pUncomplete(taskID, child) {
+  if (!confirm('Mark this task as not done?')) return;
+  var allTasks = child === 'jj' ? parentAllData.jj : parentAllData.buggsy;
+  var t = allTasks.find(function(x){return x.taskID === taskID;});
+  if (!t) return;
+  google.script.run.withSuccessHandler(function(){ loadParentData(); }).khUncompleteTaskSafe(t.rowIndex, t.taskID);
+}
+function pReset(mode, child) {
+  if (!confirm('Reset ' + mode + ' tasks for ' + child + '?')) return;
+  google.script.run.withSuccessHandler(function(){ loadParentData(); }).khResetTasksSafe(mode, child);
+}
+</script>
+<!-- Embossed Thompson2016 generator (parent only) -->
+<script>
+(function(){
+  if (!IS_PARENT) return;
+  var c = document.getElementById('p-emboss');
+  if (!c) return;
+  var w = 'Thompson2016', rH = 44, tW = 150;
+  var rows = Math.ceil((window.innerHeight + 350) / rH) + 2;
+  var cols = Math.ceil((window.innerWidth + 400) / tW) + 3;
+  for (var r = 0; r < rows; r++) {
+    var row = document.createElement('div');
+    row.className = 'p-emboss-row' + (r % 2 === 1 ? ' offset' : '');
+    for (var cc = 0; cc < cols; cc++) {
+      var s = document.createElement('span');
+      s.className = 'p-emboss-word';
+      s.textContent = w;
+      row.appendChild(s);
+    }
+    c.appendChild(row);
+  }
+})();
+</script>
+<!-- ═══ V2 TOAST ═══ -->
+<div id="syncStrip" class="sync-strip" style="display:none"><span class="sync-dot green"></span><span class="sync-text">Synced</span></div>
+<div id="p-toast" class="p-toast"></div>
+<!-- ═══ V2 PARENT UX — ONE-TAP + WEEKLY GRID ═══ -->
+<script>
+(function() {
+  if (typeof INIT_VIEW === 'undefined' || INIT_VIEW !== 'parent') return;
+  var currentTab = 'pending', currentWeeklyKid = 'all', parentData = null;
+  var origRP = window.renderParent;
+  window.renderParent = function() {
+    parentData = null;
+    document.getElementById('app').innerHTML = buildParentUI();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('pSpinner').style.display = 'flex';
+    document.getElementById('pContent').style.display = 'none';
+    google.script.run
+      .withSuccessHandler(function(raw) {
+        var data = safeParse(raw);
+        parentData = data;
+        renderV2(data);
+      })
+      .withFailureHandler(function(err) {
+        var b = document.querySelector('.p-body');
+        if (b) b.innerHTML = '<div class="p-empty-state">Error: ' + err.message + '</div>';
+      })
+      .getKidsHubDataSafe('all');
+  };
+  function renderV2(data) {
+    var tasks = data.tasks || [], bal = data.balances || {}, wg = data.weeklyGrid || {};
+    var pending = tasks.filter(function(t) { return t.completed && !t.parentApproved; });
+    var completed = tasks.filter(function(t) { return t.completed && t.parentApproved; });
+    var bBal = (bal.buggsy || {}).balance || 0, jBal = (bal.jj || {}).balance || 0;
+    var body = document.querySelector('.p-body');
+    if (!body) { body = document.createElement('div'); body.className = 'p-body'; document.body.appendChild(body); }
+    var h = '';
+    h += '<div class="p-summary">';
+    h += sc('⭕', bBal, 'BUGGSY PTS', '#f59e0b');
+    h += sc('⭐', jBal, 'JJ STARS', '#ec4899');
+    h += sc('⏳', pending.length, 'PENDING', '#f59e0b');
+    h += sc('✅', completed.length, 'APPROVED', '#16a34a');
+    h += '</div>';
+    h += '<div class="p-v2-tabs">';
+    h += tb('pending', '⏳ Pending (' + pending.length + ')');
+    h += tb('completed', '✅ Completed (' + completed.length + ')');
+    h += tb('weekly', '📅 Weekly');
+    h += '</div>';
+    if (currentTab === 'pending') h += rPending(pending, data.requiredStatus || {});
+    else if (currentTab === 'completed') h += rCompleted(completed);
+    else h += rWeekly(wg);
+    h += rAskQueue(data.requests || []);
+    h += rStoryFactory();
+    h += rDeduction();
+    h += rReset();
+    h += rGuide();
+    body.innerHTML = h;
+  }
+  function sc(icon, val, lbl, color) {
+    return '<div class="p-sum-card"><div class="p-sum-icon">' + icon + '</div><div class="p-sum-val" style="color:' + color + '">' + val + '</div><div class="p-sum-lbl">' + lbl + '</div></div>';
+  }
+  function tb(id, label) {
+    return '<div class="p-v2-tab' + (currentTab === id ? ' active' : '') + '" onclick="window._v2Tab(\'' + id + '\')">' + label + '</div>';
+  }
+  function rPending(items, reqStatus) {
+    var grouped = {};
+    items.forEach(function(t) {
+      var c = (t.child || '').toLowerCase();
+      if (c === 'both') { add('buggsy', t); add('jj', t); } else add(c, t);
+    });
+    function add(k, t) { if (!grouped[k]) grouped[k] = []; grouped[k].push(t); }
+    var h = '<div class="p-kids" style="grid-template-columns:1fr">';
+    var rendered = false;
+    ['buggsy', 'jj'].forEach(function(kid) {
+      var list = grouped[kid] || [];
+      var req = (reqStatus && reqStatus[kid]) || { remaining: [], done: 0, total: 0, allClear: true };
+      var remaining = req.remaining || [];
+      if (!list.length && !remaining.length) return;
+      rendered = true;
+      h += '<div class="p-kid-col"><div class="p-kid-hdr ' + kid + '"><span class="p-kid-name">' + (kid === 'buggsy' ? '⭕ BUGGSY' : '⭐ JJ') + '</span><span class="p-kid-score ' + kid + '">' + (req.allClear ? 'All clear' : (Math.max((req.total || 0) - (req.done || 0), 0) + ' must-do left')) + '</span></div><div class="p-kid-body">';
+      if (remaining.length) {
+        h += '<div class="p-kid-section-title">↪ Required overrides</div>';
+        remaining.forEach(function(t) {
+          h += '<div class="p-task-item"><div class="p-task-icon">' + (t.icon || '🔒') + '</div>';
+          h += '<div class="p-task-info"><div class="p-task-name">' + t.task + '</div><div class="p-task-meta">Must-do · clear only · 0 pts</div></div>';
+          h += '<div class="p-onetap">';
+          h += '<button class="p-onetap-btn approve" onclick="window._v2Override(' + t.rowIndex + ',\'' + t.taskID + '\')">↩ Clear</button>';
+          h += '</div></div>';
+        });
+      }
+      if (list.length) {
+        h += '<div class="p-kid-section-title" style="margin-top:' + (remaining.length ? '14px' : '0') + '">⏳ Pending approvals</div>';
+        list.forEach(function(t) {
+          h += '<div class="p-task-item"><div class="p-task-icon">' + (t.icon || '⭐') + '</div>';
+          h += '<div class="p-task-info"><div class="p-task-name">' + t.task + '</div><div class="p-task-meta">' + t.points + ' pts · ' + t.category + '</div></div>';
+          h += '<div class="p-onetap">';
+          h += '<button class="p-onetap-btn approve" onclick="window._v2Approve(' + t.rowIndex + ',\'' + t.taskID + '\')">✓</button>';
+          h += '<button class="p-onetap-btn bonus15" onclick="window._v2Bonus(' + t.rowIndex + ',1.5,\'' + t.taskID + '\')">⚡️1.5x</button>';
+          h += '<button class="p-onetap-btn bonus2" onclick="window._v2Bonus(' + t.rowIndex + ',2,\'' + t.taskID + '\')">⚡2x</button>';
+          h += '<button class="p-onetap-btn reject" onclick="window._v2Reject(' + t.rowIndex + ',\'' + t.taskID + '\')">✕</button>';
+          h += '</div></div>';
+        });
+      }
+      h += '</div></div>';
+    });
+    h += '</div>';
+    if (!rendered) return '<div class="p-empty-state">🎉 No pending approvals!</div>';
+    return h;
+  }
+  function rCompleted(items) {
+    if (!items.length) return '<div class="p-empty-state">No approved tasks yet today</div>';
+    var h = '<div class="p-kid-col" style="margin-bottom:20px"><div class="p-kid-body">';
+    items.forEach(function(t) {
+      h += '<div class="p-done-item"><div class="p-done-icon">' + (t.icon || '✅') + '</div>';
+      h += '<div class="p-done-name">' + t.task + ' <span style="color:#94a3b8">(' + t.child + ')</span></div>';
+      h += '<div class="p-done-pts">+' + t.points + '</div><div class="p-done-ck">✓</div></div>';
+    });
+    h += '</div></div>';
+    return h;
+  }
+  function rWeekly(wg) {
+    if (!wg || !wg.days) return '<div class="p-empty-state">No weekly data</div>';
+    var h = '<div class="p-weekly"><div class="p-weekly-title">📅 WEEKLY VIEW</div>';
+    h += '<div class="p-weekly-range">' + (wg.weekStart || '') + ' — ' + (wg.weekEnd || '') + '</div>';
+    h += '<div class="p-weekly-kid-filter">';
+    ['all','buggsy','jj'].forEach(function(k) {
+      var lbl = k === 'all' ? '👨‍👩‍👧‍👦 All' : (k === 'buggsy' ? '⭕ Buggsy' : '⭐ JJ');
+      h += '<div class="p-weekly-kid-btn' + (currentWeeklyKid === k ? ' active' : '') + '" onclick="window._v2WeekKid(\'' + k + '\')">' + lbl + '</div>';
+    });
+    h += '</div><div class="p-weekly-grid">';
+    var today = new Date().toISOString().slice(0, 10), grid = wg.grid || {};
+    for (var d = 0; d < 7; d++) {
+      var isT = (wg.dates || [])[d] === today;
+      h += '<div class="p-weekly-day' + (isT ? ' today' : '') + '"><div class="p-weekly-day-name">' + ((wg.days || [])[d] || '') + '</div>';
+      var ent = gEnt(grid, d);
+      if (!ent.length) { h += '<div class="p-weekly-empty">—</div>'; }
+      else ent.forEach(function(e) {
+        var neg = e.points < 0;
+        h += '<div class="p-weekly-entry"><span>' + (e.eventType === 'rejection' ? '✕ ' : '✓ ') + e.task + '</span>';
+        h += '<span class="p-weekly-entry-pts' + (neg ? ' neg' : '') + '">' + (neg ? '' : '+') + e.points + '</span></div>';
+      });
+      h += '</div>';
+    }
+    h += '</div></div>';
+    return h;
+  }
+  function gEnt(grid, di) {
+    var out = [], kids = currentWeeklyKid === 'all' ? Object.keys(grid) : [currentWeeklyKid];
+    kids.forEach(function(k) { if (grid[k] && grid[k][di]) grid[k][di].entries.forEach(function(e) { out.push(e); }); });
+    return out;
+  }
+  // v25: Story Factory section
+  function rStoryFactory() {
+    return '<div class="sf-panel"><div class="sf-title">📚 STORY FACTORY</div>' +
+      '<div id="sfForm">' +
+      '<div class="sf-row">' +
+      '<select id="sfChar" class="sf-select"><option value="JJ">⭐ JJ</option><option value="Buggsy">⭕ Buggsy</option><option value="Both">👫 Both Kids</option><option value="Whole Family">👨‍👩‍👧‍👦 Whole Family</option></select>' +
+      '<select id="sfTone" class="sf-select"><option value="Funny">😂 Funny</option><option value="Adventurous">⚔️ Adventure</option><option value="Cozy">🌙 Cozy</option><option value="Spooky">👻 Spooky</option></select>' +
+      '</div>' +
+      '<input type="text" id="sfTopic" class="sf-input" placeholder="Story topic... (e.g. JJ opens a lemonade stand)" style="margin-bottom:10px">' +
+      '<button class="sf-btn" id="sfBtn" onclick="window._v2CreateStory()">📖 Create Bedtime Story</button>' +
+      '</div>' +
+      '<div id="sfLoading" style="display:none" class="sf-loading">' +
+      '<div class="sf-loading-ring"></div>' +
+      '<div class="sf-loading-msg" id="sfMsg">Writing the story...</div>' +
+      '</div>' +
+      '<div id="sfResult" style="display:none" class="sf-result"></div>' +
+      '</div>';
+  }
+  function rDeduction() {
+    return '<div class="p-reset-panel" style="margin-bottom:20px"><div class="p-reset-title">⚡ DEDUCTION</div>' +
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+      '<div style="display:flex;gap:10px">' +
+      '<select id="dedChild" style="flex:1;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit">' +
+      '<option value="Buggsy">⭕ Buggsy</option><option value="JJ">⭐ JJ</option></select>' +
+      '<input type="number" id="dedAmount" placeholder="Points" min="1" max="100" style="flex:1;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">' +
+      '</div>' +
+      '<input type="text" id="dedReason" placeholder="Reason (e.g. Didn\'t listen, Fought with sibling)" style="padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">' +
+      '<button onclick="window._v2Deduct()" style="padding:12px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">⚡ Apply Deduction</button>' +
+      '<div id="dedStatus" style="display:none;font-size:12px;padding:6px 10px;border-radius:6px;text-align:center"></div>' +
+      '</div></div>';
+  }
+  function rReset() {
+    return '<div class="p-reset-panel"><div class="p-reset-title">⚙ RESET CONTROLS</div><div class="p-reset-grid">'
+      + '<button class="p-reset-btn blue-b" onclick="window._v2Reset(\'daily\',\'buggsy\')">🔄 Buggsy Daily</button>'
+      + '<button class="p-reset-btn pink-b" onclick="window._v2Reset(\'daily\',\'jj\')">🔄 JJ Daily</button>'
+      + '<button class="p-reset-btn all-b" onclick="window._v2Reset(\'daily\',\'all\')">🔄 All Daily</button>'
+      + '<button class="p-reset-btn blue-b" onclick="window._v2Reset(\'weekly\',\'buggsy\')">📅 Buggsy Weekly</button>'
+      + '<button class="p-reset-btn pink-b" onclick="window._v2Reset(\'weekly\',\'jj\')">📅 JJ Weekly</button>'
+      + '<button class="p-reset-btn red-b" onclick="window._v2Reset(\'all\',\'all\')">⚠ Full Reset</button>'
+      + '</div></div>';
+  }
+  function rGuide() {
+    var tabs = [['KH_Chores','Task definitions + completion'],['KH_History','Permanent audit log'],['KH_Rewards','Reward tiers'],['KH_Redemptions','Spend log'],['KH_Streaks','Performance cache'],['KH_Deductions','Negative consequences'],['KH_Allowance','Weekly allowance config'],['KH_Children','Child profiles + themes']];
+    var h = '<div class="p-sheet-guide"><div class="p-sheet-title">📋 Sheet Guide — 8 KH Tabs</div>';
+    tabs.forEach(function(t) { h += '<div class="p-sheet-row"><div class="p-sheet-dot"></div><strong>' + t[0] + '</strong> — ' + t[1] + '</div>'; });
+    return h + '</div>';
+  }
+  // v26: Track 3 — Ask Queue rendering
+  function rAskQueue(allRequests) {
+    var pending = (allRequests || []).filter(function(r) { return r.status === 'Pending'; });
+    if (!pending.length) return '';
+    var typeIcons = { Money: '💰', Shopping: '🛒', Activity: '🎯', Other: '💬' };
+    var h = '<div class="p-ask-section"><div class="p-ask-hdr">✋ Pending Asks <span class="p-ask-badge">' + pending.length + '</span></div>';
+    pending.forEach(function(r) {
+      var icon = typeIcons[r.type] || '💬';
+      var childIcon = (r.child || '').toLowerCase() === 'jj' ? '⭐' : '⭕';
+      var childName = (r.child || '').toLowerCase() === 'jj' ? 'JJ' : 'Buggsy';
+      h += '<div class="p-ask-card" data-ask-uid="' + r.requestUID + '">';
+      h += '<div class="p-ask-icon">' + icon + '</div>';
+      h += '<div class="p-ask-info"><div class="p-ask-name">' + (r.title || 'Request') + '</div>';
+      h += '<div class="p-ask-child">' + childIcon + ' ' + childName + '</div>';
+      if (r.amount) h += '<div class="p-ask-amount">$' + Number(r.amount).toFixed(2) + '</div>';
+      if (r.notes) h += '<div class="p-ask-notes">"' + r.notes + '"</div>';
+      h += '</div><div class="p-ask-btns">';
+      h += '<button class="p-ask-btn approve" onclick="window._v2AskApprove(\'' + r.requestUID + '\', \'' + r.type + '\', ' + (r.amount || 0) + ', \'' + childName + '\')">✓ Approve</button>';
+      h += '<button class="p-ask-btn deny" onclick="window._v2AskDeny(\'' + r.requestUID + '\')">✕ Deny</button>';
+      h += '</div></div>';
+    });
+    h += '</div>';
+    return h;
+  }
+  function toast(msg) {
+    var el = document.getElementById('p-toast'); if (!el) return;
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, 2500);
+  }
+  // v26: Track 9B — helper to update pending count without full rebuild
+  function updatePendingCount(delta) {
+    var tabs = document.querySelectorAll('.p-v2-tab');
+    if (tabs && tabs[0]) {
+      var m = tabs[0].textContent.match(/(\d+)/);
+      if (m) {
+        var newCount = Math.max(0, parseInt(m[1]) + delta);
+        tabs[0].textContent = '⏳ Pending (' + newCount + ')';
+      }
+    }
+  }
+  window._v2Tab = function(t) { currentTab = t; if (parentData) renderV2(parentData); };
+  window._v2WeekKid = function(k) { currentWeeklyKid = k; if (parentData) renderV2(parentData); };
+  // v26: Track 9B — inline card removal instead of full DOM rebuild
+  window._v2Approve = function(ri, tid) {
+    var btn = event.target;
+    var card = btn ? btn.closest('.p-task-item') : null;
+    var btns = card ? card.querySelectorAll('.p-onetap-btn') : [];
+    for (var i = 0; i < btns.length; i++) { btns[i].disabled = true; }
+    toast('Approving...');
+    setSyncState('saving');
+    google.script.run.withSuccessHandler(function(raw) {
+      var r = safeParse(raw);
+      if (r.status === 'ok') {
+        if (card) {
+          card.style.transition = 'opacity 0.3s, transform 0.3s';
+          card.style.opacity = '0'; card.style.transform = 'translateX(40px)';
+          setTimeout(function() { card.remove(); updatePendingCount(-1); }, 350);
+        }
+        toast('✅ Approved!');
+        setSyncState('synced', 'Approved!');
+        clearTimeout(window._parentRefreshTimer);
+        window._parentRefreshTimer = setTimeout(function() { window.renderParent(); }, 8000);
+      } else {
+        for (var i = 0; i < btns.length; i++) { btns[i].disabled = false; }
+        toast('Error: ' + (r.error || 'unknown'));
+        setSyncState('failed');
+      }
+    }).withFailureHandler(function(e) {
+      for (var i = 0; i < btns.length; i++) { btns[i].disabled = false; }
+      toast('Error: ' + e.message);
+      setSyncState('failed');
+    }).khApproveTaskSafe(ri, tid);
+  };
+  window._v2Bonus = function(ri, mult, tid) {
+    toast('Approving '+mult+'x...'); google.script.run.withSuccessHandler(function(raw) { var r=safeParse(raw); if (r.status==='ok') { toast('⚡ '+mult+'x approved!'); window.renderParent(); } else toast('Error: '+(r.error||'unknown')); }).withFailureHandler(function(e) { toast('Error: '+e.message); }).khApproveWithBonusSafe(ri, mult, tid);
+  };
+  window._v2Reject = function(ri, tid) {
+    if (!confirm('Reject this task? Points will be reversed.')) return;
+    toast('Rejecting...'); google.script.run.withSuccessHandler(function(raw) { var r=safeParse(raw); if (r.status==='ok') { toast('✕ Rejected — '+r.reversedPoints+' pts reversed'); window.renderParent(); } else toast('Error: '+(r.error||'unknown')); }).withFailureHandler(function(e) { toast('Error: '+e.message); }).khRejectTaskSafe(ri, tid);
+  };
+  window._v2Override = function(ri, tid) {
+    toast('Clearing must-do...'); google.script.run.withSuccessHandler(function(raw) { var r=safeParse(raw); if (r.status==='ok') { toast('↩ Cleared — gate updated'); window.renderParent(); } else toast('Error: '+(r.error||'unknown')); }).withFailureHandler(function(e) { toast('Error: '+e.message); }).khOverrideTaskSafe(ri, tid);
+  };
+  // v26: Track 3 — Ask approve/deny handlers
+  window._v2AskApprove = function(uid, type, amount, childName) {
+    if (type === 'Money' && amount > 0) {
+      if (!confirm('Deduct $' + Number(amount).toFixed(2) + ' from ' + childName + "'s bank?")) return;
+    }
+    var btn = event.target;
+    var card = btn ? btn.closest('.p-ask-card') : null;
+    var btns = card ? card.querySelectorAll('.p-ask-btn') : [];
+    for (var i = 0; i < btns.length; i++) { btns[i].disabled = true; }
+    toast('Approving ask...');
+    setSyncState('saving');
+    google.script.run.withSuccessHandler(function(raw) {
+      var r = safeParse(raw);
+      if (r.status === 'ok') {
+        if (card) {
+          card.style.transition = 'opacity 0.3s, transform 0.3s';
+          card.style.opacity = '0'; card.style.transform = 'translateX(40px)';
+          setTimeout(function() { card.remove(); }, 350);
+        }
+        toast('✅ Ask approved!');
+        setSyncState('synced', 'Approved!');
+        clearTimeout(window._parentRefreshTimer);
+        window._parentRefreshTimer = setTimeout(function() { window.renderParent(); }, 8000);
+      } else {
+        for (var i = 0; i < btns.length; i++) { btns[i].disabled = false; }
+        toast('Error: ' + (r.error || 'unknown'));
+        setSyncState('failed');
+      }
+    }).withFailureHandler(function(e) {
+      for (var i = 0; i < btns.length; i++) { btns[i].disabled = false; }
+      toast('Error: ' + e.message);
+      setSyncState('failed');
+    }).khApproveRequestSafe(uid);
+  };
+  window._v2AskDeny = function(uid) {
+    var note = prompt('Deny reason (optional):') || '';
+    var btn = event.target;
+    var card = btn ? btn.closest('.p-ask-card') : null;
+    var btns = card ? card.querySelectorAll('.p-ask-btn') : [];
+    for (var i = 0; i < btns.length; i++) { btns[i].disabled = true; }
+    toast('Denying ask...');
+    google.script.run.withSuccessHandler(function(raw) {
+      var r = safeParse(raw);
+      if (r.status === 'ok') {
+        if (card) {
+          card.style.transition = 'opacity 0.3s, transform 0.3s';
+          card.style.opacity = '0'; card.style.transform = 'translateX(40px)';
+          setTimeout(function() { card.remove(); }, 350);
+        }
+        toast('✕ Ask denied');
+        clearTimeout(window._parentRefreshTimer);
+        window._parentRefreshTimer = setTimeout(function() { window.renderParent(); }, 8000);
+      } else {
+        for (var i = 0; i < btns.length; i++) { btns[i].disabled = false; }
+        toast('Error: ' + (r.error || 'unknown'));
+      }
+    }).withFailureHandler(function(e) {
+      for (var i = 0; i < btns.length; i++) { btns[i].disabled = false; }
+      toast('Error: ' + e.message);
+    }).khDenyRequestSafe(uid, note);
+  };
+  window._v2Deduct = function() {
+    var child = document.getElementById('dedChild').value;
+    var reason = (document.getElementById('dedReason').value || '').trim();
+    var amount = parseInt(document.getElementById('dedAmount').value) || 0;
+    var statusEl = document.getElementById('dedStatus');
+    if (!reason) { statusEl.style.display = 'block'; statusEl.style.background = '#fef2f2'; statusEl.style.color = '#ef4444'; statusEl.textContent = 'Need a reason'; return; }
+    if (amount < 1) { statusEl.style.display = 'block'; statusEl.style.background = '#fef2f2'; statusEl.style.color = '#ef4444'; statusEl.textContent = 'Amount must be at least 1'; return; }
+    toast('Applying deduction...');
+    google.script.run.withSuccessHandler(function(raw) {
+      var r = safeParse(raw);
+      if (r.status === 'ok') {
+        toast('⚡ -' + amount + ' pts from ' + child);
+        document.getElementById('dedReason').value = '';
+        document.getElementById('dedAmount').value = '';
+        statusEl.style.display = 'block'; statusEl.style.background = '#f0fdf4'; statusEl.style.color = '#16a34a';
+        statusEl.textContent = 'Done — deducted ' + amount + ' from ' + child;
+        window.renderParent();
+      } else {
+        toast('Error: ' + (r.error || 'unknown'));
+        statusEl.style.display = 'block'; statusEl.style.background = '#fef2f2'; statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Failed: ' + (r.error || 'unknown');
+      }
+    }).withFailureHandler(function(e) {
+      toast('Error: ' + e.message);
+    }).khAddDeductionSafe(child, reason, amount);
+  };
+  window._v2Reset = function(mode, child) {
+    if (!confirm('Run '+mode+' reset for '+child+'?')) return;
+    toast('Resetting...'); google.script.run.withSuccessHandler(function(raw) { var r=safeParse(raw); if (r.status==='ok') { toast('🔄 Reset '+r.resetCount+' tasks'); window.renderParent(); } else toast('Error: '+(r.error||'unknown')); }).withFailureHandler(function(e) { toast('Error: '+e.message); }).khResetTasksSafe(mode, child);
+  };
+  // v25: Story Factory handler
+  var _sfMsgs = [
+    'Writing the story...', 'Building the world...', 'Drawing the characters...',
+    'Painting the pictures...', 'Adding the colors...', 'Binding the book...',
+    'Almost done...', 'Final touches...'
+  ];
+  var _sfMsgIdx = 0, _sfMsgTimer = null;
+  window._v2CreateStory = function() {
+    var topic = (document.getElementById('sfTopic').value || '').trim();
+    var character = document.getElementById('sfChar').value;
+    var tone = document.getElementById('sfTone').value;
+    if (!topic) { toast('Enter a story topic!'); return; }
+    // Show loading, hide form
+    document.getElementById('sfForm').style.display = 'none';
+    document.getElementById('sfLoading').style.display = 'block';
+    document.getElementById('sfResult').style.display = 'none';
+    _sfMsgIdx = 0;
+    document.getElementById('sfMsg').textContent = _sfMsgs[0];
+    _sfMsgTimer = setInterval(function() {
+      _sfMsgIdx++;
+      if (_sfMsgIdx < _sfMsgs.length) {
+        document.getElementById('sfMsg').textContent = _sfMsgs[_sfMsgIdx];
+      }
+    }, 8000);
+    toast('📖 Creating story...');
+    google.script.run
+      .withSuccessHandler(function(result) {
+        clearInterval(_sfMsgTimer);
+        document.getElementById('sfLoading').style.display = 'none';
+        var res = document.getElementById('sfResult');
+        if (result && result.success) {
+          res.innerHTML =
+            '<div class="sf-result-title">📖 ' + (result.title || 'Story Created!') + '</div>' +
+            '<div class="sf-result-book">Book #' + (result.bookNumber || '?') + '</div>' +
+            '<a class="sf-result-link" href="' + result.pdfUrl + '" target="_blank">📚 Open Story PDF</a>' +
+            '<div style="margin-top:12px"><button class="sf-btn" style="background:rgba(255,255,255,0.1);max-width:200px;margin:0 auto" onclick="document.getElementById(\'sfForm\').style.display=\'block\';document.getElementById(\'sfResult\').style.display=\'none\';document.getElementById(\'sfTopic\').value=\'\'">+ New Story</button></div>';
+          res.style.display = 'block';
+          toast('📖 Story ready!');
+        } else {
+          document.getElementById('sfForm').style.display = 'block';
+          res.innerHTML = '<div class="sf-error">Story creation failed: ' + ((result && result.error) || 'unknown error') + '</div>';
+          res.style.display = 'block';
+          toast('Story failed — try again');
+        }
+      })
+      .withFailureHandler(function(err) {
+        clearInterval(_sfMsgTimer);
+        document.getElementById('sfLoading').style.display = 'none';
+        document.getElementById('sfForm').style.display = 'block';
+        var res = document.getElementById('sfResult');
+        res.innerHTML = '<div class="sf-error">Connection error: ' + (err.message || 'unknown') + '</div>';
+        res.style.display = 'block';
+        toast('Story failed — try again');
+      })
+      .runStoryFactorySafe(topic, character, tone);
+  };
+})();
+</script>
+</body>
+</html><!-- Paste Chunk 3 here -->
