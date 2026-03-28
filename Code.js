@@ -1,13 +1,13 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v48 — Apps Script Router (TBM Consolidated)
+// Code.gs v49 — Apps Script Router (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
 // TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeGsVersion() { return 48; }
+function getCodeGsVersion() { return 49; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -253,6 +253,84 @@ function serveData(e) {
 
   try {
     var result;
+
+    // v49: Smart Proxy — return raw HTML content for Cloudflare Worker
+    if (action === 'htmlSource') {
+      var page = (e.parameter.page || 'pulse').toLowerCase();
+      var routes = {
+        'vein': 'TheVein', 'pulse': 'ThePulse', 'vault': 'Vault',
+        'kidshub': 'KidsHub', 'spine': 'TheSpine', 'soul': 'TheSoul',
+        'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse'
+      };
+      var filename = routes[page] || 'ThePulse';
+      try {
+        var content;
+        if (page === 'kidshub') {
+          var tmpl = HtmlService.createTemplateFromFile('KidsHub');
+          tmpl.INIT_CHILD = (e.parameter.child || 'buggsy').toLowerCase();
+          tmpl.INIT_VIEW  = (e.parameter.view  || 'kid').toLowerCase();
+          content = tmpl.evaluate().getContent();
+        } else {
+          content = HtmlService.createHtmlOutputFromFile(filename).getContent();
+        }
+        return ContentService.createTextOutput(content).setMimeType(ContentService.MimeType.TEXT);
+      } catch (err) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ error: 'htmlSource failed: ' + err.message, file: filename })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    // v49: Smart Proxy — universal function router with security whitelist
+    if (action === 'api') {
+      var fn = e.parameter.fn;
+      var args = [];
+      try { args = JSON.parse(e.parameter.args || '[]'); } catch(ex) {}
+
+      var API_WHITELIST = {
+        'getDataSafe': getDataSafe, 'getMonthsSafe': getMonthsSafe,
+        'getCashFlowForecastSafe': getCashFlowForecastSafe, 'getSimulatorDataSafe': getSimulatorDataSafe,
+        'getWeeklyTrackerDataSafe': getWeeklyTrackerDataSafe, 'getSubscriptionDataSafe': getSubscriptionDataSafe,
+        'getCategoryTransactionsSafe': getCategoryTransactionsSafe, 'getReconcileStatusSafe': getReconcileStatusSafe,
+        'reconcileVeinPulseSafe': reconcileVeinPulseSafe, 'getBoardDataSafe': getBoardDataSafe,
+        'getSystemHealthSafe': getSystemHealthSafe, 'getMERGateStatusSafe': getMERGateStatusSafe,
+        'getCloseHistoryDataSafe': getCloseHistoryDataSafe, 'getKHAppUrlsSafe': getKHAppUrlsSafe,
+        'getDeployedVersionsSafe': getDeployedVersionsSafe,
+        'getKidsHubDataSafe': getKidsHubDataSafe, 'getKidsHubWidgetDataSafe': getKidsHubWidgetDataSafe,
+        'getKHLastModified': getKHLastModified, 'getSpineHeartbeatSafe': getSpineHeartbeatSafe,
+        'khCompleteTaskSafe': khCompleteTaskSafe, 'khCompleteTaskWithBonusSafe': khCompleteTaskWithBonusSafe,
+        'khUncompleteTaskSafe': khUncompleteTaskSafe, 'khApproveTaskSafe': khApproveTaskSafe,
+        'khRejectTaskSafe': khRejectTaskSafe, 'khOverrideTaskSafe': khOverrideTaskSafe,
+        'khApproveWithBonusSafe': khApproveWithBonusSafe, 'khResetTasksSafe': khResetTasksSafe,
+        'khRedeemRewardSafe': khRedeemRewardSafe, 'khSubmitRequestSafe': khSubmitRequestSafe,
+        'khApproveRequestSafe': khApproveRequestSafe, 'khDenyRequestSafe': khDenyRequestSafe,
+        'khAddBonusTaskSafe': khAddBonusTaskSafe, 'khDebitScreenTimeSafe': khDebitScreenTimeSafe,
+        'khSetBankOpeningSafe': khSetBankOpeningSafe, 'khVerifyPinSafe': khVerifyPinSafe,
+        'khAddDeductionSafe': khAddDeductionSafe, 'khHealthCheckSafe': khHealthCheckSafe,
+        'khSubmitGradeSafe': khSubmitGradeSafe, 'khGetGradeHistorySafe': khGetGradeHistorySafe,
+        'updateFamilyNoteSafe': updateFamilyNoteSafe,
+        'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
+        'getScriptUrlSafe': getScriptUrlSafe
+      };
+
+      if (!fn || !API_WHITELIST[fn]) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ error: 'Unknown or missing function: ' + (fn || 'null') })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      try {
+        var apiResult = API_WHITELIST[fn].apply(null, args);
+        if (apiResult === undefined) apiResult = null;
+        return ContentService.createTextOutput(
+          JSON.stringify(apiResult)
+        ).setMimeType(ContentService.MimeType.JSON);
+      } catch (err) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ error: err.message, fn: fn })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
 
     if (action === 'months') {
       result = getAvailableMonths();
@@ -831,7 +909,7 @@ function getVaultDataSafe() {
 // ════════════════════════════════════════════════════════════════════
 
 function healthCheck() {
-  Logger.log('═══ Code.gs v48 Health Check ═══');
+  Logger.log('═══ Code.gs v49 Health Check ═══');
 
   var fns = [
     'doGet', 'servePage', 'serveData', 'getDataSafe', 'getMonthsSafe',
@@ -1211,4 +1289,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v48
+// END OF FILE — Code.gs v49
