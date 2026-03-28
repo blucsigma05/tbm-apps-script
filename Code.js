@@ -194,6 +194,10 @@ function getKHLastModified() {
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  // v49: Route proxy actions to serveData BEFORE servePage checks
+  if (p.action === 'htmlSource' || p.action === 'api') {
+    return serveData(e);
+  }
   if (p.page || !p.action) {
     return servePage(p.page || 'vein', e);
   }
