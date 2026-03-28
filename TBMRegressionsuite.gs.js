@@ -142,7 +142,7 @@ function runBugAssertions_(results) {
     };
     // Runtime check: verify KH_History row count as proxy
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = SpreadsheetApp.openById(SSID);
       var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_History']) ? TAB_MAP['KH_History'] : 'KH_History';
       var sheet = ss.getSheetByName(tabName);
       if (sheet) {
@@ -400,7 +400,7 @@ function runEnvironmentAssertions_(results) {
     var requiredTabs = ['KH_Chores', 'KH_History', 'KH_Rewards', 'KH_Redemptions', 'KH_Streaks'];
     var missing = [];
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = SpreadsheetApp.openById(SSID);
       for (var i = 0; i < requiredTabs.length; i++) {
         var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP[requiredTabs[i]]) ? TAB_MAP[requiredTabs[i]] : requiredTabs[i];
         if (!ss.getSheetByName(tabName)) missing.push(requiredTabs[i]);
@@ -426,7 +426,7 @@ function runEnvironmentAssertions_(results) {
     var requiredTabs = ['Transactions', 'Balance History', 'Categories', 'Budget_Data', 'DebtModel', 'Debt_Export', 'Close History', 'Helpers', 'BankRec'];
     var missing = [];
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = SpreadsheetApp.openById(SSID);
       for (var i = 0; i < requiredTabs.length; i++) {
         var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP[requiredTabs[i]]) ? TAB_MAP[requiredTabs[i]] : requiredTabs[i];
         if (!ss.getSheetByName(tabName)) missing.push(requiredTabs[i]);
@@ -506,7 +506,7 @@ function runEnvironmentAssertions_(results) {
   (function() {
     var a = { id: 'ENV-007', category: 'data-integrity', description: 'DebtModel Column O matches Balance History account names', status: 'PASS', details: '' };
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = SpreadsheetApp.openById(SSID);
       var dmName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['DebtModel']) ? TAB_MAP['DebtModel'] : 'DebtModel';
       var bhName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Balance History']) ? TAB_MAP['Balance History'] : 'Balance History';
       var dm = ss.getSheetByName(dmName);
@@ -577,7 +577,7 @@ function runEnvironmentAssertions_(results) {
   (function() {
     var a = { id: 'ENV-010', category: 'operations', description: 'Helpers B5/B6 close-month selectors exist', status: 'PASS', details: '' };
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = SpreadsheetApp.openById(SSID);
       var hName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Helpers']) ? TAB_MAP['Helpers'] : 'Helpers';
       var h = ss.getSheetByName(hName);
       if (!h) {
@@ -611,7 +611,7 @@ function runPerformanceAssertions_(results) {
   (function() {
     var a = { id: 'PERF-001', category: 'performance', description: 'Transactions row count within safe limits', status: 'PASS', details: '' };
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = SpreadsheetApp.openById(SSID);
       var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Transactions']) ? TAB_MAP['Transactions'] : 'Transactions';
       var sheet = ss.getSheetByName(tabName);
       if (sheet) {
@@ -628,7 +628,7 @@ function runPerformanceAssertions_(results) {
   (function() {
     var a = { id: 'PERF-002', category: 'performance', description: 'Balance History row count within safe limits', status: 'PASS', details: '' };
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = SpreadsheetApp.openById(SSID);
       var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Balance History']) ? TAB_MAP['Balance History'] : 'Balance History';
       var sheet = ss.getSheetByName(tabName);
       if (sheet) {
@@ -645,7 +645,7 @@ function runPerformanceAssertions_(results) {
   (function() {
     var a = { id: 'PERF-003', category: 'performance', description: 'KH_Chores tab size reasonable', status: 'PASS', details: '' };
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = SpreadsheetApp.openById(SSID);
       var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_Chores']) ? TAB_MAP['KH_Chores'] : 'KH_Chores';
       var sheet = ss.getSheetByName(tabName);
       if (sheet) {
