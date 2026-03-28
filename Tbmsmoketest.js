@@ -204,7 +204,7 @@ function checkSchemas_() {
     return result;
   }
 
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SSID);
 
   for (var tabKey in KH_SCHEMAS) {
     if (!KH_SCHEMAS.hasOwnProperty(tabKey)) continue;
@@ -313,7 +313,7 @@ function checkGrowth_() {
     metrics: {}
   };
 
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SSID);
   var warnings = [];
   var failures = [];
 
