@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ============================================================
 // STORY FACTORY — Google Apps Script Agent
-// Version: 6.0
+// Version: 7.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 6; }
+function getStoryFactoryVersion() { return 7; }
 
 var CONFIG = {
 GEMINI_API_KEY:  PropertiesService.getScriptProperties().getProperty('JJ Stories'),
@@ -891,9 +891,9 @@ parts.push('<html><head><meta charset="utf-8">');
 parts.push('<style>');
 parts.push('body { font-family: Georgia, serif; max-width: 650px; margin: 0 auto; padding: 40px 30px; color: #1E293B; background: #FFF0F5; }');
 parts.push('h1 { color: #7C3AED; text-align: center; font-size: 28px; margin-bottom: 4px; }');
-parts.push('.subtitle { text-align: center; color: #94A3B8; font-style: italic; font-size: 13px; margin-bottom: 30px; }');
+parts.push('.subtitle { text-align: center; color: #94A3B8; font-style: italic; font-size: 15px; margin-bottom: 30px; }');
 parts.push('.scene-img { display: block; margin: 20px auto; border-radius: 8px; }');
-parts.push('.scene-text { font-size: 15px; line-height: 1.7; margin-bottom: 10px; }');
+parts.push('.scene-text { font-size: 20px; line-height: 1.8; margin-bottom: 14px; }');
 parts.push('.divider { border: none; border-top: 1px solid #F5C6D0; margin: 28px 0; }');
 parts.push('.the-end { text-align: center; font-size: 22px; font-weight: bold; color: #EC4899; margin-top: 40px; }');
 parts.push('</style>');
@@ -1056,7 +1056,7 @@ return 7;
 // ── MAIN PIPELINE ────────────────────────────────────────────
 
 function runStoryFactory(topic, character, tone) {
-Logger.log('=== Story Factory v6.0 ===');
+Logger.log('=== Story Factory v7.0 ===');
 Logger.log('Topic: ' + topic + ' | Character: ' + character + ' | Tone: ' + (tone || 'Funny'));
 
 try {
