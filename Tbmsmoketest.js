@@ -142,7 +142,8 @@ function checkWiring_() {
     'getSystemHealthSafe', 'khAddBonusTaskSafe', 'khApproveRequestSafe',
     'khApproveTaskSafe', 'khApproveWithBonusSafe', 'khDebitScreenTimeSafe',
     'khDenyRequestSafe', 'khOverrideTaskSafe', 'khRejectTaskSafe',
-    'khSetBankOpeningSafe'
+    'khSetBankOpeningSafe', 'khSubmitGradeSafe', 'khGetGradeHistorySafe',
+    'runMERGatesSafe', 'stampCloseMonthSafe', 'updateFamilyNoteSafe'
   ];
 
   // Deduplicate

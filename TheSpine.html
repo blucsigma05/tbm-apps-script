@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<title>TheSpine v39 — Office Ambient Display</title>
+<title>TheSpine v40 — Office Ambient Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -372,7 +372,7 @@ body.evening{
 
 <script>
 // Version history tracked in Notion deploy page.
-var SPINE_VERSION = 38;
+var SPINE_VERSION = 40;
 var FINANCE_MS = 300000;
 var KIDS_MS = 180000;
 var BOARD_MS = 600000;
@@ -452,6 +452,20 @@ function hideLoader(){
 function safeParse(d){ try{ return typeof d === 'string' ? JSON.parse(d) : d; } catch(e){ return {}; } }
 function n(v){ var x = Number(v); return isNaN(x) ? null : x; }
 function fmtMoney(v){ var x = n(v); if(x === null) return '\u2014'; var s = Math.abs(x) >= 1000000 ? (x/1000000).toFixed(1)+'M' : Math.abs(x) >= 1000 ? Math.round(Math.abs(x)/1000)+'k' : Math.round(Math.abs(x)).toString(); return (x < 0 ? '-$' : '$') + s; }
+// v40: Smooth number transitions on data refresh (400ms)
+function animateNum(el, to, fmt) {
+  if (!el) return;
+  var raw = el.textContent.replace(/[^0-9.\-]/g, '');
+  var from = parseFloat(raw) || 0;
+  if (Math.abs(from - to) < 1) { el.textContent = fmt ? fmt(to) : to; return; }
+  var start = Date.now(), dur = 400;
+  var timer = setInterval(function() {
+    var p = Math.min((Date.now() - start) / dur, 1);
+    var val = from + (to - from) * p;
+    el.textContent = fmt ? fmt(val) : Math.round(val);
+    if (p >= 1) clearInterval(timer);
+  }, 16);
+}
 function fmtMoneyFull(v){ var x = n(v); if(x === null) return '\u2014'; return (x < 0 ? '-$' : '$') + Math.abs(x).toLocaleString(); }
 function fmtMoneyExact(v){ var x = Number(v || 0); return '$' + x.toFixed(2); }
 function stamp(){ var d = new Date(); return d.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
@@ -494,7 +508,7 @@ function renderFinance(d){
   var period = pick(d, ['periodLabel','monthLabel','monthName','selectedMonth']) || 'Current';
   document.getElementById('periodVal').textContent = period;
   var totalDebt = pick(d, ['debtCurrent','allNonMortgageDebt']);
-  document.getElementById('debtHeroAmount').textContent = fmtMoney(totalDebt);
+  animateNum(document.getElementById('debtHeroAmount'), n(totalDebt) || 0, fmtMoney);
   var debtByType = Array.isArray(d.debtByType) ? d.debtByType.slice() : [];
   debtByType = debtByType.filter(function(r){ return (r.type || '').toLowerCase() !== 'mortgage'; });
   debtByType.sort(function(a,b){ return (n(b.total)||0) - (n(a.total)||0); });
@@ -529,7 +543,7 @@ function renderFinance(d){
   document.getElementById('tlPromo').textContent = pickPromoDate(d) || "Apr '26";
   document.getElementById('tlCf').textContent = fmtDateToken(pick(d, ['cashFlowPositiveDate'])) || '\u2014';
   document.getElementById('tlFree').textContent = fmtDateToken(pick(d, ['debtTarget','debtFreeTarget'])) || '\u2014';
-  document.getElementById('burnMo').textContent = fmtMoney(pick(d, ['interestBurn.monthly','canonicalInterestBurnMonthly','monthlyInterestBurn']));
+  animateNum(document.getElementById('burnMo'), n(pick(d, ['interestBurn.monthly','canonicalInterestBurnMonthly','monthlyInterestBurn'])) || 0, fmtMoney);
   document.getElementById('paidOffVal').textContent = fmtMoney(pick(d, ['debtPaidOff','paidOffSinceStart','paidOffAmount']));
   document.getElementById('nextPayoffVal').textContent = pick(d, ['nextWin.label','nextPayoff','promoAction']) || '\u2014';
   var netWorth = pick(d, ['netWorth']);
@@ -548,10 +562,10 @@ function renderFinance(d){
   var spentPlusDebt = totalOut + debtPmt;
   var cfResult = earnedInc - spentPlusDebt;
 
-  document.getElementById('inVal').textContent = fmtMoney(earnedInc);
-  document.getElementById('outVal').textContent = fmtMoney(spentPlusDebt);
+  animateNum(document.getElementById('inVal'), earnedInc, fmtMoney);
+  animateNum(document.getElementById('outVal'), spentPlusDebt, fmtMoney);
   var cfEl = document.getElementById('cfVal');
-  cfEl.textContent = fmtMoney(cfResult);
+  animateNum(cfEl, cfResult, fmtMoney);
   cfEl.style.color = cfResult >= 0 ? 'var(--mint)' : 'var(--rose)';
 
   // Pills

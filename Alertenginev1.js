@@ -1,10 +1,10 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// AlertEngine.gs v4 — Push Notifications via Pushover API
+// AlertEngine.gs v5 — Push Notifications via Pushover API
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
-function getAlertEngineVersion() { return 4; }
+function getAlertEngineVersion() { return 5; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor
 var _aeSS = null;
@@ -16,6 +16,11 @@ function getAESS_() {
 // ── PUSHOVER CONFIG ─────────────────────────────────────────────
 // Script Properties: PUSHOVER_TOKEN, PUSHOVER_USER_LT, PUSHOVER_USER_JT
 
+function getParentDashUrl_() {
+  try { return ScriptApp.getService().getUrl() + '?page=kidshub&view=parent&jt=1'; }
+  catch(e) { return ''; }
+}
+
 function getPushoverConfig_() {
   var props = PropertiesService.getScriptProperties();
   return {
@@ -26,8 +31,8 @@ function getPushoverConfig_() {
 }
 
 // ── SEND PUSH NOTIFICATION ──────────────────────────────────────
-// recipient: 'LT', 'JT', or 'BOTH'
-function sendPush_(title, message, recipient, priority) {
+// recipient: 'LT', 'JT', or 'BOTH'  |  url: optional deep link
+function sendPush_(title, message, recipient, priority, url) {
   var config = getPushoverConfig_();
   if (!config.token) {
     console.log('ALERT_SKIP: PUSHOVER_TOKEN not configured');
@@ -60,6 +65,11 @@ function sendPush_(title, message, recipient, priority) {
       // Only include priority if non-zero (0 is Pushover's default)
       if (priority && priority !== 0) {
         payload.priority = String(priority);
+      }
+      // v5: Deep link support
+      if (url) {
+        payload.url = url;
+        payload.url_title = 'Open Kids Dashboard';
       }
 
       var response = UrlFetchApp.fetch('https://api.pushover.net/1/messages.json', {
@@ -155,7 +165,7 @@ function checkPendingApprovals() {
       var title = pending.length + ' task' + (pending.length > 1 ? 's' : '') + ' waiting for approval';
       var body = lines.join('\n');
 
-      var sent = sendPush_(title, body, 'BOTH', 0);
+      var sent = sendPush_(title, body, 'BOTH', 0, getParentDashUrl_());
 
       if (sent) {
         console.log('ALERT_SENT', JSON.stringify({
@@ -171,6 +181,64 @@ function checkPendingApprovals() {
 
   } catch (e) {
     console.log('ALERT_ERROR', 'checkPendingApprovals: ' + e.message);
+  }
+
+  // v5: Also check Asks on the same trigger cycle
+  try { checkPendingAsks(); } catch (e2) { console.log('ALERT_ERROR', 'checkPendingAsks piggyback: ' + e2.message); }
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// ASK ALERTS — Check for new pending Asks, push to JT only
+// ════════════════════════════════════════════════════════════════════
+
+function checkPendingAsks() {
+  if (!isAlertWindowOpen_()) return;
+  try {
+    var ss = getAESS_();
+    var tabName = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['KH_Requests'] || 'KH_Requests') : 'KH_Requests';
+    var sheet = ss.getSheetByName(tabName);
+    if (!sheet || sheet.getLastRow() < 2) return;
+
+    var data = sheet.getDataRange().getValues();
+    var h = data[0].map(function(c) { return String(c).trim(); });
+    var statusCol = h.indexOf('Status');
+    var childCol = h.indexOf('Child');
+    var typeCol = h.indexOf('Type');
+    var titleCol = h.indexOf('Title');
+    var amountCol = h.indexOf('Amount');
+    if (statusCol < 0) return;
+
+    var pending = [];
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][statusCol] || '').trim() === 'Pending') {
+        pending.push({
+          child: String(data[i][childCol] || ''),
+          type: String(data[i][typeCol] || ''),
+          title: String(data[i][titleCol] || ''),
+          amount: data[i][amountCol] || 0
+        });
+      }
+    }
+
+    var props = PropertiesService.getScriptProperties();
+    var lastCount = parseInt(props.getProperty('ALERT_LAST_ASKS') || '0');
+
+    if (pending.length > lastCount && pending.length > 0) {
+      var newest = pending[pending.length - 1];
+      var amtStr = newest.amount ? ' ($' + Number(newest.amount).toFixed(2) + ')' : '';
+      var title = newest.child + ' sent an Ask';
+      var body = newest.type + ': ' + newest.title + amtStr;
+      if (pending.length > 1) {
+        body += '\n' + pending.length + ' total asks waiting';
+      }
+
+      sendPush_(title, body, 'BOTH', 0, getParentDashUrl_());
+    }
+
+    props.setProperty('ALERT_LAST_ASKS', String(pending.length));
+  } catch (e) {
+    console.log('ALERT_ERROR', 'checkPendingAsks: ' + e.message);
   }
 }
 

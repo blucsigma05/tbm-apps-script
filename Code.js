@@ -1,13 +1,13 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v47 — Apps Script Router (TBM Consolidated)
+// Code.gs v48 — Apps Script Router (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
 // TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeGsVersion() { return 47; }
+function getCodeGsVersion() { return 48; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -401,6 +401,25 @@ function getScriptUrlSafe() {
   return ScriptApp.getService().getUrl();
 }
 
+// ── MonitorEngine safe wrappers (v48) ────────────────────────────
+function runMERGatesSafe(monthLabel) {
+  return withMonitor_('runMERGatesSafe', function() {
+    return JSON.stringify(runMERGates(monthLabel));
+  });
+}
+function stampCloseMonthSafe(monthLabel) {
+  return withMonitor_('stampCloseMonthSafe', function() {
+    return JSON.stringify(stampCloseMonth(monthLabel));
+  });
+}
+
+// ── Family Note safe wrapper (v48) ───────────────────────────────
+function updateFamilyNoteSafe(noteText) {
+  return withMonitor_('updateFamilyNoteSafe', function() {
+    return updateFamilyNote(noteText);
+  });
+}
+
 // ── KidsHub safe wrappers ────────────────────────────────────────
 function getKidsHubDataSafe(child) {
   return withMonitor_('getKidsHubDataSafe', function() {
@@ -670,6 +689,19 @@ function khDebitScreenTimeSafe(child, screenType, minutes) {
   });
 }
 
+// v48: Grade Bonus safe wrappers
+function khSubmitGradeSafe(params) {
+  return withMonitor_('khSubmitGradeSafe', function() {
+    try { return JSON.parse(khSubmitGrade(params)); }
+    catch(e) { _khDiag_('khSubmitGradeSafe', params, e); throw e; }
+  });
+}
+function khGetGradeHistorySafe(kid) {
+  return withMonitor_('khGetGradeHistorySafe', function() {
+    return JSON.parse(khGetGradeHistory(kid || 'all'));
+  });
+}
+
 // v39: Bonus Task safe wrapper
 function khAddBonusTaskSafe(child, taskName, points, icon, timeOfDay) {
   return withMonitor_('khAddBonusTaskSafe', function() {
@@ -799,7 +831,7 @@ function getVaultDataSafe() {
 // ════════════════════════════════════════════════════════════════════
 
 function healthCheck() {
-  Logger.log('═══ Code.gs v47 Health Check ═══');
+  Logger.log('═══ Code.gs v48 Health Check ═══');
 
   var fns = [
     'doGet', 'servePage', 'serveData', 'getDataSafe', 'getMonthsSafe',
@@ -1179,4 +1211,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v47
+// END OF FILE — Code.gs v48

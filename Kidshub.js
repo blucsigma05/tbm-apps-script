@@ -1,10 +1,10 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v26 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v28 — Kids Hub Server Backend (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubGsVersion() { return 26; }
-function getKidsHubVersion() { return 26; }  // alias for smoke test
+function getKidsHubGsVersion() { return 28; }
+function getKidsHubVersion() { return 28; }  // alias for smoke test
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -17,7 +17,8 @@ var KH_TABS = {
   ALLOWANCE:    'KH_Allowance',
   CHILDREN:     'KH_Children',
   REQUESTS:     'KH_Requests',
-  SCREEN_TIME:  'KH_ScreenTime'
+  SCREEN_TIME:  'KH_ScreenTime',
+  GRADES:       'KH_Grades'
 };
 
 // ── FREQUENCY OPTIONS (single source of truth) ───────────────────
@@ -34,6 +35,17 @@ var KH_THEME_OPTIONS     = ['buggsy', 'jj'];
 var KH_BOOLEAN_OPTIONS   = ['TRUE', 'FALSE'];
 var KH_REQUEST_TYPES     = ['Money', 'Purchase', 'Activity', 'Other'];
 var KH_REQUEST_STATUSES  = ['Pending', 'Approved', 'Denied'];
+
+// v28: Grade Bonus System
+var KH_GRADE_REWARDS = {
+  'A': { rings: 50, cash: 5.00 },
+  'B': { rings: 25, cash: 2.00 },
+  'C': { rings: 0, cash: 0 },
+  'D': { rings: 0, cash: 0 },
+  'F': { rings: 0, cash: 0 }
+};
+var KH_SUBJECTS = ['Math', 'Reading', 'Science', 'Social Studies', 'Art', 'Music', 'PE', 'Other'];
+var KH_QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4', 'S1', 'S2', 'Final'];
 
 // ── CANONICAL LEVELS (post-10x, single source of truth) ──────────
 var KH_LEVELS = [
@@ -64,10 +76,10 @@ var KH_SCHEMAS = {
     headers: [
       'Child','Task','Task_ID','Task_Order','Category','Icon','Points',
       'TV_Minutes','Money','Snacks','Frequency','Active','Required',
-      'Bonus_Multiplier','Streak_Threshold','Max_Bonus_Per_Week',
+      'Due_Day','Bonus_Multiplier','Streak_Threshold','Max_Bonus_Per_Week',
       'Completed','Completed_Date','Parent_Approved'
     ],
-    widths: [70,340,130,90,100,45,60,90,60,60,90,60,60,80,100,110,85,115,115]
+    widths: [70,340,130,90,100,45,60,90,60,60,90,60,60,80,80,100,110,85,115,115]
   },
 
   KH_History: {
@@ -119,6 +131,11 @@ var KH_SCHEMAS = {
   KH_ScreenTime: {
     headers: ['Entry_UID','Child','Screen_Type','Minutes','Direction','Source','Date','Timestamp'],
     widths: [220,70,90,70,90,160,100,180]
+  },
+
+  KH_Grades: {
+    headers: ['Timestamp','Kid','Subject','Grade','Quarter','School_Year','Rings_Awarded','Cash_Awarded','Entered_By','Notes'],
+    widths: [180,70,120,60,70,100,100,100,80,200]
   }
 };
 
@@ -794,6 +811,7 @@ function readChores_(child, isAll) {
       snacks:           Number(row[khCol_(h, 'Snacks')])          || 0,
       frequency:        freq,
       required:         String(row[khCol_(h, 'Required')] || 'NO').toUpperCase() === 'YES',
+      dueDay:           String(row[khCol_(h, 'Due_Day')] || '').trim(),
       streakThreshold:  Number(row[khCol_(h, 'Streak_Threshold')])|| 5,
       maxBonusPerWeek:  Number(row[khCol_(h, 'Max_Bonus_Per_Week')]) || 2,
       completed:        done,
@@ -1060,6 +1078,23 @@ function readStreaks_(child, isAll) {
 }
 
 
+// v27: Check if today matches a Due_Day value (e.g. "Saturday", "Mon,Thu")
+// Blank dueDay = every day (backward compatible)
+function isDueToday_(dueDay) {
+  if (!dueDay) return true;
+  var DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var today = new Date().getDay();
+  var parts = dueDay.split(',');
+  for (var i = 0; i < parts.length; i++) {
+    var d = parts[i].trim();
+    if (!d) continue;
+    var dl = d.charAt(0).toUpperCase() + d.slice(1).toLowerCase();
+    if (dl === DAYS[today] || dl === SHORT[today]) return true;
+  }
+  return false;
+}
+
 function getRequiredStatus_(child) {
   var tasks = readChores_(child, false);
   var hour = new Date().getHours();
@@ -1067,7 +1102,7 @@ function getRequiredStatus_(child) {
   if (hour >= 12) activeBuckets.push('2-Afternoon');
   if (hour >= 17) activeBuckets.push('3-Evening');
 
-  var required = tasks.filter(function(t) { return t.required; });
+  var required = tasks.filter(function(t) { return t.required && isDueToday_(t.dueDay); });
   var currentRequired = required.filter(function(t) {
     return activeBuckets.indexOf(t.timeOfDay) >= 0;
   });
@@ -1348,6 +1383,7 @@ function khApproveTask(rowIndex, expectedTaskID) {
     var earnedPoints = Math.round(basePoints * mult);
     // v25: Batch write — modify row in memory, single writeback
     row[khCol_(h, 'Parent_Approved')] = true;
+    row[khCol_(h, 'Completed_Date')] = today;
     // v18: Auto-deactivate One-Time tasks after approval so they don't reappear
     var freq = String(row[khCol_(h, 'Frequency')] || '').toLowerCase();
     if (freq === 'one-time') {
@@ -1488,6 +1524,7 @@ function khApproveWithBonus(rowIndex, multiplier, expectedTaskID) {
     // v25: Batch write — modify row in memory, single writeback
     row[khCol_(h, 'Bonus_Multiplier')] = validMult;
     row[khCol_(h, 'Parent_Approved')] = true;
+    row[khCol_(h, 'Completed_Date')] = today;
     // v18: Auto-deactivate One-Time tasks after approval
     var freq = String(row[khCol_(h, 'Frequency')] || '').toLowerCase();
     if (freq === 'one-time') {
@@ -1582,6 +1619,93 @@ function khAddDeduction(child, reason, amount) {
 }
 
 
+// ── v28: GRADE BONUS SYSTEM ──────────────────────────────────────
+
+function khSubmitGrade(params) {
+  var kid = String(params.kid || '').trim();
+  var subject = String(params.subject || '').trim();
+  var grade = String(params.grade || '').trim().toUpperCase();
+  var quarter = String(params.quarter || '').trim();
+  var schoolYear = String(params.schoolYear || '').trim();
+  var enteredBy = String(params.enteredBy || '').trim();
+  var notes = String(params.notes || '').trim();
+
+  // Validate
+  if (!kid || (kid !== 'Buggsy' && kid !== 'JJ')) {
+    return JSON.stringify({ status: 'error', message: 'Invalid kid: ' + kid });
+  }
+  if (KH_SUBJECTS.indexOf(subject) < 0) {
+    return JSON.stringify({ status: 'error', message: 'Invalid subject: ' + subject });
+  }
+  if (!KH_GRADE_REWARDS[grade]) {
+    return JSON.stringify({ status: 'error', message: 'Invalid grade: ' + grade });
+  }
+  if (KH_QUARTERS.indexOf(quarter) < 0) {
+    return JSON.stringify({ status: 'error', message: 'Invalid quarter: ' + quarter });
+  }
+
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked', message: 'Another operation is in progress.' });
+  try {
+    var reward = KH_GRADE_REWARDS[grade];
+    var today = getTodayISO_();
+    var now = getNowISO_();
+
+    // 1. Append to KH_Grades
+    var gradeSheet = getKHSheet_('KH_Grades');
+    if (!gradeSheet) return JSON.stringify({ status: 'error', message: 'KH_Grades tab not found' });
+    gradeSheet.appendRow([now, kid, subject, grade, quarter, schoolYear, reward.rings, reward.cash, enteredBy, notes]);
+
+    // 2. If rings > 0, append to KH_History as a bonus event
+    if (reward.rings > 0) {
+      var histUID = kid.toLowerCase() + '_GRADE_' + subject.replace(/\s/g, '') + '_' + quarter + '_' + schoolYear.replace(/[^0-9]/g, '');
+      appendHistory_(histUID, 'GRADE', kid, subject + ' Grade: ' + grade, reward.rings, reward.rings, 1, 'bonus', today, now);
+    }
+
+    // 3. If cash > 0, log to KH_Allowance (simple append — balance computed at read time)
+    if (reward.cash > 0) {
+      var allowSheet = getKHSheet_('KH_Allowance');
+      if (allowSheet) {
+        allowSheet.appendRow([kid, reward.cash, today, 'Grade Bonus: ' + subject + ' ' + grade]);
+      }
+    }
+
+    stampKHHeartbeat_();
+    console.log('KH_WRITE', JSON.stringify({ fn: 'khSubmitGrade', kid: kid, subject: subject, grade: grade, rings: reward.rings, cash: reward.cash }));
+    return JSON.stringify({ status: 'ok', kid: kid, subject: subject, grade: grade, ringsAwarded: reward.rings, cashAwarded: reward.cash });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function khGetGradeHistory(kid) {
+  var sheet = getKHSheet_('KH_Grades');
+  if (!sheet || sheet.getLastRow() < 2) return JSON.stringify([]);
+  var data = sheet.getDataRange().getValues();
+  var h = data[0].map(String);
+  var results = [];
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    var rowKid = String(row[h.indexOf('Kid')] || '');
+    if (kid && kid !== 'all' && rowKid !== kid) continue;
+    results.push({
+      timestamp: String(row[h.indexOf('Timestamp')] || ''),
+      kid: rowKid,
+      subject: String(row[h.indexOf('Subject')] || ''),
+      grade: String(row[h.indexOf('Grade')] || ''),
+      quarter: String(row[h.indexOf('Quarter')] || ''),
+      schoolYear: String(row[h.indexOf('School_Year')] || ''),
+      rings: Number(row[h.indexOf('Rings_Awarded')]) || 0,
+      cash: Number(row[h.indexOf('Cash_Awarded')]) || 0,
+      enteredBy: String(row[h.indexOf('Entered_By')] || ''),
+      notes: String(row[h.indexOf('Notes')] || '')
+    });
+  }
+  results.sort(function(a, b) { return a.timestamp > b.timestamp ? -1 : 1; });
+  return JSON.stringify(results);
+}
+
+
 function khResetTasks(mode, child) {
   var lk = acquireLock_();
   if (!lk.acquired) return JSON.stringify({ status: 'locked', message: 'Another operation is in progress. Try again.' });
@@ -1652,6 +1776,53 @@ function khResetTasks(mode, child) {
 // ════════════════════════════════════════════════════════════════════
 
 // v17: Auto-create helper for KH_Requests tab
+// v28: One-time migration — adds Due_Day column to KH_Chores between Required and Bonus_Multiplier
+// Safe to run multiple times — skips if column already exists
+function migrateDueDay() {
+  var sheet = getKHSheet_('KH_Chores');
+  if (!sheet) { Logger.log('migrateDueDay: KH_Chores not found'); return 'ERROR: KH_Chores not found'; }
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String);
+  if (headers.indexOf('Due_Day') >= 0) {
+    Logger.log('migrateDueDay: Due_Day column already exists at index ' + headers.indexOf('Due_Day'));
+    return 'SKIP: Due_Day already exists';
+  }
+  // Find Required column — Due_Day goes right after it
+  var reqIdx = headers.indexOf('Required');
+  if (reqIdx < 0) { Logger.log('migrateDueDay: Required column not found'); return 'ERROR: Required column not found'; }
+  var insertAfter = reqIdx + 1; // 0-based index of Required, +1 = column after
+  sheet.insertColumnAfter(insertAfter); // insertColumnAfter is 1-based
+  var newColNum = insertAfter + 1;
+  sheet.getRange(1, newColNum).setValue('Due_Day')
+    .setBackground('#0f1923').setFontColor('#fbbf24')
+    .setFontWeight('bold').setFontFamily('Courier New').setFontSize(10);
+  sheet.setColumnWidth(newColNum, 80);
+  Logger.log('migrateDueDay: Inserted Due_Day at column ' + newColNum + ' (after Required)');
+  return 'OK: Due_Day added at column ' + newColNum;
+}
+
+// v28: One-time migration — creates KH_Grades tab with schema headers
+function migrateGradesTab() {
+  var ss = getKHSS_();
+  var tabName = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['KH_Grades'] || 'KH_Grades') : '🧹📅 KH_Grades';
+  var existing = ss.getSheetByName(tabName);
+  if (existing) {
+    Logger.log('migrateGradesTab: Tab already exists — ' + tabName);
+    return 'SKIP: ' + tabName + ' already exists';
+  }
+  var schema = KH_SCHEMAS['KH_Grades'];
+  var sheet = ss.insertSheet(tabName);
+  var hRange = sheet.getRange(1, 1, 1, schema.headers.length);
+  hRange.setValues([schema.headers]);
+  hRange.setBackground('#0f1923').setFontColor('#fbbf24')
+    .setFontWeight('bold').setFontFamily('Courier New').setFontSize(10);
+  for (var i = 0; i < schema.widths.length; i++) {
+    sheet.setColumnWidth(i + 1, schema.widths[i]);
+  }
+  sheet.setFrozenRows(1);
+  Logger.log('migrateGradesTab: Created ' + tabName + ' with ' + schema.headers.length + ' columns');
+  return 'OK: Created ' + tabName;
+}
+
 function ensureKHRequestsTab_() {
   var sheet = getKHSheet_('KH_Requests');
   if (sheet) return sheet;

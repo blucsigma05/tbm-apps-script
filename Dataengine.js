@@ -2,7 +2,7 @@
 // DATA ENGINE v74 — Dynamic KPI Computation from Raw Tiller Data
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 74; }
+function getDataEngineVersion() { return 75; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -185,10 +185,6 @@ var TAB_MAP = {
   'Kids_Collection':  '⌚📦 Kids Collection',
   'Wishlist':         '⌚📦 Wish List',
   'Style Reference':  '⌚📦 Style Reference',
-  // 🧹📅 Kids Hub (TBM workbook only)
-  'Chores':           '🧹📅 Chores',
-  'Rewards':          '🧹📅 Rewards',
-  'Weekly Tracker':   '🧹📅 Weekly Tracker',
   // 🧹📅 Kids Hub — KH_ tabs (v56)
   'KH_Chores':        '🧹📅 KH_Chores',
   'KH_History':       '🧹📅 KH_History',
@@ -200,6 +196,7 @@ var TAB_MAP = {
   'KH_Children':      '🧹📅 KH_Children',
   'KH_Requests':      '🧹📅 KH_Requests',
   'KH_ScreenTime':    '🧹📅 KH_ScreenTime',
+  'KH_Grades':        '🧹📅 KH_Grades',
   // 📋 Board Config
   'Board_Config':     '📋 Board_Config'
 };
@@ -3089,6 +3086,36 @@ function getBoardData() {
   };
 }
 
+
+// v75: Update family note in Board_Config — called from TheVein note editor
+function updateFamilyNote(noteText) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+    var ss = getDESS_();
+    var sheet = ss.getSheetByName(TAB_MAP['Board_Config'] || 'Board_Config');
+    if (!sheet) throw new Error('Board_Config tab not found');
+    var data = sheet.getDataRange().getValues();
+    var found = false;
+    for (var i = 0; i < data.length; i++) {
+      if (String(data[i][0]).trim() === 'FAMILY_NOTE') {
+        sheet.getRange(i + 1, 2).setValue(String(noteText || '').trim());
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      sheet.appendRow(['FAMILY_NOTE', String(noteText || '').trim()]);
+    }
+    try { CacheService.getScriptCache().remove('board_data'); } catch(e) {}
+    return { success: true, note: String(noteText || '').trim() };
+  } catch (e) {
+    Logger.log('updateFamilyNote error: ' + e.toString());
+    return { success: false, error: e.message || e.toString() };
+  } finally {
+    lock.releaseLock();
+  }
+}
 
 /**
  * Format a CalendarApp event for Board display.

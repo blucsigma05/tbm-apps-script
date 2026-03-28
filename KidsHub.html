@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kids Hub v26</title>
+<title>Kids Hub v28</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -18,6 +18,14 @@ body { min-height: 100vh; }
 }
 .load-ring { width: 52px; height: 52px; border-radius: 50%; border: 4px solid transparent; animation: spin 0.9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+/* v27: Shared micro-feedback */
+@keyframes tb-check-pop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+.tb-check-mark { position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);font-size:28px;z-index:10;pointer-events:none;animation:tb-check-pop 0.3s ease forwards; }
+/* v27: Wolf Kid / character reactions */
+@keyframes char-bounce { 0%{transform:translateY(0)} 40%{transform:translateY(-5px)} 100%{transform:translateY(0)} }
+@keyframes char-glow { 0%{filter:drop-shadow(0 0 0 transparent)} 50%{filter:drop-shadow(0 0 8px rgba(255,215,0,0.6))} 100%{filter:drop-shadow(0 0 0 transparent)} }
+.char-bounce { animation:char-bounce 0.3s ease; }
+.char-glow { animation:char-glow 0.5s ease; }
 .load-text { font-size: 14px; }
 
 /* ════════════════════════════════════════
@@ -367,6 +375,11 @@ body { min-height: 100vh; }
   font-family: 'Barlow Condensed', sans-serif; color: #e2e8f0;
   padding-bottom: 60px; min-height: 100vh;
 }
+/* v27: Parent nav bar — matches ThePulse pattern */
+.p-nav { position:sticky;top:0;z-index:1000;display:flex;align-items:center;justify-content:center;gap:2px;padding:6px 12px;background:rgba(58,72,112,0.95);border-bottom:1px solid rgba(255,255,255,0.15);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:0.4px;flex-wrap:wrap; }
+.p-nav a { padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.5);transition:all 0.15s; }
+.p-nav a:hover { color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.1); }
+.p-nav a.pnav-active { color:#fff;background:rgba(255,255,255,0.12);font-weight:700; }
 .parent-body #loading { background: #3a4870; }
 .parent-body .load-ring { border-top-color: #d4a843; border-right-color: #d4a843; }
 .parent-body .load-text { font-size: 15px; color: #e2e8f0; font-weight: 700; letter-spacing: 1px; }
@@ -416,7 +429,7 @@ body { min-height: 100vh; }
 .p-task-name { font-size: 14px; font-weight: 700; color: #e2e8f0; line-height: 1.2; }
 .p-task-meta { font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 600; margin-top: 2px; }
 .p-task-btns { display: flex; gap: 5px; flex-shrink: 0; }
-.p-appr-btn { font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.12s; }
+.p-appr-btn { font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.12s; min-height: 44px; min-width: 44px; }
 .p-appr-btn.yes { background: rgba(22,163,106,0.15); color: #86efac; }
 .p-appr-btn.yes:hover { background: #16a34a; color: #fff; }
 .p-appr-btn.no { background: rgba(220,38,38,0.15); color: #fca5a5; }
@@ -497,7 +510,7 @@ body { min-height: 100vh; }
 .p-v2-tab:hover { border-color: #6366f1; color: #a5b4fc; }
 .p-v2-tab.active { background: #6366f1; color: #fff; border-color: #6366f1; }
 .p-onetap { display: flex; gap: 5px; flex-shrink: 0; }
-.p-onetap-btn { font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+.p-onetap-btn { font-size: 11px; font-weight: 700; padding: 6px 10px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.12s; white-space: nowrap; min-height: 44px; min-width: 44px; }
 .p-onetap-btn.approve { background: rgba(22,163,106,0.15); color: #86efac; }
 .p-onetap-btn.approve:hover { background: #16a34a; color: #fff; }
 .p-onetap-btn.bonus15 { background: rgba(217,119,6,0.15); color: #fcd34d; }
@@ -561,7 +574,7 @@ body { min-height: 100vh; }
 @media (max-width: 600px) { .p-weekly-grid { grid-template-columns: repeat(3,1fr); } }
 /* v26: Track 5 — responsive fixes */
 @media (max-width: 480px) { .sf-row { flex-wrap: wrap; } .sf-select { flex-basis: 100%; } .p-onetap { flex-wrap: wrap; gap: 4px; } .p-onetap-btn { padding: 5px 8px; font-size: 11px; } }
-@media (max-width: 420px) { .p-sum-val { font-size: 22px; } .p-sum-lbl { font-size: 10px; } }
+@media (max-width: 420px) { .p-sum-val { font-size: 22px; } .p-sum-lbl { font-size: 10px; } .p-v2-tab { font-size: 11px; padding: 8px 6px; } .p-nav a { padding: 5px 10px; font-size: 11px; } .p-task-btns, .p-ask-btns { flex-wrap: wrap; } .p-hdr { padding: 14px 12px 10px; } .p-body { padding: 14px 10px 0; } }
 /* v26: Track 7 — sync strip */
 .sync-strip { position: fixed; bottom: 12px; left: 24px; display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 14px; z-index: 200; font-size: 11px; font-weight: 700; transition: opacity 0.3s; }
 .buggsy-body .sync-strip { background: rgba(13,21,32,0.85); border: 1px solid #1e3347; font-family: 'Press Start 2P', monospace; font-size: 7px; color: #4a6080; }
@@ -596,7 +609,7 @@ body { min-height: 100vh; }
 .p-ask-amount { font-size: 13px; font-weight: 800; color: #fbbf24; margin-top: 2px; }
 .p-ask-notes { font-size: 11px; color: #94a3b8; margin-top: 4px; font-style: italic; }
 .p-ask-btns { display: flex; gap: 6px; flex-shrink: 0; }
-.p-ask-btn { font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.12s; }
+.p-ask-btn { font-size: 12px; font-weight: 700; padding: 7px 14px; border-radius: 6px; border: none; cursor: pointer; transition: all 0.12s; min-height: 44px; min-width: 44px; }
 .p-ask-btn.approve { background: rgba(22,163,106,0.15); color: #86efac; }
 .p-ask-btn.approve:hover { background: #16a34a; color: #fff; }
 .p-ask-btn.deny { background: rgba(220,38,38,0.15); color: #fca5a5; }
@@ -847,6 +860,47 @@ var INIT_VIEW  = "<?= INIT_VIEW ?>";
 var IS_JJ     = INIT_CHILD === 'jj';
 var IS_PARENT = INIT_VIEW  === 'parent';
 
+// v27: Parent nav — fetch base URL and navigate between surfaces
+var _pNavBaseUrl = '';
+if (IS_PARENT) { google.script.run.withSuccessHandler(function(u) { _pNavBaseUrl = u; }).getScriptUrlSafe(); }
+function pNavGo(page) {
+  var suffix = '&jt=1';
+  if (_pNavBaseUrl) { window.top.location.href = _pNavBaseUrl + '?page=' + page + suffix; }
+  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page + suffix; }).getScriptUrlSafe(); }
+}
+
+// v27: Animate number tick-up (ES5 safe, 400ms)
+function animateNumber(el, from, to, fmt) {
+  if (!el || from === to) { if (el) el.textContent = fmt ? fmt(to) : to; return; }
+  var start = Date.now(), dur = 400;
+  var timer = setInterval(function() {
+    var p = Math.min((Date.now() - start) / dur, 1);
+    var val = Math.round(from + (to - from) * p);
+    el.textContent = fmt ? fmt(val) : val;
+    if (p >= 1) clearInterval(timer);
+  }, 16);
+}
+// v27: Character reaction — bounce on claim, glow on approval
+function charReact(type) {
+  var imgs = document.querySelectorAll('.char-stat-img, .char-avatar');
+  var cls = type === 'glow' ? 'char-glow' : 'char-bounce';
+  for (var i = 0; i < imgs.length; i++) {
+    imgs[i].classList.remove('char-bounce', 'char-glow');
+    void imgs[i].offsetWidth;
+    imgs[i].classList.add(cls);
+  }
+}
+// v27: Show checkmark pop on a card element
+function showCheckPop(card) {
+  if (!card) return;
+  card.style.position = 'relative';
+  var m = document.createElement('div');
+  m.className = 'tb-check-mark';
+  m.textContent = '\u2705';
+  card.appendChild(m);
+  setTimeout(function() { if (m.parentNode) m.parentNode.removeChild(m); }, 600);
+}
+
 // ── Levels — v17: read from payload, fallback for backward compat ────
 var LEVELS_FALLBACK = [
   { name:'Noob', min:0, color:'#9e9e9e' },
@@ -976,6 +1030,19 @@ window.onload = function () {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     renderParent();
+    // v27: Parent dashboard heartbeat poll — 60s, visibility-gated
+    setInterval(function() {
+      if (_fetching || document.hidden) return;
+      google.script.run
+        .withSuccessHandler(function(ts) {
+          if (ts && ts !== _lastHeartbeat) {
+            _lastHeartbeat = ts;
+            window.renderParent();
+          }
+        })
+        .withFailureHandler(function() { })
+        .getKHLastModified();
+    }, 60000);
   } else {
     loadKidData();
     // v24: Smart polling — check heartbeat timestamp before full fetch
@@ -1129,6 +1196,27 @@ function onKidData(raw) {
     }, 300);
   }
 
+  // v28: Grade celebration — check for today's grade entries (first load only)
+  if (!IS_PARENT && !window._gradeCelebrated) {
+    window._gradeCelebrated = true;
+    google.script.run.withSuccessHandler(function(grades) {
+      if (!grades || !grades.length) return;
+      var today = new Date().toISOString().substring(0, 10);
+      var childName = IS_JJ ? 'JJ' : 'Buggsy';
+      var todayGrades = grades.filter(function(g) {
+        return g.kid === childName && g.timestamp && g.timestamp.substring(0, 10) === today && g.rings > 0;
+      });
+      todayGrades.forEach(function(g) {
+        var msg = 'You got ' + g.grade + ' in ' + g.subject + '! +' + g.rings + ' ' + (IS_JJ ? 'stars' : 'rings');
+        if (g.cash > 0) msg += ' +$' + Number(g.cash).toFixed(2);
+        setTimeout(function() {
+          if (IS_JJ) { jjConfetti(20); jjPointsBanner(msg + ' ⭐'); }
+          else { showBXP({clientX: window.innerWidth/2, clientY: window.innerHeight/4}, msg + '!'); }
+        }, 500);
+      });
+    }).withFailureHandler(function() { }).khGetGradeHistorySafe(IS_JJ ? 'JJ' : 'Buggsy');
+  }
+
   // v24: Capture heartbeat on load so smart poll can compare
   google.script.run.withSuccessHandler(function(ts) { if (ts) _lastHeartbeat = ts; }).getKHLastModified();
 
@@ -1193,8 +1281,12 @@ function updateBuggsy() {
   var tv    = tvBank + gamingBank;
   var money = approved.reduce(function(s,t){return s+t.money;},0);
 
-  document.getElementById('bRings').textContent  = rings;
-  document.getElementById('bTV').textContent     = tv;
+  var bRingsEl = document.getElementById('bRings');
+  var bTVEl = document.getElementById('bTV');
+  var prevRings = parseInt(bRingsEl.textContent) || 0;
+  var prevTV = parseInt(bTVEl.textContent) || 0;
+  animateNumber(bRingsEl, prevRings, rings);
+  animateNumber(bTVEl, prevTV, tv);
   document.getElementById('bMoney').textContent  = '$' + money.toFixed(2);
   document.getElementById('bRBadge').textContent = rings + ' RINGS';
 
@@ -1375,6 +1467,8 @@ function bClaim(taskID, e) {
   t.completed = true;
   updateBuggsy();
   showBXP(e, '📦 PENDING!');
+  showCheckPop(btn ? btn.closest('.b-card') : null);
+  charReact('bounce');
   bSendRingsToCounter(e, Math.max(3, Math.min(6, t.points || 3)));
   setSyncState('saving', 'Claiming...');
   google.script.run
@@ -1391,7 +1485,7 @@ function bApprove(taskID, e) {
   _fetching = true;
   t.parentApproved = true; updateBuggsy();
   google.script.run
-    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){t.parentApproved=false; updateBuggsy(); return;} showBXP(e, '✓ APPROVED!'); })
+    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){t.parentApproved=false; updateBuggsy(); return;} showBXP(e, '✓ APPROVED!'); charReact('glow'); })
     .withFailureHandler(function(err){ _fetching = false; showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.parentApproved=false; updateBuggsy(); })
     .khApproveTaskSafe(t.rowIndex, t.taskID);
 }
@@ -1631,9 +1725,15 @@ function updateJJ() {
   var jjGamingBank = (screenTimeBank.Gaming && typeof screenTimeBank.Gaming.balance === 'number') ? screenTimeBank.Gaming.balance : 0;
   var displayTV = jjTvBank + jjGamingBank;
   var earnedSnack = approved.reduce(function(s,t){return s + (t.snacks || 0);},0);
-  document.getElementById('jjStars').textContent    = stars;
-  document.getElementById('jjTV').textContent       = displayTV + 'm';
-  document.getElementById('jjSnack').textContent    = earnedSnack;
+  var jjStarsEl = document.getElementById('jjStars');
+  var jjTVEl = document.getElementById('jjTV');
+  var jjSnackEl = document.getElementById('jjSnack');
+  var prevStars = parseInt(jjStarsEl.textContent) || 0;
+  var prevJJTV = parseInt(jjTVEl.textContent) || 0;
+  var prevSnack = parseInt(jjSnackEl.textContent) || 0;
+  animateNumber(jjStarsEl, prevStars, stars);
+  animateNumber(jjTVEl, prevJJTV, displayTV, function(v) { return v + 'm'; });
+  animateNumber(jjSnackEl, prevSnack, earnedSnack);
   var jjLevelInfo = getLevel(stars, 'jj');
   var jjLevel = jjLevelInfo.level;
   var jjChip = document.getElementById('jjLevelChip');
@@ -1807,7 +1907,7 @@ function jjClaim(taskID, e) {
   if (!t||t.completed) return;
   _fetching = true;
   var btn = e.target; if (btn) { btn.disabled = true; btn.innerHTML = '⭐'; btn.classList.add('spinning'); }
-  t.completed=true; updateJJ(); jjConfetti(8); jjStarPop(e,'✨ I did it!'); jjSendStarsToCounter(e, Math.max(3, Math.min(6, t.points || 3)));
+  t.completed=true; updateJJ(); jjConfetti(8); jjStarPop(e,'✨ I did it!'); showCheckPop(btn ? btn.closest('.jj-card') : null); charReact('bounce'); jjSendStarsToCounter(e, Math.max(3, Math.min(6, t.points || 3)));
   setSyncState('saving', 'Claiming...');
   google.script.run
     .withSuccessHandler(function(){ _fetching = false; setSyncState('synced', 'Done!'); })
@@ -1823,7 +1923,7 @@ function jjApprove(taskID, e) {
   var pts = t.points;
   t.parentApproved=true; updateJJ();
   google.script.run
-    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){t.parentApproved=false; updateJJ(); return;} jjStarPop(e,'Parent said yes! ✨'); jjConfetti(22); jjPointsBanner('+'+pts+' ⭐'); })
+    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){t.parentApproved=false; updateJJ(); return;} jjStarPop(e,'Parent said yes! ✨'); jjConfetti(22); jjPointsBanner('+'+pts+' ⭐'); charReact('glow'); })
     .withFailureHandler(function(err){ _fetching = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.parentApproved=false; updateJJ(); })
     .khApproveTaskSafe(t.rowIndex, t.taskID);
 }
@@ -2090,6 +2190,43 @@ function updateAskTab(child, prefix) {
   renderAskRewards(child, prefix + 'AskRewards');
 }
 // ── EVENTS TAB — Calendar bridge via CalendarSync.gs ──────
+// v28: Grade Bonus submission
+function submitGrade() {
+  var kid = document.getElementById('gradeKid').value;
+  var subject = document.getElementById('gradeSubject').value;
+  var grade = document.getElementById('gradeGrade').value;
+  var quarter = document.getElementById('gradeQuarter').value;
+  var schoolYear = document.getElementById('gradeYear').value;
+  var notes = document.getElementById('gradeNotes').value;
+  var statusEl = document.getElementById('gradeStatus');
+  statusEl.style.display = 'block';
+  statusEl.style.background = 'rgba(99,102,241,0.15)';
+  statusEl.style.color = '#a5b4fc';
+  statusEl.textContent = 'Submitting...';
+  google.script.run
+    .withSuccessHandler(function(r) {
+      if (r && r.status === 'ok') {
+        var msg = kid + ' earned ' + r.ringsAwarded + ' rings';
+        if (r.cashAwarded > 0) msg += ' + $' + Number(r.cashAwarded).toFixed(2);
+        msg += ' for ' + grade + ' in ' + subject + '!';
+        statusEl.style.background = 'rgba(22,163,106,0.15)';
+        statusEl.style.color = '#86efac';
+        statusEl.textContent = msg;
+        document.getElementById('gradeNotes').value = '';
+      } else {
+        statusEl.style.background = 'rgba(220,38,38,0.15)';
+        statusEl.style.color = '#fca5a5';
+        statusEl.textContent = (r && r.message) || 'Error submitting grade';
+      }
+    })
+    .withFailureHandler(function(e) {
+      statusEl.style.background = 'rgba(220,38,38,0.15)';
+      statusEl.style.color = '#fca5a5';
+      statusEl.textContent = 'Error: ' + (e.message || 'Unknown');
+    })
+    .khSubmitGradeSafe({ kid: kid, subject: subject, grade: grade, quarter: quarter, schoolYear: schoolYear, enteredBy: 'Parent', notes: notes });
+}
+
 function submitEvent(prefix) {
   var title = document.getElementById(prefix + 'EvTitle').value.trim();
   var date  = document.getElementById(prefix + 'EvDate').value;
@@ -2138,11 +2275,21 @@ function renderParent() {
   loadParentData();
 }
 function buildParentUI() {
-  return '<div class="p-hdr"><div class="p-hdr-top"><div class="p-hdr-title">KIDS HUB <span>/ PARENT</span></div><div class="p-links" id="pLinks"><span style="font-size:11px;color:#64748b;font-weight:700;align-self:center">OPEN:</span></div></div></div>'+
+  return '<div class="p-nav" id="pNav"><a onclick="pNavGo(\'pulse\')">The Pulse</a><a class="pnav-active">Kids Dashboard</a></div>'+
+  '<div class="p-hdr"><div class="p-hdr-top"><div class="p-hdr-title">KIDS HUB <span>/ PARENT</span></div><div class="p-links" id="pLinks"><span style="font-size:11px;color:#64748b;font-weight:700;align-self:center">OPEN:</span></div></div></div>'+
   '<div class="p-body"><div id="pSpinner" class="p-spinner"><div class="p-spin-ring"></div></div>'+
   '<div id="pContent" style="display:none">'+
   '<div class="p-summary" id="pSummary"></div>'+
   '<div class="p-kids" id="pKids"></div>'+
+  '<div class="p-reset-panel" style="margin-bottom:20px"><div class="p-reset-title">📝 REPORT CARD</div>'+
+  '<div style="display:flex;flex-direction:column;gap:10px">'+
+  '<div style="display:flex;gap:10px"><select id="gradeKid" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0"><option value="Buggsy">Buggsy</option><option value="JJ">JJ</option></select><select id="gradeSubject" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0"><option>Math</option><option>Reading</option><option>Science</option><option>Social Studies</option><option>Art</option><option>Music</option><option>PE</option><option>Other</option></select></div>'+
+  '<div style="display:flex;gap:10px"><select id="gradeGrade" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0"><option value="A">A — 50 rings + $5</option><option value="B">B — 25 rings + $2</option><option value="C">C — logged only</option><option value="D">D — logged only</option><option value="F">F — logged only</option></select><select id="gradeQuarter" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option><option>S1</option><option>S2</option><option>Final</option></select></div>'+
+  '<input type="text" id="gradeYear" value="2025-2026" style="padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0" placeholder="School Year">'+
+  '<input type="text" id="gradeNotes" placeholder="Notes (optional)" style="padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0">'+
+  '<button onclick="submitGrade()" style="padding:12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;min-height:44px">📝 Submit Grade</button>'+
+  '<div id="gradeStatus" style="display:none;padding:10px;border-radius:8px;font-size:13px;font-weight:700;text-align:center"></div>'+
+  '</div></div>'+
   '<div class="p-reset-panel" style="margin-bottom:20px"><div class="p-reset-title">📅 ADD CALENDAR EVENT</div>'+
 '<div style="display:flex;flex-direction:column;gap:10px">'+
 '<input type="text" id="pEvTitle" placeholder="Event title..." style="padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">'+

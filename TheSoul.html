@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<title>TheSoul v38 — Thompson Family Display</title>
+<title>TheSoul v39 — Thompson Family Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
@@ -572,6 +572,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
 .kid-shell{
   height:100%;
   display:grid;
+  animation:fadeInSoft 0.3s ease;
   grid-template-rows:auto auto auto auto 1fr;
   gap:2px;
   padding:5px 9px;
@@ -1246,17 +1247,18 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
     var totalEvents = householdEvents.length + kidsEvents.length;
     var nextEvent = totalEvents ? (householdEvents[0] || kidsEvents[0]) : null;
 
-    $('householdSchedule').innerHTML = scheduleCardHtml(
+    // v39: Fade transition on calendar event changes
+    fadeSwap($('householdSchedule'), scheduleCardHtml(
       householdEvents,
       'Clear schedule \u2014 enjoy the quiet!',
       'Nothing on deck for the house right now'
-    );
+    ));
 
-    $('kidsSchedule').innerHTML = scheduleCardHtml(
+    fadeSwap($('kidsSchedule'), scheduleCardHtml(
       kidsEvents,
       'Nothing on deck \u2014 go play!',
       'No kids activities lined up right now'
-    );
+    ));
 
     $('scheduleSummary').textContent = totalEvents
       ? totalEvents + ' event' + (totalEvents !== 1 ? 's' : '') + ' today'
@@ -1379,6 +1381,31 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
   function fmtMoney(v){
     var n = Number(v || 0);
     return '$' + n.toFixed(2);
+  }
+  // v39: Fade-swap for calendar event transitions (200ms)
+  function fadeSwap(el, newHTML) {
+    if (!el) return;
+    if (el.innerHTML === newHTML) return;
+    el.style.transition = 'opacity 0.2s ease';
+    el.style.opacity = '0';
+    setTimeout(function() {
+      el.innerHTML = newHTML;
+      el.style.opacity = '1';
+    }, 200);
+  }
+  // v39: Smooth number transitions on data refresh (400ms)
+  function animateNum(el, to, fmt) {
+    if (!el) return;
+    var raw = el.textContent.replace(/[^0-9.\-]/g, '');
+    var from = parseFloat(raw) || 0;
+    if (Math.abs(from - to) < 1) { el.textContent = fmt ? fmt(to) : to; return; }
+    var start = Date.now(), dur = 400;
+    var timer = setInterval(function() {
+      var p = Math.min((Date.now() - start) / dur, 1);
+      var val = from + (to - from) * p;
+      el.textContent = fmt ? fmt(val) : Math.round(val);
+      if (p >= 1) clearInterval(timer);
+    }, 16);
   }
 
   function buildTaskZone(tasks, theme){

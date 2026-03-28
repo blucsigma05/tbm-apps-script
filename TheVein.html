@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>The Vein v59 — Household Command Center</title>
-<!-- TheVein v59 — Version history tracked in Notion deploy page. No changelogs in this file. -->
+<title>The Vein v60 — Household Command Center</title>
+<!-- TheVein v60 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -208,6 +208,20 @@ background:linear-gradient(90deg,transparent,var(--blue),transparent);}
 .sysops-val{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--text);line-height:1.3}
 .sysops-versions{grid-column:1/-1;padding:8px 12px;background:var(--surface-2);border-radius:8px;text-align:center}
 .sysops-versions .sysops-val{font-size:10px;color:var(--text-mid)}
+/* ── Family Note Editor (v60) ─────────────── */
+.fnote-wrap{margin-top:12px;background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:14px 16px}
+.fnote-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.fnote-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold)}
+.fnote-status{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);opacity:0;transition:opacity .3s}
+.fnote-status.show{opacity:1}
+.fnote-row{display:flex;gap:8px;align-items:flex-start}
+.fnote-input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:none;min-height:36px;max-height:80px;line-height:1.4;outline:none}
+.fnote-input:focus{border-color:var(--blue)}
+.fnote-save{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;cursor:pointer;white-space:nowrap;opacity:.5;pointer-events:none;transition:opacity .2s}
+.fnote-save.active{opacity:1;pointer-events:auto}
+.fnote-save:active{transform:scale(.97)}
+.fnote-preview{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);line-height:1.5}
+.fnote-preview span{color:var(--text-muted)}
 .gate-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 .gate-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface-2);border-radius:8px;border-left:3px solid transparent;}
 .gate-item.gp{border-left-color:var(--positive);} .gate-item.gw{border-left-color:var(--warning);} .gate-item.gf{border-left-color:var(--negative);}
@@ -309,6 +323,11 @@ padding:1px 5px;border-radius:4px;margin-left:5px;vertical-align:middle;text-tra
 .bn{background:var(--negative-bg);color:var(--negative);}
 .bm{background:rgba(156,163,175,.15);color:var(--text-muted);}
 .negam-tag{font-family:'JetBrains Mono',monospace;font-size:8px;background:var(--negative-bg);color:var(--negative);padding:1px 4px;border-radius:4px;margin-left:4px;}
+/* v60: Debt row expand/collapse detail */
+.debt-row{cursor:pointer;}
+.debt-detail{grid-column:1/-1;display:none;padding:6px 14px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);border-bottom:1px solid var(--border);background:var(--surface-2);animation:fadeUp 0.2s ease;}
+.debt-detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.dd-item{text-align:center;} .dd-label{font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px;} .dd-val{font-size:12px;font-weight:600;}
 
 /* ── Subscriptions ───────────────────────── */
 .sub-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;}
@@ -643,6 +662,19 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
 </div>
 </div>
 </div>
+</div>
+
+<!-- ═══ Family Note Editor (v60) ═══ -->
+<div class="fnote-wrap" id="fnoteWrap">
+  <div class="fnote-header">
+    <div class="fnote-title">&#x2728; Family Note</div>
+    <div class="fnote-status" id="fnoteStatus">Saved</div>
+  </div>
+  <div class="fnote-row">
+    <textarea class="fnote-input" id="fnoteInput" placeholder="Leave a note for the family..." maxlength="200" rows="2"></textarea>
+    <button class="fnote-save" id="fnoteSave" onclick="saveFamilyNote()">Save</button>
+  </div>
+  <div class="fnote-preview" id="fnotePreview"><span>Shows on kitchen &amp; office displays</span></div>
 </div>
 
 <!-- ═══ Kids Hub Widget ═══ -->
@@ -988,7 +1020,7 @@ id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition
 <div class="footer">
 <span id="footerSrc">Source: Tiller BudgetMaster</span>
 <span id="veinReconcileBadge" style="font-size:10px;font-weight:600;letter-spacing:.05em;opacity:0.85;"></span>
-<span id="veinVersionTag">The Vein v59</span>
+<span id="veinVersionTag">The Vein v60</span>
 </div>
 
 </div>
@@ -1017,6 +1049,20 @@ var fmt=function(v){if(v==null||isNaN(v))return'—';var a=Math.abs(v);var s=v<0
 if(a>=1e6)return s+'$'+(a/1e6).toFixed(1)+'M';if(a>=1e4)return s+'$'+Math.round(a).toLocaleString();
 return s+'$'+a.toLocaleString(undefined,{minimumFractionDigits:0,maximumFractionDigits:0});};
 var fmtPct=function(v){return (v*100).toFixed(2)+'%';};
+// v60: Smooth number tick-up on data refresh (400ms)
+function animateNum(el, to, fmtFn) {
+  if (!el) return;
+  var raw = el.textContent.replace(/[^0-9.\-]/g, '');
+  var from = parseFloat(raw) || 0;
+  if (Math.abs(from - to) < 1) { el.textContent = fmtFn ? fmtFn(to) : to; return; }
+  var start = Date.now(), dur = 400;
+  var timer = setInterval(function() {
+    var p = Math.min((Date.now() - start) / dur, 1);
+    var val = from + (to - from) * p;
+    el.textContent = fmtFn ? fmtFn(val) : Math.round(val);
+    if (p >= 1) clearInterval(timer);
+  }, 16);
+}
 function daysUntil(ds){var t=new Date(ds+'T00:00:00');var n=new Date();n.setHours(0,0,0,0);return Math.max(0,Math.round((t-n)/(1000*60*60*24)));}
 function showError(msg){
 var es=$('errorScreen');if(!es)return;
@@ -1118,6 +1164,11 @@ h += '<div style="margin-top:7px;padding-top:10px;border-top:1px solid var(--bor
 el.innerHTML = h;
 }
 
+// v60: Debt row expand/collapse
+function toggleDebtDetail(id) {
+  var el = document.getElementById(id);
+  if (el) { el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
+}
 function toggleBucketDetail(id) {
   var el = document.getElementById('detail-' + id);
   var arrow = document.getElementById('arrow-' + id);
@@ -1474,17 +1525,17 @@ $('pulseNetNote').textContent = 'DEFICIT \u00b7 ' + fmt(d.earnedIncome) + ' in \
 }
 
 // stat cards
-$('netWorthD').textContent=fmt(d.netWorth);
-$('assetsD').textContent=fmt(d.totalAssets);
-$('liabD').textContent=fmt(d.totalLiabilities);
+animateNum($('netWorthD'), d.netWorth||0, fmt);
+animateNum($('assetsD'), d.totalAssets||0, fmt);
+animateNum($('liabD'), d.totalLiabilities||0, fmt);
 // v36 FIX: Headline = true net cash — only subtract debt pmts if data available
 // v54 FIX: Include bridgeCash for parity with Pulse (earned + bridge - opex - debt = same number)
 var _bridgeForCF = d.bridgeCash||0;
 var _trueNetCash = _dpAvail ? ((d.earnedIncome||0) + _bridgeForCF - (d.operatingExpenses||0) - (d.debtPaymentsMTD||0)) : ((d.earnedIncome||0) + _bridgeForCF - (d.operatingExpenses||0));
-$('cashFlowD').textContent=fmt(_trueNetCash);
+animateNum($('cashFlowD'), _trueNetCash, fmt);
 $('cashFlowD').className = 'cval ' + (_trueNetCash >= 0 ? 'pos' : 'neg');
-$('earnedD').textContent=fmt(d.earnedIncome);
-$('opexD').textContent=fmt(d.operatingExpenses);
+animateNum($('earnedD'), d.earnedIncome||0, fmt);
+animateNum($('opexD'), d.operatingExpenses||0, fmt);
 $('opflowD').textContent=fmt(d.operationalCashFlow!=null?d.operationalCashFlow:0);
 // v36: Debt payments historical guard — N/A if prior month with no payment data
 $('debtPmtsD').textContent=_dpAvail?fmt(d.debtPaymentsMTD||0):'N/A';
@@ -1655,7 +1706,7 @@ $('footerSrc').textContent='Source: Tiller BudgetMaster · '+d.month+' '+d.year+
 // v25 FIX: dynamic footer version tag reads DE version from _meta
 var _vTag=$('veinVersionTag');
 if(_vTag){var _nowStr=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});// v35: footer version tag
-_vTag.textContent='Updated '+_nowStr+(d._meta?' \u00b7 DE v'+(d._meta.version||'?'):'')+ ' \u00b7 The Vein v59';}
+_vTag.textContent='Updated '+_nowStr+(d._meta?' \u00b7 DE v'+(d._meta.version||'?'):'')+ ' \u00b7 The Vein v60';}
 $('badgeWrap').innerHTML=live?'':
 '<span style="font-size:8px;padding:2px 6px;background:var(--gold-wash);color:var(--gold);border-radius:4px;">Snapshot</span>';
 }
@@ -1761,7 +1812,14 @@ var stratTag=(d.strategy!=='Neg-Am'&&d.strategy!=='Excluded')?'<span class="badg
 var pri=(d.strategy==='Minimum Only'||d.strategy==='Excluded'||d.strategy==='Neg-Am')?'—':d.priority;
 var row=document.createElement('div');row.className='debt-row '+rc;
 row.innerHTML='<div class="d-pri">'+pri+'</div><div class="d-name">'+d.name+negamTag+promoTag+stratTag+'</div><div class="d-bal">'+fmt(d.balance)+'</div><div class="d-apr '+ac+'">'+fmtPct(d.apr)+'</div><div class="d-min">'+fmt(d.min)+'</div><div class="d-pay '+pc+'">'+(d.payoff||'—')+'</div>';
+var detailId='debtDetail-'+si;
+row.setAttribute('onclick','toggleDebtDetail("'+detailId+'")');
 c.appendChild(row);
+var moInt=Math.round(d.balance*d.apr/12);
+var payoffInfo=d.min>moInt?(d.min>0?Math.ceil(d.balance/(d.min-moInt)):'\u221E'):'Min \u2264 interest';
+var detail=document.createElement('div');detail.className='debt-detail';detail.id=detailId;
+detail.innerHTML='<div class="debt-detail-grid"><div class="dd-item"><div class="dd-label">Mo. Interest</div><div class="dd-val" style="color:var(--negative)">'+fmt(moInt)+'</div></div><div class="dd-item"><div class="dd-label">Months to Payoff</div><div class="dd-val">'+(typeof payoffInfo==='number'?payoffInfo+' mo':payoffInfo)+'</div></div><div class="dd-item"><div class="dd-label">Strategy</div><div class="dd-val" style="font-size:10px">'+d.strategy+'</div></div></div>';
+c.appendChild(detail);
 }
 window._lastDebts = sorted;
 }
@@ -1936,7 +1994,33 @@ function renderSysOps(raw){
     html += '<div class="sysops-item ' + it.cls + '"><div class="sysops-label">' + it.label + '</div><div class="sysops-val">' + it.val + '</div></div>';
   });
   html += '<div class="sysops-versions"><div class="sysops-label">Versions</div><div class="sysops-val">' + vrText + '</div></div>';
+  // v60: Close Month controls
+  html += '<div class="sysops-close-month" style="grid-column:1/-1;padding:10px 0;border-top:1px solid var(--border);margin-top:6px">';
+  html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+  html += '<div class="sysops-label" style="margin:0">Close Month</div>';
+  html += '<select id="closeMonthSelect" style="font-family:JetBrains Mono,monospace;font-size:10px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer"></select>';
+  html += '<button id="runGatesBtn" onclick="veinRunGates()" style="font-family:JetBrains Mono,monospace;font-size:9px;padding:4px 10px;border:1px solid var(--blue);border-radius:4px;background:var(--blue-wash);color:var(--blue);cursor:pointer">Run Gates</button>';
+  html += '<button id="stampCloseBtn" onclick="veinStampClose()" style="display:none;font-family:JetBrains Mono,monospace;font-size:9px;padding:4px 10px;border:1px solid var(--positive);border-radius:4px;background:var(--positive-bg);color:var(--positive);cursor:pointer">Stamp Close</button>';
+  html += '</div>';
+  html += '<div id="gateResults" style="margin-top:6px;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--text-dim)"></div>';
+  html += '</div>';
+
   $('sysOpsGrid').innerHTML = html;
+  // Populate month selector
+  (function(){
+    var sel = $('closeMonthSelect');
+    if (!sel) return;
+    var now = new Date();
+    for (var mi = 0; mi < 3; mi++) {
+      var dt = new Date(now.getFullYear(), now.getMonth() - mi, 1);
+      var val = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0');
+      var label = dt.toLocaleString('en-US',{month:'long',year:'numeric'});
+      var opt = document.createElement('option');
+      opt.value = val; opt.textContent = label;
+      if (mi === 1) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  })();
 
   // Pips + overall score
   var overall = d.overall || {};
@@ -1944,6 +2028,103 @@ function renderSysOps(raw){
   var pips = items.map(function(it){ return it.cls === 'pass' ? '🟢' : (it.cls === 'warn' ? '🟡' : '🔴'); }).join(' ');
   $('sysOpsPips').innerHTML = '<span style="font-size:8px;letter-spacing:2px">' + pips + '</span>';
   $('sysOpsScore').textContent = statusMap[overall.status] || '—';
+}
+
+// v60: Close Month handlers
+function veinRunGates() {
+  var sel = $('closeMonthSelect');
+  var month = sel ? sel.value : '';
+  var btn = $('runGatesBtn');
+  var res = $('gateResults');
+  if (btn) { btn.disabled = true; btn.textContent = 'Running...'; }
+  if (res) res.innerHTML = '';
+  google.script.run
+    .withSuccessHandler(function(raw) {
+      var gates = (typeof raw === 'string') ? JSON.parse(raw) : raw;
+      if (btn) { btn.disabled = false; btn.textContent = 'Run Gates'; }
+      if (!gates || !Array.isArray(gates)) { if (res) res.innerHTML = 'Unexpected response'; return; }
+      var allPass = true;
+      var h = '';
+      gates.forEach(function(g) {
+        var icon = g.status === 'PASS' ? '🟢' : '🔴';
+        if (g.status !== 'PASS') allPass = false;
+        h += '<div style="padding:2px 0">' + icon + ' Gate ' + g.gate + ': ' + g.name + ' — ' + g.detail + '</div>';
+      });
+      if (res) res.innerHTML = h;
+      var stampBtn = $('stampCloseBtn');
+      if (stampBtn) stampBtn.style.display = allPass ? 'inline-block' : 'none';
+    })
+    .withFailureHandler(function(err) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Run Gates'; }
+      if (res) res.innerHTML = '<span style="color:var(--negative)">Error: ' + (err.message || 'unknown') + '</span>';
+    })
+    .runMERGatesSafe(month);
+}
+function veinStampClose() {
+  var sel = $('closeMonthSelect');
+  var month = sel ? sel.value : '';
+  var btn = $('stampCloseBtn');
+  var res = $('gateResults');
+  if (btn) { btn.disabled = true; btn.textContent = 'Stamping...'; }
+  google.script.run
+    .withSuccessHandler(function(raw) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Stamp Close'; btn.style.display = 'none'; }
+      if (res) res.innerHTML = '<div style="color:var(--positive);font-weight:700">✅ Month closed successfully!</div>';
+    })
+    .withFailureHandler(function(err) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Stamp Close'; }
+      if (res) res.innerHTML += '<div style="color:var(--negative)">Close failed: ' + (err.message || 'unknown') + '</div>';
+    })
+    .stampCloseMonthSafe(month);
+}
+
+/* ═══ Family Note Editor (v60) ═══ */
+var _fnoteOriginal = '';
+
+function initFamilyNote(noteText) {
+  var input = document.getElementById('fnoteInput');
+  var btn = document.getElementById('fnoteSave');
+  if (!input) return;
+  _fnoteOriginal = noteText || '';
+  input.value = _fnoteOriginal;
+  input.addEventListener('input', function() {
+    var changed = input.value.trim() !== _fnoteOriginal;
+    btn.className = 'fnote-save' + (changed ? ' active' : '');
+  });
+}
+
+function saveFamilyNote() {
+  var input = document.getElementById('fnoteInput');
+  var btn = document.getElementById('fnoteSave');
+  var status = document.getElementById('fnoteStatus');
+  if (!input || !btn) return;
+  var val = input.value.trim();
+  if (val === _fnoteOriginal) return;
+  btn.textContent = 'Saving...';
+  btn.className = 'fnote-save';
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.success) {
+        _fnoteOriginal = val;
+        btn.textContent = 'Save';
+        btn.className = 'fnote-save';
+        status.textContent = 'Saved \u2713';
+        status.className = 'fnote-status show';
+        setTimeout(function() { status.className = 'fnote-status'; }, 2500);
+      } else {
+        btn.textContent = 'Save';
+        btn.className = 'fnote-save active';
+        status.textContent = 'Error \u2014 try again';
+        status.className = 'fnote-status show';
+      }
+    })
+    .withFailureHandler(function() {
+      btn.textContent = 'Save';
+      btn.className = 'fnote-save active';
+      status.textContent = 'Failed \u2014 try again';
+      status.className = 'fnote-status show';
+    })
+    .updateFamilyNoteSafe(val);
 }
 
 /* ——— TREND CHARTS ——— */
@@ -2111,6 +2292,7 @@ var iw=$('dataError');if(iw){iw.innerHTML='⚠ Integrity check: '+engineData.int
 google.script.run.withSuccessHandler(function(months){if(months && months.length) buildDropdownFromEngine(months);}).withFailureHandler(function(){}).getMonthsSafe();
 google.script.run.withSuccessHandler(function(historyData){if(historyData && historyData.length){ HISTORY_DATA = historyData; renderTrends(); }}).withFailureHandler(function(e){ console.warn('Close History unavailable:', e); }).getCloseHistoryDataSafe();
 try{ google.script.run.withSuccessHandler(renderCFF).withFailureHandler(function(e){console.warn('CFF unavailable:',e);}).getCashFlowForecastSafe(); }catch(e){}
+google.script.run.withSuccessHandler(function(bd){if(bd)initFamilyNote(bd.familyNote);}).withFailureHandler(function(){}).getBoardDataSafe();
 setTimeout(function(){loader.classList.add('hidden');},500);
 return;
 }
@@ -2450,10 +2632,14 @@ function _showKidsToast(msg) {
   setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.remove(); }, 300); }, 2500);
 }
 
-function _kidsApprove(rowIndex, el, taskID) {
-  if (rowIndex == null || rowIndex === '') return;
+// v60: Shared helper — disable buttons + decrement badge before server call
+function _kidsOptimistic(el) {
   var card = el ? el.closest('.kids-pending-item') : null;
-  if (card) card.classList.add('kids-approve-removing');
+  if (card) {
+    var btns = card.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) { btns[i].disabled = true; btns[i].style.opacity = '0.4'; }
+    card.classList.add('kids-approve-removing');
+  }
   var badge = document.getElementById('kidsAlertBadge');
   if (badge) {
     var count = parseInt(badge.textContent) || 0;
@@ -2461,6 +2647,11 @@ function _kidsApprove(rowIndex, el, taskID) {
     else { badge.style.display = 'none'; }
   }
   setTimeout(function() { if (card) card.remove(); }, 350);
+  return card;
+}
+function _kidsApprove(rowIndex, el, taskID) {
+  if (rowIndex == null || rowIndex === '') return;
+  _kidsOptimistic(el);
   google.script.run
     .withSuccessHandler(function() { _showKidsToast('\u2713 Approved! Points awarded.'); })
     .withFailureHandler(function(err) {
@@ -2471,15 +2662,7 @@ function _kidsApprove(rowIndex, el, taskID) {
 }
 function _kidsApproveBonus(rowIndex, el, taskID) {
   if (rowIndex == null || rowIndex === '') return;
-  var card = el ? el.closest('.kids-pending-item') : null;
-  if (card) card.classList.add('kids-approve-removing');
-  var badge = document.getElementById('kidsAlertBadge');
-  if (badge) {
-    var count = parseInt(badge.textContent) || 0;
-    if (count > 1) { badge.textContent = (count - 1) + ' pending'; }
-    else { badge.style.display = 'none'; }
-  }
-  setTimeout(function() { if (card) card.remove(); }, 350);
+  _kidsOptimistic(el);
   google.script.run
     .withSuccessHandler(function() { _showKidsToast('\u2726 2x bonus approved!'); })
     .withFailureHandler(function(err) {
@@ -2491,15 +2674,7 @@ function _kidsApproveBonus(rowIndex, el, taskID) {
 // v56: Decline — sends task back to kid's board as uncompleted
 function _kidsDecline(rowIndex, el, taskID) {
   if (rowIndex == null || rowIndex === '') return;
-  var card = el ? el.closest('.kids-pending-item') : null;
-  if (card) card.classList.add('kids-approve-removing');
-  var badge = document.getElementById('kidsAlertBadge');
-  if (badge) {
-    var count = parseInt(badge.textContent) || 0;
-    if (count > 1) { badge.textContent = (count - 1) + ' pending'; }
-    else { badge.style.display = 'none'; }
-  }
-  setTimeout(function() { if (card) card.remove(); }, 350);
+  _kidsOptimistic(el);
   google.script.run
     .withSuccessHandler(function() { _showKidsToast('\u21A9 Sent back. Kid needs to redo it.'); initKidsWidget(); })
     .withFailureHandler(function(err) {

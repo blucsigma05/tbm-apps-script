@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ============================================================
 // STORY FACTORY — Google Apps Script Agent
-// Version: 5.0
+// Version: 6.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 5; }
+function getStoryFactoryVersion() { return 6; }
 
 var CONFIG = {
 GEMINI_API_KEY:  PropertiesService.getScriptProperties().getProperty('JJ Stories'),
@@ -31,6 +31,50 @@ MEMORY_CANON_COUNT: 20,
 var IMAGE_STYLE = 'Comic book style illustration of a loving Black family. ' +
 'Bold clean comic lines, high contrast, vibrant colors, white background. ' +
 'Child-friendly, warm, expressive characters.';
+
+// v6: Character description locks — consistent appearance across all books
+var STORY_CHARACTERS = {
+  buggsy: {
+    physical: 'African-American boy, age 8-9, short hair with clean fade, slim build, brown eyes, small lightning bolt temporary tattoo on left side of neck',
+    personality: 'Cool and quiet, hands often in pockets, walks with purpose, secretly caring toward JJ, into Wolfkid Universe comics and drawing',
+    default_outfit: 'Blue/white plaid button-up shirt (untucked), dark jeans, grey/white sneakers',
+    wardrobe: {
+      sports: 'Basketball jersey or athletic shorts and t-shirt, basketball shoes',
+      beach: 'Swim trunks with a cool pattern, no shirt or a tank top, sandals',
+      school: 'Polo shirt, khaki pants, backpack',
+      bedtime: 'Pajama pants, superhero t-shirt',
+      formal: 'Button-up shirt (tucked), dark pants, dress shoes',
+      casual: 'Blue/white plaid button-up (untucked), dark jeans, sneakers'
+    }
+  },
+  jj: {
+    physical: 'African-American girl, age 4-5, natural curly/coily hair in two puffs, brown eyes, small for her age but big personality, unicorn headband with horn (ALWAYS present, never removed)',
+    personality: 'Bossy in the best way, owns an imaginary restaurant, princess warrior, negotiates everything, falls asleep in the car after every adventure',
+    default_outfit: 'Graphic t-shirt (Sonic/superhero), pink tutu skirt with blue trim, pink sneakers',
+    wardrobe: {
+      sports: 'Pink tutu over athletic leggings, sneakers (she wears the tutu everywhere)',
+      beach: 'Pink swimsuit with tutu cover-up, water shoes, unicorn headband stays',
+      school: 'Cute dress or overalls, unicorn headband, backpack',
+      bedtime: 'Nightgown or pajama set, unicorn headband stays on in sleep',
+      formal: 'Princess dress with tutu, sparkly shoes, unicorn headband',
+      casual: 'Graphic tee, pink tutu, pink sneakers'
+    }
+  },
+  mom: {
+    physical: 'African-American woman, early-mid 30s, natural curly/coily hair (shoulder length, sometimes pulled up), warm brown skin, medium build, warm smile',
+    default_outfit: 'Casual but put-together — jeans or slacks, nice top, small hoop earrings'
+  },
+  dad: {
+    physical: 'African-American man, early-mid 30s, short hair with neat fade, trim beard (always present), athletic build, tall, warm expression',
+    default_outfit: 'Casual — fitted t-shirt or henley, jeans, clean sneakers'
+  }
+};
+
+// v6: Banned words — too advanced for target reading levels
+var BANNED_WORDS = ['feigned','strategic','assessment','optimal','acumen','schema',
+  'rotational','perimeter','procurement','dominion','unwavering','orchestrated',
+  'fundamental','embodying','conviction','inventory','executive','oversight',
+  'engagement','renegotiation','reconnaissance'];
 
 // ── NOTION HELPERS ───────────────────────────────────────────
 
@@ -341,6 +385,11 @@ var prompt = 'You are a children\'s bedtime story writer for a loving Black fami
 memoryBlock + '\n' +
 'WRITING RULES:\n' +
 toneGuide +
+'READING LEVEL RULES:\n' +
+(character === 'JJ' ? '- JJ stories (age 4-5): Maximum Flesch-Kincaid Grade Level 1.5. Use simple sentences (5-10 words average). No words over 3 syllables unless character-specific (restaurant, headband). First-person narration from JJ perspective.\n' :
+ character === 'Buggsy' ? '- Buggsy stories (age 8-9): Maximum Flesch-Kincaid Grade Level 3.0. Sentences can be longer but conversational. Vocabulary should match a 3rd grader.\n' :
+ '- Both stories: Grade Level 2.0. JJ dialogue stays simple, narration slightly more complex.\n') +
+'- BANNED WORDS (never use): ' + BANNED_WORDS.join(', ') + '\n' +
 '- Structure: Exactly 6 scenes, each 3-5 sentences\n' +
 '- Story MUST end with the main character in bed asleep\n' +
 '- Each scene needs a vivid image_prompt for comic book illustration\n' +
@@ -425,6 +474,68 @@ return parsed;
 Logger.log('JSON repair also failed. Raw: ' + repaired.substring(0, 500));
 throw new Error('Story JSON parse failed even after repair: ' + e.message);
 }
+}
+
+// ── v6: POST-GENERATION AUDIT ─────────────────────────────────
+
+function auditStoryText_(storyData, character) {
+  var issues = [];
+  var allText = '';
+  var scenes = storyData.scenes || [];
+  for (var i = 0; i < scenes.length; i++) {
+    allText += (scenes[i].text || '') + ' ';
+  }
+  allText = allText.trim();
+
+  // Banned word check
+  var lower = allText.toLowerCase();
+  for (var b = 0; b < BANNED_WORDS.length; b++) {
+    if (lower.indexOf(BANNED_WORDS[b]) !== -1) {
+      issues.push('FLAG: Banned word "' + BANNED_WORDS[b] + '" found');
+    }
+  }
+
+  // Average sentence length check
+  var sentences = allText.split(/[.!?]+/).filter(function(s) { return s.trim().length > 0; });
+  var totalWords = 0;
+  for (var s = 0; s < sentences.length; s++) {
+    totalWords += sentences[s].trim().split(/\s+/).length;
+  }
+  var avgSentLen = sentences.length > 0 ? Math.round(totalWords / sentences.length) : 0;
+  var maxSentLen = character === 'JJ' ? 10 : (character === 'Both' ? 14 : 16);
+  if (avgSentLen > maxSentLen) {
+    issues.push('WARN: Average sentence length ' + avgSentLen + ' words (target: <' + maxSentLen + ' for ' + character + ')');
+  }
+
+  // Canon check — JJ must have headband/unicorn reference
+  if (character === 'JJ' || character === 'Both') {
+    if (lower.indexOf('headband') === -1 && lower.indexOf('unicorn') === -1) {
+      issues.push('WARN: JJ story missing headband/unicorn reference');
+    }
+  }
+
+  var result = { passed: issues.length === 0, issues: issues, avgSentenceLength: avgSentLen };
+  Logger.log('Story audit: ' + (result.passed ? 'PASSED' : issues.length + ' issues') + ' — avg sentence: ' + avgSentLen + ' words');
+  for (var j = 0; j < issues.length; j++) {
+    Logger.log('  ' + issues[j]);
+  }
+  return result;
+}
+
+// v6: Build image prompt with wardrobe map based on setting
+function buildWardrobePrompt_(charNames, setting) {
+  var prompt = '';
+  for (var i = 0; i < charNames.length; i++) {
+    var key = charNames[i].toLowerCase();
+    if (key === 'nathan') key = 'buggsy';
+    if (key === 'lt') key = 'mom';
+    if (key === 'jt') key = 'dad';
+    var char = STORY_CHARACTERS[key];
+    if (!char) continue;
+    var outfit = (char.wardrobe && char.wardrobe[setting]) || char.default_outfit;
+    prompt += 'CHARACTER: ' + charNames[i] + ' — ' + char.physical + '. Wearing: ' + outfit + '.\n';
+  }
+  return prompt;
 }
 
 // ── PHASE 4: EXTRACT CANON AFTER GENERATION ──────────────────
@@ -945,7 +1056,7 @@ return 7;
 // ── MAIN PIPELINE ────────────────────────────────────────────
 
 function runStoryFactory(topic, character, tone) {
-Logger.log('=== Story Factory v5.0 ===');
+Logger.log('=== Story Factory v6.0 ===');
 Logger.log('Topic: ' + topic + ' | Character: ' + character + ' | Tone: ' + (tone || 'Funny'));
 
 try {
@@ -988,6 +1099,10 @@ Logger.log('Step 1: Generating story with memory injection...');
 var storyData = generateStory(topic, character, tone || 'Funny', characters, recentStories, canonFacts);
 storyData.topic = topic;
 Logger.log('Story: "' + storyData.title + '" (' + storyData.scenes.length + ' scenes)');
+
+// v6: Post-generation audit
+var audit = auditStoryText_(storyData, character);
+storyData._audit = audit;
 
 // Phase 4: Extract canon from the generated story
 Logger.log('Step 1b: Extracting canon from story...');
