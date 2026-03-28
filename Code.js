@@ -264,19 +264,33 @@ function serveData(e) {
       };
       var filename = routes[page] || 'ThePulse';
       try {
-        var content;
-        if (page === 'kidshub') {
-          var tmpl = HtmlService.createTemplateFromFile('KidsHub');
-          tmpl.INIT_CHILD = (e.parameter.child || 'buggsy').toLowerCase();
-          tmpl.INIT_VIEW  = (e.parameter.view  || 'kid').toLowerCase();
-          content = tmpl.evaluate().getContent();
-        } else if (page === 'vault') {
-          var tmpl = HtmlService.createTemplateFromFile('Vault');
-          tmpl.sheetData = JSON.stringify(getAllVaultData());
-          content = tmpl.evaluate().getContent();
-        } else {
-          content = HtmlService.createHtmlOutputFromFile(filename).getContent();
+        // Fetch raw file source via Apps Script API — avoids GAS sandbox/iframe wrapper
+        var scriptId = ScriptApp.getScriptId();
+        var url = 'https://script.googleapis.com/v1/projects/' + scriptId + '/content';
+        var token = ScriptApp.getOAuthToken();
+        var resp = UrlFetchApp.fetch(url, {
+          headers: { 'Authorization': 'Bearer ' + token },
+          muteHttpExceptions: true
+        });
+        if (resp.getResponseCode() !== 200) throw new Error('API fetch failed: ' + resp.getResponseCode());
+        var files = JSON.parse(resp.getContentText()).files || [];
+        var content = null;
+        for (var fi = 0; fi < files.length; fi++) {
+          if (files[fi].name === filename && files[fi].type === 'HTML') {
+            content = files[fi].source;
+            break;
+          }
         }
+        if (content === null) throw new Error('File not found: ' + filename);
+
+        // Template evaluation: inject server-side variables into raw source
+        if (page === 'kidshub') {
+          var initChild = (e.parameter.child || 'buggsy').toLowerCase();
+          var initView  = (e.parameter.view  || 'kid').toLowerCase();
+          content = content.replace(/<\?= *INIT_CHILD *\?>/g, initChild);
+          content = content.replace(/<\?= *INIT_VIEW *\?>/g, initView);
+        }
+
         return ContentService.createTextOutput(content).setMimeType(ContentService.MimeType.TEXT);
       } catch (err) {
         return ContentService.createTextOutput(
