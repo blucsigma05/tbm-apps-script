@@ -68,7 +68,7 @@ All .gs files share one global scope. Constants and TAB_MAP defined in DataEngin
 | Workbook reference | DataEngine.gs -> `SSID` + `getDESS_()` |
 | Push notifications | AlertEngine.gs -> `sendPush_()` (recipients: LT, JT, BOTH) |
 | KH heartbeat | KidsHub.gs -> `stampKHHeartbeat_()` after every write |
-| Code snapshots | CodeSnapshot.gs -> `snapshotCodeToGDrive()`, `snapshotToSingleDoc()` |
+| Code snapshots | CodeSnapshot.gs -> `runSnapshot()`, `runSnapshotSingle()` (via ThompsonLib) |
 
 ## TBM-specific conventions
 - Income categories: `INCOME_CATS` array in DataEngine.gs (5 categories)

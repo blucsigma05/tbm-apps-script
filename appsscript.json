@@ -7,6 +7,13 @@
         "version": "v4",
         "serviceId": "sheets"
       }
+    ],
+    "libraries": [
+      {
+        "userSymbol": "ThompsonLib",
+        "libraryId": "1fGMx8pQtkNeQkbEPWKwdvuRojyKXUlIW2BVpBVnIP5j0pGKbVHx3hNND",
+        "version": "1"
+      }
     ]
   },
   "oauthScopes": [
