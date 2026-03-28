@@ -270,6 +270,10 @@ function serveData(e) {
           tmpl.INIT_CHILD = (e.parameter.child || 'buggsy').toLowerCase();
           tmpl.INIT_VIEW  = (e.parameter.view  || 'kid').toLowerCase();
           content = tmpl.evaluate().getContent();
+        } else if (page === 'vault') {
+          var tmpl = HtmlService.createTemplateFromFile('Vault');
+          tmpl.sheetData = JSON.stringify(getAllVaultData());
+          content = tmpl.evaluate().getContent();
         } else {
           content = HtmlService.createHtmlOutputFromFile(filename).getContent();
         }
@@ -310,7 +314,8 @@ function serveData(e) {
         'khSubmitGradeSafe': khSubmitGradeSafe, 'khGetGradeHistorySafe': khGetGradeHistorySafe,
         'updateFamilyNoteSafe': updateFamilyNoteSafe,
         'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
-        'getScriptUrlSafe': getScriptUrlSafe
+        'getVaultDataSafe': getVaultDataSafe, 'runStoryFactorySafe': runStoryFactorySafe,
+        'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
