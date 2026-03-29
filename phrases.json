@@ -1,0 +1,1646 @@
+{
+  "_meta": {
+    "version": 1,
+    "description": "Audio clip definitions for Thompson Education Platform. Source of truth for generate-audio.js and Notion Audio Clip Queue.",
+    "voices": {
+      "jj": {
+        "name": "Nia",
+        "voiceId": "A2YMjtICNQnO93UAZ8l6"
+      },
+      "buggsy": {
+        "name": "Marco",
+        "voiceId": "RYPzpPBmugfktRI79EC9"
+      }
+    },
+    "models": {
+      "v3": "eleven_v3",
+      "flash": "eleven_flash_v2_5"
+    }
+  },
+  "clips": [
+    {
+      "id": "jj_letter_name_A",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] A!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_A.mp3"
+    },
+    {
+      "id": "jj_letter_name_B",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] B!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_B.mp3"
+    },
+    {
+      "id": "jj_letter_name_C",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] C!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_C.mp3"
+    },
+    {
+      "id": "jj_letter_name_D",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] D!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_D.mp3"
+    },
+    {
+      "id": "jj_letter_name_E",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] E!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_E.mp3"
+    },
+    {
+      "id": "jj_letter_name_F",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] F!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_F.mp3"
+    },
+    {
+      "id": "jj_letter_name_G",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] G!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_G.mp3"
+    },
+    {
+      "id": "jj_letter_name_H",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] H!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_H.mp3"
+    },
+    {
+      "id": "jj_letter_name_I",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] I!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_I.mp3"
+    },
+    {
+      "id": "jj_letter_name_J",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] J!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_J.mp3"
+    },
+    {
+      "id": "jj_letter_name_K",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] K!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_K.mp3"
+    },
+    {
+      "id": "jj_letter_name_L",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] L!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_L.mp3"
+    },
+    {
+      "id": "jj_letter_name_M",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] M!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_M.mp3"
+    },
+    {
+      "id": "jj_letter_name_N",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] N!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_N.mp3"
+    },
+    {
+      "id": "jj_letter_name_O",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] O!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_O.mp3"
+    },
+    {
+      "id": "jj_letter_name_P",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] P!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_P.mp3"
+    },
+    {
+      "id": "jj_letter_name_Q",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] Q!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_Q.mp3"
+    },
+    {
+      "id": "jj_letter_name_R",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] R!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_R.mp3"
+    },
+    {
+      "id": "jj_letter_name_S",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] S!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_S.mp3"
+    },
+    {
+      "id": "jj_letter_name_T",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] T!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_T.mp3"
+    },
+    {
+      "id": "jj_letter_name_U",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] U!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_U.mp3"
+    },
+    {
+      "id": "jj_letter_name_V",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] V!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_V.mp3"
+    },
+    {
+      "id": "jj_letter_name_W",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] W!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_W.mp3"
+    },
+    {
+      "id": "jj_letter_name_X",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] X!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_X.mp3"
+    },
+    {
+      "id": "jj_letter_name_Y",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] Y!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_Y.mp3"
+    },
+    {
+      "id": "jj_letter_name_Z",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] Z!",
+      "model": "v3",
+      "file": "jj/jj_letter_name_Z.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_A",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] A is for Apple!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_A.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_B",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] B is for Buggsy!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_B.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_C",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] C is for Candace!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_C.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_D",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] D is for Daddy!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_D.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_E",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] E is for Elephant!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_E.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_F",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] F is for Family!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_F.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_G",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] G is for GranniePoo!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_G.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_H",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] H is for Heart!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_H.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_I",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] I is for Ice Cream!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_I.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_J",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[excited] J is for Jennifer!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_J.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_K",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[excited] K is for KINDLE!!!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_K.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_L",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] L is for LeShawd!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_L.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_M",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] M is for Mommy!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_M.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_N",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] N is for Nathan!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_N.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_O",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] O is for Octopus!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_O.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_P",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] P is for Princess!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_P.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_Q",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] Q is for Queen!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_Q.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_R",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] R is for Rainbow!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_R.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_S",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] S is for Sparkle!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_S.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_T",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] T is for Tiara!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_T.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_U",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] U is for Unicorn!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_U.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_V",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] V is for Violin!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_V.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_W",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] W is for Watch!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_W.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_X",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] X is for Xavier!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_X.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_Y",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] Y is for Yellow!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_Y.mp3"
+    },
+    {
+      "id": "jj_letter_phrase_Z",
+      "kid": "jj",
+      "category": "Letter",
+      "text": "[happy] Z is for Zebra!",
+      "model": "v3",
+      "file": "jj/jj_letter_phrase_Z.mp3"
+    },
+    {
+      "id": "jj_find_A",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter A!",
+      "model": "v3",
+      "file": "jj/jj_find_A.mp3"
+    },
+    {
+      "id": "jj_find_B",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter B!",
+      "model": "v3",
+      "file": "jj/jj_find_B.mp3"
+    },
+    {
+      "id": "jj_find_C",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter C!",
+      "model": "v3",
+      "file": "jj/jj_find_C.mp3"
+    },
+    {
+      "id": "jj_find_D",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter D!",
+      "model": "v3",
+      "file": "jj/jj_find_D.mp3"
+    },
+    {
+      "id": "jj_find_E",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter E!",
+      "model": "v3",
+      "file": "jj/jj_find_E.mp3"
+    },
+    {
+      "id": "jj_find_F",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter F!",
+      "model": "v3",
+      "file": "jj/jj_find_F.mp3"
+    },
+    {
+      "id": "jj_find_G",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter G!",
+      "model": "v3",
+      "file": "jj/jj_find_G.mp3"
+    },
+    {
+      "id": "jj_find_H",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter H!",
+      "model": "v3",
+      "file": "jj/jj_find_H.mp3"
+    },
+    {
+      "id": "jj_find_I",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter I!",
+      "model": "v3",
+      "file": "jj/jj_find_I.mp3"
+    },
+    {
+      "id": "jj_find_J",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter J!",
+      "model": "v3",
+      "file": "jj/jj_find_J.mp3"
+    },
+    {
+      "id": "jj_find_K",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter K!",
+      "model": "v3",
+      "file": "jj/jj_find_K.mp3"
+    },
+    {
+      "id": "jj_find_L",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter L!",
+      "model": "v3",
+      "file": "jj/jj_find_L.mp3"
+    },
+    {
+      "id": "jj_find_M",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter M!",
+      "model": "v3",
+      "file": "jj/jj_find_M.mp3"
+    },
+    {
+      "id": "jj_find_N",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter N!",
+      "model": "v3",
+      "file": "jj/jj_find_N.mp3"
+    },
+    {
+      "id": "jj_find_O",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter O!",
+      "model": "v3",
+      "file": "jj/jj_find_O.mp3"
+    },
+    {
+      "id": "jj_find_P",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter P!",
+      "model": "v3",
+      "file": "jj/jj_find_P.mp3"
+    },
+    {
+      "id": "jj_find_Q",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter Q!",
+      "model": "v3",
+      "file": "jj/jj_find_Q.mp3"
+    },
+    {
+      "id": "jj_find_R",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter R!",
+      "model": "v3",
+      "file": "jj/jj_find_R.mp3"
+    },
+    {
+      "id": "jj_find_S",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter S!",
+      "model": "v3",
+      "file": "jj/jj_find_S.mp3"
+    },
+    {
+      "id": "jj_find_T",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter T!",
+      "model": "v3",
+      "file": "jj/jj_find_T.mp3"
+    },
+    {
+      "id": "jj_find_U",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter U!",
+      "model": "v3",
+      "file": "jj/jj_find_U.mp3"
+    },
+    {
+      "id": "jj_find_V",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter V!",
+      "model": "v3",
+      "file": "jj/jj_find_V.mp3"
+    },
+    {
+      "id": "jj_find_W",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter W!",
+      "model": "v3",
+      "file": "jj/jj_find_W.mp3"
+    },
+    {
+      "id": "jj_find_X",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter X!",
+      "model": "v3",
+      "file": "jj/jj_find_X.mp3"
+    },
+    {
+      "id": "jj_find_Y",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter Y!",
+      "model": "v3",
+      "file": "jj/jj_find_Y.mp3"
+    },
+    {
+      "id": "jj_find_Z",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, find the letter Z!",
+      "model": "v3",
+      "file": "jj/jj_find_Z.mp3"
+    },
+    {
+      "id": "jj_trace_A",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter A!",
+      "model": "v3",
+      "file": "jj/jj_trace_A.mp3"
+    },
+    {
+      "id": "jj_trace_B",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter B!",
+      "model": "v3",
+      "file": "jj/jj_trace_B.mp3"
+    },
+    {
+      "id": "jj_trace_C",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter C!",
+      "model": "v3",
+      "file": "jj/jj_trace_C.mp3"
+    },
+    {
+      "id": "jj_trace_D",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter D!",
+      "model": "v3",
+      "file": "jj/jj_trace_D.mp3"
+    },
+    {
+      "id": "jj_trace_E",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter E!",
+      "model": "v3",
+      "file": "jj/jj_trace_E.mp3"
+    },
+    {
+      "id": "jj_trace_F",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter F!",
+      "model": "v3",
+      "file": "jj/jj_trace_F.mp3"
+    },
+    {
+      "id": "jj_trace_G",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter G!",
+      "model": "v3",
+      "file": "jj/jj_trace_G.mp3"
+    },
+    {
+      "id": "jj_trace_H",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter H!",
+      "model": "v3",
+      "file": "jj/jj_trace_H.mp3"
+    },
+    {
+      "id": "jj_trace_I",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter I!",
+      "model": "v3",
+      "file": "jj/jj_trace_I.mp3"
+    },
+    {
+      "id": "jj_trace_J",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter J!",
+      "model": "v3",
+      "file": "jj/jj_trace_J.mp3"
+    },
+    {
+      "id": "jj_trace_K",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter K!",
+      "model": "v3",
+      "file": "jj/jj_trace_K.mp3"
+    },
+    {
+      "id": "jj_trace_L",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter L!",
+      "model": "v3",
+      "file": "jj/jj_trace_L.mp3"
+    },
+    {
+      "id": "jj_trace_M",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter M!",
+      "model": "v3",
+      "file": "jj/jj_trace_M.mp3"
+    },
+    {
+      "id": "jj_trace_N",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter N!",
+      "model": "v3",
+      "file": "jj/jj_trace_N.mp3"
+    },
+    {
+      "id": "jj_trace_O",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter O!",
+      "model": "v3",
+      "file": "jj/jj_trace_O.mp3"
+    },
+    {
+      "id": "jj_trace_P",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter P!",
+      "model": "v3",
+      "file": "jj/jj_trace_P.mp3"
+    },
+    {
+      "id": "jj_trace_Q",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter Q!",
+      "model": "v3",
+      "file": "jj/jj_trace_Q.mp3"
+    },
+    {
+      "id": "jj_trace_R",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter R!",
+      "model": "v3",
+      "file": "jj/jj_trace_R.mp3"
+    },
+    {
+      "id": "jj_trace_S",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter S!",
+      "model": "v3",
+      "file": "jj/jj_trace_S.mp3"
+    },
+    {
+      "id": "jj_trace_T",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter T!",
+      "model": "v3",
+      "file": "jj/jj_trace_T.mp3"
+    },
+    {
+      "id": "jj_trace_U",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter U!",
+      "model": "v3",
+      "file": "jj/jj_trace_U.mp3"
+    },
+    {
+      "id": "jj_trace_V",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter V!",
+      "model": "v3",
+      "file": "jj/jj_trace_V.mp3"
+    },
+    {
+      "id": "jj_trace_W",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter W!",
+      "model": "v3",
+      "file": "jj/jj_trace_W.mp3"
+    },
+    {
+      "id": "jj_trace_X",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter X!",
+      "model": "v3",
+      "file": "jj/jj_trace_X.mp3"
+    },
+    {
+      "id": "jj_trace_Y",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter Y!",
+      "model": "v3",
+      "file": "jj/jj_trace_Y.mp3"
+    },
+    {
+      "id": "jj_trace_Z",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] JJ, trace the letter Z!",
+      "model": "v3",
+      "file": "jj/jj_trace_Z.mp3"
+    },
+    {
+      "id": "jj_spell_jj",
+      "kid": "jj",
+      "category": "Name Builder",
+      "text": "[excited] JJ, let's spell your name!",
+      "model": "v3",
+      "file": "jj/jj_spell_jj.mp3"
+    },
+    {
+      "id": "jj_spell_kindle",
+      "kid": "jj",
+      "category": "Name Builder",
+      "text": "[happy] Now let's spell KINDLE!",
+      "model": "v3",
+      "file": "jj/jj_spell_kindle.mp3"
+    },
+    {
+      "id": "jj_spell_great_jj",
+      "kid": "jj",
+      "category": "Name Builder",
+      "text": "[excited] You spelled JJ!!! Great job, girl!",
+      "model": "v3",
+      "file": "jj/jj_spell_great_jj.mp3"
+    },
+    {
+      "id": "jj_spell_great_kindle",
+      "kid": "jj",
+      "category": "Name Builder",
+      "text": "[excited] JJ, you spelled KINDLE!!! That's AMAZING!",
+      "model": "v3",
+      "file": "jj/jj_spell_great_kindle.mp3"
+    },
+    {
+      "id": "jj_spell_next_letter",
+      "kid": "jj",
+      "category": "Name Builder",
+      "text": "[curious] What letter comes next, JJ?",
+      "model": "v3",
+      "file": "jj/jj_spell_next_letter.mp3"
+    },
+    {
+      "id": "jj_spell_tap_letter",
+      "kid": "jj",
+      "category": "Name Builder",
+      "text": "[encouraging] Tap the right letter!",
+      "model": "v3",
+      "file": "jj/jj_spell_tap_letter.mp3"
+    },
+    {
+      "id": "jj_sound_A",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"æ\">A</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_A.mp3"
+    },
+    {
+      "id": "jj_sound_B",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"bʌ\">B</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_B.mp3"
+    },
+    {
+      "id": "jj_sound_C",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"kʌ\">C</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_C.mp3"
+    },
+    {
+      "id": "jj_sound_D",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"dʌ\">D</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_D.mp3"
+    },
+    {
+      "id": "jj_sound_E",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"ɛ\">E</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_E.mp3"
+    },
+    {
+      "id": "jj_sound_F",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"fː\">F</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_F.mp3"
+    },
+    {
+      "id": "jj_sound_G",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"gʌ\">G</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_G.mp3"
+    },
+    {
+      "id": "jj_sound_H",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"hʌ\">H</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_H.mp3"
+    },
+    {
+      "id": "jj_sound_I",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"ɪ\">I</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_I.mp3"
+    },
+    {
+      "id": "jj_sound_J",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"dʒʌ\">J</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_J.mp3"
+    },
+    {
+      "id": "jj_sound_K",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"kʌ\">K</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_K.mp3"
+    },
+    {
+      "id": "jj_sound_L",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"lː\">L</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_L.mp3"
+    },
+    {
+      "id": "jj_sound_M",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"mː\">M</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_M.mp3"
+    },
+    {
+      "id": "jj_sound_N",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"nː\">N</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_N.mp3"
+    },
+    {
+      "id": "jj_sound_O",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"ɒ\">O</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_O.mp3"
+    },
+    {
+      "id": "jj_sound_P",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"pʌ\">P</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_P.mp3"
+    },
+    {
+      "id": "jj_sound_Q",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"kwʌ\">Q</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_Q.mp3"
+    },
+    {
+      "id": "jj_sound_R",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"ɹː\">R</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_R.mp3"
+    },
+    {
+      "id": "jj_sound_S",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"sː\">S</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_S.mp3"
+    },
+    {
+      "id": "jj_sound_T",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"tʌ\">T</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_T.mp3"
+    },
+    {
+      "id": "jj_sound_U",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"ʌ\">U</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_U.mp3"
+    },
+    {
+      "id": "jj_sound_V",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"vː\">V</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_V.mp3"
+    },
+    {
+      "id": "jj_sound_W",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"wʌ\">W</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_W.mp3"
+    },
+    {
+      "id": "jj_sound_X",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"ks\">X</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_X.mp3"
+    },
+    {
+      "id": "jj_sound_Y",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"jʌ\">Y</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_Y.mp3"
+    },
+    {
+      "id": "jj_sound_Z",
+      "kid": "jj",
+      "category": "Phonics",
+      "text": "<phoneme alphabet=\"ipa\" ph=\"zː\">Z</phoneme>",
+      "model": "flash",
+      "file": "jj/jj_sound_Z.mp3"
+    },
+    {
+      "id": "jj_feedback_correct1",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[excited] That's RIGHT, JJ!",
+      "model": "v3",
+      "file": "jj/jj_feedback_correct1.mp3"
+    },
+    {
+      "id": "jj_feedback_correct2",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[happy] You GOT it, JJ!",
+      "model": "v3",
+      "file": "jj/jj_feedback_correct2.mp3"
+    },
+    {
+      "id": "jj_feedback_correct3",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[excited] YES!!! Great job, JJ!",
+      "model": "v3",
+      "file": "jj/jj_feedback_correct3.mp3"
+    },
+    {
+      "id": "jj_feedback_correct4",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[happy] WONDERFUL, JJ!",
+      "model": "v3",
+      "file": "jj/jj_feedback_correct4.mp3"
+    },
+    {
+      "id": "jj_feedback_correct5",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[excited] AMAZING, JJ!!!",
+      "model": "v3",
+      "file": "jj/jj_feedback_correct5.mp3"
+    },
+    {
+      "id": "jj_feedback_correct6",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[happy] PERFECT, JJ!",
+      "model": "v3",
+      "file": "jj/jj_feedback_correct6.mp3"
+    },
+    {
+      "id": "jj_feedback_correct7",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[excited] JJ, you're a STAR!!!",
+      "model": "v3",
+      "file": "jj/jj_feedback_correct7.mp3"
+    },
+    {
+      "id": "jj_feedback_correct8",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[excited] Way to GO, JJ!!!",
+      "model": "v3",
+      "file": "jj/jj_feedback_correct8.mp3"
+    },
+    {
+      "id": "jj_feedback_tryagain1",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[encouraging] Try again, JJ!",
+      "model": "v3",
+      "file": "jj/jj_feedback_tryagain1.mp3"
+    },
+    {
+      "id": "jj_feedback_tryagain2",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[encouraging] Good try, JJ! One more time!",
+      "model": "v3",
+      "file": "jj/jj_feedback_tryagain2.mp3"
+    },
+    {
+      "id": "jj_feedback_tryagain3",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[encouraging] Almost, JJ! Try again!",
+      "model": "v3",
+      "file": "jj/jj_feedback_tryagain3.mp3"
+    },
+    {
+      "id": "jj_feedback_tryagain4",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[gentle] Not quite, JJ... keep going!",
+      "model": "v3",
+      "file": "jj/jj_feedback_tryagain4.mp3"
+    },
+    {
+      "id": "jj_feedback_complete1",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[excited] JJ, you DID it!!!",
+      "model": "v3",
+      "file": "jj/jj_feedback_complete1.mp3"
+    },
+    {
+      "id": "jj_feedback_complete2",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[happy] All done, JJ!!! Great work!",
+      "model": "v3",
+      "file": "jj/jj_feedback_complete2.mp3"
+    },
+    {
+      "id": "jj_feedback_complete3",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[excited] Sparkle sparkle!!! JJ, you FINISHED!",
+      "model": "v3",
+      "file": "jj/jj_feedback_complete3.mp3"
+    },
+    {
+      "id": "jj_feedback_star_earned",
+      "kid": "jj",
+      "category": "Hype",
+      "text": "[excited] JJ, you earned a STAR!!!",
+      "model": "v3",
+      "file": "jj/jj_feedback_star_earned.mp3"
+    },
+    {
+      "id": "jj_instruction_welcome",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Welcome to Sparkle Learning, JJ!",
+      "model": "v3",
+      "file": "jj/jj_instruction_welcome.mp3"
+    },
+    {
+      "id": "jj_instruction_pick_game",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[excited] JJ, pick a game to play!",
+      "model": "v3",
+      "file": "jj/jj_instruction_pick_game.mp3"
+    },
+    {
+      "id": "jj_instruction_find_game",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[excited] Let's play Find the Letter, JJ!",
+      "model": "v3",
+      "file": "jj/jj_instruction_find_game.mp3"
+    },
+    {
+      "id": "jj_instruction_trace_game",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Let's practice tracing, JJ!",
+      "model": "v3",
+      "file": "jj/jj_instruction_trace_game.mp3"
+    },
+    {
+      "id": "jj_instruction_sound_game",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[excited] JJ, let's play the Sound Game!",
+      "model": "v3",
+      "file": "jj/jj_instruction_sound_game.mp3"
+    },
+    {
+      "id": "jj_instruction_name_game",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[excited] Let's spell your name, JJ!",
+      "model": "v3",
+      "file": "jj/jj_instruction_name_game.mp3"
+    },
+    {
+      "id": "jj_instruction_hear_it",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[encouraging] Tap to hear it again!",
+      "model": "v3",
+      "file": "jj/jj_instruction_hear_it.mp3"
+    },
+    {
+      "id": "jj_instruction_what_color",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[curious] JJ, what color is this?",
+      "model": "v3",
+      "file": "jj/jj_instruction_what_color.mp3"
+    },
+    {
+      "id": "jj_instruction_count",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[curious] JJ, how many do you see?",
+      "model": "v3",
+      "file": "jj/jj_instruction_count.mp3"
+    },
+    {
+      "id": "jj_instruction_what_next",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[curious] What comes next, JJ?",
+      "model": "v3",
+      "file": "jj/jj_instruction_what_next.mp3"
+    },
+    {
+      "id": "jj_instruction_great_session",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Great learning today, JJ!",
+      "model": "v3",
+      "file": "jj/jj_instruction_great_session.mp3"
+    },
+    {
+      "id": "jj_instruction_bye",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Bye bye JJ! See you next time!",
+      "model": "v3",
+      "file": "jj/jj_instruction_bye.mp3"
+    },
+    {
+      "id": "jj_number_1",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] One!",
+      "model": "v3",
+      "file": "jj/jj_number_1.mp3"
+    },
+    {
+      "id": "jj_number_2",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Two!",
+      "model": "v3",
+      "file": "jj/jj_number_2.mp3"
+    },
+    {
+      "id": "jj_number_3",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Three!",
+      "model": "v3",
+      "file": "jj/jj_number_3.mp3"
+    },
+    {
+      "id": "jj_number_4",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Four!",
+      "model": "v3",
+      "file": "jj/jj_number_4.mp3"
+    },
+    {
+      "id": "jj_number_5",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Five!",
+      "model": "v3",
+      "file": "jj/jj_number_5.mp3"
+    },
+    {
+      "id": "jj_number_6",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Six!",
+      "model": "v3",
+      "file": "jj/jj_number_6.mp3"
+    },
+    {
+      "id": "jj_number_7",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Seven!",
+      "model": "v3",
+      "file": "jj/jj_number_7.mp3"
+    },
+    {
+      "id": "jj_number_8",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Eight!",
+      "model": "v3",
+      "file": "jj/jj_number_8.mp3"
+    },
+    {
+      "id": "jj_number_9",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Nine!",
+      "model": "v3",
+      "file": "jj/jj_number_9.mp3"
+    },
+    {
+      "id": "jj_number_10",
+      "kid": "jj",
+      "category": "Instruction",
+      "text": "[happy] Ten!",
+      "model": "v3",
+      "file": "jj/jj_number_10.mp3"
+    },
+    {
+      "id": "buggsy_nav_welcome",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[excited] What's up, Buggsy! Welcome BACK!",
+      "model": "v3",
+      "file": "buggsy/buggsy_nav_welcome.mp3"
+    },
+    {
+      "id": "buggsy_nav_wolfkid",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[excited] Wolfkid is READY... LET'S GO!",
+      "model": "v3",
+      "file": "buggsy/buggsy_nav_wolfkid.mp3"
+    },
+    {
+      "id": "buggsy_nav_cer_ready",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[excited] New episode just DROPPED, Buggsy!",
+      "model": "v3",
+      "file": "buggsy/buggsy_nav_cer_ready.mp3"
+    },
+    {
+      "id": "buggsy_nav_math",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[encouraging] Math time. You GOT this!",
+      "model": "v3",
+      "file": "buggsy/buggsy_nav_math.mp3"
+    },
+    {
+      "id": "buggsy_nav_science",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[excited] Science loaded up... LET'S GET IT!",
+      "model": "v3",
+      "file": "buggsy/buggsy_nav_science.mp3"
+    },
+    {
+      "id": "buggsy_feedback_correct1",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] LET'S GOOOO!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_correct1.mp3"
+    },
+    {
+      "id": "buggsy_feedback_correct2",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] YOOO, NICE!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_correct2.mp3"
+    },
+    {
+      "id": "buggsy_feedback_correct3",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] SHEESH, Buggsy!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_correct3.mp3"
+    },
+    {
+      "id": "buggsy_feedback_correct4",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] THAT'S what I'm talking about!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_correct4.mp3"
+    },
+    {
+      "id": "buggsy_feedback_correct5",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] W, Buggsy... BIG W!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_correct5.mp3"
+    },
+    {
+      "id": "buggsy_feedback_correct6",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[encouraging] You GOT this, bro!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_correct6.mp3"
+    },
+    {
+      "id": "buggsy_feedback_correct7",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] No WAY you just did that!!! LET'S GO!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_correct7.mp3"
+    },
+    {
+      "id": "buggsy_feedback_correct8",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] CLEAN answer, Buggsy!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_correct8.mp3"
+    },
+    {
+      "id": "buggsy_feedback_wrong1",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[encouraging] Not that one... try again!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_wrong1.mp3"
+    },
+    {
+      "id": "buggsy_feedback_wrong2",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[encouraging] Nah, Buggsy... one more shot.",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_wrong2.mp3"
+    },
+    {
+      "id": "buggsy_feedback_wrong3",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[thoughtful] Almost! Think about it...",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_wrong3.mp3"
+    },
+    {
+      "id": "buggsy_feedback_wrong4",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[mischievously] Six... seven!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_wrong4.mp3"
+    },
+    {
+      "id": "buggsy_feedback_wrong5",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[laughs] Bruh... try again!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_wrong5.mp3"
+    },
+    {
+      "id": "buggsy_feedback_complete1",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] Module DONE!!! LET'S GO, Buggsy!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_complete1.mp3"
+    },
+    {
+      "id": "buggsy_feedback_complete2",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] All questions CRUSHED... nice work!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_complete2.mp3"
+    },
+    {
+      "id": "buggsy_feedback_submitted",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] Episode ARCHIVED... that was FIRE, Buggsy!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_submitted.mp3"
+    },
+    {
+      "id": "buggsy_feedback_rings",
+      "kid": "buggsy",
+      "category": "Hype",
+      "text": "[excited] RINGS EARNED!!! Get that loot!!!",
+      "model": "v3",
+      "file": "buggsy/buggsy_feedback_rings.mp3"
+    },
+    {
+      "id": "buggsy_cer_read",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[encouraging] Read the passage, Buggsy... take your time.",
+      "model": "v3",
+      "file": "buggsy/buggsy_cer_read.mp3"
+    },
+    {
+      "id": "buggsy_cer_claim",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[curious] What's your claim? Drop it.",
+      "model": "v3",
+      "file": "buggsy/buggsy_cer_claim.mp3"
+    },
+    {
+      "id": "buggsy_cer_evidence",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[encouraging] Find your evidence... what did the text say?",
+      "model": "v3",
+      "file": "buggsy/buggsy_cer_evidence.mp3"
+    },
+    {
+      "id": "buggsy_cer_reasoning",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[thoughtful] Now explain WHY... connect it.",
+      "model": "v3",
+      "file": "buggsy/buggsy_cer_reasoning.mp3"
+    },
+    {
+      "id": "buggsy_cer_submit",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[excited] Ready to drop this in the archives?!",
+      "model": "v3",
+      "file": "buggsy/buggsy_cer_submit.mp3"
+    },
+    {
+      "id": "buggsy_cer_timer_start",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[encouraging] Timer's on... no rush, Buggsy.",
+      "model": "v3",
+      "file": "buggsy/buggsy_cer_timer_start.mp3"
+    },
+    {
+      "id": "buggsy_cer_timer_half",
+      "kid": "buggsy",
+      "category": "Instruction",
+      "text": "[encouraging] Halfway there... keep it going!",
+      "model": "v3",
+      "file": "buggsy/buggsy_cer_timer_half.mp3"
+    }
+  ]
+}
