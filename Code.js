@@ -1,13 +1,13 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v49 — Apps Script Router (TBM Consolidated)
+// Code.gs v50 — Apps Script Router (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
 // TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeGsVersion() { return 49; }
+function getCodeGsVersion() { return 50; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -320,7 +320,8 @@ function serveData(e) {
         'updateFamilyNoteSafe': updateFamilyNoteSafe,
         'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
         'getVaultDataSafe': getVaultDataSafe, 'runStoryFactorySafe': runStoryFactorySafe,
-        'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe
+        'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe,
+        'runTestsSafe': runTestsSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
@@ -342,7 +343,25 @@ function serveData(e) {
       }
     }
 
-    if (action === 'months') {
+    if (action === 'runTests') {
+      var smokeRaw = tbmSmokeTest();
+      var regRaw = tbmRegressionSuite();
+      var smokeResult = JSON.parse(smokeRaw);
+      var regressionResult = JSON.parse(regRaw);
+      result = {
+        timestamp: new Date().toISOString(),
+        overall: (smokeResult.overall === 'PASS' && regressionResult.overall === 'PASS') ? 'PASS'
+               : (smokeResult.overall === 'FAIL' || regressionResult.overall === 'FAIL') ? 'FAIL' : 'WARN',
+        smoke: smokeResult,
+        regression: regressionResult,
+        versions: {
+          codeGs: 'v' + getCodeGsVersion(),
+          dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })(),
+          smokeTest: 'v' + (function(){ try { return getSmokeTestVersion(); } catch(e) { return '?'; } })(),
+          regressionSuite: 'v' + (function(){ try { return getRegressionSuiteVersion(); } catch(e) { return '?'; } })()
+        }
+      };
+    } else if (action === 'months') {
       result = getAvailableMonths();
     } else if (action === 'forecast') {
       result = getCashFlowForecast();
@@ -813,6 +832,30 @@ function getDeployedVersionsSafe() {
 }
 
 
+// v50: Zero-touch deploy — combined smoke + regression test runner
+// Called via ?action=runTests (direct) or ?action=api&fn=runTestsSafe (proxy)
+function runTestsSafe() {
+  return withMonitor_('runTestsSafe', function() {
+    var smokeRaw = tbmSmokeTest();
+    var regRaw = tbmRegressionSuite();
+    var smokeResult = JSON.parse(smokeRaw);
+    var regressionResult = JSON.parse(regRaw);
+    return {
+      timestamp: new Date().toISOString(),
+      overall: (smokeResult.overall === 'PASS' && regressionResult.overall === 'PASS') ? 'PASS'
+             : (smokeResult.overall === 'FAIL' || regressionResult.overall === 'FAIL') ? 'FAIL' : 'WARN',
+      smoke: smokeResult,
+      regression: regressionResult,
+      versions: {
+        codeGs: 'v' + getCodeGsVersion(),
+        dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })(),
+        smokeTest: 'v' + (function(){ try { return getSmokeTestVersion(); } catch(e) { return '?'; } })(),
+        regressionSuite: 'v' + (function(){ try { return getRegressionSuiteVersion(); } catch(e) { return '?'; } })()
+      }
+    };
+  });
+}
+
 function getAppUrls() {
   var base = ScriptApp.getService().getUrl();
   return JSON.stringify({
@@ -919,7 +962,7 @@ function getVaultDataSafe() {
 // ════════════════════════════════════════════════════════════════════
 
 function healthCheck() {
-  Logger.log('═══ Code.gs v49 Health Check ═══');
+  Logger.log('═══ Code.gs v50 Health Check ═══');
 
   var fns = [
     'doGet', 'servePage', 'serveData', 'getDataSafe', 'getMonthsSafe',
@@ -1299,4 +1342,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v49
+// END OF FILE — Code.gs v50
