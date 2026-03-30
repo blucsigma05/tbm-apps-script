@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v52 — Apps Script Router (TBM Consolidated)
+// Code.gs v53 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 52; }
+function getCodeVersion() { return 53; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -342,6 +342,8 @@ function serveData(e) {
         'listStoredStoriesSafe': listStoredStoriesSafe, 'getStoredStorySafe': getStoredStorySafe,
         'getTodayContentSafe': getTodayContentSafe, 'seedWeek1CurriculumSafe': seedWeek1CurriculumSafe,
         'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe,
+        'submitFeedbackSafe': submitFeedbackSafe, 'getAudioBatchSafe': getAudioBatchSafe,
+        'logHomeworkCompletionSafe': logHomeworkCompletionSafe, 'logSparkleProgressSafe': logSparkleProgressSafe,
         'runTestsSafe': runTestsSafe
       };
 
@@ -878,6 +880,162 @@ function seedWeek1CurriculumSafe() {
   });
 }
 
+// v52: Feedback Form — setup + submit
+function setupFeedbackSheet() {
+  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Feedback']) || '💻 Feedback';
+  var sheet = ss.getSheetByName(tabName);
+  if (!sheet) {
+    sheet = ss.insertSheet(tabName);
+    sheet.appendRow(['Timestamp', 'Surface', 'LayoutRating', 'ReadabilityRating', 'FreeText', 'UserAgent']);
+    sheet.setFrozenRows(1);
+    sheet.getRange('1:1').setFontWeight('bold');
+    Logger.log('✅ Feedback sheet created: ' + tabName);
+  } else {
+    Logger.log('Feedback sheet already exists.');
+  }
+}
+
+function submitFeedbackSafe(payload) {
+  return withMonitor_('submitFeedbackSafe', function() {
+    var layout = parseInt(payload.layout, 10);
+    var readability = parseInt(payload.readability, 10);
+    if (isNaN(layout) || layout < 1 || layout > 5) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'Layout rating must be 1-5' }));
+    }
+    if (isNaN(readability) || readability < 1 || readability > 5) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'Readability rating must be 1-5' }));
+    }
+    var surface = String(payload.surface || 'unknown');
+    var text = String(payload.text || '').substring(0, 500);
+
+    var lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); } catch(e) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'System is busy' }));
+    }
+    try {
+      var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+      var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Feedback']) || '💻 Feedback';
+      var sheet = ss.getSheetByName(tabName);
+      if (!sheet) {
+        return JSON.parse(JSON.stringify({ error: true, message: 'Feedback sheet not found. Run setupFeedbackSheet() first.' }));
+      }
+      sheet.appendRow([new Date().toISOString(), surface, layout, readability, text, 'web']);
+      return JSON.parse(JSON.stringify({ success: true }));
+    } finally {
+      lock.releaseLock();
+    }
+  });
+}
+
+// v52: Audio Wiring — batch fetch audio clips from Drive as base64
+function getAudioBatchSafe(filenames) {
+  return withMonitor_('getAudioBatchSafe', function() {
+    var folderId = '1rXWVBD9QMruWOj6AlNB4mY2E9wzWGctm';
+    var folder = DriveApp.getFolderById(folderId);
+    var result = {};
+    for (var i = 0; i < filenames.length; i++) {
+      var files = folder.getFilesByName(filenames[i]);
+      if (files.hasNext()) {
+        result[filenames[i]] = Utilities.base64Encode(files.next().getBlob().getBytes());
+      }
+    }
+    // Check subfolders for missing files
+    var missing = [];
+    for (var k = 0; k < filenames.length; k++) {
+      if (!result[filenames[k]]) missing.push(filenames[k]);
+    }
+    if (missing.length > 0) {
+      var subs = folder.getFolders();
+      while (subs.hasNext()) {
+        var sub = subs.next();
+        for (var m = 0; m < missing.length; m++) {
+          if (!result[missing[m]]) {
+            var sf = sub.getFilesByName(missing[m]);
+            if (sf.hasNext()) {
+              result[missing[m]] = Utilities.base64Encode(sf.next().getBlob().getBytes());
+            }
+          }
+        }
+      }
+    }
+    return JSON.parse(JSON.stringify(result));
+  });
+}
+
+// v52: Notion write-backs — log homework and sparkle progress
+function logHomeworkCompletionSafe(data) {
+  return withMonitor_('logHomeworkCompletionSafe', function() {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+    if (!apiKey) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_API_KEY not set' }));
+
+    var payload = {
+      parent: { database_id: '331cea3cd9e8816aa07feec250328cf8' },
+      properties: {
+        'Name': { title: [{ text: { content: String(data.title || 'Homework Entry') } }] },
+        'Child': { select: { name: String(data.child || 'buggsy') } },
+        'Subject': { select: { name: String(data.subject || 'General') } },
+        'Score': { number: parseInt(data.score, 10) || 0 },
+        'Date': { date: { start: String(data.date || new Date().toISOString().slice(0, 10)) } }
+      }
+    };
+
+    var resp = UrlFetchApp.fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+
+    var code = resp.getResponseCode();
+    if (code >= 400) {
+      if (typeof logError_ === 'function') logError_('logHomeworkCompletionSafe', new Error('Notion API ' + code));
+      return JSON.parse(JSON.stringify({ error: true, message: 'Notion API error: ' + code }));
+    }
+    return JSON.parse(JSON.stringify({ success: true }));
+  });
+}
+
+function logSparkleProgressSafe(data) {
+  return withMonitor_('logSparkleProgressSafe', function() {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+    if (!apiKey) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_API_KEY not set' }));
+
+    var payload = {
+      parent: { database_id: '331cea3cd9e8816aa07feec250328cf8' },
+      properties: {
+        'Name': { title: [{ text: { content: String(data.activity || 'Sparkle Progress') } }] },
+        'Child': { select: { name: 'jj' } },
+        'Subject': { select: { name: String(data.subject || 'Letters') } },
+        'Score': { number: parseInt(data.score, 10) || 0 },
+        'Date': { date: { start: String(data.date || new Date().toISOString().slice(0, 10)) } }
+      }
+    };
+
+    var resp = UrlFetchApp.fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+
+    var code = resp.getResponseCode();
+    if (code >= 400) {
+      if (typeof logError_ === 'function') logError_('logSparkleProgressSafe', new Error('Notion API ' + code));
+      return JSON.parse(JSON.stringify({ error: true, message: 'Notion API error: ' + code }));
+    }
+    return JSON.parse(JSON.stringify({ success: true }));
+  });
+}
+
 // v44: Deployed versions — calls all get*Version() functions from GASHardening
 function getDeployedVersionsSafe() {
   return withMonitor_('getDeployedVersionsSafe', function() {
@@ -1071,7 +1229,11 @@ function healthCheck() {
     'getStoredStory', 'getStoredStorySafe',
     'getTodayContent_', 'getTodayContentSafe',
     'ensureCurriculumTab_', 'seedWeek1Curriculum', 'seedWeek1CurriculumSafe',
-    'addBedtimeStoryChore'
+    'addBedtimeStoryChore',
+    // v53: Feedback + Audio + Notion write-backs
+    'setupFeedbackSheet', 'submitFeedbackSafe',
+    'getAudioBatchSafe',
+    'logHomeworkCompletionSafe', 'logSparkleProgressSafe'
   ];
   var allOk = true;
   for (var fi = 0; fi < fns.length; fi++) {
@@ -1372,4 +1534,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v52
+// END OF FILE — Code.gs v53

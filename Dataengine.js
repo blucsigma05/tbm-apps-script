@@ -199,8 +199,9 @@ var TAB_MAP = {
   'KH_Requests':      '🧹📅 KH_Requests',
   'KH_ScreenTime':    '🧹📅 KH_ScreenTime',
   'KH_Grades':        '🧹📅 KH_Grades',
-  // 💻 Education
+  // 💻 Education + System
   'Curriculum':       '💻 Curriculum',
+  'Feedback':         '💻 Feedback',
   // 📋 Board Config
   'Board_Config':     '📋 Board_Config'
 };
