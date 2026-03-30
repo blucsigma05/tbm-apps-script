@@ -7,7 +7,7 @@
 
 // WRITES TO: KH_StoryProgress
 // READS FROM: KH_StoryProgress, Notion (via API)
-function getStoryFactoryVersion() { return 7; }
+function getStoryFactoryVersion() { return 8; }
 
 var CONFIG = {
 GEMINI_API_KEY:  PropertiesService.getScriptProperties().getProperty('JJ Stories'),
@@ -1293,4 +1293,108 @@ Logger.log('=== Memory Fetch Complete ===');
 function authorizeDrive() {
 var folder = DriveApp.getFolderById(CONFIG.STORY_FOLDER_ID);
 Logger.log('Drive authorized! Folder: ' + folder.getName());
+}
+
+// ── LOAD PRE-WRITTEN STORY TO SCRIPT PROPERTIES ─────────────
+// Usage: loadStoryToProps('week1-jj-garden-mystery')
+// Stores story JSON in Script Properties under key STORY_<name>.
+// KidsHub can then serve it without hitting Gemini.
+
+function loadStoryToProps(storyNameOrObj) {
+  var storyName, story, content;
+
+  if (typeof storyNameOrObj === 'object' && storyNameOrObj !== null) {
+    // Direct object — inline story data
+    story = storyNameOrObj;
+    storyName = story.title ? story.title.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'unnamed';
+    content = JSON.stringify(story);
+  } else if (typeof storyNameOrObj === 'string') {
+    // String — try Drive stories folder
+    storyName = storyNameOrObj;
+    var fileName = storyName + '.json';
+    try {
+      var folder = DriveApp.getFolderById(CONFIG.STORY_FOLDER_ID);
+      var files = folder.getFilesByName(fileName);
+      if (!files.hasNext()) throw new Error('Not found');
+      content = files.next().getBlob().getDataAsString();
+      story = JSON.parse(content);
+    } catch(e) {
+      throw new Error('Story file not found in Drive stories folder: ' + fileName + ' (' + e.message + ')');
+    }
+  } else {
+    throw new Error('Pass a story name (string) or story object');
+  }
+
+  var key = 'STORY_' + storyName.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+  if (!story.title || !story.scenes || story.scenes.length === 0) {
+    throw new Error('Story must have title and at least 1 scene');
+  }
+
+  // Store in Script Properties
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty(key, content);
+
+  Logger.log('Loaded story to Script Properties:');
+  Logger.log('  Key: ' + key);
+  Logger.log('  Title: ' + story.title);
+  Logger.log('  Scenes: ' + story.scenes.length);
+  Logger.log('  Size: ' + content.length + ' bytes');
+
+  return {
+    success: true,
+    key: key,
+    title: story.title,
+    scenes: story.scenes.length,
+    bytes: content.length
+  };
+}
+
+// ── GET PRE-LOADED STORY FROM SCRIPT PROPERTIES ─────────────
+function getStoredStory(storyName) {
+  var key = 'STORY_' + storyName.replace(/[^a-zA-Z0-9_-]/g, '_');
+  var raw = PropertiesService.getScriptProperties().getProperty(key);
+  if (!raw) return null;
+  return JSON.parse(raw);
+}
+
+// ── LIST ALL STORED STORIES ─────────────────────────────────
+function listStoredStories() {
+  var props = PropertiesService.getScriptProperties().getProperties();
+  var stories = [];
+  for (var key in props) {
+    if (!props.hasOwnProperty(key)) continue;
+    if (key.indexOf('STORY_') !== 0) continue;
+    try {
+      var data = JSON.parse(props[key]);
+      stories.push({ key: key, title: data.title, character: data.character, scenes: data.scenes.length });
+    } catch(e) {
+      stories.push({ key: key, title: '(parse error)', error: e.message });
+    }
+  }
+  Logger.log('Stored stories: ' + stories.length);
+  for (var i = 0; i < stories.length; i++) {
+    Logger.log('  ' + stories[i].key + ' — ' + stories[i].title);
+  }
+  return stories;
+}
+
+// ── WEEK 1: JJ and the Garden Mystery ───────────────────────
+// Run from editor: loadWeek1JJGardenMystery()
+function loadWeek1JJGardenMystery() {
+  return loadStoryToProps({
+    title: 'JJ and the Garden Mystery',
+    character: 'JJ',
+    topic: 'garden mystery',
+    tone: 'Funny',
+    week: 1,
+    scenes: [
+      { scene_number: 1, text: "JJ was playing in the backyard when she noticed something strange. Mama's big red tomatoes were disappearing from the garden! Yesterday there were six tomatoes, and today there were only three. JJ put her hands on her hips. 'Somebody is eating our tomatoes!' she said. She decided right then and there to solve the mystery.", image_prompt: 'Comic book illustration of a 4-year-old Black girl with puffy twists standing in a backyard garden, hands on hips, looking at a tomato plant with missing tomatoes. Bold clean lines, vibrant colors, white background.', characters_in_scene: ['JJ'] },
+      { scene_number: 2, text: "JJ ran inside to get her detective kit \u2014 a magnifying glass from the dollar store, a little notebook, and a purple crayon. She put on her rain boots even though it wasn't raining, because detectives need serious shoes. Buggsy looked up from his tablet. 'What are you doing?' he asked. 'I'm solving a MYSTERY,' JJ whispered loudly. 'Somebody stole Mama's tomatoes!'", image_prompt: 'Comic book illustration of a 4-year-old Black girl wearing oversized rain boots, holding a magnifying glass and notebook. An older Black boy sits nearby with a tablet looking curious. Bold clean lines, vibrant colors, white background.', characters_in_scene: ['JJ', 'Buggsy'] },
+      { scene_number: 3, text: "JJ crouched down by the tomato plants and looked through her magnifying glass. She found a clue! There were tiny bite marks on one of the tomatoes, and little tracks in the dirt. 'These tracks are very small,' JJ said, writing a wobbly circle in her notebook. She also found a piece of lettuce on the ground near the fence. 'Hmm,' she said seriously. 'Very suspicious.'", image_prompt: 'Comic book illustration of a 4-year-old Black girl crouching in a garden, peering through a magnifying glass at tiny tracks in the soil near tomato plants. Bold clean lines, vibrant colors, white background.', characters_in_scene: ['JJ'] },
+      { scene_number: 4, text: "JJ followed the tracks across the yard. They went past the swing set, around the big tree, and right to a hole under the fence. JJ peeked through and gasped. There sat the biggest, fattest rabbit she had ever seen, happily munching on a tomato! Two baby bunnies sat beside it, their little noses wiggling. 'You're the tomato thieves!' JJ giggled.", image_prompt: 'Comic book illustration of a 4-year-old Black girl peeking through a gap under a wooden fence, discovering a large rabbit and two baby bunnies eating a red tomato. Bold clean lines, vibrant colors, white background.', characters_in_scene: ['JJ'] },
+      { scene_number: 5, text: "JJ ran inside to tell everyone. 'Mama! Daddy! I solved it! Bunnies are eating the tomatoes!' Daddy laughed. 'Good detective work, JJ!' Mama smiled and said, 'Maybe we can plant some extra lettuce by the fence so the bunnies eat that instead.' JJ thought that was the best idea ever. She even named the big rabbit Detective Fluffbottom.", image_prompt: 'Comic book illustration of a 4-year-old Black girl excitedly telling her parents about her discovery. The mother and father are smiling proudly. Bold clean lines, vibrant colors, white background.', characters_in_scene: ['JJ', 'Mama', 'Daddy'] },
+      { scene_number: 6, text: "That night, JJ snuggled into bed with her magnifying glass on the nightstand. She told her stuffed bunny all about her big case. 'Don't worry,' she whispered. 'Detective Fluffbottom gets to keep eating. We planted lettuce just for her.' Mama kissed her forehead and turned off the light. JJ smiled, closed her eyes, and dreamed about solving mysteries with bunnies.", image_prompt: 'Comic book illustration of a 4-year-old Black girl tucked into bed, smiling peacefully with a magnifying glass on the nightstand and a stuffed bunny. Moonlight through the window. Bold clean lines, vibrant colors, white background.', characters_in_scene: ['JJ', 'Mama'] }
+    ]
+  });
 }
