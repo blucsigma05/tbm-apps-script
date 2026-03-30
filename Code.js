@@ -1354,24 +1354,146 @@ function setupFeedbackSheet() {
 
 function submitFeedbackSafe(payload) {
   return withMonitor_('submitFeedbackSafe', function() {
-    // Validate
-    var layout = parseInt(payload && payload.layout);
-    var readability = parseInt(payload && payload.readability);
-    if (isNaN(layout) || layout < 1 || layout > 5) throw new Error('Layout rating must be 1-5');
-    if (isNaN(readability) || readability < 1 || readability > 5) throw new Error('Readability rating must be 1-5');
-    var surface = String(payload.surface || 'unknown');
+    var layout = parseInt(payload && payload.layout, 10);
+    var readability = parseInt(payload && payload.readability, 10);
+    if (isNaN(layout) || layout < 1 || layout > 5) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'Layout rating must be 1-5' }));
+    }
+    if (isNaN(readability) || readability < 1 || readability > 5) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'Readability rating must be 1-5' }));
+    }
+    var surface = (payload.surface === 'vein') ? 'vein' : 'pulse';
     var text = String(payload.text || '').substring(0, 500);
 
     var lock = LockService.getScriptLock();
-    lock.waitLock(30000);
+    try {
+      lock.waitLock(30000);
+    } catch(e) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'System is busy — please try again' }));
+    }
     try {
       var ss = SpreadsheetApp.openById(SSID);
-      var tabName = TAB_MAP['Feedback'] || '💻 Feedback';
-      var sheet = ss.getSheetByName(tabName);
-      if (!sheet) throw new Error('Feedback sheet not found. Run setupFeedbackSheet() first.');
+      var sheet = ss.getSheetByName(TAB_MAP['Feedback'] || '💻 Feedback');
+      if (!sheet) {
+        return JSON.parse(JSON.stringify({ error: true, message: 'Feedback sheet not found' }));
+      }
       sheet.appendRow([new Date().toISOString(), surface, layout, readability, text, 'web']);
+      return JSON.parse(JSON.stringify({ success: true }));
     } finally {
       lock.releaseLock();
+    }
+  });
+}
+
+// ── Audio Batch (v52) ──────────────────────────────────────────────
+
+function getAudioBatchSafe(filenames) {
+  return withMonitor_('getAudioBatchSafe', function() {
+    var folderId = '1rXWVBD9QMruWOj6AlNB4mY2E9wzWGctm';
+    var folder = DriveApp.getFolderById(folderId);
+    var result = {};
+    for (var i = 0; i < filenames.length; i++) {
+      var files = folder.getFilesByName(filenames[i]);
+      if (files.hasNext()) {
+        result[filenames[i]] = Utilities.base64Encode(files.next().getBlob().getBytes());
+      }
+    }
+    // Check subfolders for files not found in root
+    var missing = [];
+    for (var k = 0; k < filenames.length; k++) {
+      if (!result[filenames[k]]) missing.push(filenames[k]);
+    }
+    if (missing.length > 0) {
+      var subs = folder.getFolders();
+      while (subs.hasNext()) {
+        var sub = subs.next();
+        for (var m = 0; m < missing.length; m++) {
+          if (!result[missing[m]]) {
+            var sf = sub.getFilesByName(missing[m]);
+            if (sf.hasNext()) {
+              result[missing[m]] = Utilities.base64Encode(sf.next().getBlob().getBytes());
+            }
+          }
+        }
+      }
+    }
+    return JSON.parse(JSON.stringify(result));
+  });
+}
+
+// ── Notion Education Write-Back (v52) ──────────────────────────────
+
+function logHomeworkCompletionSafe(data) {
+  return withMonitor_('logHomeworkCompletionSafe', function() {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+    if (!apiKey) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'Notion API key not configured in Script Properties' }));
+    }
+    var HOMEWORK_DB_ID = '9164c6a594b448028426366ff62952b5';
+    var payload = {
+      parent: { database_id: HOMEWORK_DB_ID },
+      properties: {
+        'Assignment': { title: [{ text: { content: data.assignment || 'Daily Mission' } }] },
+        'Subject': { select: { name: data.subject || 'General' } },
+        'Due Date': { date: { start: new Date().toISOString().split('T')[0] } },
+        'Status': { select: { name: 'Done' } },
+        'Difficulty': { select: { name: data.difficulty || 'Medium' } },
+        'Grade': { number: data.score || 0 },
+        'Notes': { rich_text: [{ text: { content: 'TEKS: ' + (data.teksCode || 'N/A') + ' | Score: ' + (data.score || 0) + '/' + (data.total || 0) } }] }
+      }
+    };
+    var options = {
+      method: 'post',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+    var resp = UrlFetchApp.fetch('https://api.notion.com/v1/pages', options);
+    var code = resp.getResponseCode();
+    if (code !== 200) {
+      logError_('logHomeworkCompletionSafe', new Error('Notion API returned ' + code + ': ' + resp.getContentText()));
+      return JSON.parse(JSON.stringify({ error: true, message: 'Notion write failed (HTTP ' + code + ')' }));
+    }
+    return JSON.parse(JSON.stringify({ success: true }));
+  });
+}
+
+function logSparkleProgressSafe(data) {
+  return withMonitor_('logSparkleProgressSafe', function() {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+    if (!apiKey) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'Notion API key not configured in Script Properties' }));
+    }
+    var PREK_PREP_DB_ID = 'ac28bcfae972428e812df2281df55af9';
+    var payload = {
+      parent: { database_id: PREK_PREP_DB_ID },
+      properties: {
+        'Skill': { title: [{ text: { content: data.skill } }] },
+        'Category': { select: { name: data.category || 'Letters' } },
+        'Status': { select: { name: data.phase || 'Practicing' } },
+        'Practice Count': { number: data.practiceCount || 1 },
+        'Notes': { rich_text: [{ text: { content: data.notes || 'Session ' + new Date().toLocaleDateString() } }] }
+      }
+    };
+    var options = {
+      method: 'post',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Content-Type': 'application/json',
+        'Notion-Version': '2022-06-28'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+    var resp = UrlFetchApp.fetch('https://api.notion.com/v1/pages', options);
+    var code = resp.getResponseCode();
+    if (code !== 200) {
+      logError_('logSparkleProgressSafe', new Error('Notion API returned ' + code + ': ' + resp.getContentText()));
+      return JSON.parse(JSON.stringify({ error: true, message: 'Notion write failed (HTTP ' + code + ')' }));
     }
     return JSON.parse(JSON.stringify({ success: true }));
   });

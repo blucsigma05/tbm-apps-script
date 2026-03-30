@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>The Vein v61 — Household Command Center</title>
+<meta name="tbm-version" content="v61">
 <!-- TheVein v61 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -601,6 +602,7 @@ h1{font-size:22px;} .cval{font-size:22px;}
 </div>
 </nav>
 <script>
+var TBM_VERSION='v61';
 // v59: ES5-safe URL param reader (replaces URLSearchParams)
 function getParam_(name){var r=new RegExp('[?&]'+name+'=([^&#]*)');var m=r.exec(window.location.search);return m?decodeURIComponent(m[1]):null;}
 var _tbmBaseUrl=''; var _isPartnerMode=getParam_('jt')==='1';
@@ -1038,7 +1040,7 @@ id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition
 <div class="footer">
 <span id="footerSrc">Source: Tiller BudgetMaster</span>
 <span id="veinReconcileBadge" style="font-size:10px;font-weight:600;letter-spacing:.05em;opacity:0.85;"></span>
-<span id="veinVersionTag">The Vein v60</span>
+<span id="veinVersionTag">The Vein</span>
 </div>
 
 </div>
@@ -1724,7 +1726,7 @@ $('footerSrc').textContent='Source: Tiller BudgetMaster · '+d.month+' '+d.year+
 // v25 FIX: dynamic footer version tag reads DE version from _meta
 var _vTag=$('veinVersionTag');
 if(_vTag){var _nowStr=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});// v35: footer version tag
-_vTag.textContent='Updated '+_nowStr+(d._meta?' \u00b7 DE v'+(d._meta.version||'?'):'')+ ' \u00b7 The Vein v60';}
+_vTag.textContent='Updated '+_nowStr+(d._meta?' \u00b7 DE v'+(d._meta.version||'?'):'')+ ' \u00b7 The Vein ' + TBM_VERSION;}
 $('badgeWrap').innerHTML=live?'':
 '<span style="font-size:8px;padding:2px 6px;background:var(--gold-wash);color:var(--gold);border-radius:4px;">Snapshot</span>';
 }
@@ -1785,7 +1787,7 @@ function handleVerify(d, debts) {
   var overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.85);overflow:auto;padding:40px;';
   overlay.innerHTML='<div style="max-width:800px;margin:0 auto;background:var(--surface);border-radius:16px;padding:28px;box-shadow:0 8px 40px rgba(0,0,0,.5);">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h2 style="font-family:Playfair Display,serif;font-size:24px;color:var(--navy);">🔍 TheVein v56 — Verify</h2><button onclick="this.closest(div[style]).remove()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;font-size:12px;">Close</button></div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h2 style="font-family:Playfair Display,serif;font-size:24px;color:var(--navy);">🔍 TheVein '+TBM_VERSION+' — Verify</h2><button onclick="this.closest(div[style]).remove()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;font-size:12px;">Close</button></div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;"><div style="padding:12px;background:var(--positive-bg);border-radius:8px;text-align:center;"><div style="font-size:28px;font-weight:700;color:var(--positive);">'+ok+'</div><div style="font-size:10px;color:var(--text-muted);">FIELDS OK</div></div><div style="padding:12px;background:'+(miss>0?'var(--negative-bg)':'var(--positive-bg)')+';border-radius:8px;text-align:center;"><div style="font-size:28px;font-weight:700;color:'+(miss>0?'var(--negative)':'var(--positive)')+';">'+miss+'</div><div style="font-size:10px;color:var(--text-muted);">MISSING</div></div></div>' +
     '<div style="font-family:JetBrains Mono,monospace;font-size:9px;letter-spacing:.2em;color:var(--text-muted);margin-bottom:6px;">DASHBOARD DATA FIELDS</div>' +
     '<table style="width:100%;border-collapse:collapse;font-family:JetBrains Mono,monospace;"><tr style="background:var(--surface-2);"><th style="padding:4px 8px;text-align:left;font-size:9px;">Field</th><th style="padding:4px 8px;text-align:left;font-size:9px;">Value</th></tr>'+rows+'</table>' +
@@ -3249,7 +3251,7 @@ rows+='<tr><td style="padding:5px 10px;font-size:11px;border-bottom:1px solid rg
 var allPass=fail===0;
 var p=document.createElement('div');p.id='diagPanel';
 p.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;max-height:45vh;overflow:auto;background:#1a1a2e;color:#e0e0e0;font-family:JetBrains Mono,monospace;font-size:11px;border-top:4px solid '+(allPass?'#4ade80':'#f87171')+';box-shadow:0 -4px 20px rgba(0,0,0,.5);';
-p.innerHTML='<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;background:#12122a;"><span style="font-weight:700;letter-spacing:1px;font-size:12px;">🔍 DOM Self-Check · TheVein v54</span><span style="display:flex;gap:8px;align-items:center;"><span style="font-size:10px;color:#9ca3af;">'+pass+'/'+T1.length+' fields</span><span style="padding:3px 10px;border-radius:4px;font-weight:700;font-size:10px;letter-spacing:.5px;background:'+(allPass?'#166534':'#7f1d1d')+';color:'+(allPass?'#4ade80':'#fca5a5')+'">'+(allPass?'ALL PASS':'FAIL')+'</span><button onclick="document.getElementById(\x27diagPanel\x27).remove()" style="padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#9ca3af;cursor:pointer;font-size:10px;">Close</button></span></div><table style="width:100%;border-collapse:collapse;"><tr style="background:#12122a;"><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">TIER 1 FIELD</th><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">PAYLOAD VALUE</th></tr>'+rows+'</table>';
+p.innerHTML='<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;background:#12122a;"><span style="font-weight:700;letter-spacing:1px;font-size:12px;">🔍 DOM Self-Check · TheVein '+TBM_VERSION+'</span><span style="display:flex;gap:8px;align-items:center;"><span style="font-size:10px;color:#9ca3af;">'+pass+'/'+T1.length+' fields</span><span style="padding:3px 10px;border-radius:4px;font-weight:700;font-size:10px;letter-spacing:.5px;background:'+(allPass?'#166534':'#7f1d1d')+';color:'+(allPass?'#4ade80':'#fca5a5')+'">'+(allPass?'ALL PASS':'FAIL')+'</span><button onclick="document.getElementById(\x27diagPanel\x27).remove()" style="padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#9ca3af;cursor:pointer;font-size:10px;">Close</button></span></div><table style="width:100%;border-collapse:collapse;"><tr style="background:#12122a;"><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">TIER 1 FIELD</th><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">PAYLOAD VALUE</th></tr>'+rows+'</table>';
 document.body.appendChild(p);
 document.body.style.border=allPass?'3px solid #4ade80':'3px solid #f87171';
 });

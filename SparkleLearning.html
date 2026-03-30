@@ -522,6 +522,50 @@
   var celebrateText = '';
   var isTracing = false;
   var animFrameId = null;
+
+  // ─── Audio preload system ───
+  var audioCache = {};
+  var audioLoaded = false;
+
+  function preloadAudio(filenames) {
+    google.script.run
+      .withSuccessHandler(function(map) {
+        if (map && !map.error) {
+          for (var key in map) {
+            if (map.hasOwnProperty(key)) {
+              audioCache[key] = new Audio('data:audio/mp3;base64,' + map[key]);
+            }
+          }
+          audioLoaded = true;
+        }
+      })
+      .withFailureHandler(function() {
+        audioLoaded = false;
+      })
+      .getAudioBatchSafe(filenames);
+  }
+
+  function playAudio(filename, fallbackText) {
+    if (audioCache[filename]) {
+      audioCache[filename].currentTime = 0;
+      audioCache[filename].play();
+    } else if (fallbackText) {
+      var u = new SpeechSynthesisUtterance(fallbackText);
+      u.rate = 0.9;
+      u.pitch = 1.1;
+      speechSynthesis.speak(u);
+    }
+  }
+
+  // Preload letter clips + celebrations on load
+  var _preloadFiles = [];
+  for (var _li = 0; _li < 26; _li++) {
+    _preloadFiles.push(String.fromCharCode(65 + _li) + '.mp3');
+  }
+  _preloadFiles.push('correct.mp3');
+  _preloadFiles.push('celebration.mp3');
+  _preloadFiles.push('try-again.mp3');
+  preloadAudio(_preloadFiles);
   var canvasEl = null;
 
   // ─── Sparkle Particle (ES5 constructor) ───
@@ -731,6 +775,7 @@
         stars += 1;
         updateStarsDisplay();
         celebrateText = 'You traced ' + currentLetter + '!';
+        playAudio('celebration.mp3', 'Great job!');
         stopAnimation();
         mode = 'celebrate';
         render();
@@ -770,6 +815,7 @@
     if (identifyResult !== null) return;
     if (letter === identifyTarget) {
       identifyResult = 'correct';
+      playAudio('correct.mp3', 'Correct!');
       stars += 1;
       updateStarsDisplay();
       render();
@@ -780,6 +826,7 @@
       }, 1000);
     } else {
       identifyResult = 'wrong';
+      playAudio('try-again.mp3', 'Try again!');
       render();
       setTimeout(function() {
         identifyResult = null;
@@ -802,6 +849,7 @@
     trailPoints = [];
     sparkleParticles = [];
     mode = 'trace';
+    playAudio(currentLetter + '.mp3', currentLetter);
     render();
     setTimeout(bindCanvasEvents, 50);
   }
@@ -827,6 +875,7 @@
 
   function pickLetter(l) {
     currentLetter = l;
+    playAudio(l + '.mp3', l);
     render();
   }
   window.pickLetter = pickLetter;
