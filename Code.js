@@ -1,13 +1,13 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v50 — Apps Script Router (TBM Consolidated)
+// Code.gs v51 — Apps Script Router (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
 // TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeGsVersion() { return 50; }
+function getCodeGsVersion() { return 51; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -221,8 +221,10 @@ function servePage(page, e) {
     'wolfkid':   { file: 'WolfkidCER',     title: 'Wolfkid CER — Episode 3' },
     'dashboard': { file: 'DesignDashboard', title: 'Design Dashboard — Ring Quest Creator' },
     'facts':     { file: 'fact-sprint',    title: 'Fact Sprint — Math Drill' },
-    'reading':   { file: 'reading-module', title: 'Reading Module — Thompson Education' },
-    'writing':   { file: 'writing-module', title: 'Writing Module — Thompson Education' }
+    'reading':       { file: 'reading-module',  title: 'Reading Module — Thompson Education' },
+    'writing':       { file: 'writing-module', title: 'Writing Module — Thompson Education' },
+    'comic-studio':  { file: 'ComicStudio',    title: 'Wolfkid Comic Studio' },
+    'progress':      { file: 'ProgressReport', title: 'Weekly Progress Report' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -271,7 +273,8 @@ function serveData(e) {
       var routes = {
         'vein': 'TheVein', 'pulse': 'ThePulse', 'vault': 'Vault',
         'kidshub': 'KidsHub', 'spine': 'TheSpine', 'soul': 'TheSoul',
-        'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse'
+        'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse',
+        'comic-studio': 'ComicStudio', 'progress': 'ProgressReport'
       };
       var filename = routes[page] || 'ThePulse';
       try {

@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tbm-module" content="comic-studio">
+<meta name="tbm-version" content="v1">
+<title>Wolfkid Comic Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: #0B0F1A;
+  color: #E2E8F0;
+  font-family: 'Nunito', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+@keyframes celebratePop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+textarea::-webkit-input-placeholder { color: #64748B; }
+textarea:-moz-placeholder { color: #64748B; }
+textarea::-moz-placeholder { color: #64748B; }
+textarea:-ms-input-placeholder { color: #64748B; }
+input::-webkit-input-placeholder { color: #64748B; }
+input:-moz-placeholder { color: #64748B; }
+input::-moz-placeholder { color: #64748B; }
+input:-ms-input-placeholder { color: #64748B; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1E2A4A; border-radius: 3px; }
+
+#starfield {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #93C5FD;
+  opacity: 0.3;
+}
+
+#app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(11,15,26,0.95);
+  border-bottom: 1px solid #1E2A4A;
+  padding: 10px 16px;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo { font-size: 22px; }
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #F59E0B, #FBBF24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+.header-subtitle {
+  font-size: 9px;
+  color: #64748B;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 2px;
+}
+.progress-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #94A3B8;
+  background: #171D30;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #1E2A4A;
+}
+
+.nav-bar {
+  display: flex;
+  gap: 2px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 12px 16px 0;
+  position: relative;
+  z-index: 10;
+}
+.nav-tab {
+  flex: 1;
+  padding: 10px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  border-radius: 8px 8px 0 0;
+  color: #64748B;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+.nav-tab.active {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-bottom: 2px solid #F59E0B;
+  color: #FBBF24;
+  font-weight: 700;
+}
+
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Plan Your Attack overlay */
+#plan-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11,15,26,0.95);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#plan-overlay .plan-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: fadeSlide 0.4s ease;
+}
+#plan-overlay .plan-icon { font-size: 48px; margin-bottom: 12px; }
+#plan-overlay h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #F59E0B;
+  margin-bottom: 12px;
+}
+#plan-overlay p {
+  font-size: 14px;
+  color: #94A3B8;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+#plan-overlay .plan-checklist {
+  text-align: left;
+  margin-bottom: 20px;
+}
+#plan-overlay .plan-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: #E2E8F0;
+  line-height: 1.5;
+}
+#plan-overlay .plan-item .check { color: #22C55E; font-weight: 700; }
+#plan-overlay .start-btn {
+  background: #F59E0B;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 32px;
+  color: #0B0F1A;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+#plan-overlay .start-btn:hover { background: #FBBF24; }
+
+/* Canvas area */
+.canvas-wrap {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 16px;
+}
+.canvas-container {
+  position: relative;
+  width: 100%;
+  background: #FFFFFF;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.canvas-container canvas {
+  display: block;
+  width: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* Layout selector */
+.layout-picker {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.layout-btn {
+  background: #1E2A4A;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 8px 14px;
+  color: #94A3B8;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.layout-btn.active {
+  border-color: #F59E0B;
+  color: #FBBF24;
+  background: rgba(245,158,11,0.1);
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  align-items: center;
+}
+.tool-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid #1E2A4A;
+  background: #171D30;
+  color: #94A3B8;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.tool-btn.active {
+  border-color: #F59E0B;
+  color: #FBBF24;
+  background: rgba(245,158,11,0.1);
+}
+.color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.color-swatch.active {
+  border-color: #FBBF24;
+  box-shadow: 0 0 8px rgba(245,158,11,0.4);
+}
+.size-slider {
+  width: 80px;
+  -webkit-appearance: none;
+  height: 4px;
+  background: #1E2A4A;
+  border-radius: 2px;
+  outline: none;
+}
+.size-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #F59E0B;
+  cursor: pointer;
+}
+
+/* Caption editor */
+.caption-editor {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 12px;
+}
+.caption-editor h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  color: #F59E0B;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+.caption-input {
+  width: 100%;
+  background: #0B0F1A;
+  border: 1px solid #1E2A4A;
+  border-radius: 8px;
+  padding: 10px;
+  color: #E2E8F0;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  resize: vertical;
+  min-height: 60px;
+}
+.caption-input:focus {
+  outline: none;
+  border-color: #F59E0B;
+}
+.word-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #64748B;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* Vocab challenge */
+.vocab-challenge {
+  background: rgba(139,92,246,0.08);
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 12px;
+}
+.vocab-challenge h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  color: #A78BFA;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.vocab-word {
+  font-size: 18px;
+  font-weight: 800;
+  color: #C4B5FD;
+  margin-bottom: 4px;
+}
+.vocab-def {
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.vocab-prompt {
+  font-size: 13px;
+  color: #E2E8F0;
+  font-style: italic;
+}
+.vocab-status {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.vocab-status.used { color: #22C55E; }
+.vocab-status.not-used { color: #64748B; }
+
+/* Panel grid */
+.panel-grid {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  min-height: 400px;
+}
+.panel-grid.layout-2 { flex-direction: row; }
+.panel-grid.layout-3 { flex-direction: row; }
+.panel-grid.layout-4 { flex-wrap: wrap; }
+.panel-slot {
+  flex: 1;
+  min-height: 200px;
+  background: #FFFFFF;
+  border: 2px solid #CBD5E1;
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.panel-slot.active {
+  border-color: #F59E0B;
+  box-shadow: 0 0 10px rgba(245,158,11,0.3);
+}
+.panel-slot .panel-label {
+  position: absolute;
+  top: 4px;
+  left: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #94A3B8;
+  background: rgba(255,255,255,0.8);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* Completion */
+.completion-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: center;
+  margin-top: 24px;
+  animation: fadeSlide 0.5s ease;
+}
+.completion-card .trophy { font-size: 56px; margin-bottom: 12px; }
+.completion-card h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  color: #FBBF24;
+  margin-bottom: 8px;
+}
+.completion-card .ring-award {
+  font-size: 28px;
+  font-weight: 800;
+  color: #F59E0B;
+  animation: ringPulse 1.5s ease infinite;
+  margin: 12px 0;
+}
+.completion-card .ring-award span {
+  font-family: 'JetBrains Mono', monospace;
+}
+.completion-card p {
+  color: #94A3B8;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.btn-primary {
+  background: #F59E0B;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  color: #0B0F1A;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+  margin-top: 16px;
+}
+.btn-primary:hover { background: #FBBF24; }
+
+.section-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  color: #F59E0B;
+  letter-spacing: 1.5px;
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+
+<div id="app-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-logo">&#128225;</div>
+      <div>
+        <div class="header-title">COMIC STUDIO</div>
+        <div class="header-subtitle">WOLFKID CREATIVE</div>
+      </div>
+    </div>
+    <div class="progress-badge" id="ring-badge">0 Rings</div>
+  </div>
+</div>
+
+<div class="nav-bar" id="nav-bar">
+  <button class="nav-tab active" onclick="switchTab('draw')">Draw</button>
+  <button class="nav-tab" onclick="switchTab('caption')">Caption</button>
+  <button class="nav-tab" onclick="switchTab('vocab')">Vocab</button>
+  <button class="nav-tab" onclick="switchTab('preview')">Preview</button>
+</div>
+
+<main id="main-content">
+  <!-- Plan Your Attack overlay -->
+  <div id="plan-overlay">
+    <div class="plan-card">
+      <div class="plan-icon">&#128225;</div>
+      <h2>PLAN YOUR ATTACK</h2>
+      <p>Today you are the artist AND the storyteller. Build a Wolfkid comic strip!</p>
+      <div class="plan-checklist">
+        <div class="plan-item"><span class="check">1</span> Pick a panel layout (2, 3, or 4 panels)</div>
+        <div class="plan-item"><span class="check">2</span> Draw your scenes in each panel</div>
+        <div class="plan-item"><span class="check">3</span> Write captions for each panel</div>
+        <div class="plan-item"><span class="check">4</span> Use the bonus vocabulary word for extra rings</div>
+        <div class="plan-item"><span class="check">5</span> Preview your finished comic!</div>
+      </div>
+      <button class="start-btn" onclick="dismissPlan()">LET'S CREATE!</button>
+    </div>
+  </div>
+
+  <!-- Draw Tab -->
+  <div id="tab-draw">
+    <div class="section-label">PANEL LAYOUT</div>
+    <div class="layout-picker" id="layout-picker"></div>
+
+    <div class="section-label">TOOLS</div>
+    <div class="toolbar" id="toolbar"></div>
+
+    <div class="canvas-wrap">
+      <div id="panel-grid" class="panel-grid layout-2"></div>
+    </div>
+  </div>
+
+  <!-- Caption Tab -->
+  <div id="tab-caption" class="hidden">
+    <div class="section-label">PANEL CAPTIONS</div>
+    <div id="caption-list"></div>
+  </div>
+
+  <!-- Vocab Tab -->
+  <div id="tab-vocab" class="hidden">
+    <div class="vocab-challenge" id="vocab-area"></div>
+  </div>
+
+  <!-- Preview Tab -->
+  <div id="tab-preview" class="hidden">
+    <div class="section-label">YOUR COMIC</div>
+    <div id="preview-area"></div>
+    <button class="btn-primary" id="finish-btn" onclick="finishComic()">FINISH &amp; EARN RINGS</button>
+  </div>
+
+  <!-- Completion -->
+  <div id="completion-area" class="hidden"></div>
+</main>
+
+<script>
+var MODULE_NAME = 'comic-studio';
+var MODULE_VERSION = 'v1';
+var CHILD = 'buggsy';
+
+// State
+var panelCount = 2;
+var activePanel = 0;
+var activeTool = 'pen';
+var activeColor = '#000000';
+var brushSize = 4;
+var captions = ['', '', '', ''];
+var panelCanvases = [];
+var panelContexts = [];
+var isDrawing = false;
+var lastX = 0;
+var lastY = 0;
+var ringsEarned = 0;
+var isFinished = false;
+var activeTab = 'draw';
+
+var COLORS = ['#000000', '#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC4899', '#FFFFFF'];
+
+var VOCAB_WORDS = [
+  { word: 'VALIANT', def: 'Showing courage or determination.', prompt: 'Use "valiant" in one of your captions to describe Wolfkid!' },
+  { word: 'LURKING', def: 'Waiting in hiding, ready to attack.', prompt: 'Use "lurking" to describe a villain or danger in your comic!' },
+  { word: 'TRIUMPH', def: 'A great victory or achievement.', prompt: 'Use "triumph" in a caption about Wolfkid winning!' },
+  { word: 'PERILOUS', def: 'Full of danger or risk.', prompt: 'Use "perilous" to describe the setting or mission!' },
+  { word: 'CUNNING', def: 'Having skill in achieving goals by deceit or cleverness.', prompt: 'Use "cunning" to describe a plan or a character!' }
+];
+var todayVocab = VOCAB_WORDS[new Date().getDay() % VOCAB_WORDS.length];
+
+var LAYOUTS = [
+  { count: 2, label: '2 Panels', icon: '||' },
+  { count: 3, label: '3 Panels', icon: '|||' },
+  { count: 4, label: '4 Panels', icon: '||||' }
+];
+
+// Stars
+function createStars() {
+  var el = document.getElementById('starfield');
+  var html = '';
+  for (var i = 0; i < 60; i++) {
+    var size = Math.floor(Math.random() * 3) + 1;
+    var x = Math.floor(Math.random() * 100);
+    var y = Math.floor(Math.random() * 100);
+    var dur = (Math.random() * 4 + 2).toFixed(1);
+    var delay = (Math.random() * 3).toFixed(1);
+    html += '<div class="star" style="width:' + size + 'px;height:' + size + 'px;left:' + x + '%;top:' + y + '%;animation:twinkle ' + dur + 's ' + delay + 's infinite"></div>';
+  }
+  el.innerHTML = html;
+}
+
+function dismissPlan() {
+  document.getElementById('plan-overlay').style.display = 'none';
+}
+
+// Tab switching
+function switchTab(tab) {
+  activeTab = tab;
+  var tabs = ['draw', 'caption', 'vocab', 'preview'];
+  var btns = document.getElementById('nav-bar').getElementsByTagName('button');
+  for (var i = 0; i < tabs.length; i++) {
+    var el = document.getElementById('tab-' + tabs[i]);
+    if (el) {
+      if (tabs[i] === tab) {
+        el.className = el.className.replace(' hidden', '');
+        if (el.className.indexOf('hidden') === -1) { /* already visible */ }
+      } else {
+        if (el.className.indexOf('hidden') === -1) {
+          el.className = el.className + ' hidden';
+        }
+      }
+    }
+    if (btns[i]) {
+      btns[i].className = tabs[i] === tab ? 'nav-tab active' : 'nav-tab';
+    }
+  }
+  if (tab === 'preview') { renderPreview(); }
+  if (tab === 'caption') { renderCaptions(); }
+}
+
+// Layout picker
+function buildLayoutPicker() {
+  var html = '';
+  for (var i = 0; i < LAYOUTS.length; i++) {
+    var l = LAYOUTS[i];
+    var cls = l.count === panelCount ? 'layout-btn active' : 'layout-btn';
+    html += '<button class="' + cls + '" onclick="setLayout(' + l.count + ')">' + l.icon + ' ' + l.label + '</button>';
+  }
+  document.getElementById('layout-picker').innerHTML = html;
+}
+
+function setLayout(count) {
+  panelCount = count;
+  activePanel = 0;
+  buildLayoutPicker();
+  buildPanelGrid();
+  renderCaptions();
+}
+
+// Toolbar
+function buildToolbar() {
+  var html = '';
+  var tools = [
+    { id: 'pen', icon: '&#9998;' },
+    { id: 'eraser', icon: '&#9114;' }
+  ];
+  for (var i = 0; i < tools.length; i++) {
+    var t = tools[i];
+    var cls = t.id === activeTool ? 'tool-btn active' : 'tool-btn';
+    html += '<button class="' + cls + '" onclick="setTool(\'' + t.id + '\')">' + t.icon + '</button>';
+  }
+  html += '<input type="range" class="size-slider" min="1" max="20" value="' + brushSize + '" onchange="setBrushSize(this.value)">';
+  for (var c = 0; c < COLORS.length; c++) {
+    var col = COLORS[c];
+    var ccls = col === activeColor ? 'color-swatch active' : 'color-swatch';
+    html += '<div class="' + ccls + '" style="background:' + col + ';' + (col === '#FFFFFF' ? 'border:1px solid #CBD5E1;' : '') + '" onclick="setColor(\'' + col + '\')"></div>';
+  }
+  html += '<button class="tool-btn" onclick="clearPanel()" title="Clear Panel">&#128465;</button>';
+  document.getElementById('toolbar').innerHTML = html;
+}
+
+function setTool(tool) {
+  activeTool = tool;
+  buildToolbar();
+}
+
+function setColor(color) {
+  activeColor = color;
+  activeTool = 'pen';
+  buildToolbar();
+}
+
+function setBrushSize(val) {
+  brushSize = parseInt(val, 10);
+}
+
+function clearPanel() {
+  if (panelContexts[activePanel]) {
+    var c = panelCanvases[activePanel];
+    panelContexts[activePanel].clearRect(0, 0, c.width, c.height);
+    panelContexts[activePanel].fillStyle = '#FFFFFF';
+    panelContexts[activePanel].fillRect(0, 0, c.width, c.height);
+  }
+}
+
+// Panel grid
+function buildPanelGrid() {
+  var grid = document.getElementById('panel-grid');
+  grid.className = 'panel-grid layout-' + panelCount;
+  var html = '';
+  for (var i = 0; i < panelCount; i++) {
+    html += '<div class="panel-slot' + (i === activePanel ? ' active' : '') + '" data-panel="' + i + '" onclick="selectPanel(' + i + ')">';
+    html += '<div class="panel-label">Panel ' + (i + 1) + '</div>';
+    html += '<canvas id="canvas-' + i + '" width="400" height="400"></canvas>';
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+
+  panelCanvases = [];
+  panelContexts = [];
+  for (var j = 0; j < panelCount; j++) {
+    var canvas = document.getElementById('canvas-' + j);
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    panelCanvases.push(canvas);
+    panelContexts.push(ctx);
+    attachDrawEvents(canvas, j);
+  }
+}
+
+function selectPanel(idx) {
+  activePanel = idx;
+  var slots = document.getElementById('panel-grid').getElementsByClassName('panel-slot');
+  for (var i = 0; i < slots.length; i++) {
+    slots[i].className = i === idx ? 'panel-slot active' : 'panel-slot';
+  }
+}
+
+function attachDrawEvents(canvas, panelIdx) {
+  function getPos(e) {
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / rect.width;
+    var scaleY = canvas.height / rect.height;
+    var clientX, clientY;
+    if (e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    return {
+      x: (clientX - rect.left) * scaleX,
+      y: (clientY - rect.top) * scaleY
+    };
+  }
+
+  function startDraw(e) {
+    e.preventDefault();
+    activePanel = panelIdx;
+    selectPanel(panelIdx);
+    isDrawing = true;
+    var pos = getPos(e);
+    lastX = pos.x;
+    lastY = pos.y;
+  }
+
+  function moveDraw(e) {
+    if (!isDrawing) return;
+    e.preventDefault();
+    var ctx = panelContexts[panelIdx];
+    var pos = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.strokeStyle = activeTool === 'eraser' ? '#FFFFFF' : activeColor;
+    ctx.lineWidth = activeTool === 'eraser' ? brushSize * 3 : brushSize;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    lastX = pos.x;
+    lastY = pos.y;
+  }
+
+  function endDraw(e) {
+    isDrawing = false;
+  }
+
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', moveDraw);
+  canvas.addEventListener('mouseup', endDraw);
+  canvas.addEventListener('mouseleave', endDraw);
+  canvas.addEventListener('touchstart', startDraw);
+  canvas.addEventListener('touchmove', moveDraw);
+  canvas.addEventListener('touchend', endDraw);
+  canvas.addEventListener('touchcancel', endDraw);
+}
+
+// Captions
+function renderCaptions() {
+  var html = '';
+  for (var i = 0; i < panelCount; i++) {
+    html += '<div class="caption-editor">';
+    html += '<h3>PANEL ' + (i + 1) + ' CAPTION</h3>';
+    html += '<textarea class="caption-input" id="caption-' + i + '" placeholder="Write what happens in this panel..." oninput="updateCaption(' + i + ', this.value)">' + (captions[i] || '') + '</textarea>';
+    html += '<div class="word-count" id="wc-' + i + '">' + countWords(captions[i] || '') + ' words</div>';
+    html += '</div>';
+  }
+  document.getElementById('caption-list').innerHTML = html;
+}
+
+function updateCaption(idx, val) {
+  captions[idx] = val;
+  var wc = document.getElementById('wc-' + idx);
+  if (wc) wc.textContent = countWords(val) + ' words';
+  checkVocabUsage();
+}
+
+function countWords(str) {
+  var trimmed = str.replace(/^\s+|\s+$/g, '');
+  if (trimmed === '') return 0;
+  return trimmed.split(/\s+/).length;
+}
+
+// Vocab
+function renderVocab() {
+  var used = checkVocabInCaptions();
+  var html = '<h3>BONUS VOCABULARY CHALLENGE</h3>';
+  html += '<div class="vocab-word">' + todayVocab.word + '</div>';
+  html += '<div class="vocab-def">' + todayVocab.def + '</div>';
+  html += '<div class="vocab-prompt">' + todayVocab.prompt + '</div>';
+  if (used) {
+    html += '<div class="vocab-status used">&#10003; Used in captions! +10 bonus rings</div>';
+  } else {
+    html += '<div class="vocab-status not-used">Not yet used in captions</div>';
+  }
+  document.getElementById('vocab-area').innerHTML = html;
+}
+
+function checkVocabInCaptions() {
+  var word = todayVocab.word.toLowerCase();
+  for (var i = 0; i < panelCount; i++) {
+    if ((captions[i] || '').toLowerCase().indexOf(word) !== -1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function checkVocabUsage() {
+  if (activeTab === 'vocab') {
+    renderVocab();
+  }
+}
+
+// Preview
+function renderPreview() {
+  var html = '<div style="background:#FFFFFF;border-radius:12px;padding:16px;display:flex;gap:8px;flex-wrap:wrap;">';
+  for (var i = 0; i < panelCount; i++) {
+    var dataUrl = panelCanvases[i] ? panelCanvases[i].toDataURL('image/png') : '';
+    var w = panelCount <= 2 ? '48%' : '48%';
+    html += '<div style="flex:0 0 ' + w + ';border:2px solid #1E2A4A;border-radius:6px;overflow:hidden;">';
+    html += '<img src="' + dataUrl + '" style="width:100%;display:block;">';
+    html += '<div style="background:#0B0F1A;color:#E2E8F0;padding:8px;font-size:12px;min-height:40px;">';
+    html += captions[i] || '<span style="color:#64748B;font-style:italic;">No caption</span>';
+    html += '</div></div>';
+  }
+  html += '</div>';
+  document.getElementById('preview-area').innerHTML = html;
+}
+
+// Finish
+function finishComic() {
+  if (isFinished) return;
+  isFinished = true;
+
+  var totalWords = 0;
+  var captionedPanels = 0;
+  for (var i = 0; i < panelCount; i++) {
+    var wc = countWords(captions[i] || '');
+    totalWords += wc;
+    if (wc > 0) captionedPanels++;
+  }
+
+  var rings = 15;
+  if (captionedPanels === panelCount) rings += 10;
+  if (totalWords >= 20) rings += 5;
+  if (checkVocabInCaptions()) rings += 10;
+  ringsEarned = rings;
+
+  document.getElementById('tab-preview').className = document.getElementById('tab-preview').className + ' hidden';
+  document.getElementById('nav-bar').style.display = 'none';
+
+  var comp = document.getElementById('completion-area');
+  comp.className = '';
+  var html = '<div class="completion-card">';
+  html += '<div class="trophy">&#127942;</div>';
+  html += '<h2>COMIC COMPLETE!</h2>';
+  html += '<div class="ring-award"><span>+' + rings + '</span> Rings Earned!</div>';
+  html += '<p>' + panelCount + ' panels drawn';
+  if (captionedPanels === panelCount) html += ' &bull; All panels captioned';
+  if (checkVocabInCaptions()) html += ' &bull; Vocab word "' + todayVocab.word + '" used!';
+  html += '</p>';
+  html += '<p style="margin-top:12px;color:#64748B;font-size:12px;">Total words written: ' + totalWords + '</p>';
+  html += '</div>';
+  comp.innerHTML = html;
+
+  document.getElementById('ring-badge').textContent = rings + ' Rings';
+
+  // Award rings via backend
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function() { })
+      .withFailureHandler(function(err) { })
+      .awardRings(CHILD, rings, MODULE_NAME);
+  }
+}
+
+// Init
+function init() {
+  createStars();
+  buildLayoutPicker();
+  buildToolbar();
+  buildPanelGrid();
+  renderCaptions();
+  renderVocab();
+}
+
+init();
+</script>
+</body>
+</html>

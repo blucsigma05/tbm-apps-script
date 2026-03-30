@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tbm-module" content="progress-report">
+<meta name="tbm-version" content="v1">
+<title>Weekly Progress Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: #0B0F1A;
+  color: #E2E8F0;
+  font-family: 'Nunito', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1E2A4A; border-radius: 3px; }
+
+#starfield {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #93C5FD;
+  opacity: 0.3;
+}
+
+#app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(11,15,26,0.95);
+  border-bottom: 1px solid #1E2A4A;
+  padding: 10px 16px;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo { font-size: 22px; }
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #60A5FA, #93C5FD);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+.header-subtitle {
+  font-size: 9px;
+  color: #64748B;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 2px;
+}
+.header-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #94A3B8;
+  background: #171D30;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #1E2A4A;
+}
+
+.nav-bar {
+  display: flex;
+  gap: 2px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 12px 16px 0;
+  position: relative;
+  z-index: 10;
+}
+.nav-tab {
+  flex: 1;
+  padding: 10px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  border-radius: 8px 8px 0 0;
+  color: #64748B;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+.nav-tab.active {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-bottom: 2px solid #3B82F6;
+  color: #60A5FA;
+  font-weight: 700;
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+  position: relative;
+  z-index: 10;
+}
+
+.section-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  color: #60A5FA;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+  margin-top: 20px;
+}
+
+/* Stat Cards */
+.stat-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.stat-card {
+  flex: 1;
+  min-width: 120px;
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+  animation: fadeSlide 0.4s ease;
+}
+.stat-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  color: #FBBF24;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-label {
+  font-size: 11px;
+  color: #64748B;
+  letter-spacing: 0.5px;
+}
+
+/* Score Bar */
+.score-bar-wrap {
+  margin-bottom: 10px;
+}
+.score-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.score-bar-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #E2E8F0;
+}
+.score-bar-pct {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #94A3B8;
+}
+.score-bar-track {
+  width: 100%;
+  height: 8px;
+  background: #1E2A4A;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.score-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+/* Day Log */
+.day-log {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.day-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid #1E2A4A;
+}
+.day-row:last-child { border-bottom: none; }
+.day-name {
+  width: 80px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #94A3B8;
+  font-weight: 600;
+}
+.day-status {
+  flex: 1;
+  font-size: 13px;
+}
+.day-status.done { color: #22C55E; }
+.day-status.missed { color: #EF4444; }
+.day-status.pending { color: #64748B; font-style: italic; }
+.day-score {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #FBBF24;
+  width: 50px;
+  text-align: right;
+}
+
+/* Alert card */
+.alert-card {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  animation: fadeSlide 0.4s ease;
+}
+.alert-card.warning {
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.25);
+}
+.alert-card.info {
+  background: rgba(59,130,246,0.08);
+  border-color: rgba(59,130,246,0.25);
+}
+.alert-icon { font-size: 18px; flex-shrink: 0; }
+.alert-text {
+  font-size: 13px;
+  color: #E2E8F0;
+  line-height: 1.5;
+}
+
+/* Milestone cards (JJ) */
+.milestone-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.milestone-card {
+  flex: 1;
+  min-width: 140px;
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 14px;
+  animation: fadeSlide 0.4s ease;
+}
+.milestone-icon { font-size: 24px; margin-bottom: 6px; }
+.milestone-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #E2E8F0;
+  margin-bottom: 2px;
+}
+.milestone-status {
+  font-size: 11px;
+  font-weight: 600;
+}
+.milestone-status.mastered { color: #22C55E; }
+.milestone-status.practicing { color: #FBBF24; }
+.milestone-status.not-started { color: #64748B; }
+
+/* Loading */
+.loading-wrap {
+  text-align: center;
+  padding: 60px 20px;
+}
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #1E2A4A;
+  border-top: 3px solid #3B82F6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  color: #64748B;
+  font-size: 14px;
+}
+
+/* Overview summary */
+.overview-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 12px;
+}
+.overview-card h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  color: #60A5FA;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.overview-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(30,42,74,0.5);
+  font-size: 13px;
+}
+.overview-row:last-child { border-bottom: none; }
+.overview-label { color: #94A3B8; }
+.overview-value {
+  font-family: 'JetBrains Mono', monospace;
+  color: #E2E8F0;
+  font-weight: 600;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748B;
+  font-size: 14px;
+}
+
+.hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+
+<div id="app-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-logo">&#128202;</div>
+      <div>
+        <div class="header-title">PROGRESS REPORT</div>
+        <div class="header-subtitle">WEEKLY SUMMARY</div>
+      </div>
+    </div>
+    <div class="header-date" id="week-label">Loading...</div>
+  </div>
+</div>
+
+<div class="nav-bar" id="nav-bar">
+  <button class="nav-tab active" onclick="switchTab('buggsy')">Buggsy</button>
+  <button class="nav-tab" onclick="switchTab('jj')">JJ</button>
+  <button class="nav-tab" onclick="switchTab('overview')">Overview</button>
+</div>
+
+<main id="main-content">
+  <div id="loading" class="loading-wrap">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading progress data...</div>
+  </div>
+
+  <!-- Buggsy Tab -->
+  <div id="tab-buggsy" class="hidden"></div>
+
+  <!-- JJ Tab -->
+  <div id="tab-jj" class="hidden"></div>
+
+  <!-- Overview Tab -->
+  <div id="tab-overview" class="hidden"></div>
+</main>
+
+<script>
+var MODULE_NAME = 'progress-report';
+var MODULE_VERSION = 'v1';
+var activeTab = 'buggsy';
+var reportData = null;
+
+// Stars
+function createStars() {
+  var el = document.getElementById('starfield');
+  var html = '';
+  for (var i = 0; i < 60; i++) {
+    var size = Math.floor(Math.random() * 3) + 1;
+    var x = Math.floor(Math.random() * 100);
+    var y = Math.floor(Math.random() * 100);
+    var dur = (Math.random() * 4 + 2).toFixed(1);
+    var delay = (Math.random() * 3).toFixed(1);
+    html += '<div class="star" style="width:' + size + 'px;height:' + size + 'px;left:' + x + '%;top:' + y + '%;animation:twinkle ' + dur + 's ' + delay + 's infinite"></div>';
+  }
+  el.innerHTML = html;
+}
+
+function getWeekLabel() {
+  var now = new Date();
+  var day = now.getDay();
+  var mondayOffset = day === 0 ? -6 : 1 - day;
+  var monday = new Date(now);
+  monday.setDate(now.getDate() + mondayOffset);
+  var friday = new Date(monday);
+  friday.setDate(monday.getDate() + 4);
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return months[monday.getMonth()] + ' ' + monday.getDate() + ' - ' + months[friday.getMonth()] + ' ' + friday.getDate();
+}
+
+// Tab switching
+function switchTab(tab) {
+  activeTab = tab;
+  var tabs = ['buggsy', 'jj', 'overview'];
+  var btns = document.getElementById('nav-bar').getElementsByTagName('button');
+  for (var i = 0; i < tabs.length; i++) {
+    var el = document.getElementById('tab-' + tabs[i]);
+    if (el) {
+      if (tabs[i] === tab) {
+        el.className = el.className.replace(' hidden', '');
+      } else {
+        if (el.className.indexOf('hidden') === -1) {
+          el.className = el.className + ' hidden';
+        }
+      }
+    }
+    if (btns[i]) {
+      btns[i].className = tabs[i] === tab ? 'nav-tab active' : 'nav-tab';
+    }
+  }
+}
+
+// Render helpers
+function buildScoreBar(label, pct, color) {
+  var safeColor = color || '#3B82F6';
+  return '<div class="score-bar-wrap">' +
+    '<div class="score-bar-header">' +
+    '<span class="score-bar-label">' + label + '</span>' +
+    '<span class="score-bar-pct">' + Math.round(pct) + '%</span>' +
+    '</div>' +
+    '<div class="score-bar-track">' +
+    '<div class="score-bar-fill" style="width:' + Math.min(pct, 100) + '%;background:' + safeColor + ';"></div>' +
+    '</div></div>';
+}
+
+function buildStatCard(value, label) {
+  return '<div class="stat-card">' +
+    '<div class="stat-value">' + value + '</div>' +
+    '<div class="stat-label">' + label + '</div>' +
+    '</div>';
+}
+
+function buildAlert(icon, text, type) {
+  return '<div class="alert-card ' + (type || '') + '">' +
+    '<div class="alert-icon">' + icon + '</div>' +
+    '<div class="alert-text">' + text + '</div>' +
+    '</div>';
+}
+
+function buildDayRow(dayName, status, score) {
+  var statusClass = 'pending';
+  var statusText = 'Pending';
+  if (status === 'done') { statusClass = 'done'; statusText = 'Completed'; }
+  else if (status === 'missed') { statusClass = 'missed'; statusText = 'Missed'; }
+  else if (status === 'partial') { statusClass = 'done'; statusText = 'Partial'; }
+  var scoreHtml = score !== null && score !== undefined ? score + '%' : '--';
+  return '<div class="day-row">' +
+    '<div class="day-name">' + dayName + '</div>' +
+    '<div class="day-status ' + statusClass + '">' + statusText + '</div>' +
+    '<div class="day-score">' + scoreHtml + '</div>' +
+    '</div>';
+}
+
+// Render Buggsy tab
+function renderBuggsy(data) {
+  var b = data.buggsy;
+  var html = '';
+
+  html += '<div class="section-label">WEEKLY STATS</div>';
+  html += '<div class="stat-grid">';
+  html += buildStatCard(b.ringsThisWeek, 'Rings This Week');
+  html += buildStatCard(b.streak, 'Day Streak');
+  html += buildStatCard(b.sessionsCompleted + '/' + b.sessionsTotal, 'Sessions');
+  html += buildStatCard(b.avgScore ? Math.round(b.avgScore) + '%' : '--', 'Avg Score');
+  html += '</div>';
+
+  html += '<div class="section-label">COMPLETION</div>';
+  html += buildScoreBar('Weekly Completion', b.completionRate, '#22C55E');
+
+  if (b.subjects && b.subjects.length > 0) {
+    html += '<div class="section-label">BY SUBJECT</div>';
+    var subjectColors = { 'Math': '#3B82F6', 'Reading': '#A855F7', 'Science': '#22C55E', 'Writing': '#F59E0B', 'Social Studies': '#EC4899' };
+    for (var i = 0; i < b.subjects.length; i++) {
+      var s = b.subjects[i];
+      var color = subjectColors[s.name] || '#3B82F6';
+      html += buildScoreBar(s.name + ' (' + (s.score || 0) + '/' + (s.total || 0) + ')', s.total > 0 ? (s.score / s.total * 100) : 0, color);
+    }
+  }
+
+  html += '<div class="section-label">DAILY LOG</div>';
+  html += '<div class="day-log">';
+  var dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  if (b.weekLog && b.weekLog.length > 0) {
+    for (var d = 0; d < b.weekLog.length; d++) {
+      var entry = b.weekLog[d];
+      html += buildDayRow(entry.day || dayNames[d] || ('Day ' + (d + 1)), entry.status, entry.score);
+    }
+  } else {
+    for (var d2 = 0; d2 < dayNames.length; d2++) {
+      html += buildDayRow(dayNames[d2], 'pending', null);
+    }
+  }
+  html += '</div>';
+
+  if (b.alerts && b.alerts.length > 0) {
+    html += '<div class="section-label">ALERTS</div>';
+    for (var a = 0; a < b.alerts.length; a++) {
+      var alert = b.alerts[a];
+      var icon = alert.type === 'warning' ? '&#9888;' : (alert.type === 'info' ? '&#8505;' : '&#9888;');
+      html += buildAlert(icon, alert.message, alert.type || 'warning');
+    }
+  }
+
+  if (!b.subjects || b.subjects.length === 0) {
+    html += '<div class="empty-state">No session data for this week yet. Complete homework modules to see progress here.</div>';
+  }
+
+  document.getElementById('tab-buggsy').innerHTML = html;
+}
+
+// Render JJ tab
+function renderJJ(data) {
+  var j = data.jj;
+  var html = '';
+
+  html += '<div class="section-label">WEEKLY STATS</div>';
+  html += '<div class="stat-grid">';
+  html += buildStatCard(j.starsThisWeek, 'Stars This Week');
+  html += buildStatCard(j.streak, 'Day Streak');
+  html += buildStatCard(j.sessionsCompleted + '/' + j.sessionsTotal, 'Sessions');
+  html += '</div>';
+
+  html += '<div class="section-label">COMPLETION</div>';
+  html += buildScoreBar('Weekly Completion', j.completionRate, '#FBBF24');
+
+  if (j.milestones && j.milestones.length > 0) {
+    html += '<div class="section-label">MILESTONES</div>';
+    html += '<div class="milestone-grid">';
+    for (var m = 0; m < j.milestones.length; m++) {
+      var ms = j.milestones[m];
+      var statusClass = ms.status === 'mastered' ? 'mastered' : (ms.status === 'practicing' ? 'practicing' : 'not-started');
+      var statusLabel = ms.status === 'mastered' ? 'Mastered' : (ms.status === 'practicing' ? 'Practicing' : 'Not Started');
+      html += '<div class="milestone-card">';
+      html += '<div class="milestone-icon">' + (ms.icon || '&#11088;') + '</div>';
+      html += '<div class="milestone-name">' + (ms.name || 'Milestone') + '</div>';
+      html += '<div class="milestone-status ' + statusClass + '">' + statusLabel + '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+  }
+
+  html += '<div class="section-label">DAILY LOG</div>';
+  html += '<div class="day-log">';
+  var dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+  if (j.weekLog && j.weekLog.length > 0) {
+    for (var d = 0; d < j.weekLog.length; d++) {
+      var entry = j.weekLog[d];
+      html += buildDayRow(entry.day || dayNames[d] || ('Day ' + (d + 1)), entry.status, entry.score);
+    }
+  } else {
+    for (var d2 = 0; d2 < dayNames.length; d2++) {
+      html += buildDayRow(dayNames[d2], 'pending', null);
+    }
+  }
+  html += '</div>';
+
+  if (j.alerts && j.alerts.length > 0) {
+    html += '<div class="section-label">ALERTS</div>';
+    for (var a = 0; a < j.alerts.length; a++) {
+      var alert = j.alerts[a];
+      var icon = alert.type === 'warning' ? '&#9888;' : (alert.type === 'info' ? '&#8505;' : '&#9888;');
+      html += buildAlert(icon, alert.message, alert.type || 'warning');
+    }
+  }
+
+  if (!j.milestones || j.milestones.length === 0) {
+    html += '<div class="empty-state">No SparkleLearn data for this week yet. JJ sessions will appear here.</div>';
+  }
+
+  document.getElementById('tab-jj').innerHTML = html;
+}
+
+// Render Overview tab
+function renderOverview(data) {
+  var b = data.buggsy;
+  var j = data.jj;
+  var html = '';
+
+  html += '<div class="section-label">FAMILY OVERVIEW</div>';
+  html += '<div class="overview-card">';
+  html += '<h3>BUGGSY</h3>';
+  html += '<div class="overview-row"><span class="overview-label">Rings This Week</span><span class="overview-value">' + b.ringsThisWeek + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Total Rings</span><span class="overview-value">' + b.ringsTotal + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + b.sessionsCompleted + '/' + b.sessionsTotal + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Avg Score</span><span class="overview-value">' + (b.avgScore ? Math.round(b.avgScore) + '%' : '--') + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Streak</span><span class="overview-value">' + b.streak + ' days</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Time Spent</span><span class="overview-value">' + (b.timeSpent || 0) + ' min</span></div>';
+  html += '</div>';
+
+  html += '<div class="overview-card">';
+  html += '<h3>JJ (KINDLE)</h3>';
+  html += '<div class="overview-row"><span class="overview-label">Stars This Week</span><span class="overview-value">' + j.starsThisWeek + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Total Stars</span><span class="overview-value">' + j.starsTotal + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + j.sessionsCompleted + '/' + j.sessionsTotal + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Streak</span><span class="overview-value">' + j.streak + ' days</span></div>';
+  html += '</div>';
+
+  var allAlerts = [];
+  if (b.alerts) {
+    for (var i = 0; i < b.alerts.length; i++) {
+      allAlerts.push({ source: 'Buggsy', alert: b.alerts[i] });
+    }
+  }
+  if (j.alerts) {
+    for (var k = 0; k < j.alerts.length; k++) {
+      allAlerts.push({ source: 'JJ', alert: j.alerts[k] });
+    }
+  }
+
+  if (allAlerts.length > 0) {
+    html += '<div class="section-label">ALL ALERTS</div>';
+    for (var a = 0; a < allAlerts.length; a++) {
+      var item = allAlerts[a];
+      var icon = item.alert.type === 'warning' ? '&#9888;' : '&#8505;';
+      html += buildAlert(icon, '<strong>' + item.source + ':</strong> ' + item.alert.message, item.alert.type || 'warning');
+    }
+  } else {
+    html += '<div class="section-label">ALERTS</div>';
+    html += '<div class="alert-card info"><div class="alert-icon">&#10003;</div><div class="alert-text">No alerts this week. Everything looks good!</div></div>';
+  }
+
+  document.getElementById('tab-overview').innerHTML = html;
+}
+
+// Data loading
+function loadData() {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(data) {
+        reportData = data;
+        onDataLoaded();
+      })
+      .withFailureHandler(function(err) {
+        useMockData();
+      })
+      .getWeeklyProgressSafe();
+  } else {
+    useMockData();
+  }
+}
+
+function useMockData() {
+  reportData = {
+    buggsy: {
+      name: 'Buggsy',
+      ringsThisWeek: 0,
+      ringsTotal: 0,
+      streak: 0,
+      completionRate: 0,
+      sessionsCompleted: 0,
+      sessionsTotal: 5,
+      avgScore: 0,
+      timeSpent: 0,
+      subjects: [],
+      weekLog: [],
+      alerts: []
+    },
+    jj: {
+      name: 'JJ (Kindle)',
+      starsThisWeek: 0,
+      starsTotal: 0,
+      streak: 0,
+      completionRate: 0,
+      sessionsCompleted: 0,
+      sessionsTotal: 5,
+      milestones: [],
+      weekLog: [],
+      alerts: []
+    }
+  };
+  onDataLoaded();
+}
+
+function onDataLoaded() {
+  document.getElementById('loading').className = 'loading-wrap hidden';
+  renderBuggsy(reportData);
+  renderJJ(reportData);
+  renderOverview(reportData);
+  // Show first tab
+  document.getElementById('tab-buggsy').className = '';
+}
+
+// Init
+function init() {
+  createStars();
+  document.getElementById('week-label').textContent = getWeekLabel();
+  loadData();
+}
+
+init();
+</script>
+</body>
+</html>

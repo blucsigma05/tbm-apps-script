@@ -1,10 +1,10 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v28 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v29 — Kids Hub Server Backend (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubGsVersion() { return 28; }
-function getKidsHubVersion() { return 28; }  // alias for smoke test
+function getKidsHubGsVersion() { return 29; }
+function getKidsHubVersion() { return 29; }  // alias for smoke test
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2378,4 +2378,141 @@ function khHealthCheck() {
   }
 
   return JSON.stringify(results, null, 2);
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// v29: AUDIO BATCH LOADER + PROGRESS REPORT
+// ════════════════════════════════════════════════════════════════════
+
+var AUDIO_FOLDER_ID = '1rXWVBD9QMruWOj6AlNB4mY2E9wzWGctm';
+
+/**
+ * v29: Batch audio preload — returns { filename: base64 } map.
+ * Max 50 files per call. Used by SparkleLearn audio wiring.
+ */
+function getAudioBatchSafe(filenames) {
+  return withMonitor_('getAudioBatchSafe', function() {
+    if (!filenames || !Array.isArray(filenames) || filenames.length === 0) {
+      return { error: 'No filenames provided' };
+    }
+    var maxFiles = 50;
+    var toFetch = filenames.slice(0, maxFiles);
+    var folder = DriveApp.getFolderById(AUDIO_FOLDER_ID);
+    var result = {};
+    var fileIndex = buildFileIndex_(folder);
+    for (var i = 0; i < toFetch.length; i++) {
+      var fname = toFetch[i];
+      if (fileIndex[fname]) {
+        try {
+          var blob = fileIndex[fname].getBlob();
+          result[fname] = Utilities.base64Encode(blob.getBytes());
+        } catch (e) {
+          Logger.log('getAudioBatchSafe: Failed to read ' + fname + ': ' + e.message);
+        }
+      }
+    }
+    return JSON.parse(JSON.stringify(result));
+  });
+}
+
+/**
+ * v29: Private helper — indexes MP3 files across folder + one level of subfolders.
+ */
+function buildFileIndex_(folder) {
+  var index = {};
+  var files = folder.getFilesByType('audio/mpeg');
+  while (files.hasNext()) {
+    var f = files.next();
+    index[f.getName()] = f;
+  }
+  var allFiles = folder.getFiles();
+  while (allFiles.hasNext()) {
+    var af = allFiles.next();
+    var name = af.getName();
+    if (name.indexOf('.mp3') === name.length - 4 && !index[name]) {
+      index[name] = af;
+    }
+  }
+  var subfolders = folder.getFolders();
+  while (subfolders.hasNext()) {
+    var sub = subfolders.next();
+    var subFiles = sub.getFiles();
+    while (subFiles.hasNext()) {
+      var sf = subFiles.next();
+      var sName = sf.getName();
+      if (sName.indexOf('.mp3') === sName.length - 4 && !index[sName]) {
+        index[sName] = sf;
+      }
+    }
+  }
+  return index;
+}
+
+/**
+ * v29: Deployment health check — returns array of missing filenames.
+ */
+function verifyAudioFiles(expectedFilenames) {
+  var folder = DriveApp.getFolderById(AUDIO_FOLDER_ID);
+  var index = buildFileIndex_(folder);
+  var missing = [];
+  for (var i = 0; i < expectedFilenames.length; i++) {
+    if (!index[expectedFilenames[i]]) {
+      missing.push(expectedFilenames[i]);
+    }
+  }
+  return missing;
+}
+
+/**
+ * v29: Progress report data stub — called by ProgressReport.html.
+ * Returns skeleton data structure. Wire to real sheet data when
+ * KH_Homework and KH_SparkleProgress sheets have data flowing.
+ */
+function getWeeklyProgressSafe() {
+  return withMonitor_('getWeeklyProgressSafe', function() {
+    var ss = SpreadsheetApp.openById(SSID);
+    var today = new Date();
+    var dayOfWeek = today.getDay();
+    var mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    var monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+
+    var result = {
+      buggsy: {
+        name: 'Buggsy',
+        ringsThisWeek: 0,
+        ringsTotal: 0,
+        streak: 0,
+        completionRate: 0,
+        sessionsCompleted: 0,
+        sessionsTotal: 5,
+        avgScore: 0,
+        timeSpent: 0,
+        subjects: [],
+        weekLog: [],
+        alerts: []
+      },
+      jj: {
+        name: 'JJ (Kindle)',
+        starsThisWeek: 0,
+        starsTotal: 0,
+        streak: 0,
+        completionRate: 0,
+        sessionsCompleted: 0,
+        sessionsTotal: 5,
+        milestones: [],
+        weekLog: [],
+        alerts: []
+      }
+    };
+
+    // TODO: Read from KH_Homework sheet, aggregate by week
+    // TODO: Read from KH_SparkleProgress sheet for JJ data
+    // TODO: Calculate streaks from consecutive completion dates
+    // TODO: Generate alerts based on score thresholds
+
+    return JSON.parse(JSON.stringify(result));
+  });
 }
