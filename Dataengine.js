@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v76 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v77 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 76; }
+function getDataEngineVersion() { return 77; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -1128,6 +1128,9 @@ cashFlowPositiveDate: (function() {
     result.integrityErrors = integrityErrors;
     Logger.log('\u26a0\ufe0f INTEGRITY CHECK FAILED: ' + integrityErrors.join(' | '));
   }
+
+  // v77: Pulse Summary — informational narrative for ThePulse
+  result.pulseSummary = de_buildPulseSummary_(result);
 
   return result;
   } finally {
@@ -2440,6 +2443,55 @@ function getSimulatorData() {
     gapAfterDebt: roundTo(earnedIncome - operatingExpenses - totalMinimums, 2),
     // v46 FIX #10: Unmatched debt warning
     unmatchedBudgetDebts: _unmatchedBudgetDebts,
+    // v77: Pulse Summary — informational narrative
+    pulseSummary: (function() {
+      // Compute budget totals from Budget_Data for pace comparison
+      var _psBdData = de_readSheet_('Budget_Data');
+      var _psBB = { fixedExpenses: 0, necessaryLiving: 0, discretionary: 0, debtCost: 0 };
+      if (_psBdData && _psBdData.length >= 2) {
+        var _psPBM = getPartnerBucketMap();
+        var _psBK = { 'Fixed Expenses': 'fixedExpenses', 'Necessary Living': 'necessaryLiving', 'Discretionary': 'discretionary', 'Debt Cost': 'debtCost' };
+        var _psXFER = ['Transfer: Internal', 'Transfer: LOC Draw', 'Balance Transfers', 'CC Payment', 'LOC Payment', 'Loan Payment', 'Investment', 'Payroll Deduction', 'Duplicate - Exclude', 'Debt Offset', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
+        var _psINC = ['JT Income', 'LT Income', 'Bonus Income', 'Other Income', 'Interest Income'];
+        for (var _pb = 1; _pb < _psBdData.length; _pb++) {
+          var _psYM = String(_psBdData[_pb][1] || '').trim();
+          var _psCat = String(_psBdData[_pb][2] || '').trim();
+          var _psAmt = parseFloat(_psBdData[_pb][4]) || 0;
+          if (_psYM !== ym || !_psCat) continue;
+          if (_psINC.indexOf(_psCat) >= 0 || _psXFER.indexOf(_psCat) >= 0) continue;
+          var _psRawB = _psPBM[_psCat] || '';
+          var _psBKey = _psBK[_psRawB];
+          if (_psBKey) _psBB[_psBKey] += Math.abs(_psAmt);
+        }
+      }
+      var _psBudgetTotal = _psBB.fixedExpenses + _psBB.necessaryLiving + _psBB.discretionary + _psBB.debtCost;
+      var _psNow = new Date();
+      var _psDom = _psNow.getDate();
+      var _psDim = new Date(_psNow.getFullYear(), _psNow.getMonth() + 1, 0).getDate();
+      var _psTimePct = (_psDom / _psDim) * 100;
+      var _psSpendPct = _psBudgetTotal > 0 ? (operatingExpenses / _psBudgetTotal) * 100 : 0;
+      var _psHeadline;
+      if (_psSpendPct <= _psTimePct - 10) _psHeadline = 'On track this month.';
+      else if (_psSpendPct <= _psTimePct + 10) _psHeadline = 'Tracking close to budget.';
+      else _psHeadline = 'Spending is ahead of pace.';
+      var _psDetails = [];
+      var _bks = [
+        { name: 'Discretionary', actual: bucketTotals.discretionary || 0, budget: _psBB.discretionary },
+        { name: 'Necessary Living', actual: bucketTotals.necessaryLiving || 0, budget: _psBB.necessaryLiving },
+        { name: 'Fixed Expenses', actual: bucketTotals.fixedExpenses || 0, budget: _psBB.fixedExpenses }
+      ];
+      for (var _bi = 0; _bi < _bks.length; _bi++) {
+        if (_bks[_bi].budget > 0 && _bks[_bi].actual > _bks[_bi].budget) {
+          _psDetails.push(_bks[_bi].name + ' is $' + Math.round(_bks[_bi].actual - _bks[_bi].budget) + ' over budget.');
+          break;
+        }
+      }
+      var _psThrottle = earnedIncome - operatingExpenses - debtPaymentsMTD;
+      if (_psThrottle < 0) _psDetails.push('Spending $' + Math.abs(Math.round(_psThrottle)) + ' more than earned so far.');
+      var _psRemain = _psDim - _psDom;
+      if (_psRemain <= 7 && _psRemain > 0) _psDetails.push(_psRemain + ' days left in the month.');
+      return { headline: _psHeadline, detail: _psDetails.join(' '), alert: null };
+    })(),
     _meta: de_buildMeta_('simulator', ym)
   };
   } finally {
@@ -3197,4 +3249,111 @@ function setupBoardConfig() {
 }
 
 
-// END OF FILE — DataEngine v76
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  v77: Pulse Summary + Soul Moment — narrative builders          ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+/**
+ * Build an informational (NOT prescriptive) summary for ThePulse.
+ * Uses only fields already in the result payload — no new sheet reads.
+ */
+function de_buildPulseSummary_(payload) {
+  var summary = { headline: '', detail: '', alert: null };
+
+  // Determine headline from spending vs time-in-month pace
+  var totalBudget = (payload['expenses.fixed_expenses.budget'] || 0) +
+                    (payload['expenses.necessary_living.budget'] || 0) +
+                    (payload['expenses.discretionary.budget'] || 0) +
+                    (payload['expenses.debt_cost.budget'] || 0);
+  var totalActual = payload.operatingExpenses || 0;
+
+  var dayOfMonth = payload.dayOfMonth || new Date().getDate();
+  var daysInMonth = payload.daysInMonth || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+  var timePct = (dayOfMonth / daysInMonth) * 100;
+  var spendPct = totalBudget > 0 ? (totalActual / totalBudget) * 100 : 0;
+
+  if (spendPct <= timePct - 10) {
+    summary.headline = 'On track this month.';
+  } else if (spendPct <= timePct + 10) {
+    summary.headline = 'Tracking close to budget.';
+  } else {
+    summary.headline = 'Spending is ahead of pace.';
+  }
+
+  // Detail: find the bucket with largest overage (if any)
+  var buckets = [
+    { name: 'Fixed Expenses', actual: payload['expenses.fixed_expenses.actual'] || 0, budget: payload['expenses.fixed_expenses.budget'] || 0 },
+    { name: 'Necessary Living', actual: payload['expenses.necessary_living.actual'] || 0, budget: payload['expenses.necessary_living.budget'] || 0 },
+    { name: 'Discretionary', actual: payload['expenses.discretionary.actual'] || 0, budget: payload['expenses.discretionary.budget'] || 0 }
+  ];
+  var worstOver = null;
+  for (var i = 0; i < buckets.length; i++) {
+    var b = buckets[i];
+    if (b.budget > 0 && b.actual > b.budget) {
+      var over = Math.round(b.actual - b.budget);
+      if (!worstOver || over > worstOver.over) {
+        worstOver = { name: b.name, over: over };
+      }
+    }
+  }
+
+  var details = [];
+  if (worstOver) {
+    details.push(worstOver.name + ' is $' + worstOver.over + ' over budget.');
+  }
+
+  var daysRemaining = payload.daysRemaining || 0;
+  if (daysRemaining <= 7 && daysRemaining > 0) {
+    details.push(daysRemaining + ' days left in the month.');
+  }
+
+  // Cash flow context
+  var incomeThrottle = payload.incomeThrottle;
+  if (incomeThrottle != null && incomeThrottle !== undefined) {
+    if (incomeThrottle < 0) {
+      details.push('Spending $' + Math.abs(Math.round(incomeThrottle)) + ' more than earned so far.');
+    }
+  }
+
+  summary.detail = details.join(' ');
+
+  // Alert: only for anomalies
+  if (payload.integrityErrors && payload.integrityErrors.length > 0) {
+    summary.alert = payload.integrityErrors.length + ' data integrity issue' + (payload.integrityErrors.length > 1 ? 's' : '') + ' detected.';
+  }
+
+  return summary;
+}
+
+/**
+ * Build a rotating family moment string for TheSoul kitchen display.
+ * Cycles through available content based on time.
+ */
+function de_buildSoulMoment_(boardPayload, kidsPayload) {
+  var moments = [];
+
+  // Kid streaks
+  if (kidsPayload && kidsPayload.kids) {
+    for (var i = 0; i < kidsPayload.kids.length; i++) {
+      var kid = kidsPayload.kids[i];
+      if (kid.streakDays && kid.streakDays >= 2) {
+        moments.push(kid.name + ': \ud83d\udd25 ' + kid.streakDays + '-day streak!');
+      }
+      if (kid.starsToday && kid.starsToday > 0) {
+        moments.push(kid.name + ' earned ' + kid.starsToday + ' star' + (kid.starsToday > 1 ? 's' : '') + ' today!');
+      }
+    }
+  }
+
+  // Family note
+  if (boardPayload && boardPayload.familyNote) {
+    moments.push(boardPayload.familyNote);
+  }
+
+  // Rotate by 5-minute window
+  if (moments.length === 0) return '';
+  var idx = Math.floor(new Date().getMinutes() / 5) % moments.length;
+  return moments[idx];
+}
+
+// END OF FILE — DataEngine v77

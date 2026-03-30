@@ -1,10 +1,10 @@
-<!-- TheSoul v39 — crest fix -->
+<!-- TheSoul v40 — crest fix -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<title>TheSoul v39 — Thompson Family Display</title>
+<title>TheSoul v40 — Thompson Family Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
@@ -913,6 +913,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
 </div>
 
 <div class="error-banner" id="errorBanner"></div>
+<div id="confidenceRail" style="position:fixed;bottom:4px;right:8px;font-size:10px;color:rgba(148,163,184,0.5);z-index:100;"></div>
 
 <div class="page" id="soulPage" style="display:none;">
   <section class="hero-zone">
@@ -1018,6 +1019,8 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
     </div>
   </section>
 
+  <div id="soulMoment" style="display:none;text-align:center;padding:6px 20px;font-size:14px;font-weight:700;color:#fde68a;letter-spacing:0.3px;opacity:0.85;text-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>
+
   <section class="kids-zone">
     <div class="kid-panel" id="jjHost"></div>
     <div class="kid-panel" id="bugHost"></div>
@@ -1041,6 +1044,24 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
   'use strict';
 
   var REFRESH_MS = 120000;
+  // v40: Confidence Rail + Graceful Degradation
+  var _soulLastFetch = null;
+  var _soulLastBoard = null;
+  var _soulLastKids = null;
+  function _soulMarkFresh() {
+    _soulLastFetch = new Date();
+    _soulUpdateRail();
+  }
+  function _soulUpdateRail() {
+    if (!_soulLastFetch) return;
+    var el = document.getElementById('confidenceRail');
+    if (!el) return;
+    var diff = Math.floor((new Date().getTime() - _soulLastFetch.getTime()) / 60000);
+    if (diff < 1) { el.textContent = 'Updated just now'; }
+    else if (diff < 60) { el.textContent = 'Updated ' + diff + 'm ago'; }
+    else { el.textContent = 'Updated ' + Math.floor(diff / 60) + 'h ago'; el.style.color = 'rgba(245,158,11,0.5)'; }
+  }
+  setInterval(_soulUpdateRail, 30000);
   var MAX_ACTIVE = 4;
   var MAX_EXTRA_EVENTS = 2;
   var MAX_CAL_EVENTS = 3;
@@ -1671,7 +1692,8 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
       balances:data.balances || {},
       requiredStatus:data.requiredStatus || {},
       pendingRequestCount:data.pendingRequestCount || {},
-      screenTime:data.screenTime || {}
+      screenTime:data.screenTime || {},
+      metaProgression:data.metaProgression || {}
     };
 
     try{
@@ -1694,15 +1716,47 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
 
     state.firstKids = true;
     $('kidsStamp').textContent = stampTime();
+    // v40: Rotating Family Moment
+    updateSoulMoment();
     updateRefreshStamp();
     reveal();
   }
 
+  function updateSoulMoment() {
+    var moments = [];
+    // Kid streak data from metaProgression
+    if (state.kids) {
+      var mp = state.kids.metaProgression || {};
+      var kNames = { buggsy: 'Buggsy', jj: 'JJ' };
+      for (var k in kNames) {
+        var km = mp[k];
+        if (km && km.streakDays && km.streakDays >= 2) {
+          moments.push(kNames[k] + ': \ud83d\udd25 ' + km.streakDays + '-day streak!');
+        }
+      }
+      // Today's achievements
+      var bals = state.kids.balances || {};
+      if (bals.jj && bals.jj.earned > 0) moments.push('JJ earned ' + bals.jj.earned + ' stars!');
+      if (bals.buggsy && bals.buggsy.earned > 0) moments.push('Buggsy earned ' + bals.buggsy.earned + ' rings!');
+    }
+    // Family note
+    var fn = noteVal(state.board || {});
+    if (fn) moments.push(fn);
+
+    var el = $('soulMoment');
+    if (!el) return;
+    if (moments.length === 0) { el.style.display = 'none'; return; }
+    var idx = Math.floor(new Date().getMinutes() / 5) % moments.length;
+    el.textContent = moments[idx];
+    el.style.display = 'block';
+  }
+
   function loadBoard(){
     google.script.run
-      .withSuccessHandler(renderBoard)
+      .withSuccessHandler(function(data){ _soulLastBoard = data; _soulMarkFresh(); renderBoard(data); })
       .withFailureHandler(function(e){
         console.error(e);
+        if (_soulLastBoard) { var rail = document.getElementById('confidenceRail'); if (rail) { rail.textContent = 'Retrying\u2026'; rail.style.color = 'rgba(245,158,11,0.5)'; } return; }
         showError('Family board failed.');
         state.firstBoard = true;
         $('boardStamp').textContent = 'ERR';
@@ -1713,9 +1767,10 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
 
   function loadKids(){
     google.script.run
-      .withSuccessHandler(renderKids)
+      .withSuccessHandler(function(data){ _soulLastKids = data; _soulMarkFresh(); renderKids(data); })
       .withFailureHandler(function(e){
         console.error(e);
+        if (_soulLastKids) { var rail = document.getElementById('confidenceRail'); if (rail) { rail.textContent = 'Retrying\u2026'; rail.style.color = 'rgba(245,158,11,0.5)'; } return; }
         showError('Kids data failed.');
         state.firstKids = true;
         $('kidsStamp').textContent = 'ERR';

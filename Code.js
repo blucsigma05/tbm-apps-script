@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v53 — Apps Script Router (TBM Consolidated)
+// Code.gs v54 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 53; }
+function getCodeVersion() { return 54; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -334,7 +334,7 @@ function serveData(e) {
         'khApproveRequestSafe': khApproveRequestSafe, 'khDenyRequestSafe': khDenyRequestSafe,
         'khAddBonusTaskSafe': khAddBonusTaskSafe, 'khDebitScreenTimeSafe': khDebitScreenTimeSafe,
         'khSetBankOpeningSafe': khSetBankOpeningSafe, 'khVerifyPinSafe': khVerifyPinSafe,
-        'khAddDeductionSafe': khAddDeductionSafe, 'khHealthCheckSafe': khHealthCheckSafe,
+        'khAddDeductionSafe': khAddDeductionSafe, 'khHealthCheckSafe': khHealthCheckSafe, 'khBatchApproveSafe': khBatchApproveSafe,
         'khSubmitGradeSafe': khSubmitGradeSafe, 'khGetGradeHistorySafe': khGetGradeHistorySafe,
         'updateFamilyNoteSafe': updateFamilyNoteSafe,
         'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
@@ -846,6 +846,21 @@ function khAddBonusTaskSafe(child, taskName, points, icon, timeOfDay) {
   return withMonitor_('khAddBonusTaskSafe', function() {
     try { return JSON.parse(khAddBonusTask(child, taskName, points, icon, timeOfDay)); }
     catch(e) { _khDiag_('khAddBonusTaskSafe', {child: child, task: taskName, points: points}, e); throw e; }
+  });
+}
+
+// v54: Batch Approve safe wrapper — approve multiple tasks in one call
+function khBatchApproveSafe(payload) {
+  return withMonitor_('khBatchApproveSafe', function() {
+    var lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); } catch(e) {
+      return { error: true, message: 'System is busy \u2014 please try again' };
+    }
+    try {
+      return kh_batchApprove_(payload.taskIds || payload.rowIndices || [], payload.approver || 'JT');
+    } finally {
+      lock.releaseLock();
+    }
   });
 }
 
@@ -1534,4 +1549,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v53
+// END OF FILE — Code.gs v54

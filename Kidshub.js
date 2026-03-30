@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v29 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v30 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 29; }
+function getKidsHubVersion() { return 30; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -683,6 +683,19 @@ function getKidsHubData(child, _cacheBust) {
       return 0;
     });
 
+    // v30: Meta-Progression — streak + mastery rank per kid
+    var metaProgression = {};
+    for (var _mpi = 0; _mpi < children.length; _mpi++) {
+      var _mpk = children[_mpi];
+      var _mpBal = balances[_mpk] || {};
+      var _mpTotal = (_mpBal.earned || 0);
+      metaProgression[_mpk] = {
+        streakDays: kh_computeWeeklyStreak_(_mpk),
+        masteryRank: kh_computeMasteryRank_(_mpTotal, _mpk),
+        totalEarned: _mpTotal
+      };
+    }
+
     return JSON.stringify({
       tasks:              tasks,
       rewards:            rewards,
@@ -699,9 +712,10 @@ function getKidsHubData(child, _cacheBust) {
       screenTime:         computeScreenTimeBalances_(childLower, isAll),
       levels:             KH_LEVELS,
       levelsJJ:           KH_LEVELS_JJ,
+      metaProgression:    metaProgression,
       sortOrder:          'canonical',
       _meta: {
-        version:   'KidsHub.gs v26',
+        version:   'KidsHub.gs v30',
         timestamp: getNowISO_(),
         child:     childLower
       }
@@ -2578,4 +2592,113 @@ function addBedtimeStoryChore() {
   } finally {
     lk.lock.releaseLock();
   }
+}
+
+// ╔══════════════════════════════════════════════════════════════════╗
+// ║  v30: Batch Approve — approve multiple completed tasks at once  ║
+// ╚══════════════════════════════════════════════════════════════════╝
+
+function kh_batchApprove_(rowIndices, approver) {
+  var sheet = getKHSheet_('KH_Chores');
+  if (!sheet) return { error: true, message: 'KH_Chores not found' };
+  var h = getKHHeaders_(sheet);
+  var today = getTodayISO_();
+  var now = getNowISO_();
+  var approved = 0;
+  var skipped = 0;
+
+  for (var i = 0; i < rowIndices.length; i++) {
+    var rowIndex = parseInt(rowIndices[i]);
+    if (isNaN(rowIndex) || rowIndex < 2) { skipped++; continue; }
+    var row = sheet.getRange(rowIndex, 1, 1, h.length).getValues()[0];
+    var alreadyApproved = row[khCol_(h, 'Parent_Approved')] === true ||
+      String(row[khCol_(h, 'Parent_Approved')]).toUpperCase() === 'TRUE';
+    if (alreadyApproved) { skipped++; continue; }
+
+    var completed = row[khCol_(h, 'Completed')] === true ||
+      String(row[khCol_(h, 'Completed')]).toUpperCase() === 'TRUE';
+    if (!completed) { skipped++; continue; }
+
+    var taskID = String(row[khCol_(h, 'Task_ID')] || '');
+    var child  = String(row[khCol_(h, 'Child')]   || '');
+    var task   = String(row[khCol_(h, 'Task')]    || '');
+    var approvalUID = taskID + '_' + today + '_' + child.toLowerCase() + '_approval';
+    if (historyUIDExists_(approvalUID)) { skipped++; continue; }
+
+    var basePoints = Number(row[khCol_(h, 'Points')]) || 0;
+    var mult = Math.max(1, parseFloat(row[khCol_(h, 'Bonus_Multiplier')]) || 1);
+    var earnedPoints = Math.round(basePoints * mult);
+
+    row[khCol_(h, 'Parent_Approved')] = true;
+    row[khCol_(h, 'Completed_Date')] = today;
+    var freq = String(row[khCol_(h, 'Frequency')] || '').toLowerCase();
+    if (freq === 'one-time') { row[khCol_(h, 'Active')] = false; }
+    sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
+    appendHistory_(approvalUID, taskID, child, task, earnedPoints, basePoints, mult, 'approval', today, now);
+    approved++;
+  }
+  stampKHHeartbeat_();
+  console.log('KH_WRITE', JSON.stringify({ fn: 'kh_batchApprove_', approved: approved, skipped: skipped, approver: approver || 'JT' }));
+  return { success: true, approved: approved, skipped: skipped };
+}
+
+// v30: Streak + Mastery computation helpers
+function kh_computeWeeklyStreak_(child) {
+  var sheet = getKHSheet_('KH_History');
+  if (!sheet) return 0;
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return 0;
+  var h = data[0];
+  var childIdx = h.indexOf('Child');
+  var eventIdx = h.indexOf('Event_Type');
+  var dateIdx = h.indexOf('Date');
+  if (childIdx < 0 || eventIdx < 0 || dateIdx < 0) return 0;
+
+  // Build set of unique dates this child completed tasks
+  var completionDates = {};
+  for (var i = 1; i < data.length; i++) {
+    var c = String(data[i][childIdx] || '').toLowerCase();
+    var ev = String(data[i][eventIdx] || '').toLowerCase();
+    var dt = String(data[i][dateIdx] || '');
+    if (c === child.toLowerCase() && (ev === 'approval' || ev === 'completion')) {
+      if (dt.length >= 10) completionDates[dt.substring(0, 10)] = true;
+    }
+  }
+
+  // Count consecutive days backward from today
+  var now = new Date();
+  var streak = 0;
+  for (var d = 0; d < 365; d++) {
+    var checkDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - d);
+    var iso = checkDate.getFullYear() + '-' +
+      (checkDate.getMonth() < 9 ? '0' : '') + (checkDate.getMonth() + 1) + '-' +
+      (checkDate.getDate() < 10 ? '0' : '') + checkDate.getDate();
+    if (completionDates[iso]) { streak++; }
+    else if (d > 0) { break; }
+    // d===0 (today) — if no completions today, still check yesterday
+  }
+  return streak;
+}
+
+function kh_computeMasteryRank_(totalPoints, child) {
+  var RANKS_BUGGSY = [
+    { min: 0, name: 'Rookie' },
+    { min: 50, name: 'Builder' },
+    { min: 150, name: 'Architect' },
+    { min: 300, name: 'Commander' },
+    { min: 500, name: 'Legend' }
+  ];
+  var RANKS_JJ = [
+    { min: 0, name: 'Spark' },
+    { min: 50, name: 'Twinkle' },
+    { min: 150, name: 'Shimmer' },
+    { min: 300, name: 'Glow' },
+    { min: 500, name: 'Supernova' }
+  ];
+  var ranks = (child.toLowerCase() === 'jj') ? RANKS_JJ : RANKS_BUGGSY;
+  var rank = ranks[0];
+  for (var i = 0; i < ranks.length; i++) {
+    if (totalPoints >= ranks[i].min) rank = ranks[i];
+  }
+  return rank.name;
 }

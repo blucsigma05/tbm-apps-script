@@ -125,10 +125,11 @@ function checkWiring_() {
   // Canonical list: every *Safe function called from any HTML surface
   // Source: grep -oP '\\w+Safe\\w*' across all 5 HTML files (Session 59 extraction)
   var expectedFunctions = [
-    // KidsHub.html (18 functions)
+    // KidsHub.html (19 functions)
     'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKidsHubDataSafe',
     'khAddDeductionSafe', 'khApproveRequestSafe', 'khApproveTaskSafe',
-    'khApproveWithBonusSafe', 'khCompleteTaskSafe', 'khCompleteTaskWithBonusSafe',
+    'khApproveWithBonusSafe', 'khBatchApproveSafe', 'khCompleteTaskSafe',
+    'khCompleteTaskWithBonusSafe',
     'khDenyRequestSafe', 'khOverrideTaskSafe', 'khRedeemRewardSafe',
     'khRejectTaskSafe', 'khResetTasksSafe', 'khSubmitRequestSafe',
     'khUncompleteTaskSafe', 'khVerifyPinSafe', 'runStoryFactorySafe',
