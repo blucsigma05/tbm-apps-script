@@ -163,7 +163,7 @@ body { min-height: 100vh; }
 @keyframes crown-bob { 0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)} }
 .jj-title { font-family: 'Fredoka One', cursive; font-size: clamp(32px,8vw,46px); line-height: 1.1; background: linear-gradient(135deg,#fde68a,#f9a8d4,#c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 .jj-sub { font-size: 16px; font-weight: 800; color: #f9a8d4; margin-top: 4px; letter-spacing: 1px; }
-.jj-stars-display { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 3px solid rgba(255,255,255,0.25); border-radius: 24px; padding: 14px 20px; margin: 0 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 32px rgba(236,72,153,0.25); }
+.jj-stars-display { background: rgba(255,255,255,0.1); border: 3px solid rgba(255,255,255,0.25); border-radius: 24px; padding: 14px 20px; margin: 0 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 32px rgba(236,72,153,0.25); }
 .jj-stars-left { display: flex; align-items: center; gap: 10px; }
 .jj-star-icon { font-size: 36px; animation: star-spin 4s linear infinite; }
 @keyframes star-spin { 0%{transform:rotate(0)}50%{transform:rotate(20deg)}100%{transform:rotate(0)} }
@@ -174,11 +174,11 @@ body { min-height: 100vh; }
 .jj-mini-stat span { color: #a5f3fc; }
 /* ── JJ STAT PILLS — mirrors TheSoul v9 Currency/RewardA/RewardB ── */
 .jj-stat-pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 14px 16px; }
-.jj-stat-pill { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 2px solid rgba(255,255,255,0.22); border-radius: 18px; padding: 14px 8px; text-align: center; box-shadow: 0 4px 16px rgba(236,72,153,0.15); transition: all 0.2s; }
+.jj-stat-pill { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.22); border-radius: 18px; padding: 14px 8px; text-align: center; box-shadow: 0 4px 16px rgba(236,72,153,0.15); transition: all 0.2s; }
 .jj-stat-pill-icon { font-size: 24px; margin-bottom: 4px; }
 .jj-stat-pill-val { font-family: 'Fredoka One', cursive; font-size: 28px; color: #fde68a; line-height: 1; text-shadow: 0 0 12px rgba(253,230,138,0.5); }
 .jj-stat-pill-lbl { font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.5); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
-.jj-progress-wrap { margin: 0 14px 20px; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2); border-radius: 18px; padding: 12px 16px; }
+.jj-progress-wrap { margin: 0 14px 20px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 18px; padding: 12px 16px; }
 .jj-prog-label { font-size: 12px; font-weight: 800; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; }
 .jj-prog-label span { color: #fde68a; }
 .jj-prog-track { height: 18px; background: rgba(0,0,0,0.3); border-radius: 9px; overflow: hidden; border: 2px solid rgba(255,255,255,0.15); }
@@ -186,7 +186,7 @@ body { min-height: 100vh; }
 @keyframes prog-shimmer { 0%{background-position:0% 0}100%{background-position:200% 0} }
 .jj-sec-title { font-family: 'Fredoka One', cursive; font-size: 22px; color: #f9a8d4; padding: 8px 14px 10px; text-align: center; }
 .jj-list { padding: 0 14px; }
-.jj-card { background: rgba(255,255,255,0.12); backdrop-filter: blur(12px); border: 2px solid rgba(255,255,255,0.22); border-radius: 20px; margin-bottom: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+.jj-card { background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.22); border-radius: 20px; margin-bottom: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
 .jj-card:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 8px 24px rgba(236,72,153,0.3); }
 .jj-card:active { transform: scale(0.97); }
 .jj-card.done { background: rgba(34,197,94,0.12); border-color: rgba(34,197,94,0.35); opacity: 0.8; cursor: default; }
@@ -210,7 +210,7 @@ body { min-height: 100vh; }
 .jj-bonus-badge { background: linear-gradient(135deg,rgba(249,115,22,0.2),rgba(234,88,12,0.2)); border: 1px solid rgba(249,115,22,0.5); border-radius: 8px; padding: 3px 8px; font-size: 11px; font-weight: 800; color: #fed7aa; display: inline-block; margin-top: 3px; }
 .jj-approve-bonus-btn { background: linear-gradient(135deg,#7c2d00,#9a3412); border: none; border-radius: 10px; padding: 7px 10px; cursor: pointer; font-family: 'Fredoka One', cursive; font-size: 13px; color: #fed7aa; transition: all 0.15s; margin-top: 4px; }
 .jj-rewards { padding: 0 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.jj-reward-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 16px 12px; text-align: center; transition: all 0.2s; }
+.jj-reward-card { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 16px 12px; text-align: center; transition: all 0.2s; }
 .jj-reward-card.unlocked { border-color: rgba(253,230,138,0.6); background: rgba(253,230,138,0.12); animation: jj-unlock-pulse 3s ease infinite; }
 @keyframes jj-unlock-pulse { 0%,100%{box-shadow:0 0 8px rgba(253,230,138,0.2)}50%{box-shadow:0 0 24px rgba(253,230,138,0.5)} }
 .jj-reward-emoji { font-size: 34px; display: block; margin-bottom: 7px; }
@@ -226,7 +226,7 @@ body { min-height: 100vh; }
 .jj-parent-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.5); font-family: 'Fredoka One', cursive; font-size: 13px; padding: 5px 12px; border-radius: 10px; cursor: pointer; transition: all 0.15s; }
 .jj-parent-btn.active { border-color: rgba(134,239,172,0.5); color: #86efac; }
 .jj-parent-wrap { padding: 0 14px; }
-.jj-parent-inner { background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border: 2px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 20px; }
+.jj-parent-inner { background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 20px; }
 .jj-parent-title { font-family: 'Fredoka One', cursive; font-size: 20px; color: #fde68a; text-align: center; margin-bottom: 14px; }
 .jj-parent-actions { display: flex; flex-direction: column; gap: 8px; }
 .jj-pab { font-family: 'Fredoka One', cursive; font-size: 16px; padding: 12px; border-radius: 14px; border: 2px solid; cursor: pointer; background: transparent; transition: all 0.15s; }
@@ -239,7 +239,7 @@ body { min-height: 100vh; }
 .jj-tab:hover { border-color: rgba(236,72,153,0.5); color: #f9a8d4; }
 .jj-tab.active { background: linear-gradient(135deg,rgba(236,72,153,0.25),rgba(168,85,247,0.25)); border-color: rgba(236,72,153,0.6); color: #fff; box-shadow: 0 0 14px rgba(236,72,153,0.2); }
 .jj-pin-overlay { position: fixed; inset: 0; background: rgba(26,0,40,0.9); display: flex; align-items: center; justify-content: center; z-index: 300; }
-.jj-pin-box { background: rgba(255,255,255,0.12); backdrop-filter: blur(20px); border: 3px solid rgba(253,230,138,0.5); border-radius: 24px; padding: 28px; text-align: center; width: 285px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+.jj-pin-box { background: rgba(255,255,255,0.12); border: 3px solid rgba(253,230,138,0.5); border-radius: 24px; padding: 28px; text-align: center; width: 285px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 .jj-pin-title { font-family: 'Fredoka One', cursive; font-size: 22px; color: #fde68a; margin-bottom: 12px; }
 .jj-pin-input { font-family: 'Press Start 2P', monospace; font-size: 22px; letter-spacing: 7px; width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.2); color: #fff; text-align: center; padding: 12px; border-radius: 12px; margin-bottom: 12px; outline: none; }
 .jj-pin-input:focus { border-color: rgba(236,72,153,0.7); }
@@ -360,7 +360,7 @@ body { min-height: 100vh; }
 /* ── Bank Display ── */
 .ask-bank-display { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; }
 .buggsy-body .ask-bank-display { background: linear-gradient(135deg,#0f1824,#0b131d); border: 1px solid #2b4258; }
-.jj-body .ask-bank-display { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 2px solid rgba(255,255,255,0.2); border-radius: 16px; }
+.jj-body .ask-bank-display { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 16px; }
 .ask-bank-icon { font-size: 20px; flex-shrink: 0; }
 .ask-bank-val { font-size: 22px; font-weight: 800; line-height: 1; }
 .buggsy-body .ask-bank-val { font-family: 'Press Start 2P', monospace; font-size: 14px; color: #f59e0b; }
@@ -371,7 +371,7 @@ body { min-height: 100vh; }
 /* ── Ask Toast ── */
 .ask-toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); padding: 10px 22px; border-radius: 8px; font-size: 13px; font-weight: 700; z-index: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
 .buggsy-body .ask-toast { background: #0d1520; border: 1px solid #f59e0b; color: #f59e0b; font-family: 'Press Start 2P', monospace; font-size: 8px; }
-.jj-body .ask-toast { background: rgba(255,255,255,0.15); backdrop-filter: blur(12px); border: 2px solid rgba(236,72,153,0.5); color: #fff; font-family: 'Fredoka One', cursive; border-radius: 14px; }
+.jj-body .ask-toast { background: rgba(255,255,255,0.15); border: 2px solid rgba(236,72,153,0.5); color: #fff; font-family: 'Fredoka One', cursive; border-radius: 14px; }
 .ask-toast.show { opacity: 1; }
 .ask-empty { padding: 16px; text-align: center; font-size: 12px; font-weight: 700; }
 .buggsy-body .ask-empty { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #4a6080; }
@@ -393,7 +393,7 @@ body { min-height: 100vh; }
 .parent-body .load-ring { border-top-color: #d4a843; border-right-color: #d4a843; }
 .parent-body .load-text { font-size: 15px; color: #e2e8f0; font-weight: 700; letter-spacing: 1px; }
 .p-hdr {
-  background: rgba(20,20,40,0.55); backdrop-filter: blur(12px);
+  background: rgba(20,20,40,0.55);
   padding: 20px 20px 16px; position: relative; z-index: 1;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
@@ -408,7 +408,7 @@ body { min-height: 100vh; }
 .p-body { max-width: 800px; margin: 0 auto; padding: 20px 16px 0; position: relative; z-index: 1; }
 .p-summary { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
 .p-sum-card {
-  background: rgba(20,20,40,0.45); backdrop-filter: blur(10px);
+  background: rgba(20,20,40,0.45);
   border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
   padding: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); text-align: center;
 }
@@ -417,7 +417,7 @@ body { min-height: 100vh; }
 .p-sum-lbl { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.45); letter-spacing: 1px; text-transform: uppercase; }
 .p-kids { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
 .p-kid-col {
-  background: rgba(20,20,40,0.45); backdrop-filter: blur(10px);
+  background: rgba(20,20,40,0.45);
   border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.2); overflow: hidden;
 }
@@ -451,7 +451,7 @@ body { min-height: 100vh; }
 .p-done-pts { font-size: 12px; font-weight: 800; color: #86efac; }
 .p-done-ck { color: #86efac; font-size: 14px; }
 .p-reset-panel {
-  background: rgba(20,20,40,0.45); backdrop-filter: blur(10px);
+  background: rgba(20,20,40,0.45);
   border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
   padding: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); margin-bottom: 20px;
 }
@@ -529,7 +529,7 @@ body { min-height: 100vh; }
 .p-onetap-btn.reject { background: rgba(220,38,38,0.15); color: #fca5a5; }
 .p-onetap-btn.reject:hover { background: #dc2626; color: #fff; }
 .p-weekly {
-  background: rgba(20,20,40,0.45); backdrop-filter: blur(10px);
+  background: rgba(20,20,40,0.45);
   border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
   padding: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); margin-bottom: 20px;
 }
@@ -549,7 +549,7 @@ body { min-height: 100vh; }
 .p-weekly-empty { font-size: 10px; color: rgba(255,255,255,0.2); text-align: center; padding: 8px 0; }
 .p-toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-  background: rgba(20,20,40,0.7); backdrop-filter: blur(12px);
+  background: rgba(20,20,40,0.7);
   color: #fff; padding: 12px 24px; border-radius: 10px; font-size: 14px;
   font-weight: 700; z-index: 500; opacity: 0; transition: opacity 0.3s;
   pointer-events: none; border: 1px solid rgba(255,255,255,0.1);
