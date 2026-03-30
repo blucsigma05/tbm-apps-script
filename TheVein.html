@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>The Vein v60 — Household Command Center</title>
-<!-- TheVein v60 — Version history tracked in Notion deploy page. No changelogs in this file. -->
+<title>The Vein v61 — Household Command Center</title>
+<!-- TheVein v61 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -608,6 +608,7 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
 <div id="errorMsg" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-muted);max-width:400px;line-height:1.6;margin-bottom:24px;">Unable to connect to DataEngine. No cached or fallback data will be shown — this dashboard only displays live, verified numbers.</div>
 <button onclick="location.reload()" style="padding:12px 32px;border-radius:8px;border:none;background:var(--blue);color:#fff;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.05em;">Reload Dashboard</button>
 </div>
+<div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;font-family:'JetBrains Mono',monospace;"></div>
 
 <!-- ═══ Header ═══ -->
 <div class="header a1">
@@ -1020,7 +1021,7 @@ id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition
 <div class="footer">
 <span id="footerSrc">Source: Tiller BudgetMaster</span>
 <span id="veinReconcileBadge" style="font-size:10px;font-weight:600;letter-spacing:.05em;opacity:0.85;"></span>
-<span id="veinVersionTag">The Vein v60</span>
+<span id="veinVersionTag">The Vein v61</span>
 </div>
 
 </div>
@@ -1044,6 +1045,23 @@ REFRESH_MINS: 0,
 };
 
 var IS_EMBEDDED=(function(){try{return!!google.script.run;}catch(e){return false;}})();
+// v61: Confidence Rail + Graceful Degradation
+var _veinLastFetch = null;
+var _veinLastGoodEngine = null;
+function markVeinFresh() {
+  _veinLastFetch = new Date();
+  _updateVeinRail();
+}
+function _updateVeinRail() {
+  if (!_veinLastFetch) return;
+  var el = document.getElementById('confidenceRail');
+  if (!el) return;
+  var diff = Math.floor((new Date().getTime() - _veinLastFetch.getTime()) / 60000);
+  if (diff < 1) { el.textContent = 'Updated just now'; el.style.color = '#94a3b8'; }
+  else if (diff < 60) { el.textContent = 'Updated ' + diff + ' min ago'; el.style.color = '#94a3b8'; }
+  else { el.textContent = 'Updated ' + Math.floor(diff / 60) + 'h ago'; el.style.color = '#f59e0b'; }
+}
+setInterval(_updateVeinRail, 30000);
 var $=function(id){return document.getElementById(id);};
 var fmt=function(v){if(v==null||isNaN(v))return'—';var a=Math.abs(v);var s=v<0?'−':'';
 if(a>=1e6)return s+'$'+(a/1e6).toFixed(1)+'M';if(a>=1e4)return s+'$'+Math.round(a).toLocaleString();
@@ -1706,7 +1724,7 @@ $('footerSrc').textContent='Source: Tiller BudgetMaster · '+d.month+' '+d.year+
 // v25 FIX: dynamic footer version tag reads DE version from _meta
 var _vTag=$('veinVersionTag');
 if(_vTag){var _nowStr=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});// v35: footer version tag
-_vTag.textContent='Updated '+_nowStr+(d._meta?' \u00b7 DE v'+(d._meta.version||'?'):'')+ ' \u00b7 The Vein v60';}
+_vTag.textContent='Updated '+_nowStr+(d._meta?' \u00b7 DE v'+(d._meta.version||'?'):'')+ ' \u00b7 The Vein v61';}
 $('badgeWrap').innerHTML=live?'':
 '<span style="font-size:8px;padding:2px 6px;background:var(--gold-wash);color:var(--gold);border-radius:4px;">Snapshot</span>';
 }
@@ -1867,12 +1885,14 @@ function buildGates(d, debts){
 var gates;
 if (MER_GATE_DATA && MER_GATE_DATA.gates && MER_GATE_DATA.gates.length > 0) {
 gates = MER_GATE_DATA.gates.map(function(g) {
-var isPass = g.status === 'pass'; var isWarn = g.status === 'warn'; var isFail = g.status === 'fail';
-var resultText = (g.passText || g.result || '—').replace(/^[✅🔴⚠️\s]+/, '').trim();
-if (!resultText) resultText = g.status === 'pass' ? 'Pass' : g.status === 'warn' ? 'Warning' : g.status === 'fail' ? 'Fail' : '—';
-return { id: 'G' + g.gate, name: g.name.length > 28 ? g.name.substring(0, 26) + '…' : g.name,
+var st = String(g.status || '').toUpperCase();
+var isPass = st === 'PASS'; var isWarn = st === 'WARN'; var isFail = st === 'FAIL'; var isReview = st === 'REVIEW';
+var resultText = (g.passText || g.result || g.detail || '\u2014').replace(/^[\u2705\ud83d\udd34\u26a0\ufe0f\s]+/, '').trim();
+if (!resultText) resultText = isPass ? 'Pass' : isWarn ? 'Warning' : isFail ? 'Fail' : 'Review';
+return { id: 'G' + g.gate, name: g.name.length > 28 ? g.name.substring(0, 26) + '\u2026' : g.name,
 pass: isPass, warn: isWarn, result: resultText,
-resultCls: isPass ? 'pass' : (isWarn ? 'warn' : (isFail ? 'fail' : 'dim'))};
+resultCls: isPass ? 'pass' : (isWarn ? 'warn' : (isFail ? 'fail' : 'dim')),
+details: g.details || [] };
 });
 } else {
 var active = debts.filter(function(x){return x.strategy !== 'Excluded';});
@@ -1900,7 +1920,15 @@ var html = '';
 gates.forEach(function(g) {
 var cls = g.resultCls === 'dim' ? '' : (g.pass ? 'gp' : (g.warn ? 'gw' : 'gf'));
 var icon = g.resultCls === 'dim' ? '🔍' : (g.pass ? '✅' : (g.warn ? '⚠️' : '🔴'));
-html += '<div class="gate-item ' + cls + '"><span class="gate-icon">' + icon + '</span><span class="gate-name">' + g.id + ' · ' + g.name + '</span><span class="gate-result ' + g.resultCls + '">' + g.result + '</span></div>';
+html += '<div class="gate-item ' + cls + '" style="flex-wrap:wrap"><span class="gate-icon">' + icon + '</span><span class="gate-name">' + g.id + ' \u00B7 ' + g.name + '</span><span class="gate-result ' + g.resultCls + '">' + g.result + '</span>';
+if (g.details && g.details.length > 0 && !g.pass) {
+  html += '<div style="width:100%;font-size:11px;color:var(--text-muted);margin-top:4px;padding-left:28px;line-height:1.6">';
+  for (var _gd = 0; _gd < g.details.length; _gd++) {
+    html += '<div>' + g.details[_gd].replace(/</g, '&lt;') + '</div>';
+  }
+  html += '</div>';
+}
+html += '</div>';
 });
 $('gateGrid').innerHTML = html;
 var srcLabel = MER_GATE_DATA ? 'MER Live' : 'Client-side';
@@ -2273,13 +2301,15 @@ try {
 google.script.run.withSuccessHandler(function(gateData) {
 MER_GATE_DATA = gateData;
 if (document.querySelector('.gate-item') && window._lastDashData) buildGates(window._lastDashData, window._lastDebts || []);
-}).withFailureHandler(function(err) { console.warn('MER gates unavailable:', err); }).getMERGateStatusSafe();
+}).withFailureHandler(function(err) { console.warn('MER gates unavailable:', err); }).runMERGatesSafe();
 } catch(e) { console.warn('MER gate call failed:', e); }
 
 var now=new Date();var y=now.getFullYear();var m=now.getMonth()+1;var dd=now.getDate();
 var start=y+'-'+(m<10?'0':'')+m+'-01';var end=y+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd;
 google.script.run.withSuccessHandler(function(engineData){
 if(engineData && !engineData.error){
+_veinLastGoodEngine = engineData;
+markVeinFresh();
 var parsed = parseEngineToDash(engineData);
 var debts = engineData.debts ? engineData.debts.map(function(d){return {name:d.name||'',balance:d.balance||0,apr:d.apr||0,
 min:d.minPayment||d.min||0,strategy:d.strategy||'',priority:d.priority||99,
@@ -2300,6 +2330,8 @@ return;
 setTimeout(function(){loader.classList.add('hidden');},500);
 }).withFailureHandler(function(e){
 console.warn('DataEngine unavailable:',e);
+// v61: Graceful degradation — keep showing last good data
+if(_veinLastGoodEngine){var rail=document.getElementById('confidenceRail');if(rail){rail.textContent='Retrying\u2026 showing cached data';rail.style.color='#f59e0b';}setTimeout(function(){loader.classList.add('hidden');},500);setTimeout(initDashboard,30000);return;}
 // Fall through to CSV path
 if(!hasD){showError('No data source configured. Connect DataEngine or publish CSV URLs.');setTimeout(function(){loader.classList.add('hidden');},600);return;}
 csvFallback_();

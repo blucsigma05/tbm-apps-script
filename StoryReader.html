@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tbm-module" content="story-reader">
+<meta name="tbm-version" content="v1">
+<title>Story Reader</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  color: #E2E8F0;
+  font-family: 'Nunito', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+body.mode-bedtime {
+  background: #1A0A2E;
+}
+body.mode-listen {
+  background: #0B0F1A;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 8px rgba(168,85,247,0.3); }
+  50% { box-shadow: 0 0 20px rgba(168,85,247,0.5); }
+}
+@keyframes starPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2D1B4E; border-radius: 3px; }
+
+#starfield {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.3;
+}
+.mode-bedtime .star { background: #C4B5FD; }
+.mode-listen .star { background: #93C5FD; }
+
+/* Header */
+#app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 10px 16px;
+}
+.mode-bedtime #app-header { background: rgba(26,10,46,0.95); }
+.mode-listen #app-header { background: rgba(11,15,26,0.95); }
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo { font-size: 24px; }
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.mode-bedtime .header-title {
+  background: linear-gradient(90deg, #C4B5FD, #A78BFA);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.mode-listen .header-title {
+  background: linear-gradient(90deg, #60A5FA, #93C5FD);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.header-subtitle {
+  font-size: 9px;
+  color: #64748B;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 2px;
+}
+.header-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.mode-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.mode-bedtime .mode-badge { color: #C4B5FD; background: rgba(168,85,247,0.1); }
+.mode-listen .mode-badge { color: #60A5FA; background: rgba(59,130,246,0.1); }
+
+/* Audio control */
+.audio-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: #E2E8F0;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.audio-btn.playing {
+  animation: pulseGlow 1.5s ease infinite;
+}
+.mode-bedtime .audio-btn.playing { border-color: #A78BFA; color: #C4B5FD; }
+.mode-listen .audio-btn.playing { border-color: #3B82F6; color: #60A5FA; }
+
+/* Main content */
+main {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 16px 100px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Cover */
+.cover {
+  text-align: center;
+  padding: 32px 16px 24px;
+  animation: fadeSlide 0.6s ease;
+}
+.cover-title {
+  font-family: 'Nunito', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.3;
+  margin-bottom: 8px;
+}
+.mode-bedtime .cover-title { color: #E9D5FF; }
+.mode-listen .cover-title { color: #DBEAFE; }
+.cover-meta {
+  font-size: 13px;
+  color: #94A3B8;
+}
+
+/* Scene card */
+.scene-card {
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  animation: fadeSlide 0.5s ease;
+  position: relative;
+}
+.mode-bedtime .scene-card {
+  background: rgba(45,27,78,0.6);
+  border: 1px solid rgba(168,85,247,0.15);
+}
+.mode-listen .scene-card {
+  background: rgba(23,29,48,0.8);
+  border: 1px solid #1E2A4A;
+}
+.scene-number {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.mode-bedtime .scene-number { color: #A78BFA; }
+.mode-listen .scene-number { color: #60A5FA; }
+.scene-image-wrap {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: rgba(255,255,255,0.03);
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scene-image-wrap img {
+  width: 100%;
+  display: block;
+}
+.scene-image-placeholder {
+  color: #64748B;
+  font-size: 13px;
+  text-align: center;
+  padding: 40px;
+}
+.scene-text {
+  font-size: 18px;
+  line-height: 1.9;
+  color: #E2E8F0;
+}
+.mode-listen .scene-text { font-size: 22px; line-height: 2.0; }
+
+/* Vocab highlight */
+.vocab-word {
+  font-weight: 800;
+  cursor: pointer;
+  border-bottom: 2px dashed;
+  padding-bottom: 1px;
+  transition: all 0.2s;
+  position: relative;
+}
+.mode-bedtime .vocab-word { color: #C4B5FD; border-color: #A78BFA; }
+.mode-listen .vocab-word { color: #FBBF24; border-color: #F59E0B; }
+.vocab-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1E293B;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 10px 14px;
+  width: 260px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #CBD5E1;
+  line-height: 1.5;
+  z-index: 30;
+  pointer-events: none;
+  animation: fadeSlide 0.2s ease;
+  margin-bottom: 8px;
+}
+.vocab-tooltip-word {
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+.mode-bedtime .vocab-tooltip-word { color: #C4B5FD; }
+.mode-listen .vocab-tooltip-word { color: #FBBF24; }
+
+/* Scene play button (listen mode) */
+.scene-play-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  border: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mode-listen .scene-play-btn {
+  background: #3B82F6;
+  color: #fff;
+}
+.mode-listen .scene-play-btn:hover { background: #60A5FA; }
+.mode-bedtime .scene-play-btn {
+  background: #7C3AED;
+  color: #fff;
+}
+.mode-bedtime .scene-play-btn:hover { background: #A78BFA; }
+.scene-play-btn.playing-scene {
+  opacity: 0.7;
+}
+
+/* Vocabulary section */
+.vocab-section {
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  animation: fadeSlide 0.5s ease;
+}
+.mode-bedtime .vocab-section {
+  background: rgba(45,27,78,0.6);
+  border: 1px solid rgba(168,85,247,0.2);
+}
+.mode-listen .vocab-section {
+  background: rgba(23,29,48,0.8);
+  border: 1px solid #1E2A4A;
+}
+.vocab-section-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  margin-bottom: 14px;
+}
+.mode-bedtime .vocab-section-title { color: #C4B5FD; }
+.mode-listen .vocab-section-title { color: #60A5FA; }
+.vocab-card {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.vocab-card:last-child { border-bottom: none; }
+.vocab-card-word {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.mode-bedtime .vocab-card-word { color: #E9D5FF; }
+.mode-listen .vocab-card-word { color: #FBBF24; }
+.vocab-card-def {
+  font-size: 14px;
+  color: #94A3B8;
+  line-height: 1.6;
+}
+
+/* Questions section */
+.questions-section {
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.mode-bedtime .questions-section {
+  background: rgba(45,27,78,0.4);
+  border: 1px solid rgba(168,85,247,0.1);
+}
+.mode-listen .questions-section {
+  background: rgba(23,29,48,0.6);
+  border: 1px solid #1E2A4A;
+}
+.question-item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 0;
+  font-size: 16px;
+  color: #E2E8F0;
+  line-height: 1.6;
+}
+.mode-listen .question-item { font-size: 20px; }
+.question-number {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+.mode-bedtime .question-number { background: rgba(168,85,247,0.2); color: #C4B5FD; }
+.mode-listen .question-number { background: rgba(59,130,246,0.2); color: #60A5FA; }
+
+/* Navigation */
+.nav-bar-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.mode-bedtime .nav-bar-bottom { background: rgba(26,10,46,0.95); border-top: 1px solid rgba(168,85,247,0.15); }
+.mode-listen .nav-bar-bottom { background: rgba(11,15,26,0.95); border-top: 1px solid #1E2A4A; }
+.nav-btn {
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 100px;
+}
+.mode-bedtime .nav-btn { background: #7C3AED; color: #fff; }
+.mode-bedtime .nav-btn:hover { background: #A78BFA; }
+.mode-listen .nav-btn { background: #3B82F6; color: #fff; }
+.mode-listen .nav-btn:hover { background: #60A5FA; }
+.nav-btn:disabled { opacity: 0.3; cursor: default; }
+.nav-dots {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+.mode-bedtime .nav-dot { background: #2D1B4E; }
+.mode-bedtime .nav-dot.active { background: #A78BFA; width: 20px; border-radius: 4px; }
+.mode-listen .nav-dot { background: #1E2A4A; }
+.mode-listen .nav-dot.active { background: #3B82F6; width: 20px; border-radius: 4px; }
+
+/* The End */
+.the-end {
+  text-align: center;
+  padding: 40px 20px;
+  animation: fadeSlide 0.6s ease;
+}
+.the-end-icon { font-size: 48px; margin-bottom: 12px; }
+.the-end-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+.mode-bedtime .the-end-text { color: #C4B5FD; }
+.mode-listen .the-end-text { color: #60A5FA; }
+
+/* Loading */
+.loading-wrap {
+  text-align: center;
+  padding: 80px 20px;
+}
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+.mode-bedtime .loading-spinner { border-top-color: #A78BFA; }
+.mode-listen .loading-spinner { border-top-color: #3B82F6; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { color: #64748B; font-size: 14px; }
+
+.hidden { display: none; }
+</style>
+</head>
+<body class="mode-bedtime">
+
+<div id="starfield"></div>
+
+<div id="app-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-logo" id="header-icon">&#128214;</div>
+      <div>
+        <div class="header-title" id="header-title">STORY TIME</div>
+        <div class="header-subtitle" id="header-sub">LOADING</div>
+      </div>
+    </div>
+    <div class="header-controls">
+      <div class="mode-badge" id="mode-badge">BEDTIME</div>
+      <button class="audio-btn" id="audio-btn" onclick="toggleNarration()" title="Play / Pause narration">&#9654;</button>
+    </div>
+  </div>
+</div>
+
+<main id="main-content">
+  <div id="loading" class="loading-wrap">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading story...</div>
+  </div>
+  <div id="story-content" class="hidden"></div>
+</main>
+
+<div class="nav-bar-bottom" id="nav-bottom">
+  <button class="nav-btn" id="btn-prev" onclick="prevScene()" disabled>Back</button>
+  <div class="nav-dots" id="nav-dots"></div>
+  <button class="nav-btn" id="btn-next" onclick="nextScene()">Next</button>
+</div>
+
+<script>
+var MODULE_NAME = 'story-reader';
+var MODULE_VERSION = 'v1';
+
+// State
+var storyData = null;
+var sceneImages = {};
+var vocabDefs = {};
+var currentScene = -1; // -1 = cover
+var totalScenes = 0;
+var mode = 'bedtime'; // 'bedtime' or 'listen'
+var storyKey = '';
+var isNarrating = false;
+var activeTooltip = null;
+
+// Parse URL params (ES5 safe)
+function getParam(name) {
+  var search = window.location.search || '';
+  if (search.indexOf('?') === 0) search = search.substring(1);
+  var parts = search.split('&');
+  for (var i = 0; i < parts.length; i++) {
+    var pair = parts[i].split('=');
+    if (decodeURIComponent(pair[0]) === name) {
+      return decodeURIComponent(pair[1] || '');
+    }
+  }
+  return '';
+}
+
+// Stars
+function createStars() {
+  var el = document.getElementById('starfield');
+  var html = '';
+  for (var i = 0; i < 80; i++) {
+    var size = Math.floor(Math.random() * 3) + 1;
+    var x = Math.floor(Math.random() * 100);
+    var y = Math.floor(Math.random() * 100);
+    var dur = (Math.random() * 4 + 2).toFixed(1);
+    var delay = (Math.random() * 3).toFixed(1);
+    html += '<div class="star" style="width:' + size + 'px;height:' + size + 'px;left:' + x + '%;top:' + y + '%;animation:twinkle ' + dur + 's ' + delay + 's infinite"></div>';
+  }
+  el.innerHTML = html;
+}
+
+// Mode setup
+function setMode(m) {
+  mode = m;
+  var body = document.body;
+  body.className = m === 'listen' ? 'mode-listen' : 'mode-bedtime';
+  var badge = document.getElementById('mode-badge');
+  badge.textContent = m === 'listen' ? 'LISTEN' : 'BEDTIME';
+}
+
+// Vocab highlighting — wraps vocab words in story text with spans
+function highlightVocab(text, vocabWords) {
+  var result = text;
+  for (var i = 0; i < vocabWords.length; i++) {
+    var w = vocabWords[i];
+    // Case-insensitive replace, preserve original casing
+    var regex = new RegExp('\\b(' + w + ')\\b', 'gi');
+    result = result.replace(regex, '<span class="vocab-word" onclick="showVocabTip(this, \'' + w.toLowerCase() + '\')" data-word="' + w.toLowerCase() + '">$1</span>');
+  }
+  return result;
+}
+
+// Vocab tooltip
+function showVocabTip(el, word) {
+  // Remove existing tooltip
+  hideVocabTip();
+
+  var def = vocabDefs[word] || 'No definition available.';
+  var tip = document.createElement('div');
+  tip.className = 'vocab-tooltip';
+  tip.innerHTML = '<div class="vocab-tooltip-word">' + word.charAt(0).toUpperCase() + word.slice(1) + '</div>' + def;
+  el.style.position = 'relative';
+  el.appendChild(tip);
+  activeTooltip = { el: el, tip: tip };
+
+  // Auto-dismiss after 4s
+  setTimeout(function() { hideVocabTip(); }, 4000);
+
+  // Speak word in listen mode
+  if (mode === 'listen') {
+    speak(word + '. ' + def);
+  }
+}
+
+function hideVocabTip() {
+  if (activeTooltip && activeTooltip.tip && activeTooltip.tip.parentNode) {
+    activeTooltip.tip.parentNode.removeChild(activeTooltip.tip);
+  }
+  activeTooltip = null;
+}
+
+// TTS via Web Speech API
+function speak(text, onEnd) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  var u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.85;
+  u.pitch = 1.1;
+  if (onEnd) u.onend = onEnd;
+  window.speechSynthesis.speak(u);
+}
+
+function stopSpeech() {
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+  isNarrating = false;
+  updateAudioBtn();
+}
+
+function toggleNarration() {
+  if (isNarrating) {
+    stopSpeech();
+    return;
+  }
+  narrateCurrentScene();
+}
+
+function narrateCurrentScene() {
+  if (!storyData) return;
+  isNarrating = true;
+  updateAudioBtn();
+
+  var text = '';
+  if (currentScene === -1) {
+    text = storyData.title + '. A story about ' + storyData.character + '.';
+  } else if (currentScene < totalScenes) {
+    text = storyData.scenes[currentScene].text;
+  } else {
+    text = 'The End. Words we learned today: ';
+    var words = storyData.vocabulary_words || [];
+    for (var i = 0; i < words.length; i++) {
+      text += words[i];
+      if (i < words.length - 1) text += ', ';
+    }
+  }
+
+  speak(text, function() {
+    isNarrating = false;
+    updateAudioBtn();
+    // Auto-advance in listen mode
+    if (mode === 'listen' && currentScene < totalScenes) {
+      setTimeout(function() { nextScene(); }, 1500);
+    }
+  });
+}
+
+function updateAudioBtn() {
+  var btn = document.getElementById('audio-btn');
+  if (isNarrating) {
+    btn.innerHTML = '&#9724;';
+    btn.className = 'audio-btn playing';
+  } else {
+    btn.innerHTML = '&#9654;';
+    btn.className = 'audio-btn';
+  }
+}
+
+// Render
+function renderScene() {
+  hideVocabTip();
+  stopSpeech();
+  var container = document.getElementById('story-content');
+  var html = '';
+  var vocabWords = storyData.vocabulary_words || [];
+
+  if (currentScene === -1) {
+    // Cover
+    html += '<div class="cover">';
+    html += '<div class="cover-title">' + escapeHtml(storyData.title) + '</div>';
+    html += '<div class="cover-meta">' + escapeHtml(storyData.character) + ' Story';
+    if (storyData.type) html += ' &bull; ' + escapeHtml(storyData.type.replace(/_/g, ' '));
+    html += '</div>';
+    html += '</div>';
+  } else if (currentScene < totalScenes) {
+    // Scene
+    var scene = storyData.scenes[currentScene];
+    html += '<div class="scene-card">';
+    html += '<div class="scene-number">SCENE ' + scene.scene_number + ' OF ' + totalScenes + '</div>';
+
+    // Image
+    var imgKey = 'scene-' + scene.scene_number;
+    html += '<div class="scene-image-wrap">';
+    if (sceneImages[imgKey]) {
+      html += '<img src="data:image/png;base64,' + sceneImages[imgKey] + '" alt="Scene ' + scene.scene_number + '">';
+    } else {
+      html += '<div class="scene-image-placeholder">Illustration coming soon</div>';
+    }
+    html += '</div>';
+
+    // Text with vocab highlights
+    html += '<div class="scene-text">' + highlightVocab(escapeHtml(scene.text), vocabWords) + '</div>';
+
+    // Play button for this scene
+    html += '<button class="scene-play-btn" onclick="narrateCurrentScene()">&#9654; Read Aloud</button>';
+    html += '</div>';
+  } else {
+    // End screen with vocab + questions
+    html += '<div class="the-end">';
+    html += '<div class="the-end-icon">&#127775;</div>';
+    html += '<div class="the-end-text">THE END</div>';
+    html += '</div>';
+
+    // Vocab section
+    if (storyData.words_we_learned) {
+      html += '<div class="vocab-section">';
+      html += '<div class="vocab-section-title">WORDS WE LEARNED</div>';
+      var wKeys = Object.keys(storyData.words_we_learned);
+      for (var v = 0; v < wKeys.length; v++) {
+        html += '<div class="vocab-card">';
+        html += '<div class="vocab-card-word">' + wKeys[v].charAt(0).toUpperCase() + wKeys[v].slice(1) + '</div>';
+        html += '<div class="vocab-card-def">' + escapeHtml(storyData.words_we_learned[wKeys[v]]) + '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    // Questions
+    if (storyData.reader_questions && storyData.reader_questions.length > 0) {
+      html += '<div class="questions-section">';
+      html += '<div class="vocab-section-title">LET\'S TALK ABOUT IT</div>';
+      for (var q = 0; q < storyData.reader_questions.length; q++) {
+        html += '<div class="question-item">';
+        html += '<div class="question-number">' + (q + 1) + '</div>';
+        html += '<div>' + escapeHtml(storyData.reader_questions[q]) + '</div>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+  }
+
+  container.innerHTML = html;
+
+  // Update nav
+  updateNav();
+
+  // Auto-narrate in listen mode
+  if (mode === 'listen') {
+    setTimeout(function() { narrateCurrentScene(); }, 600);
+  }
+}
+
+function updateNav() {
+  var prev = document.getElementById('btn-prev');
+  var next = document.getElementById('btn-next');
+  prev.disabled = (currentScene <= -1);
+  next.disabled = (currentScene >= totalScenes);
+
+  // Next label
+  if (currentScene === -1) {
+    next.textContent = 'Start';
+  } else if (currentScene === totalScenes - 1) {
+    next.textContent = 'Finish';
+  } else if (currentScene >= totalScenes) {
+    next.textContent = 'Done';
+  } else {
+    next.textContent = 'Next';
+  }
+
+  // Dots
+  var dotsEl = document.getElementById('nav-dots');
+  var html = '';
+  // Cover dot + scene dots + end dot
+  var dotCount = totalScenes + 2;
+  var activeDot = currentScene + 1; // cover = 0
+  for (var i = 0; i < dotCount; i++) {
+    html += '<div class="nav-dot' + (i === activeDot ? ' active' : '') + '"></div>';
+  }
+  dotsEl.innerHTML = html;
+}
+
+function nextScene() {
+  if (currentScene < totalScenes) {
+    currentScene++;
+    renderScene();
+    window.scrollTo(0, 0);
+  }
+}
+
+function prevScene() {
+  if (currentScene > -1) {
+    currentScene--;
+    renderScene();
+    window.scrollTo(0, 0);
+  }
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Data loading
+function loadStory() {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(data) {
+        if (data && data.error) {
+          showError(data.error);
+          return;
+        }
+        storyData = data;
+        onStoryLoaded();
+        // Also try to load images
+        google.script.run
+          .withSuccessHandler(function(imgs) {
+            if (imgs) {
+              sceneImages = imgs;
+              renderScene(); // re-render to show images
+            }
+          })
+          .withFailureHandler(function() { /* images optional */ })
+          .getStoryImages(storyKey);
+      })
+      .withFailureHandler(function(err) {
+        showError('Failed to load story: ' + (err && err.message ? err.message : 'Unknown error'));
+      })
+      .getStoryForReader(storyKey);
+  } else {
+    useFallbackData();
+  }
+}
+
+function useFallbackData() {
+  // Embedded fallback for local/dev testing
+  storyData = {
+    title: 'Story not loaded',
+    character: 'Unknown',
+    type: 'demo',
+    vocabulary_words: [],
+    scenes: [
+      { scene_number: 1, text: 'This is a placeholder scene. Load a real story via the GAS backend.', vocab_used: [] }
+    ],
+    words_we_learned: {},
+    reader_questions: []
+  };
+  onStoryLoaded();
+}
+
+function onStoryLoaded() {
+  // Build vocab def map
+  if (storyData.words_we_learned) {
+    var keys = Object.keys(storyData.words_we_learned);
+    for (var i = 0; i < keys.length; i++) {
+      vocabDefs[keys[i].toLowerCase()] = storyData.words_we_learned[keys[i]];
+    }
+  }
+
+  totalScenes = storyData.scenes ? storyData.scenes.length : 0;
+  currentScene = -1;
+
+  // Update header
+  document.getElementById('header-sub').textContent = storyData.character ? storyData.character.toUpperCase() + ' STORY' : 'STORY';
+
+  // Show content
+  document.getElementById('loading').className = 'loading-wrap hidden';
+  var content = document.getElementById('story-content');
+  content.className = '';
+
+  renderScene();
+}
+
+function showError(msg) {
+  document.getElementById('loading').innerHTML = '<div style="color:#EF4444;font-size:14px;padding:40px;">' + escapeHtml(msg) + '</div>';
+}
+
+// Init
+function init() {
+  storyKey = getParam('story') || 'week1-jj-garden-mystery';
+  var modeParam = getParam('mode');
+  if (modeParam === 'listen' || modeParam === 'story_listen') {
+    setMode('listen');
+  } else {
+    setMode('bedtime');
+  }
+
+  createStars();
+  loadStory();
+
+  // Close tooltips on body tap
+  document.body.addEventListener('click', function(e) {
+    if (!e.target.className || String(e.target.className).indexOf('vocab-word') === -1) {
+      hideVocabTip();
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>

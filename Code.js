@@ -223,10 +223,12 @@ function servePage(page, e) {
     'wolfkid':   { file: 'WolfkidCER',     title: 'Wolfkid CER — Episode 3' },
     'dashboard': { file: 'DesignDashboard', title: 'Design Dashboard — Ring Quest Creator' },
     'facts':     { file: 'fact-sprint',    title: 'Fact Sprint — Math Drill' },
-    'reading':   { file: 'reading-module', title: 'Reading Module — Thompson Education' },
-    'writing':   { file: 'writing-module', title: 'Writing Module — Thompson Education' },
-    'story-library': { file: 'StoryLibrary', title: 'Story Library — Thompson Family Stories' },
-    'story':     { file: 'StoryLibrary', title: 'Story Library — Thompson Family Stories' }
+    'reading':       { file: 'reading-module',  title: 'Reading Module — Thompson Education' },
+    'writing':       { file: 'writing-module', title: 'Writing Module — Thompson Education' },
+    'story-library': { file: 'StoryLibrary',   title: 'Story Library — Thompson Family Stories' },
+    'comic-studio':  { file: 'ComicStudio',    title: 'Wolfkid Comic Studio' },
+    'progress':      { file: 'ProgressReport', title: 'Weekly Progress Report' },
+    'story':         { file: 'StoryReader',    title: 'Story Reader' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -276,7 +278,9 @@ function serveData(e) {
         'vein': 'TheVein', 'pulse': 'ThePulse', 'vault': 'Vault',
         'kidshub': 'KidsHub', 'spine': 'TheSpine', 'soul': 'TheSoul',
         'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse',
-        'story-library': 'StoryLibrary', 'story': 'StoryLibrary'
+        'story-library': 'StoryLibrary',
+        'comic-studio': 'ComicStudio', 'progress': 'ProgressReport',
+        'story': 'StoryReader'
       };
       var filename = routes[page] || 'ThePulse';
       try {
@@ -335,7 +339,7 @@ function serveData(e) {
         'khApproveRequestSafe': khApproveRequestSafe, 'khDenyRequestSafe': khDenyRequestSafe,
         'khAddBonusTaskSafe': khAddBonusTaskSafe, 'khDebitScreenTimeSafe': khDebitScreenTimeSafe,
         'khSetBankOpeningSafe': khSetBankOpeningSafe, 'khVerifyPinSafe': khVerifyPinSafe,
-        'khAddDeductionSafe': khAddDeductionSafe, 'khHealthCheckSafe': khHealthCheckSafe,
+        'khAddDeductionSafe': khAddDeductionSafe, 'khHealthCheckSafe': khHealthCheckSafe, 'khBatchApproveSafe': khBatchApproveSafe,
         'khSubmitGradeSafe': khSubmitGradeSafe, 'khGetGradeHistorySafe': khGetGradeHistorySafe,
         'updateFamilyNoteSafe': updateFamilyNoteSafe,
         'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
@@ -848,6 +852,21 @@ function khAddBonusTaskSafe(child, taskName, points, icon, timeOfDay) {
   return withMonitor_('khAddBonusTaskSafe', function() {
     try { return JSON.parse(khAddBonusTask(child, taskName, points, icon, timeOfDay)); }
     catch(e) { _khDiag_('khAddBonusTaskSafe', {child: child, task: taskName, points: points}, e); throw e; }
+  });
+}
+
+// v54: Batch Approve safe wrapper — approve multiple tasks in one call
+function khBatchApproveSafe(payload) {
+  return withMonitor_('khBatchApproveSafe', function() {
+    var lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); } catch(e) {
+      return { error: true, message: 'System is busy \u2014 please try again' };
+    }
+    try {
+      return kh_batchApprove_(payload.taskIds || payload.rowIndices || [], payload.approver || 'JT');
+    } finally {
+      lock.releaseLock();
+    }
   });
 }
 

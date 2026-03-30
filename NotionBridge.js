@@ -1,4 +1,4 @@
-// NotionBridge.gs v1
+// NotionBridge.gs v2
 // Pushes TBM health data to Notion for Custom Agent consumption.
 // Setup: Script Properties → NOTION_TOKEN = your integration token
 //        Script Properties → NOTION_HEALTH_DB = 82411a222f774ee59574e06d5ac76154
@@ -32,7 +32,7 @@ function _getNotionDbId() {
 // ═══════════════════════════════════════════════════════════════
 
 function _collectHealthData() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
   var result = {};
   var log = [];
 
@@ -78,8 +78,7 @@ function _collectHealthData() {
   // --- MER Gate Results ---
   result.gates = [];
   try {
-    var merSheet = ss.getSheetByName(TAB_MAP['MER'] || '💻🧮 Month-End Review');
-    if (!merSheet) merSheet = ss.getSheetByName('Month-End Review');
+    var merSheet = ss.getSheetByName(TAB_MAP['Month-End Review'] || '💻🧮 Month-End Review');
     if (merSheet) {
       var merData = merSheet.getDataRange().getValues();
       var gateCount = 0;
@@ -137,8 +136,7 @@ function _collectHealthData() {
 
   // --- Uncategorized transactions ---
   try {
-    var txSheet = ss.getSheetByName(TAB_MAP['Transactions'] || '🔒 Transactions');
-    if (!txSheet) txSheet = ss.getSheetByName('Transactions');
+    var txSheet = ss.getSheetByName(TAB_MAP['Transactions'] || 'Transactions');
     if (txSheet) {
       var txData = txSheet.getDataRange().getValues();
       var uncat = 0;
@@ -157,8 +155,7 @@ function _collectHealthData() {
 
   // --- Row capacity ---
   try {
-    var txSheet2 = ss.getSheetByName(TAB_MAP['Transactions'] || '🔒 Transactions');
-    if (!txSheet2) txSheet2 = ss.getSheetByName('Transactions');
+    var txSheet2 = ss.getSheetByName(TAB_MAP['Transactions'] || 'Transactions');
     if (txSheet2) {
       result.rowCount = txSheet2.getLastRow();
       result.rowCap = 20000;
@@ -544,4 +541,4 @@ function installWeeklyHealthPush() {
   Logger.log('✅ Weekly trigger installed: pushHealthSnapshot() every Wednesday ~10 AM');
 }
 
-// EOF — NotionBridge.gs v1
+// EOF — NotionBridge.gs v2

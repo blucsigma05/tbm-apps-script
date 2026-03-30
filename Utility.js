@@ -10,7 +10,9 @@
 // Run once from Apps Script editor.
 
 function fixParentPINColumn() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
   var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_Children'])
     ? TAB_MAP['KH_Children'] : 'KH_Children';
   var sheet = ss.getSheetByName(tabName);
@@ -37,6 +39,7 @@ function fixParentPINColumn() {
   }
 
   Logger.log('✅ Added Parent_PIN column with default "1234" for ' + (lastRow - 1) + ' children');
+  lock.releaseLock();
 }
 
 
