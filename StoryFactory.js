@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ============================================================
 // STORY FACTORY — Google Apps Script Agent
-// Version: 7.0
+// Version: 8.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 7; }
+function getStoryFactoryVersion() { return 8; }
 
 var CONFIG = {
 GEMINI_API_KEY:  PropertiesService.getScriptProperties().getProperty('JJ Stories'),
@@ -1056,7 +1056,7 @@ return 7;
 // ── MAIN PIPELINE ────────────────────────────────────────────
 
 function runStoryFactory(topic, character, tone) {
-Logger.log('=== Story Factory v7.0 ===');
+Logger.log('=== Story Factory v8.0 ===');
 Logger.log('Topic: ' + topic + ' | Character: ' + character + ' | Tone: ' + (tone || 'Funny'));
 
 try {
@@ -1284,6 +1284,164 @@ Logger.log(facts[k]);
 }
 
 Logger.log('=== Memory Fetch Complete ===');
+}
+
+// ── v8: STORY READER — Serve stories for StoryReader.html ──────
+
+/**
+ * v8: Story index — maps story keys to file metadata.
+ * Stories live in the stories/ folder (repo) and are loaded via
+ * ScriptProperties or Drive. This index is the single source of truth
+ * for what the reader can serve.
+ */
+var STORY_INDEX = {
+  'week1-jj-garden-mystery': {
+    title: "JJ and GranniePoo's Garden Mystery",
+    character: 'JJ',
+    type: 'vocabulary_bedtime',
+    week: 1,
+    propertyKey: 'STORY_week1_jj_garden_mystery'
+  }
+};
+
+/**
+ * v8: Serve a story to StoryReader.html.
+ * Loads from ScriptProperties (JSON stored as string).
+ * Returns story JSON object or { error: message }.
+ */
+function getStoryForReader(storyKey) {
+  return withMonitor_('getStoryForReader', function() {
+    if (!storyKey || !STORY_INDEX[storyKey]) {
+      return { error: 'Story not found: ' + storyKey };
+    }
+    var meta = STORY_INDEX[storyKey];
+    var props = PropertiesService.getScriptProperties();
+    var raw = props.getProperty(meta.propertyKey);
+    if (!raw) {
+      return { error: 'Story data not loaded. Run loadStoryToProps("' + storyKey + '") first.' };
+    }
+    return JSON.parse(raw);
+  });
+}
+
+/**
+ * v8: Load a story JSON from the stories/ folder in Drive into ScriptProperties.
+ * Run once per story after adding the JSON file to the repo.
+ * storyKey must match a key in STORY_INDEX.
+ * jsonString: the full JSON content as a string.
+ */
+function loadStoryToProps(storyKey, jsonString) {
+  if (!STORY_INDEX[storyKey]) {
+    Logger.log('loadStoryToProps: Unknown story key: ' + storyKey);
+    return 'ERROR: Unknown story key';
+  }
+  var meta = STORY_INDEX[storyKey];
+  // Validate JSON
+  try {
+    JSON.parse(jsonString);
+  } catch (e) {
+    Logger.log('loadStoryToProps: Invalid JSON — ' + e.message);
+    return 'ERROR: Invalid JSON';
+  }
+  PropertiesService.getScriptProperties().setProperty(meta.propertyKey, jsonString);
+  Logger.log('loadStoryToProps: Stored ' + storyKey + ' (' + jsonString.length + ' chars)');
+  return 'OK: ' + storyKey + ' loaded (' + jsonString.length + ' chars)';
+}
+
+/**
+ * v8: List all available stories for the reader.
+ * Returns array of { key, title, character, type, week, loaded }.
+ */
+function listStoriesForReader() {
+  var props = PropertiesService.getScriptProperties();
+  var keys = Object.keys(STORY_INDEX);
+  var result = [];
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    var meta = STORY_INDEX[k];
+    result.push({
+      key: k,
+      title: meta.title,
+      character: meta.character,
+      type: meta.type,
+      week: meta.week,
+      loaded: !!props.getProperty(meta.propertyKey)
+    });
+  }
+  return result;
+}
+
+/**
+ * v8: Generate scene images for a stored story via Gemini.
+ * storyKey: key from STORY_INDEX (story must be loaded in props).
+ * Returns { success: true, imageCount: N } or { error: message }.
+ */
+function generateStoryImages(storyKey) {
+  return withMonitor_('generateStoryImages', function() {
+    if (!STORY_INDEX[storyKey]) {
+      return { error: 'Unknown story key: ' + storyKey };
+    }
+    var raw = PropertiesService.getScriptProperties().getProperty(STORY_INDEX[storyKey].propertyKey);
+    if (!raw) {
+      return { error: 'Story not loaded in props' };
+    }
+    var storyData = JSON.parse(raw);
+    var characters = fetchCharacterFromNotion(storyData.character);
+
+    Logger.log('generateStoryImages: Generating images for "' + storyData.title + '"');
+    var imageBlobs = generateSceneImages(storyData.scenes, characters);
+
+    // Store images in Drive story folder
+    var folder = DriveApp.getFolderById(CONFIG.STORY_FOLDER_ID);
+    var storyFolder;
+    var folders = folder.getFoldersByName(storyKey);
+    if (folders.hasNext()) {
+      storyFolder = folders.next();
+    } else {
+      storyFolder = folder.createFolder(storyKey);
+    }
+
+    var stored = 0;
+    for (var i = 0; i < imageBlobs.length; i++) {
+      if (imageBlobs[i] && imageBlobs[i].data) {
+        var blob = Utilities.newBlob(
+          Utilities.base64Decode(imageBlobs[i].data),
+          imageBlobs[i].mimeType,
+          'scene-' + (i + 1) + '.png'
+        );
+        storyFolder.createFile(blob);
+        stored++;
+      }
+    }
+
+    Logger.log('generateStoryImages: Stored ' + stored + ' images in Drive/' + storyKey);
+    return { success: true, imageCount: stored, folderId: storyFolder.getId() };
+  });
+}
+
+/**
+ * v8: Get scene images for a story (base64 map).
+ * Returns { 'scene-1': base64, 'scene-2': base64, ... } or empty if no images yet.
+ */
+function getStoryImages(storyKey) {
+  return withMonitor_('getStoryImages', function() {
+    var folder = DriveApp.getFolderById(CONFIG.STORY_FOLDER_ID);
+    var folders = folder.getFoldersByName(storyKey);
+    if (!folders.hasNext()) return {};
+    var storyFolder = folders.next();
+    var files = storyFolder.getFiles();
+    var result = {};
+    while (files.hasNext()) {
+      var f = files.next();
+      var name = f.getName().replace('.png', '').replace('.jpg', '');
+      try {
+        result[name] = Utilities.base64Encode(f.getBlob().getBytes());
+      } catch (e) {
+        Logger.log('getStoryImages: Failed to read ' + f.getName() + ': ' + e.message);
+      }
+    }
+    return JSON.parse(JSON.stringify(result));
+  });
 }
 
 // ── AUTHORIZE DRIVE (run once) ──

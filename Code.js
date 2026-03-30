@@ -224,7 +224,8 @@ function servePage(page, e) {
     'reading':       { file: 'reading-module',  title: 'Reading Module — Thompson Education' },
     'writing':       { file: 'writing-module', title: 'Writing Module — Thompson Education' },
     'comic-studio':  { file: 'ComicStudio',    title: 'Wolfkid Comic Studio' },
-    'progress':      { file: 'ProgressReport', title: 'Weekly Progress Report' }
+    'progress':      { file: 'ProgressReport', title: 'Weekly Progress Report' },
+    'story':         { file: 'StoryReader',    title: 'Story Reader' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -274,7 +275,8 @@ function serveData(e) {
         'vein': 'TheVein', 'pulse': 'ThePulse', 'vault': 'Vault',
         'kidshub': 'KidsHub', 'spine': 'TheSpine', 'soul': 'TheSoul',
         'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse',
-        'comic-studio': 'ComicStudio', 'progress': 'ProgressReport'
+        'comic-studio': 'ComicStudio', 'progress': 'ProgressReport',
+        'story': 'StoryReader'
       };
       var filename = routes[page] || 'ThePulse';
       try {
