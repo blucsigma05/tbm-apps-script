@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmRegressionSuite.gs — Phase A3: Post-Deploy Behavioral Assertions
+// tbmRegressionSuite.gs v2 — Phase A3: Post-Deploy Behavioral Assertions
 // ════════════════════════════════════════════════════════════════════
 // Version history tracked in Notion deploy page. Do not add version comments here.
 //
@@ -18,7 +18,7 @@
 // USAGE: Run tbmRegressionSuite() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getRegressionSuiteVersion() { return 1; }
+function getRegressionSuiteVersion() { return 2; }
 
 /**
  * Main entry point. Run after every deploy.
@@ -524,8 +524,11 @@ function runEnvironmentAssertions_(results) {
         var name = String(dmData[d][0] || '').trim();
         if (name && name !== '') dmNames.push(name);
       }
-      // Read BH account names (column D = index 3)
-      var bhData = bh.getRange(2, 4, Math.min(bh.getLastRow() - 1, 100), 1).getValues();
+      // Read BH account names (column D) — scan last 500 rows for broader account coverage
+      var bhRowCount = bh.getLastRow() - 1;
+      var scanRows = Math.min(bhRowCount, 500);
+      var bhStartRow = Math.max(2, bh.getLastRow() - scanRows + 1);
+      var bhData = bh.getRange(bhStartRow, 4, scanRows, 1).getValues();
       var bhNames = {};
       for (var b = 0; b < bhData.length; b++) {
         var bn = String(bhData[b][0] || '').trim();
@@ -560,18 +563,12 @@ function runEnvironmentAssertions_(results) {
     note: 'GASHardening v2 removed the config default. Verify no other file references it.'
   });
 
-  // ── ENV-009: FIELD_MAP dead reference in Code.gs ────────────────
-  // reconcileVeinPulse references TAB_MAP['FIELD_MAP'] which doesn't exist.
-  (function() {
-    var a = { id: 'ENV-009', category: 'drift', description: 'FIELD_MAP reference resolved or removed', status: 'PASS', details: '' };
-    if (typeof TAB_MAP !== 'undefined' && !TAB_MAP['FIELD_MAP']) {
-      a.status = 'WARN';
-      a.details = 'TAB_MAP has no FIELD_MAP entry. reconcileVeinPulse falls back to _reconcileWithoutFieldMap every time. Harmless but dead code.';
-    } else if (typeof TAB_MAP !== 'undefined' && TAB_MAP['FIELD_MAP']) {
-      a.details = 'FIELD_MAP exists in TAB_MAP.';
-    }
-    results.assertions.push(a);
-  })();
+  // ── ENV-009: FIELD_MAP dead reference — RESOLVED in Code.gs v50 ──
+  // Dead FIELD_MAP codepath removed. reconcileVeinPulse now uses core fields directly.
+  results.assertions.push({
+    id: 'ENV-009', category: 'drift', description: 'FIELD_MAP dead code removed from reconcileVeinPulse',
+    status: 'PASS', details: 'Resolved in Code.gs v50. reconcileVeinPulse uses core fields list directly.'
+  });
 
   // ── ENV-010: Helpers sheet has close-month selectors ─────────────
   (function() {
@@ -724,4 +721,4 @@ function regressionEnvOnly() {
 }
 
 
-// END OF FILE — tbmRegressionSuite.gs v1
+// END OF FILE — tbmRegressionSuite.gs v2

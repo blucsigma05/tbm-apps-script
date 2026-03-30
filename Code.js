@@ -1237,38 +1237,8 @@ function resolveNestedKey_(obj, key) {
   return cur;
 }
 
+// v50: Removed dead FIELD_MAP codepath (ENV-009). Core fields checked directly.
 function reconcileVeinPulse() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var fmSheet = ss.getSheetByName(TAB_MAP['FIELD_MAP'] || 'FIELD_MAP');
-  if (!fmSheet) return _reconcileWithoutFieldMap();
-  var rows = fmSheet.getDataRange().getValues();
-  if (rows.length < 2) return { status: 'FAIL', error: 'FIELD_MAP empty' };
-  var n = new Date();
-  var ym = n.getFullYear() + '-' + leftPad2_(n.getMonth() + 1);
-  var start = ym + '-01';
-  var end = ym + '-' + new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate();
-  var data = getData(start, end, true);
-  var total = 0, passed = 0, failed = 0, failures = [];
-  for (var i = 1; i < rows.length; i++) {
-    var fieldKey = String(rows[i][0] || '').trim();
-    var surface  = String(rows[i][1] || '').trim().toLowerCase();
-    var label    = String(rows[i][2] || fieldKey);
-    if (!fieldKey) continue;
-    total++;
-    var val = resolveNestedKey_(data, fieldKey);
-    var valStr = JSON.stringify(val);
-    var isBad = (val === undefined || val === null || valStr === 'null' || (typeof val === 'number' && isNaN(val)));
-    if (isBad) { failed++; failures.push({ field: fieldKey, label: label, surface: surface, value: valStr }); }
-    else { passed++; }
-  }
-  var status = failed === 0 ? 'PASS' : 'FAIL';
-  var result = { status: status, total: total, passed: passed, failed: failed, failures: failures, checkedAt: new Date().toISOString(), dataMonth: ym };
-  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeGsVersion(), gate: 'Vein/Pulse Reconciliation', status: status, details: status === 'PASS' ? 'All ' + total + ' fields valid' : failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) {}
-  try { writeReconcileStatus_(result); } catch(e) {}
-  return result;
-}
-
-function _reconcileWithoutFieldMap() {
   var n = new Date();
   var ym = n.getFullYear() + '-' + leftPad2_(n.getMonth() + 1);
   var start = ym + '-01';
@@ -1284,8 +1254,8 @@ function _reconcileWithoutFieldMap() {
     else { passed++; }
   }
   var status = failed === 0 ? 'PASS' : 'FAIL';
-  var result = { status: status, total: total, passed: passed, failed: failed, failures: failures, checkedAt: new Date().toISOString(), note: 'fallback' };
-  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeGsVersion(), gate: 'Reconciliation (fallback)', status: status, details: failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) {}
+  var result = { status: status, total: total, passed: passed, failed: failed, failures: failures, checkedAt: new Date().toISOString(), dataMonth: ym };
+  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeGsVersion(), gate: 'Vein/Pulse Reconciliation', status: status, details: status === 'PASS' ? 'All ' + total + ' fields valid' : failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) {}
   try { writeReconcileStatus_(result); } catch(e) {}
   return result;
 }
