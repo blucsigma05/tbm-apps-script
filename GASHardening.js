@@ -1,11 +1,11 @@
 // ════════════════════════════════════════════════════════════════════
-// GAS HARDENING v3 — Centralized Monitoring, Logging & Maintenance
+// GAS HARDENING v5 — Centralized Monitoring, Logging & Maintenance
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
 // WRITES TO: ErrorLog, PerfLog
 // READS FROM: ErrorLog, PerfLog, all version functions
-function getGASHardeningVersion() { return 4; }
+function getGASHardeningVersion() { return 5; }
 
 //
 // WHAT THIS DOES:
@@ -1189,5 +1189,52 @@ function setupDailyTriggers() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// END OF FILE — GAS HARDENING v4
+// FK DEVICE CACHE CLEAR (Tightening Plan 1.1)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Clear Fully Kiosk device caches via FK Remote Admin REST API.
+ * Store device IPs and passwords in Script Properties:
+ *   FK_DEVICE_SPINE=192.168.1.50|password
+ *   FK_DEVICE_SOUL=192.168.1.51|password
+ *   FK_DEVICE_BUGGSY=192.168.1.52|password
+ *   FK_DEVICE_JJ=192.168.1.53|password
+ * Run after every deploy to force all devices to reload.
+ */
+function clearAllDeviceCaches() {
+  var props = PropertiesService.getScriptProperties().getProperties();
+  var results = [];
+  var cleared = 0;
+  var failed = 0;
+  for (var key in props) {
+    if (!props.hasOwnProperty(key)) continue;
+    if (key.indexOf('FK_DEVICE_') !== 0) continue;
+    var parts = String(props[key]).split('|');
+    if (parts.length < 2) {
+      results.push(key + ': SKIP (malformed — expected IP|password)');
+      continue;
+    }
+    var ip = parts[0].trim();
+    var pw = encodeURIComponent(parts[1].trim());
+    try {
+      UrlFetchApp.fetch(
+        'http://' + ip + ':2323/?cmd=loadStartURL&password=' + pw,
+        { muteHttpExceptions: true, followRedirects: false }
+      );
+      results.push(key + ': OK');
+      cleared++;
+    } catch(e) {
+      results.push(key + ': FAIL — ' + e.message);
+      failed++;
+    }
+  }
+  if (results.length === 0) {
+    results.push('No FK_DEVICE_ keys in Script Properties. See Tightening Plan 1.1 for setup.');
+  }
+  Logger.log('FK cache clear: ' + cleared + ' cleared, ' + failed + ' failed\n' + results.join('\n'));
+  return { cleared: cleared, failed: failed, results: results };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// END OF FILE — GAS HARDENING v5
 // ═══════════════════════════════════════════════════════════════

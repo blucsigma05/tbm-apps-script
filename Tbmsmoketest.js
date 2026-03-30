@@ -22,7 +22,7 @@
 // USAGE: Run tbmSmokeTest() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 2; }
+function getSmokeTestVersion() { return 3; }
 
 /**
  * Main entry point. Run this before every deploy.
@@ -56,6 +56,9 @@ function tbmSmokeTest() {
   // ── Category 5: Triggers ────────────────────────────────────────
   results.categories['5_triggers'] = checkTriggers_();
 
+  // ── Category 9: HTML Contracts ──────────────────────────────────
+  results.categories['9_html_contracts'] = checkHTMLContracts_();
+
   // ── Categories 6-8: Source-level (NOT runtime verifiable) ───────
   results.categories['6_concurrency'] = {
     status: 'NOT_VERIFIED',
@@ -67,8 +70,9 @@ function tbmSmokeTest() {
   results.categories['7_es5_compliance'] = {
     status: 'NOT_VERIFIED',
     description: 'ES5 banned constructs in Fire Stick HTML surfaces',
-    details: 'Requires source text scan for: let, const, =>, template literals, default params, destructuring, async/await, ?., ??. Surfaces: ThePulse, TheSpine, TheSoul, KidsHub.html.',
+    details: 'Automated coverage via category 9_html_contracts (runtime). Manual audit still recommended for constructs regex cannot catch (e.g. nested arrow functions in strings).',
     method: 'source_level_only',
+    see_also: '9_html_contracts',
     banned_constructs: ['let ', 'const ', '=>', '`', '...', 'async ', 'await ', '?.', '??']
   };
 
@@ -143,7 +147,10 @@ function checkWiring_() {
     'khApproveTaskSafe', 'khApproveWithBonusSafe', 'khDebitScreenTimeSafe',
     'khDenyRequestSafe', 'khOverrideTaskSafe', 'khRejectTaskSafe',
     'khSetBankOpeningSafe', 'khSubmitGradeSafe', 'khGetGradeHistorySafe',
-    'runMERGatesSafe', 'stampCloseMonthSafe', 'updateFamilyNoteSafe'
+    'runMERGatesSafe', 'stampCloseMonthSafe', 'updateFamilyNoteSafe',
+    // v52: Feedback + Education (ThePulse, TheVein, education modules)
+    'submitFeedbackSafe', 'getAudioBatchSafe',
+    'logHomeworkCompletionSafe', 'logSparkleProgressSafe'
   ];
 
   // Deduplicate
@@ -273,9 +280,27 @@ function checkSchemas_() {
     failures.push('TAB_MAP is undefined');
   }
 
+  // v3: Auto-create known setup-able tabs (Tightening Plan 1.3)
   if (result.tab_map_checks.missing.length > 0) {
-    // v2: Unresolved TAB_MAP entries are WARN, not FAIL — they have zero runtime impact
-    // (code gracefully handles null from getSheetByName). Log them for awareness.
+    var missingAfterSetup = [];
+    for (var am = 0; am < result.tab_map_checks.missing.length; am++) {
+      if (result.tab_map_checks.missing[am].indexOf('Feedback') === 0) {
+        try {
+          setupFeedbackSheet();
+          result.tab_map_checks.resolved++;
+          result.details = (result.details ? result.details + ' ' : '') + 'Feedback tab auto-created.';
+        } catch(eSetup) {
+          missingAfterSetup.push(result.tab_map_checks.missing[am] + ' (auto-create failed: ' + eSetup.message + ')');
+        }
+      } else {
+        missingAfterSetup.push(result.tab_map_checks.missing[am]);
+      }
+    }
+    result.tab_map_checks.missing = missingAfterSetup;
+  }
+
+  if (result.tab_map_checks.missing.length > 0) {
+    // Unresolved TAB_MAP entries are WARN, not FAIL — code gracefully handles null.
     if (result.status !== 'FAIL') result.status = 'WARN';
     result.details = (result.details ? result.details + ' | ' : '') +
       'TAB_MAP WARN: ' + result.tab_map_checks.missing.length + ' entries point to non-existent tabs: ' +
@@ -564,4 +589,69 @@ function smokeTestGrowthOnly() {
 }
 
 
-// END OF FILE — tbmSmokeTest.gs v2
+// ════════════════════════════════════════════════════════════════════
+// CATEGORY 9: HTML CONTRACT VALIDATION (Tightening Plan 2.1)
+// Runtime scan of all HTML surfaces for ES5 violations + structure.
+// ════════════════════════════════════════════════════════════════════
+
+function checkHTMLContracts_() {
+  var result = {
+    status: 'PASS',
+    description: 'All HTML surfaces load cleanly and pass ES5 + structural contracts',
+    details: '',
+    method: 'runtime',
+    surfaces: {}
+  };
+
+  var surfaces = ['ThePulse', 'TheVein', 'KidsHub', 'TheSpine', 'TheSoul', 'SparkleLearning'];
+  var allIssues = [];
+
+  for (var i = 0; i < surfaces.length; i++) {
+    var name = surfaces[i];
+    var surfaceIssues = [];
+    var html;
+
+    try {
+      html = HtmlService.createHtmlOutputFromFile(name).getContent();
+    } catch(e) {
+      surfaceIssues.push('FILE_NOT_FOUND: ' + e.message);
+      result.surfaces[name] = { status: 'FAIL', issues: surfaceIssues };
+      allIssues.push(name + ': FILE NOT FOUND');
+      continue;
+    }
+
+    // ES5 violations
+    if (/[^=!<>]=>/.test(html)) surfaceIssues.push('arrow function');
+    if (/\blet\s+\w/.test(html)) surfaceIssues.push('let keyword');
+    if (/\bconst\s+\w/.test(html)) surfaceIssues.push('const keyword');
+    if (/`[^`]*\$\{/.test(html)) surfaceIssues.push('template literal');
+    if (/\?\?/.test(html)) surfaceIssues.push('nullish coalescing ??');
+    if (/\?\./.test(html)) surfaceIssues.push('optional chaining ?.');
+    if (/\.includes\s*\(/.test(html)) surfaceIssues.push('Array.includes()');
+    if (/backdrop-filter\s*:[^n]/.test(html)) surfaceIssues.push('backdrop-filter (non-none)');
+
+    // Structural contracts
+    if (html.indexOf('tbm-version') === -1) surfaceIssues.push('missing tbm-version meta tag');
+    if (html.indexOf('google.script.run') === -1) surfaceIssues.push('no google.script.run calls');
+
+    if (surfaceIssues.length > 0) {
+      result.surfaces[name] = { status: 'FAIL', issues: surfaceIssues };
+      for (var j = 0; j < surfaceIssues.length; j++) {
+        allIssues.push(name + ': ' + surfaceIssues[j]);
+      }
+    } else {
+      result.surfaces[name] = { status: 'PASS', issues: [] };
+    }
+  }
+
+  if (allIssues.length > 0) {
+    result.status = 'FAIL';
+    result.details = allIssues.length + ' issue(s): ' + allIssues.join(' | ');
+  } else {
+    result.details = surfaces.length + ' surfaces passed all contracts.';
+  }
+
+  return result;
+}
+
+// END OF FILE — tbmSmokeTest.gs v3

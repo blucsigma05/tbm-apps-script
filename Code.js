@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v50 — Apps Script Router (TBM Consolidated)
+// Code.gs v53 — Apps Script Router (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
 // TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
@@ -9,8 +9,8 @@
 
 // WRITES TO: (routing only — no direct sheet writes)
 // READS FROM: (all tabs via safe wrappers; CacheService)
-function getCodeGsVersion() { return 52; }
-function getCodeVersion() { return 52; }  // alias for standardized naming
+function getCodeGsVersion() { return 53; }
+function getCodeVersion() { return 53; }  // alias for standardized naming
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -395,6 +395,8 @@ function serveData(e) {
       result = { codeGs: 'v' + getCodeGsVersion(), dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return 'unknown'; } })(), cascadeEngine: 'v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return 'unknown'; } })(), updated: new Date().toISOString().slice(0,10) };
     } else if (action === 'loc') {
       result = getLOCCapacity();
+    } else if (action === 'surfaceCheck') {
+      result = surfaceCheck_();
     } else {
       var start, end;
       if (e.parameter.month) {
@@ -1499,4 +1501,25 @@ function logSparkleProgressSafe(data) {
   });
 }
 
-// END OF FILE — Code.gs v52
+// ════════════════════════════════════════════════════════════════════
+// SURFACE HEALTH CHECK — ?action=surfaceCheck (Tightening Plan 2.3)
+// Returns load status + HTML contract check + deployed versions.
+// ════════════════════════════════════════════════════════════════════
+function surfaceCheck_() {
+  var surfaces = ['ThePulse', 'TheVein', 'KidsHub', 'TheSpine', 'TheSoul', 'SparkleLearning'];
+  var results = {};
+  for (var i = 0; i < surfaces.length; i++) {
+    try {
+      HtmlService.createHtmlOutputFromFile(surfaces[i]);
+      results[surfaces[i]] = 'OK';
+    } catch(e) {
+      results[surfaces[i]] = 'FAIL: ' + e.message;
+    }
+  }
+  try { results.versions = getDeployedVersions(); } catch(e) { results.versions = { error: e.message }; }
+  try { results.htmlContracts = checkHTMLContracts_(); } catch(e) { results.htmlContracts = { status: 'ERROR', error: e.message }; }
+  results.checkedAt = new Date().toISOString();
+  return results;
+}
+
+// END OF FILE — Code.gs v53
