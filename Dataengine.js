@@ -201,7 +201,6 @@ var TAB_MAP = {
   'Board_Config':     '📋 Board_Config',
   // 💻 System
   'Snapshots':        '💻 Snapshots',
-  'Cascade_Proof':    '💻 Cascade_Proof',
   'ErrorLog':         '💻 ErrorLog',
   'PerfLog':          '💻 PerfLog',
   'Month-End Review': '💻🧮 Month-End Review',

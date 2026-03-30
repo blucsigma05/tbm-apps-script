@@ -640,7 +640,7 @@ function writeWeeklySnapshot() {
     // Debt-free date from cascade if available
     var debtFreeDate = '';
     try {
-      var cascadeSheet = ss.getSheetByName(TAB_MAP['Cascade_Proof'] || '💻 Cascade_Proof');
+      var cascadeSheet = ss.getSheetByName(TAB_MAP['Cascade Proof'] || '💻🧮 Cascade Proof');
       if (cascadeSheet) {
         // Look for payoff date in cascade proof
         var proofData = cascadeSheet.getDataRange().getValues();
