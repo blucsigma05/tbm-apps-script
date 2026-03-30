@@ -3,6 +3,36 @@
 ## The Cardinal Rule
 > Read source before writing assertions. Never claim a feature is missing, a value is correct, or a version is deployed without verifying. Confidence without verification is a hallucination.
 
+## Verify-Before-Assert Rule (MANDATORY)
+
+Before writing ANY code that references a payload field, grep the source file for the exact field name. If grep returns 0 matches, the field doesn't exist — do not use it. If grep returns matches, read the surrounding 5 lines to understand the shape.
+
+Before writing ANY assertion or diagnostic, run the function being tested from the editor FIRST, read the actual Logger output, then write assertions against what you saw — not what you think the output looks like.
+
+Before declaring ANY build item complete, grep for the function name in the pushed code. If grep returns 0 matches, it wasn't built. Run the function and read Logger output before marking done.
+
+**The test:** "Can I point to grep output or Logger output proving this field/function exists?" If no, stop and verify. If yes, proceed.
+
+**Subagent summaries are leads, not facts.** A subagent summary tells you WHERE to look. You still read the actual source line before writing code. Field names, object shapes, and function signatures from summaries must be verified against the construction site (the `var result = {}` or `return {}` block where the value is built).
+
+## Common Mistakes (NEVER do these)
+
+1. Hardcoding sheet names instead of TAB_MAP
+2. Using `getActiveSpreadsheet()` instead of `openById(SSID)`
+3. Using `tryLock()` instead of `waitLock(30000)`
+4. Duplicating constants across files (shared global scope)
+5. Writing to a sheet tab owned by another module
+6. Creating a new GAS deployment instead of updating existing
+7. Using ES6 in any .html file
+8. Skipping smoke test before deploy
+9. Pushing to GAS without git commit+push after
+10. Updating Notion deploy page icon+title together (double-emoji bug)
+11. Guessing at versions — read the actual file header
+12. Stopping at clasp push without completing steps 5-10
+13. Pushing to GAS without running audit-source.sh first
+14. Adding a google.script.run call without adding the Safe function to smoke test wiring check
+15. Writing code against assumed field names without grep verification (see Verify-Before-Assert Rule)
+
 ---
 
 ## What This Is
@@ -93,13 +123,16 @@ All .gs files share one scope. Constants and TAB_MAP from DataEngine.gs are avai
                  FAIL = stop, fix, re-run. Do NOT push.
                  WARN = review each warning. Fix or document why it's acceptable.
 4. PUSH      → clasp push
-5. TEST      → Hit ?action=runTests on HEAD/dev URL
-                 Read JSON response. Must show PASS for both smoke + regression.
-                 If FAIL: fix and repeat from step 1. Do NOT proceed.
+5. PRE-QA    → Run diagPreQA() from Apps Script editor (GASHardening.gs)
+                 Must show ALL categories PASS (0 FAIL, 0 WARN)
+                 If ANY category FAIL: stop, fix, re-push, re-run until PASS
+                 diagPreQA runs smoke + regression internally — no separate test step needed
 6. DEPLOY    → clasp deploy -i <deploymentId>
                  NEVER use clasp deploy without -i (creates new URL)
-7. VERIFY    → Hit ?action=runTests on PRODUCTION /exec URL
+7. VERIFY    → Hit ?action=runTests on PRODUCTION /exec URL (public, no auth needed)
                  Check ErrorLog sheet for new errors in last 5 minutes
+                 NOTE: Dev /dev URLs require Google auth — curl/fetch cannot reach them.
+                 All pre-deploy testing happens via diagPreQA() in step 5, not via URL.
 8. GIT       → Use Git Bash (NOT PowerShell — credential helper conflict):
                  git checkout -b <branch-name>
                  git add .
@@ -114,7 +147,7 @@ All .gs files share one scope. Constants and TAB_MAP from DataEngine.gs are avai
                  Include: what changed, what was tested, what's next
 ```
 
-**Never stop at step 4.** Push without audit+test+deploy+git+Notion is incomplete work.
+**Never stop at step 4.** Push without pre-QA+deploy+git+Notion is incomplete work.
 
 ---
 
@@ -125,6 +158,10 @@ All .gs files share one scope. Constants and TAB_MAP from DataEngine.gs are avai
 | Static source audit | Before every clasp push | `bash audit-source.sh` |
 | Wiring audit (detailed) | After adding new google.script.run calls | `bash audit-wiring.sh` |
 | Runtime tests | After every clasp push AND deploy | Hit `?action=runTests` |
+| Pre-QA verification | Before every deploy | Run `diagPreQA()` from GASHardening.gs |
+
+### Permissions
+Claude Code permissions are configured in `~/.claude/settings.json` under `"permissions": {"allow": [...]}`. If Code prompts for permission on every tool call, check that file.
 
 ---
 
@@ -209,7 +246,7 @@ If any match: fix before pushing.
 
 ## GAS Trigger Budget & Automation
 
-**Budget: 20 triggers max. Currently using ~5.**
+**Budget: 20 triggers max. Run `auditTriggers()` from GASHardening.gs for current count.**
 
 ### Required daily triggers (add these):
 | Trigger | Time | Function | Purpose |
@@ -243,25 +280,6 @@ If any match: fix before pushing.
 1. Add entry to Notion Audio Clip Queue with Status = "Not started"
 2. Run `node generate-audio.js` — generates only new clips, skips existing
 3. Mark Notion entry Status = "Done"
-
----
-
-## Common Mistakes (NEVER do these)
-
-1. Hardcoding sheet names instead of TAB_MAP
-2. Using `getActiveSpreadsheet()` instead of `openById(SSID)`
-3. Using `tryLock()` instead of `waitLock(30000)`
-4. Duplicating constants across files (shared global scope)
-5. Writing to a sheet tab owned by another module
-6. Creating a new GAS deployment instead of updating existing
-7. Using ES6 in any .html file
-8. Skipping smoke test before deploy
-9. Pushing to GAS without git commit+push after
-10. Updating Notion deploy page icon+title together (double-emoji bug)
-11. Guessing at versions — read the actual file header
-12. Stopping at clasp push without completing steps 5-10
-13. Pushing to GAS without running audit-source.sh first
-14. Adding a google.script.run call without adding the Safe function to smoke test wiring check
 
 ---
 

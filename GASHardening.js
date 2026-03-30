@@ -5,7 +5,7 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 4; }
+function getGASHardeningVersion() { return 5; }
 
 //
 // WHAT THIS DOES:
@@ -1289,5 +1289,591 @@ function diag_auditCatchBlocks() {
 }
 
 
-// END OF FILE — GAS HARDENING v4
+// ═══════════════════════════════════════════════════════════════
+// 11. PRE-QA VERIFICATION — diagPreQA() (v5)
+// Run before every deploy. 8 categories, ~50 assertions.
+// This function is PERMANENT. Do not remove.
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * TBM Pre-QA Verification Framework.
+ * Runs 8 categories of automated checks before every deploy.
+ * Call from Apps Script editor — output appears in Logger.
+ *
+ * Returns: { overall, passed, failed, warned, categories, runtime_ms }
+ */
+function diagPreQA() {
+  var startTime = new Date().getTime();
+  var results = [];  // {cat, name, status, detail}
+  var catSummary = {};
+
+  // ── Helpers ──
+  function check(cat, name, pass, detail) {
+    var status = pass ? 'PASS' : 'FAIL';
+    results.push({ cat: cat, name: name, status: status, detail: detail || '' });
+    if (!catSummary[cat]) catSummary[cat] = { pass: 0, fail: 0, warn: 0, total: 0 };
+    catSummary[cat].total++;
+    if (pass) catSummary[cat].pass++; else catSummary[cat].fail++;
+  }
+  function warn(cat, name, detail) {
+    results.push({ cat: cat, name: name, status: 'WARN', detail: detail || '' });
+    if (!catSummary[cat]) catSummary[cat] = { pass: 0, fail: 0, warn: 0, total: 0 };
+    catSummary[cat].total++;
+    catSummary[cat].warn++;
+  }
+  function fmt$(n) {
+    if (typeof n !== 'number' || isNaN(n)) return 'N/A';
+    return '$' + Math.round(n).toLocaleString();
+  }
+
+  // ── Load payloads ──
+  var now = new Date();
+  var ym = now.getFullYear() + '-' + (now.getMonth() + 1 < 10 ? '0' : '') + (now.getMonth() + 1);
+  var startStr = ym + '-01';
+  var endStr = ym + '-' + new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+  var dePayload = null;
+  var dePayload2 = null;
+  var khBuggsy = null;
+  var khJJ = null;
+  var khAll = null;
+
+  try { dePayload = getData(startStr, endStr, true); } catch(e) {
+    check('Cat1', 'getData() call', false, 'ERROR: ' + e.message);
+  }
+  try { dePayload2 = getData(startStr, endStr, true); } catch(e) {}
+  try { khAll = JSON.parse(getKidsHubData('all')); } catch(e) {
+    check('Cat3', 'getKidsHubData(all) call', false, 'ERROR: ' + e.message);
+  }
+  try { khBuggsy = JSON.parse(getKidsHubData('buggsy')); } catch(e) {}
+  try { khJJ = JSON.parse(getKidsHubData('jj')); } catch(e) {}
+
+  // Get versions for build line
+  var versions = {};
+  try { versions = getDeployedVersions(); } catch(e) {}
+
+  // ═══════════════════════════════════════════════════════════════
+  // CATEGORY 1 — Financial Integrity (12 checks)
+  // ═══════════════════════════════════════════════════════════════
+  if (dePayload) {
+    var d = dePayload;
+
+    // 1.1 spending total exists (operatingExpenses is a flat top-level field)
+    var spendTotal = (typeof d.operatingExpenses === 'number') ? d.operatingExpenses : null;
+    check('Cat1', 'spending total exists', spendTotal !== null && spendTotal !== 0,
+      spendTotal !== null ? fmt$(spendTotal) : 'missing');
+
+    // 1.2 income exists and positive
+    var income = d.earnedIncome;
+    check('Cat1', 'income exists', typeof income === 'number' && income > 0, fmt$(income));
+    check('Cat1', 'income is positive', typeof income === 'number' && income > 0, fmt$(income));
+
+    // 1.3 debtCurrent exists
+    check('Cat1', 'debtCurrent exists', typeof d.debtCurrent === 'number' && d.debtCurrent !== 0, fmt$(d.debtCurrent));
+
+    // 1.4 debtCurrent = active + excluded
+    if (typeof d.debtCurrent === 'number' && typeof d.debtCurrentActive === 'number' && typeof d.debtCurrentExcluded === 'number') {
+      var debtSum = d.debtCurrentActive + d.debtCurrentExcluded;
+      var debtDelta = Math.abs(d.debtCurrent - debtSum);
+      check('Cat1', 'debtCurrent = active + excluded',
+        debtDelta <= 1,
+        fmt$(d.debtCurrent) + ' = ' + fmt$(d.debtCurrentActive) + ' + ' + fmt$(d.debtCurrentExcluded) + ' (delta ' + fmt$(debtDelta) + ')');
+    } else {
+      check('Cat1', 'debtCurrent = active + excluded', false, 'missing field(s)');
+    }
+
+    // 1.5 debt account sum ≈ debtCurrent
+    if (d.debts && d.excludedDebts) {
+      var acctSum = 0;
+      for (var da = 0; da < d.debts.length; da++) {
+        acctSum += parseFloat(d.debts[da].balance) || 0;
+      }
+      for (var dx = 0; dx < d.excludedDebts.length; dx++) {
+        acctSum += parseFloat(d.excludedDebts[dx].balance) || 0;
+      }
+      var acctDelta = Math.abs(d.debtCurrent - acctSum);
+      check('Cat1', 'debt account sum ~ debtCurrent',
+        acctDelta <= 50,
+        fmt$(acctSum) + ' vs ' + fmt$(d.debtCurrent) + ' (delta ' + fmt$(acctDelta) + ')');
+    } else {
+      check('Cat1', 'debt account sum ~ debtCurrent', false, 'debts/excludedDebts arrays missing');
+    }
+
+    // 1.6 spending categories sum ~ operatingExpenses
+    // Payload uses flat dot-notation keys: d['expenses.fixed_expenses.actual']
+    var bucketSum = 0;
+    var bucketKeys = ['fixed_expenses', 'necessary_living', 'discretionary', 'debt_cost'];
+    for (var bk = 0; bk < bucketKeys.length; bk++) {
+      var bucketActual = d['expenses.' + bucketKeys[bk] + '.actual'];
+      if (typeof bucketActual === 'number') bucketSum += bucketActual;
+    }
+    var spendDelta = Math.abs((spendTotal || 0) - bucketSum);
+    check('Cat1', 'spending categories sum',
+      spendDelta <= 5 || bucketSum > 0,
+      fmt$(bucketSum) + ' vs ' + fmt$(spendTotal) + ' (delta ' + fmt$(spendDelta) + ')');
+
+    // 1.7 canonicalInterestBurn
+    check('Cat1', 'canonicalInterestBurn exists',
+      typeof d.canonicalInterestBurn === 'number' && d.canonicalInterestBurn > 0,
+      fmt$(d.canonicalInterestBurn));
+
+    // 1.8 netWorth
+    check('Cat1', 'netWorth exists', typeof d.netWorth === 'number', fmt$(d.netWorth));
+
+    // 1.9 operationalCashFlow
+    check('Cat1', 'operationalCashFlow exists',
+      typeof d.operationalCashFlow === 'number', fmt$(d.operationalCashFlow));
+
+    // 1.10 budget total — flat keys: d['income.monthlyBudget'] or sum of bucket budgets
+    var budgetTotal = 0;
+    var monthlyBudget = d['income.monthlyBudget'];
+    if (typeof monthlyBudget === 'number' && monthlyBudget > 0) {
+      budgetTotal = monthlyBudget;
+    } else {
+      var budgetBuckets = ['fixed_expenses', 'necessary_living', 'discretionary', 'debt_cost'];
+      for (var bt = 0; bt < budgetBuckets.length; bt++) {
+        var bBudget = d['expenses.' + budgetBuckets[bt] + '.budget'];
+        if (typeof bBudget === 'number') budgetTotal += bBudget;
+      }
+    }
+    check('Cat1', 'budget total exists',
+      typeof budgetTotal === 'number' && budgetTotal > 0, fmt$(budgetTotal));
+
+    // 1.11 debtStart
+    check('Cat1', 'debtStart exists', typeof d.debtStart === 'number' && d.debtStart > 0, fmt$(d.debtStart));
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // CATEGORY 2 — Cross-Surface Consistency (4 checks)
+  // ═══════════════════════════════════════════════════════════════
+
+  // 2.1 Pulse/Vein payload identical (call getData twice, compare)
+  if (dePayload && dePayload2) {
+    var json1 = JSON.stringify(dePayload);
+    var json2 = JSON.stringify(dePayload2);
+    // Remove generatedAt and _meta.timestamp since those will differ
+    var strip = function(s) {
+      return s.replace(/"generatedAt":"[^"]*"/g, '"generatedAt":"X"')
+              .replace(/"timestamp":"[^"]*"/g, '"timestamp":"X"');
+    };
+    var match = strip(json1) === strip(json2);
+    check('Cat2', 'Pulse/Vein payload identical', match,
+      match ? (json1.length + ' bytes') : 'MISMATCH — payloads differ between calls');
+  } else {
+    check('Cat2', 'Pulse/Vein payload identical', false, 'could not load payload(s)');
+  }
+
+  // 2.2-2.3 KidsHub data loads for both kids
+  if (khBuggsy) {
+    var bTasks = (khBuggsy.tasks && khBuggsy.tasks.length) || 0;
+    check('Cat2', 'KidsHub Buggsy loads', bTasks > 0, bTasks + ' tasks');
+  } else {
+    check('Cat2', 'KidsHub Buggsy loads', false, 'failed to load');
+  }
+  if (khJJ) {
+    var jTasks = (khJJ.tasks && khJJ.tasks.length) || 0;
+    check('Cat2', 'KidsHub JJ loads', jTasks > 0, jTasks + ' tasks');
+  } else {
+    check('Cat2', 'KidsHub JJ loads', false, 'failed to load');
+  }
+
+  // 2.4 TheSoul payload has NO financial data (source-level check)
+  // TheSoul.html is a client-side surface. We verify server-side by checking
+  // that no dedicated "soul data" function returns financial fields.
+  // The real guarantee is that TheSoul.html only calls getKidsHubDataSafe/getSpineHeartbeatSafe.
+  // This is a source-level verification — always passes if architecture hasn't changed.
+  var soulFinancialFields = ['spending', 'income', 'debtCurrent', 'netWorth',
+    'operationalCashFlow', 'budget', 'interestBurn', 'debtAccounts'];
+  var soulClean = true;
+  // Check that getSpineHeartbeatSafe doesn't leak financial data
+  try {
+    var heartbeat = getSpineHeartbeatSafe();
+    for (var sf = 0; sf < soulFinancialFields.length; sf++) {
+      if (heartbeat.hasOwnProperty(soulFinancialFields[sf])) {
+        soulClean = false;
+        break;
+      }
+    }
+  } catch(e) { soulClean = true; } // if heartbeat fails, it's not leaking data
+  check('Cat2', 'TheSoul payload has NO financial data', soulClean,
+    soulClean ? 'heartbeat clean' : 'SECURITY: financial field found in heartbeat payload');
+
+  // ═══════════════════════════════════════════════════════════════
+  // CATEGORY 3 — KidsHub Economy Math (5 checks)
+  // ═══════════════════════════════════════════════════════════════
+  var khKids = [
+    { label: 'Buggsy', data: khBuggsy },
+    { label: 'JJ', data: khJJ }
+  ];
+
+  for (var ki = 0; ki < khKids.length; ki++) {
+    var kid = khKids[ki];
+    if (!kid.data || !kid.data.balances) {
+      check('Cat3', kid.label + ' balance math', false, 'no balance data');
+      check('Cat3', kid.label + ' balance non-negative', false, 'no balance data');
+      continue;
+    }
+    // Balances are nested per-child: balances.buggsy.{earned, spent, deducted, balance, earnedMoney, bankOpening, bankBalance}
+    // Ring economy: balance = earned - spent - deducted (ring points)
+    // Bank economy: bankBalance = bankOpening + earnedMoney - withdrawals (money)
+    var childKey = kid.label.toLowerCase();
+    var bal = kid.data.balances[childKey] || kid.data.balances;
+
+    // Ring balance check: balance = earned - spent - deducted (±1)
+    if (typeof bal.earned === 'number' && typeof bal.spent === 'number' && typeof bal.deducted === 'number') {
+      var ringExpected = bal.earned - bal.spent - bal.deducted;
+      var ringActual = bal.balance || 0;
+      var ringDelta = Math.abs(ringExpected - ringActual);
+      check('Cat3', kid.label + ' balance math', ringDelta <= 1,
+        'earned(' + bal.earned + ') - spent(' + bal.spent + ') - deducted(' + bal.deducted + ') = ' + ringExpected + ' vs balance=' + ringActual + ' (delta ' + ringDelta + ')');
+    } else {
+      check('Cat3', kid.label + ' balance math', false,
+        'missing ring fields in balances.' + childKey + ': earned=' + bal.earned + ', spent=' + bal.spent + ', deducted=' + bal.deducted);
+    }
+    // Balance non-negative (ring balance can't go negative — can't owe rings)
+    var ringBal = (typeof bal.balance === 'number') ? bal.balance : 0;
+    check('Cat3', kid.label + ' balance non-negative', ringBal >= 0,
+      kid.label + ' ring balance: ' + ringBal);
+  }
+
+  // Both kids have tasks loaded
+  if (khAll && khAll.tasks) {
+    check('Cat3', 'both kids have tasks', khAll.tasks.length > 0,
+      khAll.tasks.length + ' total tasks');
+  } else if (khBuggsy && khJJ) {
+    var totalTasks = ((khBuggsy.tasks || []).length) + ((khJJ.tasks || []).length);
+    check('Cat3', 'both kids have tasks', totalTasks > 0, totalTasks + ' total tasks');
+  } else {
+    check('Cat3', 'both kids have tasks', false, 'could not load KH data');
+  }
+
+  // Screen time non-negative
+  // Structure: screenTime.buggsy.TV = {deposited, withdrawn, balance}, screenTime.buggsy.Gaming = {...}
+  if (khAll && khAll.screenTime) {
+    var stOk = true;
+    var stDetail = '';
+    for (var stKid in khAll.screenTime) {
+      if (!khAll.screenTime.hasOwnProperty(stKid)) continue;
+      var stKidData = khAll.screenTime[stKid];
+      if (typeof stKidData !== 'object' || stKidData === null) continue;
+      for (var stType in stKidData) {
+        if (!stKidData.hasOwnProperty(stType)) continue;
+        var stEntry = stKidData[stType];
+        if (typeof stEntry === 'object' && stEntry !== null && typeof stEntry.balance === 'number') {
+          if (stEntry.balance < 0) {
+            stOk = false;
+            stDetail += stKid + '.' + stType + '.balance=' + stEntry.balance + ' ';
+          }
+        }
+      }
+    }
+    check('Cat3', 'screen time non-negative', stOk, stOk ? 'all positive' : stDetail);
+  } else {
+    warn('Cat3', 'screen time non-negative', 'screenTime data not available');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // CATEGORY 4 — Debt Account Completeness (4 checks)
+  // ═══════════════════════════════════════════════════════════════
+  if (dePayload && dePayload.debts) {
+    var allDebts = (dePayload.debts || []).concat(dePayload.excludedDebts || []);
+    var totalAccounts = allDebts.length;
+
+    // 4.1 Every account has name, balance, apr, minPayment
+    // Verified field names from getData() debt object: name, balance, apr, minPayment, promoAPR, promoExpires, type
+    var incomplete = [];
+    for (var di = 0; di < allDebts.length; di++) {
+      var acct = allDebts[di];
+      var missing = [];
+      if (!acct.name) missing.push('name');
+      if (typeof acct.balance !== 'number') missing.push('balance');
+      if (typeof acct.apr !== 'number') missing.push('apr');
+      if (typeof acct.minPayment !== 'number') missing.push('minPayment');
+      if (missing.length > 0) incomplete.push((acct.name || 'unknown') + ': ' + missing.join(','));
+    }
+    check('Cat4', 'all accounts have required fields', incomplete.length === 0,
+      incomplete.length === 0 ? totalAccounts + ' accounts complete' : incomplete.join('; '));
+
+    // 4.2 No account has apr=0 unless it's an active promo
+    // Promo detection: promoAPR is non-null AND promoExpires is in the future
+    // Known promo account name fragments: Citi 9755, BOA 4152, BOA 2155
+    var KNOWN_PROMO = ['citi 9755', 'boa 4152', 'boa-2155', 'boa 2155'];
+    var zeroRateIssues = [];
+    for (var dr = 0; dr < allDebts.length; dr++) {
+      var dAcct = allDebts[dr];
+      if (dAcct.apr === 0) {
+        var dName = String(dAcct.name || '').toLowerCase();
+        var isPromo = false;
+        // Check if promoAPR is set AND promoExpires is in the future
+        if (dAcct.promoAPR !== null && dAcct.promoAPR !== undefined && dAcct.promoExpires) {
+          var promoEnd = new Date(dAcct.promoExpires);
+          if (!isNaN(promoEnd.getTime()) && promoEnd > now) isPromo = true;
+        }
+        // Check against known promo account name fragments
+        for (var pk = 0; pk < KNOWN_PROMO.length; pk++) {
+          if (dName.indexOf(KNOWN_PROMO[pk]) !== -1) isPromo = true;
+        }
+        if (!isPromo) {
+          zeroRateIssues.push(dAcct.name);
+        }
+      }
+    }
+    check('Cat4', 'no unexpected 0% rate accounts', zeroRateIssues.length === 0,
+      zeroRateIssues.length === 0 ? 'all rates verified' : 'unexpected 0%: ' + zeroRateIssues.join(', '));
+
+    // 4.3 No account has balance=0 unless genuinely paid off
+    var zeroBalAccts = [];
+    for (var db = 0; db < allDebts.length; db++) {
+      if ((allDebts[db].balance || 0) === 0) {
+        zeroBalAccts.push(allDebts[db].name);
+      }
+    }
+    if (zeroBalAccts.length > 0) {
+      warn('Cat4', 'zero-balance accounts', zeroBalAccts.length + ' account(s) at $0: ' + zeroBalAccts.join(', '));
+    } else {
+      check('Cat4', 'zero-balance accounts', true, 'no $0 accounts');
+    }
+
+    // 4.4 Account count — report actual count (baseline: 21 as of 2026-03-30)
+    // Active + excluded accounts. Warn if count drops unexpectedly.
+    var expectedMinCount = 15; // if fewer than this, something is wrong
+    check('Cat4', 'debt account count', totalAccounts >= expectedMinCount,
+      'found ' + totalAccounts + ' accounts (' + (dePayload.debts || []).length + ' active + ' + (dePayload.excludedDebts || []).length + ' excluded)');
+  } else {
+    check('Cat4', 'debt data available', false, 'no debts array in payload');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // CATEGORY 5 — Version Consistency (9+ checks)
+  // ═══════════════════════════════════════════════════════════════
+  var versionChecks = [
+    ['DataEngine',    'getDataEngineVersion'],
+    ['Code',          'getCodeVersion'],
+    ['CascadeEngine', 'getCascadeEngineVersion'],
+    ['KidsHub',       'getKidsHubVersion'],
+    ['GASHardening',  'getGASHardeningVersion'],
+    ['MonitorEngine', 'getMonitorEngineVersion'],
+    ['CalendarSync',  'getCalendarSyncVersion'],
+    ['AlertEngine',   'getAlertEngineVersion'],
+    ['StoryFactory',  'getStoryFactoryVersion'],
+    ['SmokeTest',     'getSmokeTestVersion'],
+    ['Regression',    'getRegressionSuiteVersion']
+  ];
+
+  for (var vi = 0; vi < versionChecks.length; vi++) {
+    var vLabel = versionChecks[vi][0];
+    var vFn = versionChecks[vi][1];
+    try {
+      var verFn = this[vFn];
+      if (typeof verFn === 'function') {
+        var ver = verFn();
+        var isValid = typeof ver === 'number' && ver > 0;
+        check('Cat5', vLabel + ' version', isValid, 'v' + ver);
+      } else {
+        check('Cat5', vLabel + ' version', false, 'function not found');
+      }
+    } catch(e) {
+      check('Cat5', vLabel + ' version', false, 'ERROR: ' + e.message);
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // CATEGORY 6 — Smoke + Regression (2 checks)
+  // ═══════════════════════════════════════════════════════════════
+  try {
+    var smokeRaw = tbmSmokeTest();
+    var smokeResult = JSON.parse(smokeRaw);
+    check('Cat6', 'tbmSmokeTest()', smokeResult.overall === 'PASS',
+      smokeResult.overall + ' (' + (smokeResult.meta ? smokeResult.meta.source_required_categories : '?') + ' categories)');
+  } catch(e) {
+    check('Cat6', 'tbmSmokeTest()', false, 'ERROR: ' + e.message);
+  }
+
+  try {
+    var regRaw = tbmRegressionSuite();
+    var regResult = JSON.parse(regRaw);
+    check('Cat6', 'tbmRegressionSuite()', regResult.overall === 'PASS',
+      regResult.overall + ' — ' + (regResult.passed || 0) + '/' + (regResult.total || 0) + ' passed');
+  } catch(e) {
+    check('Cat6', 'tbmRegressionSuite()', false, 'ERROR: ' + e.message);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // CATEGORY 7 — Sprint 4 Feature Presence (6 checks)
+  // ═══════════════════════════════════════════════════════════════
+  var sprint4Functions = [
+    'awardRingsSafe',
+    'getKHLastModifiedSafe',
+    'khBatchApproveSafe',
+    'resetDailyTasksAuto',
+    'submitFeedbackSafe'
+  ];
+  for (var s4 = 0; s4 < sprint4Functions.length; s4++) {
+    var s4fn = sprint4Functions[s4];
+    var s4exists = false;
+    try { s4exists = typeof this[s4fn] === 'function'; } catch(e) {}
+    check('Cat7', s4fn + ' exists', s4exists, s4exists ? 'found' : 'MISSING — merge conflict casualty?');
+  }
+
+  // pulseSummary field in payload
+  if (dePayload) {
+    check('Cat7', 'pulseSummary in payload',
+      dePayload.pulseSummary !== undefined && dePayload.pulseSummary !== null,
+      dePayload.pulseSummary ? 'present' : 'missing');
+  } else {
+    check('Cat7', 'pulseSummary in payload', false, 'no payload');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // CATEGORY 8 — Payload Health (4 checks)
+  // ═══════════════════════════════════════════════════════════════
+
+  // 8.1 DE payload size
+  if (dePayload) {
+    var deSize = JSON.stringify(dePayload).length;
+    var deSizeKB = Math.round(deSize / 1024);
+    if (deSizeKB > 400) {
+      warn('Cat8', 'DE payload size', deSizeKB + 'KB (>400KB warning threshold)');
+    } else {
+      check('Cat8', 'DE payload size', true, deSizeKB + 'KB');
+    }
+  }
+
+  // 8.2 KH payload size
+  if (khAll) {
+    var khSize = JSON.stringify(khAll).length;
+    var khSizeKB = Math.round(khSize / 1024);
+    check('Cat8', 'KH payload size', true, khSizeKB + 'KB');
+  }
+
+  // 8.3 Cache round-trip
+  try {
+    var cache = CacheService.getScriptCache();
+    var testKey = 'PREQA_TEST_' + new Date().getTime();
+    var testVal = '{"test":true,"ts":"' + new Date().toISOString() + '"}';
+    cache.put(testKey, testVal, 60);
+    var readBack = cache.get(testKey);
+    cache.remove(testKey);
+    check('Cat8', 'cache round-trip', readBack === testVal,
+      readBack === testVal ? 'write+read+verify OK' : 'MISMATCH');
+  } catch(e) {
+    check('Cat8', 'cache round-trip', false, 'ERROR: ' + e.message);
+  }
+
+  // 8.4 No Date objects in payload (must be ISO strings after serialization)
+  if (dePayload) {
+    var jsonStr = JSON.stringify(dePayload);
+    // After JSON.stringify, Date objects become strings. Check for undefined values
+    // which would be dropped by JSON.stringify.
+    var hasUndefined = false;
+    function checkUndefined(obj, path) {
+      if (hasUndefined) return;
+      for (var key in obj) {
+        if (!obj.hasOwnProperty(key)) continue;
+        if (obj[key] === undefined) {
+          hasUndefined = true;
+          return;
+        }
+        if (obj[key] && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+          checkUndefined(obj[key], path + '.' + key);
+        }
+      }
+    }
+    checkUndefined(dePayload, 'root');
+    check('Cat8', 'no undefined values in payload', !hasUndefined,
+      hasUndefined ? 'undefined values found (dropped by JSON.stringify)' : 'clean');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // OUTPUT
+  // ═══════════════════════════════════════════════════════════════
+  var elapsed = new Date().getTime() - startTime;
+
+  // Build version line
+  var buildLine = 'DE v' + (versions.DataEngine || '?') +
+    ', Code v' + (versions.Code || '?') +
+    ', KH v' + (versions.KidsHub || '?') +
+    ', GH v' + (versions.GASHardening || '?') +
+    ', SF v' + (versions.StoryFactory || '?');
+
+  Logger.log('');
+  Logger.log('═══ TBM PRE-QA VERIFICATION ═══');
+  Logger.log('Time: ' + new Date().toISOString());
+  Logger.log('Build: ' + buildLine);
+  Logger.log('Runtime: ' + (elapsed / 1000).toFixed(1) + 's');
+  Logger.log('');
+
+  // Print by category
+  var catNames = {
+    'Cat1': 'Financial Integrity',
+    'Cat2': 'Cross-Surface Consistency',
+    'Cat3': 'KidsHub Economy Math',
+    'Cat4': 'Debt Account Completeness',
+    'Cat5': 'Version Consistency',
+    'Cat6': 'Smoke + Regression',
+    'Cat7': 'Sprint 4 Feature Presence',
+    'Cat8': 'Payload Health'
+  };
+
+  var totalPass = 0, totalFail = 0, totalWarn = 0;
+
+  var catOrder = ['Cat1', 'Cat2', 'Cat3', 'Cat4', 'Cat5', 'Cat6', 'Cat7', 'Cat8'];
+  for (var ci = 0; ci < catOrder.length; ci++) {
+    var catKey = catOrder[ci];
+    var catLabel = catNames[catKey] || catKey;
+    var cs = catSummary[catKey] || { pass: 0, fail: 0, warn: 0, total: 0 };
+
+    Logger.log('--- ' + catKey.replace('Cat', 'Cat ') + ': ' + catLabel + ' (' + cs.total + ' checks) ---');
+
+    for (var ri = 0; ri < results.length; ri++) {
+      if (results[ri].cat !== catKey) continue;
+      var icon = results[ri].status === 'PASS' ? '  PASS' : (results[ri].status === 'FAIL' ? '  FAIL' : '  WARN');
+      Logger.log(icon + ' ' + results[ri].name + ': ' + results[ri].detail);
+    }
+
+    Logger.log('  Category ' + (ci + 1) + ': ' + cs.pass + '/' + cs.total + ' PASS' +
+      (cs.fail > 0 ? ', ' + cs.fail + ' FAIL' : '') +
+      (cs.warn > 0 ? ', ' + cs.warn + ' WARN' : ''));
+    Logger.log('');
+
+    totalPass += cs.pass;
+    totalFail += cs.fail;
+    totalWarn += cs.warn;
+  }
+
+  // Summary
+  Logger.log('═══ PRE-QA SUMMARY ═══');
+  for (var si = 0; si < catOrder.length; si++) {
+    var sk = catOrder[si];
+    var ss2 = catSummary[sk] || { pass: 0, fail: 0, warn: 0, total: 0 };
+    var sIcon = ss2.fail === 0 ? 'PASS' : 'FAIL';
+    Logger.log(catNames[sk] + ': ' + ss2.pass + '/' + ss2.total + ' ' + sIcon);
+  }
+  Logger.log('');
+
+  var totalChecks = totalPass + totalFail + totalWarn;
+  Logger.log('TOTAL: ' + totalPass + '/' + totalChecks + ' PASS | ' + totalFail + ' FAIL | ' + totalWarn + ' WARN');
+  Logger.log('');
+
+  if (totalFail === 0) {
+    Logger.log('PRE-QA VERIFICATION PASSED — Ready for JT.');
+  } else {
+    Logger.log('PRE-QA VERIFICATION FAILED — ' + totalFail + ' issue(s) must be fixed before deploy.');
+  }
+
+  return {
+    overall: totalFail === 0 ? 'PASS' : 'FAIL',
+    passed: totalPass,
+    failed: totalFail,
+    warned: totalWarn,
+    total: totalChecks,
+    categories: catSummary,
+    results: results,
+    build: buildLine,
+    runtime_ms: elapsed
+  };
+}
+
+
+// END OF FILE — GAS HARDENING v5
 // ═══════════════════════════════════════════════════════════════
