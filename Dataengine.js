@@ -1,5 +1,7 @@
 // ════════════════════════════════════════════════════════════════════
 // DATA ENGINE v76 — Dynamic KPI Computation from Raw Tiller Data
+// WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule
+// READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules
 // ════════════════════════════════════════════════════════════════════
 
 function getDataEngineVersion() { return 76; }
@@ -51,9 +53,9 @@ function testGetData() {
 /**
  * Diagnostic — verify grouped debt totals for TheSpine/TheSoul v12.
  */
-function testGetDebtByType_() {
+function de_testGetDebtByType_() {
   var parsed = parseDebtExport();
-  var grouped = getDebtByType_(parsed.active, parsed.excluded, getCurrentMortgageBalance_());
+  var grouped = de_getDebtByType_(parsed.active, parsed.excluded, de_getCurrentMortgageBalance_());
   Logger.log('=== DEBT BY TYPE ===');
   grouped.forEach(function(row) {
     Logger.log(row.type + ': $' + row.total + ' | ' + row.count + ' accounts | ' + row.accounts.join(', '));
@@ -204,7 +206,7 @@ var TAB_MAP = {
 };
 
 // v73: Request-scoped sheet data cache — same pattern as KidsHub v25.
-// When _deCache is non-null, readDESheet_() caches getDataRange().getValues() results.
+// When _deCache is non-null, de_readSheet_() caches getDataRange().getValues() results.
 // Activated at getData()/getSimulatorData()/getWeeklyTrackerData() entry, cleared in finally.
 // Write functions and standalone callers see _deCache=null → always read fresh.
 var _deCache = null;
@@ -218,7 +220,7 @@ function getDESS_() {
   return _deSS;
 }
 
-function readDESheet_(tabKey) {
+function de_readSheet_(tabKey) {
   if (_deCache && _deCache.hasOwnProperty(tabKey)) return _deCache[tabKey];
   var ss = getDESS_();
   var name = TAB_MAP[tabKey] || tabKey;
@@ -249,7 +251,7 @@ function getData(startStr, endStr, includeDebt) {
 
   var _warnings = [];  // v24: collect warnings for _meta
   // ── 1. Load Categories → build PartnerBucket + key mappings ──
-  var catData = readDESheet_('Categories');
+  var catData = de_readSheet_('Categories');
   if (!catData || catData.length < 2) throw new Error('Categories sheet empty or missing');
   var catMap = {};      // category → { type, bucket, group }
   var bucketMap = {};   // bucket label → normalized key
@@ -289,7 +291,7 @@ function getData(startStr, endStr, includeDebt) {
   var EARNED_INCOME_CATS = ['JT Income', 'LT Income', 'Bonus Income', 'Other Income', 'Interest Income'];
 
   // ── 2. Load Transactions, filter by date range ──
-  var txData = readDESheet_('Transactions');
+  var txData = de_readSheet_('Transactions');
   if (!txData || txData.length < 2) throw new Error('Transactions sheet empty or missing');
 
   var catActuals = {};   // category → sum of absolute amounts
@@ -382,7 +384,7 @@ function getData(startStr, endStr, includeDebt) {
     }
   }
   // ── 4. Load Budget_Data for the date range ──
-  var budData = readDESheet_('Budget_Data');
+  var budData = de_readSheet_('Budget_Data');
   if (!budData || budData.length < 2) { _warnings.push('Budget_Data empty'); budData = [[]]; }
   var monthFractions = getMonthFractions(startDate, endDate);
   var catBudgets = {};
@@ -416,7 +418,7 @@ function getData(startStr, endStr, includeDebt) {
     (catBudgets['Interest Income'] || 0);
 
   // ── 5. Balance History — latest balance per account ──
-  var bhData = readDESheet_('Balance History');
+  var bhData = de_readSheet_('Balance History');
   if (!bhData || bhData.length < 2) throw new Error('Balance History sheet empty or missing');
   var latestInRange = {};
   var latestOverall = {};
@@ -515,7 +517,7 @@ function getData(startStr, endStr, includeDebt) {
   var debtTotalActive = 0;             // v26: active-only sum
   var debtTotalExcluded = 0;           // v26: excluded-only sum
   if (includeDebt) {
-    var dxData = readDESheet_('Debt_Export');
+    var dxData = de_readSheet_('Debt_Export');
     if (dxData && dxData.length > 0) {
       var dxHeaders = [];
       var dxFoundHeader = false;
@@ -622,7 +624,7 @@ function getData(startStr, endStr, includeDebt) {
   var _budgetMapCoverage = _allDebtsForBudget.length > 0
     ? roundTo((_allDebtsForBudget.length - _unmatchedBudgetDebts.length) / _allDebtsForBudget.length * 100, 1)
     : 100;
-  var weeklyCashMap = getWeeklyCashMapMetrics_(ss);
+  var weeklyCashMap = de_getWeeklyCashMapMetrics_(ss);
 
   // ── 7. Compute derived metrics ──
   var operationalCashFlow = earnedIncome - operatingExpenses;
@@ -684,7 +686,7 @@ function getData(startStr, endStr, includeDebt) {
   // ── 7b. Compute interest burn server-side (v24) ──
   // v26: include both active + excluded for full interest picture
   var _allDebtsForBurn = debts.concat(excludedDebtsFromExport);
-  var _interestBurn = (includeDebt && _allDebtsForBurn.length > 0) ? computeInterestBurn_(_allDebtsForBurn) : { monthly: 0, annual: 0, byAccount: [], byTier: [], lowAprBurn: 0, critical: 0, high: 0, medium: 0, low: 0 };
+  var _interestBurn = (includeDebt && _allDebtsForBurn.length > 0) ? de_computeInterestBurn_(_allDebtsForBurn) : { monthly: 0, annual: 0, byAccount: [], byTier: [], lowAprBurn: 0, critical: 0, high: 0, medium: 0, low: 0 };
 
   // ── 8. Build response matching Dashboard_Export KV structure ──
   var result = {
@@ -816,7 +818,7 @@ function getData(startStr, endStr, includeDebt) {
     debtCurrent: roundTo(debtCurrent, 2),                        // v26: active + excluded
     debtCurrentActive: roundTo(debtTotalActive, 2),               // v26: cascade/waterfall
     debtCurrentExcluded: roundTo(debtTotalExcluded, 2),           // v26: transparency
-    debtByType: getDebtByType_(debts, excludedDebtsFromExport, _mortgageBalance_v21),
+    debtByType: de_getDebtByType_(debts, excludedDebtsFromExport, _mortgageBalance_v21),
     debtTarget: readDebtExportMeta('debtFreeTarget') || null,
 cashFlowPositiveDate: (function() {
   var _cfpNow = new Date();
@@ -961,7 +963,7 @@ cashFlowPositiveDate: (function() {
 
   result.onTrackDays = (function() {
     if (!includeDebt) return 0;
-    var bhData = readDESheet_('Balance History');
+    var bhData = de_readSheet_('Balance History');
     if (!bhData || bhData.length < 2) return 0;
     var _trackedNames = {};
     for (var _oti = 0; _oti < debts.length; _oti++) _trackedNames[debts[_oti].name] = true;
@@ -999,7 +1001,7 @@ cashFlowPositiveDate: (function() {
 
   result.lastWin = (function() {
     if (!includeDebt) return null;
-    var bhData = readDESheet_('Balance History');
+    var bhData = de_readSheet_('Balance History');
     if (!bhData || bhData.length < 2) return null;
     var _trackedNames = {};
     for (var _lwi = 0; _lwi < debts.length; _lwi++) _trackedNames[debts[_lwi].name] = true;
@@ -1116,7 +1118,7 @@ cashFlowPositiveDate: (function() {
   // v45: Unmapped category diagnostic for bucket variance debugging
   result.unmappedCategories = _unmappedCategories;
   // v24: Attach response metadata
-  result._meta = buildMeta_(startStr, endStr, _warnings);
+  result._meta = de_buildMeta_(startStr, endStr, _warnings);
   // v24: debtStart $0 warning
   if (result.debtStart <= 0) {
     integrityErrors.push('debtStart=$0 \u2014 DebtModel may be missing or account names changed');
@@ -1204,7 +1206,7 @@ function assertNumeric(x, fieldName) {
  * Get list of available months from Budget_Data (for dropdown population)
  */
 function getAvailableMonths() {
-  var budData = readDESheet_('Budget_Data');
+  var budData = de_readSheet_('Budget_Data');
   if (!budData || budData.length < 2) return [];
   var months = {};
   var MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1247,7 +1249,7 @@ function amortizationMonths(balance, apr, payment) {
  * Read a named value from Debt_Export SUMMARY METRICS section.
  */
 function readDebtExportMeta(key) {
-  var data = readDESheet_('Debt_Export');
+  var data = de_readSheet_('Debt_Export');
   if (!data || data.length < 2) return null;
   var inSummary = false;
   for (var r = 0; r < data.length; r++) {
@@ -1275,7 +1277,7 @@ function readDebtExportMeta(key) {
 function computeDebtBaseline() {
   // v73: Use cached reads when called within getData() scope
   // ── v28 PRIMARY: Iterate Close History for January 2026 (not hardcoded row) ──
-  var chData = readDESheet_('Close History');
+  var chData = de_readSheet_('Close History');
   if (chData && chData.length > 1) {
     for (var r = 1; r < chData.length; r++) {
       var monthStr = String(chData[r][0] || '').trim().toLowerCase();
@@ -1293,7 +1295,7 @@ function computeDebtBaseline() {
   }
 
   // ── FALLBACK: Balance History scan (original v22-v26 logic) ──
-  var dmData = readDESheet_('DebtModel');
+  var dmData = de_readSheet_('DebtModel');
   if (!dmData || dmData.length < 2) {
     Logger.log('\u26a0\ufe0f computeDebtBaseline: DebtModel sheet not found');
     return 0;
@@ -1314,7 +1316,7 @@ function computeDebtBaseline() {
     if (tillerName) trackedNames[tillerName] = true;
     if (acct) trackedNames[acct] = true;
   }
-  var bhData = readDESheet_('Balance History');
+  var bhData = de_readSheet_('Balance History');
   if (!bhData || bhData.length < 2) {
     Logger.log('\u26a0\ufe0f computeDebtBaseline: Balance History sheet not found');
     return 0;
@@ -1360,7 +1362,7 @@ function computeDebtBaseline() {
 function getLOCCapacity() {
   var now = new Date();
 
-  var dxData = readDESheet_('Debt_Export');
+  var dxData = de_readSheet_('Debt_Export');
   if (!dxData || dxData.length < 2) return _emptyLOCCapacity();
   var dxHeaders = [];
   var foundHeader = false;
@@ -1402,7 +1404,7 @@ function getLOCCapacity() {
   var totalAvailable = Math.max(0, totalLimit - totalUsed);
   var capacityPct = totalLimit > 0 ? roundTo((totalAvailable / totalLimit) * 100, 1) : 0;
 
-  var txData = readDESheet_('Transactions');
+  var txData = de_readSheet_('Transactions');
   var drawsByMonth = {};
 
   for (var t = 1; t < txData.length; t++) {
@@ -1513,7 +1515,7 @@ function getLOCCapacitySafe() {
 /**
  * Read WeeklyCashMap pickup cells by column-A label scan.
  */
-function getWeeklyCashMapMetrics_(ss) {
+function de_getWeeklyCashMapMetrics_(ss) {
   var empty = {
     weeklyCashMin: null,
     pinchPointDate: null,
@@ -1522,7 +1524,7 @@ function getWeeklyCashMapMetrics_(ss) {
     honestMonthlyDeficit: null
   };
   try {
-    var data = readDESheet_('WCM');
+    var data = de_readSheet_('WCM');
     if (!data || data.length < 1) return empty;
     var pickup = {};
     var KEYS = ['weeklyCashMin','pinchPointDate','weeksOfRunway','honestWeeklyBurn','honestMonthlyDeficit'];
@@ -1561,7 +1563,7 @@ function getCashFlowForecast() {
   var _cacheOwner = !_deCache;
   if (_cacheOwner) _deCache = {};
   try {
-  var budData = readDESheet_('Budget_Data');
+  var budData = de_readSheet_('Budget_Data');
   if (!budData || budData.length < 2) return { error: 'Budget_Data empty' };
   var monthBudgets = {};
   for (var b = 1; b < budData.length; b++) {
@@ -1573,7 +1575,7 @@ function getCashFlowForecast() {
     monthBudgets[ym][cat] = amt;
   }
 
-  var dxData = readDESheet_('Debt_Export');
+  var dxData = de_readSheet_('Debt_Export');
   var debts = {};
   if (dxData && dxData.length > 0) {
     var dxHeaders = [], foundHeader = false, foundData = false;
@@ -1601,8 +1603,8 @@ function getCashFlowForecast() {
   var sofiJTPayoff = new Date(now.getFullYear(), now.getMonth() + sofiJTMonths, 1);
   var sofiLTPayoff = new Date(now.getFullYear(), now.getMonth() + sofiLTMonths, 1);
 
-  var txData = readDESheet_('Transactions');
-  var catData = readDESheet_('Categories');
+  var txData = de_readSheet_('Transactions');
+  var catData = de_readSheet_('Categories');
   var catMap = {};
   for (var i = 1; i < catData.length; i++) {
     var cn = catData[i][0], ct = catData[i][2];
@@ -1726,7 +1728,7 @@ function getCashFlowForecast() {
     sofiJTMonths: sofiJTMonths,
     sofiLTMonths: sofiLTMonths,
     locCapacity: getLOCCapacity(),
-    _meta: buildMeta_('forecast', '2026-2027')
+    _meta: de_buildMeta_('forecast', '2026-2027')
   };
   } finally {
     if (_cacheOwner) { _deCache = null; _deSS = null; }
@@ -1743,7 +1745,7 @@ function getCashFlowForecast() {
 // ██  parseDebtExport()      — v21 Wave 6: promoAction added
 // ██  getSimulatorData()     — v21 Wave 4: budgetBreathingRoom added
 // ██  getWeeklyTrackerData() — unchanged from v19
-// ██  buildMeta_() + computeInterestBurn_() + verify functions
+// ██  de_buildMeta_() + de_computeInterestBurn_() + verify functions
 // ════════════════════════════════════════════════════════════════════
 
 
@@ -1752,7 +1754,7 @@ function getCashFlowForecast() {
  * v21 Wave 6: adds promoAction field (reads Debt_Export col V / DebtModel col V).
  */
 function parseDebtExport() {
-  var dxData = readDESheet_('Debt_Export');
+  var dxData = de_readSheet_('Debt_Export');
   if (!dxData || dxData.length < 2) return { active: [], excluded: [], summary: {} };
   var dxHeaders = [];
   var foundHeader = false;
@@ -1846,7 +1848,7 @@ function parseDebtExport() {
  * Current mortgage balance for grouped debt visuals.
  * Largest liability over $100K not already represented in Debt_Export.
  */
-function getCurrentMortgageBalance_() {
+function de_getCurrentMortgageBalance_() {
   var parsed = parseDebtExport();
   var tracked = {};
   parsed.active.concat(parsed.excluded).forEach(function(d) {
@@ -1854,7 +1856,7 @@ function getCurrentMortgageBalance_() {
     if (name) tracked[name] = true;
   });
 
-  var bhData = readDESheet_('Balance History');
+  var bhData = de_readSheet_('Balance History');
   if (!bhData || bhData.length < 2) return 0;
   var latestBal = {};
   for (var i = 1; i < bhData.length; i++) {
@@ -1886,7 +1888,7 @@ function getCurrentMortgageBalance_() {
  * Group debt balances for Spine/Soul v12 grouped waterfall visuals.
  * Returns [{ type, total, count, accounts }].
  */
-function getDebtByType_(activeDebts, excludedDebts, mortgageBalance) {
+function de_getDebtByType_(activeDebts, excludedDebts, mortgageBalance) {
   var allDebts = (activeDebts || []).concat(excludedDebts || []);
   var orderedTypes = [
     'Mortgage',
@@ -1974,7 +1976,7 @@ function getDebtByType_(activeDebts, excludedDebts, mortgageBalance) {
  * getPartnerBucketMap() — v17
  */
 function getPartnerBucketMap() {
-  var data = readDESheet_('Budget_Data');
+  var data = de_readSheet_('Budget_Data');
   if (!data || data.length < 2) return {};
   var headers = data[0].map(function(h) { return String(h).trim(); });
   var catIdx = headers.indexOf('Category');
@@ -2030,7 +2032,7 @@ function getSimulatorData() {
   }
 
   var EARNED_INCOME_CATS_SIM = ['JT Income', 'LT Income', 'Bonus Income', 'Other Income', 'Interest Income'];
-  var txData = readDESheet_('Transactions');
+  var txData = de_readSheet_('Transactions');
   var monthStart = new Date(y, m, 1);
   var monthEnd = new Date(y, m + 1, 0, 23, 59, 59);
   var earnedIncome = 0;
@@ -2190,7 +2192,7 @@ function getSimulatorData() {
 
   // ── Wave 4: budgetBreathingRoom — Budget_Data incomeBudget - minimums - expense57Budget ──
   var budgetBreathingRoom = (function() {
-    var _bdData = readDESheet_('Budget_Data');
+    var _bdData = de_readSheet_('Budget_Data');
     if (!_bdData || _bdData.length < 2) return null;
     var _incomeBudget = 0, _expenseBudget = 0;
     var _INCOME_CATS = ['JT Income', 'LT Income', 'Bonus Income', 'Other Income', 'Interest Income'];
@@ -2290,7 +2292,7 @@ function getSimulatorData() {
     totalActiveDebt:    roundTo(totalActiveDebt, 2),
     totalExcludedDebt:  roundTo(totalExcludedDebt, 2),
     allNonMortgageDebt: roundTo(allNonMortgageDebt, 2),
-    debtByType: getDebtByType_(activeDebts, excludedDebts, getCurrentMortgageBalance_()),
+    debtByType: de_getDebtByType_(activeDebts, excludedDebts, de_getCurrentMortgageBalance_()),
     // v51: Cash flow parity with getData() + dynamic debt counts + coverage
     operationalCashFlow: roundTo(earnedIncome - operatingExpenses, 2),
     netCashFlow: roundTo(earnedIncome - operatingExpenses + loanProceedsTotal, 2),
@@ -2328,12 +2330,12 @@ function getSimulatorData() {
     asOf:         now.toISOString(),
     debtTarget:   readDebtExportMeta('debtFreeTarget') || null,
     locCapacity:  getLOCCapacity(),
-    interestBurn: (activeDebts.length > 0 || excludedDebts.length > 0) ? computeInterestBurn_(activeDebts.concat(excludedDebts)) : { monthly: 0, annual: 0, byAccount: [], byTier: [], lowAprBurn: 0, critical: 0, high: 0, medium: 0, low: 0 },
+    interestBurn: (activeDebts.length > 0 || excludedDebts.length > 0) ? de_computeInterestBurn_(activeDebts.concat(excludedDebts)) : { monthly: 0, annual: 0, byAccount: [], byTier: [], lowAprBurn: 0, critical: 0, high: 0, medium: 0, low: 0 },
     // v30: Canonical interest burn from Debt_Export (uses full APR, no promo discount)
     canonicalInterestBurn: parseFloat(readDebtExportMeta('totalMonthlyInterest')) || 0,
     // v30: Budget breakdown by bucket for actual/budget display
     incomeBudget: (function() {
-      var _bdD2 = readDESheet_('Budget_Data');
+      var _bdD2 = de_readSheet_('Budget_Data');
       if (!_bdD2 || _bdD2.length < 2) return 0;
       var _ib = 0;
       var _INCOME_CATS2 = ['JT Income', 'LT Income', 'Bonus Income', 'Other Income', 'Interest Income'];
@@ -2347,7 +2349,7 @@ function getSimulatorData() {
       return Math.round(_ib);
     })(),
     bucketBudgets: (function() {
-      var _bdD3 = readDESheet_('Budget_Data');
+      var _bdD3 = de_readSheet_('Budget_Data');
       if (!_bdD3 || _bdD3.length < 2) return {};
       var _pbm = getPartnerBucketMap();
       var _BKEYS2 = { 'Fixed Expenses': 'fixedExpenses', 'Necessary Living': 'necessaryLiving', 'Discretionary': 'discretionary', 'Debt Cost': 'debtCost' };
@@ -2437,7 +2439,7 @@ function getSimulatorData() {
     gapAfterDebt: roundTo(earnedIncome - operatingExpenses - totalMinimums, 2),
     // v46 FIX #10: Unmatched debt warning
     unmatchedBudgetDebts: _unmatchedBudgetDebts,
-    _meta: buildMeta_('simulator', ym)
+    _meta: de_buildMeta_('simulator', ym)
   };
   } finally {
     if (_cacheOwner) { _deCache = null; _deSS = null; }
@@ -2496,7 +2498,7 @@ function getWeeklyTrackerData() {
     lastWeek: { start: lastWeekStart, end: lastWeekEnd, data: lastWeekData_raw },
     asOf: now.toISOString(),
     locCapacity: getLOCCapacity(),
-    _meta: buildMeta_(currStart, currEnd)
+    _meta: de_buildMeta_(currStart, currEnd)
   };
   } finally {
     if (_cacheOwner) { _deCache = null; _deSS = null; }
@@ -2614,7 +2616,7 @@ function verifyDataEngineFixes() {
 // ════════════════════════════════════════════════════════════════════
 
 function getSubscriptionData(startDate, endDate) {
-  var txData = readDESheet_('Transactions');
+  var txData = de_readSheet_('Transactions');
   if (!txData || txData.length < 2) return { subscriptions: [], periodTransactions: [], totalMonthly: 0, totalAnnual: 0, periodTotal: 0, asOf: '' };
   var now = new Date();
   var sixMonthsAgo = new Date(now); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
@@ -2696,7 +2698,7 @@ function getSubscriptionData(startDate, endDate) {
 // ════════════════════════════════════════════════════════════════════
 
 function getCloseHistoryData() {
-  var data = readDESheet_('Close History');
+  var data = de_readSheet_('Close History');
   if (!data || data.length < 2) return [];
   var months = [];
 
@@ -2737,7 +2739,7 @@ function getCloseHistoryData() {
 // getCategoryTransactions() — E-6: Transaction drill-down for WeeklyTracker
 // ════════════════════════════════════════════════════════════════════
 function getCategoryTransactions(category, startStr, endStr) {
-  var txData = readDESheet_('Transactions');
+  var txData = de_readSheet_('Transactions');
   if (!txData || txData.length < 2) return { transactions: [], total: 0 };
   var startDate = new Date(startStr + 'T00:00:00');
   var endDate = new Date(endStr + 'T23:59:59');
@@ -2778,10 +2780,10 @@ function getCascadeResultsSafe(extraMonthly, lumpSum, sideIncome) {
     var extra = (parseFloat(extraMonthly) || 0) + (parseFloat(sideIncome) || 0);
     var lump = parseFloat(lumpSum) || 0;
     var result;
-    if (typeof runCascadeWithExtras_ === 'function') {
-      result = runCascadeWithExtras_(debts, augustBonus, extra, lump);
+    if (typeof ce_runCascadeWithExtras_ === 'function') {
+      result = ce_runCascadeWithExtras_(debts, augustBonus, extra, lump);
     } else {
-      result = runCascade_(debts, augustBonus);
+      result = ce_runCascade_(debts, augustBonus);
     }
     return JSON.parse(JSON.stringify(result));
   } catch(e) {
@@ -2790,9 +2792,9 @@ function getCascadeResultsSafe(extraMonthly, lumpSum, sideIncome) {
   }
 }
 // ════════════════════════════════════════════════════════════════════
-// buildMeta_() — Response metadata for trust & traceability (v24)
+// de_buildMeta_() — Response metadata for trust & traceability (v24)
 // ════════════════════════════════════════════════════════════════════
-function buildMeta_(startOrLabel, endOrScope, warnings) {
+function de_buildMeta_(startOrLabel, endOrScope, warnings) {
   return {
     engine: 'DataEngine',
     version: getDataEngineVersion(),
@@ -2802,9 +2804,9 @@ function buildMeta_(startOrLabel, endOrScope, warnings) {
   };
 }
 // ════════════════════════════════════════════════════════════════════
-// computeInterestBurn_() — Server-side interest cost breakdown (v24)
+// de_computeInterestBurn_() — Server-side interest cost breakdown (v24)
 // ════════════════════════════════════════════════════════════════════
-function computeInterestBurn_(debts) {
+function de_computeInterestBurn_(debts) {
   var monthly = 0;
   var byAccount = [];
   var now = new Date();
@@ -3047,7 +3049,7 @@ function getBoardData() {
   // ── 7. Family note from Board_Config tab ──────────────────────────
   var familyNote = '';
   try {
-    var bcData = readDESheet_('Board_Config');
+    var bcData = de_readSheet_('Board_Config');
     if (bcData) {
       for (var bi = 0; bi < bcData.length; bi++) {
         if (String(bcData[bi][0]).trim() === 'FAMILY_NOTE') {

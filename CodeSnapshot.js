@@ -1,6 +1,8 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 // CodeSnapshot.gs v3 — Thin wrappers calling ThompsonLib
+// WRITES TO: (Google Drive only — no sheet writes)
+// READS FROM: (reads .gs source files for snapshot)
 // ════════════════════════════════════════════════════════════════════
 
 function getCodeSnapshotVersion() { return 3; }

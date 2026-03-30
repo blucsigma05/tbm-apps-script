@@ -1,5 +1,7 @@
 // ════════════════════════════════════════════════════════════════════
 // CalendarSync.gs v3 — Google Calendar Seeding & Sync from TBM Data
+// WRITES TO: (Google Calendar only — no sheet writes)
+// READS FROM: 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
 function getCalendarSyncVersion() { return 3; }

@@ -1,5 +1,7 @@
 // ════════════════════════════════════════════════════════════════════
 // CASCADE ENGINE v10 — Dynamic Debt Cascade Generator
+// WRITES TO: 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule
+// READS FROM: 💻🧮 DebtModel
 // ════════════════════════════════════════════════════════════════════
 // Version history tracked in Notion deploy page. Do not add version comments here.
 
@@ -7,7 +9,7 @@ function getCascadeEngineVersion() { return 10; }
 
 // v10: openById migration — trigger-safe spreadsheet accessor
 var _ceSS = null;
-function getCESS_() {
+function ce_getSS_() {
   if (!_ceSS) _ceSS = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
   return _ceSS;
 }
@@ -34,7 +36,7 @@ function refreshCascadeTabs() {
     return;
   }
   try {
-  var ss = getCESS_();
+  var ss = ce_getSS_();
   var startTime = new Date();
 
   // ── 1. Load debts ──
@@ -43,14 +45,14 @@ function refreshCascadeTabs() {
   var excludedDebts = parsed.excluded;
 
   // ── 2. Load DebtModel for notes + extra fields ──
-  var dmNotes = loadDebtModelNotes_(ss);
+  var dmNotes = ce_getDebtModelNotes_(ss);
 
   // ── 3. Load summary meta ──
   var augustBonus = parseFloat(readDebtExportMeta('augustBonus')) || 0;
   var debtFreeTarget = readDebtExportMeta('debtFreeTarget') || '';
 
   // ── 4. Run cascade simulation ──
-  var simResult = runCascade_(activeDebts, augustBonus);
+  var simResult = ce_runCascade_(activeDebts, augustBonus);
 
   // ── 4b. Write computed debt-free date back to Debt_Export ──
   //   Replaces the static "Dec 2028" string with actual CascadeEngine output
@@ -64,9 +66,9 @@ function refreshCascadeTabs() {
   writeDebtExportMeta('lastCascadeRun', new Date().toISOString());
   Logger.log('  Wrote lastCascadeRun: ' + new Date().toISOString());
   // ── 5. Write all three tabs ──
-  writeCascadeProof_(ss, activeDebts, dmNotes, simResult, startTime);
-  writeCascadeMonthByMonth_(ss, simResult);
-  writeCascadePayoffSchedule_(ss, simResult, activeDebts);
+  ce_writeCascadeProof_(ss, activeDebts, dmNotes, simResult, startTime);
+  ce_writeCascadeMonthByMonth_(ss, simResult);
+  ce_writeCascadePayoffSchedule_(ss, simResult, activeDebts);
 
   Logger.log('═══ Cascade Tabs Refreshed ═══');
   Logger.log('  Active debts: ' + activeDebts.length);
@@ -104,7 +106,7 @@ function refreshCascadeTabsSafe() {
  * @param {number} augustBonus — windfall amount
  * @returns {Object} { accts, months, startingDebt, totalInterest, lastPayoffMonth, lastPayoffLabel }
  */
-function runCascade_(debts, augustBonus, extraMonthly, lumpSum) {
+function ce_runCascade_(debts, augustBonus, extraMonthly, lumpSum) {
   extraMonthly = extraMonthly || 0;
   lumpSum = lumpSum || 0;
   var now = new Date();
@@ -346,7 +348,7 @@ function runCascade_(debts, augustBonus, extraMonthly, lumpSum) {
  * Read DebtModel tab for notes, due dates, credit limits per account.
  * Returns { 'Account Name': { notes, dueDate, creditLimit, strategy } }
  */
-function loadDebtModelNotes_(ss) {
+function ce_getDebtModelNotes_(ss) {
   var dm = ss.getSheetByName(TAB_MAP['DebtModel']);
   if (!dm) return {};
 
@@ -382,7 +384,7 @@ function loadDebtModelNotes_(ss) {
  * @param {*} val — value to write
  */
 function writeDebtExportMeta(key, val) {
-  var ss = getCESS_();
+  var ss = ce_getSS_();
   var dx = ss.getSheetByName(TAB_MAP['Debt_Export']);
   if (!dx) return;
 
@@ -415,8 +417,8 @@ function writeDebtExportMeta(key, val) {
 /**
  * Parameterized cascade for DebtSimulator slider inputs (v4).
  */
-function runCascadeWithExtras_(debts, augustBonus, extraMonthly, lumpSum) {
-  return runCascade_(debts, augustBonus, extraMonthly || 0, lumpSum || 0);
+function ce_runCascadeWithExtras_(debts, augustBonus, extraMonthly, lumpSum) {
+  return ce_runCascade_(debts, augustBonus, extraMonthly || 0, lumpSum || 0);
 }
 // ════════════════════════════════════════════════════════════════════
 // TAB WRITERS
@@ -425,8 +427,8 @@ function runCascadeWithExtras_(debts, augustBonus, extraMonthly, lumpSum) {
 /**
  * Write Cascade Proof tab — account listing with live data + simulation results.
  */
-function writeCascadeProof_(ss, activeDebts, dmNotes, simResult, genTime) {
-  var sheet = getOrCreateSheet_(ss, 'Cascade Proof');
+function ce_writeCascadeProof_(ss, activeDebts, dmNotes, simResult, genTime) {
+  var sheet = ce_getOrCreateSheet_(ss, 'Cascade Proof');
   sheet.clearContents();
   sheet.clearFormats();
 
@@ -509,8 +511,8 @@ function writeCascadeProof_(ss, activeDebts, dmNotes, simResult, genTime) {
 /**
  * Write Cascade Month-by-Month tab — full monthly projection timeline.
  */
-function writeCascadeMonthByMonth_(ss, simResult) {
-  var sheet = getOrCreateSheet_(ss, 'Cascade Month-by-Month');
+function ce_writeCascadeMonthByMonth_(ss, simResult) {
+  var sheet = ce_getOrCreateSheet_(ss, 'Cascade Month-by-Month');
   sheet.clearContents();
   sheet.clearFormats();
 
@@ -556,8 +558,8 @@ function writeCascadeMonthByMonth_(ss, simResult) {
 /**
  * Write Cascade Payoff Schedule tab — per-account payoff summary.
  */
-function writeCascadePayoffSchedule_(ss, simResult, activeDebts) {
-  var sheet = getOrCreateSheet_(ss, 'Cascade Payoff Schedule');
+function ce_writeCascadePayoffSchedule_(ss, simResult, activeDebts) {
+  var sheet = ce_getOrCreateSheet_(ss, 'Cascade Payoff Schedule');
   sheet.clearContents();
   sheet.clearFormats();
 
@@ -631,7 +633,7 @@ function writeCascadePayoffSchedule_(ss, simResult, activeDebts) {
 /**
  * Get or create a sheet by name. If it exists, return it. If not, create it.
  */
-function getOrCreateSheet_(ss, name) {
+function ce_getOrCreateSheet_(ss, name) {
   var physicalName = TAB_MAP[name] || name;
   var sheet = ss.getSheetByName(physicalName);
   if (!sheet) {
@@ -650,7 +652,7 @@ function testCascade() {
   Logger.log('Active debts: ' + parsed.active.length);
   Logger.log('August bonus: $' + bonus);
 
-  var result = runCascade_(parsed.active, bonus);
+  var result = ce_runCascade_(parsed.active, bonus);
   Logger.log('Starting debt: $' + Math.round(result.startingDebt));
   Logger.log('Total interest: $' + Math.round(result.totalInterest));
   Logger.log('Last payoff: Month ' + result.lastPayoffMonth + ' (' + result.lastPayoffLabel + ')');

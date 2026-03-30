@@ -1,6 +1,8 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 // AlertEngine.gs v6 — Push Notifications via Pushover API
+// WRITES TO: (Pushover API only — no sheet writes)
+// READS FROM: 💻🧮 Helpers (for config)
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 

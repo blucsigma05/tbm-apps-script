@@ -1,5 +1,7 @@
 // ═══════════════════════════════════════════════════
 // MonitorEngine.gs v6
+// WRITES TO: 💻🧮 Close History, 💻🧮 Month-End Review
+// READS FROM: 💻🧮 DebtModel, 💻🧮 Helpers, 🔒 Transactions, 🔒 Balance History
 // ═══════════════════════════════════════════════════
 
 function getMonitorEngineVersion() { return 6; }

@@ -1,10 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 // KidsHub.gs v29 — Kids Hub Server Backend (TBM Consolidated)
+// WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
+// READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubGsVersion() { return 29; }
-function getKidsHubVersion() { return 29; }  // alias for smoke test
+function getKidsHubVersion() { return 29; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {

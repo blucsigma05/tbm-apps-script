@@ -1,13 +1,15 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v51 — Apps Script Router (TBM Consolidated)
+// Code.gs v52 — Apps Script Router (TBM Consolidated)
+// WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
+// READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
 
 // TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeGsVersion() { return 51; }
+function getCodeVersion() { return 52; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -367,7 +369,7 @@ function serveData(e) {
         smoke: smokeResult,
         regression: regressionResult,
         versions: {
-          codeGs: 'v' + getCodeGsVersion(),
+          codeGs: 'v' + getCodeVersion(),
           dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })(),
           smokeTest: 'v' + (function(){ try { return getSmokeTestVersion(); } catch(e) { return '?'; } })(),
           regressionSuite: 'v' + (function(){ try { return getRegressionSuiteVersion(); } catch(e) { return '?'; } })()
@@ -394,7 +396,7 @@ function serveData(e) {
     } else if (action === 'board') {
       result = getBoardData();
     } else if (action === 'version') {
-      result = { codeGs: 'v' + getCodeGsVersion(), dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return 'unknown'; } })(), cascadeEngine: 'v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return 'unknown'; } })(), updated: new Date().toISOString().slice(0,10) };
+      result = { codeGs: 'v' + getCodeVersion(), dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return 'unknown'; } })(), cascadeEngine: 'v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return 'unknown'; } })(), updated: new Date().toISOString().slice(0,10) };
     } else if (action === 'loc') {
       result = getLOCCapacity();
     } else {
@@ -517,7 +519,9 @@ function getScriptUrl() {
 }
 
 function getScriptUrlSafe() {
-  return ScriptApp.getService().getUrl();
+  return withMonitor_('getScriptUrlSafe', function() {
+    return JSON.parse(JSON.stringify({ url: ScriptApp.getService().getUrl() }));
+  });
 }
 
 // ── MonitorEngine safe wrappers (v48) ────────────────────────────
@@ -765,13 +769,19 @@ function khResetTasksSafe(mode, child) {
   });
 }
 function khVerifyPinSafe(pin) {
-  return khVerifyPin(pin);
+  return withMonitor_('khVerifyPinSafe', function() {
+    return JSON.parse(JSON.stringify(khVerifyPin(pin)));
+  });
 }
 function getKHAppUrlsSafe() {
-  return getKHAppUrls();
+  return withMonitor_('getKHAppUrlsSafe', function() {
+    return JSON.parse(JSON.stringify(getKHAppUrls()));
+  });
 }
 function khHealthCheckSafe() {
-  return JSON.parse(khHealthCheck());
+  return withMonitor_('khHealthCheckSafe', function() {
+    return JSON.parse(khHealthCheck());
+  });
 }
 
 // v36: Ask System safe wrappers
@@ -883,7 +893,7 @@ function runTestsSafe() {
       smoke: smokeResult,
       regression: regressionResult,
       versions: {
-        codeGs: 'v' + getCodeGsVersion(),
+        codeGs: 'v' + getCodeVersion(),
         dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })(),
         smokeTest: 'v' + (function(){ try { return getSmokeTestVersion(); } catch(e) { return '?'; } })(),
         regressionSuite: 'v' + (function(){ try { return getRegressionSuiteVersion(); } catch(e) { return '?'; } })()
@@ -1024,7 +1034,7 @@ function healthCheck() {
     'runDailyGateCheck', 'installDailyGateAlert', 'removeDailyGateAlert',
     'notionApi_', 'pushQAResult', 'testNotionConnection',
     'reconcileVeinPulse', 'reconcileVeinPulseSafe', 'resolveNestedKey_',
-    'getCodeGsVersion',
+    'getCodeVersion',
     'getBoardData', 'getBoardDataSafe',
     'writeReconcileStatus_', 'getReconcileStatusSafe',
     'installReconciliationTrigger', 'removeReconciliationTrigger',
@@ -1059,7 +1069,7 @@ function healthCheck() {
   for (var fi = 0; fi < fns.length; fi++) {
     var name = fns[fi];
     var exists = false;
-    try { exists = typeof eval(name) === 'function'; } catch(e) {}
+    try { exists = typeof this[name] === 'function'; } catch(e) {}
     Logger.log('  ' + name + ': ' + (exists ? '✓' : '✗ MISSING'));
     if (!exists) allOk = false;
   }
@@ -1154,10 +1164,10 @@ function healthCheck() {
 
   try {
     pushQAResult({
-      surface: 'System', version: 'v' + getCodeGsVersion(),
+      surface: 'System', version: 'v' + getCodeVersion(),
       gate: 'Health Check', status: allOk ? 'PASS' : 'FAIL',
       details: allOk ? 'All checks passed' : 'Issues found',
-      values: { codeGs: 'v' + getCodeGsVersion() }
+      values: { codeGs: 'v' + getCodeVersion() }
     });
     Logger.log('📤 Results pushed to Notion QA Log');
   } catch (e) {
@@ -1290,7 +1300,7 @@ function reconcileVeinPulse() {
   }
   var status = failed === 0 ? 'PASS' : 'FAIL';
   var result = { status: status, total: total, passed: passed, failed: failed, failures: failures, checkedAt: new Date().toISOString(), dataMonth: ym };
-  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeGsVersion(), gate: 'Vein/Pulse Reconciliation', status: status, details: status === 'PASS' ? 'All ' + total + ' fields valid' : failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) {}
+  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeVersion(), gate: 'Vein/Pulse Reconciliation', status: status, details: status === 'PASS' ? 'All ' + total + ' fields valid' : failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) {}
   try { writeReconcileStatus_(result); } catch(e) {}
   return result;
 }
@@ -1316,7 +1326,7 @@ function writeReconcileStatus_(result) {
     sheet.setColumnWidth(1, 220); sheet.setColumnWidth(2, 400);
   }
   var versions = 'DE v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })()
-    + ' · Code v' + getCodeGsVersion()
+    + ' · Code v' + getCodeVersion()
     + ' · CE v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return '?'; } })();
   sheet.getRange('B1').setValue(new Date().toISOString());
   sheet.getRange('B2').setValue(result.status || 'UNKNOWN');
@@ -1354,4 +1364,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v51
+// END OF FILE — Code.gs v52
