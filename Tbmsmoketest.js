@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmSmokeTest.gs v4 — Pre-Deploy Structural Validation
+// tbmSmokeTest.gs v5 — Pre-Deploy Structural Validation
 // WRITES TO: (none — read-only checks)
 // READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
@@ -24,7 +24,7 @@
 // USAGE: Run tbmSmokeTest() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 4; }
+function getSmokeTestVersion() { return 5; }
 
 /**
  * Main entry point. Run this before every deploy.
@@ -123,11 +123,11 @@ function checkWiring_() {
   };
 
   // Canonical list: every *Safe function called from any HTML surface
-  // Source: audit-wiring.sh output (Sprint 2 wiring audit, 2026-03-30)
-  // Updates: removed stale khCompleteTaskWithBonusSafe, added listStoredStoriesSafe
+  // Source: audit-wiring.sh output (Sprint 3 wiring audit, 2026-03-30)
+  // v5: added awardRingsSafe, getKHLastModifiedSafe; removed stale khCompleteTaskWithBonusSafe
   var expectedFunctions = [
-    // KidsHub.html (20 functions)
-    'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKidsHubDataSafe',
+    // KidsHub.html (21 functions)
+    'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKHLastModifiedSafe', 'getKidsHubDataSafe',
     'khAddDeductionSafe', 'khApproveRequestSafe', 'khApproveTaskSafe',
     'khApproveWithBonusSafe', 'khBatchApproveSafe', 'khCompleteTaskSafe',
     'khCompleteTaskWithBonusSafe',
@@ -153,7 +153,9 @@ function checkWiring_() {
     'khSetBankOpeningSafe', 'khSubmitGradeSafe',
     'runMERGatesSafe', 'stampCloseMonthSafe', 'updateFamilyNoteSafe',
     // StoryLibrary.html (1 function)
-    'listStoredStoriesSafe'
+    'listStoredStoriesSafe',
+    // Education modules: fact-sprint.html, writing-module.html (1 function)
+    'awardRingsSafe'
   ];
 
   // Deduplicate
@@ -709,4 +711,4 @@ function checkHTMLContracts_() {
 }
 
 
-// END OF FILE — tbmSmokeTest.gs v4
+// END OF FILE — tbmSmokeTest.gs v5

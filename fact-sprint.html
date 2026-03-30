@@ -1093,7 +1093,7 @@ function finishSprint() {
     google.script.run
       .withSuccessHandler(function() {})
       .withFailureHandler(function(err) { console.error('Ring award failed:', err); })
-      .awardRings(CHILD, rings, 'fact-sprint');
+      .awardRingsSafe(CHILD, rings, 'fact-sprint');
   }
 }
 

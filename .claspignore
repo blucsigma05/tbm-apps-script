@@ -5,6 +5,7 @@ node_modules/**
 *.jsx
 generate-audio.js
 phrases.json
+audit-source.sh
 audit-wiring.sh
 wiring-audit-results.txt
 executive-skills-components.html

@@ -2595,6 +2595,92 @@ function addBedtimeStoryChore() {
 }
 
 
+// ════════════════════════════════════════════════════════════════════
+// v30: EDUCATION POINTS — award rings/stars for education module completion
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Award rings/stars for education module completion.
+ * Called by awardRingsSafe() in Code.gs.
+ * Writes a history entry to KH_History with event_type 'education'.
+ *
+ * @param {string} kid - 'buggsy' or 'jj'
+ * @param {number} amount - integer points to award (1-100)
+ * @param {string} source - description e.g. 'fact-sprint', 'writing-module-persuasive'
+ * @return {string} JSON string with status
+ */
+function kh_awardEducationPoints_(kid, amount, source) {
+  kid = String(kid || '').toLowerCase();
+  if (kid !== 'buggsy' && kid !== 'jj') {
+    return JSON.stringify({ error: true, message: 'Invalid kid: ' + kid });
+  }
+  amount = parseInt(amount, 10);
+  if (isNaN(amount) || amount < 1 || amount > 100) {
+    return JSON.stringify({ error: true, message: 'Amount must be 1-100' });
+  }
+  source = String(source || 'Education').substring(0, 100);
+  var today = getTodayISO_();
+  var now = getNowISO_();
+  var uid = 'EDU_' + kid + '_' + source.replace(/\s+/g, '_') + '_' + today;
+
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked', message: 'System is busy — please try again' });
+  try {
+    if (historyUIDExists_(uid)) {
+      return JSON.stringify({ status: 'ok', duplicate: true, message: 'Already awarded today for ' + source });
+    }
+    // appendHistory_(uid, taskID, child, task, points, basePoints, mult, eventType, date, timestamp)
+    appendHistory_(uid, 'EDU_' + source, kid, 'Education: ' + source, 0, amount, 1, 'education', today, now);
+    stampKHHeartbeat_();
+    return JSON.stringify({ status: 'ok', awarded: amount, kid: kid, source: source });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// v30: DAILY AUTO-RESET — trigger handler for 5 AM daily chore reset
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Trigger handler for daily task reset. Called by time-driven trigger at 5:00 AM CST.
+ * Resets all daily chores for both kids. Reuses khResetTasks() core logic.
+ * Trigger-safe: khResetTasks uses getKHSheet_ which uses openById.
+ */
+function resetDailyTasksAuto() {
+  try {
+    var result = JSON.parse(khResetTasks('daily', 'all'));
+    if (result.status === 'ok') {
+      Logger.log('resetDailyTasksAuto: Reset ' + result.resetCount + ' daily tasks');
+    } else {
+      Logger.log('resetDailyTasksAuto: ' + JSON.stringify(result));
+      if (typeof logError_ === 'function') logError_('resetDailyTasksAuto', new Error('Reset returned: ' + JSON.stringify(result)));
+    }
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('resetDailyTasksAuto', e);
+  }
+}
+
+/**
+ * Install daily reset trigger at 5 AM. Run from editor once.
+ */
+function installDailyReset() {
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'resetDailyTasksAuto') {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+  ScriptApp.newTrigger('resetDailyTasksAuto')
+    .timeBased()
+    .everyDays(1)
+    .atHour(5)
+    .create();
+  Logger.log('Daily reset trigger installed for 5 AM');
+}
+
+
 // v29: AUDIO BATCH LOADER + PROGRESS REPORT
 // ════════════════════════════════════════════════════════════════════
 

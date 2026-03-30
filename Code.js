@@ -329,7 +329,8 @@ function serveData(e) {
         'getCloseHistoryDataSafe': getCloseHistoryDataSafe, 'getKHAppUrlsSafe': getKHAppUrlsSafe,
         'getDeployedVersionsSafe': getDeployedVersionsSafe,
         'getKidsHubDataSafe': getKidsHubDataSafe, 'getKidsHubWidgetDataSafe': getKidsHubWidgetDataSafe,
-        'getKHLastModified': getKHLastModified, 'getSpineHeartbeatSafe': getSpineHeartbeatSafe,
+        'getKHLastModified': getKHLastModified, 'getKHLastModifiedSafe': getKHLastModifiedSafe,
+        'getSpineHeartbeatSafe': getSpineHeartbeatSafe,
         'khCompleteTaskSafe': khCompleteTaskSafe, 'khCompleteTaskWithBonusSafe': khCompleteTaskWithBonusSafe,
         'khUncompleteTaskSafe': khUncompleteTaskSafe, 'khApproveTaskSafe': khApproveTaskSafe,
         'khRejectTaskSafe': khRejectTaskSafe, 'khOverrideTaskSafe': khOverrideTaskSafe,
@@ -348,6 +349,7 @@ function serveData(e) {
         'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe,
         'submitFeedbackSafe': submitFeedbackSafe, 'getAudioBatchSafe': getAudioBatchSafe,
         'logHomeworkCompletionSafe': logHomeworkCompletionSafe, 'logSparkleProgressSafe': logSparkleProgressSafe,
+        'awardRingsSafe': awardRingsSafe,
         'runTestsSafe': runTestsSafe
       };
 
@@ -1052,6 +1054,20 @@ function logSparkleProgressSafe(data) {
       return JSON.parse(JSON.stringify({ error: true, message: 'Notion API error: ' + code }));
     }
     return JSON.parse(JSON.stringify({ success: true }));
+  });
+}
+
+// v54: Education ring/star awards — wires HTML awardRings() to KidsHub backend
+function awardRingsSafe(kid, amount, source) {
+  return withMonitor_('awardRingsSafe', function() {
+    return JSON.parse(kh_awardEducationPoints_(kid, amount, source));
+  });
+}
+
+// v54: Safe wrapper for KH heartbeat timestamp read
+function getKHLastModifiedSafe() {
+  return withMonitor_('getKHLastModifiedSafe', function() {
+    return JSON.parse(JSON.stringify(getKHLastModified()));
   });
 }
 
