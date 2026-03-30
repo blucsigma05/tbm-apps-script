@@ -2592,6 +2592,7 @@ function addBedtimeStoryChore() {
   } finally {
     lk.lock.releaseLock();
   }
+}
 
 
 // v29: AUDIO BATCH LOADER + PROGRESS REPORT
