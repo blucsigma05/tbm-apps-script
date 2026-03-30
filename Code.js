@@ -327,7 +327,8 @@ function serveData(e) {
         'updateFamilyNoteSafe': updateFamilyNoteSafe,
         'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
         'getVaultDataSafe': getVaultDataSafe, 'runStoryFactorySafe': runStoryFactorySafe,
-        'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe
+        'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe,
+        'runTestsSafe': runTestsSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
@@ -349,7 +350,25 @@ function serveData(e) {
       }
     }
 
-    if (action === 'months') {
+    if (action === 'runTests') {
+      var smokeRaw = tbmSmokeTest();
+      var regRaw = tbmRegressionSuite();
+      var smokeResult = JSON.parse(smokeRaw);
+      var regressionResult = JSON.parse(regRaw);
+      result = {
+        timestamp: new Date().toISOString(),
+        overall: (smokeResult.overall === 'PASS' && regressionResult.overall === 'PASS') ? 'PASS'
+               : (smokeResult.overall === 'FAIL' || regressionResult.overall === 'FAIL') ? 'FAIL' : 'WARN',
+        smoke: smokeResult,
+        regression: regressionResult,
+        versions: {
+          codeGs: 'v' + getCodeGsVersion(),
+          dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })(),
+          smokeTest: 'v' + (function(){ try { return getSmokeTestVersion(); } catch(e) { return '?'; } })(),
+          regressionSuite: 'v' + (function(){ try { return getRegressionSuiteVersion(); } catch(e) { return '?'; } })()
+        }
+      };
+    } else if (action === 'months') {
       result = getAvailableMonths();
     } else if (action === 'forecast') {
       result = getCashFlowForecast();
@@ -819,6 +838,30 @@ function getDeployedVersionsSafe() {
   });
 }
 
+
+// v50: Zero-touch deploy — combined smoke + regression test runner
+// Called via ?action=runTests (direct) or ?action=api&fn=runTestsSafe (proxy)
+function runTestsSafe() {
+  return withMonitor_('runTestsSafe', function() {
+    var smokeRaw = tbmSmokeTest();
+    var regRaw = tbmRegressionSuite();
+    var smokeResult = JSON.parse(smokeRaw);
+    var regressionResult = JSON.parse(regRaw);
+    return {
+      timestamp: new Date().toISOString(),
+      overall: (smokeResult.overall === 'PASS' && regressionResult.overall === 'PASS') ? 'PASS'
+             : (smokeResult.overall === 'FAIL' || regressionResult.overall === 'FAIL') ? 'FAIL' : 'WARN',
+      smoke: smokeResult,
+      regression: regressionResult,
+      versions: {
+        codeGs: 'v' + getCodeGsVersion(),
+        dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })(),
+        smokeTest: 'v' + (function(){ try { return getSmokeTestVersion(); } catch(e) { return '?'; } })(),
+        regressionSuite: 'v' + (function(){ try { return getRegressionSuiteVersion(); } catch(e) { return '?'; } })()
+      }
+    };
+  });
+}
 
 function getAppUrls() {
   var base = ScriptApp.getService().getUrl();
