@@ -1584,7 +1584,7 @@ $('wcmPinch').textContent='Pinch '+(function(v){
 var _now=new Date();var _isCur=(d.year===_now.getFullYear()&&d.monthNum===(_now.getMonth()+1));
 var _histDebt=null;
 if(!_isCur&&HISTORY_DATA&&HISTORY_DATA.length>0){
-var _hm=HISTORY_DATA.find(function(h){return h.month===d.month&&(h.year||2026)==d.year;});
+var _hm=null;for(var _hi=0;_hi<HISTORY_DATA.length;_hi++){if(HISTORY_DATA[_hi].month===d.month&&(HISTORY_DATA[_hi].year||2026)==d.year){_hm=HISTORY_DATA[_hi];break;}}
 if(_hm&&_hm.debtCurrent!=null)_histDebt=_hm.debtCurrent;
 }
 var _debtVal=_isCur?d.debtCurrent:(_histDebt!=null?_histDebt:null);
