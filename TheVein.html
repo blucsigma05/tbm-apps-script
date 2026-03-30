@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>The Vein v60 — Household Command Center</title>
-<!-- TheVein v60 — Version history tracked in Notion deploy page. No changelogs in this file. -->
+<title>The Vein v61 — Household Command Center</title>
+<!-- TheVein v61 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -552,6 +552,24 @@ h1{font-size:22px;} .cval{font-size:22px;}
 .kids-ask-meta{color:var(--text-muted)}
 .kids-bank-display{background:rgba(5,150,105,0.06);border:1px solid rgba(5,150,105,0.15)}
 .kids-bank-display .kids-bank-admin{color:var(--gold);border-color:rgba(201,168,76,0.3)}
+/* v61: Feedback system */
+.fbk-btn{position:fixed;bottom:16px;right:16px;z-index:900;padding:6px 14px;background:var(--card-bg,rgba(255,255,255,0.06));border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:20px;color:var(--text-muted,rgba(255,255,255,0.5));font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.2s}
+.fbk-btn:active{transform:scale(0.95)}
+.fbk-overlay{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s}
+.fbk-overlay.open{opacity:1}
+.fbk-card{background:var(--bg,#0f172a);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:16px;padding:24px;width:320px;max-width:90vw;color:var(--text,#e2e8f0);font-family:'JetBrains Mono',monospace;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.fbk-close{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--text-muted,rgba(255,255,255,0.5));font-size:18px;cursor:pointer;padding:4px}
+.fbk-title{font-size:16px;font-weight:700;margin-bottom:16px;letter-spacing:0.3px}
+.fbk-label{font-size:12px;font-weight:600;color:var(--text-muted,rgba(255,255,255,0.5));margin-bottom:6px}
+.fbk-stars{display:flex;gap:6px;margin-bottom:14px}
+.fbk-star{width:32px;height:32px;border-radius:8px;border:1px solid var(--border,rgba(255,255,255,0.08));background:transparent;color:var(--text-muted,rgba(255,255,255,0.5));font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:'JetBrains Mono',monospace}
+.fbk-star.selected{background:var(--gold,#c9a84c);color:#fff;border-color:var(--gold,#c9a84c)}
+.fbk-textarea{width:100%;height:60px;background:rgba(255,255,255,0.04);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:8px;color:var(--text,#e2e8f0);font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px;resize:none}
+.fbk-textarea:focus{outline:none;border-color:var(--gold,#c9a84c)}
+.fbk-submit{width:100%;margin-top:12px;padding:10px;border:none;border-radius:8px;background:var(--positive,#059669);color:#fff;font-size:13px;font-weight:700;font-family:'JetBrains Mono',monospace;cursor:pointer;transition:all 0.15s}
+.fbk-submit:disabled{opacity:0.4;cursor:not-allowed}
+.fbk-submit:active:not(:disabled){transform:scale(0.97)}
+.fbk-msg{text-align:center;font-size:12px;margin-top:8px;font-weight:600}
 </style>
 </head>
 <body>
@@ -3235,6 +3253,86 @@ p.innerHTML='<div style="padding:10px 16px;display:flex;justify-content:space-be
 document.body.appendChild(p);
 document.body.style.border=allPass?'3px solid #4ade80':'3px solid #f87171';
 });
+})();
+</script>
+<!-- v61: Feedback system -->
+<button class="fbk-btn" onclick="fbkOpen()">📝 Feedback</button>
+<div id="fbkOverlay" class="fbk-overlay" style="display:none" onclick="if(event.target===this)fbkClose()">
+<div class="fbk-card">
+<button class="fbk-close" onclick="fbkClose()">&times;</button>
+<div class="fbk-title">Quick Feedback</div>
+<div class="fbk-label">How's the layout?</div>
+<div class="fbk-stars" id="fbkLayout"></div>
+<div class="fbk-label">How's the readability?</div>
+<div class="fbk-stars" id="fbkRead"></div>
+<div class="fbk-label">Anything else? <span style="color:var(--text-muted);font-weight:400">(optional)</span></div>
+<textarea class="fbk-textarea" id="fbkText" maxlength="500" placeholder="What's bugging you?"></textarea>
+<button class="fbk-submit" id="fbkSubmit" disabled onclick="fbkSend()">Submit</button>
+<div class="fbk-msg" id="fbkMsg"></div>
+</div>
+</div>
+<script>
+(function(){
+var _fbkLayout = 0, _fbkRead = 0;
+function renderStars(containerId) {
+  var c = document.getElementById(containerId);
+  if (!c) return;
+  var html = '';
+  for (var i = 1; i <= 5; i++) {
+    html += '<button class="fbk-star" data-v="' + i + '" onclick="fbkRate(\'' + containerId + '\',' + i + ')">' + i + '</button>';
+  }
+  c.innerHTML = html;
+}
+renderStars('fbkLayout');
+renderStars('fbkRead');
+
+window.fbkRate = function(containerId, val) {
+  if (containerId === 'fbkLayout') _fbkLayout = val;
+  if (containerId === 'fbkRead') _fbkRead = val;
+  var btns = document.getElementById(containerId).querySelectorAll('.fbk-star');
+  for (var i = 0; i < btns.length; i++) {
+    var bv = parseInt(btns[i].getAttribute('data-v'));
+    if (bv <= val) { btns[i].className = 'fbk-star selected'; }
+    else { btns[i].className = 'fbk-star'; }
+  }
+  var sub = document.getElementById('fbkSubmit');
+  if (sub) sub.disabled = !(_fbkLayout > 0 && _fbkRead > 0);
+};
+window.fbkOpen = function() {
+  var o = document.getElementById('fbkOverlay');
+  if (o) { o.style.display = 'flex'; setTimeout(function(){ o.className = 'fbk-overlay open'; }, 10); }
+};
+window.fbkClose = function() {
+  var o = document.getElementById('fbkOverlay');
+  if (o) { o.className = 'fbk-overlay'; setTimeout(function(){ o.style.display = 'none'; }, 200); }
+  _fbkLayout = 0; _fbkRead = 0;
+  renderStars('fbkLayout'); renderStars('fbkRead');
+  var t = document.getElementById('fbkText'); if (t) t.value = '';
+  var s = document.getElementById('fbkSubmit'); if (s) s.disabled = true;
+  var m = document.getElementById('fbkMsg'); if (m) m.textContent = '';
+};
+window.fbkSend = function() {
+  var sub = document.getElementById('fbkSubmit');
+  if (sub) { sub.disabled = true; sub.textContent = 'Sending...'; }
+  var payload = {
+    surface: 'vein',
+    layout: _fbkLayout,
+    readability: _fbkRead,
+    text: (document.getElementById('fbkText') || {}).value || ''
+  };
+  google.script.run
+    .withSuccessHandler(function() {
+      var m = document.getElementById('fbkMsg');
+      if (m) { m.style.color = 'var(--positive,#059669)'; m.textContent = 'Thanks! ✓'; }
+      setTimeout(function(){ fbkClose(); }, 2000);
+    })
+    .withFailureHandler(function(err) {
+      var m = document.getElementById('fbkMsg');
+      if (m) { m.style.color = 'var(--negative,#dc2626)'; m.textContent = 'Error: ' + (err.message || 'try again'); }
+      if (sub) { sub.disabled = false; sub.textContent = 'Submit'; }
+    })
+    .submitFeedbackSafe(payload);
+};
 })();
 </script>
 </body>

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>The Pulse v58 — Thompson Household</title>
-<meta name="tbm-version" content="v58">
+<title>The Pulse v59 — Thompson Household</title>
+<meta name="tbm-version" content="v59">
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -464,6 +464,24 @@ button,.kids-approve-btn,.kids-ask-btn,.refresh-btn{min-height:44px;min-width:44
 }
 /* v55: Slider thumb for tablet touch */
 input[type=range]::-webkit-slider-thumb{width:36px;height:36px}
+/* v59: Feedback system */
+.fbk-btn{position:fixed;bottom:16px;right:16px;z-index:900;padding:6px 14px;background:var(--card);border:1px solid var(--card-border);border-radius:20px;color:var(--ink2);font-size:11px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;backdrop-filter:none}
+.fbk-btn:active{transform:scale(0.95)}
+.fbk-overlay{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s}
+.fbk-overlay.open{opacity:1}
+.fbk-card{background:var(--paper,#5c2833);border:1px solid var(--card-border);border-radius:16px;padding:24px;width:320px;max-width:90vw;color:var(--ink);font-family:'DM Sans',sans-serif;position:relative;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.fbk-close{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--ink3);font-size:18px;cursor:pointer;padding:4px}
+.fbk-title{font-size:16px;font-weight:700;margin-bottom:16px;letter-spacing:0.3px}
+.fbk-label{font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.fbk-stars{display:flex;gap:6px;margin-bottom:14px}
+.fbk-star{width:32px;height:32px;border-radius:8px;border:1px solid var(--card-border);background:transparent;color:var(--ink3);font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+.fbk-star.selected{background:var(--gold,#D4A853);color:#fff;border-color:var(--gold,#D4A853)}
+.fbk-textarea{width:100%;height:60px;background:rgba(255,255,255,0.06);border:1px solid var(--card-border);border-radius:8px;color:var(--ink);font-family:'DM Sans',sans-serif;font-size:12px;padding:8px;resize:none}
+.fbk-textarea:focus{outline:none;border-color:var(--gold,#D4A853)}
+.fbk-submit{width:100%;margin-top:12px;padding:10px;border:none;border-radius:8px;background:var(--green,#8ECDA0);color:#fff;font-size:13px;font-weight:700;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.15s}
+.fbk-submit:disabled{opacity:0.4;cursor:not-allowed}
+.fbk-submit:active:not(:disabled){transform:scale(0.97)}
+.fbk-msg{text-align:center;font-size:12px;margin-top:8px;font-weight:600}
 </style>
 </head>
 <body>
@@ -473,7 +491,7 @@ input[type=range]::-webkit-slider-thumb{width:36px;height:36px}
 <a id="nav-vein" onclick="tbmNav('vein')" style="padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.6);transition:all 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.9)';this.style.background='rgba(255,255,255,0.1)'" onmouseout="if(!this.classList.contains('tbm-active')){this.style.color='rgba(255,255,255,0.6)';this.style.background='transparent'}">Command Center</a>
 </div>
 <script>
-var TBM_VERSION='v58';
+var TBM_VERSION='v59';
 var _tbmBaseUrl='';var _isPartnerMode=(new URLSearchParams(window.location.search)).get('jt')==='1';
 google.script.run.withSuccessHandler(function(u){_tbmBaseUrl=u;}).getScriptUrlSafe();
 function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.top.location.href=_tbmBaseUrl+'?page='+p+suffix;else google.script.run.withSuccessHandler(function(u){window.top.location.href=u+'?page='+p+suffix;}).getScriptUrlSafe();}
@@ -1329,6 +1347,86 @@ p.innerHTML='<div style="padding:10px 16px;display:flex;justify-content:space-be
 document.body.appendChild(p);
 document.body.style.border=allPass?'3px solid #4ade80':'3px solid #f87171';
 });
+})();
+</script>
+<!-- v59: Feedback system -->
+<button class="fbk-btn" onclick="fbkOpen()">📝 Feedback</button>
+<div id="fbkOverlay" class="fbk-overlay" style="display:none" onclick="if(event.target===this)fbkClose()">
+<div class="fbk-card">
+<button class="fbk-close" onclick="fbkClose()">&times;</button>
+<div class="fbk-title">Quick Feedback</div>
+<div class="fbk-label">How's the layout?</div>
+<div class="fbk-stars" id="fbkLayout"></div>
+<div class="fbk-label">How's the readability?</div>
+<div class="fbk-stars" id="fbkRead"></div>
+<div class="fbk-label">Anything else? <span style="color:var(--ink3);font-weight:400">(optional)</span></div>
+<textarea class="fbk-textarea" id="fbkText" maxlength="500" placeholder="What's bugging you?"></textarea>
+<button class="fbk-submit" id="fbkSubmit" disabled onclick="fbkSend()">Submit</button>
+<div class="fbk-msg" id="fbkMsg"></div>
+</div>
+</div>
+<script>
+(function(){
+var _fbkLayout = 0, _fbkRead = 0;
+function renderStars(containerId, setter) {
+  var c = document.getElementById(containerId);
+  if (!c) return;
+  var html = '';
+  for (var i = 1; i <= 5; i++) {
+    html += '<button class="fbk-star" data-v="' + i + '" onclick="fbkRate(\'' + containerId + '\',' + i + ')">' + i + '</button>';
+  }
+  c.innerHTML = html;
+}
+renderStars('fbkLayout');
+renderStars('fbkRead');
+
+window.fbkRate = function(containerId, val) {
+  if (containerId === 'fbkLayout') _fbkLayout = val;
+  if (containerId === 'fbkRead') _fbkRead = val;
+  var btns = document.getElementById(containerId).querySelectorAll('.fbk-star');
+  for (var i = 0; i < btns.length; i++) {
+    var bv = parseInt(btns[i].getAttribute('data-v'));
+    if (bv <= val) { btns[i].className = 'fbk-star selected'; }
+    else { btns[i].className = 'fbk-star'; }
+  }
+  var sub = document.getElementById('fbkSubmit');
+  if (sub) sub.disabled = !(_fbkLayout > 0 && _fbkRead > 0);
+};
+window.fbkOpen = function() {
+  var o = document.getElementById('fbkOverlay');
+  if (o) { o.style.display = 'flex'; setTimeout(function(){ o.className = 'fbk-overlay open'; }, 10); }
+};
+window.fbkClose = function() {
+  var o = document.getElementById('fbkOverlay');
+  if (o) { o.className = 'fbk-overlay'; setTimeout(function(){ o.style.display = 'none'; }, 200); }
+  _fbkLayout = 0; _fbkRead = 0;
+  renderStars('fbkLayout'); renderStars('fbkRead');
+  var t = document.getElementById('fbkText'); if (t) t.value = '';
+  var s = document.getElementById('fbkSubmit'); if (s) s.disabled = true;
+  var m = document.getElementById('fbkMsg'); if (m) m.textContent = '';
+};
+window.fbkSend = function() {
+  var sub = document.getElementById('fbkSubmit');
+  if (sub) { sub.disabled = true; sub.textContent = 'Sending...'; }
+  var payload = {
+    surface: 'pulse',
+    layout: _fbkLayout,
+    readability: _fbkRead,
+    text: (document.getElementById('fbkText') || {}).value || ''
+  };
+  google.script.run
+    .withSuccessHandler(function() {
+      var m = document.getElementById('fbkMsg');
+      if (m) { m.style.color = 'var(--green,#8ECDA0)'; m.textContent = 'Thanks! ✓'; }
+      setTimeout(function(){ fbkClose(); }, 2000);
+    })
+    .withFailureHandler(function(err) {
+      var m = document.getElementById('fbkMsg');
+      if (m) { m.style.color = 'var(--red,#F0B4B4)'; m.textContent = 'Error: ' + (err.message || 'try again'); }
+      if (sub) { sub.disabled = false; sub.textContent = 'Submit'; }
+    })
+    .submitFeedbackSafe(payload);
+};
 })();
 </script>
 </body>

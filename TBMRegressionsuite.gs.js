@@ -416,7 +416,7 @@ function runEnvironmentAssertions_(results) {
   // ── ENV-004: All critical finance tabs exist ────────────────────
   (function() {
     var a = { id: 'ENV-004', category: 'environment', description: 'Critical finance tabs exist in workbook', status: 'PASS', details: '' };
-    var requiredTabs = ['Transactions', 'Balance History', 'Categories', 'Budget_Data', 'DebtModel', 'Debt_Export', 'Close History', 'Helpers', 'BankRec'];
+    var requiredTabs = ['Transactions', 'Balance History', 'Categories', 'Budget_Data', 'DebtModel', 'Debt_Export', 'Close History', 'Helpers', 'BankRec', 'Feedback'];
     var missing = [];
     try {
       var ss = SpreadsheetApp.openById(SSID);

@@ -9,8 +9,8 @@
 
 // WRITES TO: (routing only — no direct sheet writes)
 // READS FROM: (all tabs via safe wrappers; CacheService)
-function getCodeGsVersion() { return 51; }
-function getCodeVersion() { return 51; }  // alias for standardized naming
+function getCodeGsVersion() { return 52; }
+function getCodeVersion() { return 52; }  // alias for standardized naming
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -1330,4 +1330,51 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v50
+// ── Feedback System (v52) ──────────────────────────────────────────
+
+/**
+ * One-time setup: creates the 💻 Feedback tab with headers.
+ * Run from the Apps Script editor.
+ */
+function setupFeedbackSheet() {
+  var ss = SpreadsheetApp.openById(SSID);
+  var tabName = TAB_MAP['Feedback'] || '💻 Feedback';
+  var existing = ss.getSheetByName(tabName);
+  if (existing) {
+    Logger.log('Feedback sheet already exists.');
+    return { success: true, message: 'Already exists' };
+  }
+  var sheet = ss.insertSheet(tabName);
+  sheet.appendRow(['Timestamp', 'Surface', 'LayoutRating', 'ReadabilityRating', 'FreeText', 'UserAgent']);
+  sheet.setFrozenRows(1);
+  sheet.getRange('A1:F1').setFontWeight('bold');
+  Logger.log('Created feedback sheet: ' + tabName);
+  return { success: true, message: 'Created' };
+}
+
+function submitFeedbackSafe(payload) {
+  return withMonitor_('submitFeedbackSafe', function() {
+    // Validate
+    var layout = parseInt(payload && payload.layout);
+    var readability = parseInt(payload && payload.readability);
+    if (isNaN(layout) || layout < 1 || layout > 5) throw new Error('Layout rating must be 1-5');
+    if (isNaN(readability) || readability < 1 || readability > 5) throw new Error('Readability rating must be 1-5');
+    var surface = String(payload.surface || 'unknown');
+    var text = String(payload.text || '').substring(0, 500);
+
+    var lock = LockService.getScriptLock();
+    lock.waitLock(30000);
+    try {
+      var ss = SpreadsheetApp.openById(SSID);
+      var tabName = TAB_MAP['Feedback'] || '💻 Feedback';
+      var sheet = ss.getSheetByName(tabName);
+      if (!sheet) throw new Error('Feedback sheet not found. Run setupFeedbackSheet() first.');
+      sheet.appendRow([new Date().toISOString(), surface, layout, readability, text, 'web']);
+    } finally {
+      lock.releaseLock();
+    }
+    return JSON.parse(JSON.stringify({ success: true }));
+  });
+}
+
+// END OF FILE — Code.gs v52
