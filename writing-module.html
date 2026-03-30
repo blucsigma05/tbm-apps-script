@@ -1086,7 +1086,7 @@ function handleSubmit() {
       google.script.run
         .withSuccessHandler(function() { })
         .withFailureHandler(function(err) { })
-        .awardRings(CHILD, 3, 'writing-module-' + fmt.id);
+        .awardRingsSafe(CHILD, 3, 'writing-module-' + fmt.id);
     }
   } catch (e) {
     // Standalone mode — no GAS backend
@@ -1098,7 +1098,7 @@ function handleSubmit() {
       google.script.run
         .withSuccessHandler(function() { })
         .withFailureHandler(function(err) { })
-        .logHomeworkCompletion({
+        .logHomeworkCompletionSafe({
           child: CHILD,
           subject: 'RLA',
           assignment: 'Writing - ' + fmt.name,

@@ -1053,7 +1053,7 @@ window.onload = function () {
           }
         })
         .withFailureHandler(function() { })
-        .getKHLastModified();
+        .getKHLastModifiedSafe();
     }, 60000);
   } else {
     loadKidData();
@@ -1069,7 +1069,7 @@ window.onload = function () {
           }
         })
         .withFailureHandler(function() { /* heartbeat check failed, skip this cycle */ })
-        .getKHLastModified();
+        .getKHLastModifiedSafe();
     }, 60000);
   }
 };
@@ -1230,7 +1230,7 @@ function onKidData(raw) {
   }
 
   // v24: Capture heartbeat on load so smart poll can compare
-  google.script.run.withSuccessHandler(function(ts) { if (ts) _lastHeartbeat = ts; }).getKHLastModified();
+  google.script.run.withSuccessHandler(function(ts) { if (ts) _lastHeartbeat = ts; }).getKHLastModifiedSafe();
 
   // v23 Fix 5: Win animation — celebrate when balance increases after refresh
   var newBal = Number(balances.balance) || 0;

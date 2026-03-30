@@ -89,32 +89,42 @@ All .gs files share one scope. Constants and TAB_MAP from DataEngine.gs are avai
                  - get*Version() return value
                  - Last line END OF FILE comment
                All three MUST match. Check with grep before pushing.
-3. PUSH      → clasp push
-4. TEST      → Hit ?action=runTests on HEAD/dev URL
+3. AUDIT     → Run: bash audit-source.sh
+                 FAIL = stop, fix, re-run. Do NOT push.
+                 WARN = review each warning. Fix or document why it's acceptable.
+4. PUSH      → clasp push
+5. TEST      → Hit ?action=runTests on HEAD/dev URL
                  Read JSON response. Must show PASS for both smoke + regression.
                  If FAIL: fix and repeat from step 1. Do NOT proceed.
-5. DEPLOY    → clasp deploy -i <deploymentId>
+6. DEPLOY    → clasp deploy -i <deploymentId>
                  NEVER use clasp deploy without -i (creates new URL)
-6. VERIFY    → Hit ?action=runTests on PRODUCTION /exec URL
+7. VERIFY    → Hit ?action=runTests on PRODUCTION /exec URL
                  Check ErrorLog sheet for new errors in last 5 minutes
-7. GIT       → Use Git Bash (NOT PowerShell — credential helper conflict):
-                 git checkout -b claude/session-XX-[short-desc]
+8. GIT       → Use Git Bash (NOT PowerShell — credential helper conflict):
+                 git checkout -b <branch-name>
                  git add .
-                 git commit -m "Session XX: [summary]"
-                 git push -u origin claude/session-XX-[short-desc]
-                 Open a PR to main. Wait for Gemini CI review.
-                 If Gemini flags issues: fix, push to same branch, re-check.
-                 Once Gemini passes: merge PR to main.
-                 NEVER push directly to main — all changes go through PR.
-8. NOTION    → Update PM Active Versions table:
+                 git commit -m "<description>"
+                 git push origin <branch-name>
+                 Open PR against main
+9. NOTION    → Update PM Active Versions table:
                  Page ID: 2c8cea3cd9e8818eaf53df73cb5c2eee
                  Update the version number for each changed component
-9. HANDOFF   → Write thread handoff summary to Notion Thread Handoff Archive:
+10. HANDOFF  → Write thread handoff summary to Notion Thread Handoff Archive:
                  Page ID: 322cea3cd9e881bb8afcd560fe772481
                  Include: what changed, what was tested, what's next
 ```
 
-**Never stop at step 3.** Push without test+deploy+git+Notion is incomplete work.
+**Never stop at step 4.** Push without audit+test+deploy+git+Notion is incomplete work.
+
+---
+
+## Audit Tools (run from C:\Dev\tbm-apps-script in Git Bash)
+
+| Tool | When | Command |
+|------|------|---------|
+| Static source audit | Before every clasp push | `bash audit-source.sh` |
+| Wiring audit (detailed) | After adding new google.script.run calls | `bash audit-wiring.sh` |
+| Runtime tests | After every clasp push AND deploy | Hit `?action=runTests` |
 
 ---
 
@@ -249,7 +259,9 @@ If any match: fix before pushing.
 9. Pushing to GAS without git commit+push after
 10. Updating Notion deploy page icon+title together (double-emoji bug)
 11. Guessing at versions — read the actual file header
-12. Stopping at clasp push without completing steps 4-9
+12. Stopping at clasp push without completing steps 5-10
+13. Pushing to GAS without running audit-source.sh first
+14. Adding a google.script.run call without adding the Safe function to smoke test wiring check
 
 ---
 

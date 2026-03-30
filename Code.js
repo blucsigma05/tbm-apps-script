@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v53 — Apps Script Router (TBM Consolidated)
+// Code.gs v54 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 53; }
+function getCodeVersion() { return 54; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -325,7 +325,8 @@ function serveData(e) {
         'getCloseHistoryDataSafe': getCloseHistoryDataSafe, 'getKHAppUrlsSafe': getKHAppUrlsSafe,
         'getDeployedVersionsSafe': getDeployedVersionsSafe,
         'getKidsHubDataSafe': getKidsHubDataSafe, 'getKidsHubWidgetDataSafe': getKidsHubWidgetDataSafe,
-        'getKHLastModified': getKHLastModified, 'getSpineHeartbeatSafe': getSpineHeartbeatSafe,
+        'getKHLastModified': getKHLastModified, 'getKHLastModifiedSafe': getKHLastModifiedSafe,
+        'getSpineHeartbeatSafe': getSpineHeartbeatSafe,
         'khCompleteTaskSafe': khCompleteTaskSafe, 'khCompleteTaskWithBonusSafe': khCompleteTaskWithBonusSafe,
         'khUncompleteTaskSafe': khUncompleteTaskSafe, 'khApproveTaskSafe': khApproveTaskSafe,
         'khRejectTaskSafe': khRejectTaskSafe, 'khOverrideTaskSafe': khOverrideTaskSafe,
@@ -344,6 +345,7 @@ function serveData(e) {
         'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe,
         'submitFeedbackSafe': submitFeedbackSafe, 'getAudioBatchSafe': getAudioBatchSafe,
         'logHomeworkCompletionSafe': logHomeworkCompletionSafe, 'logSparkleProgressSafe': logSparkleProgressSafe,
+        'awardRingsSafe': awardRingsSafe,
         'runTestsSafe': runTestsSafe
       };
 
@@ -1036,6 +1038,20 @@ function logSparkleProgressSafe(data) {
   });
 }
 
+// v54: Education ring/star awards — wires HTML awardRings() to KidsHub backend
+function awardRingsSafe(kid, amount, source) {
+  return withMonitor_('awardRingsSafe', function() {
+    return JSON.parse(kh_awardEducationPoints_(kid, amount, source));
+  });
+}
+
+// v54: Safe wrapper for KH heartbeat timestamp read
+function getKHLastModifiedSafe() {
+  return withMonitor_('getKHLastModifiedSafe', function() {
+    return JSON.parse(JSON.stringify(getKHLastModified()));
+  });
+}
+
 // v44: Deployed versions — calls all get*Version() functions from GASHardening
 function getDeployedVersionsSafe() {
   return withMonitor_('getDeployedVersionsSafe', function() {
@@ -1534,4 +1550,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v53
+// END OF FILE — Code.gs v54
