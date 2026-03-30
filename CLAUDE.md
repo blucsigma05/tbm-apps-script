@@ -90,6 +90,11 @@ All .gs files share one scope. Constants and TAB_MAP from DataEngine.gs are avai
                  - Last line END OF FILE comment
                All three MUST match. Check with grep before pushing.
 3. PUSH      → clasp push
+3.5 VERIFY PUSH → For every file changed, grep the specific line(s) edited:
+                   Example: grep -n "padding:10px" TheSoul.html
+                   Confirm the new value appears, not the old one.
+                   If the old value persists, the edit did not land.
+                   Do NOT proceed to step 4 until verified.
 4. TEST      → Hit ?action=runTests on HEAD/dev URL
                  Read JSON response. Must show PASS for both smoke + regression.
                  If FAIL: fix and repeat from step 1. Do NOT proceed.

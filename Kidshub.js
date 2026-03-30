@@ -3,6 +3,8 @@
 // KidsHub.gs v28 — Kids Hub Server Backend (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
+// WRITES TO: KH_Chores, KH_History, KH_Rewards, KH_Requests, KH_ScreenTime, KH_Grades, KH_StoryProgress
+// READS FROM: KH_Chores, KH_History, KH_Rewards, KH_Requests, KH_ScreenTime, KH_Grades, KH_Config
 function getKidsHubGsVersion() { return 28; }
 function getKidsHubVersion() { return 28; }  // alias for smoke test
 

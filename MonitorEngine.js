@@ -2,7 +2,9 @@
 // MonitorEngine.gs v6
 // ═══════════════════════════════════════════════════
 
-function getMonitorEngineVersion() { return 6; }
+// WRITES TO: Close History, Month-End Review
+// READS FROM: Close History, Month-End Review, Transactions, Balances
+function getMonitorEngineVersion() { return 7; }
 
 var MONITOR_EMAIL = 'lthompson@memoveindesigns.com';
 // v6: openById migration — trigger-safe (was getActiveSpreadsheet, fails from CLOCK triggers)
@@ -198,7 +200,7 @@ function checkRefiGhosts() {
 function runMERGates(monthLabel) {
   monthLabel = defaultPriorMonth_(monthLabel);
   var range = parseMonthRange_(monthLabel);
-  Logger.log('═══ MonitorEngine v6 — runMERGates(' + monthLabel + ') ═══');
+  Logger.log('═══ MonitorEngine v7 — runMERGates(' + monthLabel + ') ═══');
 
   var loaded = loadMonthTransactions_(range.start, range.end);
   var monthTxns = loaded.txns, txSheet = loaded.sheet;
@@ -302,7 +304,7 @@ function runMERGates(monthLabel) {
   });
   Logger.log('SUMMARY: ' + summary);
   return { month: monthLabel, timestamp: new Date().toISOString(),
-    version: 'MonitorEngine v6', summary: summary,
+    version: 'MonitorEngine v7', summary: summary,
     allAutoPass: f === 0 && w === 0, gates: results };
 }
 
@@ -387,23 +389,28 @@ function getKnownAccounts_() {
 // ══════════════════════════════════════════════════════
 //  TRIGGER MANAGEMENT
 // ══════════════════════════════════════════════════════
-function setupMonitorTriggers() {
+function installMonthlyClose() {
+  // Remove existing first
+  removeMonthlyClose();
   ScriptApp.newTrigger('runMonthlyMERReport_')
-    .timeBased().onMonthDay(1).atHour(9)
+    .timeBased().onMonthDay(1).atHour(8)
     .inTimezone('America/Chicago').create();
-  Logger.log('MonitorEngine: Monthly trigger installed (1st @ 9 AM CT).');
+  Logger.log('MonitorEngine: Monthly close trigger installed (1st @ 8 AM CST).');
 }
+function setupMonitorTriggers() { return installMonthlyClose(); }  // legacy alias
 
-function removeMonitorTriggers() {
+function removeMonthlyClose() {
   var triggers = ScriptApp.getProjectTriggers();
   var removed = 0;
-  triggers.forEach(function(t) {
-    if (t.getHandlerFunction() === 'runMonthlyMERReport_') {
-      ScriptApp.deleteTrigger(t); removed++;
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === 'runMonthlyMERReport_') {
+      ScriptApp.deleteTrigger(triggers[i]); removed++;
     }
-  });
-  Logger.log('MonitorEngine: Removed ' + removed + ' trigger(s).');
+  }
+  Logger.log('MonitorEngine: Removed ' + removed + ' monthly close trigger(s).');
+  return { removed: removed };
 }
+function removeMonitorTriggers() { return removeMonthlyClose(); }  // legacy alias
 
 // ══════════════════════════════════════════════════════
 //  MONTHLY TRIGGER — MER report + large txns + auto-stamp
@@ -417,7 +424,7 @@ function runMonthlyMERReport_() {
   var lgResult = listLargeTransactions(monthLabel);
 
   var subject = 'TBM MER Gates — ' + monthLabel + ' — ' + result.summary;
-  var body = 'MonitorEngine v6 — Monthly Close Pre-Check\n' +
+  var body = 'MonitorEngine v7 — Monthly Close Pre-Check\n' +
     'Month: ' + monthLabel + '\nRun at: ' + result.timestamp + '\n\n' +
     '═══════════════════════════════════════\n';
   result.gates.forEach(function(g) {
@@ -441,15 +448,23 @@ function runMonthlyMERReport_() {
   MailApp.sendEmail(MONITOR_EMAIL, subject, body);
   Logger.log('MER report emailed to ' + MONITOR_EMAIL);
 
+  // v7: Pushover summary notification
+  var pushMsg = monthLabel + ' — ' + result.summary;
   if (result.allAutoPass) {
     Logger.log('All auto gates PASS — stamping ' + monthLabel);
     var stamp = stampCloseMonth(monthLabel);
-    Logger.log(stamp.success
-      ? '✅ Stamped: '+stamp.month+' $'+stamp.debtCurrent.toFixed(2)
-      : '⚠️ Stamp failed: '+stamp.reason);
+    if (stamp.success) {
+      Logger.log('✅ Stamped: '+stamp.month+' $'+stamp.debtCurrent.toFixed(2));
+      pushMsg += '\n✅ Auto-stamped. Debt: $' + stamp.debtCurrent.toFixed(2);
+    } else {
+      Logger.log('⚠️ Stamp failed: '+stamp.reason);
+      pushMsg += '\n⚠️ Stamp failed: ' + stamp.reason;
+    }
+    sendPush_('MER Close — ' + monthLabel, pushMsg, 'LT', 0);
   } else {
     Logger.log('⚠️ Gate failures — NOT auto-stamped. Run stampCloseMonth() manually.');
+    sendPush_('MER Close NEEDS REVIEW', pushMsg + '\nManual gates remain.', 'LT', 0);
   }
 }
 
-// EOF — MonitorEngine.gs v6
+// EOF — MonitorEngine.gs v7

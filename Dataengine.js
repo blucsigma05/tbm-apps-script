@@ -2,6 +2,8 @@
 // DATA ENGINE v74 — Dynamic KPI Computation from Raw Tiller Data
 // ════════════════════════════════════════════════════════════════════
 
+// WRITES TO: DebtModel, CFF, Dashboard_Export, Debt_Export
+// READS FROM: Transactions, Balances, DebtModel, Budget, Config, Balance History
 function getDataEngineVersion() { return 75; }
 
 // ════════════════════════════════════════════════════════════════════
@@ -2776,10 +2778,10 @@ function getCascadeResultsSafe(extraMonthly, lumpSum, sideIncome) {
     var extra = (parseFloat(extraMonthly) || 0) + (parseFloat(sideIncome) || 0);
     var lump = parseFloat(lumpSum) || 0;
     var result;
-    if (typeof runCascadeWithExtras_ === 'function') {
-      result = runCascadeWithExtras_(debts, augustBonus, extra, lump);
+    if (typeof ce_runCascadeWithExtras_ === 'function') {
+      result = ce_runCascadeWithExtras_(debts, augustBonus, extra, lump);
     } else {
-      result = runCascade_(debts, augustBonus);
+      result = ce_runCascade_(debts, augustBonus);
     }
     return JSON.parse(JSON.stringify(result));
   } catch(e) {

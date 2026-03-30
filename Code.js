@@ -7,7 +7,10 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeGsVersion() { return 50; }
+// WRITES TO: (routing only — no direct sheet writes)
+// READS FROM: (all tabs via safe wrappers; CacheService)
+function getCodeGsVersion() { return 51; }
+function getCodeVersion() { return 51; }  // alias for standardized naming
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -512,7 +515,9 @@ function getScriptUrl() {
 }
 
 function getScriptUrlSafe() {
-  return ScriptApp.getService().getUrl();
+  return withMonitor_('getScriptUrlSafe', function() {
+    return ScriptApp.getService().getUrl();
+  });
 }
 
 // ── MonitorEngine safe wrappers (v48) ────────────────────────────
@@ -760,13 +765,19 @@ function khResetTasksSafe(mode, child) {
   });
 }
 function khVerifyPinSafe(pin) {
-  return khVerifyPin(pin);
+  return withMonitor_('khVerifyPinSafe', function() {
+    return khVerifyPin(pin);
+  });
 }
 function getKHAppUrlsSafe() {
-  return getKHAppUrls();
+  return withMonitor_('getKHAppUrlsSafe', function() {
+    return getKHAppUrls();
+  });
 }
 function khHealthCheckSafe() {
-  return JSON.parse(khHealthCheck());
+  return withMonitor_('khHealthCheckSafe', function() {
+    return JSON.parse(khHealthCheck());
+  });
 }
 
 // v36: Ask System safe wrappers

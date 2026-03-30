@@ -2,6 +2,8 @@
 // CalendarSync.gs v3 — Google Calendar Seeding & Sync from TBM Data
 // ════════════════════════════════════════════════════════════════════
 
+// WRITES TO: (no sheet writes — Google Calendar only)
+// READS FROM: KH_Chores, Config
 function getCalendarSyncVersion() { return 3; }
 
 // ────────────────────────────────────────────────────────────────────

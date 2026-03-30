@@ -52,6 +52,10 @@ All three MUST show the same version number. Flag if any disagree.
 - Safe wrappers: `*Safe` suffix (e.g., `getDataSafe`)
 - Module prefixes preferred: `kh_` for KidsHub, `de_` for DataEngine, `ce_` for CascadeEngine
 
+### Post-push verification
+Every PR description should include the specific grep commands that verify
+the claimed changes actually landed in the committed files.
+
 ### Code patterns
 - Error logging: use `logError_()` from GASHardening.gs
 - Performance monitoring: use `withMonitor_()` wrapper

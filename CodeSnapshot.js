@@ -3,6 +3,8 @@
 // CodeSnapshot.gs v3 — Thin wrappers calling ThompsonLib
 // ════════════════════════════════════════════════════════════════════
 
+// WRITES TO: (no sheet writes — Google Drive only)
+// READS FROM: Script source files (ScriptApp)
 function getCodeSnapshotVersion() { return 3; }
 
 function _snapshotConfig_() {

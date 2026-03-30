@@ -4,6 +4,8 @@
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
+// WRITES TO: (no sheet writes — Pushover API only)
+// READS FROM: Config (Pushover keys)
 function getAlertEngineVersion() { return 6; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor

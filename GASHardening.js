@@ -3,7 +3,9 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 3; }
+// WRITES TO: ErrorLog, PerfLog
+// READS FROM: ErrorLog, PerfLog, all version functions
+function getGASHardeningVersion() { return 4; }
 
 //
 // WHAT THIS DOES:
@@ -1130,9 +1132,9 @@ function getDeployedVersions() {
   var v = {};
   var checks = [
     ['DataEngine',    'getDataEngineVersion'],
-    ['Code',          'getCodeGsVersion'],
+    ['Code',          'getCodeVersion'],
     ['CascadeEngine', 'getCascadeEngineVersion'],
-    ['KidsHub',       'getKidsHubGsVersion'],
+    ['KidsHub',       'getKidsHubVersion'],
     ['GASHardening',  'getGASHardeningVersion'],
     ['MonitorEngine', 'getMonitorEngineVersion'],
     ['CalendarSync',  'getCalendarSyncVersion'],
@@ -1143,7 +1145,7 @@ function getDeployedVersions() {
     var label = checks[i][0];
     var fn = checks[i][1];
     try {
-      v[label] = eval(fn + '()');
+      v[label] = this[fn]();
     } catch(e) {
       v[label] = '?';
     }
@@ -1179,42 +1181,13 @@ function replaceDailyTrigger_(functionName, hour) {
 }
 
 /**
- * One-time setup: install daily triggers for health check and snapshot.
- * Run from the Apps Script editor. Checks that target functions exist first.
- *
- * NOTE: resetDailyTasksAuto is NOT wired — function does not exist yet.
- *       Add it here once KidsHub implements daily task reset.
+ * DEPRECATED — use installDailyTriggers() from DailyOps.gs instead.
+ * Kept as alias for backward compatibility.
  */
 function setupDailyTriggers() {
-  var plan = [
-    // {fn: 'resetDailyTasksAuto', hour: 5, label: 'Daily chore reset'},  // NOT YET — function missing
-    {fn: 'dailyHealthCheck', hour: 6, label: 'Morning health check'},
-    {fn: 'runSnapshot', hour: 6, label: 'Code snapshot to Drive'}
-  ];
-
-  var installed = 0;
-  for (var i = 0; i < plan.length; i++) {
-    var entry = plan[i];
-    var exists = false;
-    try { exists = typeof eval(entry.fn) === 'function'; } catch(e) {}
-    if (!exists) {
-      Logger.log('SKIP: ' + entry.fn + ' — function not found in project');
-      continue;
-    }
-    replaceDailyTrigger_(entry.fn, entry.hour);
-    Logger.log('INSTALLED: ' + entry.fn + ' at ' + entry.hour + ':00 CST — ' + entry.label);
-    installed++;
-  }
-
-  var total = ScriptApp.getProjectTriggers().length;
-  Logger.log('');
-  Logger.log('Triggers installed this run: ' + installed);
-  Logger.log('Total triggers now: ' + total + '/20');
-  if (total >= 18) {
-    Logger.log('WARNING: Approaching 20-trigger GAS limit!');
-  }
+  return installDailyTriggers();
 }
 
 // ═══════════════════════════════════════════════════════════════
-// END OF FILE — GAS HARDENING v3
+// END OF FILE — GAS HARDENING v4
 // ═══════════════════════════════════════════════════════════════

@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>The Pulse v57 — Thompson Household</title>
+<title>The Pulse v58 — Thompson Household</title>
+<meta name="tbm-version" content="v58">
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -472,6 +473,7 @@ input[type=range]::-webkit-slider-thumb{width:36px;height:36px}
 <a id="nav-vein" onclick="tbmNav('vein')" style="padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.6);transition:all 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.9)';this.style.background='rgba(255,255,255,0.1)'" onmouseout="if(!this.classList.contains('tbm-active')){this.style.color='rgba(255,255,255,0.6)';this.style.background='transparent'}">Command Center</a>
 </div>
 <script>
+var TBM_VERSION='v58';
 var _tbmBaseUrl='';var _isPartnerMode=(new URLSearchParams(window.location.search)).get('jt')==='1';
 google.script.run.withSuccessHandler(function(u){_tbmBaseUrl=u;}).getScriptUrlSafe();
 function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.top.location.href=_tbmBaseUrl+'?page='+p+suffix;else google.script.run.withSuccessHandler(function(u){window.top.location.href=u+'?page='+p+suffix;}).getScriptUrlSafe();}
@@ -1047,7 +1049,7 @@ function _initKidsWidgetCore() {
       var b = document.getElementById('kidsWidgetBody');
       if (b) b.innerHTML = '<div class="kids-error">Kids Hub unavailable: ' + (e.message || 'connection error') + '</div>';
     })
-    .getKidsHubWidgetDataSafe('summary');
+    .getKidsHubWidgetDataSafe();
 }
 
 function _kidsGatePeriod(req) {
@@ -1089,7 +1091,64 @@ function _kidsGateLine(req, icon, label, tint, bg) {
   return html;
 }
 
-// v52: Interactive task management functions removed — now handled by Parent Dashboard (?page=kidshub&view=parent)
+// v58: Inline approve/decline/bonus — ported from TheVein v60
+function _showKidsToast(msg) {
+  var t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:10px 20px;background:var(--green,#059669);color:#fff;border-radius:8px;font-size:12px;font-weight:700;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.2);opacity:0;transition:opacity 0.3s';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(function(){ t.style.opacity = '1'; }, 10);
+  setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.remove(); }, 300); }, 2500);
+}
+function _kidsOptimistic(el) {
+  var card = el ? el.closest('.kids-pending-item') : null;
+  if (card) {
+    var btns = card.querySelectorAll('button');
+    for (var i = 0; i < btns.length; i++) { btns[i].disabled = true; btns[i].style.opacity = '0.4'; }
+    card.classList.add('kids-approve-removing');
+  }
+  var badge = document.getElementById('kidsAlertBadge');
+  if (badge) {
+    var count = parseInt(badge.textContent) || 0;
+    if (count > 1) { badge.textContent = (count - 1) + ' pending'; }
+    else { badge.style.display = 'none'; }
+  }
+  setTimeout(function() { if (card) card.remove(); }, 350);
+  return card;
+}
+function _kidsApprove(rowIndex, el, taskID) {
+  if (rowIndex == null || rowIndex === '') return;
+  _kidsOptimistic(el);
+  google.script.run
+    .withSuccessHandler(function() { _showKidsToast('\u2713 Approved! Points awarded.'); })
+    .withFailureHandler(function(err) {
+      console.error('Pulse approve failed:', err);
+      initKidsWidget();
+    })
+    .khApproveTaskSafe(rowIndex, taskID);
+}
+function _kidsApproveBonus(rowIndex, el, taskID) {
+  if (rowIndex == null || rowIndex === '') return;
+  _kidsOptimistic(el);
+  google.script.run
+    .withSuccessHandler(function() { _showKidsToast('\u2726 2x bonus approved!'); })
+    .withFailureHandler(function(err) {
+      console.error('Pulse bonus approve failed:', err);
+      initKidsWidget();
+    })
+    .khApproveWithBonusSafe(rowIndex, 2, taskID);
+}
+function _kidsDecline(rowIndex, el, taskID) {
+  if (rowIndex == null || rowIndex === '') return;
+  _kidsOptimistic(el);
+  google.script.run
+    .withSuccessHandler(function() { _showKidsToast('\u21A9 Sent back. Kid needs to redo it.'); initKidsWidget(); })
+    .withFailureHandler(function(err) {
+      console.error('Pulse decline failed:', err);
+      initKidsWidget();
+    })
+    .khRejectTaskSafe(rowIndex, taskID);
+}
 
 // ═══ Render function (rendering only — no function definitions inside) ═══
 
@@ -1150,18 +1209,47 @@ function _renderKidsWidget(data) {
     '</div>';
   }
 
-  // Pending approvals summary
-  var totalPending = (bStats.pendingCount || 0) + (jStats.pendingCount || 0);
+  // v58: Inline approve buttons — build pending items with action buttons
+  var allPending = [];
+  var bPendArr = (bStats.pendingApprovals || []);
+  for (var bpi = 0; bpi < bPendArr.length; bpi++) {
+    var bp = bPendArr[bpi];
+    allPending.push({ childKey: 'buggsy', childLabel: '\u2B55 Buggsy', task: bp.task, icon: bp.icon, points: bp.points, rowIndex: bp.rowIndex, taskID: bp.taskID });
+  }
+  var jPendArr = (jStats.pendingApprovals || []);
+  for (var jpi = 0; jpi < jPendArr.length; jpi++) {
+    var jp = jPendArr[jpi];
+    allPending.push({ childKey: 'jj', childLabel: '\u2B50 JJ', task: jp.task, icon: jp.icon, points: jp.points, rowIndex: jp.rowIndex, taskID: jp.taskID });
+  }
   var totalAsks = (data.buggsy && data.buggsy.pendingRequestCount || 0) + (data.jj && data.jj.pendingRequestCount || 0);
-  var alertParts = [];
-  if (totalPending > 0) alertParts.push(totalPending + ' task' + (totalPending > 1 ? 's' : '') + ' need approval');
-  if (totalAsks > 0) alertParts.push(totalAsks + ' ask' + (totalAsks > 1 ? 's' : '') + ' waiting');
-  var alertHTML = alertParts.length > 0
-    ? '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--amber-bg);border-radius:8px;margin-bottom:6px">' +
-        '<span style="font-size:14px">\u26A0\uFE0F</span>' +
-        '<span style="font-size:12px;font-weight:700;color:var(--amber)">' + alertParts.join(' \u00b7 ') + '</span>' +
-      '</div>'
-    : '';
+
+  var alertHTML = '';
+  if (allPending.length > 0) {
+    alertHTML = '<div class="kids-pending-section">';
+    alertHTML += '<div class="kids-pending-title">Needs Your Approval (' + allPending.length + ')</div>';
+    for (var api = 0; api < allPending.length; api++) {
+      var apt = allPending[api];
+      alertHTML += '<div class="kids-pending-item">' +
+        '<div class="kids-pending-icon">' + (apt.icon || '\u2B55') + '</div>' +
+        '<div class="kids-pending-info">' +
+          '<div class="kids-pending-name">' + escapeHtml(apt.task) + '</div>' +
+          '<div class="kids-pending-meta">' + apt.childLabel + ' \u00b7 +' + (apt.points || 0) + ' pts</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:5px;align-items:center;flex-shrink:0">' +
+          '<button class="kids-approve-btn approve" onclick="_kidsApprove(' + apt.rowIndex + ',this,\'' + (apt.taskID || '') + '\')" title="Approve">\u2713</button>' +
+          '<button class="kids-approve-btn bonus" onclick="_kidsApproveBonus(' + apt.rowIndex + ',this,\'' + (apt.taskID || '') + '\')" title="Approve 2x bonus">\u2726 2x</button>' +
+          '<button class="kids-approve-btn decline" onclick="_kidsDecline(' + apt.rowIndex + ',this,\'' + (apt.taskID || '') + '\')" title="Send back">\u2715</button>' +
+        '</div>' +
+      '</div>';
+    }
+    alertHTML += '</div>';
+  }
+  if (totalAsks > 0) {
+    alertHTML += '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--amber-bg);border-radius:8px;margin-bottom:6px">' +
+      '<span style="font-size:14px">\u26A0\uFE0F</span>' +
+      '<span style="font-size:12px;font-weight:700;color:var(--amber)">' + totalAsks + ' ask' + (totalAsks > 1 ? 's' : '') + ' waiting</span>' +
+    '</div>';
+  }
 
   // Budget line
   var budgetLine = '';
