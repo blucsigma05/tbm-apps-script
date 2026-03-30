@@ -588,6 +588,19 @@ function runEnvironmentAssertions_(results) {
     }
     results.assertions.push(a);
   })();
+
+  // ── ENV-011: runSnapshot() executes without scope error ──────────
+  (function() {
+    var a = { id: 'ENV-011', category: 'environment', description: 'runSnapshot() executes without scope error', status: 'PASS', details: '' };
+    try {
+      runSnapshot();
+      a.details = 'runSnapshot() completed successfully.';
+    } catch (e) {
+      a.status = 'FAIL';
+      a.details = 'runSnapshot() threw: ' + e.message;
+    }
+    results.assertions.push(a);
+  })();
 }
 
 
