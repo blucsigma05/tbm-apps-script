@@ -126,10 +126,11 @@ function checkWiring_() {
   // Source: audit-wiring.sh output (Sprint 2 wiring audit, 2026-03-30)
   // Updates: removed stale khCompleteTaskWithBonusSafe, added listStoredStoriesSafe
   var expectedFunctions = [
-    // KidsHub.html (17 functions)
+    // KidsHub.html (20 functions)
     'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKidsHubDataSafe',
     'khAddDeductionSafe', 'khApproveRequestSafe', 'khApproveTaskSafe',
-    'khApproveWithBonusSafe', 'khCompleteTaskSafe',
+    'khApproveWithBonusSafe', 'khBatchApproveSafe', 'khCompleteTaskSafe',
+    'khCompleteTaskWithBonusSafe',
     'khDenyRequestSafe', 'khGetGradeHistorySafe', 'khOverrideTaskSafe',
     'khRedeemRewardSafe', 'khRejectTaskSafe', 'khResetTasksSafe',
     'khSubmitGradeSafe', 'khSubmitRequestSafe', 'khUncompleteTaskSafe',

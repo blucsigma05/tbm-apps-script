@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kids Hub v29</title>
+<title>Kids Hub v30</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -849,6 +849,7 @@ var INIT_VIEW  = "<?= INIT_VIEW ?>";
 </div>
 <div id="loading"><img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson Family Crest" style="width:280px;height:280px;object-fit:contain;margin-bottom:20px;opacity:0.85;filter:drop-shadow(0 8px 24px rgba(212,168,67,0.3))" onerror="this.remove()"><div class="load-ring"></div><div class="load-text" id="loadText">Loading...</div></div>
 <div id="app" style="display:none"></div>
+<div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 
 <!-- ══════════════════════════════════════════ -->
 <!-- CHUNK 3 OF 3 — JavaScript                 -->
@@ -956,6 +957,23 @@ var streakData = {};   // v1 TBM: from KH_Streaks cache
 var parentMode = false;
 var currentTab = 'quests';
 var _fetching  = false;   // v5: fetch guard — prevents ghost taps during reload (#57)
+// v30: Confidence Rail + Graceful Degradation
+var _khLastFetch = null;
+var _khLastGoodRaw = null;
+function _khMarkFresh() {
+  _khLastFetch = new Date();
+  _khUpdateRail();
+}
+function _khUpdateRail() {
+  if (!_khLastFetch) return;
+  var el = document.getElementById('confidenceRail');
+  if (!el) return;
+  var diff = Math.floor((new Date().getTime() - _khLastFetch.getTime()) / 60000);
+  if (diff < 1) { el.textContent = 'Updated just now'; el.style.color = '#94a3b8'; }
+  else if (diff < 60) { el.textContent = 'Updated ' + diff + ' min ago'; el.style.color = '#94a3b8'; }
+  else { el.textContent = 'Updated ' + Math.floor(diff / 60) + 'h ago'; el.style.color = '#f59e0b'; }
+}
+setInterval(_khUpdateRail, 30000);
 // v29 ES5-safe Array.find replacement
 function _findByKey(arr, key, val) { for (var i = 0; i < arr.length; i++) { if (arr[i][key] === val) return arr[i]; } return null; }
 function _findWhere(arr, fn) { for (var i = 0; i < arr.length; i++) { if (fn(arr[i])) return arr[i]; } return null; }
@@ -1148,11 +1166,15 @@ function loadKidData() {
   setSyncState('saving', 'Loading...');
   google.script.run
     .withSuccessHandler(onKidData)
-    .withFailureHandler(function(e){ _fetching = false; setSyncState('failed'); console.log('KH_FAIL', e); onErr(e); })
+    .withFailureHandler(function(e){ _fetching = false; setSyncState('failed'); console.log('KH_FAIL', e);
+      if (_khLastGoodRaw) { var rail = document.getElementById('confidenceRail'); if (rail) { rail.textContent = 'Retrying\u2026 showing cached data'; rail.style.color = '#f59e0b'; } setTimeout(loadKidData, 30000); return; }
+      onErr(e); })
     .getKidsHubDataSafe(IS_PARENT ? 'all' : INIT_CHILD);
 }
 
 function onKidData(raw) {
+  _khLastGoodRaw = raw;
+  _khMarkFresh();
   var data = safeParse(raw);
   console.log('KH_RAW', JSON.stringify(data && data.balances));
   console.log('KH_INIT_CHILD', INIT_CHILD);
@@ -1166,6 +1188,8 @@ function onKidData(raw) {
     streakData = data.streaks   || {};
     requiredStatus = data.requiredStatus || null;
     requests = data.requests || [];
+    // v30: Meta-Progression
+    window._metaProgression = data.metaProgression || {};
     pendingRequestCount = data.pendingRequestCount || {};
     // v22: Screen Time Bank from server
     screenTimeBank = (data.screenTime && data.screenTime[INIT_CHILD]) || {};
@@ -1270,7 +1294,7 @@ function buildBuggsyUI() {
   return '<div class="pin-overlay" id="bPinOverlay" style="display:none"><div class="pin-box"><div class="pin-title">🔐 PARENT ACCESS</div><input class="pin-input" type="password" maxlength="6" id="bPinInput" placeholder="••••"><button class="pin-submit" onclick="bSubmitPin()">ENTER</button><button class="pin-cancel" onclick="bCancelPin()">cancel</button><div class="pin-error" id="bPinError" style="display:none">WRONG PIN</div></div></div>'+
   '<div class="b-hdr"><div style="max-width:720px;margin:0 auto"><div class="b-hdr-top"><div class="b-title"><img src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" class="char-avatar" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px"><span style="display:inline-block;width:16px;height:16px;border:3px solid #ffd700;border-radius:50%;box-shadow:0 0 6px rgba(255,215,0,0.4);vertical-align:middle;margin-right:6px"></span>RING<span> QUEST</span></div><button class="b-parent-btn" id="bParentBtn" onclick="bToggleParent()">⚙ PARENT</button></div>'+
   '<div class="b-stats" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;align-items:stretch;width:100%"><div class="b-stat"><span class="b-stat-icon"><img src="https://i.ibb.co/d0KSS8zh/1773982478792.png" class="char-stat-img" style="width:28px;height:28px;border-radius:50%;object-fit:cover"></span><div><div class="b-stat-val" id="bRings">0</div><div class="b-stat-lbl">RINGS</div></div></div><div class="b-stat"><span class="b-stat-icon">📺</span><div><div class="b-stat-val" id="bTV" style="color:#38bdf8">0</div><div class="b-stat-lbl">TV MIN</div></div></div><div class="b-stat"><span class="b-stat-icon">💵</span><div><div class="b-stat-val" id="bMoney" style="color:#22c55e">$0</div><div class="b-stat-lbl">EARNED</div></div></div><div class="b-refresh-coin" id="bRefreshCoin" onclick="bRefresh()" style="position:static;width:36px;height:36px;border:5px solid #ffd700;border-radius:50%;box-shadow:0 0 10px rgba(255,215,0,0.5),inset 0 0 4px rgba(255,215,0,0.25);background:linear-gradient(135deg,rgba(255,235,100,0.25) 0%,transparent 50%);cursor:pointer;flex-shrink:0;margin-left:8px"></div></div></div></div>'+
-  '<div class="b-level"><div class="b-lvl-row"><div class="b-lvl-badge" id="bLvlBadge">1</div><div><div class="b-lvl-name" id="bLvlName">Noob</div><div class="b-lvl-xp" id="bLvlXP">0 rings</div></div><div class="b-lvl-next" id="bLvlNext"></div></div><div class="b-bar-track"><div class="b-bar-fill" id="bLvlBar" style="width:0%"></div></div></div>'+
+  '<div class="b-level"><div class="b-lvl-row"><div class="b-lvl-badge" id="bLvlBadge">1</div><div><div class="b-lvl-name" id="bLvlName">Noob</div><div class="b-lvl-xp" id="bLvlXP">0 rings</div></div><span id="bMasteryRank" style="display:none;font-size:10px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,0.1);padding:2px 8px;border-radius:10px;letter-spacing:0.5px"></span><div class="b-lvl-next" id="bLvlNext"></div></div><div class="b-bar-track"><div class="b-bar-fill" id="bLvlBar" style="width:0%"></div></div><div id="bStreakDisplay" style="display:none;text-align:center;font-size:12px;font-weight:700;color:#f59e0b;padding:4px 0;letter-spacing:0.3px"></div></div>'+
   '<div class="b-tabs"><button class="b-tab active" id="btab-quests" onclick="bTab(\'quests\')">⚔ QUESTS</button><button class="b-tab" id="btab-rewards" onclick="bTab(\'rewards\')">🏆 REWARDS</button><button class="b-tab" id="btab-events" onclick="bTab(\'events\')">✋ ASK</button><button class="b-tab" id="btab-parent" onclick="bTab(\'parent\')" style="display:none">👑 PARENT</button></div>'+
   '<div id="bView-quests"><div class="b-sec"><span class="b-sec-title" id="bQLabel">QUESTS</span><span class="b-sec-badge" id="bQBadge">—</span></div><div class="b-two-col"><div class="b-col-main"><div class="b-sec"><span class="b-sec-title" style="color:#4ade80">⚔ CHALLENGES</span></div><div class="b-list" id="bQuestList"></div></div><div class="b-col-pending"><div class="b-sec"><span class="b-sec-title" style="color:#fbbf24">📦 PENDING</span><span class="b-sec-badge" id="bPendBadge">0</span></div><div class="b-list" id="bPendList"></div></div></div></div>'+
   '<div id="bView-rewards" style="display:none"><div class="b-sec"><span class="b-sec-title">REWARD VAULT</span><span class="b-sec-badge" id="bRBadge">0 RINGS</span></div><div class="b-rewards-grid" id="bRewardGrid"></div></div>'+
@@ -1321,6 +1345,23 @@ function updateBuggsy() {
     bar.style.width = (Math.min(prog,1) * 100) + '%';
     bar.style.background = 'linear-gradient(90deg,' + lvl.color + '99,' + lvl.color + ')';
     bar.style.boxShadow  = '0 0 8px ' + lvl.color + '66';
+  }
+
+  // v30: Streak + Mastery Rank
+  var _bMeta = (window._metaProgression || {}).buggsy || {};
+  var _bStreakEl = document.getElementById('bStreakDisplay');
+  if (_bStreakEl) {
+    if (_bMeta.streakDays && _bMeta.streakDays >= 2) {
+      var _flames = '';
+      for (var _fi = 0; _fi < Math.min(_bMeta.streakDays, 7); _fi++) _flames += '\ud83d\udd25';
+      _bStreakEl.textContent = _flames + ' ' + _bMeta.streakDays + '-day streak!';
+      _bStreakEl.style.display = 'block';
+    } else { _bStreakEl.style.display = 'none'; }
+  }
+  var _bRankEl = document.getElementById('bMasteryRank');
+  if (_bRankEl && _bMeta.masteryRank) {
+    _bRankEl.textContent = '\u2b50 ' + _bMeta.masteryRank;
+    _bRankEl.style.display = 'inline-block';
   }
 
   // Quests
@@ -1717,7 +1758,7 @@ function buildJJUI() {
   return '<div class="jj-pin-overlay" id="jjPinOverlay" style="display:none"><div class="jj-pin-box"><div class="jj-pin-title">🔐 Parent Access</div><input class="jj-pin-input" type="password" maxlength="6" id="jjPinInput" placeholder="••••"><button class="jj-pin-submit" onclick="jjSubmitPin()">Let Me In! ✨</button><button class="jj-pin-cancel" onclick="jjCancelPin()">never mind</button><div class="jj-pin-error" id="jjPinError" style="display:none">Hmm, try again! 💕</div></div></div>'+
   '<div class="jj-wrap"><div class="jj-hdr"><div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="jj-parent-btn" id="jjParentBtn" onclick="jjToggleParent()">⚙ Parent</button></div><img src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" class="char-avatar" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-bottom:4px"><span class="jj-crown">👑</span><div class="jj-title">JJ\'s Sparkle Stars</div><div class="jj-sub">Little Diva Helper Board ✨</div></div>'+
   '<div style="display:flex;align-items:center;gap:10px;margin:0 14px 16px"><div class="jj-stat-pills" style="flex:1;margin:0"><div class="jj-stat-pill"><div class="jj-stat-pill-icon">⭐</div><div class="jj-stat-pill-val" id="jjStars">0</div><div class="jj-stat-pill-lbl">Stars</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">📺</div><div class="jj-stat-pill-val" id="jjTV">0m</div><div class="jj-stat-pill-lbl">TV</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">🍪</div><div class="jj-stat-pill-val" id="jjSnack">0</div><div class="jj-stat-pill-lbl">Snacks</div></div></div><img src="https://i.ibb.co/5h2hYsNp/1773982672701.png" class="char-stat-img" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0"><div class="jj-refresh-star" id="jjRefreshStar" onclick="jjRefresh()" style="position:static;flex-shrink:0">✨</div></div>'+
-  '<div style="margin:0 14px 12px;text-align:center"><div id="jjLevelChip" style="display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.22);font-size:13px;font-weight:800;color:#fde68a;letter-spacing:1px;text-transform:uppercase">LEVEL 1 · SPROUT</div></div>'+
+  '<div style="margin:0 14px 12px;text-align:center"><div id="jjLevelChip" style="display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.22);font-size:13px;font-weight:800;color:#fde68a;letter-spacing:1px;text-transform:uppercase">LEVEL 1 \u00B7 SPROUT</div><div id="jjMasteryRank" style="display:none;margin-top:4px;font-size:11px;font-weight:800;color:#f9a8d4;letter-spacing:0.5px"></div><div id="jjStreakDisplay" style="display:none;margin-top:4px;font-size:18px;text-align:center"></div></div>'+
   '<div class="jj-progress-wrap"><div class="jj-prog-label">Next reward unlocks at <span id="jjNextCost">10</span> ⭐<span id="jjProgNums">0 / 10</span></div><div class="jj-prog-track"><div class="jj-prog-fill" id="jjProgBar" style="width:0%"></div></div></div>'+
   '<div class="jj-tabs"><button class="jj-tab active" id="jjtab-quests" onclick="jjTab(\'quests\')">🌸 Jobs</button><button class="jj-tab" id="jjtab-rewards" onclick="jjTab(\'rewards\')">🎀 Prizes</button><button class="jj-tab" id="jjtab-events" onclick="jjTab(\'events\')">✨ Ask</button><button class="jj-tab" id="jjtab-parent" onclick="jjTab(\'parent\')" style="display:none">⚙ Parent</button></div>'+
   '<div id="jjView-quests" style="margin-top:12px"><div class="jj-sec-title">Your Sparkle Jobs! 💕</div><div class="jj-two-col"><div class="jj-col-main"><div class="jj-sec-title" style="color:#c084fc">🌸 Sparkle Jobs</div><div class="jj-list" id="jjTaskList"></div></div><div class="jj-col-pending"><div class="jj-sec-title" style="color:#f9a8d4">✨ Pending</div><div class="jj-list" id="jjPendList"></div></div></div></div>'+
@@ -1756,6 +1797,23 @@ function updateJJ() {
     jjChip.style.boxShadow = '0 0 18px ' + jjLevel.color + '33';
     jjChip.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.12), ' + jjLevel.color + '22)';
   }
+  // v30: Streak + Mastery Rank for JJ
+  var _jMeta = (window._metaProgression || {}).jj || {};
+  var _jStreakEl = document.getElementById('jjStreakDisplay');
+  if (_jStreakEl) {
+    if (_jMeta.streakDays && _jMeta.streakDays >= 2) {
+      var _jFlames = '';
+      for (var _jfi = 0; _jfi < Math.min(_jMeta.streakDays, 7); _jfi++) _jFlames += '\ud83d\udd25';
+      _jStreakEl.textContent = _jFlames;
+      _jStreakEl.style.display = 'block';
+    } else { _jStreakEl.style.display = 'none'; }
+  }
+  var _jRankEl = document.getElementById('jjMasteryRank');
+  if (_jRankEl && _jMeta.masteryRank) {
+    _jRankEl.textContent = '\u2728 ' + _jMeta.masteryRank + ' \u2728';
+    _jRankEl.style.display = 'block';
+  }
+
   // Progress to next reward
   var nextR = _findWhere(rewards, function(r){return stars < r.cost;}) || rewards[rewards.length - 1] || {cost:10};
   var nextIdx = rewards.indexOf(nextR);
@@ -2293,7 +2351,9 @@ function buildParentUI() {
   '<div id="pContent" style="display:none">'+
   '<div class="p-summary" id="pSummary"></div>'+
   '<div class="p-kids" id="pKids"></div>'+
-  '<div class="p-reset-panel" style="margin-bottom:20px"><div class="p-reset-title">📝 REPORT CARD</div>'+
+  '<div class="p-triage-hdr" onclick="pToggleSection(\'weekSection\')" style="display:flex;align-items:center;gap:8px;padding:14px 16px;background:rgba(99,102,241,0.1);border-radius:8px;margin:16px 0 8px;cursor:pointer;font-weight:700;font-size:13px;color:#c4b5fd"><span id="weekChevron" style="transition:transform 0.2s">\u25BC</span> THIS WEEK</div>'+
+  '<div id="weekSection">'+
+  '<div class="p-reset-panel" style="margin-bottom:20px"><div class="p-reset-title">\ud83d\udcdd REPORT CARD</div>'+
   '<div style="display:flex;flex-direction:column;gap:10px">'+
   '<div style="display:flex;gap:10px"><select id="gradeKid" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0"><option value="Buggsy">Buggsy</option><option value="JJ">JJ</option></select><select id="gradeSubject" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0"><option>Math</option><option>Reading</option><option>Science</option><option>Social Studies</option><option>Art</option><option>Music</option><option>PE</option><option>Other</option></select></div>'+
   '<div style="display:flex;gap:10px"><select id="gradeGrade" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0"><option value="A">A — 50 rings + $5</option><option value="B">B — 25 rings + $2</option><option value="C">C — logged only</option><option value="D">D — logged only</option><option value="F">F — logged only</option></select><select id="gradeQuarter" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0"><option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option><option>S1</option><option>S2</option><option>Final</option></select></div>'+
@@ -2311,22 +2371,25 @@ function buildParentUI() {
 '<button onclick="submitEvent(\'p\')" style="padding:12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">📅 Add to Calendar</button>'+
 '<div class="ev-status" id="pEvStatus" style="display:none"></div>'+
 '</div></div>'+
-'<div class="p-reset-panel"><div class="p-reset-title">⚙ QUICK RESET</div>'+
+'</div>'+ // close weekSection
+'<div class="p-triage-hdr" onclick="pToggleSection(\'adminSection\')" style="display:flex;align-items:center;gap:8px;padding:14px 16px;background:rgba(239,68,68,0.08);border-radius:8px;margin:16px 0 8px;cursor:pointer;font-weight:700;font-size:13px;color:#f87171"><span id="adminChevron" style="transition:transform 0.2s;transform:rotate(-90deg)">\u25BC</span> ADMIN</div>'+
+'<div id="adminSection" style="display:none">'+
+'<div class="p-reset-panel"><div class="p-reset-title">\u2699 QUICK RESET</div>'+
   '<div class="p-reset-grid">'+
-  '<button class="p-reset-btn blue-b" onclick="pReset(\'daily\',\'buggsy\')">🔄 Buggsy<br>Daily Reset</button>'+
-  '<button class="p-reset-btn pink-b" onclick="pReset(\'daily\',\'jj\')">🌸 JJ<br>Daily Reset</button>'+
-  '<button class="p-reset-btn red-b" onclick="pReset(\'weekly\',\'buggsy\')">📅 Buggsy<br>Weekly Reset</button>'+
-  '<button class="p-reset-btn" style="color:#a855f7;border-color:#e9d5ff" onclick="pReset(\'weekly\',\'jj\')">💜 JJ<br>Weekly Reset</button>'+
-  '<button class="p-reset-btn all-b" onclick="pReset(\'all\',\'buggsy\')">⚠ Buggsy<br>Reset All</button>'+
-  '<button class="p-reset-btn all-b" onclick="pReset(\'all\',\'jj\')">⚠ JJ<br>Reset All</button>'+
+  '<button class="p-reset-btn blue-b" onclick="pReset(\'daily\',\'buggsy\')">\ud83d\udd04 Buggsy<br>Daily Reset</button>'+
+  '<button class="p-reset-btn pink-b" onclick="pReset(\'daily\',\'jj\')">\ud83c\udf38 JJ<br>Daily Reset</button>'+
+  '<button class="p-reset-btn red-b" onclick="pReset(\'weekly\',\'buggsy\')">\ud83d\udcc5 Buggsy<br>Weekly Reset</button>'+
+  '<button class="p-reset-btn" style="color:#a855f7;border-color:#e9d5ff" onclick="pReset(\'weekly\',\'jj\')">\ud83d\udc9c JJ<br>Weekly Reset</button>'+
+  '<button class="p-reset-btn all-b" onclick="pReset(\'all\',\'buggsy\')">\u26a0 Buggsy<br>Reset All</button>'+
+  '<button class="p-reset-btn all-b" onclick="pReset(\'all\',\'jj\')">\u26a0 JJ<br>Reset All</button>'+
   '</div></div>'+
-  '<div class="p-sheet-guide"><div class="p-sheet-title">📋 How the KH_ Tabs work</div>'+
-  '<div class="p-sheet-row"><div class="p-sheet-dot"></div><b>KH_Chores</b> — add a row to create a task. It shows up in the app on next refresh.</div>'+
+  '<div class="p-sheet-guide"><div class="p-sheet-title">\ud83d\udccb How the KH_ Tabs work</div>'+
+  '<div class="p-sheet-row"><div class="p-sheet-dot"></div><b>KH_Chores</b> \u2014 add a row to create a task. It shows up in the app on next refresh.</div>'+
   '<div class="p-sheet-row"><div class="p-sheet-dot"></div>Set <b>Active</b> to NO to hide a task without deleting it.</div>'+
   '<div class="p-sheet-row"><div class="p-sheet-dot"></div>Edit <b>Points, TV_Minutes, or Money</b> columns to rebalance rewards.</div>'+
-  '<div class="p-sheet-row"><div class="p-sheet-dot"></div><b>KH_Rewards</b> — add/edit reward tiers. Cost column sets the unlock threshold.</div>'+
+  '<div class="p-sheet-row"><div class="p-sheet-dot"></div><b>KH_Rewards</b> \u2014 add/edit reward tiers. Cost column sets the unlock threshold.</div>'+
   '<div class="p-sheet-row"><div class="p-sheet-dot"></div>Change <b>Child</b> column to move tasks between Buggsy and JJ.</div>'+
-  '</div></div></div>';
+  '</div></div></div></div>';
 }
 var parentAllData = { buggsy:[], jj:[], bBal:{}, jBal:{} };
 function loadParentData() {
@@ -2385,15 +2448,20 @@ function buildKidColumn(name, kidTasks, score, cls, icon, color) {
   var doneCount = kidTasks.filter(function(t){return t.completed;}).length;
   var pendHTML = '';
   if (pending.length === 0) {
-    pendHTML = '<div class="p-empty-state">All clear! ✓<br>No approvals needed.</div>';
+    pendHTML = '<div class="p-empty-state">All clear! \u2713<br>No approvals needed.</div>';
   } else {
+    pendHTML += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 4px">' +
+      '<label style="font-size:12px;color:#94a3b8;cursor:pointer;display:flex;align-items:center;gap:4px">' +
+      '<input type="checkbox" class="batch-select-all" data-child="' + cls + '" onchange="pToggleSelectAll(this,\'' + cls + '\')" style="width:16px;height:16px;cursor:pointer"> Select All</label>' +
+      '<button id="batchBtn_' + cls + '" disabled onclick="pBatchApprove(\'' + cls + '\')" style="margin-left:auto;padding:6px 14px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;opacity:0.5">Approve Selected</button></div>';
     pending.forEach(function(t){
       pendHTML += '<div class="p-task-item">'+
+        '<input type="checkbox" class="task-select task-select-' + cls + '" data-row="' + t.rowIndex + '" onchange="pUpdateBatchBtn(\'' + cls + '\')" style="width:16px;height:16px;cursor:pointer;margin-right:4px">'+
         '<div class="p-task-icon">'+t.icon+'</div>'+
-        '<div class="p-task-info"><div class="p-task-name">'+t.task+'</div><div class="p-task-meta">'+t.points+' pts • '+t.frequency+'</div></div>'+
+        '<div class="p-task-info"><div class="p-task-name">'+t.task+'</div><div class="p-task-meta">'+t.points+' pts \u2022 '+t.frequency+'</div></div>'+
         '<div class="p-task-btns">'+
-        '<button class="p-appr-btn yes" onclick="pApprove(\''+t.taskID+'\',\''+cls+'\')" >✓</button>'+
-        '<button class="p-appr-btn no" onclick="pUncomplete(\''+t.taskID+'\',\''+cls+'\')" >✕</button>'+
+        '<button class="p-appr-btn yes" onclick="pApprove(\''+t.taskID+'\',\''+cls+'\')" >\u2713</button>'+
+        '<button class="p-appr-btn no" onclick="pUncomplete(\''+t.taskID+'\',\''+cls+'\')" >\u2715</button>'+
         '</div></div>';
     });
   }
@@ -2426,6 +2494,53 @@ function pUncomplete(taskID, child) {
   var t = _findByKey(allTasks, 'taskID', taskID);
   if (!t) return;
   google.script.run.withSuccessHandler(function(){ loadParentData(); }).khUncompleteTaskSafe(t.rowIndex, t.taskID);
+}
+function pToggleSection(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var chevronId = id.replace('Section', 'Chevron');
+  var chevron = document.getElementById(chevronId);
+  if (el.style.display === 'none') {
+    el.style.display = 'block';
+    if (chevron) chevron.style.transform = 'rotate(0deg)';
+  } else {
+    el.style.display = 'none';
+    if (chevron) chevron.style.transform = 'rotate(-90deg)';
+  }
+}
+function pToggleSelectAll(el, child) {
+  var boxes = document.querySelectorAll('.task-select-' + child);
+  for (var i = 0; i < boxes.length; i++) { boxes[i].checked = el.checked; }
+  pUpdateBatchBtn(child);
+}
+function pUpdateBatchBtn(child) {
+  var boxes = document.querySelectorAll('.task-select-' + child + ':checked');
+  var btn = document.getElementById('batchBtn_' + child);
+  if (!btn) return;
+  btn.disabled = (boxes.length === 0);
+  btn.style.opacity = boxes.length > 0 ? '1' : '0.5';
+  btn.textContent = boxes.length > 0 ? 'Approve ' + boxes.length + ' tasks' : 'Approve Selected';
+}
+function pBatchApprove(child) {
+  var boxes = document.querySelectorAll('.task-select-' + child + ':checked');
+  var rowIds = [];
+  for (var i = 0; i < boxes.length; i++) { rowIds.push(boxes[i].getAttribute('data-row')); }
+  if (rowIds.length === 0) return;
+  var btn = document.getElementById('batchBtn_' + child);
+  if (btn) { btn.disabled = true; btn.textContent = 'Approving...'; }
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.error) {
+        if (btn) { btn.textContent = 'Error \u2014 try again'; btn.disabled = false; btn.style.opacity = '1'; }
+        return;
+      }
+      if (btn) { btn.textContent = 'Approved ' + (result.approved || rowIds.length) + ' \u2713'; btn.style.background = '#16a34a'; }
+      setTimeout(function() { loadParentData(); }, 1500);
+    })
+    .withFailureHandler(function() {
+      if (btn) { btn.textContent = 'Error \u2014 try again'; btn.disabled = false; btn.style.opacity = '1'; }
+    })
+    .khBatchApproveSafe({ rowIndices: rowIds, approver: 'JT' });
 }
 function pReset(mode, child) {
   if (!confirm('Reset ' + mode + ' tasks for ' + child + '?')) return;

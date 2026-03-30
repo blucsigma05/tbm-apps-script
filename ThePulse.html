@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>The Pulse v57 — Thompson Household</title>
+<title>The Pulse v58 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -497,6 +497,37 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
 <button onclick="loadData()" style="margin-top:12px;padding:10px 20px;background:var(--ink);color:white;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;">Retry</button>
 </div>
 <div class="app" id="app"></div>
+<div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
+
+<script>
+var _lastFetchTime = null;
+var _lastGoodSim = null;
+
+function markDataFresh() {
+  _lastFetchTime = new Date();
+  updateConfidenceRail();
+}
+
+function updateConfidenceRail() {
+  if (!_lastFetchTime) return;
+  var el = document.getElementById('confidenceRail');
+  if (!el) return;
+  var now = new Date();
+  var diffMin = Math.floor((now.getTime() - _lastFetchTime.getTime()) / 60000);
+  if (diffMin < 1) {
+    el.textContent = 'Updated just now';
+    el.style.color = '#94a3b8';
+  } else if (diffMin < 60) {
+    el.textContent = 'Updated ' + diffMin + ' min ago';
+    el.style.color = '#94a3b8';
+  } else {
+    el.textContent = 'Updated ' + Math.floor(diffMin / 60) + 'h ago';
+    el.style.color = '#f59e0b';
+  }
+}
+
+setInterval(updateConfidenceRail, 30000);
+</script>
 
 <script>
 // ╔════════════════════════════════════════════════════════════════════╗
@@ -582,7 +613,7 @@ function loadData(){document.getElementById('loading-overlay').style.display='fl
   google.script.run.withSuccessHandler(onTrackerData).withFailureHandler(function(e){console.error('Tracker load failed:',e);_trackerError=e;tryRender();}).getWeeklyTrackerDataSafe();
   google.script.run.withSuccessHandler(function(m){_serverMonths=m||[];if(_tracker)onTrackerData(_tracker);}).withFailureHandler(function(){}).getMonthsSafe();
   loadReconcileBadge();}
-function onSimData(r){if(!r||!r.debts){onError('Empty simulator data');return;}_sim=r;
+function onSimData(r){if(!r||!r.debts){onError('Empty simulator data');return;}_sim=r;_lastGoodSim=r;markDataFresh();
   DEBT_CONFIG._raw = r;
   DEBTS=r.debts.map(normalizeDebt).filter(function(d){return d.balance>0.01;});
   EXCL=(r.excludedDebts||[]).map(function(d){return{name:d.name,balance:d.balance,apr:d.apr,min:d.min||d.minPayment||0};}).filter(function(d){return d.balance>0;});
@@ -614,6 +645,8 @@ function onSimData(r){if(!r||!r.debts){onError('Empty simulator data');return;}_
   // v19 FIX #6b: Dumb Glass — read server pre-computed fields
   DEBT_CONFIG._debtNow=r.debtNow||r.allNonMortgageDebt||0;
   DEBT_CONFIG._debtNetChange=r.debtNetChange||0;
+  // v58: Pulse Summary from DataEngine v77
+  DEBT_CONFIG._pulseSummary=r.pulseSummary||null;
   // v21 FIX: removed gapAfterDebt server read — was using total minimums instead of actual payments
   tryRender();}
 function onTrackerData(r){if(!r||!r.currentMonth)return;_tracker=r;selectedMonthIdx=r.currentMonth.idx;
@@ -636,7 +669,9 @@ function onTrackerData(r){if(!r||!r.currentMonth)return;_tracker=r;selectedMonth
   }
   _selectedYM=r.currentMonth.ym||null;
   tryRender();}
-function onError(e){console.error('Load error:',e);document.getElementById('loading-overlay').style.display='none';document.getElementById('error-overlay').style.display='flex';}
+function onError(e){console.error('Load error:',e);document.getElementById('loading-overlay').style.display='none';
+  if(_lastGoodSim){var rail=document.getElementById('confidenceRail');if(rail){rail.textContent='Retrying\u2026 showing cached data';rail.style.color='#f59e0b';}setTimeout(function(){loadData();},30000);return;}
+  document.getElementById('error-overlay').style.display='flex';}
 function tryRender(){if(!_sim)return;document.getElementById('loading-overlay').style.display='none';baseResult=simulate(DEBTS,0,0,strat);render();}
 
 // ╔════════════════════════════════════════════════════════════════════╗
@@ -696,10 +731,24 @@ function render(){
   if(!showingCurrent){heroDate='N/A';heroMonths='—';cfpStr='N/A';}
   var html='';
   // HEADER
-  html+='<div class="header"><div class="h-eyebrow">The Pulse · v57</div><div class="h-title">Thompson Household</div>';
+  html+='<div class="header"><div class="h-eyebrow">The Pulse \u00B7 v58</div><div class="h-title">Thompson Household</div>';
   var _headerDate=(customRange&&_customRangeData&&_customRangeData.periodLabel)?_customRangeData.periodLabel:(!showingCurrent&&monthData.periodLabel)?monthData.periodLabel:(MONTHS[now.getMonth()]+' '+now.getFullYear()+' · Day '+now.getDate());
   html+='<div class="h-sub">'+_headerDate+'</div>';
   html+='<div class="h-actions"><button class="refresh-btn" onclick="loadData()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></button><div class="h-pulse"></div></div></div>';
+
+  // v58: PULSE SUMMARY — informational narrative block
+  var _ps = DEBT_CONFIG._pulseSummary;
+  if (_ps && _ps.headline) {
+    html += '<div id="summaryBlock" style="background:#f0f9ff;border-left:4px solid #2563eb;padding:14px 16px;margin:0 16px 16px;border-radius:0 8px 8px 0;">';
+    html += '<div style="font-weight:600;font-size:15px;color:#1e3a5f;margin-bottom:4px;">' + escapeHtml(_ps.headline) + '</div>';
+    if (_ps.detail) {
+      html += '<div style="font-size:13px;color:#475569;">' + escapeHtml(_ps.detail) + '</div>';
+    }
+    if (_ps.alert) {
+      html += '<div style="font-size:12px;color:#d97706;margin-top:6px;padding:6px 10px;background:#fffbeb;border-radius:6px;">' + escapeHtml(_ps.alert) + '</div>';
+    }
+    html += '</div>';
+  }
 
   // 1. KIDS HUB
   html+='<div class="sec a1"><div class="sec-label">Kids Hub</div>';

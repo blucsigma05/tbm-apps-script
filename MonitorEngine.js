@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════
-// MonitorEngine.gs v6
+// MonitorEngine.gs v7
 // WRITES TO: 💻🧮 Close History, 💻🧮 Month-End Review
 // READS FROM: 💻🧮 DebtModel, 💻🧮 Helpers, 🔒 Transactions, 🔒 Balance History
 // ═══════════════════════════════════════════════════
 
-function getMonitorEngineVersion() { return 6; }
+function getMonitorEngineVersion() { return 7; }
 
 var MONITOR_EMAIL = 'lthompson@memoveindesigns.com';
 // v6: openById migration — trigger-safe (was getActiveSpreadsheet, fails from CLOCK triggers)
@@ -207,19 +207,39 @@ function runMERGates(monthLabel) {
   Logger.log('Month transactions: ' + monthTxns.length);
   var results = [];
 
-  // Gate 1: Uncategorized = 0
-  var uncat = monthTxns.filter(function(t) {
+  // Gate 1: Uncategorized = 0 — v7: include transaction details for triage
+  var uncatTxns = monthTxns.filter(function(t) {
     return !t.cat || t.cat === '' || t.cat === 'Uncategorized';
-  }).length;
+  });
+  var uncat = uncatTxns.length;
+  var uncatDetails = [];
+  uncatTxns.sort(function(a, b) { return b.date - a.date; });
+  for (var _u = 0; _u < Math.min(uncatTxns.length, 10); _u++) {
+    var _ut = uncatTxns[_u];
+    uncatDetails.push(Utilities.formatDate(_ut.date, 'America/Chicago', 'MMM dd') +
+      ' \u2014 ' + (_ut.desc || 'No description') + ' \u2014 $' + Math.abs(_ut.amt).toFixed(2));
+  }
+  if (uncatTxns.length > 10) uncatDetails.push('and ' + (uncatTxns.length - 10) + ' more\u2026');
   results.push({ gate: 1, name: 'Uncategorized = 0',
     status: uncat === 0 ? 'PASS' : 'FAIL', value: uncat,
-    detail: uncat + ' uncategorized transactions' });
+    detail: uncat + ' uncategorized transactions',
+    details: uncatDetails });
 
-  // Gate 2: ATM/Cash < 20
-  var atm = monthTxns.filter(function(t) { return t.cat === 'ATM/Cash'; }).length;
+  // Gate 2: ATM/Cash < 20 — v7: include transaction details
+  var atmTxns = monthTxns.filter(function(t) { return t.cat === 'ATM/Cash'; });
+  var atm = atmTxns.length;
+  var atmDetails = [];
+  atmTxns.sort(function(a, b) { return b.date - a.date; });
+  for (var _a = 0; _a < Math.min(atmTxns.length, 10); _a++) {
+    var _at = atmTxns[_a];
+    atmDetails.push(Utilities.formatDate(_at.date, 'America/Chicago', 'MMM dd') +
+      ' \u2014 ' + (_at.desc || 'ATM') + ' \u2014 $' + Math.abs(_at.amt).toFixed(2));
+  }
+  if (atmTxns.length > 10) atmDetails.push('and ' + (atmTxns.length - 10) + ' more\u2026');
   results.push({ gate: 2, name: 'ATM/Cash < 20',
     status: atm < 20 ? 'PASS' : 'FAIL', value: atm,
-    detail: atm + ' ATM/Cash transactions' });
+    detail: atm + ' ATM/Cash transactions',
+    details: atmDetails });
 
   // Gate 3: Transfer Net ~$0
   var tNet = 0;
@@ -235,10 +255,13 @@ function runMERGates(monthLabel) {
     return Utilities.formatDate(t.date,'America/Chicago','MM/dd') +
       ' $' + t.amt.toFixed(2) + ' ' + t.cat + ' — ' + t.desc;
   });
+  var lgDetails = lgLines.slice(0, 10);
+  if (lgLines.length > 10) lgDetails.push('and ' + (lgLines.length - 10) + ' more\u2026');
   results.push({ gate: 4, name: 'Large Txns > $500', status: 'REVIEW', value: lgTxns.length,
     detail: lgTxns.length + ' large transactions' +
       (lgLines.length > 0 ? ':\n' + lgLines.slice(0,10).join('\n') +
-        (lgLines.length > 10 ? '\n... and ' + (lgLines.length-10) + ' more' : '') : '') });
+        (lgLines.length > 10 ? '\n... and ' + (lgLines.length-10) + ' more' : '') : ''),
+    details: lgDetails });
 
   // Gate 5: BankRec Tie-Out
   results.push({ gate: 5, name: 'BankRec Tie-Out', status: 'REVIEW', value: 'Manual',
@@ -454,4 +477,4 @@ function runMonthlyMERReport_() {
   }
 }
 
-// EOF — MonitorEngine.gs v6
+// EOF — MonitorEngine.gs v7

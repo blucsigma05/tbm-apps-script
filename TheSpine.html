@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<title>TheSpine v40 — Office Ambient Display</title>
+<title>TheSpine v41 — Office Ambient Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -369,15 +369,32 @@ body.evening{
     <div class="footer-item"><div class="footer-label">Board</div><div class="footer-val" id="boardStamp">—</div></div>
   </footer>
 </div>
+<div id="confidenceRail" style="position:fixed;bottom:2px;right:6px;font-size:10px;color:rgba(148,163,184,0.4);z-index:100;"></div>
 
 <script>
 // Version history tracked in Notion deploy page.
-var SPINE_VERSION = 40;
+var SPINE_VERSION = 41;
 var FINANCE_MS = 300000;
 var KIDS_MS = 180000;
 var BOARD_MS = 600000;
 var MAX_TASKS = 4;
 var state = { finance:null, kids:null, board:null, levels:null, loaded:{finance:false,kids:false,board:false} };
+// v41: Confidence Rail + Graceful Degradation
+var _spineLastFetch = null;
+function _spineMarkFresh() {
+  _spineLastFetch = new Date();
+  _spineUpdateRail();
+}
+function _spineUpdateRail() {
+  if (!_spineLastFetch) return;
+  var el = document.getElementById('confidenceRail');
+  if (!el) return;
+  var diff = Math.floor((new Date().getTime() - _spineLastFetch.getTime()) / 60000);
+  if (diff < 1) { el.textContent = 'Updated just now'; }
+  else if (diff < 60) { el.textContent = 'Updated ' + diff + 'm ago'; }
+  else { el.textContent = 'Updated ' + Math.floor(diff / 60) + 'h ago'; el.style.color = 'rgba(245,158,11,0.4)'; }
+}
+setInterval(_spineUpdateRail, 30000);
 var typeClassMap = {
   'Mortgage':'mortgage','Personal Loans':'loans','Credit Cards':'cc','Student Loans':'student','Lines of Credit':'loc','Auto':'auto','Solar':'solar'
 };
@@ -490,10 +507,12 @@ function loadFinance(){
   google.script.run.withSuccessHandler(function(raw){
     state.finance = safeParse(raw) || {};
     state.loaded.finance = true;
+    _spineMarkFresh();
     renderFinance(state.finance);
     document.getElementById('financeStamp').textContent = stamp();
     hideLoader();
   }).withFailureHandler(function(e){
+    if (state.finance) { var rail = document.getElementById('confidenceRail'); if (rail) { rail.textContent = 'Retrying\u2026'; rail.style.color = 'rgba(245,158,11,0.4)'; } hideLoader(); return; }
     state.loaded.finance = true;
     document.getElementById('financeStamp').textContent = 'ERR';
     showFinanceError(e);
@@ -628,10 +647,12 @@ function loadKids(){
     var parsed = safeParse(raw) || {};
     state.kids = parsed;
     state.loaded.kids = true;
+    _spineMarkFresh();
     renderKids(parsed);
     document.getElementById('kidsStamp').textContent = stamp();
     hideLoader();
   }).withFailureHandler(function(){
+    if (state.kids) { return; }
     state.loaded.kids = true;
     document.getElementById('kidsStamp').textContent = 'ERR';
     hideLoader();
@@ -811,10 +832,12 @@ function loadBoard(){
   google.script.run.withSuccessHandler(function(raw){
     state.board = safeParse(raw) || {};
     state.loaded.board = true;
+    _spineMarkFresh();
     renderBoard(state.board);
     document.getElementById('boardStamp').textContent = stamp();
     hideLoader();
   }).withFailureHandler(function(){
+    if (state.board) { return; }
     state.loaded.board = true;
     document.getElementById('boardStamp').textContent = 'ERR';
     hideLoader();
