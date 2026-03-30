@@ -49,7 +49,7 @@ function getCachedKHPayload_() {
 
     return raw; // return JSON string, not parsed
   } catch(e) {
-    Logger.log('getCachedKHPayload_ error: ' + e.message);
+    if (typeof logError_ === 'function') logError_('getCachedKHPayload_', e);
     return null;
   }
 }
@@ -105,7 +105,7 @@ function getCachedPayload_(cacheKey) {
     // Non-chunked — parse directly
     return JSON.parse(raw);
   } catch(e) {
-    Logger.log('getCachedPayload_ error: ' + e.message);
+    if (typeof logError_ === 'function') logError_('getCachedPayload_', e);
     return null;
   }
 }
@@ -172,7 +172,7 @@ function bustCache() {
     chunkKeys.push(KH_CACHE_KEY);
     chunkKeys.push(KH_CACHE_HB_KEY);
     cache.removeAll(chunkKeys);
-  } catch(e) {}
+  } catch(e) { if (typeof logError_ === 'function') logError_('bustCache', e); }
   return { status: 'ok', busted: new Date().toISOString() };
 }
 
@@ -186,7 +186,7 @@ function getKHLastModified() {
       var v = sh.getRange('Z1').getValue();
       return v ? String(v) : '';
     }
-  } catch(e) {}
+  } catch(e) { if (typeof logError_ === 'function') logError_('getKHLastModified', e); }
   return '';
 }
 
@@ -307,6 +307,13 @@ function serveData(e) {
       var fn = e.parameter.fn;
       var args = [];
       try { args = JSON.parse(e.parameter.args || '[]'); } catch(ex) {}
+      // v52: Validate args is an array with bounded length
+      if (!Array.isArray(args)) args = [];
+      if (args.length > 10) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ error: 'Too many arguments (' + args.length + ')' })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
 
       var API_WHITELIST = {
         'getDataSafe': getDataSafe, 'getMonthsSafe': getMonthsSafe,
@@ -351,6 +358,7 @@ function serveData(e) {
           JSON.stringify(apiResult)
         ).setMimeType(ContentService.MimeType.JSON);
       } catch (err) {
+        if (typeof logError_ === 'function') logError_('serveData_API_' + fn, err);
         return ContentService.createTextOutput(
           JSON.stringify({ error: err.message, fn: fn })
         ).setMimeType(ContentService.MimeType.JSON);
@@ -480,7 +488,7 @@ function getDataSafe(paramsOrStart, endArg, debtArg) {
       var cached = getCachedPayload_(cacheKey);
       if (cached) return cached;
     }
-    try { SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TAB_MAP['Helpers'] || 'Helpers').getRange('Z1').setValue(new Date().toISOString()); } catch(e) {}
+    try { SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TAB_MAP['Helpers'] || 'Helpers').getRange('Z1').setValue(new Date().toISOString()); } catch(e) { if (typeof logError_ === 'function') logError_('getDataSafe_heartbeat', e); }
     var raw = getData(start, end, true);
     var result = JSON.parse(JSON.stringify(raw));
     if (isCurrentMonth) {
@@ -1300,8 +1308,8 @@ function reconcileVeinPulse() {
   }
   var status = failed === 0 ? 'PASS' : 'FAIL';
   var result = { status: status, total: total, passed: passed, failed: failed, failures: failures, checkedAt: new Date().toISOString(), dataMonth: ym };
-  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeVersion(), gate: 'Vein/Pulse Reconciliation', status: status, details: status === 'PASS' ? 'All ' + total + ' fields valid' : failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) {}
-  try { writeReconcileStatus_(result); } catch(e) {}
+  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeVersion(), gate: 'Vein/Pulse Reconciliation', status: status, details: status === 'PASS' ? 'All ' + total + ' fields valid' : failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) { if (typeof logError_ === 'function') logError_('reconcile_pushQA', e); }
+  try { writeReconcileStatus_(result); } catch(e) { if (typeof logError_ === 'function') logError_('reconcile_writeStatus', e); }
   return result;
 }
 

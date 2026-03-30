@@ -216,7 +216,7 @@ function stampKHHeartbeat_() {
     var hn = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['Helpers'] || 'Helpers') : 'Helpers';
     var sh = ss.getSheetByName(hn);
     if (sh) sh.getRange('Z1').setValue(new Date().toISOString());
-  } catch(e) { /* non-fatal — don't break write path */ }
+  } catch(e) { if (typeof logError_ === 'function') logError_('kh_stampKHHeartbeat_', e); }
 }
 
 

@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// CalendarSync.gs v3 — Google Calendar Seeding & Sync from TBM Data
+// CalendarSync.gs v4 — Google Calendar Seeding & Sync from TBM Data
 // WRITES TO: (Google Calendar only — no sheet writes)
 // READS FROM: 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getCalendarSyncVersion() { return 3; }
+function getCalendarSyncVersion() { return 4; }
 
 // ────────────────────────────────────────────────────────────────────
 // v1 (2026-03-10):
@@ -17,7 +17,7 @@ function getCalendarSyncVersion() { return 3; }
 //   seedHouseholdCalendar()   — bulk seed household/subscription events
 //   syncPromoCliffs()         — re-runnable promo expiration alerts
 //   syncDebtMilestones()      — re-runnable debt-free target + quick wins
-//   addKidsEvent(title, dateStr, timeStr, calName)  — Kids Hub bridge
+//   cs_addKidsEvent_(title, dateStr, timeStr, calName)  — Kids Hub bridge
 //   syncAll()                 — runs everything in sequence
 //
 // IDEMPOTENCY:
@@ -742,7 +742,7 @@ function seedCFFMilestones_() {
 // ════════════════════════════════════════════════════════════════════
 
 /**
- * addKidsEvent(title, dateStr, timeStr, calName) — Creates a single
+ * cs_addKidsEvent_(title, dateStr, timeStr, calName) — Creates a single
  * event on the Kids Activities calendar (or specified calendar).
  * Called by Kids Hub Events tab form submission.
  *
@@ -754,7 +754,7 @@ function seedCFFMilestones_() {
  * @param {string} childName  - Optional: 'Buggsy', 'JJ', 'Both'
  * @returns {string} JSON with event ID or error
  */
-function addKidsEvent(title, dateStr, timeStr, calName, recurrence, childName) {
+function cs_addKidsEvent_(title, dateStr, timeStr, calName, recurrence, childName) {
   try {
     var calKey = calName || 'kids';
     var cal = cs_getCalendar_(calKey);
@@ -819,7 +819,9 @@ function addKidsEvent(title, dateStr, timeStr, calName, recurrence, childName) {
  * addKidsEventSafe — Wrapper for google.script.run (same pattern as KidsHub.gs)
  */
 function addKidsEventSafe(title, dateStr, timeStr, calName, recurrence, childName) {
-  return addKidsEvent(title, dateStr, timeStr, calName, recurrence, childName);
+  return withMonitor_('addKidsEventSafe', function() {
+    return JSON.parse(JSON.stringify(cs_addKidsEvent_(title, dateStr, timeStr, calName, recurrence, childName)));
+  });
 }
 
 

@@ -2959,15 +2959,15 @@ function getBoardData() {
         weather = {
           tempF:     Math.round(cur.temperature_2m) || 0,
           feelsF:    Math.round(cur.apparent_temperature) || 0,
-          condition: _openMeteoCondition(cur.weather_code),
+          condition: de_openMeteoCondition_(cur.weather_code),
           highF:     daily ? Math.round(daily.temperature_2m_max[0]) : 0,
           lowF:      daily ? Math.round(daily.temperature_2m_min[0]) : 0,
-          icon:      _openMeteoIcon(cur.weather_code)
+          icon:      de_openMeteoIcon_(cur.weather_code)
         };
       }
     }
   } catch(e) {
-    // Weather degrades gracefully — returns null
+    if (typeof logError_ === 'function') logError_('de_getBoardData_Weather', e);
   }
 
   // ── 4. Google Calendar events (today) ─────────────────────────────
@@ -2993,7 +2993,7 @@ function getBoardData() {
       }
     }
   } catch(e) {
-    // Calendar degrades gracefully
+    if (typeof logError_ === 'function') logError_('de_getBoardData_Calendar', e);
   }
 
   // Sort by start time, cap at 3
@@ -3027,7 +3027,7 @@ function getBoardData() {
         };
       }
     } catch(e) {
-      // Tomorrow preview degrades gracefully
+      if (typeof logError_ === 'function') logError_('de_getBoardData_Tomorrow', e);
     }
   }
 
@@ -3043,7 +3043,7 @@ function getBoardData() {
       choreStatus.pendingApprovals = (khData.buggsy.stats.pendingCount || 0) + (khData.jj.stats.pendingCount || 0);
     }
   } catch(e) {
-    // Chore status degrades gracefully
+    if (typeof logError_ === 'function') logError_('de_getBoardData_ChoreStatus', e);
   }
 
   // ── 7. Family note from Board_Config tab ──────────────────────────
@@ -3059,7 +3059,7 @@ function getBoardData() {
       }
     }
   } catch(e) {
-    // Family note degrades gracefully
+    if (typeof logError_ === 'function') logError_('de_getBoardData_FamilyNote', e);
   }
 
   // ── 8. Return payload ─────────────────────────────────────────────
@@ -3144,7 +3144,7 @@ function _boardFormatEvent(evt, calName) {
 }
 
 
-function _openMeteoCondition(code) {
+function de_openMeteoCondition_(code) {
   var c = parseInt(code) || 0;
   if (c === 0) return 'Clear sky';
   if (c <= 3) return ['Mainly clear', 'Partly cloudy', 'Overcast'][c - 1];
@@ -3158,7 +3158,7 @@ function _openMeteoCondition(code) {
   return 'Unknown';
 }
 
-function _openMeteoIcon(code) {
+function de_openMeteoIcon_(code) {
   var c = parseInt(code) || 0;
   if (c === 0) return '☀️';
   if (c <= 2) return '⛅';
