@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wolfkid Training Module</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: #0B0F1A;
+  color: #E2E8F0;
+  font-family: 'Nunito', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+textarea::-webkit-input-placeholder { color: #64748B; }
+textarea:-moz-placeholder { color: #64748B; }
+textarea::-moz-placeholder { color: #64748B; }
+textarea:-ms-input-placeholder { color: #64748B; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1E2A4A; border-radius: 3px; }
+
+#starfield {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #93C5FD;
+  opacity: 0.3;
+}
+
+#app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(11,15,26,0.92);
+  border-bottom: 1px solid #1E2A4A;
+  padding: 10px 16px;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo {
+  font-size: 22px;
+}
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #60A5FA, #93C5FD);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+.header-subtitle {
+  font-size: 9px;
+  color: #64748B;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 2px;
+}
+.progress-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #94A3B8;
+  background: #171D30;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #1E2A4A;
+}
+
+.nav-bar {
+  display: flex;
+  gap: 2px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 12px 16px 0;
+  position: relative;
+  z-index: 10;
+}
+.nav-tab {
+  flex: 1;
+  padding: 10px 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  border-radius: 8px 8px 0 0;
+  color: #64748B;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+.nav-tab.active {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  font-weight: 700;
+}
+
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Plan Your Attack overlay */
+#plan-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11,15,26,0.95);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#plan-overlay .plan-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: fadeSlide 0.4s ease;
+}
+#plan-overlay .plan-icon { font-size: 48px; margin-bottom: 12px; }
+#plan-overlay h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #60A5FA;
+  margin-bottom: 12px;
+}
+#plan-overlay p {
+  font-size: 14px;
+  color: #94A3B8;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+#plan-overlay .plan-checklist {
+  text-align: left;
+  margin-bottom: 20px;
+}
+#plan-overlay .plan-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: #E2E8F0;
+  line-height: 1.5;
+}
+#plan-overlay .plan-item .check { color: #22C55E; font-weight: 700; }
+#plan-overlay .start-btn {
+  background: #3B82F6;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 32px;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+#plan-overlay .start-btn:hover { background: #60A5FA; }
+
+/* Session timer */
+#session-timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+/* Completion overlay */
+#completion-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11,15,26,0.95);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#completion-overlay .comp-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 32px 24px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: fadeSlide 0.4s ease;
+}
+.ring-award {
+  display: inline-block;
+  animation: ringPulse 2s ease-in-out infinite;
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+/* Question card */
+.q-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+  animation: fadeSlide 0.3s ease both;
+}
+.q-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.q-type-label {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+}
+.q-meta {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.q-difficulty {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+.q-teks {
+  font-size: 9px;
+  color: #64748B;
+  font-family: 'JetBrains Mono', monospace;
+}
+.q-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #E2E8F0;
+  margin-bottom: 12px;
+  white-space: pre-line;
+}
+.q-number {
+  font-weight: 700;
+  margin-right: 6px;
+}
+.q-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.q-option {
+  text-align: left;
+  padding: 10px 14px;
+  background: #131829;
+  border: 1px solid #1E2A4A;
+  border-radius: 8px;
+  color: #E2E8F0;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: all 0.2s;
+  outline: none;
+}
+.q-option:hover { border-color: #3B82F6; }
+.q-option.selected { border-color: currentColor; }
+.q-option.correct-answer {
+  background: rgba(34,197,94,0.12);
+  border-color: #22C55E;
+}
+.q-option.wrong-answer {
+  background: rgba(239,68,68,0.12);
+  border-color: #EF4444;
+}
+.q-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  background: #131829;
+  border: 1px solid #1E2A4A;
+  border-radius: 8px;
+  color: #E2E8F0;
+  font-size: 14px;
+  font-family: 'Nunito', sans-serif;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+.q-textarea:focus { border-color: #8B5CF6; }
+.q-textarea.math-focus:focus { border-color: #F59E0B; }
+.q-textarea:disabled { opacity: 0.7; }
+.lock-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+  cursor: pointer;
+  outline: none;
+}
+.lock-btn.disabled {
+  background: #1E2A4A;
+  color: #64748B;
+  cursor: not-allowed;
+}
+.feedback-box {
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.feedback-correct {
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.3);
+}
+.feedback-wrong {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.3);
+}
+.feedback-review {
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.3);
+}
+.feedback-label {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+/* Footer */
+#app-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(11,15,26,0.95);
+  border-top: 1px solid #1E2A4A;
+  padding: 8px 16px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  z-index: 20;
+}
+.footer-btn {
+  background: transparent;
+  border: none;
+  color: #64748B;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 6px 12px;
+  font-family: 'Nunito', sans-serif;
+  outline: none;
+}
+.footer-btn.active {
+  background: rgba(59,130,246,0.1);
+  border: 1px solid #3B82F6;
+  color: #60A5FA;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  border-radius: 6px;
+}
+
+/* Mission cards */
+.mission-card {
+  width: 100%;
+  text-align: left;
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+  color: #E2E8F0;
+  font-family: 'Nunito', sans-serif;
+}
+.mission-card:hover { border-color: #3B82F6; }
+</style>
+</head>
+<body>
+
+<!-- Plan Your Attack Overlay -->
+<div id="plan-overlay">
+  <div class="plan-card">
+    <div class="plan-icon">&#x1F43A;&#x1F9E0;</div>
+    <h2>PLAN YOUR ATTACK</h2>
+    <p>Before you start, here is what you are up against today:</p>
+    <div class="plan-checklist">
+      <div class="plan-item">
+        <span class="check">&#10003;</span>
+        <span>&#x1F52C; <strong>Science:</strong> Forces (gravity, friction, magnetism) &mdash; 6 questions, 8 Rings</span>
+      </div>
+      <div class="plan-item">
+        <span class="check">&#10003;</span>
+        <span>&#x1F522; <strong>Math:</strong> Fractions (comparing, adding, equivalence) &mdash; 6 questions, 8 Rings</span>
+      </div>
+      <div class="plan-item">
+        <span class="check">&#10003;</span>
+        <span>&#x1F4D6; Read the Intel Briefing in Science before answering</span>
+      </div>
+      <div class="plan-item">
+        <span class="check">&#10003;</span>
+        <span>&#x2705; Open-ended answers go to parent review &mdash; write complete sentences</span>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#F97316;">&#x1F3AF; <strong>16 Rings</strong> total. Take your time, think it through.</p>
+    <button class="start-btn" onclick="startModule()">LET'S GO</button>
+  </div>
+</div>
+
+<!-- Completion Overlay -->
+<div id="completion-overlay">
+  <div class="comp-card">
+    <div class="ring-award">&#x1F48D;</div>
+    <div id="comp-title" style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#22C55E;margin-bottom:8px;">MODULE COMPLETE</div>
+    <div id="comp-subtitle" style="font-size:14px;color:#94A3B8;line-height:1.7;margin-bottom:16px;"></div>
+    <div id="comp-rings" style="font-size:32px;font-weight:900;color:#F59E0B;font-family:'Orbitron',sans-serif;margin-bottom:8px;"></div>
+    <div style="font-size:11px;color:#64748B;margin-bottom:16px;">Open-ended answers pending parent review</div>
+    <div id="comp-feedback" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:14px;font-size:13px;color:#94A3B8;line-height:1.6;margin-bottom:16px;text-align:left;"></div>
+    <button style="background:#3B82F6;border:none;border-radius:10px;padding:12px 32px;color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;" onclick="closeCompletion()">VIEW RESULTS</button>
+  </div>
+</div>
+
+<!-- Star field -->
+<div id="starfield"></div>
+
+<!-- Header -->
+<header id="app-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <span class="header-logo">&#x1F43A;</span>
+      <div>
+        <div class="header-title">WOLFKID</div>
+        <div class="header-subtitle">TRAINING MODULE</div>
+        <div id="session-timer"></div>
+      </div>
+    </div>
+    <div class="progress-badge" id="progress-badge">0/12 complete</div>
+  </div>
+</header>
+
+<!-- Nav Tabs -->
+<div class="nav-bar" id="nav-bar">
+  <button class="nav-tab active" id="tab-overview" onclick="switchTab('overview')" style="border-bottom-color:#3B82F6;color:#60A5FA;font-weight:700;">&#x1F4CB; Overview</button>
+  <button class="nav-tab" id="tab-science" onclick="switchTab('science')">&#x1F52C; Science (6)</button>
+  <button class="nav-tab" id="tab-math" onclick="switchTab('math')">&#x1F522; Math (6)</button>
+  <button class="nav-tab" id="tab-results" onclick="switchTab('results')">&#x1F4CA; Results</button>
+</div>
+
+<!-- Main Content -->
+<main>
+  <div id="section-overview" style="padding-top:16px;animation:fadeSlide 0.3s ease;"></div>
+  <div id="section-science" style="padding-top:16px;display:none;"></div>
+  <div id="section-math" style="padding-top:16px;display:none;"></div>
+  <div id="section-results" style="padding-top:16px;display:none;"></div>
+</main>
+
+<!-- Footer -->
+<div id="app-footer">
+  <button class="footer-btn">&#x1F3E0; Chores</button>
+  <button class="footer-btn">&#x1F43A; Wolfkid</button>
+  <button class="footer-btn active">&#x1F4DA; Math/Sci</button>
+</div>
+
+<script>
+/* ============================================================
+   HomeworkModule — ES5 vanilla conversion
+   ============================================================ */
+
+// ─── MODULE DATA ───
+var MODULE = {
+  date: "Monday Module",
+  science: {
+    strand: "Force, Motion, and Energy",
+    teks: "4.7A \u2014 Forces (gravity, friction, magnetism)",
+    title: "Mission Briefing: The Physics of the Chase",
+    quickFact: "A wolf can run at speeds up to 40 mph, but friction between its paws and the ground is what lets it turn corners without sliding. Without friction, even the fastest wolf would just... keep sliding.",
+    passage: [
+      "Forces are pushes or pulls that act on objects. Some forces require contact \u2014 like when you push a door open or friction slows down a rolling ball. Other forces work at a distance \u2014 gravity pulls you toward Earth even though the ground isn\u2019t touching you, and a magnet can attract a paperclip without touching it.",
+      "Gravity is the force that pulls everything toward the center of Earth. It\u2019s why a basketball comes back down after you throw it, and why you don\u2019t float off the playground. The strength of gravity depends on mass \u2014 Earth has a lot of mass, so its gravitational pull is strong.",
+      "Friction is the force that resists motion when two surfaces rub together. Rough surfaces create more friction than smooth ones. Friction can be helpful \u2014 it lets your shoes grip the floor so you don\u2019t slip. But it can also slow things down, like when a rolling skateboard eventually stops.",
+      "Magnetism is a force that can attract or repel certain materials (like iron and steel) without touching them. Every magnet has a north pole and a south pole. Opposite poles attract each other, and matching poles push apart."
+    ],
+    questions: [
+      {
+        id: 1,
+        type: "multiple_choice",
+        teks: "4.7A",
+        difficulty: "Easy",
+        question: "Which of these is an example of a force acting at a DISTANCE (without contact)?",
+        options: [
+          "A) Kicking a soccer ball",
+          "B) A magnet pulling a paperclip across a table",
+          "C) Pushing a shopping cart",
+          "D) Rubbing your hands together"
+        ],
+        answer: 1,
+        explanation: "Magnetism is a non-contact force \u2014 the magnet can pull the paperclip without touching it. The other options all require direct contact."
+      },
+      {
+        id: 2,
+        type: "multiple_choice",
+        teks: "4.7A",
+        difficulty: "Medium",
+        question: "Wolfkid is chasing Hex across the gym floor. He\u2019s running fast, then hits a patch of water and starts sliding. What happened to the friction?",
+        options: [
+          "A) Friction increased because water is heavier than air",
+          "B) Friction decreased because the water made the surface smoother",
+          "C) Gravity pulled Wolfkid sideways",
+          "D) The magnetic force between his shoes and the floor changed"
+        ],
+        answer: 1,
+        explanation: "Water reduces friction between surfaces. Less friction = less grip = sliding. This is why wet floors have warning signs!"
+      },
+      {
+        id: 3,
+        type: "multiple_choice",
+        teks: "4.7A",
+        difficulty: "Medium",
+        question: "A student drops a ball from a second-floor window. Which force pulls the ball toward the ground?",
+        options: [
+          "A) Friction",
+          "B) Magnetism",
+          "C) Gravity",
+          "D) Air resistance only"
+        ],
+        answer: 2,
+        explanation: "Gravity is the force that pulls objects toward Earth\u2019s center. It acts on everything with mass, which is why dropped objects fall."
+      },
+      {
+        id: 4,
+        type: "short_answer",
+        teks: "4.7A",
+        difficulty: "Medium",
+        question: "Hex slides a book across the table. It slows down and stops. Name the force that stopped it, and explain whether this is a contact or non-contact force.",
+        sampleAnswer: "Friction stopped the book. Friction is a contact force because it happens when two surfaces (the book and the table) rub against each other."
+      },
+      {
+        id: 5,
+        type: "multiple_choice",
+        teks: "4.7A",
+        difficulty: "Medium",
+        question: "Look at this data table:\n\nSurface | Distance ball rolled\nTile floor | 8 feet\nCarpet | 3 feet\nSandpaper | 1 foot\nIce | 15 feet\n\nWhich conclusion is BEST supported by this data?",
+        options: [
+          "A) Gravity is stronger on carpet than ice",
+          "B) Smoother surfaces have less friction, so the ball rolls farther",
+          "C) The ball was pushed harder on the tile floor",
+          "D) Magnetism affected the ball on sandpaper"
+        ],
+        answer: 1,
+        explanation: "The data shows the ball rolled farther on smoother surfaces (ice, tile) and shorter on rougher surfaces (carpet, sandpaper). This pattern supports the conclusion about friction."
+      },
+      {
+        id: 6,
+        type: "why_question",
+        teks: "4.7A",
+        difficulty: "Hard",
+        question: "If you were designing shoes for Wolfkid to wear during a chase scene on a rainy day, would you make the soles smooth or rough? Explain WHY using what you know about friction.",
+        sampleAnswer: "Rough soles, because rough surfaces create more friction. On a rainy day, water reduces friction, so Wolfkid needs extra grip from rougher soles to keep from slipping during the chase."
+      }
+    ]
+  },
+  math: {
+    strand: "Number and Operations \u2014 Fractions",
+    teks: "4.3A-D \u2014 Representing and Comparing Fractions",
+    title: "Code Cracker: Fraction Intelligence",
+    questions: [
+      {
+        id: 7,
+        type: "computation",
+        teks: "4.3C",
+        difficulty: "Easy",
+        question: "What fraction is equivalent to 2/4?",
+        options: ["A) 1/3", "B) 1/2", "C) 3/4", "D) 2/8"],
+        answer: 1,
+        explanation: "2/4 can be simplified by dividing both numerator and denominator by 2: 2\u00f72 = 1, 4\u00f72 = 2. So 2/4 = 1/2."
+      },
+      {
+        id: 8,
+        type: "word_problem",
+        teks: "4.3E",
+        difficulty: "Medium",
+        question: "Wolfkid and Hex are splitting lookout duty. Wolfkid takes 3/8 of the shift. Hex takes 2/8 of the shift. What fraction of the shift have they covered together?",
+        options: ["A) 5/16", "B) 5/8", "C) 1/8", "D) 6/8"],
+        answer: 1,
+        explanation: "When adding fractions with the same denominator, add the numerators: 3/8 + 2/8 = 5/8. The denominator stays the same."
+      },
+      {
+        id: 9,
+        type: "visual",
+        teks: "4.3A",
+        difficulty: "Easy",
+        question: "Which symbol makes this statement true?\n\n    1/3  ___  1/2",
+        options: ["A) >", "B) <", "C) ="],
+        answer: 1,
+        explanation: "1/3 is less than 1/2. Think of it this way: if you cut a pizza into 3 pieces, each piece is smaller than if you cut it into 2 pieces."
+      },
+      {
+        id: 10,
+        type: "error_analysis",
+        teks: "4.3D",
+        difficulty: "Hard",
+        question: "A student said: \"3/4 is less than 5/8 because 4 is less than 8.\"\n\nIs this correct? Explain the mistake.",
+        sampleAnswer: "No, this is wrong. You can\u2019t just compare denominators. 3/4 = 6/8 when you find a common denominator. Since 6/8 > 5/8, the student\u2019s answer is incorrect. A larger denominator actually means smaller pieces, not a bigger fraction."
+      },
+      {
+        id: 11,
+        type: "multi_step",
+        teks: "4.3E,4.3D",
+        difficulty: "Hard",
+        question: "Hex intercepted a coded message. It was split into 3 parts. Part 1 is 2/6 of the message. Part 2 is 1/6 of the message. How much of the message is still missing?",
+        options: ["A) 3/6", "B) 1/6", "C) 4/6", "D) 2/6"],
+        answer: 0,
+        explanation: "First add what they have: 2/6 + 1/6 = 3/6. The whole message = 6/6. Missing = 6/6 - 3/6 = 3/6 (which equals 1/2)."
+      },
+      {
+        id: 12,
+        type: "real_world",
+        teks: "4.3A",
+        difficulty: "Medium",
+        question: "You earned 15 Rings this week. You want to save 1/3 of them and spend the rest. How many Rings do you save?",
+        options: ["A) 3 Rings", "B) 5 Rings", "C) 10 Rings", "D) 7 Rings"],
+        answer: 1,
+        explanation: "1/3 of 15 = 15 \u00f7 3 = 5 Rings saved. This connects fractions to real-world decisions about money! (And yes, this is basically how your Ring economy works.)"
+      }
+    ]
+  }
+};
+
+// ─── COLORS ───
+var C = {
+  bg: "#0B0F1A",
+  surface: "#131829",
+  card: "#171D30",
+  border: "#1E2A4A",
+  blue: "#3B82F6",
+  blueLight: "#60A5FA",
+  blueGlow: "#93C5FD",
+  orange: "#F97316",
+  red: "#EF4444",
+  green: "#22C55E",
+  greenBg: "rgba(34,197,94,0.08)",
+  yellow: "#EAB308",
+  text: "#E2E8F0",
+  textMuted: "#94A3B8",
+  textDim: "#64748B",
+  scienceColor: "#8B5CF6",
+  mathColor: "#F59E0B"
+};
+
+// ─── STATE ───
+var currentSection = "overview";
+var answers = {};
+var sessionStartTime = null;
+var timerInterval = null;
+var moduleStarted = false;
+
+var scienceQs = MODULE.science.questions;
+var mathQs = MODULE.math.questions;
+var allQs = scienceQs.concat(mathQs);
+
+// ─── TYPE LABELS ───
+var TYPE_LABELS = {
+  multiple_choice: "\uD83D\uDCCB Multiple Choice",
+  computation: "\uD83D\uDD22 Computation",
+  word_problem: "\uD83D\uDCD6 Word Problem",
+  visual: "\uD83D\uDC41\uFE0F Visual",
+  error_analysis: "\uD83D\uDD0D Error Analysis",
+  multi_step: "\uD83E\uDDE9 Multi-Step",
+  real_world: "\uD83C\uDF0D Real World",
+  short_answer: "\u270D\uFE0F Short Answer",
+  why_question: "\uD83E\uDDE0 Why Question"
+};
+
+// ─── HELPERS ───
+function escapeHtml(str) {
+  var div = document.createElement("div");
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+function getTotalAnswered() {
+  var count = 0;
+  var keys = Object.keys(answers);
+  for (var i = 0; i < keys.length; i++) {
+    if (answers[keys[i]] && answers[keys[i]].submitted) count++;
+  }
+  return count;
+}
+
+function getTotalMCCorrect() {
+  var count = 0;
+  var keys = Object.keys(answers);
+  for (var i = 0; i < keys.length; i++) {
+    var a = answers[keys[i]];
+    if (a && a.submitted && a.correct === true) count++;
+  }
+  return count;
+}
+
+function getTotalMC() {
+  var count = 0;
+  for (var i = 0; i < allQs.length; i++) {
+    if (allQs[i].options) count++;
+  }
+  return count;
+}
+
+function isMCQuestion(q) {
+  return q.type !== "short_answer" && q.type !== "why_question" && q.type !== "error_analysis";
+}
+
+function getDiffColor(diff) {
+  if (diff === "Easy") return C.green;
+  if (diff === "Medium") return C.yellow;
+  if (diff === "Hard") return C.orange;
+  return C.textDim;
+}
+
+function updateProgress() {
+  var total = getTotalAnswered();
+  var el = document.getElementById("progress-badge");
+  if (el) el.textContent = total + "/" + allQs.length + " complete";
+
+  // Check if all done and show completion
+  if (total === allQs.length && moduleStarted) {
+    showCompletion();
+  }
+}
+
+// ─── STAR FIELD ───
+function buildStarField() {
+  var container = document.getElementById("starfield");
+  var html = "";
+  for (var i = 0; i < 30; i++) {
+    var x = Math.random() * 100;
+    var y = Math.random() * 100;
+    var size = Math.random() * 2 + 0.5;
+    var delay = Math.random() * 4;
+    var dur = Math.random() * 3 + 2;
+    html += '<div class="star" style="left:' + x + '%;top:' + y + '%;width:' + size + 'px;height:' + size + 'px;animation:twinkle ' + dur + 's ease-in-out ' + delay + 's infinite;"></div>';
+  }
+  container.innerHTML = html;
+}
+
+// ─── SESSION TIMER ───
+function startTimer() {
+  sessionStartTime = Date.now();
+  timerInterval = setInterval(function() {
+    var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+    var mins = Math.floor(elapsed / 60);
+    var secs = elapsed % 60;
+    var display = mins + ":" + (secs < 10 ? "0" : "") + secs;
+    var el = document.getElementById("session-timer");
+    if (el) el.textContent = "Session: " + display;
+  }, 1000);
+}
+
+// ─── PLAN YOUR ATTACK ───
+function startModule() {
+  var overlay = document.getElementById("plan-overlay");
+  overlay.style.display = "none";
+  moduleStarted = true;
+  startTimer();
+}
+
+// ─── COMPLETION SCREEN ───
+function showCompletion() {
+  var mcCorrect = getTotalMCCorrect();
+  var totalMC = getTotalMC();
+  var openEnded = allQs.length - totalMC;
+  var pct = totalMC > 0 ? Math.round((mcCorrect / totalMC) * 100) : 0;
+
+  var subtitle = document.getElementById("comp-subtitle");
+  subtitle.textContent = "Auto-graded: " + mcCorrect + "/" + totalMC + " multiple choice correct (" + pct + "%). " + openEnded + " open-ended answers submitted for parent review.";
+
+  var ringsEl = document.getElementById("comp-rings");
+  ringsEl.innerHTML = "&#x1F48D; Up to 16 RINGS";
+
+  var feedback = document.getElementById("comp-feedback");
+  var fbHtml = "";
+  if (pct === 100) {
+    fbHtml = '<div style="color:#22C55E;font-weight:700;margin-bottom:6px;">Perfect auto-grade score!</div>';
+    fbHtml += '<div>Outstanding work. You nailed every multiple choice question. Your open-ended answers are with your parent for review. Keep this up and those Rings are yours.</div>';
+  } else if (pct >= 75) {
+    fbHtml = '<div style="color:#60A5FA;font-weight:700;margin-bottom:6px;">Strong performance!</div>';
+    fbHtml += '<div>You got most of the auto-graded questions right. Review the ones you missed \u2014 the explanations will help lock in the concepts. Your open-ended answers are pending review.</div>';
+  } else if (pct >= 50) {
+    fbHtml = '<div style="color:#EAB308;font-weight:700;margin-bottom:6px;">Good effort, room to grow.</div>';
+    fbHtml += '<div>You are getting there. Go back and read the explanations for the questions you missed. Understanding WHY the answer is what it is will help you next time.</div>';
+  } else {
+    fbHtml = '<div style="color:#F97316;font-weight:700;margin-bottom:6px;">Let\u2019s review together.</div>';
+    fbHtml += '<div>This topic might need another look. Re-read the Intel Briefing and try to understand each explanation. Your parent can walk through the tricky ones with you.</div>';
+  }
+  feedback.innerHTML = fbHtml;
+
+  // Show elapsed time
+  if (sessionStartTime) {
+    var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+    var mins = Math.floor(elapsed / 60);
+    var secs = elapsed % 60;
+    subtitle.textContent += " Time: " + mins + "m " + secs + "s.";
+  }
+
+  var overlay = document.getElementById("completion-overlay");
+  overlay.style.display = "flex";
+}
+
+function closeCompletion() {
+  var overlay = document.getElementById("completion-overlay");
+  overlay.style.display = "none";
+  switchTab("results");
+}
+
+// ─── TAB SWITCHING ───
+function switchTab(tab) {
+  currentSection = tab;
+  var sections = ["overview", "science", "math", "results"];
+  var tabColors = {
+    overview: C.blue,
+    science: C.scienceColor,
+    math: C.mathColor,
+    results: C.blue
+  };
+  var tabTextColors = {
+    overview: C.blueLight,
+    science: C.scienceColor,
+    math: C.mathColor,
+    results: C.blueLight
+  };
+
+  for (var i = 0; i < sections.length; i++) {
+    var s = sections[i];
+    var sectionEl = document.getElementById("section-" + s);
+    var tabEl = document.getElementById("tab-" + s);
+
+    if (s === tab) {
+      sectionEl.style.display = "block";
+      tabEl.className = "nav-tab active";
+      tabEl.style.borderBottomColor = tabColors[s];
+      tabEl.style.color = tabTextColors[s];
+      tabEl.style.fontWeight = "700";
+      tabEl.style.background = C.card;
+      tabEl.style.borderColor = C.border;
+    } else {
+      sectionEl.style.display = "none";
+      tabEl.className = "nav-tab";
+      tabEl.style.borderBottomColor = "transparent";
+      tabEl.style.color = C.textDim;
+      tabEl.style.fontWeight = "400";
+      tabEl.style.background = "transparent";
+      tabEl.style.borderColor = "transparent";
+    }
+  }
+
+  // Re-render active section
+  if (tab === "overview") renderOverview();
+  if (tab === "science") renderScience();
+  if (tab === "math") renderMath();
+  if (tab === "results") renderResults();
+}
+
+// ─── QUESTION INTERACTION ───
+function selectOption(qId, optIdx) {
+  var key = "q" + qId;
+  if (answers[key] && answers[key].submitted) return;
+  if (!answers[key]) answers[key] = {};
+  answers[key].selected = optIdx;
+
+  // Re-render the question options
+  var subject = qId <= 6 ? "science" : "math";
+  if (subject === "science") renderScience();
+  else renderMath();
+}
+
+function updateTextAnswer(qId) {
+  var key = "q" + qId;
+  if (answers[key] && answers[key].submitted) return;
+  var textarea = document.getElementById("textarea-" + qId);
+  if (!textarea) return;
+  if (!answers[key]) answers[key] = {};
+  answers[key].text = textarea.value;
+}
+
+function submitAnswer(qId) {
+  var key = "q" + qId;
+  var q = null;
+  for (var i = 0; i < allQs.length; i++) {
+    if (allQs[i].id === qId) { q = allQs[i]; break; }
+  }
+  if (!q) return;
+
+  var isMC = isMCQuestion(q);
+  if (!answers[key]) answers[key] = {};
+
+  if (isMC && answers[key].selected === undefined) return;
+  if (!isMC) {
+    var text = answers[key].text || "";
+    if (!text.replace(/^\s+|\s+$/g, "")) return;
+  }
+
+  var correct = isMC ? (answers[key].selected === q.answer) : true;
+  answers[key].submitted = true;
+  answers[key].correct = correct;
+
+  updateProgress();
+
+  // Re-render
+  var subject = qId <= 6 ? "science" : "math";
+  if (subject === "science") renderScience();
+  else renderMath();
+}
+
+// ─── BUILD QUESTION HTML ───
+function buildQuestionHtml(q, index, subjectColor) {
+  var key = "q" + q.id;
+  var a = answers[key] || {};
+  var selected = a.selected;
+  var submitted = a.submitted;
+  var isCorrect = a.correct;
+  var textAnswer = a.text || "";
+  var isMC = isMCQuestion(q);
+  var typeLabel = TYPE_LABELS[q.type] || q.type;
+  var diffColor = getDiffColor(q.difficulty);
+  var focusClass = subjectColor === C.mathColor ? " math-focus" : "";
+
+  var html = '<div class="q-card" style="border-left:3px solid ' + subjectColor + ';animation-delay:' + (index * 0.05) + 's;">';
+
+  // Header
+  html += '<div class="q-header">';
+  html += '<span class="q-type-label" style="color:' + subjectColor + ';">' + typeLabel + '</span>';
+  html += '<div class="q-meta">';
+  html += '<span class="q-difficulty" style="color:' + diffColor + ';background:' + diffColor + '15;">' + escapeHtml(q.difficulty) + '</span>';
+  html += '<span class="q-teks">TEKS ' + escapeHtml(q.teks) + '</span>';
+  html += '</div></div>';
+
+  // Question text
+  html += '<div class="q-text"><span class="q-number" style="color:' + subjectColor + ';">Q' + (index + 1) + '.</span>' + escapeHtml(q.question) + '</div>';
+
+  // MC options
+  if (isMC && q.options) {
+    html += '<div class="q-options">';
+    for (var oi = 0; oi < q.options.length; oi++) {
+      var isSelected = selected === oi;
+      var isAnswer = q.answer === oi;
+      var cls = "q-option";
+      var extraStyle = "";
+
+      if (submitted && isAnswer) {
+        cls += " correct-answer";
+      } else if (submitted && isSelected && !isAnswer) {
+        cls += " wrong-answer";
+      } else if (isSelected) {
+        extraStyle = "border-color:" + subjectColor + ";background:" + subjectColor + "12;";
+      }
+
+      var cursor = submitted ? "cursor:default;" : "cursor:pointer;";
+      var onclick = submitted ? "" : ' onclick="selectOption(' + q.id + ',' + oi + ')"';
+
+      html += '<button class="' + cls + '" style="' + extraStyle + cursor + '"' + onclick + '>';
+      html += escapeHtml(q.options[oi]);
+      if (submitted && isAnswer) html += ' \u2713';
+      if (submitted && isSelected && !isAnswer) html += ' \u2717';
+      html += '</button>';
+    }
+    html += '</div>';
+  }
+
+  // Open-ended textarea
+  if (!isMC) {
+    var disabledAttr = submitted ? ' disabled' : '';
+    var opacityStyle = submitted ? 'opacity:0.7;' : '';
+    html += '<textarea id="textarea-' + q.id + '" class="q-textarea' + focusClass + '" placeholder="Type your answer here..." oninput="updateTextAnswer(' + q.id + ')"' + disabledAttr + ' style="' + opacityStyle + '">' + escapeHtml(textAnswer) + '</textarea>';
+  }
+
+  // Submit / Feedback
+  if (!submitted) {
+    var canSubmit = false;
+    if (isMC && selected !== undefined) canSubmit = true;
+    if (!isMC && textAnswer.replace(/^\s+|\s+$/g, "")) canSubmit = true;
+
+    var btnClass = canSubmit ? "lock-btn" : "lock-btn disabled";
+    var btnBg = canSubmit ? subjectColor : C.border;
+    var btnColor = canSubmit ? "#fff" : C.textDim;
+    var btnCursor = canSubmit ? "cursor:pointer;" : "cursor:not-allowed;";
+
+    html += '<button class="' + btnClass + '" style="background:' + btnBg + ';color:' + btnColor + ';' + btnCursor + '" onclick="submitAnswer(' + q.id + ')">LOCK IN</button>';
+  } else {
+    // Feedback
+    if (isMC) {
+      var fbClass = isCorrect ? "feedback-box feedback-correct" : "feedback-box feedback-wrong";
+      html += '<div class="' + fbClass + '">';
+      if (isCorrect) {
+        html += '<div class="feedback-label" style="color:' + C.green + ';">\u2713 Correct!</div>';
+      } else {
+        html += '<div class="feedback-label" style="color:' + C.red + ';">\u2717 Not quite.</div>';
+      }
+      html += '<div style="color:' + C.textMuted + ';">' + escapeHtml(q.explanation) + '</div>';
+      html += '</div>';
+    } else {
+      html += '<div class="feedback-box feedback-review">';
+      html += '<div class="feedback-label" style="color:' + C.blue + ';">\u2713 Submitted for review</div>';
+      var sampleText = q.sampleAnswer ? "Sample answer: " + q.sampleAnswer : "";
+      html += '<div style="color:' + C.textMuted + ';">' + escapeHtml(sampleText) + '</div>';
+      html += '</div>';
+    }
+  }
+
+  html += '</div>';
+  return html;
+}
+
+// ─── RENDER SECTIONS ───
+function renderOverview() {
+  var html = '';
+
+  // Hero card
+  html += '<div style="background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.05));border:1px solid ' + C.border + ';border-radius:12px;padding:20px;margin-bottom:16px;">';
+  html += '<div style="font-family:\'Orbitron\',sans-serif;font-size:11px;color:' + C.orange + ';letter-spacing:2px;margin-bottom:4px;">' + MODULE.date.toUpperCase() + '</div>';
+  html += '<h1 style="font-family:\'Orbitron\',sans-serif;font-size:20px;font-weight:900;margin:0;background:linear-gradient(90deg,' + C.blueLight + ',' + C.blueGlow + ');-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Training Module: Forces &amp; Fractions</h1>';
+  html += '<div style="font-size:13px;color:' + C.textMuted + ';margin-top:8px;line-height:1.6;">Two missions today. Complete both to earn your Rings.</div>';
+  html += '</div>';
+
+  // Mission cards
+  var missions = [
+    { icon: "\uD83D\uDD2C", title: MODULE.science.title, subtitle: MODULE.science.strand, teks: MODULE.science.teks, count: scienceQs.length, color: C.scienceColor, tab: "science", rings: 8 },
+    { icon: "\uD83D\uDD22", title: MODULE.math.title, subtitle: MODULE.math.strand, teks: MODULE.math.teks, count: mathQs.length, color: C.mathColor, tab: "math", rings: 8 }
+  ];
+
+  for (var i = 0; i < missions.length; i++) {
+    var m = missions[i];
+    html += '<button class="mission-card" style="border-left:3px solid ' + m.color + ';" onclick="switchTab(\'' + m.tab + '\')">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;">';
+    html += '<div>';
+    html += '<div style="font-size:16px;font-weight:700;color:' + C.text + ';margin-bottom:4px;">' + m.icon + ' ' + escapeHtml(m.title) + '</div>';
+    html += '<div style="font-size:12px;color:' + m.color + ';font-family:\'JetBrains Mono\',monospace;">' + escapeHtml(m.subtitle) + '</div>';
+    html += '<div style="font-size:10px;color:' + C.textDim + ';margin-top:4px;">' + escapeHtml(m.teks) + ' \u2022 ' + m.count + ' questions</div>';
+    html += '</div>';
+    html += '<div style="background:' + m.color + '15;border:1px solid ' + m.color + '40;border-radius:8px;padding:6px 10px;text-align:center;">';
+    html += '<div style="font-size:16px;font-weight:800;color:' + m.color + ';">' + m.rings + '</div>';
+    html += '<div style="font-size:9px;color:' + C.textDim + ';">RINGS</div>';
+    html += '</div></div></button>';
+  }
+
+  // Info bar
+  html += '<div style="background:rgba(249,115,22,0.06);border:1px solid rgba(249,115,22,0.15);border-radius:10px;padding:14px;font-size:12px;color:' + C.textMuted + ';line-height:1.6;margin-top:8px;">';
+  html += '\uD83D\uDC3A <strong style="color:' + C.orange + ';">16 Rings available today.</strong> Complete all questions in both missions to earn full credit. Open-ended answers will be reviewed.';
+  html += '</div>';
+
+  document.getElementById("section-overview").innerHTML = html;
+}
+
+function renderScience() {
+  var html = '';
+
+  // Quick Fact
+  html += '<div style="background:' + C.scienceColor + '10;border:1px solid ' + C.scienceColor + '30;border-radius:10px;padding:14px;margin-bottom:14px;">';
+  html += '<div style="font-size:11px;color:' + C.scienceColor + ';font-family:\'Orbitron\',sans-serif;letter-spacing:1.5px;margin-bottom:4px;">\u26A1 QUICK FACT</div>';
+  html += '<div style="font-size:13px;color:' + C.text + ';line-height:1.6;">' + escapeHtml(MODULE.science.quickFact) + '</div>';
+  html += '</div>';
+
+  // Intel Briefing (passage)
+  html += '<div style="background:' + C.card + ';border:1px solid ' + C.border + ';border-radius:12px;padding:16px;margin-bottom:16px;">';
+  html += '<div style="font-size:11px;color:' + C.scienceColor + ';font-family:\'Orbitron\',sans-serif;letter-spacing:1.5px;margin-bottom:8px;">\uD83D\uDCD6 INTEL BRIEFING</div>';
+  for (var i = 0; i < MODULE.science.passage.length; i++) {
+    html += '<p style="font-size:14px;line-height:1.8;color:' + C.text + ';margin:0 0 10px 0;">' + escapeHtml(MODULE.science.passage[i]) + '</p>';
+  }
+  html += '</div>';
+
+  // Questions
+  for (var i = 0; i < scienceQs.length; i++) {
+    html += buildQuestionHtml(scienceQs[i], i, C.scienceColor);
+  }
+
+  document.getElementById("section-science").innerHTML = html;
+}
+
+function renderMath() {
+  var html = '';
+
+  // Mission Intel
+  html += '<div style="background:' + C.mathColor + '10;border:1px solid ' + C.mathColor + '30;border-radius:10px;padding:14px;margin-bottom:14px;">';
+  html += '<div style="font-size:11px;color:' + C.mathColor + ';font-family:\'Orbitron\',sans-serif;letter-spacing:1.5px;margin-bottom:4px;">\uD83D\uDD22 MISSION INTEL</div>';
+  html += '<div style="font-size:13px;color:' + C.text + ';line-height:1.6;">Hex intercepted some enemy intel, but it\u2019s coded in fractions. Time to crack it.</div>';
+  html += '</div>';
+
+  // Questions
+  for (var i = 0; i < mathQs.length; i++) {
+    html += buildQuestionHtml(mathQs[i], i, C.mathColor);
+  }
+
+  document.getElementById("section-math").innerHTML = html;
+}
+
+function renderResults() {
+  var totalAnswered = getTotalAnswered();
+  var allDone = totalAnswered === allQs.length;
+  var html = '';
+
+  if (allDone) {
+    var totalMCCorrect = getTotalMCCorrect();
+    var totalMC = getTotalMC();
+
+    // Completion banner
+    html += '<div style="background:' + C.greenBg + ';border:1px solid rgba(34,197,94,0.3);border-radius:12px;padding:24px;text-align:center;margin-bottom:20px;">';
+    html += '<div style="font-size:40px;margin-bottom:8px;">\uD83D\uDC3A\u26A1\uD83D\uDD2C\uD83D\uDD22</div>';
+    html += '<div style="font-family:\'Orbitron\',sans-serif;font-size:18px;font-weight:900;color:' + C.green + ';margin-bottom:6px;">MODULE COMPLETE</div>';
+    html += '<div style="font-size:13px;color:' + C.textMuted + ';line-height:1.6;">';
+    html += 'Auto-graded: ' + totalMCCorrect + '/' + totalMC + ' multiple choice correct.<br>Open-ended answers submitted for parent review.';
+    html += '</div></div>';
+
+    // Breakdown
+    html += '<div style="background:' + C.card + ';border:1px solid ' + C.border + ';border-radius:12px;padding:16px;">';
+    html += '<div style="font-family:\'Orbitron\',sans-serif;font-size:11px;color:' + C.blue + ';letter-spacing:1.5px;margin-bottom:10px;">BREAKDOWN</div>';
+
+    // Science MC count
+    var sciMCCorrect = 0;
+    var sciMCTotal = 0;
+    for (var i = 0; i < scienceQs.length; i++) {
+      if (scienceQs[i].options) {
+        sciMCTotal++;
+        var sa = answers["q" + scienceQs[i].id];
+        if (sa && sa.correct) sciMCCorrect++;
+      }
+    }
+
+    // Math MC count
+    var mathMCCorrect = 0;
+    var mathMCTotal = 0;
+    for (var i = 0; i < mathQs.length; i++) {
+      if (mathQs[i].options) {
+        mathMCTotal++;
+        var ma = answers["q" + mathQs[i].id];
+        if (ma && ma.correct) mathMCCorrect++;
+      }
+    }
+
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid ' + C.border + ';">';
+    html += '<span style="color:' + C.scienceColor + ';font-weight:600;">Science MC</span>';
+    html += '<span style="font-family:\'JetBrains Mono\',monospace;color:' + C.text + ';">' + sciMCCorrect + '/' + sciMCTotal + '</span>';
+    html += '</div>';
+
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">';
+    html += '<span style="color:' + C.mathColor + ';font-weight:600;">Math MC</span>';
+    html += '<span style="font-family:\'JetBrains Mono\',monospace;color:' + C.text + ';">' + mathMCCorrect + '/' + mathMCTotal + '</span>';
+    html += '</div>';
+
+    // Open-ended count
+    var openEndedCount = 0;
+    for (var i = 0; i < allQs.length; i++) {
+      if (!allQs[i].options) openEndedCount++;
+    }
+
+    html += '<div style="margin-top:12px;padding:10px 14px;background:' + C.orange + '10;border-radius:8px;font-size:13px;color:' + C.textMuted + ';line-height:1.6;">';
+    html += '\u23F3 <strong style="color:' + C.orange + ';">Pending parent review</strong> for ' + openEndedCount + ' open-ended questions. Rings will be awarded after review.';
+    html += '</div></div>';
+
+  } else {
+    // Not done yet
+    var pct = allQs.length > 0 ? Math.round((totalAnswered / allQs.length) * 100) : 0;
+
+    html += '<div style="background:' + C.card + ';border:1px solid ' + C.border + ';border-radius:12px;padding:24px;text-align:center;">';
+    html += '<div style="font-size:32px;margin-bottom:8px;">\uD83D\uDCDD</div>';
+    html += '<div style="font-size:14px;color:' + C.textMuted + ';margin-bottom:4px;">' + totalAnswered + '/' + allQs.length + ' questions answered</div>';
+    html += '<div style="font-size:12px;color:' + C.textDim + ';">Complete all questions to see your results.</div>';
+    html += '<div style="margin-top:12px;height:6px;background:' + C.border + ';border-radius:3px;overflow:hidden;">';
+    html += '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,' + C.blue + ',' + C.blueLight + ');border-radius:3px;transition:width 0.5s ease;"></div>';
+    html += '</div></div>';
+  }
+
+  document.getElementById("section-results").innerHTML = html;
+}
+
+// ─── INIT ───
+function init() {
+  buildStarField();
+  renderOverview();
+  renderScience();
+  renderMath();
+  renderResults();
+  updateProgress();
+}
+
+init();
+</script>
+</body>
+</html>

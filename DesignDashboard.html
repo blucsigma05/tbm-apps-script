@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: #0B0F1A;
+    color: #E2E8F0;
+    font-family: 'Nunito', sans-serif;
+  }
+  input::placeholder { color: #64748B; }
+
+  /* Header */
+  .dd-header {
+    background: rgba(11,15,26,0.95);
+    border-bottom: 1px solid #1E2A4A;
+    padding: 14px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .dd-header-inner { max-width: 600px; margin: 0 auto; }
+  .dd-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 900;
+    text-align: center;
+    background: linear-gradient(90deg, #60A5FA, #F97316);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .dd-subtitle {
+    font-size: 11px;
+    color: #64748B;
+    text-align: center;
+    margin-top: 4px;
+  }
+  .dd-progress { display: flex; gap: 4px; margin-top: 10px; }
+  .dd-bar {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    transition: background 0.3s;
+  }
+  .dd-bar-active { background: #3B82F6; }
+  .dd-bar-inactive { background: #1E2A4A; }
+  .dd-labels { display: flex; justify-content: space-between; margin-top: 4px; }
+  .dd-label {
+    font-size: 9px;
+    font-family: 'Orbitron', sans-serif;
+  }
+  .dd-label-active { color: #60A5FA; font-weight: 700; }
+  .dd-label-inactive { color: #64748B; font-weight: 400; }
+
+  /* Main */
+  .dd-main {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 16px 16px 100px;
+  }
+  .dd-step { animation: fadeUp 0.3s ease; }
+  .dd-step-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+  .dd-step-desc {
+    font-size: 13px;
+    color: #94A3B8;
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  /* Choice cards */
+  .dd-choices { display: flex; flex-direction: column; gap: 8px; }
+  .dd-card {
+    width: 100%;
+    text-align: left;
+    padding: 14px;
+    background: #171D30;
+    border: 2px solid #1E2A4A;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    color: #E2E8F0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+  }
+  .dd-card-selected {
+    background: rgba(59,130,246,0.08);
+    border-color: #3B82F6;
+  }
+  .dd-card-check {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #3B82F6;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #fff;
+  }
+  .dd-card-selected .dd-card-check { display: flex; }
+  .dd-card-row { display: flex; gap: 12px; align-items: center; }
+  .dd-card-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .dd-card-mascot-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #131829;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border: 1px solid #1E2A4A;
+    flex-shrink: 0;
+  }
+  .dd-card-body { flex: 1; }
+  .dd-card-name { font-size: 15px; font-weight: 700; color: #E2E8F0; }
+  .dd-card-desc { font-size: 12px; color: #94A3B8; margin-top: 2px; }
+  .dd-swatches { display: flex; gap: 4px; margin-top: 6px; }
+  .dd-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  /* Section names */
+  .dd-section-label {
+    font-size: 11px;
+    color: #F97316;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .dd-section-group { margin-bottom: 16px; }
+  .dd-section-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .dd-section-btn {
+    padding: 10px 12px;
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 8px;
+    color: #94A3B8;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    transition: all 0.2s;
+  }
+  .dd-section-btn-selected {
+    background: rgba(59,130,246,0.08);
+    border-color: #3B82F6;
+    color: #60A5FA;
+    font-weight: 700;
+  }
+
+  /* Name input */
+  .dd-name-input {
+    width: 100%;
+    padding: 16px;
+    background: #171D30;
+    border: 2px solid #1E2A4A;
+    border-radius: 12px;
+    color: #E2E8F0;
+    font-size: 18px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .dd-name-input-active { border-color: #3B82F6; }
+  .dd-char-count {
+    font-size: 11px;
+    color: #64748B;
+    text-align: right;
+    margin-top: 4px;
+  }
+  .dd-name-preview {
+    margin-top: 16px;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .dd-name-preview-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  }
+
+  /* Preview step */
+  .dd-preview-banner {
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid #1E2A4A;
+  }
+  .dd-preview-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: #fff;
+    text-align: center;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    margin-bottom: 4px;
+  }
+  .dd-preview-theme {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+  }
+  .dd-preview-sections { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .dd-preview-section {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .dd-preview-section-icon { font-size: 20px; }
+  .dd-preview-section-name { font-size: 14px; font-weight: 700; color: #E2E8F0; }
+  .dd-preview-section-sub { font-size: 11px; color: #64748B; }
+
+  /* Summary table */
+  .dd-summary {
+    background: #131829;
+    border: 1px solid #1E2A4A;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 12px;
+  }
+  .dd-summary-header {
+    color: #3B82F6;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+  }
+  .dd-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    border-bottom: 1px solid #1E2A4A;
+  }
+  .dd-summary-row-last { border-bottom: none; }
+  .dd-summary-label { color: #64748B; }
+  .dd-summary-value { color: #E2E8F0; font-weight: 600; }
+
+  /* Lock in button */
+  .dd-lockin {
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px;
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+  }
+
+  /* Submitted */
+  .dd-done { animation: fadeUp 0.5s ease; text-align: center; padding-top: 40px; }
+  .dd-done-emoji { font-size: 56px; margin-bottom: 12px; }
+  .dd-done-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: #22C55E;
+    margin-bottom: 8px;
+  }
+  .dd-done-text {
+    font-size: 14px;
+    color: #94A3B8;
+    line-height: 1.7;
+    margin-bottom: 24px;
+  }
+  .dd-done-ring {
+    background: rgba(249,115,22,0.06);
+    border: 1px solid rgba(249,115,22,0.19);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 13px;
+    color: #94A3B8;
+  }
+
+  /* Plan Your Attack */
+  .dd-plan {
+    animation: fadeUp 0.3s ease;
+    text-align: center;
+    padding-top: 20px;
+  }
+  .dd-plan-icon { font-size: 48px; margin-bottom: 12px; }
+  .dd-plan-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: #60A5FA;
+    margin-bottom: 8px;
+  }
+  .dd-plan-desc {
+    font-size: 14px;
+    color: #94A3B8;
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+  .dd-plan-time {
+    background: #131829;
+    border: 1px solid #1E2A4A;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    color: #64748B;
+    margin-bottom: 20px;
+  }
+  .dd-plan-time strong { color: #F97316; }
+  .dd-plan-start {
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+  }
+
+  /* Nav */
+  .dd-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(11,15,26,0.95);
+    border-top: 1px solid #1E2A4A;
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    max-width: 600px;
+    margin: 0 auto;
+    z-index: 20;
+  }
+  .dd-back {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    color: #94A3B8;
+  }
+  .dd-back-hidden {
+    background: transparent;
+    border: 1px solid transparent;
+    color: transparent;
+    cursor: default;
+  }
+  .dd-next {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+  }
+  .dd-next-enabled { background: #3B82F6; color: #fff; }
+  .dd-next-disabled { background: #1E2A4A; color: #64748B; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<div id="dd-app"></div>
+
+<script>
+/* ===== DATA ===== */
+var THEMES = [
+  { id: "wolfkid", name: "Wolfkid Universe", emoji: "\uD83D\uDC3A", colors: ["#0B0F1A","#3B82F6","#60A5FA","#EF4444"], desc: "Dark & electric. Your original universe.", preview: "linear-gradient(135deg, #0B0F1A 0%, #1E293B 50%, #3B82F6 100%)" },
+  { id: "minecraft", name: "Minecraft", emoji: "\u26CF\uFE0F", colors: ["#3B7D4F","#8B6914","#5C8A3C","#4A4A4A"], desc: "Blocky, green, earthy. Craft your homework.", preview: "linear-gradient(135deg, #3B7D4F 0%, #5C8A3C 50%, #8B6914 100%)" },
+  { id: "mario", name: "Super Mario", emoji: "\uD83C\uDF44", colors: ["#E52521","#049CD8","#FBD000","#43B047"], desc: "Red, blue, gold. Power-up your grades.", preview: "linear-gradient(135deg, #E52521 0%, #049CD8 50%, #FBD000 100%)" },
+  { id: "sonic", name: "Sonic Speed", emoji: "\uD83D\uDCA8", colors: ["#0057A8","#FFD700","#FF3333","#17569B"], desc: "Fast, blue, gold rings. Gotta go fast.", preview: "linear-gradient(135deg, #0057A8 0%, #17569B 50%, #FFD700 100%)" },
+  { id: "space", name: "Deep Space", emoji: "\uD83D\uDE80", colors: ["#0D0221","#7B2FBE","#E040FB","#00E5FF"], desc: "Cosmic purple & neon. Mission control.", preview: "linear-gradient(135deg, #0D0221 0%, #7B2FBE 50%, #E040FB 100%)" },
+  { id: "custom", name: "Your Own Thing", emoji: "\uD83C\uDFA8", colors: ["#000","#FFF","#FF0","#0FF"], desc: "Pick every color yourself. Total control.", preview: "linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 50%, #45B7D1 100%)" }
+];
+
+var SECTION_NAMES = {
+  homework: ["Training Module", "Mission Control", "The Lab", "Quest Board", "Level Up Zone", "My Workshop"],
+  chores: ["Daily Quests", "Side Missions", "The Grind", "Task Board", "Challenge Board", "Chore Zone"],
+  rewards: ["Loot Shop", "Prize Vault", "Reward Center", "Trophy Room", "The Armory", "Power-Up Shop"]
+};
+
+var MASCOT_IDEAS = [
+  { id: "wolfkid", name: "Wolfkid", emoji: "\uD83D\uDC3A", desc: "Your original character" },
+  { id: "custom_creature", name: "New Character", emoji: "\uD83C\uDFA8", desc: "Design something brand new" },
+  { id: "robot", name: "Robot/Mech", emoji: "\uD83E\uDD16", desc: "A tech-powered helper" },
+  { id: "dragon", name: "Dragon", emoji: "\uD83D\uDC09", desc: "Fire-breathing study buddy" },
+  { id: "none", name: "No Mascot", emoji: "\uD83D\uDE0E", desc: "Keep it clean, no character" }
+];
+
+var STEPS = ["Theme", "Sections", "Mascot", "Name It", "Preview"];
+
+/* ===== STATE ===== */
+var state = {
+  started: false,
+  step: 0,
+  theme: null,
+  sectionHomework: null,
+  sectionChores: null,
+  sectionRewards: null,
+  mascot: null,
+  dashName: "",
+  submitted: false
+};
+
+/* ===== HELPERS ===== */
+function escHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function findTheme(id) {
+  for (var i = 0; i < THEMES.length; i++) {
+    if (THEMES[i].id === id) return THEMES[i];
+  }
+  return null;
+}
+
+function findMascot(id) {
+  for (var i = 0; i < MASCOT_IDEAS.length; i++) {
+    if (MASCOT_IDEAS[i].id === id) return MASCOT_IDEAS[i];
+  }
+  return null;
+}
+
+function canNext() {
+  var s = state.step;
+  if (s === 0) return state.theme !== null;
+  if (s === 1) return state.sectionHomework !== null && state.sectionChores !== null && state.sectionRewards !== null;
+  if (s === 2) return state.mascot !== null;
+  if (s === 3) return state.dashName.replace(/^\s+|\s+$/g, '').length > 0;
+  return true;
+}
+
+/* ===== ACTIONS ===== */
+function startWizard() {
+  state.started = true;
+  render();
+}
+
+function goBack() {
+  if (state.step > 0) {
+    state.step--;
+    render();
+  }
+}
+
+function goNext() {
+  if (canNext() && state.step < 4) {
+    state.step++;
+    render();
+  }
+}
+
+function selectTheme(id) {
+  state.theme = id;
+  render();
+}
+
+function selectSection(category, name) {
+  if (category === 'homework') state.sectionHomework = name;
+  else if (category === 'chores') state.sectionChores = name;
+  else if (category === 'rewards') state.sectionRewards = name;
+  render();
+}
+
+function selectMascot(id) {
+  state.mascot = id;
+  render();
+}
+
+function updateDashName(el) {
+  state.dashName = el.value;
+  render();
+  /* Restore focus and cursor position */
+  var inp = document.getElementById('dash-name-input');
+  if (inp) {
+    inp.focus();
+    inp.setSelectionRange(inp.value.length, inp.value.length);
+  }
+}
+
+function lockItIn() {
+  state.submitted = true;
+  render();
+}
+
+/* ===== RENDER ===== */
+function render() {
+  var app = document.getElementById('dd-app');
+  var html = '';
+
+  /* Header */
+  html += '<header class="dd-header"><div class="dd-header-inner">';
+  html += '<div class="dd-title">\uD83C\uDFA8 DESIGN YOUR DASHBOARD</div>';
+  html += '<div class="dd-subtitle">First mission: make this YOURS</div>';
+
+  if (state.started && !state.submitted) {
+    /* Progress bars */
+    html += '<div class="dd-progress">';
+    for (var i = 0; i < STEPS.length; i++) {
+      html += '<div class="dd-bar ' + (i <= state.step ? 'dd-bar-active' : 'dd-bar-inactive') + '"></div>';
+    }
+    html += '</div>';
+    /* Labels */
+    html += '<div class="dd-labels">';
+    for (var i = 0; i < STEPS.length; i++) {
+      html += '<span class="dd-label ' + (i === state.step ? 'dd-label-active' : 'dd-label-inactive') + '">' + STEPS[i] + '</span>';
+    }
+    html += '</div>';
+  }
+
+  html += '</div></header>';
+
+  /* Main */
+  html += '<main class="dd-main">';
+
+  if (!state.started) {
+    html += renderPlanScreen();
+  } else if (state.submitted) {
+    html += renderSubmitted();
+  } else if (state.step === 0) {
+    html += renderThemeStep();
+  } else if (state.step === 1) {
+    html += renderSectionsStep();
+  } else if (state.step === 2) {
+    html += renderMascotStep();
+  } else if (state.step === 3) {
+    html += renderNameStep();
+  } else if (state.step === 4) {
+    html += renderPreviewStep();
+  }
+
+  html += '</main>';
+
+  /* Nav */
+  if (state.started && !state.submitted) {
+    html += renderNav();
+  }
+
+  app.innerHTML = html;
+}
+
+function renderPlanScreen() {
+  var h = '';
+  h += '<div class="dd-plan">';
+  h += '<div class="dd-plan-icon">\uD83D\uDCCB</div>';
+  h += '<div class="dd-plan-title">PLAN YOUR ATTACK</div>';
+  h += '<div class="dd-plan-desc">';
+  h += 'Before we build, here\'s the plan.<br>';
+  h += 'You\'ll pick your theme, name your sections,<br>';
+  h += 'choose a guide, and name your dashboard.';
+  h += '</div>';
+  h += '<div class="dd-plan-time">';
+  h += '\u23F1 Estimated time: <strong>2-3 minutes</strong>';
+  h += '</div>';
+  h += '<button class="dd-plan-start" onclick="startWizard()">\uD83D\uDE80 LET\'S BUILD IT</button>';
+  h += '</div>';
+  return h;
+}
+
+function renderThemeStep() {
+  var h = '';
+  h += '<div class="dd-step">';
+  h += '<div class="dd-step-title">Pick Your Vibe</div>';
+  h += '<div class="dd-step-desc">This sets the colors and feel for YOUR entire dashboard.<br>You can always change it later.</div>';
+  h += '<div class="dd-choices">';
+
+  for (var i = 0; i < THEMES.length; i++) {
+    var t = THEMES[i];
+    var sel = state.theme === t.id;
+    h += '<button class="dd-card' + (sel ? ' dd-card-selected' : '') + '" onclick="selectTheme(\'' + t.id + '\')">';
+    h += '<div class="dd-card-check">\u2713</div>';
+    h += '<div class="dd-card-row">';
+    h += '<div class="dd-card-icon" style="background:' + t.preview + '">' + t.emoji + '</div>';
+    h += '<div class="dd-card-body">';
+    h += '<div class="dd-card-name">' + escHtml(t.name) + '</div>';
+    h += '<div class="dd-card-desc">' + escHtml(t.desc) + '</div>';
+    h += '<div class="dd-swatches">';
+    for (var j = 0; j < t.colors.length; j++) {
+      h += '<div class="dd-swatch" style="background:' + t.colors[j] + '"></div>';
+    }
+    h += '</div></div></div></button>';
+  }
+
+  h += '</div></div>';
+  return h;
+}
+
+function renderSectionsStep() {
+  var h = '';
+  var categories = [
+    { key: "homework", label: "\uD83D\uDCDA Homework Area", stateKey: "sectionHomework" },
+    { key: "chores", label: "\uD83C\uDFE0 Chores Area", stateKey: "sectionChores" },
+    { key: "rewards", label: "\uD83C\uDF81 Rewards Area", stateKey: "sectionRewards" }
+  ];
+
+  h += '<div class="dd-step">';
+  h += '<div class="dd-step-title">Name Your Sections</div>';
+  h += '<div class="dd-step-desc">What do you want to call each part of your dashboard?</div>';
+
+  for (var c = 0; c < categories.length; c++) {
+    var cat = categories[c];
+    var options = SECTION_NAMES[cat.key];
+    var selected = state[cat.stateKey];
+
+    h += '<div class="dd-section-group">';
+    h += '<div class="dd-section-label">' + cat.label + '</div>';
+    h += '<div class="dd-section-grid">';
+
+    for (var i = 0; i < options.length; i++) {
+      var name = options[i];
+      var isSel = selected === name;
+      h += '<button class="dd-section-btn' + (isSel ? ' dd-section-btn-selected' : '') + '" ';
+      h += 'onclick="selectSection(\'' + cat.key + '\', \'' + escHtml(name) + '\')">';
+      h += escHtml(name);
+      h += '</button>';
+    }
+
+    h += '</div></div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function renderMascotStep() {
+  var h = '';
+  h += '<div class="dd-step">';
+  h += '<div class="dd-step-title">Pick Your Guide</div>';
+  h += '<div class="dd-step-desc">Who shows up on your dashboard? This character represents YOU.</div>';
+  h += '<div class="dd-choices">';
+
+  for (var i = 0; i < MASCOT_IDEAS.length; i++) {
+    var m = MASCOT_IDEAS[i];
+    var sel = state.mascot === m.id;
+    h += '<button class="dd-card' + (sel ? ' dd-card-selected' : '') + '" onclick="selectMascot(\'' + m.id + '\')">';
+    h += '<div class="dd-card-check">\u2713</div>';
+    h += '<div class="dd-card-row">';
+    h += '<div class="dd-card-mascot-icon">' + m.emoji + '</div>';
+    h += '<div class="dd-card-body">';
+    h += '<div class="dd-card-name">' + escHtml(m.name) + '</div>';
+    h += '<div class="dd-card-desc">' + escHtml(m.desc) + '</div>';
+    h += '</div></div></button>';
+  }
+
+  h += '</div></div>';
+  return h;
+}
+
+function renderNameStep() {
+  var h = '';
+  var selTheme = findTheme(state.theme);
+  var preview = selTheme ? selTheme.preview : '#171D30';
+
+  h += '<div class="dd-step">';
+  h += '<div class="dd-step-title">Name Your Dashboard</div>';
+  h += '<div class="dd-step-desc">This is what shows up at the top. Make it yours.</div>';
+
+  h += '<input id="dash-name-input" class="dd-name-input' + (state.dashName ? ' dd-name-input-active' : '') + '" ';
+  h += 'value="' + escHtml(state.dashName) + '" ';
+  h += 'placeholder="e.g., Wolfkid HQ, The Arena, Mission Control..." ';
+  h += 'maxlength="30" ';
+  h += 'oninput="updateDashName(this)">';
+
+  h += '<div class="dd-char-count">' + state.dashName.length + '/30</div>';
+
+  if (state.dashName) {
+    h += '<div class="dd-name-preview" style="background:' + preview + '">';
+    h += '<div class="dd-name-preview-text">' + escHtml(state.dashName.toUpperCase()) + '</div>';
+    h += '</div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+function renderPreviewStep() {
+  var h = '';
+  var selTheme = findTheme(state.theme);
+  var selMascot = findMascot(state.mascot);
+  var preview = selTheme ? selTheme.preview : '#171D30';
+  var mascotEmoji = selMascot ? selMascot.emoji : '';
+  var mascotName = selMascot ? selMascot.name : '';
+  var themeName = selTheme ? selTheme.name : '';
+
+  h += '<div class="dd-step">';
+  h += '<div class="dd-step-title">Here\'s Your Dashboard</div>';
+  h += '<div class="dd-step-desc">This is what YOUR homework command center will look like.</div>';
+
+  /* Banner */
+  h += '<div class="dd-preview-banner" style="background:' + preview + '">';
+  h += '<div class="dd-preview-title">' + mascotEmoji + ' ' + escHtml(state.dashName.toUpperCase()) + '</div>';
+  h += '<div class="dd-preview-theme">Theme: ' + escHtml(themeName) + '</div>';
+  h += '</div>';
+
+  /* Section previews */
+  var sections = [
+    { key: "sectionHomework", icon: "\uD83D\uDCDA", color: "#8B5CF6", sub: "Math, Science, CER" },
+    { key: "sectionChores", icon: "\uD83C\uDFE0", color: "#22C55E", sub: "Daily tasks" },
+    { key: "sectionRewards", icon: "\uD83C\uDF81", color: "#F97316", sub: "Rings & unlocks" }
+  ];
+
+  h += '<div class="dd-preview-sections">';
+  for (var i = 0; i < sections.length; i++) {
+    var s = sections[i];
+    h += '<div class="dd-preview-section" style="border-left:3px solid ' + s.color + '">';
+    h += '<span class="dd-preview-section-icon">' + s.icon + '</span>';
+    h += '<div>';
+    h += '<div class="dd-preview-section-name">' + escHtml(state[s.key] || '') + '</div>';
+    h += '<div class="dd-preview-section-sub">' + s.sub + '</div>';
+    h += '</div></div>';
+  }
+  h += '</div>';
+
+  /* Summary */
+  var rows = [
+    ["Theme", themeName],
+    ["Dashboard Name", state.dashName],
+    ["Guide", mascotName],
+    ["Homework Section", state.sectionHomework || ''],
+    ["Chores Section", state.sectionChores || ''],
+    ["Rewards Section", state.sectionRewards || '']
+  ];
+
+  h += '<div class="dd-summary">';
+  h += '<div class="dd-summary-header">YOUR CHOICES</div>';
+  for (var i = 0; i < rows.length; i++) {
+    var isLast = (i === rows.length - 1);
+    h += '<div class="dd-summary-row' + (isLast ? ' dd-summary-row-last' : '') + '">';
+    h += '<span class="dd-summary-label">' + escHtml(rows[i][0]) + '</span>';
+    h += '<span class="dd-summary-value">' + escHtml(rows[i][1]) + '</span>';
+    h += '</div>';
+  }
+  h += '</div>';
+
+  /* Lock in */
+  h += '<button class="dd-lockin" onclick="lockItIn()">\uD83D\uDE80 LOCK IT IN \u2014 BUILD MY DASHBOARD</button>';
+
+  h += '</div>';
+  return h;
+}
+
+function renderSubmitted() {
+  var h = '';
+  h += '<div class="dd-done">';
+  h += '<div class="dd-done-emoji">\uD83C\uDF89</div>';
+  h += '<div class="dd-done-title">DASHBOARD LOCKED IN</div>';
+  h += '<div class="dd-done-text">';
+  h += 'Your choices have been saved. The next time you log in,<br>';
+  h += '<strong style="color:#E2E8F0">' + escHtml(state.dashName) + '</strong> will be waiting for you.';
+  h += '</div>';
+  h += '<div class="dd-done-ring">';
+  h += '\uD83D\uDC3A <strong style="color:#F97316">+15 Rings earned</strong> for completing your first mission.';
+  h += '<br>Your dashboard is now being built. Episode 3 of Wolfkid drops next.';
+  h += '</div>';
+  h += '</div>';
+  return h;
+}
+
+function renderNav() {
+  var h = '';
+  var enabled = canNext();
+  var showBack = state.step > 0;
+
+  h += '<div class="dd-nav">';
+
+  /* Back button */
+  h += '<button class="dd-back' + (!showBack ? ' dd-back-hidden' : '') + '" ';
+  if (showBack) {
+    h += 'onclick="goBack()"';
+  }
+  h += '>\u2190 Back</button>';
+
+  /* Next button */
+  h += '<button class="dd-next ' + (enabled ? 'dd-next-enabled' : 'dd-next-disabled') + '" ';
+  if (enabled && state.step < 4) {
+    h += 'onclick="goNext()"';
+  }
+  h += '>';
+  h += (state.step === 4 ? 'Review \u2191' : 'Next \u2192');
+  h += '</button>';
+
+  h += '</div>';
+  return h;
+}
+
+/* Initial render */
+render();
+</script>
+</body>
+</html>
