@@ -1,13 +1,13 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v49 — Apps Script Router (TBM Consolidated)
+// Code.gs v50 — Apps Script Router (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
 // TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeGsVersion() { return 49; }
+function getCodeGsVersion() { return 50; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -215,7 +215,14 @@ function servePage(page, e) {
     'soul':     { file: 'TheSoul',        title: 'The Soul — Thompson Family Display' },
     'debt':     { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
     'jt':       { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
-    'weekly':   { file: 'ThePulse',        title: 'The Pulse — Thompson Household' }
+    'weekly':   { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
+    'homework':  { file: 'HomeworkModule',  title: 'Homework Module — Thompson Education' },
+    'sparkle':   { file: 'SparkleLearning', title: 'Sparkle Learning — JJ Letter & Number Games' },
+    'wolfkid':   { file: 'WolfkidCER',     title: 'Wolfkid CER — Episode 3' },
+    'dashboard': { file: 'DesignDashboard', title: 'Design Dashboard — Ring Quest Creator' },
+    'facts':     { file: 'fact-sprint',    title: 'Fact Sprint — Math Drill' },
+    'reading':   { file: 'reading-module', title: 'Reading Module — Thompson Education' },
+    'writing':   { file: 'writing-module', title: 'Writing Module — Thompson Education' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -1299,4 +1306,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v49
+// END OF FILE — Code.gs v50

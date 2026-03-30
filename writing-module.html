@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="tbm-module" content="writing-module">
+<meta name="tbm-version" content="v1">
+<title>Writing Module - Buggsy</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1E2A4A; border-radius: 3px; }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.6; }
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 8px rgba(236,72,153,0.2); }
+    50% { box-shadow: 0 0 20px rgba(236,72,153,0.4); }
+  }
+
+  body {
+    min-height: 100vh;
+    background: #0B0F1A;
+    color: #E2E8F0;
+    font-family: 'Nunito', sans-serif;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  textarea::placeholder { color: #64748B; }
+
+  /* ─── Star Field ─── */
+  #starField {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: #F9A8D4;
+    opacity: 0.3;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(11,15,26,0.92);
+    border-bottom: 1px solid #1E2A4A;
+    padding: 10px 16px;
+  }
+  .header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-brand-icon { font-size: 24px; }
+  .header-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    background: linear-gradient(90deg, #EC4899, #F9A8D4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1px;
+  }
+  .header-subtitle {
+    font-size: 10px;
+    color: #64748B;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
+  }
+  .header-timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: #94A3B8;
+  }
+
+  /* ─── Format Selector ─── */
+  .format-selector {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 12px 16px 0;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 10;
+  }
+  .format-tab {
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid #1E2A4A;
+    border-radius: 20px;
+    color: #64748B;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .format-tab-active {
+    background: rgba(236,72,153,0.12);
+    border-color: #EC4899;
+    color: #EC4899;
+  }
+
+  /* ─── Main Content ─── */
+  .main-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 16px 100px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ─── Plan Your Attack ─── */
+  .plan-attack {
+    background: rgba(236,72,153,0.06);
+    border: 1px solid rgba(236,72,153,0.2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+    margin-top: 16px;
+    animation: fadeSlide 0.4s ease forwards;
+  }
+  .plan-attack-label {
+    font-size: 11px;
+    color: #EC4899;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+  .plan-attack-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #E2E8F0;
+  }
+  .plan-attack-format {
+    display: inline-block;
+    background: rgba(236,72,153,0.15);
+    border: 1px solid rgba(236,72,153,0.3);
+    border-radius: 6px;
+    padding: 2px 10px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #EC4899;
+    margin: 4px 0;
+  }
+  .btn-ready {
+    width: 100%;
+    margin-top: 14px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #EC4899, #DB2777);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(236,72,153,0.3);
+    transition: all 0.2s;
+  }
+
+  /* ─── Prompt Card ─── */
+  .prompt-card {
+    background: rgba(236,72,153,0.06);
+    border: 1px solid rgba(236,72,153,0.2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+    animation: fadeSlide 0.4s ease forwards;
+  }
+  .prompt-label {
+    font-size: 11px;
+    color: #EC4899;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+  }
+  .prompt-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #E2E8F0;
+  }
+  .prompt-guidance {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #94A3B8;
+    line-height: 1.6;
+    padding-left: 12px;
+    border-left: 2px solid rgba(236,72,153,0.3);
+  }
+
+  /* ─── Timer Row ─── */
+  .timer-row {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .timer-label {
+    font-size: 11px;
+    color: #64748B;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+  .timer-value {
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #94A3B8;
+  }
+  .timer-value-warn {
+    color: #EAB308;
+  }
+
+  /* ─── Edit/Revise Original Text ─── */
+  .original-text-card {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .original-text-label {
+    font-size: 11px;
+    color: #F97316;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+  }
+  .original-text-content {
+    font-size: 15px;
+    line-height: 1.9;
+    color: #F87171;
+    font-style: italic;
+  }
+  .error-hint {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #94A3B8;
+    line-height: 1.5;
+  }
+
+  /* ─── CER Section (3-part layout) ─── */
+  .cer-section {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .cer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .cer-label-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cer-icon { font-size: 18px; }
+  .cer-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .cer-counter {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .cer-counter-met {
+    color: #22C55E;
+    background: rgba(34,197,94,0.1);
+  }
+  .cer-counter-unmet {
+    color: #64748B;
+    background: transparent;
+  }
+
+  /* ─── Writing Section (single textarea) ─── */
+  .writing-section {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .writing-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .writing-section-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: #EC4899;
+  }
+
+  /* ─── Sentence Starters ─── */
+  .starters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .starter-pill {
+    background: rgba(236,72,153,0.08);
+    border: 1px solid rgba(236,72,153,0.25);
+    color: #F9A8D4;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .starter-pill:hover {
+    background: rgba(236,72,153,0.18);
+    border-color: #EC4899;
+  }
+
+  /* ─── Textarea ─── */
+  .write-textarea {
+    width: 100%;
+    min-height: 200px;
+    background: #131829;
+    border: 1px solid #1E2A4A;
+    border-radius: 8px;
+    color: #E2E8F0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .write-textarea:focus {
+    border-color: #EC4899;
+  }
+  .write-textarea-cer {
+    min-height: 100px;
+  }
+
+  /* ─── Stats Row ─── */
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .stat-item {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #64748B;
+  }
+  .stat-met { color: #22C55E; }
+  .stat-unmet { color: #64748B; }
+
+  /* ─── Submit Row ─── */
+  .submit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+  }
+  .word-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #64748B;
+  }
+  .btn-submit {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+  }
+  .btn-submit-active {
+    background: linear-gradient(135deg, #EC4899, #DB2777);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(236,72,153,0.3);
+  }
+  .btn-submit-disabled {
+    background: #1E2A4A;
+    color: #64748B;
+    cursor: not-allowed;
+  }
+
+  /* ─── Completion Screen ─── */
+  .completion-screen {
+    text-align: center;
+    padding: 40px 20px;
+    animation: fadeSlide 0.5s ease forwards;
+  }
+  .completion-icon { font-size: 60px; margin-bottom: 16px; }
+  .completion-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: #22C55E;
+    margin-bottom: 10px;
+  }
+  .completion-stats {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #94A3B8;
+    margin-bottom: 6px;
+  }
+  .completion-rings {
+    display: inline-block;
+    background: rgba(236,72,153,0.1);
+    border: 1px solid rgba(236,72,153,0.3);
+    border-radius: 10px;
+    padding: 8px 20px;
+    margin: 16px 0;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #EC4899;
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+  .completion-message {
+    font-size: 15px;
+    color: #E2E8F0;
+    line-height: 1.6;
+    margin-top: 16px;
+    margin-bottom: 20px;
+  }
+  .btn-primary {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #EC4899, #DB2777);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(236,72,153,0.3);
+    transition: all 0.2s;
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ─── Star Field ─── -->
+<div id="starField"></div>
+
+<!-- ─── Header ─── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <span class="header-brand-icon">&#x270D;&#xFE0F;</span>
+      <div>
+        <div class="header-title">WRITING LAB</div>
+        <div class="header-subtitle">BUGGSY</div>
+      </div>
+    </div>
+    <span id="sessionTimer" class="header-timer">00:00</span>
+  </div>
+</header>
+
+<!-- ─── Format Selector (for testing) ─── -->
+<div class="format-selector" id="formatSelector">
+  <button class="format-tab format-tab-active" onclick="selectFormat(0)">CER</button>
+  <button class="format-tab" onclick="selectFormat(1)">Persuasive</button>
+  <button class="format-tab" onclick="selectFormat(2)">POV Journal</button>
+  <button class="format-tab" onclick="selectFormat(3)">Edit/Revise</button>
+</div>
+
+<!-- ─── Main Content ─── -->
+<main class="main-content">
+
+  <!-- ══════ PLAN YOUR ATTACK ══════ -->
+  <div id="viewPlan" style="padding-top:16px;">
+    <div class="plan-attack">
+      <div class="plan-attack-label">&#x1F3AF; PLAN YOUR ATTACK</div>
+      <div class="plan-attack-text">
+        <div id="planFormatBadge" class="plan-attack-format"></div>
+        <div id="planDescription" style="margin-top:8px;"></div>
+        <div style="margin-top:6px;font-size:12px;color:#94A3B8;">
+          &#x23F1; Time target: <strong style="color:#EC4899;">~12 minutes</strong>
+        </div>
+      </div>
+      <button class="btn-ready" onclick="startWriting()">&#x270D;&#xFE0F; I'M READY TO WRITE</button>
+    </div>
+  </div>
+
+  <!-- ══════ PROMPT VIEW ══════ -->
+  <div id="viewPrompt" class="hidden" style="padding-top:16px;">
+    <div class="prompt-card">
+      <div class="prompt-label">&#x1F4DD; YOUR PROMPT</div>
+      <div class="prompt-text" id="promptText"></div>
+      <div class="prompt-guidance" id="promptGuidance"></div>
+    </div>
+    <button class="btn-ready" onclick="goToWriting()">&#x270D;&#xFE0F; START WRITING</button>
+  </div>
+
+  <!-- ══════ WRITING VIEW ══════ -->
+  <div id="viewWrite" class="hidden" style="padding-top:16px;">
+    <!-- Timer -->
+    <div class="timer-row">
+      <span class="timer-label">WRITING TIME</span>
+      <span id="writingTimer" class="timer-value">00:00</span>
+    </div>
+
+    <!-- Writing area gets built dynamically -->
+    <div id="writingArea"></div>
+
+    <!-- Stats + Submit -->
+    <div class="submit-row">
+      <div>
+        <span id="wordCount" class="stat-item">0 words</span>
+        <span style="margin:0 6px;color:#1E2A4A;">|</span>
+        <span id="sentenceCount" class="stat-item">0 sentences</span>
+        <span style="margin:0 6px;color:#1E2A4A;">|</span>
+        <span id="minIndicator" class="stat-item stat-unmet">min not met</span>
+      </div>
+      <button id="submitBtn" class="btn-submit btn-submit-disabled" onclick="handleSubmit()" disabled>&#x2705; SUBMIT</button>
+    </div>
+  </div>
+
+  <!-- ══════ COMPLETION SCREEN ══════ -->
+  <div id="viewCompletion" class="hidden" style="padding-top:16px;">
+    <div class="completion-screen">
+      <div class="completion-icon">&#x270D;&#xFE0F;&#x2728;</div>
+      <div class="completion-title">WRITING COMPLETE</div>
+      <div id="completionWords" class="completion-stats"></div>
+      <div id="completionSentences" class="completion-stats"></div>
+      <div id="completionTime" class="completion-stats"></div>
+      <div class="completion-rings">+3 Rings &#x1F48D;</div>
+      <div class="completion-message">
+        Submitted for review.<br>
+        Great effort on today's writing!
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ─── ES5 ONLY ───
+var MODULE_VERSION = 'v1';
+var CHILD = 'buggsy';
+var TARGET_MINUTES = 12;
+
+// ─── 4 Writing Formats ───
+var FORMATS = [
+  {
+    id: 'cer',
+    name: 'CER Response',
+    description: 'Write a Claim-Evidence-Reasoning response to a science passage. Your job: make a claim, back it up with evidence from the text, and explain your reasoning.',
+    prompt: 'Based on what you read about ocean zones, explain why the sunlight zone has the most biodiversity. Use evidence from the text.',
+    guidance: 'Your response needs 3 parts: a Claim (1+ sentence), Evidence (2+ sentences quoting or referencing the text), and Reasoning (1+ sentence explaining how your evidence supports your claim).',
+    type: 'cer',
+    minSentences: 4,
+    starters: {
+      claim: [
+        'The sunlight zone has the most biodiversity because...',
+        'I believe the sunlight zone supports the most life because...',
+        'Based on the text, the sunlight zone is the most biodiverse ocean zone because...'
+      ],
+      evidence: [
+        'In the text it says, "..."',
+        'According to the passage...',
+        'The author explains that...',
+        'For example, the text states...'
+      ],
+      reasoning: [
+        'This is important because...',
+        'This shows that...',
+        'This evidence supports my claim because...',
+        'This connects to the idea that...'
+      ]
+    }
+  },
+  {
+    id: 'persuasive',
+    name: 'Persuasive Paragraph',
+    description: 'Write a persuasive paragraph that states your opinion and gives reasons to support it. Convince the reader you are right!',
+    prompt: 'Should students be allowed to have phones in school? Write a paragraph that states your opinion and gives at least two reasons.',
+    guidance: 'State your opinion clearly, give at least 2 supporting reasons, and wrap it up with a conclusion. Minimum: 5 sentences.',
+    type: 'single',
+    minSentences: 5,
+    starters: {
+      main: [
+        'I believe...',
+        'One reason is...',
+        'Another reason is...',
+        'In conclusion...',
+        'Some people might say..., but...',
+        'This matters because...'
+      ]
+    }
+  },
+  {
+    id: 'pov',
+    name: 'Character POV Journal',
+    description: 'Step into the shoes of a character and write a journal entry from their point of view. Be creative and descriptive!',
+    prompt: 'You are a deep-sea fish living in the twilight zone. Write a journal entry about your day. What do you see? How do you find food? What dangers do you face?',
+    guidance: 'Write in first person ("I") as if you ARE the fish. Describe your world using details about the twilight zone. Minimum: 4 sentences.',
+    type: 'single',
+    minSentences: 4,
+    starters: {
+      main: [
+        'Today I...',
+        'The water around me...',
+        'I noticed that...',
+        'The strangest thing about living here...',
+        'When I looked up, I could see...',
+        'The most dangerous part of my day...'
+      ]
+    }
+  },
+  {
+    id: 'edit',
+    name: 'Edit / Revise',
+    description: 'Read a paragraph that has errors (spelling, grammar, run-ons, missing commas). Rewrite it correctly in your own words below.',
+    prompt: 'Read the paragraph below carefully. It has spelling errors, grammar mistakes, run-on sentences, and missing commas. Rewrite it correctly.',
+    guidance: 'Fix ALL the errors you can find: spelling, grammar, punctuation, and sentence structure. The original stays visible above for reference.',
+    type: 'edit',
+    minSentences: 2,
+    originalText: 'the ocean is very deep and dark their are many creatures that live their. Some fish can make there own light witch is called bioluminecense it helps them find food and avoid predaters. the deepest part of the ocean is called the trench zone and nobody has ever went all the way to the bottom of every trench its very cold and the pressure is incredable.',
+    starters: {
+      main: [
+        'The ocean is...',
+        'There are many...',
+        'Some fish can make their own light, which...',
+        'The deepest part...'
+      ]
+    }
+  }
+];
+
+// ─── State ───
+var currentFormat = 0;
+var currentScreen = 'plan';
+var sessionStartTime = null;
+var sessionInterval = null;
+var writingStartTime = null;
+var writingInterval = null;
+var writingSeconds = 0;
+var submitted = false;
+
+// ─── Determine week of 4-week cycle ───
+function getWeekFormat() {
+  var now = new Date();
+  var startOfYear = new Date(now.getFullYear(), 0, 1);
+  var diff = now.getTime() - startOfYear.getTime();
+  var weekNum = Math.floor(diff / (7 * 24 * 60 * 60 * 1000));
+  return weekNum % 4;
+}
+
+// ─── Init ───
+function init() {
+  buildStarField();
+  currentFormat = getWeekFormat();
+  highlightFormatTab(currentFormat);
+  renderPlan();
+}
+
+// ─── Star Field ───
+function buildStarField() {
+  var container = document.getElementById('starField');
+  var html = '';
+  for (var i = 0; i < 35; i++) {
+    var x = Math.random() * 100;
+    var y = Math.random() * 100;
+    var size = Math.random() * 2 + 0.5;
+    var delay = Math.random() * 4;
+    var duration = Math.random() * 3 + 2;
+    html += '<div class="star" style="'
+      + 'left:' + x + '%;'
+      + 'top:' + y + '%;'
+      + 'width:' + size + 'px;'
+      + 'height:' + size + 'px;'
+      + 'animation:twinkle ' + duration + 's ease-in-out ' + delay + 's infinite;'
+      + '"></div>';
+  }
+  container.innerHTML = html;
+}
+
+// ─── Format Selection ───
+function selectFormat(index) {
+  if (submitted) return;
+  currentFormat = index;
+  highlightFormatTab(index);
+  // Reset state
+  stopWritingTimer();
+  writingSeconds = 0;
+  submitted = false;
+  currentScreen = 'plan';
+  renderPlan();
+  showScreen('plan');
+}
+
+function highlightFormatTab(index) {
+  var tabs = document.getElementById('formatSelector').getElementsByTagName('button');
+  for (var i = 0; i < tabs.length; i++) {
+    if (i === index) {
+      tabs[i].className = 'format-tab format-tab-active';
+    } else {
+      tabs[i].className = 'format-tab';
+    }
+  }
+}
+
+// ─── Screen Management ───
+function showScreen(screen) {
+  currentScreen = screen;
+  var screens = ['viewPlan', 'viewPrompt', 'viewWrite', 'viewCompletion'];
+  for (var i = 0; i < screens.length; i++) {
+    document.getElementById(screens[i]).className = 'hidden';
+  }
+  if (screen === 'plan') {
+    document.getElementById('viewPlan').className = '';
+  } else if (screen === 'prompt') {
+    document.getElementById('viewPrompt').className = '';
+  } else if (screen === 'write') {
+    document.getElementById('viewWrite').className = '';
+  } else if (screen === 'completion') {
+    document.getElementById('viewCompletion').className = '';
+  }
+}
+
+// ─── Plan Your Attack ───
+function renderPlan() {
+  var fmt = FORMATS[currentFormat];
+  document.getElementById('planFormatBadge').textContent = fmt.name;
+  document.getElementById('planDescription').textContent = fmt.description;
+}
+
+// ─── Start Writing (Plan -> Prompt) ───
+function startWriting() {
+  var fmt = FORMATS[currentFormat];
+  document.getElementById('promptText').textContent = fmt.prompt;
+  document.getElementById('promptGuidance').textContent = fmt.guidance;
+
+  // Start session timer
+  sessionStartTime = Date.now();
+  startSessionTimer();
+
+  showScreen('prompt');
+}
+
+// ─── Go To Writing (Prompt -> Write) ───
+function goToWriting() {
+  buildWritingArea();
+  startWritingTimer();
+  showScreen('write');
+}
+
+// ─── Build Writing Area (format-specific) ───
+function buildWritingArea() {
+  var fmt = FORMATS[currentFormat];
+  var container = document.getElementById('writingArea');
+  var html = '';
+
+  if (fmt.type === 'cer') {
+    // 3-section CER layout
+    var cerSections = [
+      { key: 'claim', label: 'CLAIM', icon: '&#x1F3AF;', color: '#3B82F6', min: 1, starterKey: 'claim' },
+      { key: 'evidence', label: 'EVIDENCE', icon: '&#x1F4DD;', color: '#F97316', min: 2, starterKey: 'evidence' },
+      { key: 'reasoning', label: 'REASONING', icon: '&#x1F9E0;', color: '#22C55E', min: 1, starterKey: 'reasoning' }
+    ];
+    for (var s = 0; s < cerSections.length; s++) {
+      var sec = cerSections[s];
+      html += '<div class="cer-section" style="border-left:3px solid ' + sec.color + ';">';
+      html += '<div class="cer-header">';
+      html += '<div class="cer-label-wrap">';
+      html += '<span class="cer-icon">' + sec.icon + '</span>';
+      html += '<span class="cer-label" style="color:' + sec.color + ';">' + sec.label + '</span>';
+      html += '</div>';
+      html += '<span id="counter-' + sec.key + '" class="cer-counter cer-counter-unmet">0/' + sec.min + '+ sentences</span>';
+      html += '</div>';
+
+      // Starters
+      var starters = fmt.starters[sec.starterKey];
+      html += '<div class="starters-row">';
+      for (var p = 0; p < starters.length; p++) {
+        html += '<button class="starter-pill" onclick="insertStarter(\'textarea-' + sec.key + '\', ' + escapeJsString(starters[p]) + ')">' + escapeHtml(starters[p]) + '</button>';
+      }
+      html += '</div>';
+
+      html += '<textarea id="textarea-' + sec.key + '" class="write-textarea write-textarea-cer" placeholder="Write your ' + sec.key + ' here..." oninput="updateCounts()"></textarea>';
+      html += '</div>';
+    }
+  } else if (fmt.type === 'edit') {
+    // Show original text with errors
+    html += '<div class="original-text-card">';
+    html += '<div class="original-text-label">&#x1F6A8; ORIGINAL TEXT (with errors)</div>';
+    html += '<div class="original-text-content">' + escapeHtml(fmt.originalText) + '</div>';
+    html += '<div class="error-hint">Find and fix: spelling errors, grammar mistakes, run-on sentences, missing commas, and wrong word usage.</div>';
+    html += '</div>';
+
+    // Starters
+    html += '<div class="writing-section">';
+    html += '<div class="writing-section-header">';
+    html += '<span class="writing-section-label">&#x270D;&#xFE0F; YOUR CORRECTED VERSION</span>';
+    html += '</div>';
+    var mainStarters = fmt.starters.main;
+    html += '<div class="starters-row">';
+    for (var m = 0; m < mainStarters.length; m++) {
+      html += '<button class="starter-pill" onclick="insertStarter(\'textarea-main\', ' + escapeJsString(mainStarters[m]) + ')">' + escapeHtml(mainStarters[m]) + '</button>';
+    }
+    html += '</div>';
+    html += '<textarea id="textarea-main" class="write-textarea" placeholder="Rewrite the paragraph here with all errors fixed..." oninput="updateCounts()"></textarea>';
+    html += '</div>';
+  } else {
+    // Single textarea (persuasive, POV journal)
+    html += '<div class="writing-section">';
+    html += '<div class="writing-section-header">';
+    html += '<span class="writing-section-label">&#x270D;&#xFE0F; YOUR WRITING</span>';
+    html += '</div>';
+    var mainStarters2 = fmt.starters.main;
+    html += '<div class="starters-row">';
+    for (var n = 0; n < mainStarters2.length; n++) {
+      html += '<button class="starter-pill" onclick="insertStarter(\'textarea-main\', ' + escapeJsString(mainStarters2[n]) + ')">' + escapeHtml(mainStarters2[n]) + '</button>';
+    }
+    html += '</div>';
+    html += '<textarea id="textarea-main" class="write-textarea" placeholder="Start writing here..." oninput="updateCounts()"></textarea>';
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+  updateCounts();
+}
+
+// ─── Sentence Starter Insertion ───
+function escapeJsString(str) {
+  return "'" + str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"') + "'";
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+function insertStarter(targetId, text) {
+  var ta = document.getElementById(targetId);
+  if (!ta) return;
+  var val = ta.value;
+  var newVal = val ? val + ' ' + text : text;
+  ta.value = newVal;
+  updateCounts();
+  setTimeout(function() {
+    ta.focus();
+    if (typeof ta.setSelectionRange === 'function') {
+      ta.setSelectionRange(newVal.length, newVal.length);
+    }
+  }, 50);
+}
+
+// ─── Word & Sentence Counting ───
+function countWords(text) {
+  var trimmed = text.replace(/\s+/g, ' ').replace(/^\s+|\s+$/g, '');
+  if (trimmed === '') return 0;
+  return trimmed.split(' ').length;
+}
+
+function countSentences(text) {
+  var parts = text.split(/[.!?]+/);
+  var count = 0;
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i].replace(/\s/g, '').length > 3) {
+      count++;
+    }
+  }
+  return count;
+}
+
+function getAllText() {
+  var fmt = FORMATS[currentFormat];
+  if (fmt.type === 'cer') {
+    var c = document.getElementById('textarea-claim');
+    var e = document.getElementById('textarea-evidence');
+    var r = document.getElementById('textarea-reasoning');
+    var cVal = c ? c.value : '';
+    var eVal = e ? e.value : '';
+    var rVal = r ? r.value : '';
+    return { combined: cVal + ' ' + eVal + ' ' + rVal, parts: { claim: cVal, evidence: eVal, reasoning: rVal } };
+  } else {
+    var main = document.getElementById('textarea-main');
+    var mainVal = main ? main.value : '';
+    return { combined: mainVal, parts: { main: mainVal } };
+  }
+}
+
+function updateCounts() {
+  var fmt = FORMATS[currentFormat];
+  var textData = getAllText();
+  var totalWords = countWords(textData.combined);
+  var totalSentences = countSentences(textData.combined);
+
+  // Update word and sentence display
+  var wordEl = document.getElementById('wordCount');
+  var sentEl = document.getElementById('sentenceCount');
+  if (wordEl) wordEl.textContent = totalWords + ' words';
+  if (sentEl) sentEl.textContent = totalSentences + ' sentences';
+
+  var minMet = false;
+
+  if (fmt.type === 'cer') {
+    // Check each CER section individually
+    var claimSentences = countSentences(textData.parts.claim);
+    var evidenceSentences = countSentences(textData.parts.evidence);
+    var reasoningSentences = countSentences(textData.parts.reasoning);
+
+    var claimMet = claimSentences >= 1;
+    var evidenceMet = evidenceSentences >= 2;
+    var reasoningMet = reasoningSentences >= 1;
+
+    updateCounter('counter-claim', claimSentences, 1);
+    updateCounter('counter-evidence', evidenceSentences, 2);
+    updateCounter('counter-reasoning', reasoningSentences, 1);
+
+    minMet = claimMet && evidenceMet && reasoningMet;
+  } else {
+    minMet = totalSentences >= fmt.minSentences;
+  }
+
+  // Update minimum indicator
+  var minEl = document.getElementById('minIndicator');
+  if (minEl) {
+    if (minMet) {
+      minEl.textContent = 'min met!';
+      minEl.className = 'stat-item stat-met';
+    } else {
+      if (fmt.type === 'cer') {
+        minEl.textContent = 'C:1+ E:2+ R:1+ needed';
+      } else {
+        minEl.textContent = fmt.minSentences + '+ sentences needed';
+      }
+      minEl.className = 'stat-item stat-unmet';
+    }
+  }
+
+  // Submit button
+  var submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) {
+    if (minMet && totalWords > 0) {
+      submitBtn.disabled = false;
+      submitBtn.className = 'btn-submit btn-submit-active';
+    } else {
+      submitBtn.disabled = true;
+      submitBtn.className = 'btn-submit btn-submit-disabled';
+    }
+  }
+}
+
+function updateCounter(counterId, current, min) {
+  var el = document.getElementById(counterId);
+  if (!el) return;
+  el.textContent = current + '/' + min + '+ sentences';
+  if (current >= min) {
+    el.className = 'cer-counter cer-counter-met';
+  } else {
+    el.className = 'cer-counter cer-counter-unmet';
+  }
+}
+
+// ─── Session Timer ───
+function startSessionTimer() {
+  sessionInterval = setInterval(function() {
+    var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+    var m = Math.floor(elapsed / 60);
+    var s = elapsed % 60;
+    document.getElementById('sessionTimer').textContent = padTwo(m) + ':' + padTwo(s);
+  }, 1000);
+}
+
+// ─── Writing Timer ───
+function startWritingTimer() {
+  writingStartTime = Date.now();
+  writingSeconds = 0;
+  writingInterval = setInterval(function() {
+    writingSeconds++;
+    var m = Math.floor(writingSeconds / 60);
+    var s = writingSeconds % 60;
+    var el = document.getElementById('writingTimer');
+    el.textContent = padTwo(m) + ':' + padTwo(s);
+    if (m >= TARGET_MINUTES) {
+      el.className = 'timer-value timer-value-warn';
+    } else {
+      el.className = 'timer-value';
+    }
+  }, 1000);
+}
+
+function stopWritingTimer() {
+  if (writingInterval) {
+    clearInterval(writingInterval);
+    writingInterval = null;
+  }
+}
+
+function padTwo(n) {
+  return n < 10 ? '0' + n : '' + n;
+}
+
+function getSessionTimeString() {
+  if (!sessionStartTime) return '00:00';
+  var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+  var m = Math.floor(elapsed / 60);
+  var s = elapsed % 60;
+  return padTwo(m) + ':' + padTwo(s);
+}
+
+// ─── Submit ───
+function handleSubmit() {
+  if (submitted) return;
+  submitted = true;
+
+  stopWritingTimer();
+  if (sessionInterval) {
+    clearInterval(sessionInterval);
+    sessionInterval = null;
+  }
+
+  var textData = getAllText();
+  var totalWords = countWords(textData.combined);
+  var totalSentences = countSentences(textData.combined);
+  var fmt = FORMATS[currentFormat];
+
+  document.getElementById('completionWords').textContent = totalWords + ' words written';
+  document.getElementById('completionSentences').textContent = totalSentences + ' sentences';
+  document.getElementById('completionTime').textContent = 'Writing time: ' + padTwo(Math.floor(writingSeconds / 60)) + ':' + padTwo(writingSeconds % 60) + ' | Session: ' + getSessionTimeString();
+
+  showScreen('completion');
+
+  // Award rings via GAS backend (if available)
+  try {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function() { })
+        .withFailureHandler(function(err) { })
+        .awardRings(CHILD, 3, 'writing-module-' + fmt.id);
+    }
+  } catch (e) {
+    // Standalone mode — no GAS backend
+  }
+
+  // Log to Notion via GAS backend (if available)
+  try {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function() { })
+        .withFailureHandler(function(err) { })
+        .logHomeworkCompletion({
+          child: CHILD,
+          subject: 'RLA',
+          assignment: 'Writing - ' + fmt.name,
+          score: null,
+          teksCode: 'ELA 4.12',
+          difficulty: 'Medium',
+          date: new Date().toISOString().split('T')[0]
+        });
+    }
+  } catch (e) {
+    // Standalone mode
+  }
+}
+
+// ─── Start ───
+init();
+</script>
+</body>
+</html>

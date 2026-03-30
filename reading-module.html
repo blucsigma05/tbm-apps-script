@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tbm-module" content="reading-module">
+<meta name="tbm-version" content="v1">
+<title>Wolfkid Reading Module</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: #0B0F1A;
+  color: #E2E8F0;
+  font-family: 'Nunito', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+@keyframes emeraldGlow {
+  0%, 100% { box-shadow: 0 0 8px rgba(16,185,129,0.2); }
+  50% { box-shadow: 0 0 20px rgba(16,185,129,0.4); }
+}
+textarea::-webkit-input-placeholder { color: #64748B; }
+textarea:-moz-placeholder { color: #64748B; }
+textarea::-moz-placeholder { color: #64748B; }
+textarea:-ms-input-placeholder { color: #64748B; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1E2A4A; border-radius: 3px; }
+
+/* Starfield */
+#starfield {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #6EE7B7;
+  opacity: 0.3;
+}
+
+/* Header */
+#app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(11,15,26,0.92);
+  border-bottom: 1px solid #1E2A4A;
+  padding: 10px 16px;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo { font-size: 22px; }
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #10B981, #6EE7B7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+.header-subtitle {
+  font-size: 9px;
+  color: #64748B;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 2px;
+}
+.header-focus {
+  font-size: 9px;
+  color: #10B981;
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 1px;
+}
+#session-timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #64748B;
+  margin-top: 2px;
+}
+.progress-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #94A3B8;
+  background: #171D30;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #1E2A4A;
+}
+
+/* Plan Your Attack overlay */
+#plan-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11,15,26,0.95);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.plan-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: fadeSlide 0.4s ease;
+}
+.plan-icon { font-size: 48px; margin-bottom: 12px; }
+.plan-card h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #10B981;
+  margin-bottom: 12px;
+}
+.plan-card p {
+  font-size: 14px;
+  color: #94A3B8;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.plan-checklist {
+  text-align: left;
+  margin-bottom: 20px;
+}
+.plan-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 13px;
+  color: #E2E8F0;
+  line-height: 1.5;
+}
+.plan-item .check { color: #10B981; font-weight: 700; }
+.start-btn {
+  background: #10B981;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 32px;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.start-btn:hover { background: #34D399; }
+
+/* Completion overlay */
+#completion-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11,15,26,0.95);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.comp-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 32px 24px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: fadeSlide 0.4s ease;
+}
+.ring-award {
+  display: inline-block;
+  animation: ringPulse 2s ease-in-out infinite;
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+/* Main content area */
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Passage card */
+.passage-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 24px 20px;
+  margin-bottom: 16px;
+  animation: fadeSlide 0.3s ease both;
+}
+.passage-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #10B981;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.passage-body {
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.passage-para {
+  position: relative;
+  padding-left: 36px;
+  margin-bottom: 18px;
+  font-size: 15px;
+  line-height: 1.9;
+  color: #E2E8F0;
+}
+.passage-para:last-child { margin-bottom: 0; }
+.para-num {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #10B981;
+  background: rgba(16,185,129,0.1);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 700;
+}
+.vocab-word {
+  color: #34D399;
+  font-weight: 700;
+  border-bottom: 1px dashed #10B981;
+}
+.done-reading-btn {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  background: #10B981;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.done-reading-btn:hover { background: #34D399; }
+
+/* Re-read toggle */
+.reread-toggle {
+  background: #131829;
+  border: 1px solid #1E2A4A;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.reread-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #10B981;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Nunito', sans-serif;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  outline: none;
+}
+.reread-header:hover { background: rgba(16,185,129,0.05); }
+.reread-arrow {
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+.reread-body {
+  display: none;
+  padding: 0 16px 16px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.reread-body.open { display: block; }
+.reread-body .passage-para {
+  font-size: 13px;
+  line-height: 1.8;
+  margin-bottom: 12px;
+}
+
+/* Question card */
+.q-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 14px;
+  animation: fadeSlide 0.3s ease both;
+}
+.q-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.q-type-label {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #10B981;
+}
+.q-meta {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.q-difficulty {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+.q-teks {
+  font-size: 9px;
+  color: #64748B;
+  font-family: 'JetBrains Mono', monospace;
+}
+.q-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #E2E8F0;
+  margin-bottom: 12px;
+}
+.q-number {
+  font-weight: 700;
+  color: #10B981;
+  margin-right: 6px;
+}
+.q-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.q-option {
+  text-align: left;
+  padding: 10px 14px;
+  background: #131829;
+  border: 1px solid #1E2A4A;
+  border-radius: 8px;
+  color: #E2E8F0;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: all 0.2s;
+  outline: none;
+}
+.q-option:hover { border-color: #10B981; }
+.q-option.selected {
+  border-color: #10B981;
+  background: rgba(16,185,129,0.08);
+}
+.q-option.correct-answer {
+  background: rgba(34,197,94,0.12);
+  border-color: #22C55E;
+}
+.q-option.wrong-answer {
+  background: rgba(239,68,68,0.12);
+  border-color: #EF4444;
+}
+.q-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  background: #131829;
+  border: 1px solid #1E2A4A;
+  border-radius: 8px;
+  color: #E2E8F0;
+  font-size: 14px;
+  font-family: 'Nunito', sans-serif;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 10px;
+}
+.q-textarea:focus { border-color: #10B981; }
+.q-textarea:disabled { opacity: 0.7; }
+.lock-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+  cursor: pointer;
+  outline: none;
+}
+.lock-btn.ready {
+  background: #10B981;
+  color: #fff;
+}
+.lock-btn.ready:hover { background: #34D399; }
+.lock-btn.disabled {
+  background: #1E2A4A;
+  color: #64748B;
+  cursor: not-allowed;
+}
+.feedback-box {
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 10px;
+}
+.feedback-correct {
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.3);
+}
+.feedback-wrong {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.3);
+}
+.feedback-review {
+  background: rgba(16,185,129,0.08);
+  border: 1px solid rgba(16,185,129,0.3);
+}
+.feedback-label {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.hint-box {
+  background: rgba(16,185,129,0.06);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #94A3B8;
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+/* Section headers */
+.section-header {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #10B981;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(16,185,129,0.2);
+}
+
+/* Results section */
+.results-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 14px;
+  text-align: center;
+}
+.results-score {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: #10B981;
+  margin-bottom: 4px;
+}
+.results-label {
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 12px;
+}
+.results-detail {
+  font-size: 13px;
+  color: #94A3B8;
+  line-height: 1.7;
+}
+.results-rings {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: #F59E0B;
+  margin-top: 12px;
+}
+</style>
+</head>
+<body>
+
+<!-- Plan Your Attack Overlay -->
+<div id="plan-overlay">
+  <div class="plan-card">
+    <div class="plan-icon">&#x1F43A;&#x1F4D6;</div>
+    <h2>PLAN YOUR ATTACK</h2>
+    <p>Read carefully. You will answer questions about the passage WITHOUT re-reading it first.</p>
+    <div class="plan-checklist">
+      <div class="plan-item">
+        <span class="check">&#10003;</span>
+        <span>&#x1F4D6; <strong>Passage:</strong> "The Deep Ocean" &mdash; informational text, 5 paragraphs</span>
+      </div>
+      <div class="plan-item">
+        <span class="check">&#10003;</span>
+        <span>&#x1F4DD; <strong>Questions:</strong> 5 comprehension questions (4 MC + 1 short answer)</span>
+      </div>
+      <div class="plan-item">
+        <span class="check">&#10003;</span>
+        <span>&#x23F1; <strong>Time:</strong> ~15 minutes total</span>
+      </div>
+      <div class="plan-item">
+        <span class="check">&#10003;</span>
+        <span>&#x1F4A1; Read slowly and pay attention to vocabulary words &mdash; they will be tested</span>
+      </div>
+      <div class="plan-item">
+        <span class="check">&#10003;</span>
+        <span>&#x1F4DA; Reading Focus: <strong>Informational Text</strong> (Week 6 rotation)</span>
+      </div>
+    </div>
+    <p style="font-size:12px;color:#10B981;">&#x1F48D; <strong>8 Rings</strong> available. Read like a wolf &mdash; sharp and focused.</p>
+    <button class="start-btn" onclick="startModule()">START READING</button>
+  </div>
+</div>
+
+<!-- Completion Overlay -->
+<div id="completion-overlay">
+  <div class="comp-card">
+    <div class="ring-award">&#x1F48D;</div>
+    <div id="comp-title" style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#10B981;margin-bottom:8px;">READING COMPLETE</div>
+    <div id="comp-subtitle" style="font-size:14px;color:#94A3B8;line-height:1.7;margin-bottom:16px;"></div>
+    <div id="comp-rings" style="font-size:32px;font-weight:900;color:#F59E0B;font-family:'Orbitron',sans-serif;margin-bottom:8px;"></div>
+    <div style="font-size:11px;color:#64748B;margin-bottom:16px;">Short answer pending parent review</div>
+    <div id="comp-feedback" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:14px;font-size:13px;color:#94A3B8;line-height:1.6;margin-bottom:16px;text-align:left;"></div>
+    <button style="background:#10B981;border:none;border-radius:10px;padding:12px 32px;color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;" onclick="closeCompletion()">VIEW RESULTS</button>
+  </div>
+</div>
+
+<!-- Star field -->
+<div id="starfield"></div>
+
+<!-- Header -->
+<header id="app-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <span class="header-logo">&#x1F43A;</span>
+      <div>
+        <div class="header-title">WOLFKID READING</div>
+        <div class="header-subtitle">COLD PASSAGE MODULE</div>
+        <div class="header-focus">FOCUS: INFORMATIONAL TEXT</div>
+        <div id="session-timer"></div>
+      </div>
+    </div>
+    <div class="progress-badge" id="progress-badge">0/5 answered</div>
+  </div>
+</header>
+
+<!-- Main Content -->
+<main>
+  <div id="section-passage"></div>
+  <div id="section-questions" style="display:none;"></div>
+  <div id="section-results" style="display:none;"></div>
+</main>
+
+<script>
+/* ============================================================
+   ReadingModule v1 — ES5 vanilla, single-file
+   Tuesday RLA: Cold passage + comprehension questions
+   ============================================================ */
+
+var MODULE_VERSION = 'v1';
+var CHILD = 'buggsy';
+
+// ─── PASSAGE DATA ───
+var PASSAGE = {
+  title: 'The Deep Ocean',
+  paragraphs: [
+    'The ocean is the largest habitat on Earth, covering more than 70 percent of the planet\'s surface. Most people are familiar with the shallow waters near the shore, where sunlight brightens the sandy bottom and waves lap against the beach. But the ocean is far deeper than most people realize. In some places, it plunges nearly seven miles below the surface. Scientists divide the ocean into distinct zones based on how much sunlight reaches each depth, and the deeper you go, the more alien the world becomes.',
+    'The sunlight zone is the top layer of the ocean, stretching from the surface down to about 656 feet. This is where most ocean life exists. Sunlight floods this zone, allowing tiny plants called phytoplankton to grow. These microscopic organisms produce more than half of the world\'s oxygen through photosynthesis. Fish, dolphins, sea turtles, and sharks all thrive here because food is plentiful. The water is warm and bright, making it the most hospitable part of the ocean.',
+    'Below the sunlight zone lies the twilight zone, which extends from about 656 feet to 3,280 feet deep. Only a faint blue glow of light reaches this region. The water grows colder, and the pressure increases. Many creatures here have developed bioluminescence, meaning they can produce their own light. Lanternfish, jellyfish, and squid use glowing body parts to attract prey, communicate, or confuse predators. Food is scarcer in the twilight zone, so animals must descend to darker waters or wait for scraps to drift down from above.',
+    'The midnight zone begins at about 3,280 feet and extends to roughly 13,000 feet. No sunlight penetrates this deep. The water temperature hovers just above freezing, and the pressure is crushing. Despite these extreme conditions, life persists. Giant squid, anglerfish with their eerie glowing lures, and strange tube worms cluster around hydrothermal vents on the ocean floor. These vents release superheated water and minerals from deep within the Earth, supporting entire ecosystems without any sunlight at all.',
+    'The deepest region is the abyssal zone, found below 13,000 feet. Temperatures here are near freezing, and the pressure is more than 1,000 times what we experience at the surface. Very few creatures can survive in such harsh conditions. Those that do, like certain species of sea cucumbers and microscopic organisms, have adapted to thrive in total darkness with almost no food. Scientists estimate that more than 80 percent of the ocean floor remains unexplored, meaning the abyssal zone may hold secrets we have not yet imagined.'
+  ],
+  vocabWords: ['descend', 'bioluminescence', 'hospitable', 'photosynthesis']
+};
+
+// ─── QUESTIONS DATA ───
+var QUESTIONS = [
+  {
+    id: 1,
+    type: 'multiple_choice',
+    teks: 'ELA 4.6',
+    difficulty: 'Easy',
+    label: 'Main Idea',
+    question: 'What is the MAIN idea of this passage?',
+    options: [
+      'A) The ocean is too dangerous for humans to explore.',
+      'B) The ocean is divided into zones that get darker, colder, and more extreme as depth increases.',
+      'C) Anglerfish are the most interesting creatures in the deep ocean.',
+      'D) Scientists have already explored every part of the ocean floor.'
+    ],
+    answer: 1,
+    explanation: 'The passage is organized around the different ocean zones and describes how conditions change as depth increases. Each paragraph introduces a deeper zone with harsher conditions, making this the main idea.'
+  },
+  {
+    id: 2,
+    type: 'multiple_choice',
+    teks: 'ELA 4.3B',
+    difficulty: 'Medium',
+    label: 'Vocabulary in Context',
+    question: 'In paragraph 3, the author writes that animals "must descend to darker waters." What does the word "descend" mean as it is used here?',
+    options: [
+      'A) To swim in circles',
+      'B) To move downward to a lower level',
+      'C) To float near the surface',
+      'D) To hide from predators'
+    ],
+    answer: 1,
+    explanation: 'The word "descend" means to move downward. The context clue is "to darker waters" \u2014 since the passage explains that deeper water is darker, descending means moving down to a lower depth.'
+  },
+  {
+    id: 3,
+    type: 'multiple_choice',
+    teks: 'ELA 4.10',
+    difficulty: 'Medium',
+    label: "Author's Purpose",
+    question: "What is the author's MAIN purpose for writing this passage?",
+    options: [
+      'A) To persuade readers to become ocean scientists',
+      'B) To entertain readers with a fictional story about the ocean',
+      'C) To inform readers about the different zones of the ocean and what lives there',
+      'D) To warn readers about the dangers of deep-sea diving'
+    ],
+    answer: 2,
+    explanation: "The author's purpose is to inform. The passage presents factual information about each ocean zone in an organized way. It does not try to persuade, entertain with fiction, or warn about danger."
+  },
+  {
+    id: 4,
+    type: 'multiple_choice',
+    teks: 'ELA 4.9D',
+    difficulty: 'Medium',
+    label: 'Text Structure',
+    question: 'How is this passage MAINLY organized?',
+    options: [
+      'A) Problem and solution \u2014 it describes ocean pollution and how to fix it',
+      'B) Cause and effect \u2014 it explains why the ocean exists',
+      'C) Sequential order \u2014 it describes ocean zones from shallowest to deepest',
+      'D) Compare and contrast \u2014 it only compares two zones side by side'
+    ],
+    answer: 2,
+    explanation: 'The passage follows a sequential (top-to-bottom) order, moving through each ocean zone from the sunlight zone near the surface down to the abyssal zone at the very bottom. Each paragraph introduces the next deeper zone.'
+  },
+  {
+    id: 5,
+    type: 'short_answer',
+    teks: 'ELA 4.6',
+    difficulty: 'Hard',
+    label: 'Inference',
+    question: 'Based on the passage, why do you think FEWER creatures live in the abyssal zone compared to the sunlight zone? Use evidence from the passage to support your answer.',
+    hint: 'Think about what living things need to survive: light, food, comfortable temperature, and manageable pressure. How do these factors differ between the two zones?',
+    sampleAnswer: 'Fewer creatures live in the abyssal zone because the conditions are much harsher. The passage says the sunlight zone has warm water, plentiful food, and sunlight for photosynthesis. In contrast, the abyssal zone has near-freezing temperatures, crushing pressure over 1,000 times what we feel at the surface, total darkness, and almost no food. Most organisms cannot adapt to such extreme conditions, so only a few specialized species survive there.'
+  }
+];
+
+// ─── COLORS ───
+var C = {
+  bg: '#0B0F1A',
+  surface: '#131829',
+  card: '#171D30',
+  border: '#1E2A4A',
+  emerald: '#10B981',
+  emeraldLight: '#34D399',
+  emeraldPale: '#6EE7B7',
+  green: '#22C55E',
+  red: '#EF4444',
+  yellow: '#EAB308',
+  orange: '#F97316',
+  amber: '#F59E0B',
+  text: '#E2E8F0',
+  textMuted: '#94A3B8',
+  textDim: '#64748B'
+};
+
+// ─── STATE ───
+var currentView = 'passage';
+var answers = {};
+var sessionStartTime = null;
+var timerInterval = null;
+var moduleStarted = false;
+var passageReadTime = 0;
+var missedQuestions = [];
+
+// ─── HELPERS ───
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+function getTotalAnswered() {
+  var count = 0;
+  var keys = Object.keys(answers);
+  for (var i = 0; i < keys.length; i++) {
+    if (answers[keys[i]] && answers[keys[i]].submitted) count++;
+  }
+  return count;
+}
+
+function getTotalMCCorrect() {
+  var count = 0;
+  var keys = Object.keys(answers);
+  for (var i = 0; i < keys.length; i++) {
+    var a = answers[keys[i]];
+    if (a && a.submitted && a.correct === true) count++;
+  }
+  return count;
+}
+
+function getTotalMC() {
+  var count = 0;
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    if (QUESTIONS[i].type === 'multiple_choice') count++;
+  }
+  return count;
+}
+
+function getDiffColor(diff) {
+  if (diff === 'Easy') return C.green;
+  if (diff === 'Medium') return C.yellow;
+  if (diff === 'Hard') return C.orange;
+  return C.textDim;
+}
+
+function getDiffBg(diff) {
+  if (diff === 'Easy') return 'rgba(34,197,94,0.1)';
+  if (diff === 'Medium') return 'rgba(234,179,8,0.1)';
+  if (diff === 'Hard') return 'rgba(249,115,22,0.1)';
+  return 'transparent';
+}
+
+function updateProgress() {
+  var total = getTotalAnswered();
+  var el = document.getElementById('progress-badge');
+  if (el) el.textContent = total + '/' + QUESTIONS.length + ' answered';
+  if (total === QUESTIONS.length && moduleStarted) {
+    showCompletion();
+  }
+}
+
+function formatTime(seconds) {
+  var mins = Math.floor(seconds / 60);
+  var secs = seconds % 60;
+  return mins + 'm ' + secs + 's';
+}
+
+// ─── HIGHLIGHT VOCAB IN TEXT ───
+function highlightVocab(text) {
+  var result = escapeHtml(text);
+  for (var i = 0; i < PASSAGE.vocabWords.length; i++) {
+    var word = PASSAGE.vocabWords[i];
+    var regex = new RegExp('\\b(' + word + ')\\b', 'gi');
+    result = result.replace(regex, '<span class="vocab-word">$1</span>');
+  }
+  return result;
+}
+
+// ─── STARFIELD ───
+function buildStarField() {
+  var container = document.getElementById('starfield');
+  var html = '';
+  for (var i = 0; i < 30; i++) {
+    var x = Math.random() * 100;
+    var y = Math.random() * 100;
+    var size = Math.random() * 2 + 0.5;
+    var delay = Math.random() * 4;
+    var dur = Math.random() * 3 + 2;
+    html += '<div class="star" style="left:' + x + '%;top:' + y + '%;width:' + size + 'px;height:' + size + 'px;animation:twinkle ' + dur + 's ease-in-out ' + delay + 's infinite;"></div>';
+  }
+  container.innerHTML = html;
+}
+
+// ─── SESSION TIMER ───
+function startTimer() {
+  sessionStartTime = Date.now();
+  timerInterval = setInterval(function() {
+    var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+    var mins = Math.floor(elapsed / 60);
+    var secs = elapsed % 60;
+    var display = mins + ':' + (secs < 10 ? '0' : '') + secs;
+    var el = document.getElementById('session-timer');
+    if (el) el.textContent = 'Session: ' + display;
+  }, 1000);
+}
+
+// ─── START MODULE ───
+function startModule() {
+  var overlay = document.getElementById('plan-overlay');
+  overlay.style.display = 'none';
+  moduleStarted = true;
+  startTimer();
+  renderPassage();
+}
+
+// ─── RENDER PASSAGE VIEW ───
+function renderPassage() {
+  currentView = 'passage';
+  var container = document.getElementById('section-passage');
+  var questionsEl = document.getElementById('section-questions');
+  var resultsEl = document.getElementById('section-results');
+  container.style.display = 'block';
+  questionsEl.style.display = 'none';
+  resultsEl.style.display = 'none';
+
+  var html = '<div class="passage-card">';
+  html += '<div class="passage-title">&#x1F30A; ' + escapeHtml(PASSAGE.title) + '</div>';
+  html += '<div class="passage-body">';
+
+  for (var i = 0; i < PASSAGE.paragraphs.length; i++) {
+    html += '<div class="passage-para">';
+    html += '<span class="para-num">' + (i + 1) + '</span>';
+    html += highlightVocab(PASSAGE.paragraphs[i]);
+    html += '</div>';
+  }
+
+  html += '</div>';
+  html += '<button class="done-reading-btn" onclick="doneReading()">DONE READING &#x2192;</button>';
+  html += '</div>';
+
+  container.innerHTML = html;
+}
+
+// ─── DONE READING ───
+function doneReading() {
+  if (sessionStartTime) {
+    passageReadTime = Math.floor((Date.now() - sessionStartTime) / 1000);
+  }
+  currentView = 'questions';
+  var passageEl = document.getElementById('section-passage');
+  var questionsEl = document.getElementById('section-questions');
+  passageEl.style.display = 'none';
+  questionsEl.style.display = 'block';
+  renderQuestions();
+}
+
+// ─── BUILD RE-READ TOGGLE ───
+function buildRereadToggle() {
+  var html = '<div class="reread-toggle">';
+  html += '<button class="reread-header" onclick="toggleReread()">';
+  html += '&#x1F4D6; Re-read Passage';
+  html += '<span class="reread-arrow" id="reread-arrow">&#x25BC;</span>';
+  html += '</button>';
+  html += '<div class="reread-body" id="reread-body">';
+
+  for (var i = 0; i < PASSAGE.paragraphs.length; i++) {
+    html += '<div class="passage-para">';
+    html += '<span class="para-num">' + (i + 1) + '</span>';
+    html += highlightVocab(PASSAGE.paragraphs[i]);
+    html += '</div>';
+  }
+
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+function toggleReread() {
+  var body = document.getElementById('reread-body');
+  var arrow = document.getElementById('reread-arrow');
+  if (body.className.indexOf('open') !== -1) {
+    body.className = 'reread-body';
+    arrow.innerHTML = '&#x25BC;';
+  } else {
+    body.className = 'reread-body open';
+    arrow.innerHTML = '&#x25B2;';
+  }
+}
+
+// ─── RENDER QUESTIONS VIEW ───
+function renderQuestions() {
+  var container = document.getElementById('section-questions');
+  var html = '';
+
+  html += '<div class="section-header">&#x1F4DD; Comprehension Questions</div>';
+  html += buildRereadToggle();
+
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    html += buildQuestionCard(QUESTIONS[i], i);
+  }
+
+  container.innerHTML = html;
+}
+
+// ─── BUILD QUESTION CARD ───
+function buildQuestionCard(q, idx) {
+  var qNum = idx + 1;
+  var ans = answers[q.id] || {};
+  var isSubmitted = ans.submitted;
+  var typeLabel = q.type === 'multiple_choice' ? '&#x1F4CB; Multiple Choice' : '&#x270D;&#xFE0F; Short Answer';
+
+  var html = '<div class="q-card" id="q-card-' + q.id + '">';
+
+  // Header
+  html += '<div class="q-header">';
+  html += '<span class="q-type-label">' + typeLabel + ' &mdash; ' + escapeHtml(q.label) + '</span>';
+  html += '<div class="q-meta">';
+  html += '<span class="q-difficulty" style="color:' + getDiffColor(q.difficulty) + ';background:' + getDiffBg(q.difficulty) + ';">' + escapeHtml(q.difficulty) + '</span>';
+  html += '<span class="q-teks">[' + escapeHtml(q.teks) + ']</span>';
+  html += '</div>';
+  html += '</div>';
+
+  // Question text
+  html += '<div class="q-text"><span class="q-number">Q' + qNum + '.</span>' + escapeHtml(q.question) + '</div>';
+
+  if (q.type === 'multiple_choice') {
+    html += buildMCOptions(q, ans, isSubmitted);
+  } else {
+    html += buildShortAnswer(q, ans, isSubmitted);
+  }
+
+  html += '</div>';
+  return html;
+}
+
+// ─── MC OPTIONS ───
+function buildMCOptions(q, ans, isSubmitted) {
+  var html = '<div class="q-options">';
+
+  for (var j = 0; j < q.options.length; j++) {
+    var optClass = 'q-option';
+    var isSelected = ans.selected === j;
+    var clickable = !isSubmitted;
+
+    if (isSubmitted) {
+      if (j === q.answer) {
+        optClass += ' correct-answer';
+      } else if (isSelected && j !== q.answer) {
+        optClass += ' wrong-answer';
+      }
+    } else if (isSelected) {
+      optClass += ' selected';
+    }
+
+    html += '<button class="' + optClass + '"';
+    if (clickable) {
+      html += ' onclick="selectOption(' + q.id + ',' + j + ')"';
+    }
+    html += '>' + escapeHtml(q.options[j]) + '</button>';
+  }
+
+  html += '</div>';
+
+  // Lock In button
+  if (!isSubmitted) {
+    var btnClass = (ans.selected !== undefined && ans.selected !== null) ? 'lock-btn ready' : 'lock-btn disabled';
+    html += '<button class="' + btnClass + '" id="lock-btn-' + q.id + '" onclick="lockInMC(' + q.id + ')"';
+    if (ans.selected === undefined || ans.selected === null) html += ' disabled';
+    html += '>LOCK IN</button>';
+  }
+
+  // Feedback
+  if (isSubmitted) {
+    html += buildFeedback(q, ans);
+  }
+
+  return html;
+}
+
+// ─── SHORT ANSWER ───
+function buildShortAnswer(q, ans, isSubmitted) {
+  var html = '';
+
+  html += '<textarea class="q-textarea" id="textarea-' + q.id + '"';
+  html += ' placeholder="Write your answer here using evidence from the passage..."';
+  if (isSubmitted) html += ' disabled';
+  html += '>';
+  if (ans.text) html += escapeHtml(ans.text);
+  html += '</textarea>';
+
+  if (!isSubmitted) {
+    var hasText = ans.text && ans.text.length > 0;
+    var btnClass = hasText ? 'lock-btn ready' : 'lock-btn disabled';
+    html += '<button class="' + btnClass + '" id="lock-btn-' + q.id + '" onclick="submitShortAnswer(' + q.id + ')">SUBMIT</button>';
+  }
+
+  if (isSubmitted) {
+    html += '<div class="feedback-box feedback-review">';
+    html += '<div class="feedback-label" style="color:#10B981;">&#x2705; Submitted for Review</div>';
+    html += '<div style="color:#94A3B8;">Your answer has been submitted. A parent will review it.</div>';
+    html += '</div>';
+    if (q.hint) {
+      html += '<div class="hint-box">';
+      html += '<strong style="color:#10B981;">Hint:</strong> ' + escapeHtml(q.hint);
+      html += '</div>';
+    }
+  }
+
+  return html;
+}
+
+// ─── FEEDBACK BOX ───
+function buildFeedback(q, ans) {
+  var isCorrect = ans.correct;
+  var html = '';
+  if (isCorrect) {
+    html += '<div class="feedback-box feedback-correct">';
+    html += '<div class="feedback-label" style="color:#22C55E;">&#x2705; Correct!</div>';
+    html += '<div style="color:#94A3B8;">' + escapeHtml(q.explanation) + '</div>';
+    html += '</div>';
+  } else {
+    html += '<div class="feedback-box feedback-wrong">';
+    html += '<div class="feedback-label" style="color:#EF4444;">&#x274C; Not quite.</div>';
+    html += '<div style="color:#94A3B8;">' + escapeHtml(q.explanation) + '</div>';
+    html += '</div>';
+  }
+  return html;
+}
+
+// ─── EVENT HANDLERS ───
+function selectOption(qId, optIdx) {
+  if (!answers[qId]) answers[qId] = {};
+  if (answers[qId].submitted) return;
+  answers[qId].selected = optIdx;
+  reRenderQuestion(qId);
+}
+
+function lockInMC(qId) {
+  var ans = answers[qId];
+  if (!ans || ans.selected === undefined || ans.selected === null) return;
+  if (ans.submitted) return;
+
+  var q = null;
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    if (QUESTIONS[i].id === qId) { q = QUESTIONS[i]; break; }
+  }
+  if (!q) return;
+
+  ans.submitted = true;
+  ans.correct = (ans.selected === q.answer);
+
+  if (!ans.correct) {
+    missedQuestions.push({
+      question: q.question,
+      correctAnswer: q.options[q.answer],
+      userAnswer: q.options[ans.selected]
+    });
+  }
+
+  reRenderQuestion(qId);
+  updateProgress();
+}
+
+function submitShortAnswer(qId) {
+  var textarea = document.getElementById('textarea-' + qId);
+  if (!textarea) return;
+  var text = textarea.value.replace(/^\s+|\s+$/g, '');
+  if (!text) return;
+
+  if (!answers[qId]) answers[qId] = {};
+  answers[qId].text = text;
+  answers[qId].submitted = true;
+  answers[qId].correct = null;
+
+  reRenderQuestion(qId);
+  updateProgress();
+}
+
+function reRenderQuestion(qId) {
+  var q = null;
+  var idx = 0;
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    if (QUESTIONS[i].id === qId) { q = QUESTIONS[i]; idx = i; break; }
+  }
+  if (!q) return;
+
+  var card = document.getElementById('q-card-' + qId);
+  if (!card) return;
+
+  var temp = document.createElement('div');
+  temp.innerHTML = buildQuestionCard(q, idx);
+  card.parentNode.replaceChild(temp.firstChild, card);
+
+  // Re-attach textarea value for short answer if not submitted
+  if (q.type === 'short_answer' && answers[qId] && !answers[qId].submitted) {
+    var ta = document.getElementById('textarea-' + qId);
+    if (ta && answers[qId].text) ta.value = answers[qId].text;
+  }
+}
+
+// ─── TEXTAREA CHANGE TRACKING ───
+function setupTextareaListeners() {
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    if (QUESTIONS[i].type === 'short_answer') {
+      (function(qId) {
+        var checkInterval = setInterval(function() {
+          var ta = document.getElementById('textarea-' + qId);
+          if (ta) {
+            ta.addEventListener('input', function() {
+              if (!answers[qId]) answers[qId] = {};
+              answers[qId].text = ta.value;
+              var btn = document.getElementById('lock-btn-' + qId);
+              if (btn) {
+                if (ta.value.replace(/^\s+|\s+$/g, '').length > 0) {
+                  btn.className = 'lock-btn ready';
+                  btn.disabled = false;
+                } else {
+                  btn.className = 'lock-btn disabled';
+                  btn.disabled = true;
+                }
+              }
+            });
+            clearInterval(checkInterval);
+          }
+        }, 200);
+      })(QUESTIONS[i].id);
+    }
+  }
+}
+
+// ─── COMPLETION SCREEN ───
+function showCompletion() {
+  var mcCorrect = getTotalMCCorrect();
+  var totalMC = getTotalMC();
+  var pct = totalMC > 0 ? Math.round((mcCorrect / totalMC) * 100) : 0;
+
+  var subtitle = document.getElementById('comp-subtitle');
+  subtitle.textContent = 'Auto-graded: ' + mcCorrect + '/' + totalMC + ' multiple choice correct (' + pct + '%). 1 short answer submitted for parent review.';
+
+  var baseRings = 8;
+  var earnedRings = Math.round(baseRings * (pct / 100));
+  var ringsEl = document.getElementById('comp-rings');
+  ringsEl.innerHTML = '&#x1F48D; ' + earnedRings + ' RINGS earned';
+
+  var feedback = document.getElementById('comp-feedback');
+  var fbHtml = '';
+  if (pct === 100) {
+    fbHtml = '<div style="color:#22C55E;font-weight:700;margin-bottom:6px;">Perfect reading comprehension!</div>';
+    fbHtml += '<div>You understood every part of the passage. Your attention to detail and careful reading paid off. Short answer is pending parent review for those final Rings.</div>';
+  } else if (pct >= 75) {
+    fbHtml = '<div style="color:#10B981;font-weight:700;margin-bottom:6px;">Strong reading!</div>';
+    fbHtml += '<div>You understood most of the passage well. Check the explanations on any you missed \u2014 they will help sharpen your comprehension skills.</div>';
+  } else if (pct >= 50) {
+    fbHtml = '<div style="color:#EAB308;font-weight:700;margin-bottom:6px;">Good effort, keep building.</div>';
+    fbHtml += '<div>You are getting there. Try re-reading the passage and looking at where you went wrong. Understanding WHY helps more than memorizing answers.</div>';
+  } else {
+    fbHtml = '<div style="color:#F97316;font-weight:700;margin-bottom:6px;">Let\'s review this one together.</div>';
+    fbHtml += '<div>Cold passages are tough \u2014 that is the whole point. Re-read the passage slowly, then go through each explanation. Your parent can help with the tricky parts.</div>';
+  }
+
+  if (sessionStartTime) {
+    var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+    subtitle.textContent += ' Total time: ' + formatTime(elapsed) + '.';
+    if (passageReadTime > 0) {
+      subtitle.textContent += ' Reading time: ' + formatTime(passageReadTime) + '.';
+    }
+  }
+
+  feedback.innerHTML = fbHtml;
+
+  var overlay = document.getElementById('completion-overlay');
+  overlay.style.display = 'flex';
+}
+
+function closeCompletion() {
+  var overlay = document.getElementById('completion-overlay');
+  overlay.style.display = 'none';
+  showResults();
+}
+
+// ─── RESULTS VIEW ───
+function showResults() {
+  currentView = 'results';
+  var passageEl = document.getElementById('section-passage');
+  var questionsEl = document.getElementById('section-questions');
+  var resultsEl = document.getElementById('section-results');
+  passageEl.style.display = 'none';
+  questionsEl.style.display = 'none';
+  resultsEl.style.display = 'block';
+  renderResults();
+}
+
+function renderResults() {
+  var container = document.getElementById('section-results');
+  var mcCorrect = getTotalMCCorrect();
+  var totalMC = getTotalMC();
+  var pct = totalMC > 0 ? Math.round((mcCorrect / totalMC) * 100) : 0;
+  var totalTime = sessionStartTime ? Math.floor((Date.now() - sessionStartTime) / 1000) : 0;
+  var baseRings = 8;
+  var earnedRings = Math.round(baseRings * (pct / 100));
+
+  var html = '<div class="section-header">&#x1F4CA; Results</div>';
+
+  // Score card
+  html += '<div class="results-card">';
+  html += '<div class="results-score">' + mcCorrect + '/' + totalMC + '</div>';
+  html += '<div class="results-label">Multiple Choice Score (' + pct + '%)</div>';
+  html += '<div class="results-detail">';
+  html += 'Total time: ' + formatTime(totalTime);
+  if (passageReadTime > 0) {
+    html += ' &bull; Reading: ' + formatTime(passageReadTime);
+  }
+  html += '</div>';
+  html += '<div class="results-rings">&#x1F48D; ' + earnedRings + ' Rings</div>';
+  html += '<div style="font-size:11px;color:#64748B;margin-top:4px;">+ short answer pending review</div>';
+  html += '</div>';
+
+  // Per-question breakdown
+  html += '<div class="section-header" style="margin-top:20px;">&#x1F4DD; Question Breakdown</div>';
+
+  for (var i = 0; i < QUESTIONS.length; i++) {
+    var q = QUESTIONS[i];
+    var ans = answers[q.id] || {};
+    var status = '';
+    var statusColor = '';
+
+    if (q.type === 'short_answer') {
+      status = '&#x1F4E4; Submitted';
+      statusColor = C.emerald;
+    } else if (ans.correct) {
+      status = '&#x2705; Correct';
+      statusColor = C.green;
+    } else {
+      status = '&#x274C; Incorrect';
+      statusColor = C.red;
+    }
+
+    html += '<div class="q-card">';
+    html += '<div class="q-header">';
+    html += '<span class="q-type-label">' + escapeHtml(q.label) + '</span>';
+    html += '<div class="q-meta">';
+    html += '<span class="q-difficulty" style="color:' + getDiffColor(q.difficulty) + ';background:' + getDiffBg(q.difficulty) + ';">' + escapeHtml(q.difficulty) + '</span>';
+    html += '<span class="q-teks">[' + escapeHtml(q.teks) + ']</span>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div style="font-size:13px;color:' + statusColor + ';font-weight:700;">' + status + '</div>';
+    html += '</div>';
+  }
+
+  // Review button
+  html += '<button style="display:block;width:100%;margin-top:16px;padding:14px;background:' + C.card + ';border:1px solid ' + C.border + ';border-radius:10px;color:' + C.emerald + ';font-family:Orbitron,sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;" onclick="backToQuestions()">REVIEW ANSWERS</button>';
+
+  container.innerHTML = html;
+}
+
+function backToQuestions() {
+  currentView = 'questions';
+  var passageEl = document.getElementById('section-passage');
+  var questionsEl = document.getElementById('section-questions');
+  var resultsEl = document.getElementById('section-results');
+  passageEl.style.display = 'none';
+  questionsEl.style.display = 'block';
+  resultsEl.style.display = 'none';
+}
+
+// ─── INIT ───
+function init() {
+  buildStarField();
+  renderPassage();
+  setupTextareaListeners();
+}
+
+init();
+</script>
+</body>
+</html>
