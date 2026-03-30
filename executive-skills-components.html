@@ -1,0 +1,616 @@
+<!--
+  EXECUTIVE SKILLS COMPONENTS — Thompson Education Platform
+  Drop this into any education module HTML file.
+  All ES5 compliant. All tied to Dawson & Guare framework.
+
+  TEKS-Aligned. STAAR-Ready. Executive Skills-Driven.
+
+  Components:
+  1. Plan Your Attack (Response Inhibition + Planning)
+  2. Time Estimate Display (Time Management)
+  3. Error Journal (Metacognition + Emotional Control)
+  4. Friday Self-Reflection (Metacognition + Goal-Directed Persistence)
+  5. Constructive Feedback (Emotional Control)
+  6. Session Timer (Sustained Attention + Time Management)
+-->
+
+<style>
+  /* === EXECUTIVE SKILLS SHARED STYLES === */
+
+  .es-plan-attack {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+    text-align: center;
+  }
+  .es-plan-attack h2 {
+    font-size: 20px;
+    color: #f0f0f0;
+    margin: 0 0 8px 0;
+    font-family: 'Orbitron', 'Segoe UI', sans-serif;
+    letter-spacing: 1px;
+  }
+  .es-plan-attack .es-subtitle {
+    font-size: 13px;
+    color: #8b8fa3;
+    margin: 0 0 20px 0;
+  }
+  .es-plan-overview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin: 16px 0;
+  }
+  .es-plan-pill {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: #c0c4d6;
+  }
+  .es-plan-pill .es-pill-type {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #6c63ff;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .es-time-estimate {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #a5b4fc;
+    margin: 12px 0;
+  }
+  .es-ready-btn {
+    background: linear-gradient(135deg, #6c63ff 0%, #8b5cf6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 40px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .es-ready-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(108,99,255,0.4); }
+  .es-ready-btn:active { transform: translateY(0); }
+
+  /* Sparkle theme (JJ) */
+  .es-plan-attack.sparkle {
+    background: linear-gradient(135deg, #fff0f5 0%, #fce4ec 100%);
+    border: 2px solid #ffb6c1;
+  }
+  .es-plan-attack.sparkle h2 { color: #d63384; font-family: 'Fredoka One', 'Comic Sans MS', cursive; }
+  .es-plan-attack.sparkle .es-subtitle { color: #e91e8e; }
+  .es-plan-attack.sparkle .es-plan-pill {
+    background: rgba(255,105,180,0.08); border-color: #ffb6c1; color: #c2185b;
+  }
+  .es-plan-attack.sparkle .es-ready-btn {
+    background: linear-gradient(135deg, #ff69b4 0%, #da70d6 100%);
+    font-size: 20px;
+    padding: 18px 50px;
+    border-radius: 30px;
+  }
+
+  /* Session Timer */
+  .es-session-timer {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: rgba(15,15,30,0.85);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 6px 14px;
+    font-size: 13px;
+    color: #a5b4fc;
+    font-family: 'JetBrains Mono', monospace;
+    z-index: 100;
+  }
+  .es-session-timer.sparkle {
+    background: rgba(255,182,193,0.9);
+    color: #880e4f;
+    border-color: #ff69b4;
+  }
+
+  /* Error Journal */
+  .es-error-journal {
+    background: linear-gradient(135deg, #1a1a2e 0%, #1e1e3a 100%);
+    border: 1px solid rgba(255,193,7,0.2);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  .es-error-journal h3 {
+    color: #ffc107;
+    font-size: 16px;
+    margin: 0 0 4px 0;
+  }
+  .es-error-journal .es-ej-subtitle {
+    color: #8b8fa3;
+    font-size: 13px;
+    margin: 0 0 16px 0;
+  }
+  .es-missed-q {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 14px;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .es-missed-q.selected {
+    border-color: #ffc107;
+    background: rgba(255,193,7,0.06);
+  }
+  .es-missed-q .es-mq-label {
+    font-size: 12px;
+    color: #ef4444;
+    margin-bottom: 4px;
+  }
+  .es-missed-q .es-mq-text {
+    font-size: 14px;
+    color: #e0e0e0;
+  }
+  .es-journal-textarea {
+    width: 100%;
+    min-height: 80px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 12px;
+    color: #e0e0e0;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    margin-top: 12px;
+    box-sizing: border-box;
+  }
+  .es-journal-textarea:focus {
+    outline: none;
+    border-color: #ffc107;
+  }
+  .es-journal-prompt {
+    color: #ffc107;
+    font-size: 13px;
+    font-weight: 600;
+    margin: 16px 0 6px 0;
+  }
+
+  /* Friday Self-Reflection */
+  .es-reflection {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    border: 1px solid rgba(139,92,246,0.2);
+    border-radius: 16px;
+    padding: 24px;
+    margin: 16px 0;
+  }
+  .es-reflection h3 {
+    color: #a78bfa;
+    font-size: 16px;
+    margin: 0 0 4px 0;
+  }
+  .es-reflection .es-ref-subtitle {
+    color: #8b8fa3;
+    font-size: 13px;
+    margin: 0 0 16px 0;
+  }
+  .es-ref-prompt {
+    color: #c4b5fd;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 14px 0 6px 0;
+  }
+  .es-ref-textarea {
+    width: 100%;
+    min-height: 60px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(139,92,246,0.2);
+    border-radius: 10px;
+    padding: 12px;
+    color: #e0e0e0;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  .es-ref-textarea:focus {
+    outline: none;
+    border-color: #a78bfa;
+  }
+
+  /* Constructive Feedback */
+  .es-feedback {
+    border-radius: 12px;
+    padding: 16px;
+    margin: 8px 0;
+    animation: esFeedbackSlide 0.3s ease-out;
+  }
+  .es-feedback.correct {
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.2);
+  }
+  .es-feedback.wrong {
+    background: rgba(251,191,36,0.06);
+    border: 1px solid rgba(251,191,36,0.15);
+  }
+  .es-feedback .es-fb-icon {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .es-feedback.correct .es-fb-icon { color: #22c55e; }
+  .es-feedback.wrong .es-fb-icon { color: #fbbf24; }
+  .es-feedback .es-fb-text {
+    font-size: 14px;
+    color: #d0d0d0;
+    line-height: 1.5;
+  }
+  .es-feedback .es-fb-why {
+    font-size: 13px;
+    color: #9ca3af;
+    margin-top: 6px;
+    font-style: italic;
+  }
+
+  /* JJ Sparkle Feedback */
+  .es-feedback.sparkle-correct {
+    background: rgba(255,215,0,0.1);
+    border: 2px solid #ffd700;
+    text-align: center;
+  }
+  .es-feedback.sparkle-correct .es-fb-icon {
+    font-size: 32px;
+    color: #ffd700;
+  }
+  .es-feedback.sparkle-wrong {
+    background: rgba(218,112,214,0.08);
+    border: 2px solid rgba(218,112,214,0.3);
+    text-align: center;
+  }
+  .es-feedback.sparkle-wrong .es-fb-icon {
+    font-size: 24px;
+    color: #da70d6;
+  }
+
+  @keyframes esFeedbackSlide {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<script>
+// ============================================================
+// EXECUTIVE SKILLS ENGINE — ES5 ONLY
+// Thompson Education Platform
+// TEKS-Aligned. STAAR-Ready. Executive Skills-Driven.
+// ============================================================
+
+var ExecSkills = (function() {
+  'use strict';
+
+  // --- State ---
+  var _sessionStartTime = null;
+  var _sessionTimerInterval = null;
+  var _planAttackCallback = null;
+  var _isSparkle = false;
+
+  // ============================================================
+  // 1. PLAN YOUR ATTACK (Response Inhibition + Planning)
+  // ============================================================
+  function showPlanYourAttack(options) {
+    _isSparkle = (options.child === 'jj' || options.child === 'kindle');
+    _planAttackCallback = options.onReady;
+
+    var themeClass = _isSparkle ? ' sparkle' : '';
+    var title = _isSparkle ? 'Let\'s Get Ready!' : 'PLAN YOUR ATTACK';
+    var subtitle = _isSparkle
+      ? 'Here\'s what we\'re playing today!'
+      : 'Scan the mission. Know what you\'re walking into.';
+    var btnText = _isSparkle ? 'Let\'s Go!' : 'I\'m Ready — Start Mission';
+
+    var pills = '';
+    for (var i = 0; i < options.questions.length; i++) {
+      var q = options.questions[i];
+      pills += '<div class="es-plan-pill">' +
+        '<span class="es-pill-type">' + (q.type || 'Question ' + (i + 1)) + '</span>' +
+        (q.topic || q.subject || 'Q' + (i + 1)) +
+        '</div>';
+    }
+
+    var html = '<div class="es-plan-attack' + themeClass + '">' +
+      '<h2>' + title + '</h2>' +
+      '<p class="es-subtitle">' + subtitle + '</p>' +
+      '<div class="es-time-estimate">' +
+        '&#9202; Estimated time: ~' + (options.timeEstimate || 12) + ' min' +
+      '</div>' +
+      '<div class="es-plan-overview">' + pills + '</div>' +
+      '<button class="es-ready-btn" onclick="ExecSkills._onPlanReady()">' +
+        btnText +
+      '</button>' +
+    '</div>';
+
+    var container = document.getElementById(options.container);
+    container.innerHTML = html;
+  }
+
+  function _onPlanReady() {
+    startSessionTimer(_isSparkle);
+    if (_planAttackCallback) _planAttackCallback();
+  }
+
+  // ============================================================
+  // 2. SESSION TIMER (Sustained Attention + Time Management)
+  // ============================================================
+  function startSessionTimer(isSparkle) {
+    _sessionStartTime = Date.now();
+    var timerEl = document.createElement('div');
+    timerEl.id = 'es-session-timer';
+    timerEl.className = 'es-session-timer' + (isSparkle ? ' sparkle' : '');
+    timerEl.innerHTML = '0:00';
+    document.body.appendChild(timerEl);
+
+    _sessionTimerInterval = setInterval(function() {
+      var elapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+      var min = Math.floor(elapsed / 60);
+      var sec = elapsed % 60;
+      timerEl.innerHTML = min + ':' + (sec < 10 ? '0' : '') + sec;
+    }, 1000);
+  }
+
+  function stopSessionTimer() {
+    if (_sessionTimerInterval) {
+      clearInterval(_sessionTimerInterval);
+      _sessionTimerInterval = null;
+    }
+    var elapsed = 0;
+    if (_sessionStartTime) {
+      elapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+    }
+    return elapsed;
+  }
+
+  function getSessionMinutes() {
+    if (!_sessionStartTime) return 0;
+    return Math.floor((Date.now() - _sessionStartTime) / 60000);
+  }
+
+  // ============================================================
+  // 3. CONSTRUCTIVE FEEDBACK (Emotional Control)
+  // ============================================================
+  function showFeedback(container, isCorrect, options) {
+    var sparkle = options && options.isSparkle;
+    var el = document.getElementById(container);
+    var html = '';
+
+    if (isCorrect) {
+      if (sparkle) {
+        html = '<div class="es-feedback sparkle-correct">' +
+          '<div class="es-fb-icon">&#11088; Amazing! &#11088;</div>' +
+        '</div>';
+      } else {
+        html = '<div class="es-feedback correct">' +
+          '<div class="es-fb-icon">&#9989; Nice work!</div>' +
+          (options.explanation ? '<div class="es-fb-text">' + options.explanation + '</div>' : '') +
+        '</div>';
+      }
+    } else {
+      if (sparkle) {
+        html = '<div class="es-feedback sparkle-wrong">' +
+          '<div class="es-fb-icon">&#128156; Almost! Try again!</div>' +
+        '</div>';
+      } else {
+        html = '<div class="es-feedback wrong">' +
+          '<div class="es-fb-icon">Not quite!</div>' +
+          '<div class="es-fb-text">The answer is: ' + (options.answer || '') + '</div>' +
+          (options.explanation ? '<div class="es-fb-why">' + options.explanation + '</div>' : '') +
+        '</div>';
+      }
+    }
+
+    el.innerHTML = html;
+  }
+
+  // ============================================================
+  // 4. ERROR JOURNAL (Metacognition + Emotional Control)
+  // ============================================================
+  function showErrorJournal(container, missedQuestions) {
+    if (!missedQuestions || missedQuestions.length === 0) {
+      var el = document.getElementById(container);
+      el.innerHTML = '<div class="es-error-journal">' +
+        '<h3>&#127942; Perfect Score — No Errors!</h3>' +
+        '<p class="es-ej-subtitle">Nothing to journal today. Keep it up!</p>' +
+      '</div>';
+      return;
+    }
+
+    var qCards = '';
+    for (var i = 0; i < missedQuestions.length; i++) {
+      var mq = missedQuestions[i];
+      qCards += '<div class="es-missed-q" onclick="ExecSkills._selectMissedQ(' + i + ')" id="es-mq-' + i + '">' +
+        '<div class="es-mq-label">&#10060; Missed</div>' +
+        '<div class="es-mq-text">' + mq.question + '</div>' +
+        '<div style="font-size:12px;color:#6b7280;margin-top:4px;">' +
+          'Your answer: ' + mq.userAnswer + ' | Correct: ' + mq.correctAnswer +
+        '</div>' +
+      '</div>';
+    }
+
+    var html = '<div class="es-error-journal">' +
+      '<h3>&#128221; Error Journal</h3>' +
+      '<p class="es-ej-subtitle">Pick one question you missed. Tap it, then explain WHY you got it wrong.</p>' +
+      qCards +
+      '<div class="es-journal-prompt" id="es-ej-prompt" style="display:none;">' +
+        'WHY did you get this wrong? (Not "what\'s the right answer" — WHY did you pick the wrong one?)' +
+      '</div>' +
+      '<textarea class="es-journal-textarea" id="es-ej-textarea" style="display:none;" ' +
+        'placeholder="I got this wrong because..."></textarea>' +
+      '<div id="es-ej-submit" style="display:none;text-align:center;margin-top:12px;">' +
+        '<button class="es-ready-btn" onclick="ExecSkills._submitErrorJournal()" style="font-size:14px;padding:10px 30px;">' +
+          'Log It &#128220;' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+    document.getElementById(container).innerHTML = html;
+  }
+
+  var _selectedMissedQ = -1;
+  function _selectMissedQ(index) {
+    _selectedMissedQ = index;
+    var all = document.querySelectorAll('.es-missed-q');
+    for (var i = 0; i < all.length; i++) {
+      all[i].className = 'es-missed-q';
+    }
+    var el = document.getElementById('es-mq-' + index);
+    if (el) el.className = 'es-missed-q selected';
+    document.getElementById('es-ej-prompt').style.display = 'block';
+    document.getElementById('es-ej-textarea').style.display = 'block';
+    document.getElementById('es-ej-submit').style.display = 'block';
+    document.getElementById('es-ej-textarea').focus();
+  }
+
+  function _submitErrorJournal() {
+    var text = document.getElementById('es-ej-textarea').value;
+    if (!text || text.trim().length < 5) {
+      document.getElementById('es-ej-textarea').style.borderColor = '#ffc107';
+      document.getElementById('es-ej-textarea').placeholder = 'Write at least one sentence about WHY...';
+      return;
+    }
+    ExecSkills._journalData = {
+      questionIndex: _selectedMissedQ,
+      reflection: text.trim(),
+      timestamp: new Date().toISOString()
+    };
+    document.getElementById('es-ej-prompt').innerHTML = '&#9989; Logged! Understanding WHY you miss something is how you stop missing it.';
+    document.getElementById('es-ej-textarea').style.display = 'none';
+    document.getElementById('es-ej-submit').style.display = 'none';
+  }
+
+  // ============================================================
+  // 5. FRIDAY SELF-REFLECTION (Metacognition + Persistence)
+  // ============================================================
+  function showFridayReflection(container) {
+    var html = '<div class="es-reflection">' +
+      '<h3>&#128588; Weekly Debrief</h3>' +
+      '<p class="es-ref-subtitle">Quick reflection — just two sentences.</p>' +
+      '<div class="es-ref-prompt">What was the hardest thing this week?</div>' +
+      '<textarea class="es-ref-textarea" id="es-ref-hard" ' +
+        'placeholder="The hardest thing was..."></textarea>' +
+      '<div class="es-ref-prompt">What are you proud of?</div>' +
+      '<textarea class="es-ref-textarea" id="es-ref-proud" ' +
+        'placeholder="I\'m proud that I..."></textarea>' +
+      '<div style="text-align:center;margin-top:16px;">' +
+        '<button class="es-ready-btn" onclick="ExecSkills._submitReflection()" ' +
+          'style="font-size:14px;padding:10px 30px;background:linear-gradient(135deg,#7c3aed,#a78bfa);">' +
+          'Submit Reflection &#127775;' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+    document.getElementById(container).innerHTML = html;
+  }
+
+  function _submitReflection() {
+    var hard = document.getElementById('es-ref-hard').value;
+    var proud = document.getElementById('es-ref-proud').value;
+    if (!hard || hard.trim().length < 3 || !proud || proud.trim().length < 3) {
+      if (!hard || hard.trim().length < 3) {
+        document.getElementById('es-ref-hard').style.borderColor = '#a78bfa';
+      }
+      if (!proud || proud.trim().length < 3) {
+        document.getElementById('es-ref-proud').style.borderColor = '#a78bfa';
+      }
+      return;
+    }
+    ExecSkills._reflectionData = {
+      hardest: hard.trim(),
+      proudOf: proud.trim(),
+      timestamp: new Date().toISOString()
+    };
+    var container = document.getElementById('es-ref-hard').parentNode;
+    container.innerHTML = '<div class="es-reflection">' +
+      '<h3>&#127775; Reflection Logged!</h3>' +
+      '<p class="es-ref-subtitle">Great week. Come back Monday ready to level up.</p>' +
+    '</div>';
+  }
+
+  // ============================================================
+  // 6. COMPLETION SCREEN with Executive Skills Summary
+  // ============================================================
+  function showCompletion(container, options) {
+    var elapsed = stopSessionTimer();
+    var min = Math.floor(elapsed / 60);
+    var sec = elapsed % 60;
+    var timeStr = min + ':' + (sec < 10 ? '0' : '') + sec;
+    var pct = options.total > 0 ? Math.round((options.score / options.total) * 100) : 0;
+
+    var skillsEarned = [];
+    skillsEarned.push('&#127919; Sustained Attention — ' + timeStr + ' focused');
+    skillsEarned.push('&#128203; Planning — scanned before starting');
+    if (pct >= 80) skillsEarned.push('&#127942; Goal-Directed Persistence — 80%+ accuracy');
+    if (options.dayOfWeek === 'Monday') skillsEarned.push('&#128221; Metacognition — Error Journal');
+    if (options.dayOfWeek === 'Friday') skillsEarned.push('&#129518; Self-Reflection — Weekly Debrief');
+
+    var skillsList = '';
+    for (var i = 0; i < skillsEarned.length; i++) {
+      skillsList += '<div style="font-size:13px;color:#a5b4fc;padding:4px 0;">' + skillsEarned[i] + '</div>';
+    }
+
+    var html = '<div style="text-align:center;padding:24px;">' +
+      '<div style="font-size:48px;margin-bottom:8px;">' + (pct >= 80 ? '&#127942;' : '&#128170;') + '</div>' +
+      '<h2 style="color:#f0f0f0;margin:0 0 4px 0;">Mission Complete!</h2>' +
+      '<div style="font-size:14px;color:#8b8fa3;margin-bottom:16px;">Time: ' + timeStr + '</div>' +
+      '<div style="font-size:32px;font-weight:800;color:#fbbf24;margin:8px 0;">' +
+        options.score + ' / ' + options.total + ' (' + pct + '%)' +
+      '</div>' +
+      '<div style="font-size:18px;color:#22c55e;font-weight:700;margin:12px 0;">+' +
+        options.rings + ' Rings Earned</div>' +
+      '<div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;margin:16px 0;text-align:left;">' +
+        '<div style="font-size:11px;color:#6c63ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">' +
+          'Executive Skills Built Today' +
+        '</div>' +
+        skillsList +
+      '</div>' +
+    '</div>';
+
+    document.getElementById(container).innerHTML = html;
+  }
+
+  // ============================================================
+  // PUBLIC API
+  // ============================================================
+  return {
+    showPlanYourAttack: showPlanYourAttack,
+    startSessionTimer: startSessionTimer,
+    stopSessionTimer: stopSessionTimer,
+    getSessionMinutes: getSessionMinutes,
+    showFeedback: showFeedback,
+    showErrorJournal: showErrorJournal,
+    showFridayReflection: showFridayReflection,
+    showCompletion: showCompletion,
+
+    // Internal handlers (called from onclick)
+    _onPlanReady: _onPlanReady,
+    _selectMissedQ: _selectMissedQ,
+    _submitErrorJournal: _submitErrorJournal,
+    _submitReflection: _submitReflection,
+
+    // Data access for Notion logging
+    _journalData: null,
+    _reflectionData: null
+  };
+})();
+</script>

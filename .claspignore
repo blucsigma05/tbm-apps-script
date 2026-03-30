@@ -1,0 +1,9 @@
+.claude/**
+.github/**
+node_modules/**
+*.md
+*.jsx
+generate-audio.js
+phrases.json
+executive-skills-components.html
+!appsscript.json

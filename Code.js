@@ -215,7 +215,14 @@ function servePage(page, e) {
     'soul':     { file: 'TheSoul',        title: 'The Soul — Thompson Family Display' },
     'debt':     { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
     'jt':       { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
-    'weekly':   { file: 'ThePulse',        title: 'The Pulse — Thompson Household' }
+    'weekly':   { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
+    'homework':  { file: 'HomeworkModule',  title: 'Homework Module — Thompson Education' },
+    'sparkle':   { file: 'SparkleLearning', title: 'Sparkle Learning — JJ Letter & Number Games' },
+    'wolfkid':   { file: 'WolfkidCER',     title: 'Wolfkid CER — Episode 3' },
+    'dashboard': { file: 'DesignDashboard', title: 'Design Dashboard — Ring Quest Creator' },
+    'facts':     { file: 'fact-sprint',    title: 'Fact Sprint — Math Drill' },
+    'reading':   { file: 'reading-module', title: 'Reading Module — Thompson Education' },
+    'writing':   { file: 'writing-module', title: 'Writing Module — Thompson Education' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -962,7 +969,7 @@ function getVaultDataSafe() {
 // ════════════════════════════════════════════════════════════════════
 
 function healthCheck() {
-  Logger.log('═══ Code.gs v50 Health Check ═══');
+  Logger.log('═══ Code.gs v49 Health Check ═══');
 
   var fns = [
     'doGet', 'servePage', 'serveData', 'getDataSafe', 'getMonthsSafe',

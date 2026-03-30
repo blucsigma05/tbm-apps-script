@@ -1,10 +1,10 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// AlertEngine.gs v5 — Push Notifications via Pushover API
+// AlertEngine.gs v6 — Push Notifications via Pushover API
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
-function getAlertEngineVersion() { return 5; }
+function getAlertEngineVersion() { return 6; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor
 var _aeSS = null;
@@ -464,3 +464,148 @@ function resetAlertPendingCount() {
   PropertiesService.getScriptProperties().setProperty('ALERT_LAST_PENDING', '0');
   Logger.log('ALERT_LAST_PENDING reset to 0');
 }
+
+
+// ════════════════════════════════════════════════════════════════════
+// DAILY HEALTH CHECK (v6) — Called by 6:00 AM CST trigger
+// Runs smoke test, checks ErrorLog, row counts, promo cliffs, Tiller freshness
+// ════════════════════════════════════════════════════════════════════
+
+function dailyHealthCheck() {
+  var alerts = [];
+  var ss = getAESS_();
+
+  // 1. Run smoke test
+  try {
+    var smokeResult = tbmSmokeTest();
+    if (smokeResult && smokeResult.overall !== 'PASS') {
+      alerts.push({title: 'TBM Smoke Test FAIL', msg: 'Smoke test failed at ' + new Date().toLocaleTimeString() + '. Check ErrorLog.', to: 'LT', pri: 1});
+    }
+  } catch(e) {
+    alerts.push({title: 'Smoke Test Error', msg: 'tbmSmokeTest() threw: ' + e.message, to: 'LT', pri: 1});
+  }
+
+  // 2. Check ErrorLog for entries in last 24h
+  try {
+    var errSheet = ss.getSheetByName('\uD83D\uDCBB ErrorLog');
+    if (errSheet && errSheet.getLastRow() > 1) {
+      var errData = errSheet.getDataRange().getValues();
+      var cutoff = new Date(Date.now() - 86400000).toISOString();
+      var recentCount = 0;
+      for (var i = 1; i < errData.length; i++) {
+        if (String(errData[i][0] || '') > cutoff) recentCount++;
+      }
+      if (recentCount > 0) {
+        alerts.push({title: recentCount + ' Error' + (recentCount > 1 ? 's' : '') + ' in 24h', msg: 'ErrorLog has ' + recentCount + ' new entries. Review in workbook.', to: 'LT', pri: 0});
+      }
+    }
+  } catch(e) {
+    console.log('dailyHealthCheck ErrorLog scan failed: ' + e.message);
+  }
+
+  // 3. Check Transactions row count vs 20k cap
+  try {
+    var txTab = typeof TAB_MAP !== 'undefined' ? TAB_MAP['Transactions'] : 'Transactions';
+    var txSheet = ss.getSheetByName(txTab);
+    if (txSheet) {
+      var txRows = txSheet.getLastRow();
+      if (txRows > 16000) {
+        var pct = Math.round((txRows / 20000) * 100);
+        alerts.push({title: 'Transactions at ' + pct + '%', msg: txRows + '/20000 rows. Consider archiving older transactions.', to: 'LT', pri: txRows > 18000 ? 1 : 0});
+      }
+    }
+  } catch(e) {
+    console.log('dailyHealthCheck Transactions check failed: ' + e.message);
+  }
+
+  // 4. Check Balance History row count
+  try {
+    var bhTab = typeof TAB_MAP !== 'undefined' ? TAB_MAP['Balance History'] : 'Balance History';
+    var bhSheet = ss.getSheetByName(bhTab);
+    if (bhSheet) {
+      var bhRows = bhSheet.getLastRow();
+      if (bhRows > 16000) {
+        var bhPct = Math.round((bhRows / 20000) * 100);
+        alerts.push({title: 'Balance History at ' + bhPct + '%', msg: bhRows + '/20000 rows.', to: 'LT', pri: 0});
+      }
+    }
+  } catch(e) {
+    console.log('dailyHealthCheck Balance History check failed: ' + e.message);
+  }
+
+  // 5. Check promo cliffs (DebtModel promo expiration dates)
+  try {
+    var dmTab = typeof TAB_MAP !== 'undefined' ? TAB_MAP['DebtModel'] : '\uD83D\uDCBB\uD83E\uDDEE DebtModel';
+    var dmSheet = ss.getSheetByName(dmTab);
+    if (dmSheet && dmSheet.getLastRow() > 1) {
+      var dmData = dmSheet.getDataRange().getValues();
+      var dmHeaders = dmData[0].map(function(h) { return String(h).trim(); });
+      var promoCol = dmHeaders.indexOf('Promo_End');
+      if (promoCol < 0) promoCol = dmHeaders.indexOf('PromoEnd');
+      if (promoCol < 0) promoCol = dmHeaders.indexOf('Promo End');
+      var nameCol = dmHeaders.indexOf('Account') >= 0 ? dmHeaders.indexOf('Account') : 0;
+
+      if (promoCol >= 0) {
+        var now = new Date();
+        for (var j = 1; j < dmData.length; j++) {
+          var promoDate = dmData[j][promoCol];
+          if (promoDate instanceof Date) {
+            var daysLeft = Math.ceil((promoDate.getTime() - now.getTime()) / 86400000);
+            var acctName = String(dmData[j][nameCol] || 'Unknown');
+            if (daysLeft > 0 && daysLeft <= 3) {
+              alerts.push({title: 'Promo expires in ' + daysLeft + 'd', msg: acctName + ' promo ends ' + promoDate.toLocaleDateString(), to: 'BOTH', pri: 1});
+            } else if (daysLeft > 3 && daysLeft <= 7) {
+              alerts.push({title: 'Promo cliff in ' + daysLeft + 'd', msg: acctName + ' promo ends ' + promoDate.toLocaleDateString(), to: 'BOTH', pri: 0});
+            }
+          }
+        }
+      }
+    }
+  } catch(e) {
+    console.log('dailyHealthCheck promo cliff check failed: ' + e.message);
+  }
+
+  // 6. Check Tiller freshness — latest transaction date
+  try {
+    var txTab2 = typeof TAB_MAP !== 'undefined' ? TAB_MAP['Transactions'] : 'Transactions';
+    var txSheet2 = ss.getSheetByName(txTab2);
+    if (txSheet2 && txSheet2.getLastRow() > 1) {
+      var dateCol = 0; // Date is typically first column
+      var txHeaders = txSheet2.getRange(1, 1, 1, txSheet2.getLastColumn()).getValues()[0];
+      for (var d = 0; d < txHeaders.length; d++) {
+        if (String(txHeaders[d]).trim().toLowerCase() === 'date') { dateCol = d; break; }
+      }
+      // Read last 50 rows to find most recent date
+      var startRow = Math.max(2, txSheet2.getLastRow() - 49);
+      var dateRange = txSheet2.getRange(startRow, dateCol + 1, txSheet2.getLastRow() - startRow + 1, 1).getValues();
+      var latestDate = null;
+      for (var k = dateRange.length - 1; k >= 0; k--) {
+        if (dateRange[k][0] instanceof Date) {
+          latestDate = dateRange[k][0];
+          break;
+        }
+      }
+      if (latestDate) {
+        var staleHours = (Date.now() - latestDate.getTime()) / 3600000;
+        if (staleHours > 48) {
+          alerts.push({title: 'Tiller Stale', msg: 'Latest transaction is ' + Math.round(staleHours) + 'h old. Check Tiller sync.', to: 'LT', pri: 1});
+        }
+      }
+    }
+  } catch(e) {
+    console.log('dailyHealthCheck Tiller freshness check failed: ' + e.message);
+  }
+
+  // Send all accumulated alerts
+  for (var a = 0; a < alerts.length; a++) {
+    sendPush_(alerts[a].title, alerts[a].msg, alerts[a].to, alerts[a].pri);
+  }
+
+  var result = {checked: true, alertCount: alerts.length, timestamp: new Date().toISOString()};
+  Logger.log('dailyHealthCheck complete: ' + JSON.stringify(result));
+  return result;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// END OF FILE — AlertEngine v6
+// ════════════════════════════════════════════════════════════════════

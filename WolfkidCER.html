@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wolfkid CER - Episode 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #1E2A4A; border-radius: 3px; }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.6; }
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  body {
+    min-height: 100vh;
+    background: #0B0F1A;
+    color: #E2E8F0;
+    font-family: 'Nunito', sans-serif;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  textarea::placeholder { color: #64748B; }
+
+  /* ─── Star Field ─── */
+  #starField {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: #93C5FD;
+    opacity: 0.3;
+  }
+
+  /* ─── Header ─── */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(11,15,26,0.92);
+    border-bottom: 1px solid #1E2A4A;
+    padding: 10px 16px;
+  }
+  .header-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-brand-icon { font-size: 24px; }
+  .header-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    font-weight: 900;
+    background: linear-gradient(90deg, #60A5FA, #93C5FD);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1px;
+  }
+  .header-subtitle {
+    font-size: 10px;
+    color: #64748B;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 2px;
+  }
+
+  /* ─── Episode Tracker ─── */
+  .ep-tracker {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .ep-node-wrap {
+    display: flex;
+    align-items: center;
+  }
+  .ep-node {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    transition: all 0.3s;
+  }
+  .ep-node-done {
+    background: #3B82F6;
+    color: #fff;
+    width: 28px; height: 28px;
+    font-size: 11px;
+    border: 1px solid transparent;
+  }
+  .ep-node-active {
+    background: rgba(59,130,246,0.15);
+    color: #60A5FA;
+    width: 36px; height: 36px;
+    font-size: 14px;
+    border: 2px solid #3B82F6;
+    box-shadow: 0 0 12px rgba(59,130,246,0.3);
+  }
+  .ep-node-locked {
+    background: rgba(30,42,74,0.5);
+    color: #64748B;
+    width: 28px; height: 28px;
+    font-size: 11px;
+    border: 1px solid transparent;
+  }
+  .ep-line {
+    width: 16px;
+    height: 2px;
+  }
+  .ep-line-done { background: #3B82F6; }
+  .ep-line-pending { background: #1E2A4A; }
+
+  /* ─── Nav Tabs ─── */
+  .nav-tabs {
+    display: flex;
+    gap: 2px;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 12px 16px 0;
+    position: relative;
+    z-index: 10;
+  }
+  .nav-tab {
+    flex: 1;
+    padding: 10px 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-bottom: 1px solid transparent;
+    border-radius: 8px 8px 0 0;
+    color: #64748B;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 400;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-tab-active {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-bottom: 2px solid #3B82F6;
+    color: #60A5FA;
+    font-weight: 700;
+  }
+
+  /* ─── Main Content ─── */
+  .main-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 16px 80px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ─── Plan Your Attack (ExecSkills) ─── */
+  .plan-attack {
+    background: rgba(249,115,22,0.06);
+    border: 1px solid rgba(249,115,22,0.2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+    margin-top: 16px;
+  }
+  .plan-attack-label {
+    font-size: 11px;
+    color: #F97316;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .plan-attack-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #E2E8F0;
+  }
+
+  /* ─── Story View ─── */
+  .episode-banner {
+    background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(249,115,22,0.05));
+    border: 1px solid #1E2A4A;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .episode-number {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    color: #F97316;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .episode-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    margin: 0;
+    background: linear-gradient(90deg, #60A5FA, #93C5FD);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .story-container {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 12px;
+    padding: 20px;
+    line-height: 1.9;
+    font-size: 15px;
+  }
+  .story-container p {
+    margin: 0 0 14px 0;
+    color: #E2E8F0;
+    opacity: 0;
+    animation: fadeSlide 0.4s ease forwards;
+  }
+
+  /* ─── Primary Button ─── */
+  .btn-primary {
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+    transition: all 0.2s;
+  }
+
+  /* ─── Write View ─── */
+  .prompt-card {
+    background: rgba(249,115,22,0.06);
+    border: 1px solid rgba(249,115,22,0.2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .prompt-label {
+    font-size: 11px;
+    color: #F97316;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .prompt-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #E2E8F0;
+  }
+
+  /* ─── Timer ─── */
+  .timer-card {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  .timer-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .timer-btn {
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.2s;
+  }
+  .timer-btn-start {
+    background: rgba(59,130,246,0.2);
+    border: 1px solid #3B82F6;
+    color: #3B82F6;
+  }
+  .timer-btn-pause {
+    background: rgba(239,68,68,0.2);
+    border: 1px solid #EF4444;
+    color: #EF4444;
+  }
+  .timer-bar-track {
+    flex: 1;
+    height: 6px;
+    background: #1E2A4A;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .timer-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s linear;
+  }
+  .timer-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    min-width: 60px;
+    text-align: right;
+  }
+
+  /* ─── Session Timer (ExecSkills) ─── */
+  .session-timer-card {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .session-timer-label {
+    font-size: 11px;
+    color: #64748B;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+  .session-timer-value {
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #94A3B8;
+  }
+
+  /* ─── CER Section ─── */
+  .cer-section {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .cer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .cer-label-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cer-icon { font-size: 18px; }
+  .cer-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .cer-counter {
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .cer-counter-met {
+    color: #22C55E;
+    background: rgba(34,197,94,0.1);
+  }
+  .cer-counter-unmet {
+    color: #64748B;
+    background: transparent;
+  }
+  .cer-starters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .starter-pill {
+    background: rgba(59,130,246,0.08);
+    border: 1px solid #1E2A4A;
+    color: #93C5FD;
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .starter-pill:hover {
+    background: rgba(59,130,246,0.18);
+    border-color: #3B82F6;
+  }
+  .cer-textarea {
+    width: 100%;
+    min-height: 100px;
+    background: #131829;
+    border: 1px solid #1E2A4A;
+    border-radius: 8px;
+    color: #E2E8F0;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+  }
+
+  /* ─── Word Count & Submit ─── */
+  .submit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+  }
+  .word-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #64748B;
+  }
+  .btn-submit {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    transition: all 0.3s;
+  }
+  .btn-submit-active {
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.3);
+  }
+  .btn-submit-disabled {
+    background: #1E2A4A;
+    color: #64748B;
+    cursor: not-allowed;
+  }
+
+  /* ─── Review View ─── */
+  .review-success {
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 20px;
+    animation: fadeSlide 0.5s ease forwards;
+  }
+  .review-success-icon { font-size: 40px; margin-bottom: 8px; }
+  .review-success-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: #22C55E;
+    margin-bottom: 6px;
+  }
+  .review-success-text {
+    font-size: 13px;
+    color: #94A3B8;
+    line-height: 1.6;
+  }
+  .review-card {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .review-card-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    color: #3B82F6;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+  }
+  .review-section {
+    margin-bottom: 12px;
+    padding-left: 12px;
+  }
+  .review-section-label {
+    font-size: 10px;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .review-section-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #E2E8F0;
+  }
+  .review-stats {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: rgba(59,130,246,0.06);
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #64748B;
+  }
+  .review-next {
+    background: rgba(249,115,22,0.06);
+    border: 1px solid rgba(249,115,22,0.15);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 13px;
+    color: #94A3B8;
+    line-height: 1.6;
+  }
+  .review-empty {
+    background: #171D30;
+    border: 1px solid #1E2A4A;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+  }
+  .review-empty-icon { font-size: 32px; margin-bottom: 8px; }
+  .review-empty-text { font-size: 14px; color: #94A3B8; }
+  .btn-secondary {
+    margin-top: 14px;
+    padding: 10px 20px;
+    background: #3B82F6;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* ─── Completion Screen (ExecSkills) ─── */
+  .completion-screen {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .completion-icon { font-size: 60px; margin-bottom: 16px; }
+  .completion-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: #22C55E;
+    margin-bottom: 10px;
+  }
+  .completion-stats {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #94A3B8;
+    margin-bottom: 6px;
+  }
+  .completion-message {
+    font-size: 15px;
+    color: #E2E8F0;
+    line-height: 1.6;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  /* ─── Footer Nav ─── */
+  .footer-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(11,15,26,0.95);
+    border-top: 1px solid #1E2A4A;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    z-index: 20;
+  }
+  .footer-btn {
+    background: transparent;
+    border: none;
+    color: #64748B;
+    font-size: 11px;
+    font-family: 'Nunito', sans-serif;
+    cursor: pointer;
+    padding: 6px 12px;
+  }
+  .footer-btn-active {
+    background: rgba(59,130,246,0.1);
+    border: 1px solid #3B82F6;
+    color: #60A5FA;
+    font-size: 11px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 6px;
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<!-- ─── Star Field ─── -->
+<div id="starField"></div>
+
+<!-- ─── Header ─── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="header-brand">
+      <span class="header-brand-icon">&#x1F43A;</span>
+      <div>
+        <div class="header-title">WOLFKID</div>
+        <div class="header-subtitle">UNIVERSE</div>
+      </div>
+    </div>
+    <div id="episodeTracker" class="ep-tracker"></div>
+  </div>
+</header>
+
+<!-- ─── Nav Tabs ─── -->
+<div class="nav-tabs">
+  <button id="tabStory" class="nav-tab nav-tab-active" onclick="switchView('story')">&#x1F4D6; Read</button>
+  <button id="tabWrite" class="nav-tab" onclick="switchView('write')">&#x270D;&#xFE0F; Write CER</button>
+  <button id="tabReview" class="nav-tab" onclick="switchView('review')">&#x1F4CA; Review</button>
+</div>
+
+<!-- ─── Main Content ─── -->
+<main class="main-content">
+
+  <!-- ══════ STORY VIEW ══════ -->
+  <div id="viewStory" style="padding-top:16px;">
+    <!-- Plan Your Attack (ExecSkills) -->
+    <div class="plan-attack">
+      <div class="plan-attack-label">&#x1F3AF; PLAN YOUR ATTACK</div>
+      <div class="plan-attack-text">
+        <strong>Mission:</strong> Read Episode 3 carefully. Pay attention to what Hex does and how Wolfkid reacts.
+        You will write a CER (Claim, Evidence, Reasoning) about what Hex reveals about Wolfkid's character.
+      </div>
+    </div>
+
+    <div class="episode-banner">
+      <div class="episode-number">EPISODE 3</div>
+      <h1 class="episode-title">The Locker Room Problem</h1>
+    </div>
+    <div id="storyContainer" class="story-container"></div>
+    <button class="btn-primary" onclick="switchView('write')">&#x270D;&#xFE0F; WRITE YOUR CER &#x2192;</button>
+  </div>
+
+  <!-- ══════ WRITE VIEW ══════ -->
+  <div id="viewWrite" class="hidden" style="padding-top:16px;">
+    <!-- Prompt Card -->
+    <div class="prompt-card">
+      <div class="prompt-label">YOUR MISSION</div>
+      <div class="prompt-text" id="cerPrompt"></div>
+    </div>
+
+    <!-- Session Timer (ExecSkills) -->
+    <div class="session-timer-card">
+      <span class="session-timer-label">SESSION TIME</span>
+      <span class="session-timer-value" id="sessionTimerDisplay">00:00</span>
+    </div>
+
+    <!-- Writing Timer -->
+    <div class="timer-card">
+      <div class="timer-inner">
+        <button id="timerBtn" class="timer-btn timer-btn-start" onclick="toggleTimer()">&#x25B6; Start</button>
+        <div class="timer-bar-track">
+          <div id="timerBarFill" class="timer-bar-fill" style="width:0%;background:linear-gradient(90deg,#3B82F6,#60A5FA);"></div>
+        </div>
+        <span id="timerDisplay" class="timer-display" style="color:#94A3B8;">00:00</span>
+      </div>
+    </div>
+
+    <!-- CER: Claim -->
+    <div class="cer-section" style="border-left:3px solid #3B82F6;">
+      <div class="cer-header">
+        <div class="cer-label-wrap">
+          <span class="cer-icon">&#x1F3AF;</span>
+          <span class="cer-label" style="color:#3B82F6;">Claim</span>
+        </div>
+        <span id="claimCounter" class="cer-counter cer-counter-unmet">0/1+ sentences</span>
+      </div>
+      <div id="claimStarters" class="cer-starters"></div>
+      <textarea id="claimTextarea" class="cer-textarea" placeholder="Start typing your claim here..." oninput="updateCounts()" onfocus="this.style.borderColor='#3B82F6'" onblur="this.style.borderColor='#1E2A4A'"></textarea>
+    </div>
+
+    <!-- CER: Evidence -->
+    <div class="cer-section" style="border-left:3px solid #F97316;">
+      <div class="cer-header">
+        <div class="cer-label-wrap">
+          <span class="cer-icon">&#x1F4DD;</span>
+          <span class="cer-label" style="color:#F97316;">Evidence</span>
+        </div>
+        <span id="evidenceCounter" class="cer-counter cer-counter-unmet">0/2+ sentences</span>
+      </div>
+      <div id="evidenceStarters" class="cer-starters"></div>
+      <textarea id="evidenceTextarea" class="cer-textarea" placeholder="Start typing your evidence here..." oninput="updateCounts()" onfocus="this.style.borderColor='#F97316'" onblur="this.style.borderColor='#1E2A4A'"></textarea>
+    </div>
+
+    <!-- CER: Reasoning -->
+    <div class="cer-section" style="border-left:3px solid #22C55E;">
+      <div class="cer-header">
+        <div class="cer-label-wrap">
+          <span class="cer-icon">&#x1F9E0;</span>
+          <span class="cer-label" style="color:#22C55E;">Reasoning</span>
+        </div>
+        <span id="reasoningCounter" class="cer-counter cer-counter-unmet">0/1+ sentences</span>
+      </div>
+      <div id="reasoningStarters" class="cer-starters"></div>
+      <textarea id="reasoningTextarea" class="cer-textarea" placeholder="Start typing your reasoning here..." oninput="updateCounts()" onfocus="this.style.borderColor='#22C55E'" onblur="this.style.borderColor='#1E2A4A'"></textarea>
+    </div>
+
+    <!-- Word Count & Submit -->
+    <div class="submit-row">
+      <span id="wordCount" class="word-count">0 words</span>
+      <button id="submitBtn" class="btn-submit btn-submit-disabled" onclick="handleSubmit()" disabled>&#x1F43A; SUBMIT TO THE ARCHIVES</button>
+    </div>
+  </div>
+
+  <!-- ══════ REVIEW VIEW ══════ -->
+  <div id="viewReview" class="hidden" style="padding-top:16px;">
+    <div id="reviewContent"></div>
+  </div>
+
+  <!-- ══════ COMPLETION SCREEN (ExecSkills) ══════ -->
+  <div id="viewCompletion" class="hidden" style="padding-top:16px;">
+    <div class="completion-screen">
+      <div class="completion-icon">&#x1F43A;&#x26A1;</div>
+      <div class="completion-title">MISSION COMPLETE</div>
+      <div id="completionWordCount" class="completion-stats"></div>
+      <div id="completionSessionTime" class="completion-stats"></div>
+      <div class="completion-message">
+        Your CER has been archived in the Wolfkid Universe.<br>
+        Awaiting command review for canon approval.
+      </div>
+      <button class="btn-primary" onclick="switchView('review')" style="width:auto;display:inline-block;padding:12px 28px;">&#x1F4CA; VIEW YOUR SUBMISSION</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- ─── Footer Nav ─── -->
+<div class="footer-nav">
+  <button class="footer-btn">&#x1F3E0; Chores</button>
+  <button class="footer-btn-active">&#x1F43A; Wolfkid</button>
+  <button class="footer-btn">&#x1F4DA; Math/Sci</button>
+</div>
+
+<script>
+// ─── ES5 ONLY ───
+
+// ─── Episode Data ───
+var EPISODE = {
+  number: 3,
+  title: "The Locker Room Problem",
+  passage: [
+    "Nobody asked Hex to show up. That was the thing about foxes \u2014 they just appeared, like they\u2019d been standing there the whole time and you were the one who wasn\u2019t paying attention.",
+    "It was Tuesday. Wolfkid had his headphones in, walking to his locker after lunch. Normal stuff. Except his locker wouldn\u2019t open. Not jammed. Changed. Someone had switched the combination.",
+    "\u201CTry 24-8-15,\u201D said a voice behind him.",
+    "Hex was leaning against the wall across the hall, arms crossed, hood up. Those green eyes catching the fluorescent lights like they were made of something else entirely.",
+    "\u201CHow do you know my combination?\u201D Wolfkid\u2019s ears flattened under his beanie. His tail twitched inside his jacket.",
+    "\u201CI don\u2019t know YOUR combination. I know the NEW combination. Someone changed it during third period.\u201D Hex pulled out his phone, showed a blurry hallway cam screenshot. A figure hunched at Wolfkid\u2019s locker. \u201CI was going to handle it myself, but\u2014\u201D He shrugged. \u201CYour locker. Your call.\u201D",
+    "Wolfkid punched in 24-8-15. Click. The locker swung open. Everything was still there. But sitting on top of his books was a note: \u201CFREAK.\u201D",
+    "Wolfkid crumpled it without reading it twice. His claws \u2014 no, fingernails, keep it together \u2014 dug into his palm.",
+    "\u201CYou\u2019re not going to do anything?\u201D Hex said. Not judging. Just... watching.",
+    "\u201CWhat\u2019s there to do?\u201D",
+    "\u201CI could find out who wrote it in about four minutes.\u201D",
+    "\u201CThen what? I go fight them? I rip up their stuff?\u201D Wolfkid shoved his books in his bag. \u201CThat\u2019s what they want. Me acting like\u2014\u201D He stopped.",
+    "\u201CLike a wolf?\u201D Hex finished.",
+    "The hallway was empty now. Just the two of them and the hum of the lights. Wolfkid closed his locker \u2014 his locker, with the NEW combination that Hex somehow already knew.",
+    "\u201CYou know what\u2019s weird?\u201D Wolfkid said. \u201CYou saw someone messing with my locker and your first move was to figure out the new code. Not stop them. Not tell a teacher. Just... solve the puzzle.\u201D",
+    "Hex\u2019s tail swished once behind him. \u201CThat\u2019s not weird. That\u2019s efficient.\u201D",
+    "\u201CThat\u2019s fox.\u201D",
+    "Hex almost smiled. Almost.",
+    "They walked to fifth period. Not together. Just... in the same direction. At the same time. The way two people do when they\u2019re definitely not friends but can\u2019t seem to stop showing up in each other\u2019s stories."
+  ],
+  cerPrompt: "How does the author use Hex to show something about Wolfkid\u2019s character? Use evidence from the text to support your claim.",
+  starters: {
+    claim: [
+      "The author uses Hex to show that Wolfkid is...",
+      "Through the character of Hex, we learn that Wolfkid...",
+      "Hex reveals something about Wolfkid by..."
+    ],
+    evidence: [
+      "In the text it says, \"...\"",
+      "According to the passage...",
+      "The author shows this when...",
+      "For example, in the story..."
+    ],
+    reasoning: [
+      "This is important because...",
+      "This shows that Wolfkid...",
+      "This connects to the idea that...",
+      "This reveals that..."
+    ]
+  }
+};
+
+// ─── State ───
+var currentView = "story";
+var timerSeconds = 0;
+var timerRunning = false;
+var timerInterval = null;
+var submitted = false;
+var sessionStartTime = Date.now();
+var sessionInterval = null;
+var TARGET_MINUTES = 35;
+
+// ─── Init ───
+function init() {
+  buildStarField();
+  buildEpisodeTracker();
+  buildStory();
+  buildStarters();
+  document.getElementById("cerPrompt").innerHTML = EPISODE.cerPrompt;
+  startSessionTimer();
+}
+
+// ─── Star Field ───
+function buildStarField() {
+  var container = document.getElementById("starField");
+  var html = "";
+  for (var i = 0; i < 40; i++) {
+    var x = Math.random() * 100;
+    var y = Math.random() * 100;
+    var size = Math.random() * 2 + 0.5;
+    var delay = Math.random() * 4;
+    var duration = Math.random() * 3 + 2;
+    html += '<div class="star" style="'
+      + "left:" + x + "%;"
+      + "top:" + y + "%;"
+      + "width:" + size + "px;"
+      + "height:" + size + "px;"
+      + "animation:twinkle " + duration + "s ease-in-out " + delay + "s infinite;"
+      + '"></div>';
+  }
+  container.innerHTML = html;
+}
+
+// ─── Episode Tracker ───
+function buildEpisodeTracker() {
+  var episodes = [
+    { num: 1, title: "Origin", done: true },
+    { num: 2, title: "New Kid", done: true },
+    { num: 3, title: "Locker Room", done: false, active: true },
+    { num: 4, title: "Team-Up", done: false, active: false },
+    { num: 5, title: "Your Story", done: false, active: false }
+  ];
+  var html = "";
+  for (var i = 0; i < episodes.length; i++) {
+    var ep = episodes[i];
+    var nodeClass = "ep-node ";
+    if (ep.done) {
+      nodeClass += "ep-node-done";
+    } else if (ep.active) {
+      nodeClass += "ep-node-active";
+    } else {
+      nodeClass += "ep-node-locked";
+    }
+    html += '<div class="ep-node-wrap">';
+    html += '<div class="' + nodeClass + '" title="Ep ' + ep.num + ': ' + ep.title + '">';
+    html += ep.done ? "\u2713" : ep.num;
+    html += "</div>";
+    if (i < episodes.length - 1) {
+      var lineClass = "ep-line " + (ep.done ? "ep-line-done" : "ep-line-pending");
+      html += '<div class="' + lineClass + '"></div>';
+    }
+    html += "</div>";
+  }
+  document.getElementById("episodeTracker").innerHTML = html;
+}
+
+// ─── Story Paragraphs ───
+function buildStory() {
+  var container = document.getElementById("storyContainer");
+  var html = "";
+  for (var i = 0; i < EPISODE.passage.length; i++) {
+    html += '<p style="animation-delay:' + (i * 0.06) + 's;">' + escapeHtml(EPISODE.passage[i]) + "</p>";
+  }
+  container.innerHTML = html;
+}
+
+// ─── Sentence Starter Pills ───
+function buildStarters() {
+  var sections = [
+    { id: "claimStarters", starters: EPISODE.starters.claim, target: "claimTextarea" },
+    { id: "evidenceStarters", starters: EPISODE.starters.evidence, target: "evidenceTextarea" },
+    { id: "reasoningStarters", starters: EPISODE.starters.reasoning, target: "reasoningTextarea" }
+  ];
+  for (var s = 0; s < sections.length; s++) {
+    var sec = sections[s];
+    var container = document.getElementById(sec.id);
+    var html = "";
+    for (var i = 0; i < sec.starters.length; i++) {
+      html += '<button class="starter-pill" onclick="insertStarter(\'' + sec.target + "', " + escapeJsString(sec.starters[i]) + ')">'
+        + escapeHtml(sec.starters[i])
+        + "</button>";
+    }
+    container.innerHTML = html;
+  }
+}
+
+function escapeJsString(str) {
+  return "'" + str.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"') + "'";
+}
+
+function escapeHtml(str) {
+  var div = document.createElement("div");
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+function insertStarter(targetId, text) {
+  var ta = document.getElementById(targetId);
+  var val = ta.value;
+  var newVal = val ? val + " " + text : text;
+  ta.value = newVal;
+  updateCounts();
+  setTimeout(function() {
+    ta.focus();
+    if (typeof ta.setSelectionRange === "function") {
+      ta.setSelectionRange(newVal.length, newVal.length);
+    }
+  }, 50);
+}
+
+// ─── View Switching ───
+function switchView(view) {
+  currentView = view;
+  var views = ["viewStory", "viewWrite", "viewReview", "viewCompletion"];
+  for (var i = 0; i < views.length; i++) {
+    document.getElementById(views[i]).className = "hidden";
+  }
+
+  if (view === "story") {
+    document.getElementById("viewStory").className = "";
+  } else if (view === "write") {
+    document.getElementById("viewWrite").className = "";
+  } else if (view === "review") {
+    document.getElementById("viewReview").className = "";
+    renderReview();
+  } else if (view === "completion") {
+    document.getElementById("viewCompletion").className = "";
+  }
+
+  // Update tab styles
+  var tabs = ["tabStory", "tabWrite", "tabReview"];
+  var keys = ["story", "write", "review"];
+  for (var t = 0; t < tabs.length; t++) {
+    var tabEl = document.getElementById(tabs[t]);
+    if (keys[t] === view || (view === "completion" && keys[t] === "review")) {
+      tabEl.className = "nav-tab nav-tab-active";
+    } else {
+      tabEl.className = "nav-tab";
+    }
+  }
+}
+
+// ─── Writing Timer ───
+function toggleTimer() {
+  timerRunning = !timerRunning;
+  var btn = document.getElementById("timerBtn");
+  if (timerRunning) {
+    btn.className = "timer-btn timer-btn-pause";
+    btn.innerHTML = "&#x23F8; Pause";
+    timerInterval = setInterval(function() {
+      timerSeconds++;
+      updateTimerDisplay();
+    }, 1000);
+  } else {
+    btn.className = "timer-btn timer-btn-start";
+    btn.innerHTML = timerSeconds > 0 ? "&#x25B6; Resume" : "&#x25B6; Start";
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function updateTimerDisplay() {
+  var mins = Math.floor(timerSeconds / 60);
+  var secs = timerSeconds % 60;
+  var pct = Math.min((timerSeconds / (TARGET_MINUTES * 60)) * 100, 100);
+  var isOver = mins >= TARGET_MINUTES;
+
+  var display = document.getElementById("timerDisplay");
+  display.textContent = padTwo(mins) + ":" + padTwo(secs);
+  display.style.color = isOver ? "#EAB308" : "#94A3B8";
+
+  var fill = document.getElementById("timerBarFill");
+  fill.style.width = pct + "%";
+  if (isOver) {
+    fill.style.background = "linear-gradient(90deg, #22C55E, #EAB308)";
+  } else {
+    fill.style.background = "linear-gradient(90deg, #3B82F6, #60A5FA)";
+  }
+}
+
+function padTwo(n) {
+  return n < 10 ? "0" + n : "" + n;
+}
+
+// ─── Session Timer (ExecSkills) ───
+function startSessionTimer() {
+  sessionInterval = setInterval(function() {
+    var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+    var m = Math.floor(elapsed / 60);
+    var s = elapsed % 60;
+    document.getElementById("sessionTimerDisplay").textContent = padTwo(m) + ":" + padTwo(s);
+  }, 1000);
+}
+
+function getSessionTimeString() {
+  var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+  var m = Math.floor(elapsed / 60);
+  var s = elapsed % 60;
+  return padTwo(m) + ":" + padTwo(s);
+}
+
+// ─── Sentence Counting ───
+function countSentences(text) {
+  var parts = text.split(/[.!?]+/);
+  var count = 0;
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i].replace(/\s/g, "").length > 3) {
+      count++;
+    }
+  }
+  return count;
+}
+
+function countWords(text) {
+  var trimmed = text.replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "");
+  if (trimmed === "") return 0;
+  return trimmed.split(" ").length;
+}
+
+function updateCounts() {
+  var claimVal = document.getElementById("claimTextarea").value;
+  var evidenceVal = document.getElementById("evidenceTextarea").value;
+  var reasoningVal = document.getElementById("reasoningTextarea").value;
+
+  var claimSentences = countSentences(claimVal);
+  var evidenceSentences = countSentences(evidenceVal);
+  var reasoningSentences = countSentences(reasoningVal);
+
+  var claimMet = claimSentences >= 1;
+  var evidenceMet = evidenceSentences >= 2;
+  var reasoningMet = reasoningSentences >= 1;
+
+  // Update counters
+  var claimCounter = document.getElementById("claimCounter");
+  claimCounter.textContent = claimSentences + "/1+ sentences";
+  claimCounter.className = "cer-counter " + (claimMet ? "cer-counter-met" : "cer-counter-unmet");
+
+  var evidenceCounter = document.getElementById("evidenceCounter");
+  evidenceCounter.textContent = evidenceSentences + "/2+ sentences";
+  evidenceCounter.className = "cer-counter " + (evidenceMet ? "cer-counter-met" : "cer-counter-unmet");
+
+  var reasoningCounter = document.getElementById("reasoningCounter");
+  reasoningCounter.textContent = reasoningSentences + "/1+ sentences";
+  reasoningCounter.className = "cer-counter " + (reasoningMet ? "cer-counter-met" : "cer-counter-unmet");
+
+  // Word count
+  var totalWords = countWords(claimVal) + countWords(evidenceVal) + countWords(reasoningVal);
+  document.getElementById("wordCount").textContent = totalWords + " words";
+
+  // Submit button
+  var allMet = claimMet && evidenceMet && reasoningMet;
+  var submitBtn = document.getElementById("submitBtn");
+  if (allMet) {
+    submitBtn.disabled = false;
+    submitBtn.className = "btn-submit btn-submit-active";
+  } else {
+    submitBtn.disabled = true;
+    submitBtn.className = "btn-submit btn-submit-disabled";
+  }
+}
+
+// ─── Submit ───
+function handleSubmit() {
+  submitted = true;
+  // Stop writing timer
+  if (timerRunning) {
+    timerRunning = false;
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  // Show completion screen (ExecSkills)
+  var claimVal = document.getElementById("claimTextarea").value;
+  var evidenceVal = document.getElementById("evidenceTextarea").value;
+  var reasoningVal = document.getElementById("reasoningTextarea").value;
+  var totalWords = countWords(claimVal) + countWords(evidenceVal) + countWords(reasoningVal);
+
+  document.getElementById("completionWordCount").textContent = totalWords + " words written";
+  document.getElementById("completionSessionTime").textContent = "Session time: " + getSessionTimeString();
+
+  switchView("completion");
+}
+
+// ─── Review Render ───
+function renderReview() {
+  var container = document.getElementById("reviewContent");
+  var claimVal = document.getElementById("claimTextarea").value;
+  var evidenceVal = document.getElementById("evidenceTextarea").value;
+  var reasoningVal = document.getElementById("reasoningTextarea").value;
+
+  if (submitted) {
+    var totalWords = countWords(claimVal) + countWords(evidenceVal) + countWords(reasoningVal);
+    var html = "";
+
+    // Success banner
+    html += '<div class="review-success">';
+    html += '<div class="review-success-icon">&#x1F43A;&#x26A1;</div>';
+    html += '<div class="review-success-title">EPISODE 3 ARCHIVED</div>';
+    html += '<div class="review-success-text">';
+    html += "Your CER has been transmitted to the Wolfkid Archives.<br>";
+    html += "Awaiting command review for canon approval.";
+    html += "</div></div>";
+
+    // Submission card
+    html += '<div class="review-card">';
+    html += '<div class="review-card-title">YOUR SUBMISSION</div>';
+
+    // Claim
+    html += '<div class="review-section" style="border-left:2px solid #3B82F6;">';
+    html += '<div class="review-section-label" style="color:#3B82F6;">CLAIM</div>';
+    html += '<div class="review-section-text">' + escapeHtml(claimVal) + "</div>";
+    html += "</div>";
+
+    // Evidence
+    html += '<div class="review-section" style="border-left:2px solid #F97316;">';
+    html += '<div class="review-section-label" style="color:#F97316;">EVIDENCE</div>';
+    html += '<div class="review-section-text">' + escapeHtml(evidenceVal) + "</div>";
+    html += "</div>";
+
+    // Reasoning
+    html += '<div class="review-section" style="border-left:2px solid #22C55E;">';
+    html += '<div class="review-section-label" style="color:#22C55E;">REASONING</div>';
+    html += '<div class="review-section-text">' + escapeHtml(reasoningVal) + "</div>";
+    html += "</div>";
+
+    // Stats
+    html += '<div class="review-stats">';
+    html += "<span>" + totalWords + " words</span>";
+    html += "<span>&#x23F3; Pending review</span>";
+    html += "</div></div>";
+
+    // Next episode teaser
+    html += '<div class="review-next">';
+    html += "&#x1F98A; <strong style=\"color:#F97316;\">Next episode unlocks</strong> after your CER is reviewed. ";
+    html += "Episode 4: <em>\u201CThe Thing Neither of Them Can Handle Alone\u201D</em>";
+    html += "</div>";
+
+    container.innerHTML = html;
+  } else {
+    var html2 = "";
+    html2 += '<div class="review-empty">';
+    html2 += '<div class="review-empty-icon">&#x1F4DD;</div>';
+    html2 += '<div class="review-empty-text">Complete your CER first, then come here to review before submitting.</div>';
+    html2 += '<button class="btn-secondary" onclick="switchView(\'write\')">Go to Write &#x2192;</button>';
+    html2 += "</div>";
+    container.innerHTML = html2;
+  }
+}
+
+// ─── Boot ───
+init();
+</script>
+</body>
+</html>
