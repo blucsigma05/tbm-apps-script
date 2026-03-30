@@ -4,7 +4,7 @@
 
 // WRITES TO: DebtModel, CFF, Dashboard_Export, Debt_Export
 // READS FROM: Transactions, Balances, DebtModel, Budget, Config, Balance History
-function getDataEngineVersion() { return 75; }
+function getDataEngineVersion() { return 76; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -200,7 +200,9 @@ var TAB_MAP = {
   'KH_ScreenTime':    '🧹📅 KH_ScreenTime',
   'KH_Grades':        '🧹📅 KH_Grades',
   // 📋 Board Config
-  'Board_Config':     '📋 Board_Config'
+  'Board_Config':     '📋 Board_Config',
+  // 💻 System
+  'Feedback':         '💻 Feedback'
 };
 
 // v73: Request-scoped sheet data cache — same pattern as KidsHub v25.
