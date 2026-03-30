@@ -1,0 +1,88 @@
+═══ TBM WIRING AUDIT ═══
+
+Scanning 14 HTML files and 20 JS files...
+
+--- BROKEN WIRING (client calls with no server function) ---
+  X awardRings  <-  called from: fact-sprint.html, writing-module.html
+  X logHomeworkCompletion  <-  called from: writing-module.html
+
+--- SAFE WRAPPER VIOLATIONS (client calls to non-*Safe functions) ---
+  !! getKHLastModified  <-  called from: KidsHub.html (not a Safe wrapper)
+
+--- FULL CLIENT CALL INVENTORY ---
+  addKidsEventSafe <- KidsHub.html
+  awardRings <- fact-sprint.html, writing-module.html [BROKEN]
+  getBoardDataSafe <- TheSoul.html, TheSpine.html, TheVein.html
+  getCashFlowForecastSafe <- TheVein.html
+  getCategoryTransactionsSafe <- ThePulse.html
+  getCloseHistoryDataSafe <- TheVein.html
+  getDataSafe <- ThePulse.html, TheSpine.html, TheVein.html
+  getKHAppUrlsSafe <- KidsHub.html
+  getKHLastModified <- KidsHub.html [NOT SAFE]
+  getKidsHubDataSafe <- KidsHub.html, TheSoul.html, TheSpine.html
+  getKidsHubWidgetDataSafe <- ThePulse.html, TheVein.html
+  getMERGateStatusSafe <- TheVein.html
+  getMonthsSafe <- ThePulse.html, TheVein.html
+  getReconcileStatusSafe <- ThePulse.html, TheVein.html
+  getScriptUrlSafe <- KidsHub.html, ThePulse.html, TheVein.html
+  getSimulatorDataSafe <- ThePulse.html
+  getSpineHeartbeatSafe <- TheSpine.html
+  getSubscriptionDataSafe <- TheVein.html
+  getSystemHealthSafe <- TheVein.html
+  getWeeklyTrackerDataSafe <- ThePulse.html
+  khAddBonusTaskSafe <- TheVein.html
+  khAddDeductionSafe <- KidsHub.html
+  khApproveRequestSafe <- KidsHub.html, TheVein.html
+  khApproveTaskSafe <- KidsHub.html, TheVein.html
+  khApproveWithBonusSafe <- KidsHub.html, TheVein.html
+  khCompleteTaskSafe <- KidsHub.html
+  khDebitScreenTimeSafe <- TheVein.html
+  khDenyRequestSafe <- KidsHub.html, TheVein.html
+  khGetGradeHistorySafe <- KidsHub.html
+  khOverrideTaskSafe <- KidsHub.html, TheVein.html
+  khRedeemRewardSafe <- KidsHub.html
+  khRejectTaskSafe <- KidsHub.html, TheVein.html
+  khResetTasksSafe <- KidsHub.html
+  khSetBankOpeningSafe <- TheVein.html
+  khSubmitGradeSafe <- KidsHub.html
+  khSubmitRequestSafe <- KidsHub.html
+  khUncompleteTaskSafe <- KidsHub.html
+  khVerifyPinSafe <- KidsHub.html
+  listStoredStoriesSafe <- StoryLibrary.html
+  logHomeworkCompletion <- writing-module.html [BROKEN]
+  runMERGatesSafe <- TheVein.html
+  runStoryFactorySafe <- KidsHub.html
+  stampCloseMonthSafe <- TheVein.html
+  updateFamilyNoteSafe <- TheVein.html
+
+=== SUMMARY ===
+Client-side calls found: 44 unique functions
+Server functions found:  393 total
+Broken wiring:           2
+Wrapper violations:      1
+
+FAIL -- broken wiring detected. Do NOT deploy.
+
+═══ ANNOTATIONS (Sprint 3 action items) ═══
+
+BROKEN WIRING:
+
+1. awardRings — called from fact-sprint.html, writing-module.html
+   Status: NEEDS_SERVER_FN
+   Notes: Education module ring-reward system. No server function exists.
+   Sprint 3: Create awardRingsSafe() wrapper in Code.js + underlying
+   awardRings() in KidsHub.js. Update HTML calls to use awardRingsSafe().
+
+2. logHomeworkCompletion — called from writing-module.html
+   Status: RENAMED
+   Notes: Server has logHomeworkCompletionSafe() in Code.js (line 967).
+   The HTML calls logHomeworkCompletion (without Safe suffix).
+   Sprint 3: Update writing-module.html to call logHomeworkCompletionSafe().
+
+WRAPPER VIOLATIONS:
+
+1. getKHLastModified — called from KidsHub.html
+   Status: NEEDS_SAFE_WRAPPER
+   Notes: Server function getKHLastModified() exists in Kidshub.js but
+   has no Safe wrapper. KidsHub.html calls it directly.
+   Sprint 3: Create getKHLastModifiedSafe() in Code.js, update KidsHub.html.
