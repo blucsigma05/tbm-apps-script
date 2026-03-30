@@ -1,5 +1,7 @@
 // ═══════════════════════════════════════════════════
 // MonitorEngine.gs v6
+// WRITES TO: 💻🧮 Close History, 💻🧮 Month-End Review
+// READS FROM: 💻🧮 DebtModel, 💻🧮 Helpers, 🔒 Transactions, 🔒 Balance History
 // ═══════════════════════════════════════════════════
 
 function getMonitorEngineVersion() { return 6; }
@@ -15,7 +17,7 @@ var ME_TRANSFER_CATS = [
   'Debt Offset', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'
 ];
 
-function parseAmount_(val) {
+function me_parseAmount_(val) {
   if (typeof val === 'number') return val;
   if (!val) return 0;
   var s = val.toString().replace(/[$,\s]/g, '');
@@ -23,7 +25,7 @@ function parseAmount_(val) {
   return isNaN(n) ? 0 : n;
 }
 
-function defaultPriorMonth_(monthLabel) {
+function me_defaultPriorMonth_(monthLabel) {
   if (monthLabel) return monthLabel;
   var now = new Date();
   var prior = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -45,7 +47,7 @@ function loadMonthTransactions_(startDate, endDate) {
     var d = txData[i][1];
     if (d instanceof Date && d >= startDate && d <= endDate) {
       txns.push({ date: d, desc: (txData[i][2]||'').toString(),
-        cat: (txData[i][3]||'').toString(), amt: parseAmount_(txData[i][4]),
+        cat: (txData[i][3]||'').toString(), amt: me_parseAmount_(txData[i][4]),
         acct: (txData[i][5]||'').toString() });
     }
   }
@@ -56,7 +58,7 @@ function loadMonthTransactions_(startDate, endDate) {
 //  stampCloseMonth — seals month in Close History
 // ══════════════════════════════════════════════════════
 function stampCloseMonth(monthLabel) {
-  monthLabel = defaultPriorMonth_(monthLabel);
+  monthLabel = me_defaultPriorMonth_(monthLabel);
   var range = parseMonthRange_(monthLabel);
   Logger.log('═══ stampCloseMonth(' + monthLabel + ') ═══');
 
@@ -88,7 +90,7 @@ function stampCloseMonth(monthLabel) {
     var ba = (bhData[b][3]||'').toString().trim();
     if (!ba) continue;
     if (!latest[ba] || bd >= latest[ba].date)
-      latest[ba] = { date: bd, balance: parseAmount_(bhData[b][8]) };
+      latest[ba] = { date: bd, balance: me_parseAmount_(bhData[b][8]) };
   }
 
   var debtCurrent = 0, matched = 0, unmatched = [];
@@ -127,7 +129,7 @@ function stampCloseMonth(monthLabel) {
 //  listLargeTransactions — all > $500, NO exclusions
 // ══════════════════════════════════════════════════════
 function listLargeTransactions(monthLabel) {
-  monthLabel = defaultPriorMonth_(monthLabel);
+  monthLabel = me_defaultPriorMonth_(monthLabel);
   var range = parseMonthRange_(monthLabel);
   var loaded = loadMonthTransactions_(range.start, range.end);
   Logger.log('═══ listLargeTransactions(' + monthLabel + ') ═══');
@@ -172,14 +174,14 @@ function checkRefiGhosts() {
     var a = (bhData[b][3]||'').toString().trim();
     if (!a) continue;
     if (!latestBH[a] || d >= latestBH[a].date)
-      latestBH[a] = { date: d, balance: parseAmount_(bhData[b][8]) };
+      latestBH[a] = { date: d, balance: me_parseAmount_(bhData[b][8]) };
   }
 
   var ghosts = [];
   for (var i = 0; i < dmData.length; i++) {
     var acct = (dmData[i][0]||'').toString().trim();
     var tiller = (dmData[i][14]||'').toString().trim();
-    var live = parseAmount_(dmData[i][15]);
+    var live = me_parseAmount_(dmData[i][15]);
     if (!acct || !tiller) continue;
     var bh = latestBH[tiller];
     if (live > 100 && (!bh || Math.abs(bh.balance) === 0)) {
@@ -196,7 +198,7 @@ function checkRefiGhosts() {
 //  runMERGates — 11-gate automated pre-check
 // ══════════════════════════════════════════════════════
 function runMERGates(monthLabel) {
-  monthLabel = defaultPriorMonth_(monthLabel);
+  monthLabel = me_defaultPriorMonth_(monthLabel);
   var range = parseMonthRange_(monthLabel);
   Logger.log('═══ MonitorEngine v6 — runMERGates(' + monthLabel + ') ═══');
 

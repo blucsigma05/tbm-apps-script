@@ -1,11 +1,13 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ============================================================
 // STORY FACTORY — Google Apps Script Agent
-// Version: 7.0
+// WRITES TO: (Notion + Google Drive — no sheet writes)
+// READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
+// Version: 8.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 7; }
+function getStoryFactoryVersion() { return 8; }
 
 var CONFIG = {
 GEMINI_API_KEY:  PropertiesService.getScriptProperties().getProperty('JJ Stories'),
@@ -113,7 +115,7 @@ return code;
 
 // ── PHASE 1: CHARACTER TRUTH FROM NOTION ─────────────────────
 
-function fetchCharacterFromNotion(characterName) {
+function sf_getCharacterFromNotion_(characterName) {
 // Map story-level character names to Characters DB lookup names
 var lookupNames = [];
 if (characterName === 'JJ' || characterName === 'Both' || characterName === 'Whole Family') lookupNames.push('JJ');
@@ -191,7 +193,7 @@ return parts.join('\n');
 
 // Download character reference images from Notion-stored URLs
 var _refImageCache = {};
-function fetchCharacterRefImages(characters) {
+function sf_getCharacterRefImages_(characters) {
 var images = [];
 for (var i = 0; i < characters.length; i++) {
 var c = characters[i];
@@ -233,7 +235,7 @@ return images;
 
 // ── PHASE 2: STORY MEMORY ────────────────────────────────────
 
-function fetchRecentStories(character) {
+function sf_getRecentStories_(character) {
 // Get the last N stories featuring this character (or all stories if Whole Family)
 var filter;
 if (character === 'Whole Family') {
@@ -287,7 +289,7 @@ Logger.log('Fetched ' + summaries.length + ' recent story summaries for: ' + cha
 return summaries;
 }
 
-function fetchCanonFacts(character) {
+function sf_getCanonFacts_(character) {
 // Get active canon facts relevant to this character
 var charFilters = [];
 if (character === 'JJ' || character === 'Both' || character === 'Whole Family') {
@@ -640,7 +642,7 @@ scenesToGenerate.map(function(i) { return i + 1; }).join(', '));
 
 // Download character reference images (cached per execution)
 Logger.log('Fetching character reference images...');
-var refImages = fetchCharacterRefImages(characters);
+var refImages = sf_getCharacterRefImages_(characters);
 Logger.log('Reference images loaded: ' + refImages.length);
 
 // Build character lookup for scene-level filtering
@@ -1083,7 +1085,7 @@ topic = String(topic).trim();
 
 // Phase 1: Fetch character truth from Notion
 Logger.log('Step 0: Fetching character data from Notion...');
-var characters = fetchCharacterFromNotion(character);
+var characters = sf_getCharacterFromNotion_(character);
 if (characters.length === 0) {
 Logger.log('WARNING: No characters found in Notion DB. Check Characters database.');
 throw new Error('No active characters found in Notion for: ' + character);
@@ -1091,8 +1093,8 @@ throw new Error('No active characters found in Notion for: ' + character);
 
 // Phase 2: Fetch story memory
 Logger.log('Step 0b: Fetching story memory...');
-var recentStories = fetchRecentStories(character);
-var canonFacts = fetchCanonFacts(character);
+var recentStories = sf_getRecentStories_(character);
+var canonFacts = sf_getCanonFacts_(character);
 
 // Step 1: Generate story with memory
 Logger.log('Step 1: Generating story with memory injection...');
@@ -1250,7 +1252,7 @@ scenes: [
 };
 
 try {
-var characters = fetchCharacterFromNotion('JJ');
+var characters = sf_getCharacterFromNotion_('JJ');
 Logger.log('Characters loaded: ' + characters.length);
 var pdf = buildStoryPDF(fakeStory, [null, null, null, null, null, null], 0);
 Logger.log('SUCCESS! PDF: ' + pdf.url);
@@ -1266,25 +1268,92 @@ function testMemoryFetch() {
 Logger.log('=== Testing Memory Fetch ===');
 
 Logger.log('--- Characters ---');
-var chars = fetchCharacterFromNotion('Whole Family');
+var chars = sf_getCharacterFromNotion_('Whole Family');
 for (var i = 0; i < chars.length; i++) {
 Logger.log(chars[i].name + ': ' + chars[i].narrativeTraits.substring(0, 80) + '...');
 }
 
 Logger.log('--- Recent Stories ---');
-var stories = fetchRecentStories('JJ');
+var stories = sf_getRecentStories_('JJ');
 for (var j = 0; j < stories.length; j++) {
 Logger.log(stories[j]);
 }
 
 Logger.log('--- Canon Facts ---');
-var facts = fetchCanonFacts('JJ');
+var facts = sf_getCanonFacts_('JJ');
 for (var k = 0; k < facts.length; k++) {
 Logger.log(facts[k]);
 }
 
 Logger.log('=== Memory Fetch Complete ===');
 }
+
+// ── v8: LIST STORED STORIES FROM SCRIPT PROPERTIES ──────────────
+// Stories are stored as JSON in Script Properties with keys like STORY_<key>.
+// Each property value is a JSON string: { title, character, scenes: [...], vocab: [...], wordCount, ... }
+// Returns an array of story metadata objects for the Story Library UI.
+
+function listStoredStories() {
+  var props = PropertiesService.getScriptProperties().getProperties();
+  var stories = [];
+
+  var keys = Object.keys(props);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    if (key.indexOf('STORY_') !== 0) continue;
+
+    try {
+      var data = JSON.parse(props[key]);
+      var sceneCount = (data.scenes && data.scenes.length) ? data.scenes.length : 0;
+      var vocabList = data.vocab || data.vocabulary || [];
+      var wordCount = data.wordCount || 0;
+
+      // If wordCount not pre-computed, estimate from scene text
+      if (!wordCount && data.scenes) {
+        for (var s = 0; s < data.scenes.length; s++) {
+          var txt = data.scenes[s].text || '';
+          wordCount += txt.split(/\s+/).length;
+        }
+      }
+
+      stories.push({
+        storyKey: key,
+        title: data.title || 'Untitled Story',
+        character: data.character || 'Unknown',
+        sceneCount: sceneCount,
+        vocabWords: vocabList,
+        wordCount: wordCount,
+        tone: data.tone || '',
+        topic: data.topic || ''
+      });
+    } catch (e) {
+      Logger.log('listStoredStories: skipped malformed property ' + key + ': ' + e.message);
+    }
+  }
+
+  // Sort by title alphabetically
+  stories.sort(function(a, b) {
+    return a.title < b.title ? -1 : a.title > b.title ? 1 : 0;
+  });
+
+  return stories;
+}
+
+
+// ── v8: GET SINGLE STORY FROM SCRIPT PROPERTIES ─────────────────
+// Returns the full story JSON for a given key, or null if not found.
+
+function getStoredStory(storyKey) {
+  var val = PropertiesService.getScriptProperties().getProperty(storyKey);
+  if (!val) return null;
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    Logger.log('getStoredStory: malformed JSON for ' + storyKey + ': ' + e.message);
+    return null;
+  }
+}
+
 
 // ── AUTHORIZE DRIVE (run once) ──
 

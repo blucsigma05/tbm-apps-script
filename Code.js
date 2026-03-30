@@ -1,13 +1,15 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v50 — Apps Script Router (TBM Consolidated)
+// Code.gs v53 — Apps Script Router (TBM Consolidated)
+// WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
+// READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
 
 // TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeGsVersion() { return 50; }
+function getCodeVersion() { return 53; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -47,7 +49,7 @@ function getCachedKHPayload_() {
 
     return raw; // return JSON string, not parsed
   } catch(e) {
-    Logger.log('getCachedKHPayload_ error: ' + e.message);
+    if (typeof logError_ === 'function') logError_('getCachedKHPayload_', e);
     return null;
   }
 }
@@ -103,7 +105,7 @@ function getCachedPayload_(cacheKey) {
     // Non-chunked — parse directly
     return JSON.parse(raw);
   } catch(e) {
-    Logger.log('getCachedPayload_ error: ' + e.message);
+    if (typeof logError_ === 'function') logError_('getCachedPayload_', e);
     return null;
   }
 }
@@ -170,7 +172,7 @@ function bustCache() {
     chunkKeys.push(KH_CACHE_KEY);
     chunkKeys.push(KH_CACHE_HB_KEY);
     cache.removeAll(chunkKeys);
-  } catch(e) {}
+  } catch(e) { if (typeof logError_ === 'function') logError_('bustCache', e); }
   return { status: 'ok', busted: new Date().toISOString() };
 }
 
@@ -184,7 +186,7 @@ function getKHLastModified() {
       var v = sh.getRange('Z1').getValue();
       return v ? String(v) : '';
     }
-  } catch(e) {}
+  } catch(e) { if (typeof logError_ === 'function') logError_('getKHLastModified', e); }
   return '';
 }
 
@@ -222,7 +224,9 @@ function servePage(page, e) {
     'dashboard': { file: 'DesignDashboard', title: 'Design Dashboard — Ring Quest Creator' },
     'facts':     { file: 'fact-sprint',    title: 'Fact Sprint — Math Drill' },
     'reading':   { file: 'reading-module', title: 'Reading Module — Thompson Education' },
-    'writing':   { file: 'writing-module', title: 'Writing Module — Thompson Education' }
+    'writing':   { file: 'writing-module', title: 'Writing Module — Thompson Education' },
+    'story-library': { file: 'StoryLibrary', title: 'Story Library — Thompson Family Stories' },
+    'story':     { file: 'StoryLibrary', title: 'Story Library — Thompson Family Stories' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -271,7 +275,8 @@ function serveData(e) {
       var routes = {
         'vein': 'TheVein', 'pulse': 'ThePulse', 'vault': 'Vault',
         'kidshub': 'KidsHub', 'spine': 'TheSpine', 'soul': 'TheSoul',
-        'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse'
+        'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse',
+        'story-library': 'StoryLibrary', 'story': 'StoryLibrary'
       };
       var filename = routes[page] || 'ThePulse';
       try {
@@ -302,6 +307,13 @@ function serveData(e) {
       var fn = e.parameter.fn;
       var args = [];
       try { args = JSON.parse(e.parameter.args || '[]'); } catch(ex) {}
+      // v52: Validate args is an array with bounded length
+      if (!Array.isArray(args)) args = [];
+      if (args.length > 10) {
+        return ContentService.createTextOutput(
+          JSON.stringify({ error: 'Too many arguments (' + args.length + ')' })
+        ).setMimeType(ContentService.MimeType.JSON);
+      }
 
       var API_WHITELIST = {
         'getDataSafe': getDataSafe, 'getMonthsSafe': getMonthsSafe,
@@ -327,7 +339,11 @@ function serveData(e) {
         'updateFamilyNoteSafe': updateFamilyNoteSafe,
         'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
         'getVaultDataSafe': getVaultDataSafe, 'runStoryFactorySafe': runStoryFactorySafe,
+        'listStoredStoriesSafe': listStoredStoriesSafe, 'getStoredStorySafe': getStoredStorySafe,
+        'getTodayContentSafe': getTodayContentSafe, 'seedWeek1CurriculumSafe': seedWeek1CurriculumSafe,
         'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe,
+        'submitFeedbackSafe': submitFeedbackSafe, 'getAudioBatchSafe': getAudioBatchSafe,
+        'logHomeworkCompletionSafe': logHomeworkCompletionSafe, 'logSparkleProgressSafe': logSparkleProgressSafe,
         'runTestsSafe': runTestsSafe
       };
 
@@ -344,6 +360,7 @@ function serveData(e) {
           JSON.stringify(apiResult)
         ).setMimeType(ContentService.MimeType.JSON);
       } catch (err) {
+        if (typeof logError_ === 'function') logError_('serveData_API_' + fn, err);
         return ContentService.createTextOutput(
           JSON.stringify({ error: err.message, fn: fn })
         ).setMimeType(ContentService.MimeType.JSON);
@@ -362,7 +379,7 @@ function serveData(e) {
         smoke: smokeResult,
         regression: regressionResult,
         versions: {
-          codeGs: 'v' + getCodeGsVersion(),
+          codeGs: 'v' + getCodeVersion(),
           dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })(),
           smokeTest: 'v' + (function(){ try { return getSmokeTestVersion(); } catch(e) { return '?'; } })(),
           regressionSuite: 'v' + (function(){ try { return getRegressionSuiteVersion(); } catch(e) { return '?'; } })()
@@ -389,7 +406,7 @@ function serveData(e) {
     } else if (action === 'board') {
       result = getBoardData();
     } else if (action === 'version') {
-      result = { codeGs: 'v' + getCodeGsVersion(), dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return 'unknown'; } })(), cascadeEngine: 'v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return 'unknown'; } })(), updated: new Date().toISOString().slice(0,10) };
+      result = { codeGs: 'v' + getCodeVersion(), dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return 'unknown'; } })(), cascadeEngine: 'v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return 'unknown'; } })(), updated: new Date().toISOString().slice(0,10) };
     } else if (action === 'loc') {
       result = getLOCCapacity();
     } else {
@@ -473,7 +490,7 @@ function getDataSafe(paramsOrStart, endArg, debtArg) {
       var cached = getCachedPayload_(cacheKey);
       if (cached) return cached;
     }
-    try { SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TAB_MAP['Helpers'] || 'Helpers').getRange('Z1').setValue(new Date().toISOString()); } catch(e) {}
+    try { SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TAB_MAP['Helpers'] || 'Helpers').getRange('Z1').setValue(new Date().toISOString()); } catch(e) { if (typeof logError_ === 'function') logError_('getDataSafe_heartbeat', e); }
     var raw = getData(start, end, true);
     var result = JSON.parse(JSON.stringify(raw));
     if (isCurrentMonth) {
@@ -512,7 +529,9 @@ function getScriptUrl() {
 }
 
 function getScriptUrlSafe() {
-  return ScriptApp.getService().getUrl();
+  return withMonitor_('getScriptUrlSafe', function() {
+    return JSON.parse(JSON.stringify({ url: ScriptApp.getService().getUrl() }));
+  });
 }
 
 // ── MonitorEngine safe wrappers (v48) ────────────────────────────
@@ -760,13 +779,19 @@ function khResetTasksSafe(mode, child) {
   });
 }
 function khVerifyPinSafe(pin) {
-  return khVerifyPin(pin);
+  return withMonitor_('khVerifyPinSafe', function() {
+    return JSON.parse(JSON.stringify(khVerifyPin(pin)));
+  });
 }
 function getKHAppUrlsSafe() {
-  return getKHAppUrls();
+  return withMonitor_('getKHAppUrlsSafe', function() {
+    return JSON.parse(JSON.stringify(getKHAppUrls()));
+  });
 }
 function khHealthCheckSafe() {
-  return JSON.parse(khHealthCheck());
+  return withMonitor_('khHealthCheckSafe', function() {
+    return JSON.parse(khHealthCheck());
+  });
 }
 
 // v36: Ask System safe wrappers
@@ -831,6 +856,186 @@ function runStoryFactorySafe(topic, character, tone) {
   });
 }
 
+// v51: Story Library safe wrappers
+function listStoredStoriesSafe() {
+  return withMonitor_('listStoredStoriesSafe', function() {
+    return listStoredStories();
+  });
+}
+function getStoredStorySafe(storyKey) {
+  return withMonitor_('getStoredStorySafe', function() {
+    return getStoredStory(storyKey);
+  });
+}
+
+// v51: Curriculum safe wrappers
+function getTodayContentSafe(child) {
+  return withMonitor_('getTodayContentSafe', function() {
+    return getTodayContent_(child);
+  });
+}
+function seedWeek1CurriculumSafe() {
+  return withMonitor_('seedWeek1CurriculumSafe', function() {
+    return seedWeek1Curriculum();
+  });
+}
+
+// v52: Feedback Form — setup + submit
+function setupFeedbackSheet() {
+  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Feedback']) || '💻 Feedback';
+  var sheet = ss.getSheetByName(tabName);
+  if (!sheet) {
+    sheet = ss.insertSheet(tabName);
+    sheet.appendRow(['Timestamp', 'Surface', 'LayoutRating', 'ReadabilityRating', 'FreeText', 'UserAgent']);
+    sheet.setFrozenRows(1);
+    sheet.getRange('1:1').setFontWeight('bold');
+    Logger.log('✅ Feedback sheet created: ' + tabName);
+  } else {
+    Logger.log('Feedback sheet already exists.');
+  }
+}
+
+function submitFeedbackSafe(payload) {
+  return withMonitor_('submitFeedbackSafe', function() {
+    var layout = parseInt(payload.layout, 10);
+    var readability = parseInt(payload.readability, 10);
+    if (isNaN(layout) || layout < 1 || layout > 5) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'Layout rating must be 1-5' }));
+    }
+    if (isNaN(readability) || readability < 1 || readability > 5) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'Readability rating must be 1-5' }));
+    }
+    var surface = String(payload.surface || 'unknown');
+    var text = String(payload.text || '').substring(0, 500);
+
+    var lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); } catch(e) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'System is busy' }));
+    }
+    try {
+      var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+      var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Feedback']) || '💻 Feedback';
+      var sheet = ss.getSheetByName(tabName);
+      if (!sheet) {
+        return JSON.parse(JSON.stringify({ error: true, message: 'Feedback sheet not found. Run setupFeedbackSheet() first.' }));
+      }
+      sheet.appendRow([new Date().toISOString(), surface, layout, readability, text, 'web']);
+      return JSON.parse(JSON.stringify({ success: true }));
+    } finally {
+      lock.releaseLock();
+    }
+  });
+}
+
+// v52: Audio Wiring — batch fetch audio clips from Drive as base64
+function getAudioBatchSafe(filenames) {
+  return withMonitor_('getAudioBatchSafe', function() {
+    var folderId = '1rXWVBD9QMruWOj6AlNB4mY2E9wzWGctm';
+    var folder = DriveApp.getFolderById(folderId);
+    var result = {};
+    for (var i = 0; i < filenames.length; i++) {
+      var files = folder.getFilesByName(filenames[i]);
+      if (files.hasNext()) {
+        result[filenames[i]] = Utilities.base64Encode(files.next().getBlob().getBytes());
+      }
+    }
+    // Check subfolders for missing files
+    var missing = [];
+    for (var k = 0; k < filenames.length; k++) {
+      if (!result[filenames[k]]) missing.push(filenames[k]);
+    }
+    if (missing.length > 0) {
+      var subs = folder.getFolders();
+      while (subs.hasNext()) {
+        var sub = subs.next();
+        for (var m = 0; m < missing.length; m++) {
+          if (!result[missing[m]]) {
+            var sf = sub.getFilesByName(missing[m]);
+            if (sf.hasNext()) {
+              result[missing[m]] = Utilities.base64Encode(sf.next().getBlob().getBytes());
+            }
+          }
+        }
+      }
+    }
+    return JSON.parse(JSON.stringify(result));
+  });
+}
+
+// v52: Notion write-backs — log homework and sparkle progress
+function logHomeworkCompletionSafe(data) {
+  return withMonitor_('logHomeworkCompletionSafe', function() {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+    if (!apiKey) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_API_KEY not set' }));
+
+    var payload = {
+      parent: { database_id: '331cea3cd9e8816aa07feec250328cf8' },
+      properties: {
+        'Name': { title: [{ text: { content: String(data.title || 'Homework Entry') } }] },
+        'Child': { select: { name: String(data.child || 'buggsy') } },
+        'Subject': { select: { name: String(data.subject || 'General') } },
+        'Score': { number: parseInt(data.score, 10) || 0 },
+        'Date': { date: { start: String(data.date || new Date().toISOString().slice(0, 10)) } }
+      }
+    };
+
+    var resp = UrlFetchApp.fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+
+    var code = resp.getResponseCode();
+    if (code >= 400) {
+      if (typeof logError_ === 'function') logError_('logHomeworkCompletionSafe', new Error('Notion API ' + code));
+      return JSON.parse(JSON.stringify({ error: true, message: 'Notion API error: ' + code }));
+    }
+    return JSON.parse(JSON.stringify({ success: true }));
+  });
+}
+
+function logSparkleProgressSafe(data) {
+  return withMonitor_('logSparkleProgressSafe', function() {
+    var apiKey = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
+    if (!apiKey) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_API_KEY not set' }));
+
+    var payload = {
+      parent: { database_id: '331cea3cd9e8816aa07feec250328cf8' },
+      properties: {
+        'Name': { title: [{ text: { content: String(data.activity || 'Sparkle Progress') } }] },
+        'Child': { select: { name: 'jj' } },
+        'Subject': { select: { name: String(data.subject || 'Letters') } },
+        'Score': { number: parseInt(data.score, 10) || 0 },
+        'Date': { date: { start: String(data.date || new Date().toISOString().slice(0, 10)) } }
+      }
+    };
+
+    var resp = UrlFetchApp.fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json'
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+
+    var code = resp.getResponseCode();
+    if (code >= 400) {
+      if (typeof logError_ === 'function') logError_('logSparkleProgressSafe', new Error('Notion API ' + code));
+      return JSON.parse(JSON.stringify({ error: true, message: 'Notion API error: ' + code }));
+    }
+    return JSON.parse(JSON.stringify({ success: true }));
+  });
+}
+
 // v44: Deployed versions — calls all get*Version() functions from GASHardening
 function getDeployedVersionsSafe() {
   return withMonitor_('getDeployedVersionsSafe', function() {
@@ -854,7 +1059,7 @@ function runTestsSafe() {
       smoke: smokeResult,
       regression: regressionResult,
       versions: {
-        codeGs: 'v' + getCodeGsVersion(),
+        codeGs: 'v' + getCodeVersion(),
         dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })(),
         smokeTest: 'v' + (function(){ try { return getSmokeTestVersion(); } catch(e) { return '?'; } })(),
         regressionSuite: 'v' + (function(){ try { return getRegressionSuiteVersion(); } catch(e) { return '?'; } })()
@@ -995,7 +1200,7 @@ function healthCheck() {
     'runDailyGateCheck', 'installDailyGateAlert', 'removeDailyGateAlert',
     'notionApi_', 'pushQAResult', 'testNotionConnection',
     'reconcileVeinPulse', 'reconcileVeinPulseSafe', 'resolveNestedKey_',
-    'getCodeGsVersion',
+    'getCodeVersion',
     'getBoardData', 'getBoardDataSafe',
     'writeReconcileStatus_', 'getReconcileStatusSafe',
     'installReconciliationTrigger', 'removeReconciliationTrigger',
@@ -1018,19 +1223,29 @@ function healthCheck() {
     // v43: Story Factory
     'runStoryFactory', 'runStoryFactorySafe',
     // v44: Deployed Versions
-    'getDeployedVersions', 'getDeployedVersionsSafe'
+    'getDeployedVersions', 'getDeployedVersionsSafe',
+    // v51: Story Library + Curriculum
+    'listStoredStories', 'listStoredStoriesSafe',
+    'getStoredStory', 'getStoredStorySafe',
+    'getTodayContent_', 'getTodayContentSafe',
+    'ensureCurriculumTab_', 'seedWeek1Curriculum', 'seedWeek1CurriculumSafe',
+    'addBedtimeStoryChore',
+    // v53: Feedback + Audio + Notion write-backs
+    'setupFeedbackSheet', 'submitFeedbackSafe',
+    'getAudioBatchSafe',
+    'logHomeworkCompletionSafe', 'logSparkleProgressSafe'
   ];
   var allOk = true;
   for (var fi = 0; fi < fns.length; fi++) {
     var name = fns[fi];
     var exists = false;
-    try { exists = typeof eval(name) === 'function'; } catch(e) {}
+    try { exists = typeof this[name] === 'function'; } catch(e) {}
     Logger.log('  ' + name + ': ' + (exists ? '✓' : '✗ MISSING'));
     if (!exists) allOk = false;
   }
 
   Logger.log('─── HTML Files (2-Surface Architecture) ───');
-  var activeFiles = ['TheVein', 'ThePulse', 'Vault', 'KidsHub', 'TheSpine', 'TheSoul'];
+  var activeFiles = ['TheVein', 'ThePulse', 'Vault', 'KidsHub', 'TheSpine', 'TheSoul', 'StoryLibrary'];
   for (var ai = 0; ai < activeFiles.length; ai++) {
     var fname = activeFiles[ai];
     try {
@@ -1119,10 +1334,10 @@ function healthCheck() {
 
   try {
     pushQAResult({
-      surface: 'System', version: 'v' + getCodeGsVersion(),
+      surface: 'System', version: 'v' + getCodeVersion(),
       gate: 'Health Check', status: allOk ? 'PASS' : 'FAIL',
       details: allOk ? 'All checks passed' : 'Issues found',
-      values: { codeGs: 'v' + getCodeGsVersion() }
+      values: { codeGs: 'v' + getCodeVersion() }
     });
     Logger.log('📤 Results pushed to Notion QA Log');
   } catch (e) {
@@ -1255,8 +1470,8 @@ function reconcileVeinPulse() {
   }
   var status = failed === 0 ? 'PASS' : 'FAIL';
   var result = { status: status, total: total, passed: passed, failed: failed, failures: failures, checkedAt: new Date().toISOString(), dataMonth: ym };
-  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeGsVersion(), gate: 'Vein/Pulse Reconciliation', status: status, details: status === 'PASS' ? 'All ' + total + ' fields valid' : failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) {}
-  try { writeReconcileStatus_(result); } catch(e) {}
+  try { pushQAResult({ surface: 'Reconcile', version: 'v' + getCodeVersion(), gate: 'Vein/Pulse Reconciliation', status: status, details: status === 'PASS' ? 'All ' + total + ' fields valid' : failed + ' failed', values: { passed: passed, failed: failed } }); } catch(e) { if (typeof logError_ === 'function') logError_('reconcile_pushQA', e); }
+  try { writeReconcileStatus_(result); } catch(e) { if (typeof logError_ === 'function') logError_('reconcile_writeStatus', e); }
   return result;
 }
 
@@ -1281,7 +1496,7 @@ function writeReconcileStatus_(result) {
     sheet.setColumnWidth(1, 220); sheet.setColumnWidth(2, 400);
   }
   var versions = 'DE v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return '?'; } })()
-    + ' · Code v' + getCodeGsVersion()
+    + ' · Code v' + getCodeVersion()
     + ' · CE v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return '?'; } })();
   sheet.getRange('B1').setValue(new Date().toISOString());
   sheet.getRange('B2').setValue(result.status || 'UNKNOWN');
@@ -1319,4 +1534,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v50
+// END OF FILE — Code.gs v53

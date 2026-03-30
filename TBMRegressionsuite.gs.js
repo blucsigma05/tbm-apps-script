@@ -1,5 +1,7 @@
 // ════════════════════════════════════════════════════════════════════
 // tbmRegressionSuite.gs v2 — Phase A3: Post-Deploy Behavioral Assertions
+// WRITES TO: (none — read-only assertions)
+// READS FROM: All sheets (for regression assertions)
 // ════════════════════════════════════════════════════════════════════
 // Version history tracked in Notion deploy page. Do not add version comments here.
 //
@@ -317,7 +319,7 @@ function runBugAssertions_(results) {
     // Runtime: check version function returns vs known values
     try {
       var deVer = typeof getDataEngineVersion === 'function' ? getDataEngineVersion() : 'N/A';
-      var codeVer = typeof getCodeGsVersion === 'function' ? getCodeGsVersion() : 'N/A';
+      var codeVer = typeof getCodeVersion === 'function' ? getCodeVersion() : 'N/A';
       var ceVer = typeof getCascadeEngineVersion === 'function' ? getCascadeEngineVersion() : 'N/A';
       a.details = 'Runtime versions: DE=' + deVer + ', Code=' + codeVer + ', CE=' + ceVer + '. EOF comments are source-level — verify manually.';
     } catch (e) {
@@ -442,7 +444,7 @@ function runEnvironmentAssertions_(results) {
   // ── ENV-005: Version functions return expected types ─────────────
   (function() {
     var a = { id: 'ENV-005', category: 'environment', description: 'Version functions return numbers', status: 'PASS', details: '' };
-    var vFns = ['getDataEngineVersion', 'getCodeGsVersion', 'getCascadeEngineVersion'];
+    var vFns = ['getDataEngineVersion', 'getCodeVersion', 'getCascadeEngineVersion'];
     var results_arr = [];
     for (var i = 0; i < vFns.length; i++) {
       try {
@@ -479,7 +481,9 @@ function runEnvironmentAssertions_(results) {
       'getSimulatorDataSafe','getWeeklyTrackerDataSafe','getBoardDataSafe','getSpineHeartbeatSafe',
       'getCashFlowForecastSafe','getCloseHistoryDataSafe','getMERGateStatusSafe',
       'getSubscriptionDataSafe','getSystemHealthSafe','khAddBonusTaskSafe',
-      'khDebitScreenTimeSafe','khSetBankOpeningSafe'
+      'khDebitScreenTimeSafe','khSetBankOpeningSafe',
+      'listStoredStoriesSafe','getStoredStorySafe','getTodayContentSafe','seedWeek1CurriculumSafe',
+      'submitFeedbackSafe','getAudioBatchSafe','logHomeworkCompletionSafe','logSparkleProgressSafe'
     ];
     var missing = [];
     for (var i = 0; i < fns.length; i++) {

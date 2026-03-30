@@ -1,5 +1,7 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmSmokeTest.gs — Phase A1: Pre-Deploy Structural Validation
+// tbmSmokeTest.gs v3 — Pre-Deploy Structural Validation
+// WRITES TO: (none — read-only checks)
+// READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
 // Version history tracked in Notion deploy page. Do not add version comments here.
 //
@@ -22,7 +24,7 @@
 // USAGE: Run tbmSmokeTest() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 2; }
+function getSmokeTestVersion() { return 3; }
 
 /**
  * Main entry point. Run this before every deploy.
@@ -64,13 +66,16 @@ function tbmSmokeTest() {
     method: 'source_level_only'
   };
 
+  // v3: Category 7 replaced by runtime Category 9 (HTML Contract Validation)
   results.categories['7_es5_compliance'] = {
     status: 'NOT_VERIFIED',
-    description: 'ES5 banned constructs in Fire Stick HTML surfaces',
-    details: 'Requires source text scan for: let, const, =>, template literals, default params, destructuring, async/await, ?., ??. Surfaces: ThePulse, TheSpine, TheSoul, KidsHub.html.',
-    method: 'source_level_only',
-    banned_constructs: ['let ', 'const ', '=>', '`', '...', 'async ', 'await ', '?.', '??']
+    description: 'ES5 banned constructs in Fire Stick HTML surfaces (see Category 9 for runtime check)',
+    details: 'Legacy placeholder. Category 9 now performs automated runtime ES5 scanning.',
+    method: 'source_level_only'
   };
+
+  // ── Category 9: HTML Contract Validation (v3) ───────────────────
+  results.categories['9_html_contracts'] = checkHTMLContracts_();
 
   results.categories['8_row_safety'] = {
     status: 'NOT_VERIFIED',
@@ -400,7 +405,7 @@ function checkEnvironment_() {
   // ── Version functions ──
   var versionFns = [
     { name: 'getDataEngineVersion', file: 'DataEngine.gs' },
-    { name: 'getCodeGsVersion', file: 'Code.gs' },
+    { name: 'getCodeVersion', file: 'Code.gs' },
     { name: 'getCascadeEngineVersion', file: 'CascadeEngine.gs' },
     { name: 'getKidsHubVersion', file: 'KidsHub.gs' },
     { name: 'getSmokeTestVersion', file: 'tbmSmokeTest.gs' }
@@ -564,4 +569,139 @@ function smokeTestGrowthOnly() {
 }
 
 
-// END OF FILE — tbmSmokeTest.gs v2
+// ════════════════════════════════════════════════════════════════════
+// CATEGORY 9: HTML CONTRACT VALIDATION (v3)
+// Reads HTML source files at runtime and scans for banned ES5+
+// constructs and CSS violations. Replaces manual grep checks.
+// ════════════════════════════════════════════════════════════════════
+
+function checkHTMLContracts_() {
+  var result = {
+    status: 'PASS',
+    description: 'HTML files comply with ES5 + GAS standards',
+    details: [],
+    method: 'runtime',
+    violations: []
+  };
+
+  // All HTML files served via doGet
+  var htmlFiles = [
+    'ThePulse', 'TheVein', 'KidsHub', 'TheSpine', 'TheSoul',
+    'SparkleLearning', 'HomeworkModule', 'StoryLibrary',
+    'WolfkidCER', 'fact-sprint', 'reading-module', 'writing-module'
+  ];
+
+  // Banned patterns: [regex, description, severity]
+  var bannedPatterns = [
+    [/\blet\s+\w/g, 'ES6: let declaration', 'FAIL'],
+    [/\bconst\s+\w/g, 'ES6: const declaration', 'FAIL'],
+    [/=>\s*[{(]/g, 'ES6: arrow function', 'FAIL'],
+    [/=>\s*\w/g, 'ES6: arrow function (expression)', 'FAIL'],
+    [/`[^`]*\$\{/g, 'ES6: template literal', 'FAIL'],
+    [/\?\?/g, 'ES2020: nullish coalescing', 'FAIL'],
+    [/\?\./g, 'ES2020: optional chaining', 'FAIL'],
+    [/\.includes\s*\(/g, 'ES2016: Array/String.includes()', 'FAIL'],
+    [/\.find\s*\(/g, 'ES2015: Array.find()', 'FAIL'],
+    [/\.findIndex\s*\(/g, 'ES2015: Array.findIndex()', 'FAIL'],
+    [/\basync\s+function/g, 'ES2017: async function', 'FAIL'],
+    [/\bawait\s+/g, 'ES2017: await', 'FAIL'],
+    [/Object\.entries\s*\(/g, 'ES2017: Object.entries()', 'WARN'],
+    [/Object\.values\s*\(/g, 'ES2017: Object.values()', 'WARN'],
+    [/\.\.\.\w/g, 'ES2015: spread operator', 'WARN'],
+    [/backdrop-filter/g, 'CSS: backdrop-filter (Fire TV unsupported)', 'WARN'],
+    [/new URLSearchParams/g, 'ES2015: URLSearchParams', 'FAIL']
+  ];
+
+  for (var f = 0; f < htmlFiles.length; f++) {
+    var fileName = htmlFiles[f];
+    try {
+      var htmlOutput = HtmlService.createHtmlOutputFromFile(fileName);
+      var content = htmlOutput.getContent();
+
+      // Extract <script> blocks for JS scanning
+      var scriptBlocks = [];
+      var scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+      var match;
+      while ((match = scriptRegex.exec(content)) !== null) {
+        scriptBlocks.push(match[1]);
+      }
+      var scriptContent = scriptBlocks.join('\n');
+
+      // Extract <style> blocks for CSS scanning
+      var styleBlocks = [];
+      var styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+      while ((match = styleRegex.exec(content)) !== null) {
+        styleBlocks.push(match[1]);
+      }
+      var styleContent = styleBlocks.join('\n');
+
+      // Scan script content for banned JS patterns
+      for (var p = 0; p < bannedPatterns.length; p++) {
+        var pattern = bannedPatterns[p][0];
+        var desc = bannedPatterns[p][1];
+        var severity = bannedPatterns[p][2];
+
+        // Skip CSS-only patterns when scanning JS
+        if (desc.indexOf('CSS:') === 0) continue;
+
+        pattern.lastIndex = 0;
+        var hits = [];
+        var m;
+        while ((m = pattern.exec(scriptContent)) !== null) {
+          var start = Math.max(0, m.index - 30);
+          var end = Math.min(scriptContent.length, m.index + m[0].length + 30);
+          var ctx = scriptContent.substring(start, end).replace(/\n/g, ' ');
+          // Skip if context contains http (URL, not code)
+          if (ctx.indexOf('http') !== -1) continue;
+          // Skip if context is an HTML comment
+          if (ctx.indexOf('<!--') !== -1) continue;
+          hits.push(ctx.trim());
+        }
+
+        if (hits.length > 0) {
+          result.violations.push({
+            file: fileName,
+            pattern: desc,
+            severity: severity,
+            count: hits.length,
+            samples: hits.slice(0, 3)
+          });
+          if (severity === 'FAIL') {
+            result.status = 'FAIL';
+          } else if (severity === 'WARN' && result.status === 'PASS') {
+            result.status = 'WARN';
+          }
+          result.details.push(fileName + '.html: ' + desc + ' (' + hits.length + 'x)');
+        }
+      }
+
+      // Scan style content for CSS violations
+      for (var cp = 0; cp < bannedPatterns.length; cp++) {
+        if (bannedPatterns[cp][1].indexOf('CSS:') !== 0) continue;
+        var cssPattern = bannedPatterns[cp][0];
+        var cssDesc = bannedPatterns[cp][1];
+        var cssSev = bannedPatterns[cp][2];
+        cssPattern.lastIndex = 0;
+        if (cssPattern.test(styleContent)) {
+          result.violations.push({ file: fileName, pattern: cssDesc, severity: cssSev, count: 1, samples: [] });
+          if (cssSev === 'FAIL') { result.status = 'FAIL'; }
+          else if (cssSev === 'WARN' && result.status === 'PASS') { result.status = 'WARN'; }
+          result.details.push(fileName + '.html: ' + cssDesc);
+        }
+      }
+
+    } catch (e) {
+      result.details.push(fileName + '.html: Could not read — ' + e.message);
+      if (result.status === 'PASS') result.status = 'WARN';
+    }
+  }
+
+  if (result.violations.length === 0) {
+    result.details = ['All ' + htmlFiles.length + ' HTML files pass ES5 + standards checks'];
+  }
+
+  return result;
+}
+
+
+// END OF FILE — tbmSmokeTest.gs v3

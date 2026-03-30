@@ -956,6 +956,9 @@ var streakData = {};   // v1 TBM: from KH_Streaks cache
 var parentMode = false;
 var currentTab = 'quests';
 var _fetching  = false;   // v5: fetch guard — prevents ghost taps during reload (#57)
+// v29 ES5-safe Array.find replacement
+function _findByKey(arr, key, val) { for (var i = 0; i < arr.length; i++) { if (arr[i][key] === val) return arr[i]; } return null; }
+function _findWhere(arr, fn) { for (var i = 0; i < arr.length; i++) { if (fn(arr[i])) return arr[i]; } return null; }
 var _prevBalance = null;  // v23: Track previous balance for win animation
 var _lastHeartbeat = '';  // v24: Heartbeat timestamp for smart polling
 var jjRewardUnlockState = {}; // v9: reward unlock fanfare state
@@ -1469,7 +1472,7 @@ function buildBCardHTML(task, i) {
 function bClaim(taskID, e) {
   e.stopPropagation();
   if (_fetching) return;
-  var t = tasks.find(function(t){return t.taskID === taskID;});
+  var t = _findByKey(tasks, 'taskID', taskID);
   if (!t || t.completed) return;
   _fetching = true;
   var btn = e.target; if (btn) { btn.disabled = true; btn.textContent = '...'; }
@@ -1489,7 +1492,7 @@ function bClaim(taskID, e) {
 function bApprove(taskID, e) {
   e.stopPropagation();
   if (_fetching) return;
-  var t = tasks.find(function(t){return t.taskID === taskID;});
+  var t = _findByKey(tasks, 'taskID', taskID);
   if (!t || t.parentApproved) return;
   _fetching = true;
   t.parentApproved = true; updateBuggsy();
@@ -1502,7 +1505,7 @@ function bApprove(taskID, e) {
 function bGrantBonus(taskID, multiplier, e) {
   e.stopPropagation();
   if (_fetching) return;
-  var t = tasks.find(function(t){return t.taskID === taskID;});
+  var t = _findByKey(tasks, 'taskID', taskID);
   if (!t || !t.completed || t.parentApproved) return;
   _fetching = true;
   var snap = { parentApproved: t.parentApproved, multiplier: t.multiplier, points: t.points };
@@ -1517,7 +1520,7 @@ function bGrantBonus(taskID, multiplier, e) {
 function bOverride(taskID, e) {
   e.stopPropagation();
   if (_fetching) return;
-  var t = tasks.find(function(t){return t.taskID === taskID;});
+  var t = _findByKey(tasks, 'taskID', taskID);
   if (!t || t.completed || !t.required) return;
   _fetching = true;
   t.completed = true; t.parentApproved = true;
@@ -1570,7 +1573,7 @@ var _qtyState = { rewardId:null, qty:1, cost:0, max:1, child:'' };
 function bRedeem(rewardId, e) {
   if (e) e.stopPropagation();
   if (_fetching) return;
-  var r = rewards.find(function(r){return r.id === rewardId;});
+  var r = _findByKey(rewards, 'id', rewardId);
   if (!r || balances.balance < r.cost) return;
   var maxQty = Math.min(10, Math.floor(balances.balance / r.cost));
   _qtyState = { rewardId:rewardId, qty:1, cost:r.cost, max:maxQty, child:'buggsy', icon:r.icon, name:r.name };
@@ -1754,7 +1757,7 @@ function updateJJ() {
     jjChip.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.12), ' + jjLevel.color + '22)';
   }
   // Progress to next reward
-  var nextR = rewards.find(function(r){return stars < r.cost;}) || rewards[rewards.length - 1] || {cost:10};
+  var nextR = _findWhere(rewards, function(r){return stars < r.cost;}) || rewards[rewards.length - 1] || {cost:10};
   var nextIdx = rewards.indexOf(nextR);
   var prevCost = nextIdx > 0 ? rewards[nextIdx-1].cost : 0;
   var prog = Math.min(((stars - prevCost) / (nextR.cost - prevCost)) * 100, 100);
@@ -1912,7 +1915,7 @@ function buildJJCardHTML(task, i) {
 
 function jjClaim(taskID, e) {
   e.stopPropagation(); if (_fetching) return;
-  var t = tasks.find(function(t){return t.taskID===taskID;});
+  var t = _findByKey(tasks, 'taskID', taskID);
   if (!t||t.completed) return;
   _fetching = true;
   var btn = e.target; if (btn) { btn.disabled = true; btn.innerHTML = '⭐'; btn.classList.add('spinning'); }
@@ -1926,7 +1929,7 @@ function jjClaim(taskID, e) {
 // ── v10 FIX 3: jjApprove — added return value check for duplicate guard ──
 function jjApprove(taskID, e) {
   e.stopPropagation(); if (_fetching) return;
-  var t = tasks.find(function(t){return t.taskID===taskID;});
+  var t = _findByKey(tasks, 'taskID', taskID);
   if(!t||t.parentApproved)return;
   _fetching = true;
   var pts = t.points;
@@ -1944,7 +1947,7 @@ function jjPointsBanner(text) {
 // ── v10 FIX 2: jjGrantBonus — changed khCompleteTaskWithBonusSafe → khApproveWithBonusSafe ──
 function jjGrantBonus(taskID, multiplier, e) {
   e.stopPropagation(); if (_fetching) return;
-  var t = tasks.find(function(t){return t.taskID===taskID;});
+  var t = _findByKey(tasks, 'taskID', taskID);
   if(!t||!t.completed||t.parentApproved)return;
   _fetching = true;
   var snap = {parentApproved:t.parentApproved, multiplier:t.multiplier, points:t.points};
@@ -1957,7 +1960,7 @@ function jjGrantBonus(taskID, multiplier, e) {
 }
 function jjOverride(taskID, e) {
   e.stopPropagation(); if (_fetching) return;
-  var t = tasks.find(function(t){return t.taskID===taskID;});
+  var t = _findByKey(tasks, 'taskID', taskID);
   if(!t||t.completed||!t.required)return;
   _fetching = true;
   t.completed = true; t.parentApproved = true;
@@ -2007,7 +2010,7 @@ function jjSendStarsToCounter(e, count) {
 function jjRedeem(rewardId, e) {
   if (e) e.stopPropagation();
   if (_fetching) return;
-  var r = rewards.find(function(r){return r.id === rewardId;});
+  var r = _findByKey(rewards, 'id', rewardId);
   if (!r || balances.balance < r.cost) return;
   var maxQty = Math.min(10, Math.floor(balances.balance / r.cost));
   _qtyState = { rewardId:rewardId, qty:1, cost:r.cost, max:maxQty, child:'jj', icon:r.icon, name:r.name };
@@ -2413,14 +2416,14 @@ function buildKidColumn(name, kidTasks, score, cls, icon, color) {
 }
 function pApprove(taskID, child) {
   var allTasks = child === 'jj' ? parentAllData.jj : parentAllData.buggsy;
-  var t = allTasks.find(function(x){return x.taskID === taskID;});
+  var t = _findByKey(allTasks, 'taskID', taskID);
   if (!t) return;
   google.script.run.withSuccessHandler(function(){ loadParentData(); }).khApproveTaskSafe(t.rowIndex, t.taskID);
 }
 function pUncomplete(taskID, child) {
   if (!confirm('Mark this task as not done?')) return;
   var allTasks = child === 'jj' ? parentAllData.jj : parentAllData.buggsy;
-  var t = allTasks.find(function(x){return x.taskID === taskID;});
+  var t = _findByKey(allTasks, 'taskID', taskID);
   if (!t) return;
   google.script.run.withSuccessHandler(function(){ loadParentData(); }).khUncompleteTaskSafe(t.rowIndex, t.taskID);
 }

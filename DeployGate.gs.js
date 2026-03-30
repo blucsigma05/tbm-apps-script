@@ -103,7 +103,7 @@ function khDeployGate() {
   // Every function called via google.script.run from HTML surfaces
   var requiredFunctions = [
     // KidsHub.gs core
-    'getKidsHubData', 'getKidsHubGsVersion',
+    'getKidsHubData', 'getKidsHubVersion',
     'khCompleteTask', 'khCompleteTaskWithBonus',
     'khApproveTask', 'khApproveWithBonus',
     'khRejectTask', 'khOverrideTask', 'khUncompleteTask',
@@ -220,8 +220,8 @@ function khDeployGate() {
 
   var versionChecks = [
     ['DataEngine', 'getDataEngineVersion'],
-    ['Code', 'getCodeGsVersion'],
-    ['KidsHub', 'getKidsHubGsVersion'],
+    ['Code', 'getCodeVersion'],
+    ['KidsHub', 'getKidsHubVersion'],
     ['CascadeEngine', 'getCascadeEngineVersion'],
     ['GASHardening', 'getGASHardeningVersion'],
     ['MonitorEngine', 'getMonitorEngineVersion'],

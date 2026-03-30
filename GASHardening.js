@@ -1,9 +1,11 @@
 // ════════════════════════════════════════════════════════════════════
-// GAS HARDENING v3 — Centralized Monitoring, Logging & Maintenance
+// GAS HARDENING v4 — Centralized Monitoring, Logging & Maintenance
+// WRITES TO: ErrorLog, PerfLog
+// READS FROM: (all files for version reporting)
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 3; }
+function getGASHardeningVersion() { return 4; }
 
 //
 // WHAT THIS DOES:
@@ -208,7 +210,7 @@ function auditTriggers() {
     var t = triggers[i];
     var handler = t.getHandlerFunction();
     var exists = false;
-    try { exists = typeof eval(handler) === 'function'; } catch(e) {}
+    try { exists = typeof this[handler] === 'function'; } catch(e) {}
     
     var triggerType = '';
     try { triggerType = String(t.getEventType()); } catch(e) { triggerType = 'UNKNOWN'; }
@@ -257,7 +259,7 @@ function deleteOrphanedTriggers() {
   for (var i = 0; i < triggers.length; i++) {
     var handler = triggers[i].getHandlerFunction();
     var exists = false;
-    try { exists = typeof eval(handler) === 'function'; } catch(e) {}
+    try { exists = typeof this[handler] === 'function'; } catch(e) {}
     
     if (!exists) {
       Logger.log('Deleting orphaned trigger: ' + handler + ' (ID: ' + triggers[i].getUniqueId() + ')');
@@ -758,7 +760,7 @@ function fullSystemDiagnostic() {
   try {
     Logger.log('═══ COMPONENT VERSIONS ═══');
     try { Logger.log('  DataEngine: v' + getDataEngineVersion()); } catch(e) { Logger.log('  DataEngine: ERROR — ' + e.message); }
-    try { Logger.log('  Code.gs: v' + getCodeGsVersion()); } catch(e) { Logger.log('  Code.gs: ERROR — ' + e.message); }
+    try { Logger.log('  Code.gs: v' + getCodeVersion()); } catch(e) { Logger.log('  Code.gs: ERROR — ' + e.message); }
     try { Logger.log('  CascadeEngine: v' + getCascadeEngineVersion()); } catch(e) { Logger.log('  CascadeEngine: ERROR — ' + e.message); }
   } catch(e) {
     Logger.log('Version check error: ' + e.message);
@@ -965,7 +967,7 @@ function getSystemHealth() {
     for (var ti = 0; ti < triggers.length; ti++) {
       var handler = triggers[ti].getHandlerFunction();
       var exists = false;
-      try { exists = typeof eval(handler) === 'function'; } catch(e) {}
+      try { exists = typeof this[handler] === 'function'; } catch(e) {}
       triggerList.push({ handler: handler, active: exists });
       if (!exists) orphanCount++;
     }
@@ -1078,7 +1080,7 @@ function getSpineHeartbeatSafe() {
 
     // Versions (fast — just function calls)
     try { heartbeat.versions.de = getDataEngineVersion(); } catch(e) { heartbeat.versions.de = '?'; }
-    try { heartbeat.versions.code = getCodeGsVersion(); } catch(e) { heartbeat.versions.code = '?'; }
+    try { heartbeat.versions.code = getCodeVersion(); } catch(e) { heartbeat.versions.code = '?'; }
 
     // Last Helpers Z1 write (heartbeat pulse)
     try {
@@ -1130,9 +1132,9 @@ function getDeployedVersions() {
   var v = {};
   var checks = [
     ['DataEngine',    'getDataEngineVersion'],
-    ['Code',          'getCodeGsVersion'],
+    ['Code',          'getCodeVersion'],
     ['CascadeEngine', 'getCascadeEngineVersion'],
-    ['KidsHub',       'getKidsHubGsVersion'],
+    ['KidsHub',       'getKidsHubVersion'],
     ['GASHardening',  'getGASHardeningVersion'],
     ['MonitorEngine', 'getMonitorEngineVersion'],
     ['CalendarSync',  'getCalendarSyncVersion'],
@@ -1143,7 +1145,9 @@ function getDeployedVersions() {
     var label = checks[i][0];
     var fn = checks[i][1];
     try {
-      v[label] = eval(fn + '()');
+      // v4: this[fn] accesses global scope — NO eval() needed
+      var verFn = this[fn];
+      v[label] = (typeof verFn === 'function') ? verFn() : '?';
     } catch(e) {
       v[label] = '?';
     }
@@ -1196,7 +1200,7 @@ function setupDailyTriggers() {
   for (var i = 0; i < plan.length; i++) {
     var entry = plan[i];
     var exists = false;
-    try { exists = typeof eval(entry.fn) === 'function'; } catch(e) {}
+    try { exists = typeof this[entry.fn] === 'function'; } catch(e) {}
     if (!exists) {
       Logger.log('SKIP: ' + entry.fn + ' — function not found in project');
       continue;
@@ -1216,5 +1220,74 @@ function setupDailyTriggers() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// END OF FILE — GAS HARDENING v3
+// ═══════════════════════════════════════════════════════════════
+// 8. DIAGNOSTIC: Audit catch blocks (v4)
+// Run from editor to identify silent failure paths
+// ═══════════════════════════════════════════════════════════════
+
+function diag_auditCatchBlocks() {
+  Logger.log('═══ CATCH BLOCK AUDIT ═══');
+
+  // Test 1: Does logError_ exist?
+  Logger.log('TEST 1: logError_ availability');
+  if (typeof logError_ === 'function') {
+    Logger.log('  ✓ logError_ exists');
+  } else {
+    Logger.log('  ✗ logError_ is NOT a function');
+  }
+
+  // Test 2: Do all Safe wrappers use withMonitor_?
+  Logger.log('');
+  Logger.log('TEST 2: Safe wrappers — checking for withMonitor_');
+  var safeFunctions = [
+    'getDataSafe', 'getMonthsSafe', 'getSimulatorDataSafe',
+    'getWeeklyTrackerDataSafe', 'getCashFlowForecastSafe',
+    'getSubscriptionDataSafe', 'getCategoryTransactionsSafe',
+    'getReconcileStatusSafe', 'getBoardDataSafe', 'getSystemHealthSafe',
+    'getMERGateStatusSafe', 'getCloseHistoryDataSafe',
+    'getKidsHubDataSafe', 'getKidsHubWidgetDataSafe',
+    'khCompleteTaskSafe', 'khApproveTaskSafe', 'khUncompleteTaskSafe',
+    'khRejectTaskSafe', 'khOverrideTaskSafe', 'khApproveWithBonusSafe',
+    'khResetTasksSafe', 'khRedeemRewardSafe', 'khSubmitRequestSafe',
+    'khApproveRequestSafe', 'khDenyRequestSafe', 'khAddBonusTaskSafe',
+    'khDebitScreenTimeSafe', 'khSetBankOpeningSafe', 'khAddDeductionSafe',
+    'khSubmitGradeSafe', 'khGetGradeHistorySafe',
+    'runStoryFactorySafe', 'getDeployedVersionsSafe',
+    'updateFamilyNoteSafe', 'runMERGatesSafe', 'stampCloseMonthSafe',
+    'getScriptUrlSafe', 'khVerifyPinSafe', 'getKHAppUrlsSafe', 'khHealthCheckSafe',
+    'listStoredStoriesSafe', 'getStoredStorySafe', 'getTodayContentSafe'
+  ];
+
+  var unwrapped = [];
+  for (var i = 0; i < safeFunctions.length; i++) {
+    var fnName = safeFunctions[i];
+    var fn = this[fnName];
+    if (typeof fn !== 'function') {
+      Logger.log('  ? ' + fnName + ' — NOT FOUND');
+      continue;
+    }
+    var src = fn.toString();
+    if (src.indexOf('withMonitor_') === -1) {
+      unwrapped.push(fnName);
+      Logger.log('  ✗ ' + fnName + ' — MISSING withMonitor_');
+    } else {
+      Logger.log('  ✓ ' + fnName);
+    }
+  }
+
+  Logger.log('');
+  Logger.log('SUMMARY: ' + unwrapped.length + ' Safe wrappers missing withMonitor_');
+  if (unwrapped.length > 0) {
+    Logger.log('FIX THESE: ' + unwrapped.join(', '));
+  }
+
+  return {
+    logErrorExists: typeof logError_ === 'function',
+    unwrappedSafe: unwrapped,
+    totalChecked: safeFunctions.length
+  };
+}
+
+
+// END OF FILE — GAS HARDENING v4
 // ═══════════════════════════════════════════════════════════════
