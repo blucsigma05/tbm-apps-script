@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmSmokeTest.gs v3 — Pre-Deploy Structural Validation
+// tbmSmokeTest.gs v4 — Pre-Deploy Structural Validation
 // WRITES TO: (none — read-only checks)
 // READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
@@ -24,7 +24,7 @@
 // USAGE: Run tbmSmokeTest() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 3; }
+function getSmokeTestVersion() { return 4; }
 
 /**
  * Main entry point. Run this before every deploy.
@@ -123,15 +123,17 @@ function checkWiring_() {
   };
 
   // Canonical list: every *Safe function called from any HTML surface
-  // Source: grep -oP '\\w+Safe\\w*' across all 5 HTML files (Session 59 extraction)
+  // Source: audit-wiring.sh output (Sprint 2 wiring audit, 2026-03-30)
+  // Updates: removed stale khCompleteTaskWithBonusSafe, added listStoredStoriesSafe
   var expectedFunctions = [
-    // KidsHub.html (18 functions)
+    // KidsHub.html (17 functions)
     'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKidsHubDataSafe',
     'khAddDeductionSafe', 'khApproveRequestSafe', 'khApproveTaskSafe',
-    'khApproveWithBonusSafe', 'khCompleteTaskSafe', 'khCompleteTaskWithBonusSafe',
-    'khDenyRequestSafe', 'khOverrideTaskSafe', 'khRedeemRewardSafe',
-    'khRejectTaskSafe', 'khResetTasksSafe', 'khSubmitRequestSafe',
-    'khUncompleteTaskSafe', 'khVerifyPinSafe', 'runStoryFactorySafe',
+    'khApproveWithBonusSafe', 'khCompleteTaskSafe',
+    'khDenyRequestSafe', 'khGetGradeHistorySafe', 'khOverrideTaskSafe',
+    'khRedeemRewardSafe', 'khRejectTaskSafe', 'khResetTasksSafe',
+    'khSubmitGradeSafe', 'khSubmitRequestSafe', 'khUncompleteTaskSafe',
+    'khVerifyPinSafe', 'runStoryFactorySafe',
     // ThePulse.html (8 functions)
     'getCategoryTransactionsSafe', 'getDataSafe', 'getKidsHubWidgetDataSafe',
     'getMonthsSafe', 'getReconcileStatusSafe', 'getScriptUrlSafe',
@@ -147,8 +149,10 @@ function checkWiring_() {
     'getSystemHealthSafe', 'khAddBonusTaskSafe', 'khApproveRequestSafe',
     'khApproveTaskSafe', 'khApproveWithBonusSafe', 'khDebitScreenTimeSafe',
     'khDenyRequestSafe', 'khOverrideTaskSafe', 'khRejectTaskSafe',
-    'khSetBankOpeningSafe', 'khSubmitGradeSafe', 'khGetGradeHistorySafe',
-    'runMERGatesSafe', 'stampCloseMonthSafe', 'updateFamilyNoteSafe'
+    'khSetBankOpeningSafe', 'khSubmitGradeSafe',
+    'runMERGatesSafe', 'stampCloseMonthSafe', 'updateFamilyNoteSafe',
+    // StoryLibrary.html (1 function)
+    'listStoredStoriesSafe'
   ];
 
   // Deduplicate
@@ -704,4 +708,4 @@ function checkHTMLContracts_() {
 }
 
 
-// END OF FILE — tbmSmokeTest.gs v3
+// END OF FILE — tbmSmokeTest.gs v4
