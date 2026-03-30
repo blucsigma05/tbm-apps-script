@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>The Pulse v57 — Thompson Household</title>
+<title>The Pulse v58 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -472,10 +472,11 @@ input[type=range]::-webkit-slider-thumb{width:36px;height:36px}
 <a id="nav-vein" onclick="tbmNav('vein')" style="padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.6);transition:all 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.9)';this.style.background='rgba(255,255,255,0.1)'" onmouseout="if(!this.classList.contains('tbm-active')){this.style.color='rgba(255,255,255,0.6)';this.style.background='transparent'}">Command Center</a>
 </div>
 <script>
-var _tbmBaseUrl='';var _isPartnerMode=(new URLSearchParams(window.location.search)).get('jt')==='1';
+function getParam_(name){var query=window.location.search.substring(1);var pairs=query.split('&');for(var i=0;i<pairs.length;i++){var kv=pairs[i].split('=');if(decodeURIComponent(kv[0])===name){return kv.length>1?decodeURIComponent(kv[1]):'';}}return null;}
+var _tbmBaseUrl='';var _isPartnerMode=getParam_('jt')==='1';
 google.script.run.withSuccessHandler(function(u){_tbmBaseUrl=u;}).getScriptUrlSafe();
 function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.top.location.href=_tbmBaseUrl+'?page='+p+suffix;else google.script.run.withSuccessHandler(function(u){window.top.location.href=u+'?page='+p+suffix;}).getScriptUrlSafe();}
-(function(){var c=(new URLSearchParams(window.location.search)).get('page')||'pulse';var e=document.getElementById('nav-'+c);if(e){e.style.color='#fff';e.style.background='rgba(255,255,255,0.1)';e.style.fontWeight='600';e.classList.add('tbm-active');}if(_isPartnerMode){
+(function(){var c=getParam_('page')||'pulse';var e=document.getElementById('nav-'+c);if(e){e.style.color='#fff';e.style.background='rgba(255,255,255,0.1)';e.style.fontWeight='600';e.classList.add('tbm-active');}if(_isPartnerMode){
   var v=document.getElementById('nav-vein');
   if(v){
     v.textContent='Kids Dashboard';
@@ -1224,7 +1225,7 @@ c.appendChild(row);
 <script>
 /* ═══ ?diag=1 DOM Self-Check (Wave 2) ═══ */
 (function(){
-if(new URLSearchParams(window.location.search).get('diag')!=='1')return;
+if(getParam_('diag')!=='1')return;
 var T1=['earnedIncome','operatingExpenses','operationalCashFlow','debtPaymentsMTD','debtCurrent','bridgeCash','canonicalInterestBurn','netWorth'];
 function poll(cb,n){n=n||0;if(n>50)return cb(null);var r=(typeof DEBT_CONFIG!=='undefined')&&DEBT_CONFIG._raw;if(r)return cb(r);setTimeout(function(){poll(cb,n+1);},200);}
 poll(function(r){

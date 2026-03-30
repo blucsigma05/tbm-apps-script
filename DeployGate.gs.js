@@ -16,7 +16,7 @@
  * you can't accidentally deploy past a broken gate.
  */
 function khDeployGate() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
   var results = {
     status: 'PASS',
     timestamp: new Date().toISOString(),
@@ -139,7 +139,7 @@ function khDeployGate() {
   for (var fi = 0; fi < requiredFunctions.length; fi++) {
     var fnName = requiredFunctions[fi];
     var exists = false;
-    try { exists = typeof eval(fnName) === 'function'; } catch(e) {}
+    try { exists = typeof this[fnName] === 'function'; } catch(e) {}
     if (!exists) {
       missingFns.push(fnName);
       Logger.log('  ✗ MISSING: ' + fnName);
@@ -235,7 +235,7 @@ function khDeployGate() {
     var label = versionChecks[vi][0];
     var fn = versionChecks[vi][1];
     try {
-      versions[label] = eval(fn + '()');
+      versions[label] = this[fn]();
       Logger.log('  ✓ ' + label + ': v' + versions[label]);
     } catch(e) {
       versions[label] = '?';

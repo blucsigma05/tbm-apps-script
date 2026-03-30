@@ -1,13 +1,13 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v50 — Apps Script Router (TBM Consolidated)
+// Code.gs v51 — Apps Script Router (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
 // TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeGsVersion() { return 50; }
+function getCodeGsVersion() { return 51; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -177,7 +177,7 @@ function bustCache() {
 /** Read KH heartbeat timestamp from Helpers!Z1. Lightweight single-cell read. */
 function getKHLastModified() {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(SSID);
     var hn = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['Helpers'] || 'Helpers') : 'Helpers';
     var sh = ss.getSheetByName(hn);
     if (sh) {
@@ -186,6 +186,12 @@ function getKHLastModified() {
     }
   } catch(e) {}
   return '';
+}
+
+function getKHLastModifiedSafe() {
+  return withMonitor_('getKHLastModifiedSafe', function() {
+    return JSON.parse(JSON.stringify(getKHLastModified()));
+  });
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -209,7 +215,6 @@ function servePage(page, e) {
   var routes = {
     'vein':     { file: 'TheVein',         title: 'The Vein — Thompson Household Command Center' },
     'pulse':    { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
-    'vault':    { file: 'Vault',          title: 'LT Watch Vault' },
     'kidshub':  { file: 'KidsHub',        title: 'Kids Hub — Ring Quest' },
     'spine':    { file: 'TheSpine',       title: 'The Spine — Thompson Office Display' },
     'soul':     { file: 'TheSoul',        title: 'The Soul — Thompson Family Display' },
@@ -228,13 +233,6 @@ function servePage(page, e) {
   var route = routes[page] || routes['pulse'];
 
   try {
-    if (page === 'vault') {
-      var tmpl = HtmlService.createTemplateFromFile('Vault');
-      tmpl.sheetData = JSON.stringify(getAllVaultData());
-      return tmpl.evaluate()
-        .setTitle(route.title)
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-    }
     if (page === 'kidshub') {
       var child = (e && e.parameter && e.parameter.child) || 'buggsy';
       var view  = (e && e.parameter && e.parameter.view)  || 'kid';
@@ -301,7 +299,7 @@ function serveData(e) {
     if (action === 'api') {
       var fn = e.parameter.fn;
       var args = [];
-      try { args = JSON.parse(e.parameter.args || '[]'); } catch(ex) {}
+      try { args = JSON.parse(e.parameter.args || '[]'); } catch(ex) { logError_('apiRouter', ex); }
 
       var API_WHITELIST = {
         'getDataSafe': getDataSafe, 'getMonthsSafe': getMonthsSafe,
@@ -313,7 +311,7 @@ function serveData(e) {
         'getCloseHistoryDataSafe': getCloseHistoryDataSafe, 'getKHAppUrlsSafe': getKHAppUrlsSafe,
         'getDeployedVersionsSafe': getDeployedVersionsSafe,
         'getKidsHubDataSafe': getKidsHubDataSafe, 'getKidsHubWidgetDataSafe': getKidsHubWidgetDataSafe,
-        'getKHLastModified': getKHLastModified, 'getSpineHeartbeatSafe': getSpineHeartbeatSafe,
+        'getKHLastModifiedSafe': getKHLastModifiedSafe, 'getSpineHeartbeatSafe': getSpineHeartbeatSafe,
         'khCompleteTaskSafe': khCompleteTaskSafe, 'khCompleteTaskWithBonusSafe': khCompleteTaskWithBonusSafe,
         'khUncompleteTaskSafe': khUncompleteTaskSafe, 'khApproveTaskSafe': khApproveTaskSafe,
         'khRejectTaskSafe': khRejectTaskSafe, 'khOverrideTaskSafe': khOverrideTaskSafe,
@@ -327,7 +325,7 @@ function serveData(e) {
         'updateFamilyNoteSafe': updateFamilyNoteSafe,
         'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
         'getVaultDataSafe': getVaultDataSafe, 'runStoryFactorySafe': runStoryFactorySafe,
-        'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe,
+        'getScriptUrlSafe': getScriptUrlSafe,
         'runTestsSafe': runTestsSafe
       };
 
@@ -369,25 +367,25 @@ function serveData(e) {
         }
       };
     } else if (action === 'months') {
-      result = getAvailableMonths();
+      result = getMonthsSafe();
     } else if (action === 'forecast') {
-      result = getCashFlowForecast();
+      result = getCashFlowForecastSafe();
     } else if (action === 'simulator') {
-      result = getSimulatorData();
+      result = getSimulatorDataSafe();
     } else if (action === 'weekly') {
-      result = getWeeklyTrackerData();
+      result = getWeeklyTrackerDataSafe();
     } else if (action === 'cascade') {
       refreshCascadeTabs();
       result = { status: 'ok', refreshedAt: new Date().toISOString() };
     } else if (action === 'kids') {
       var khChild = (e.parameter.child || 'all').toLowerCase();
-      result = getKidsHubData(khChild);
+      result = getKidsHubDataSafe(khChild);
     } else if (action === 'kh_health') {
       result = JSON.parse(khHealthCheck());
     } else if (action === 'reconcile') {
-      result = reconcileVeinPulse();
+      result = reconcileVeinPulseSafe();
     } else if (action === 'board') {
-      result = getBoardData();
+      result = getBoardDataSafe();
     } else if (action === 'version') {
       result = { codeGs: 'v' + getCodeGsVersion(), dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return 'unknown'; } })(), cascadeEngine: 'v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return 'unknown'; } })(), updated: new Date().toISOString().slice(0,10) };
     } else if (action === 'loc') {
@@ -473,7 +471,7 @@ function getDataSafe(paramsOrStart, endArg, debtArg) {
       var cached = getCachedPayload_(cacheKey);
       if (cached) return cached;
     }
-    try { SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TAB_MAP['Helpers'] || 'Helpers').getRange('Z1').setValue(new Date().toISOString()); } catch(e) {}
+    try { SpreadsheetApp.openById(SSID).getSheetByName(TAB_MAP['Helpers'] || 'Helpers').getRange('Z1').setValue(new Date().toISOString()); } catch(e) {}
     var raw = getData(start, end, true);
     var result = JSON.parse(JSON.stringify(raw));
     if (isCurrentMonth) {
@@ -512,7 +510,9 @@ function getScriptUrl() {
 }
 
 function getScriptUrlSafe() {
-  return ScriptApp.getService().getUrl();
+  return withMonitor_('getScriptUrlSafe', function() {
+    return ScriptApp.getService().getUrl();
+  });
 }
 
 // ── MonitorEngine safe wrappers (v48) ────────────────────────────
@@ -692,7 +692,7 @@ function getSubscriptionDataSafe(start, end) {
 // ── KidsHub write wrappers ───────────────────────────────────────
 function _khDiag_(label, args, e) {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(SSID);
     var hn = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['KH_History'] || 'KH_History') : 'KH_History';
     var sh = ss ? ss.getSheetByName(hn) : null;
     if (sh) sh.appendRow(['ERROR_DIAG', label, JSON.stringify(args), e.message, 0, 0, 0, 'error', '',
@@ -882,7 +882,7 @@ function getBoardDataSafe() {
       return JSON.parse(JSON.stringify(getBoardData()));
     } catch(e) {
       Logger.log('getBoardDataSafe error: ' + e.message);
-      return { error: 'Board data error: ' + e.message };
+      return { error: true, message: 'Board data error: ' + e.message };
     }
   });
 }
@@ -892,7 +892,7 @@ function getBoardDataSafe() {
 // ════════════════════════════════════════════════════════════════════
 
 function getMERGateStatus() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SSID);
   var qa = ss.getSheetByName(TAB_MAP['QA_Gates']);
   if (!qa) return { error: true, message: 'QA_Gates sheet not found' };
   var data = qa.getRange('A1:G15').getValues();
@@ -937,7 +937,7 @@ function getAllVaultData() {
 }
 function readVaultSheet(sheetName) {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(SSID);
     var sheet = ss.getSheetByName(TAB_MAP[sheetName] || sheetName);
     if (!sheet) return [];
     var data = sheet.getDataRange().getValues();
@@ -1100,7 +1100,7 @@ function healthCheck() {
   }
 
   Logger.log('─── Legacy Checks ───');
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SSID);
   var pe = ss.getSheetByName(TAB_MAP['Partner_Export'] || 'Partner_Export');
   Logger.log('  Partner_Export: ' + (pe ? '✓ (' + pe.getLastRow() + ' rows)' : '✗ NOT FOUND'));
 
@@ -1272,7 +1272,9 @@ function reconcileVeinPulseSafe() {
 // 8. RECONCILE STATUS SHEET + TRIGGER
 // ════════════════════════════════════════════════════════════════════
 function writeReconcileStatus_(result) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  var ss = SpreadsheetApp.openById(SSID);
   var tabName = TAB_MAP['RECONCILE_STATUS'] || 'RECONCILE_STATUS';
   var sheet = ss.getSheetByName(tabName);
   if (!sheet) {
@@ -1286,12 +1288,13 @@ function writeReconcileStatus_(result) {
   sheet.getRange('B1').setValue(new Date().toISOString());
   sheet.getRange('B2').setValue(result.status || 'UNKNOWN');
   sheet.getRange('B3').setValue(versions);
+  lock.releaseLock();
 }
 
 function getReconcileStatusSafe() {
   return withMonitor_('getReconcileStatusSafe', function() {
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = SpreadsheetApp.openById(SSID);
       var sheet = ss.getSheetByName(TAB_MAP['RECONCILE_STATUS'] || 'RECONCILE_STATUS');
       if (!sheet) return { lastReconcileAt: null, lastReconcileStatus: 'UNKNOWN', lastReconcileVersions: '' };
       return {
@@ -1319,4 +1322,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v50
+// END OF FILE — Code.gs v51

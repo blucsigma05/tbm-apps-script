@@ -1,10 +1,9 @@
 // ════════════════════════════════════════════════════════════════════
-// QAGates.gs v2 — Pre-QA Automated Server-Side Test Runner
+// QAGates.gs v3 — Pre-QA Automated Server-Side Test Runner
 // ════════════════════════════════════════════════════════════════════
 // Run: runAllQAGates() from the Apps Script editor → View → Logs
 //
-// ALL key names verified against actual DataEngine v72, KidsHub v22,
-// and Code v45 source code. No guessed or generic names.
+// Key names verified against live versions via getDeployedVersions().
 // ════════════════════════════════════════════════════════════════════
 
 var RUN_WRITE_TESTS = false; // flip to true to test KidsHub write paths
@@ -360,7 +359,7 @@ function gate9_TabExistence() {
   // Tab names verified from DataEngine v72 TAB_MAP (lines 159-205)
   var gate = { gate: 9, name: 'Tab Existence', status: 'PASS', detail: '' };
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
     // Use ACTUAL prefixed names from TAB_MAP — not logical names
     var requiredTabs = [
       // 🔒 Tiller Core — no prefix on these 3
@@ -638,7 +637,7 @@ function gate16_KHWritePath() {
     }
 
     // Cleanup: uncomplete
-    try { khUncompleteTask(row); } catch(e) {}
+    try { khUncompleteTask(row); } catch(e) { logError_('QAGate_cleanup', e); }
 
     gate.detail = issues.length > 0 ? issues.join('; ') : 'Claim→Reject(0pts)→Re-Claim→Idempotency all passed on row ' + row;
     if (issues.length > 0) gate.status = 'FAIL';

@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v74 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v75 — Dynamic KPI Computation from Raw Tiller Data
 // ════════════════════════════════════════════════════════════════════
 
 function getDataEngineVersion() { return 75; }
@@ -64,7 +64,7 @@ function testGetDebtByType_() {
  * Diagnostic — run this to see exactly what Balance History + Debt_Export contain.
  */
 function diagBalanceSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getDESS_();
 
   var bh = ss.getSheetByName(TAB_MAP['Balance History']);
   var headers = bh.getRange(1, 1, 1, 15).getValues()[0];
@@ -198,7 +198,14 @@ var TAB_MAP = {
   'KH_ScreenTime':    '🧹📅 KH_ScreenTime',
   'KH_Grades':        '🧹📅 KH_Grades',
   // 📋 Board Config
-  'Board_Config':     '📋 Board_Config'
+  'Board_Config':     '📋 Board_Config',
+  // 💻 System
+  'Snapshots':        '💻 Snapshots',
+  'Cascade_Proof':    '💻 Cascade_Proof',
+  'ErrorLog':         '💻 ErrorLog',
+  'PerfLog':          '💻 PerfLog',
+  'Month-End Review': '💻🧮 Month-End Review',
+  'RECONCILE_STATUS': 'RECONCILE_STATUS'
 };
 
 // v73: Request-scoped sheet data cache — same pattern as KidsHub v25.
@@ -3107,7 +3114,7 @@ function updateFamilyNote(noteText) {
     if (!found) {
       sheet.appendRow(['FAMILY_NOTE', String(noteText || '').trim()]);
     }
-    try { CacheService.getScriptCache().remove('board_data'); } catch(e) {}
+    try { CacheService.getScriptCache().remove('board_data'); } catch(e) { console.warn('Cache invalidation failed: ' + e.message); }
     return { success: true, note: String(noteText || '').trim() };
   } catch (e) {
     Logger.log('updateFamilyNote error: ' + e.toString());
@@ -3176,13 +3183,14 @@ function _openMeteoIcon(code) {
 // ════════════════════════════════════════════════════════════════════
 
 function setupBoardConfig() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var existing = ss.getSheetByName('📋 Board_Config');
+  var ss = getDESS_();
+  var tabName = TAB_MAP['Board_Config'] || '📋 Board_Config';
+  var existing = ss.getSheetByName(tabName);
   if (existing) {
     Logger.log('📋 Board_Config already exists — no action taken.');
     return;
   }
-  var sheet = ss.insertSheet('📋 Board_Config');
+  var sheet = ss.insertSheet(tabName);
   sheet.getRange('A1:B1').setValues([['Key', 'Value']]);
   sheet.getRange('A2:B2').setValues([['FAMILY_NOTE', 'Welcome to the Thompson Board!']]);
   sheet.getRange('A1:B1').setFontWeight('bold');
@@ -3192,4 +3200,4 @@ function setupBoardConfig() {
 }
 
 
-// END OF FILE — DataEngine v74
+// END OF FILE — DataEngine v75

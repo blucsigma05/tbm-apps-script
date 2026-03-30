@@ -15,7 +15,9 @@
  * Does NOT touch: KH_Rewards, KH_Chores structure, KH_Children config, seed data
  */
 function clearKHTestData() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
   
   function getSheet(key) {
     var name = typeof TAB_MAP !== 'undefined' ? (TAB_MAP[key] || key) : key;
@@ -101,4 +103,5 @@ function clearKHTestData() {
   Logger.log('Banks: $0 for all kids');
   Logger.log('Screen Time: 0m TV, 0m Gaming for all kids');
   Logger.log('Rings/Stars: 0 (no history = no earned points)');
+  lock.releaseLock();
 }

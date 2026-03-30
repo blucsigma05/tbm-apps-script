@@ -1,9 +1,14 @@
 // ════════════════════════════════════════════════════════════════════
-// GAS HARDENING v3 — Centralized Monitoring, Logging & Maintenance
+// GAS HARDENING v4 — Centralized Monitoring, Logging & Maintenance
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 3; }
+function getGASHardeningVersion() { return 4; }
+
+/** Private workbook accessor — never use getActiveSpreadsheet() in this file. */
+function gh_getWorkbook_() {
+  return SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+}
 
 //
 // WHAT THIS DOES:
@@ -32,10 +37,10 @@ function getGASHardeningVersion() { return 3; }
  * Run once from the editor.
  */
 function setupErrorLogSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('💻 ErrorLog');
+  var ss = gh_getWorkbook_();
+  var sheet = ss.getSheetByName(TAB_MAP['ErrorLog'] || '💻 ErrorLog');
   if (!sheet) {
-    sheet = ss.insertSheet('💻 ErrorLog');
+    sheet = ss.insertSheet(TAB_MAP['ErrorLog'] || '💻 ErrorLog');
     sheet.appendRow(['Timestamp', 'Function', 'Error Message', 'Stack Trace', 'Duration (s)']);
     sheet.setFrozenRows(1);
     sheet.getRange('1:1').setFontWeight('bold');
@@ -58,8 +63,8 @@ function setupErrorLogSheet() {
  */
 function logError_(functionName, error, durationSec) {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheetByName('💻 ErrorLog');
+    var ss = gh_getWorkbook_();
+    var sheet = ss.getSheetByName(TAB_MAP['ErrorLog'] || '💻 ErrorLog');
     if (!sheet) return; // fail silently if sheet doesn't exist yet
     
     var msg = (error && error.message) ? error.message : String(error);
@@ -95,10 +100,10 @@ function logError_(functionName, error, durationSec) {
  * Run once to create.
  */
 function setupPerfLogSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('💻 PerfLog');
+  var ss = gh_getWorkbook_();
+  var sheet = ss.getSheetByName(TAB_MAP['PerfLog'] || '💻 PerfLog');
   if (!sheet) {
-    sheet = ss.insertSheet('💻 PerfLog');
+    sheet = ss.insertSheet(TAB_MAP['PerfLog'] || '💻 PerfLog');
     sheet.appendRow(['Timestamp', 'Function', 'Duration (s)', 'Status', 'Note']);
     sheet.setFrozenRows(1);
     sheet.getRange('1:1').setFontWeight('bold');
@@ -124,8 +129,8 @@ function logPerf_(functionName, durationSec, status, note) {
     
     // Only write to sheet if slow (>3s) or errored
     if (durationSec > 3 || status === 'ERROR') {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
-      var sheet = ss.getSheetByName('💻 PerfLog');
+      var ss = gh_getWorkbook_();
+      var sheet = ss.getSheetByName(TAB_MAP['PerfLog'] || '💻 PerfLog');
       if (!sheet) return;
       
       sheet.appendRow([
@@ -291,7 +296,7 @@ function listTriggers() {
  * Designed to run daily via time-driven trigger.
  */
 function checkTillerSyncHealth() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = gh_getWorkbook_();
   var txnSheet = ss.getSheetByName('Transactions');
   if (!txnSheet) {
     Logger.log('ERROR: Transactions sheet not found');
@@ -410,7 +415,7 @@ function monthClosePreflight() {
   
   Logger.log('═══ MONTH CLOSE PREFLIGHT: ' + priorLabel + ' ═══');
   
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = gh_getWorkbook_();
   var txnSheet = ss.getSheetByName('Transactions');
   if (!txnSheet) { Logger.log('ERROR: No Transactions sheet'); return; }
   
@@ -608,12 +613,12 @@ function showConfig() {
  * Over time, this becomes your trend data.
  */
 function writeWeeklySnapshot() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = gh_getWorkbook_();
   
   // Create sheet if needed
-  var sheet = ss.getSheetByName('💻 Snapshots');
+  var sheet = ss.getSheetByName(TAB_MAP['Snapshots'] || '💻 Snapshots');
   if (!sheet) {
-    sheet = ss.insertSheet('💻 Snapshots');
+    sheet = ss.insertSheet(TAB_MAP['Snapshots'] || '💻 Snapshots');
     sheet.appendRow([
       'Date', 'Total Debt', 'Consumer Debt', 'Mortgage',
       'Net Worth', 'Monthly Burn', 'Cash on Hand',
@@ -635,7 +640,7 @@ function writeWeeklySnapshot() {
     // Debt-free date from cascade if available
     var debtFreeDate = '';
     try {
-      var cascadeSheet = ss.getSheetByName('💻 Cascade_Proof');
+      var cascadeSheet = ss.getSheetByName(TAB_MAP['Cascade_Proof'] || '💻 Cascade_Proof');
       if (cascadeSheet) {
         // Look for payoff date in cascade proof
         var proofData = cascadeSheet.getDataRange().getValues();
@@ -785,7 +790,7 @@ function fullSystemDiagnostic() {
  * versions, triggers, snapshots, reconciliation, MER gates.
  */
 function getSystemHealth() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = gh_getWorkbook_();
   var now = new Date();
   var result = {};
 
@@ -893,7 +898,7 @@ function getSystemHealth() {
 
   // ── 3. ERROR LOG (last 24h) ─────────────────────────────────
   try {
-    var errSheet = ss.getSheetByName('💻 ErrorLog');
+    var errSheet = ss.getSheetByName(TAB_MAP['ErrorLog'] || '💻 ErrorLog');
     var errorSummary = { count24h: 0, lastError: null, status: 'healthy' };
     if (errSheet && errSheet.getLastRow() > 1) {
       var errData = errSheet.getDataRange().getValues();
@@ -918,7 +923,7 @@ function getSystemHealth() {
 
   // ── 4. PERF LOG (last 24h) ──────────────────────────────────
   try {
-    var perfSheet = ss.getSheetByName('💻 PerfLog');
+    var perfSheet = ss.getSheetByName(TAB_MAP['PerfLog'] || '💻 PerfLog');
     var perfSummary = { slowCalls24h: 0, avgDuration: 0, slowest: null, status: 'healthy' };
     if (perfSheet && perfSheet.getLastRow() > 1) {
       var perfData = perfSheet.getDataRange().getValues();
@@ -983,7 +988,7 @@ function getSystemHealth() {
 
   // ── 7. LAST SNAPSHOT ────────────────────────────────────────
   try {
-    var snapSheet = ss.getSheetByName('💻 Snapshots');
+    var snapSheet = ss.getSheetByName(TAB_MAP['Snapshots'] || '💻 Snapshots');
     var snapshot = { status: 'none' };
     if (snapSheet && snapSheet.getLastRow() > 1) {
       var lastRow = snapSheet.getLastRow();
@@ -1069,7 +1074,7 @@ function getSystemHealthSafe() {
  */
 function getSpineHeartbeatSafe() {
   return withMonitor_('getSpineHeartbeatSafe', function() {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = gh_getWorkbook_();
     var now = new Date();
     var heartbeat = {
       timestamp: now.toISOString(),
@@ -1095,7 +1100,7 @@ function getSpineHeartbeatSafe() {
 
     // Error count last 24h (one sheet read)
     try {
-      var errSheet = ss.getSheetByName('💻 ErrorLog');
+      var errSheet = ss.getSheetByName(TAB_MAP['ErrorLog'] || '💻 ErrorLog');
       if (errSheet && errSheet.getLastRow() > 1) {
         var errData = errSheet.getDataRange().getValues();
         var cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -1143,7 +1148,7 @@ function getDeployedVersions() {
     var label = checks[i][0];
     var fn = checks[i][1];
     try {
-      v[label] = eval(fn + '()');
+      v[label] = this[fn]();
     } catch(e) {
       v[label] = '?';
     }
@@ -1216,5 +1221,5 @@ function setupDailyTriggers() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// END OF FILE — GAS HARDENING v3
+// END OF FILE — GAS HARDENING v4
 // ═══════════════════════════════════════════════════════════════
