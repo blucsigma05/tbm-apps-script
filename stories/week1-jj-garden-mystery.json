@@ -1,45 +1,57 @@
 {
-  "title": "JJ and the Garden Mystery",
+  "title": "JJ and GranniePoo's Garden Mystery",
   "character": "JJ",
-  "topic": "garden mystery",
-  "tone": "Funny",
+  "type": "vocabulary_bedtime",
   "week": 1,
+  "vocabulary_words": ["observe", "signal", "measure", "conclude", "vanish"],
+  "canon": false,
   "scenes": [
     {
       "scene_number": 1,
-      "text": "JJ was playing in the backyard when she noticed something strange. Mama's big red tomatoes were disappearing from the garden! Yesterday there were six tomatoes, and today there were only three. JJ put her hands on her hips. 'Somebody is eating our tomatoes!' she said. She decided right then and there to solve the mystery.",
-      "image_prompt": "Comic book illustration of a 4-year-old Black girl with puffy twists standing in a backyard garden, hands on hips, looking at a tomato plant with missing tomatoes. Bold clean lines, vibrant colors, white background.",
-      "characters_in_scene": ["JJ"]
+      "text": "GranniePoo had the prettiest garden on the whole street. She had big red roses, tiny purple flowers, and sunflowers taller than Daddy. Every morning, GranniePoo would walk outside with her coffee and observe her garden — looking at every single petal, every leaf, every little bug crawling in the dirt. \"If you want to know your garden,\" GranniePoo told JJ, \"you have to really look.\"",
+      "vocab_used": ["observe"],
+      "image_prompt": "Comic book style illustration of an elderly Black grandmother with warm smile standing in a beautiful garden full of red roses, purple flowers, and tall sunflowers, holding a coffee cup. A small 4-year-old Black girl with curly puffs and a flower headband watches her. Bold clean comic lines, vibrant colors, white background."
     },
     {
       "scene_number": 2,
-      "text": "JJ ran inside to get her detective kit — a magnifying glass from the dollar store, a little notebook, and a purple crayon. She put on her rain boots even though it wasn't raining, because detectives need serious shoes. Buggsy looked up from his tablet. 'What are you doing?' he asked. 'I'm solving a MYSTERY,' JJ whispered loudly. 'Somebody stole Mama's tomatoes!'",
-      "image_prompt": "Comic book illustration of a 4-year-old Black girl wearing oversized rain boots, holding a magnifying glass and notebook. An older Black boy sits nearby with a tablet looking curious. Bold clean lines, vibrant colors, white background.",
-      "characters_in_scene": ["JJ", "Buggsy"]
+      "text": "But one Tuesday morning, something was wrong. Three of GranniePoo's biggest roses were gone. Not wilted. Not droopy. Just — vanished. Like somebody snuck in during the night and took them right off the stem. \"My roses didn't just walk away!\" GranniePoo said, hands on her hips. JJ looked up and said, \"Maybe they did.\"",
+      "vocab_used": ["vanish"],
+      "image_prompt": "Comic book style illustration of an elderly Black grandmother with hands on hips looking shocked at bare rose stems in her garden. A 4-year-old Black girl with curly puffs and flower headband shrugs beside her. Three empty stems with clean cuts visible. Bold clean comic lines, vibrant colors, white background."
     },
     {
       "scene_number": 3,
-      "text": "JJ crouched down by the tomato plants and looked through her magnifying glass. She found a clue! There were tiny bite marks on one of the tomatoes, and little tracks in the dirt. 'These tracks are very small,' JJ said, writing a wobbly circle in her notebook. She also found a piece of lettuce on the ground near the fence. 'Hmm,' she said seriously. 'Very suspicious.'",
-      "image_prompt": "Comic book illustration of a 4-year-old Black girl crouching in a garden, peering through a magnifying glass at tiny tracks in the soil near tomato plants. Bold clean lines, vibrant colors, white background.",
-      "characters_in_scene": ["JJ"]
+      "text": "JJ decided she was going to solve this mystery. She got a ruler from Buggsy's homework bag and went outside to measure the stems where the flowers used to be. She held the ruler up very carefully. \"The bite mark is THIS big,\" JJ announced, holding her fingers apart. \"So the flower thief has a mouth this big.\" GranniePoo wrote it down in her little green notebook. \"Good detective work, baby.\"",
+      "vocab_used": ["measure"],
+      "image_prompt": "Comic book style illustration of a 4-year-old Black girl with curly puffs and flower headband holding a ruler up to a flower stem in a garden, looking very serious like a detective. An elderly Black grandmother writes in a small green notebook beside her. Bold clean comic lines, vibrant colors, white background."
     },
     {
       "scene_number": 4,
-      "text": "JJ followed the tracks across the yard. They went past the swing set, around the big tree, and right to a hole under the fence. JJ peeked through and gasped. There sat the biggest, fattest rabbit she had ever seen, happily munching on a tomato! Two baby bunnies sat beside it, their little noses wiggling. 'You're the tomato thieves!' JJ giggled.",
-      "image_prompt": "Comic book illustration of a 4-year-old Black girl peeking through a gap under a wooden fence, discovering a large rabbit and two baby bunnies eating a red tomato. Bold clean lines, vibrant colors, white background.",
-      "characters_in_scene": ["JJ"]
+      "text": "That night, JJ set up a signal system. She tied a little bell to a string and stretched it across the garden gate. If anything came through that gate, the bell would ring, and JJ would hear it from the porch where she was sitting with Mommy. \"When that bell rings,\" JJ whispered to Mommy, \"we catch the thief.\" Mommy smiled. \"You're not going to fall asleep out here, are you?\" \"I never fall asleep,\" JJ said. She yawned.",
+      "vocab_used": ["signal"],
+      "image_prompt": "Comic book style illustration of a 4-year-old Black girl with curly puffs tying a small bell to a string across a garden gate at dusk. Her mom with a curly ponytail sits on the porch watching her with a warm smile. Pink and orange sunset sky. Bold clean comic lines, vibrant colors, white background."
     },
     {
       "scene_number": 5,
-      "text": "JJ ran inside to tell everyone. 'Mama! Daddy! I solved it! Bunnies are eating the tomatoes!' Daddy laughed. 'Good detective work, JJ!' Mama smiled and said, 'Maybe we can plant some extra lettuce by the fence so the bunnies eat that instead.' JJ thought that was the best idea ever. She even named the big rabbit Detective Fluffbottom.",
-      "image_prompt": "Comic book illustration of a 4-year-old Black girl excitedly telling her parents about her discovery. The mother and father are smiling proudly. Bold clean lines, vibrant colors, white background.",
-      "characters_in_scene": ["JJ", "Mama", "Daddy"]
+      "text": "DING. The little bell rang just as the sky turned pink. JJ's eyes popped open — okay, maybe she fell asleep for one second — and she tiptoed to the gate. There, nibbling on a sunflower leaf, was a tiny brown bunny with the softest ears JJ had ever seen. \"I conclude,\" JJ said very seriously, using her best detective voice, \"that the flower thief... is a baby bunny.\" The bunny looked at JJ. JJ looked at the bunny. The bunny wiggled its nose. JJ giggled.",
+      "vocab_used": ["conclude"],
+      "image_prompt": "Comic book style illustration of a 4-year-old Black girl with curly puffs crouching at a garden gate at dawn, face to face with a tiny adorable brown bunny nibbling a leaf. The girl has a big surprised smile. Pink morning sky. Bold clean comic lines, vibrant colors, white background."
     },
     {
       "scene_number": 6,
-      "text": "That night, JJ snuggled into bed with her magnifying glass on the nightstand. She told her stuffed bunny all about her big case. 'Don't worry,' she whispered. 'Detective Fluffbottom gets to keep eating. We planted lettuce just for her.' Mama kissed her forehead and turned off the light. JJ smiled, closed her eyes, and dreamed about solving mysteries with bunnies.",
-      "image_prompt": "Comic book illustration of a 4-year-old Black girl tucked into bed, smiling peacefully with a magnifying glass on the nightstand and a stuffed bunny. Moonlight through the window. Bold clean lines, vibrant colors, white background.",
-      "characters_in_scene": ["JJ", "Mama"]
+      "text": "GranniePoo came outside and saw the bunny too. She wasn't even mad. She picked a handful of clover from the side yard and set it by the gate. \"Now the bunny eats clover, and my roses stay put,\" GranniePoo said. \"Case closed.\" JJ carried the ruler back inside, gave GranniePoo a big hug, and climbed into bed. She pulled the covers up to her chin and closed her eyes. \"Goodnight, bunny,\" she whispered. And somewhere in GranniePoo's garden, a tiny brown bunny wiggled its nose and fell asleep too.",
+      "vocab_used": [],
+      "image_prompt": "Comic book style illustration of a 4-year-old Black girl with curly puffs tucked into bed with a warm smile, eyes closing. Through her bedroom window, a tiny brown bunny sleeps curled up in a moonlit garden. Soft purple and blue nighttime colors. Bold clean comic lines, vibrant colors, white background."
     }
+  ],
+  "words_we_learned": {
+    "observe": "To look at something really carefully, noticing all the little details",
+    "signal": "Something that sends a message or a warning — like a bell, a light, or a wave",
+    "measure": "To find out how big or how long something is, usually with a ruler or tape",
+    "conclude": "To figure out the answer after thinking about all the clues",
+    "vanish": "To disappear — like it was there one second and gone the next"
+  },
+  "reader_questions": [
+    "What did the bunny do?",
+    "What did JJ use to measure?"
   ]
 }
