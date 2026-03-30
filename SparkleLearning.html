@@ -524,6 +524,69 @@
   var animFrameId = null;
   var canvasEl = null;
 
+  // ─── Audio System (Batch Preload) ───
+  var audioCache = {};
+  var audioLoading = false;
+  var CELEBRATE_CLIPS = ['celebrate1.mp3', 'celebrate2.mp3', 'celebrate3.mp3'];
+
+  function buildAudioFilenames() {
+    var files = [];
+    for (var i = 0; i < ALL_LETTERS.length; i++) {
+      files.push(ALL_LETTERS[i] + '.mp3');
+    }
+    for (var c = 0; c < CELEBRATE_CLIPS.length; c++) {
+      files.push(CELEBRATE_CLIPS[c]);
+    }
+    return files;
+  }
+
+  function preloadAudio() {
+    if (audioLoading) return;
+    if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+    audioLoading = true;
+    var filenames = buildAudioFilenames();
+    google.script.run
+      .withSuccessHandler(function(result) {
+        audioLoading = false;
+        if (result && !result.error) {
+          var keys = Object.keys(result);
+          for (var i = 0; i < keys.length; i++) {
+            audioCache[keys[i]] = result[keys[i]];
+          }
+        }
+      })
+      .withFailureHandler(function() {
+        audioLoading = false;
+      })
+      .getAudioBatchSafe(filenames);
+  }
+
+  function playAudio(filename, fallbackText) {
+    if (audioCache[filename]) {
+      try {
+        var audio = new Audio('data:audio/mp3;base64,' + audioCache[filename]);
+        audio.play();
+        return;
+      } catch (e) { /* fall through to TTS */ }
+    }
+    // Fallback to Web Speech API
+    if (fallbackText && window.speechSynthesis) {
+      var u = new SpeechSynthesisUtterance(fallbackText);
+      u.rate = 0.85;
+      u.pitch = 1.2;
+      window.speechSynthesis.speak(u);
+    }
+  }
+
+  function playLetterAudio(letter) {
+    playAudio(letter + '.mp3', letter);
+  }
+
+  function playCelebration() {
+    var clip = CELEBRATE_CLIPS[Math.floor(Math.random() * CELEBRATE_CLIPS.length)];
+    playAudio(clip, 'Great job!');
+  }
+
   // ─── Sparkle Particle (ES5 constructor) ───
   function Sparkle(x, y) {
     this.x = x;
@@ -730,6 +793,8 @@
         }
         stars += 1;
         updateStarsDisplay();
+        playLetterAudio(currentLetter);
+        playCelebration();
         celebrateText = 'You traced ' + currentLetter + '!';
         stopAnimation();
         mode = 'celebrate';
@@ -768,12 +833,14 @@
 
   function handleIdentifyTap(letter) {
     if (identifyResult !== null) return;
+    playLetterAudio(letter);
     if (letter === identifyTarget) {
       identifyResult = 'correct';
       stars += 1;
       updateStarsDisplay();
       render();
       setTimeout(function() {
+        playCelebration();
         celebrateText = 'You found ' + identifyTarget + '!';
         mode = 'celebrate';
         render();
@@ -827,6 +894,7 @@
 
   function pickLetter(l) {
     currentLetter = l;
+    playLetterAudio(l);
     render();
   }
   window.pickLetter = pickLetter;
@@ -1008,6 +1076,7 @@
 
   // ─── Init ───
   function init() {
+    preloadAudio();
     initBgSparkles();
     updateStarsDisplay();
     render();

@@ -2,7 +2,7 @@
 // DATA ENGINE v74 — Dynamic KPI Computation from Raw Tiller Data
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 75; }
+function getDataEngineVersion() { return 76; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -197,6 +197,8 @@ var TAB_MAP = {
   'KH_Requests':      '🧹📅 KH_Requests',
   'KH_ScreenTime':    '🧹📅 KH_ScreenTime',
   'KH_Grades':        '🧹📅 KH_Grades',
+  // 💻 Education
+  'Curriculum':       '💻 Curriculum',
   // 📋 Board Config
   'Board_Config':     '📋 Board_Config'
 };
