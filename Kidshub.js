@@ -2578,4 +2578,258 @@ function addBedtimeStoryChore() {
   } finally {
     lk.lock.releaseLock();
   }
+
+
+// v29: AUDIO BATCH LOADER + PROGRESS REPORT
+// ════════════════════════════════════════════════════════════════════
+
+var AUDIO_FOLDER_ID = '1rXWVBD9QMruWOj6AlNB4mY2E9wzWGctm';
+
+/**
+ * v29: Batch audio preload — returns { filename: base64 } map.
+ * Max 50 files per call. Used by SparkleLearn audio wiring.
+ */
+function getAudioBatchSafe(filenames) {
+  return withMonitor_('getAudioBatchSafe', function() {
+    if (!filenames || !Array.isArray(filenames) || filenames.length === 0) {
+      return { error: 'No filenames provided' };
+    }
+    var maxFiles = 50;
+    var toFetch = filenames.slice(0, maxFiles);
+    var folder = DriveApp.getFolderById(AUDIO_FOLDER_ID);
+    var result = {};
+    var fileIndex = buildFileIndex_(folder);
+    for (var i = 0; i < toFetch.length; i++) {
+      var fname = toFetch[i];
+      if (fileIndex[fname]) {
+        try {
+          var blob = fileIndex[fname].getBlob();
+          result[fname] = Utilities.base64Encode(blob.getBytes());
+        } catch (e) {
+          Logger.log('getAudioBatchSafe: Failed to read ' + fname + ': ' + e.message);
+        }
+      }
+    }
+    return JSON.parse(JSON.stringify(result));
+  });
+}
+
+/**
+ * v29: Private helper — indexes MP3 files across folder + one level of subfolders.
+ */
+function buildFileIndex_(folder) {
+  var index = {};
+  var files = folder.getFilesByType('audio/mpeg');
+  while (files.hasNext()) {
+    var f = files.next();
+    index[f.getName()] = f;
+  }
+  var allFiles = folder.getFiles();
+  while (allFiles.hasNext()) {
+    var af = allFiles.next();
+    var name = af.getName();
+    if (name.indexOf('.mp3') === name.length - 4 && !index[name]) {
+      index[name] = af;
+    }
+  }
+  var subfolders = folder.getFolders();
+  while (subfolders.hasNext()) {
+    var sub = subfolders.next();
+    var subFiles = sub.getFiles();
+    while (subFiles.hasNext()) {
+      var sf = subFiles.next();
+      var sName = sf.getName();
+      if (sName.indexOf('.mp3') === sName.length - 4 && !index[sName]) {
+        index[sName] = sf;
+      }
+    }
+  }
+  return index;
+}
+
+/**
+ * v29: Deployment health check — returns array of missing filenames.
+ */
+function verifyAudioFiles(expectedFilenames) {
+  var folder = DriveApp.getFolderById(AUDIO_FOLDER_ID);
+  var index = buildFileIndex_(folder);
+  var missing = [];
+  for (var i = 0; i < expectedFilenames.length; i++) {
+    if (!index[expectedFilenames[i]]) {
+      missing.push(expectedFilenames[i]);
+    }
+  }
+  return missing;
+}
+
+/**
+ * v29: Progress report data stub — called by ProgressReport.html.
+ * Returns skeleton data structure. Wire to real sheet data when
+ * KH_Homework and KH_SparkleProgress sheets have data flowing.
+ */
+function getWeeklyProgressSafe() {
+  return withMonitor_('getWeeklyProgressSafe', function() {
+    var ss = SpreadsheetApp.openById(SSID);
+    var today = new Date();
+    var dayOfWeek = today.getDay();
+    var mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    var monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+
+    var result = {
+      buggsy: {
+        name: 'Buggsy',
+        ringsThisWeek: 0,
+        ringsTotal: 0,
+        streak: 0,
+        completionRate: 0,
+        sessionsCompleted: 0,
+        sessionsTotal: 5,
+        avgScore: 0,
+        timeSpent: 0,
+        subjects: [],
+        weekLog: [],
+        alerts: []
+      },
+      jj: {
+        name: 'JJ (Kindle)',
+        starsThisWeek: 0,
+        starsTotal: 0,
+        streak: 0,
+        completionRate: 0,
+        sessionsCompleted: 0,
+        sessionsTotal: 5,
+        milestones: [],
+        weekLog: [],
+        alerts: []
+      }
+    };
+
+    // TODO: Read from KH_Homework sheet, aggregate by week
+    // TODO: Read from KH_SparkleProgress sheet for JJ data
+    // TODO: Calculate streaks from consecutive completion dates
+    // TODO: Generate alerts based on score thresholds
+
+    return JSON.parse(JSON.stringify(result));
+  });
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// v29: CURRICULUM ENGINE — Daily content serving
+// ════════════════════════════════════════════════════════════════════
+
+var CURRICULUM_HEADERS = ['WeekNumber', 'Child', 'StartDate', 'ContentJSON'];
+var DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+/**
+ * v29: Auto-create the Curriculum tab if it doesn't exist.
+ * Safe to run multiple times — skips if tab already exists.
+ */
+function ensureCurriculumTab_() {
+  var ss = SpreadsheetApp.openById(SSID);
+  var tabName = TAB_MAP['Curriculum'] || 'Curriculum';
+  var sheet = null;
+  try { sheet = ss.getSheetByName(tabName); } catch(e) {}
+  if (sheet) return sheet;
+
+  sheet = ss.insertSheet(tabName);
+  var headerRange = sheet.getRange(1, 1, 1, CURRICULUM_HEADERS.length);
+  headerRange.setValues([CURRICULUM_HEADERS]);
+  headerRange.setBackground('#0f1923').setFontColor('#fbbf24')
+    .setFontWeight('bold').setFontFamily('Courier New').setFontSize(10);
+  sheet.setColumnWidth(1, 100);  // WeekNumber
+  sheet.setColumnWidth(2, 80);   // Child
+  sheet.setColumnWidth(3, 120);  // StartDate
+  sheet.setColumnWidth(4, 600);  // ContentJSON
+  sheet.setFrozenRows(1);
+  Logger.log('ensureCurriculumTab_: Created ' + tabName);
+  return sheet;
+}
+
+/**
+ * v29: Get today's content for a child from the Curriculum tab.
+ * Reads rows, finds the current week by comparing today to StartDate,
+ * parses ContentJSON, and returns today's entry based on day of week.
+ * Returns { content: {...}, day: 'monday', week: 1 } or { error: '...' }.
+ */
+function getTodayContentSafe(child) {
+  return withMonitor_('getTodayContentSafe', function() {
+    var ss = SpreadsheetApp.openById(SSID);
+    var tabName = TAB_MAP['Curriculum'] || 'Curriculum';
+    var sheet;
+    try { sheet = ss.getSheetByName(tabName); } catch(e) {}
+    if (!sheet || sheet.getLastRow() < 2) {
+      return { error: 'No curriculum data found. Ask Dad to load this week\'s missions.' };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var h = data[0].map(String);
+    var cWeek  = h.indexOf('WeekNumber');
+    var cChild = h.indexOf('Child');
+    var cStart = h.indexOf('StartDate');
+    var cJSON  = h.indexOf('ContentJSON');
+
+    if (cChild === -1 || cStart === -1 || cJSON === -1) {
+      return { error: 'Curriculum tab missing required columns.' };
+    }
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var dayOfWeek = today.getDay();
+    var dayKey = DAY_KEYS[dayOfWeek];
+    var childLower = String(child).toLowerCase();
+
+    // Find the current week's row: StartDate <= today < StartDate + 7
+    var bestRow = null;
+    for (var i = 1; i < data.length; i++) {
+      var rowChild = String(data[i][cChild] || '').toLowerCase();
+      if (rowChild !== childLower) continue;
+
+      var startDate = data[i][cStart];
+      if (startDate instanceof Date) {
+        startDate.setHours(0, 0, 0, 0);
+      } else {
+        startDate = new Date(startDate);
+        startDate.setHours(0, 0, 0, 0);
+      }
+      if (isNaN(startDate.getTime())) continue;
+
+      var endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 7);
+
+      if (today >= startDate && today < endDate) {
+        bestRow = data[i];
+        break;
+      }
+    }
+
+    if (!bestRow) {
+      return { error: 'No curriculum loaded for this week. Ask Dad to load this week\'s missions.' };
+    }
+
+    var jsonStr = String(bestRow[cJSON] || '');
+    if (!jsonStr) {
+      return { error: 'Curriculum row found but ContentJSON is empty.' };
+    }
+
+    var weekContent;
+    try {
+      weekContent = JSON.parse(jsonStr);
+    } catch (e) {
+      return { error: 'Curriculum JSON parse error: ' + e.message };
+    }
+
+    // Look for today's content by day key
+    var todayContent = weekContent[dayKey] || weekContent[dayKey.charAt(0).toUpperCase() + dayKey.slice(1)] || null;
+
+    return JSON.parse(JSON.stringify({
+      content: todayContent,
+      fullWeek: weekContent,
+      day: dayKey,
+      week: bestRow[cWeek] || 0,
+      child: childLower
+    }));
+  });
 }

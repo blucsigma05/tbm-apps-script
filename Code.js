@@ -223,10 +223,12 @@ function servePage(page, e) {
     'wolfkid':   { file: 'WolfkidCER',     title: 'Wolfkid CER — Episode 3' },
     'dashboard': { file: 'DesignDashboard', title: 'Design Dashboard — Ring Quest Creator' },
     'facts':     { file: 'fact-sprint',    title: 'Fact Sprint — Math Drill' },
-    'reading':   { file: 'reading-module', title: 'Reading Module — Thompson Education' },
-    'writing':   { file: 'writing-module', title: 'Writing Module — Thompson Education' },
-    'story-library': { file: 'StoryLibrary', title: 'Story Library — Thompson Family Stories' },
-    'story':     { file: 'StoryLibrary', title: 'Story Library — Thompson Family Stories' }
+    'reading':       { file: 'reading-module',  title: 'Reading Module — Thompson Education' },
+    'writing':       { file: 'writing-module', title: 'Writing Module — Thompson Education' },
+    'story-library': { file: 'StoryLibrary',   title: 'Story Library — Thompson Family Stories' },
+    'comic-studio':  { file: 'ComicStudio',    title: 'Wolfkid Comic Studio' },
+    'progress':      { file: 'ProgressReport', title: 'Weekly Progress Report' },
+    'story':         { file: 'StoryReader',    title: 'Story Reader' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -276,7 +278,9 @@ function serveData(e) {
         'vein': 'TheVein', 'pulse': 'ThePulse', 'vault': 'Vault',
         'kidshub': 'KidsHub', 'spine': 'TheSpine', 'soul': 'TheSoul',
         'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse',
-        'story-library': 'StoryLibrary', 'story': 'StoryLibrary'
+        'story-library': 'StoryLibrary',
+        'comic-studio': 'ComicStudio', 'progress': 'ProgressReport',
+        'story': 'StoryReader'
       };
       var filename = routes[page] || 'ThePulse';
       try {
