@@ -1,10 +1,10 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v28 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v29 — Kids Hub Server Backend (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubGsVersion() { return 28; }
-function getKidsHubVersion() { return 28; }  // alias for smoke test
+function getKidsHubGsVersion() { return 29; }
+function getKidsHubVersion() { return 29; }  // alias for smoke test
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -185,6 +185,7 @@ var KH_SEED = {
     ['Buggsy','Vacuum all of upstairs (All Rooms and Common Areas)','BUGG_VACUUM','2-Afternoon','Household','🧹',8,0,1.00,0,'Weekly','YES','NO',1.5,3,1,false,'',false],
     ['Buggsy','Wash Pearl (Maxima)','BUGG_WASH_PEARL','2-Afternoon','Household','🚗',9,0,1.50,0,'Weekly','NO','NO',1,3,1,false,'',false],
     ['Buggsy','Wash Tempest (Telluride)','BUGG_WASH_TEMPEST','2-Afternoon','Household','🚙',9,0,1.50,0,'Weekly','NO','NO',1,3,1,false,'',false],
+    ['Buggsy','Read JJ bedtime story','BUGG_BEDTIME_STORY','3-Evening','School','📖',3,0,0.00,0,'Daily','YES','NO',1,5,2,false,'',false],
     ['JJ','Brush teeth sparkle clean in morning','JJ_BR','1-Morning','Bathroom','🪥',2,0,0.00,1,'Daily','YES','YES',1,5,2,false,'',false],
     ['JJ','Make bed (pull up the covers)','JJ_MAKEBED','2-Afternoon','Bedroom','🛏️',2,0,0.00,1,'Daily','YES','YES',1,5,2,false,'',false],
     ['JJ','Water her special plant','JJ_WATER','2-Afternoon','Outside','🌸',3,0,0.00,1,'Daily','YES','NO',1,3,1,false,'',false],
@@ -2378,4 +2379,202 @@ function khHealthCheck() {
   }
 
   return JSON.stringify(results, null, 2);
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// v29: CURRICULUM ENGINE — auto-create tab + daily content reader
+// ════════════════════════════════════════════════════════════════════
+
+// Ensures the 💻 Curriculum tab exists with the correct header row.
+// Called lazily by getTodayContent_ and seedWeek1Curriculum.
+function ensureCurriculumTab_() {
+  var ss = getKHSS_();
+  var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Curriculum']) || '💻 Curriculum';
+  var sheet = ss.getSheetByName(tabName);
+  if (sheet) return sheet;
+
+  sheet = ss.insertSheet(tabName);
+  sheet.getRange('A1:D1').setValues([['WeekNumber', 'Child', 'StartDate', 'ContentJSON']]);
+  sheet.getRange('A1:D1').setFontWeight('bold');
+  sheet.setColumnWidth(1, 100);
+  sheet.setColumnWidth(2, 80);
+  sheet.setColumnWidth(3, 110);
+  sheet.setColumnWidth(4, 600);
+  Logger.log('✅ Curriculum tab created: ' + tabName);
+  return sheet;
+}
+
+
+// Reads today's curriculum content for a child.
+// Returns parsed JSON for today's day-of-week content, or null if no data.
+function getTodayContent_(child) {
+  var sheet = ensureCurriculumTab_();
+  if (sheet.getLastRow() < 2) return null;
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(String);
+  var childCol = headers.indexOf('Child');
+  var startCol = headers.indexOf('StartDate');
+  var jsonCol = headers.indexOf('ContentJSON');
+  if (childCol === -1 || startCol === -1 || jsonCol === -1) return null;
+
+  var today = new Date();
+  var todayStr = Utilities.formatDate(today, 'America/Chicago', 'yyyy-MM-dd');
+  var dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ... 5=Fri, 6=Sat
+  var dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  var todayName = dayNames[dayOfWeek];
+
+  // Find the most recent week row for this child where StartDate <= today
+  var bestRow = null;
+  for (var i = 1; i < data.length; i++) {
+    var rowChild = String(data[i][childCol]).toLowerCase();
+    if (rowChild !== child.toLowerCase()) continue;
+
+    var rowStart = data[i][startCol];
+    var startStr = '';
+    if (rowStart instanceof Date) {
+      startStr = Utilities.formatDate(rowStart, 'America/Chicago', 'yyyy-MM-dd');
+    } else {
+      startStr = String(rowStart);
+    }
+
+    if (startStr <= todayStr) {
+      bestRow = data[i];
+    }
+  }
+
+  if (!bestRow) return null;
+
+  try {
+    var weekContent = JSON.parse(bestRow[jsonCol]);
+    // Return today's content slice
+    return weekContent[todayName] || weekContent[todayName.charAt(0).toUpperCase() + todayName.slice(1)] || null;
+  } catch (e) {
+    Logger.log('getTodayContent_: JSON parse error for ' + child + ': ' + e.message);
+    return null;
+  }
+}
+
+
+// Seeds Week 1 curriculum for both kids.
+// Run once from Script Editor to populate the Curriculum tab.
+function seedWeek1Curriculum() {
+  var sheet = ensureCurriculumTab_();
+
+  // Check if already seeded
+  if (sheet.getLastRow() >= 3) {
+    Logger.log('Curriculum tab already has data (' + (sheet.getLastRow() - 1) + ' rows). Skipping seed.');
+    return { status: 'skipped', rows: sheet.getLastRow() - 1 };
+  }
+
+  var buggsy = {
+    monday: {
+      math: { topic: 'Multiplication & Division Review', problems: ['48 x 6 = ?', '324 / 4 = ?', '57 x 8 = ?', '756 / 9 = ?', 'Write a word problem using 12 x 7'], standard: 'TEKS 4.4F' },
+      reading: { passage: 'Read Chapter 1 of your AR book (20 min)', prompt: 'Write 3 sentences: Who is the main character? What is the setting? What problem do they face?', standard: 'TEKS 4.6A' },
+      spelling: ['adventure', 'journey', 'mysterious', 'enormous', 'courageous', 'brilliant', 'discover', 'imagine', 'knowledge', 'creature']
+    },
+    tuesday: {
+      science: { topic: 'Earth Materials — Rocks & Minerals', questions: ['Name the 3 types of rocks and give one example of each.', 'How does weathering change rocks over time?', 'Draw and label the rock cycle.'], standard: 'TEKS 4.7A' },
+      reading: { passage: 'Continue AR book (20 min)', prompt: 'Summarize what happened in today\'s reading in 4-5 sentences. Use sequence words (first, then, next, finally).', standard: 'TEKS 4.6B' },
+      socialStudies: { topic: 'Texas Regions', question: 'Name the 4 regions of Texas. Which region do we live in? Draw a simple map.' }
+    },
+    wednesday: {
+      math: { topic: 'Fractions — Comparing & Equivalent', problems: ['Which is larger: 3/4 or 5/8? Show your work.', 'Find 3 fractions equivalent to 2/3.', 'Order from least to greatest: 1/2, 3/8, 5/6, 1/4', 'Add: 2/5 + 1/5 = ?', 'Subtract: 7/8 - 3/8 = ?'], standard: 'TEKS 4.3C' },
+      writing: { prompt: 'Write a short paragraph (5-7 sentences) about your favorite weekend activity. Use at least 2 adjectives and 1 simile.', standard: 'TEKS 4.11A' },
+      spelling: ['review Monday words — write each in a sentence']
+    },
+    thursday: {
+      science: { topic: 'Weather & Water Cycle', questions: ['Draw and label the 4 stages of the water cycle.', 'What is the difference between weather and climate?', 'How does the sun drive the water cycle?'], standard: 'TEKS 4.8A' },
+      reading: { passage: 'Continue AR book (20 min)', prompt: 'Find 3 vocabulary words from your reading. Write the word, what you think it means, and use it in your own sentence.', standard: 'TEKS 4.2B' },
+      storyTime: { activity: 'Read JJ a bedtime story from the Story Library', link: '?page=story-library&child=buggsy' }
+    },
+    friday: {
+      math: { topic: 'Word Problems & Review', problems: ['Maria has 234 stickers. She gives 18 to each of 6 friends. How many does she have left?', 'A rectangle is 12 cm long and 8 cm wide. What is the perimeter? What is the area?', 'Challenge: If you save $3.50 each week, how much will you have after 8 weeks?'], standard: 'TEKS 4.4H, 4.5D' },
+      writing: { prompt: 'Free write Friday! Write about anything you want for 15 minutes. Aim for at least 10 sentences.', standard: 'TEKS 4.11A' },
+      vocab: { words: ['adventure', 'journey', 'mysterious', 'enormous', 'courageous'], activity: 'Quiz yourself — cover the word, read the definition, try to spell it' }
+    }
+  };
+
+  var jj = {
+    monday: {
+      letters: { focus: 'A and B', activities: ['Trace uppercase A and lowercase a (5 times each)', 'Trace uppercase B and lowercase b (5 times each)', 'Find 3 things that start with A, find 3 things that start with B'] },
+      numbers: { focus: '1-5', activities: ['Count objects: put 1 apple, 2 bananas, 3 oranges, 4 grapes, 5 berries in a line', 'Trace numbers 1-5 (3 times each)', 'Hold up fingers: show me 3, show me 5, show me 1'] },
+      colors: { focus: 'Red and Blue', activity: 'Find 5 red things and 5 blue things in the house' }
+    },
+    tuesday: {
+      letters: { focus: 'C and D', activities: ['Trace uppercase C and lowercase c (5 times each)', 'Trace uppercase D and lowercase d (5 times each)', 'C is for Cat — draw a cat! D is for Dog — draw a dog!'] },
+      shapes: { focus: 'Circle and Square', activities: ['Find circles and squares around the house', 'Draw 3 circles and 3 squares', 'Sort blocks into circles and not-circles'] },
+      motor: { activity: 'Practice cutting with safety scissors — cut along straight and curved lines on practice paper' }
+    },
+    wednesday: {
+      letters: { focus: 'E and F', activities: ['Trace uppercase E and lowercase e (5 times each)', 'Trace uppercase F and lowercase f (5 times each)', 'E is for Elephant — how many letters in ELEPHANT?'] },
+      numbers: { focus: '6-10', activities: ['Count 6 blocks, 7 crayons, 8 stickers, 9 buttons, 10 coins', 'Trace numbers 6-10 (3 times each)', 'Clap your hands: clap 7 times, clap 10 times'] },
+      art: { activity: 'Rainbow painting — paint a rainbow using red, orange, yellow, green, blue, purple' }
+    },
+    thursday: {
+      letters: { focus: 'Review A-F', activities: ['Sing the ABC song stopping at F', 'Point to letters A through F on an alphabet chart', 'Match uppercase to lowercase: A-a, B-b, C-c, D-d, E-e, F-f'] },
+      storyTime: { activity: 'Listen to a bedtime story from the Story Library', link: '?page=story-library&child=jj' },
+      rhyming: { activity: 'Rhyme time! What rhymes with: cat, dog, bed, sun, hop?' }
+    },
+    friday: {
+      numbers: { focus: 'Review 1-10', activities: ['Count to 10 forward and backward', 'Find the number: hold up cards 1-10, say a number, pick the right card', 'How many? Count items in groups around the room'] },
+      colors: { focus: 'Review Red, Blue + add Yellow and Green', activity: 'Color scavenger hunt — find 3 of each color in the house' },
+      motor: { activity: 'Play-doh letters — make the letters A through F out of Play-doh' },
+      reward: 'Fun Friday! If all activities done Mon-Thu, pick a special game or activity'
+    }
+  };
+
+  var buggsynJSON = JSON.stringify(buggsy);
+  var jjJSON = JSON.stringify(jj);
+
+  sheet.getRange(2, 1, 2, 4).setValues([
+    [1, 'buggsy', '2026-03-31', buggsynJSON],
+    [1, 'jj',     '2026-03-31', jjJSON]
+  ]);
+
+  Logger.log('✅ Week 1 curriculum seeded for Buggsy and JJ (StartDate: 2026-03-31).');
+  return { status: 'seeded', buggsynSize: buggsynJSON.length, jjSize: jjJSON.length };
+}
+
+
+// v29: Add the "Read JJ bedtime story" chore to the live KH_Chores sheet.
+// Run once from Script Editor. Idempotent — skips if BUGG_BEDTIME_STORY already exists.
+function addBedtimeStoryChore() {
+  var lk = acquireLock_();
+  if (!lk.acquired) return { status: 'locked', message: 'Try again.' };
+  try {
+    var sheet = getKHSheet_('KH_Chores');
+    if (!sheet) return { error: 'KH_Chores not found' };
+
+    // Check for duplicate
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(String);
+    var idCol = headers.indexOf('Task_ID');
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][idCol]) === 'BUGG_BEDTIME_STORY') {
+        Logger.log('Bedtime story chore already exists. Skipping.');
+        return { status: 'exists' };
+      }
+    }
+
+    // Matches KH_SCHEMAS.KH_Chores.headers order exactly:
+    // Child, Task, Task_ID, Task_Order, Category, Icon, Points,
+    // TV_Minutes, Money, Snacks, Frequency, Active, Required,
+    // Due_Day, Bonus_Multiplier, Streak_Threshold, Max_Bonus_Per_Week,
+    // Completed, Completed_Date, Parent_Approved
+    sheet.appendRow([
+      'Buggsy', 'Read JJ bedtime story', 'BUGG_BEDTIME_STORY', '3-Evening',
+      'School', '📖', 3,
+      0, 0.00, 0, 'Daily', 'YES', 'NO',
+      1, 1, 5, 2,
+      false, '', false
+    ]);
+
+    stampKHHeartbeat_();
+    Logger.log('✅ Bedtime story chore added for Buggsy.');
+    return { status: 'added' };
+  } finally {
+    lk.lock.releaseLock();
+  }
 }

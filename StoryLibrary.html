@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<!-- Story Library v1 — Browse and launch pre-loaded bedtime stories -->
+<title>Story Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+/* ── Reset ── */
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow-x:hidden;}
+
+/* ══════════════════════════════════════════════ */
+/* BUGGSY THEME — Wolfkid dark neon              */
+/* ══════════════════════════════════════════════ */
+.buggsy-body{
+  background:linear-gradient(135deg,#061208 0%,#0a1f10 50%,#0d2818 100%);
+  color:#e2e8f0;font-family:'Press Start 2P',monospace;
+  min-height:100vh;padding:16px;
+}
+.buggsy-body .sl-header{
+  text-align:center;padding:20px 0 12px;
+}
+.buggsy-body .sl-title{
+  font-size:16px;color:#f59e0b;text-shadow:0 0 8px rgba(245,158,11,0.5);
+  margin-bottom:6px;
+}
+.buggsy-body .sl-subtitle{
+  font-size:9px;color:#94a3b8;letter-spacing:1px;
+}
+.buggsy-body .sl-grid{
+  display:flex;flex-wrap:wrap;gap:12px;justify-content:center;padding:12px 0;
+}
+.buggsy-body .sl-card{
+  background:rgba(15,30,18,0.9);border:1px solid rgba(245,158,11,0.3);
+  border-radius:12px;padding:16px;width:100%;max-width:340px;
+  cursor:pointer;transition:border-color 0.2s,box-shadow 0.2s;
+}
+.buggsy-body .sl-card:hover,
+.buggsy-body .sl-card:active{
+  border-color:#f59e0b;box-shadow:0 0 16px rgba(245,158,11,0.25);
+}
+.buggsy-body .sl-card-title{
+  font-size:11px;color:#f59e0b;margin-bottom:8px;line-height:1.4;
+}
+.buggsy-body .sl-card-meta{
+  font-size:8px;color:#94a3b8;margin-bottom:10px;
+}
+.buggsy-body .sl-vocab-row{
+  display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;
+}
+.buggsy-body .sl-vocab-badge{
+  background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);
+  border-radius:20px;padding:3px 10px;font-size:7px;color:#fbbf24;
+}
+.buggsy-body .sl-read-btn{
+  display:inline-block;background:#f59e0b;color:#0a1f10;
+  border:none;border-radius:8px;padding:10px 24px;font-size:9px;
+  font-family:'Press Start 2P',monospace;cursor:pointer;
+  text-align:center;width:100%;min-height:44px;
+}
+.buggsy-body .sl-read-btn:hover{background:#fbbf24;}
+.buggsy-body .sl-empty{
+  text-align:center;padding:60px 20px;color:#64748b;font-size:10px;line-height:2;
+}
+.buggsy-body .sl-back{
+  display:inline-block;margin-bottom:12px;color:#f59e0b;font-size:9px;
+  text-decoration:none;cursor:pointer;
+}
+
+/* ══════════════════════════════════════════════ */
+/* JJ THEME — Sparkle purple/pink                */
+/* ══════════════════════════════════════════════ */
+.jj-body{
+  background:linear-gradient(135deg,#1a0a2e 0%,#2d1452 50%,#1a0a2e 100%);
+  color:#f0e6ff;font-family:'Fredoka One',cursive;
+  min-height:100vh;padding:16px;
+}
+.jj-body .sl-header{
+  text-align:center;padding:24px 0 16px;
+}
+.jj-body .sl-title{
+  font-size:24px;color:#f0abfc;text-shadow:0 0 12px rgba(240,171,252,0.4);
+  margin-bottom:6px;
+}
+.jj-body .sl-subtitle{
+  font-size:14px;color:#c4b5fd;
+}
+.jj-body .sl-grid{
+  display:flex;flex-wrap:wrap;gap:16px;justify-content:center;padding:16px 0;
+}
+.jj-body .sl-card{
+  background:rgba(45,20,82,0.8);border:2px solid rgba(240,171,252,0.3);
+  border-radius:20px;padding:20px;width:100%;max-width:340px;
+  cursor:pointer;transition:border-color 0.2s,transform 0.15s;
+}
+.jj-body .sl-card:hover,
+.jj-body .sl-card:active{
+  border-color:#f0abfc;transform:scale(1.02);
+}
+.jj-body .sl-card-title{
+  font-size:18px;color:#f0abfc;margin-bottom:8px;line-height:1.3;
+}
+.jj-body .sl-card-meta{
+  font-size:13px;color:#c4b5fd;margin-bottom:12px;
+}
+.jj-body .sl-vocab-row{
+  display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;
+}
+.jj-body .sl-vocab-badge{
+  background:rgba(240,171,252,0.15);border:1px solid rgba(240,171,252,0.4);
+  border-radius:20px;padding:4px 12px;font-size:12px;color:#f0abfc;
+}
+.jj-body .sl-listen-btn{
+  display:inline-block;background:linear-gradient(135deg,#d946ef,#a855f7);
+  color:#fff;border:none;border-radius:16px;padding:14px 28px;font-size:16px;
+  font-family:'Fredoka One',cursive;cursor:pointer;
+  text-align:center;width:100%;min-height:64px;
+}
+.jj-body .sl-listen-btn:hover{opacity:0.9;}
+.jj-body .sl-empty{
+  text-align:center;padding:80px 20px;color:#a78bfa;font-size:16px;line-height:2;
+}
+.jj-body .sl-back{
+  display:inline-block;margin-bottom:16px;color:#f0abfc;font-size:14px;
+  text-decoration:none;cursor:pointer;
+}
+
+/* ── Loading spinner ── */
+.sl-loading{text-align:center;padding:80px 20px;}
+.sl-spinner{
+  display:inline-block;width:40px;height:40px;
+  border:4px solid rgba(255,255,255,0.2);border-top-color:#f59e0b;
+  border-radius:50%;animation:sl-spin 0.8s linear infinite;
+}
+.jj-body .sl-spinner{border-top-color:#f0abfc;}
+@keyframes sl-spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div id="app" class="buggsy-body">
+  <div class="sl-loading">
+    <div class="sl-spinner"></div>
+    <p style="margin-top:16px;font-size:10px;color:#94a3b8;">Loading stories...</p>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   Story Library v1 — ES5 ONLY (Fire Stick / Fully Kiosk safe)
+   ══════════════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+
+  // ── Parse URL params (ES5 safe) ──
+  function getParam(name) {
+    var match = new RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match ? decodeURIComponent(match[1]) : '';
+  }
+
+  var child = (getParam('child') || 'buggsy').toLowerCase();
+  var mode = child === 'jj' ? 'listen' : 'bedtime';
+  var app = document.getElementById('app');
+
+  // Apply correct theme class
+  app.className = child === 'jj' ? 'jj-body' : 'buggsy-body';
+
+  // ── Build the page ──
+  function render(stories) {
+    var html = '';
+
+    // Back link
+    html += '<a class="sl-back" onclick="history.back()">&larr; Back</a>';
+
+    // Header
+    html += '<div class="sl-header">';
+    if (child === 'jj') {
+      html += '<div class="sl-title">Story Time!</div>';
+      html += '<div class="sl-subtitle">Pick a story to listen to</div>';
+    } else {
+      html += '<div class="sl-title">STORY LIBRARY</div>';
+      html += '<div class="sl-subtitle">BEDTIME READING MISSIONS</div>';
+    }
+    html += '</div>';
+
+    // Empty state
+    if (!stories || stories.length === 0) {
+      html += '<div class="sl-empty">';
+      html += 'No stories loaded yet.<br>Ask Dad!';
+      html += '</div>';
+      app.innerHTML = html;
+      return;
+    }
+
+    // Story grid
+    html += '<div class="sl-grid">';
+    for (var i = 0; i < stories.length; i++) {
+      var s = stories[i];
+      html += buildCard(s);
+    }
+    html += '</div>';
+
+    app.innerHTML = html;
+  }
+
+  function buildCard(s) {
+    var c = '';
+    c += '<div class="sl-card" onclick="launchStory(\'' + escapeAttr(s.storyKey) + '\')">';
+    c += '<div class="sl-card-title">' + escapeHtml(s.title) + '</div>';
+    c += '<div class="sl-card-meta">';
+    c += escapeHtml(s.character) + ' &bull; ';
+    c += s.sceneCount + ' scenes &bull; ';
+    c += s.wordCount + ' words';
+    c += '</div>';
+
+    // Vocab badges
+    if (s.vocabWords && s.vocabWords.length > 0) {
+      c += '<div class="sl-vocab-row">';
+      for (var v = 0; v < s.vocabWords.length; v++) {
+        c += '<span class="sl-vocab-badge">' + escapeHtml(s.vocabWords[v]) + '</span>';
+      }
+      c += '</div>';
+    }
+
+    // Action button
+    if (child === 'jj') {
+      c += '<button class="sl-listen-btn" type="button">Listen</button>';
+    } else {
+      c += '<button class="sl-read-btn" type="button">READ</button>';
+    }
+    c += '</div>';
+    return c;
+  }
+
+  // ── HTML escape helpers (ES5) ──
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  function escapeAttr(str) {
+    return escapeHtml(str).replace(/'/g, '&#39;');
+  }
+
+  // ── Launch story reader ──
+  window.launchStory = function(storyKey) {
+    var base = window.location.href.split('?')[0];
+    // If we're in an iframe or GAS context, use google.script.run host
+    var url = base + '?page=story&story=' + encodeURIComponent(storyKey) +
+              '&mode=' + encodeURIComponent(mode) +
+              '&child=' + encodeURIComponent(child);
+    window.location.href = url;
+  };
+
+  // ── Fetch stories from server ──
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(data) { render(data); })
+      .withFailureHandler(function(err) {
+        render([]);
+        if (typeof console !== 'undefined') console.log('Story load error: ' + err.message);
+      })
+      .listStoredStoriesSafe();
+  } else {
+    // Fallback for proxy/Cloudflare: fetch via API endpoint
+    var xhr = new XMLHttpRequest();
+    var apiBase = window.location.href.split('?')[0];
+    xhr.open('GET', apiBase + '?action=api&fn=listStoredStoriesSafe&args=[]', true);
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4) {
+        if (xhr.status === 200) {
+          try {
+            var data = JSON.parse(xhr.responseText);
+            render(data);
+          } catch (e) {
+            render([]);
+          }
+        } else {
+          render([]);
+        }
+      }
+    };
+    xhr.send();
+  }
+})();
+</script>
+</body>
+</html>

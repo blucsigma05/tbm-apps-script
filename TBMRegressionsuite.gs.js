@@ -479,7 +479,8 @@ function runEnvironmentAssertions_(results) {
       'getSimulatorDataSafe','getWeeklyTrackerDataSafe','getBoardDataSafe','getSpineHeartbeatSafe',
       'getCashFlowForecastSafe','getCloseHistoryDataSafe','getMERGateStatusSafe',
       'getSubscriptionDataSafe','getSystemHealthSafe','khAddBonusTaskSafe',
-      'khDebitScreenTimeSafe','khSetBankOpeningSafe'
+      'khDebitScreenTimeSafe','khSetBankOpeningSafe',
+      'listStoredStoriesSafe','getStoredStorySafe','getTodayContentSafe','seedWeek1CurriculumSafe'
     ];
     var missing = [];
     for (var i = 0; i < fns.length; i++) {

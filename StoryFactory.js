@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ============================================================
 // STORY FACTORY — Google Apps Script Agent
-// Version: 7.0
+// Version: 8.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 7; }
+function getStoryFactoryVersion() { return 8; }
 
 var CONFIG = {
 GEMINI_API_KEY:  PropertiesService.getScriptProperties().getProperty('JJ Stories'),
@@ -1285,6 +1285,73 @@ Logger.log(facts[k]);
 
 Logger.log('=== Memory Fetch Complete ===');
 }
+
+// ── v8: LIST STORED STORIES FROM SCRIPT PROPERTIES ──────────────
+// Stories are stored as JSON in Script Properties with keys like STORY_<key>.
+// Each property value is a JSON string: { title, character, scenes: [...], vocab: [...], wordCount, ... }
+// Returns an array of story metadata objects for the Story Library UI.
+
+function listStoredStories() {
+  var props = PropertiesService.getScriptProperties().getProperties();
+  var stories = [];
+
+  var keys = Object.keys(props);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    if (key.indexOf('STORY_') !== 0) continue;
+
+    try {
+      var data = JSON.parse(props[key]);
+      var sceneCount = (data.scenes && data.scenes.length) ? data.scenes.length : 0;
+      var vocabList = data.vocab || data.vocabulary || [];
+      var wordCount = data.wordCount || 0;
+
+      // If wordCount not pre-computed, estimate from scene text
+      if (!wordCount && data.scenes) {
+        for (var s = 0; s < data.scenes.length; s++) {
+          var txt = data.scenes[s].text || '';
+          wordCount += txt.split(/\s+/).length;
+        }
+      }
+
+      stories.push({
+        storyKey: key,
+        title: data.title || 'Untitled Story',
+        character: data.character || 'Unknown',
+        sceneCount: sceneCount,
+        vocabWords: vocabList,
+        wordCount: wordCount,
+        tone: data.tone || '',
+        topic: data.topic || ''
+      });
+    } catch (e) {
+      Logger.log('listStoredStories: skipped malformed property ' + key + ': ' + e.message);
+    }
+  }
+
+  // Sort by title alphabetically
+  stories.sort(function(a, b) {
+    return a.title < b.title ? -1 : a.title > b.title ? 1 : 0;
+  });
+
+  return stories;
+}
+
+
+// ── v8: GET SINGLE STORY FROM SCRIPT PROPERTIES ─────────────────
+// Returns the full story JSON for a given key, or null if not found.
+
+function getStoredStory(storyKey) {
+  var val = PropertiesService.getScriptProperties().getProperty(storyKey);
+  if (!val) return null;
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    Logger.log('getStoredStory: malformed JSON for ' + storyKey + ': ' + e.message);
+    return null;
+  }
+}
+
 
 // ── AUTHORIZE DRIVE (run once) ──
 

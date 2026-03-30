@@ -1,13 +1,13 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v50 — Apps Script Router (TBM Consolidated)
+// Code.gs v51 — Apps Script Router (TBM Consolidated)
 // ════════════════════════════════════════════════════════════════════
 
 // TAB_MAP — REMOVED (P2/#58 Wave 1). DataEngine.gs owns the canonical TAB_MAP.
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeGsVersion() { return 50; }
+function getCodeGsVersion() { return 51; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -222,7 +222,9 @@ function servePage(page, e) {
     'dashboard': { file: 'DesignDashboard', title: 'Design Dashboard — Ring Quest Creator' },
     'facts':     { file: 'fact-sprint',    title: 'Fact Sprint — Math Drill' },
     'reading':   { file: 'reading-module', title: 'Reading Module — Thompson Education' },
-    'writing':   { file: 'writing-module', title: 'Writing Module — Thompson Education' }
+    'writing':   { file: 'writing-module', title: 'Writing Module — Thompson Education' },
+    'story-library': { file: 'StoryLibrary', title: 'Story Library — Thompson Family Stories' },
+    'story':     { file: 'StoryLibrary', title: 'Story Library — Thompson Family Stories' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -271,7 +273,8 @@ function serveData(e) {
       var routes = {
         'vein': 'TheVein', 'pulse': 'ThePulse', 'vault': 'Vault',
         'kidshub': 'KidsHub', 'spine': 'TheSpine', 'soul': 'TheSoul',
-        'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse'
+        'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse',
+        'story-library': 'StoryLibrary', 'story': 'StoryLibrary'
       };
       var filename = routes[page] || 'ThePulse';
       try {
@@ -327,6 +330,8 @@ function serveData(e) {
         'updateFamilyNoteSafe': updateFamilyNoteSafe,
         'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
         'getVaultDataSafe': getVaultDataSafe, 'runStoryFactorySafe': runStoryFactorySafe,
+        'listStoredStoriesSafe': listStoredStoriesSafe, 'getStoredStorySafe': getStoredStorySafe,
+        'getTodayContentSafe': getTodayContentSafe, 'seedWeek1CurriculumSafe': seedWeek1CurriculumSafe,
         'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe,
         'runTestsSafe': runTestsSafe
       };
@@ -831,6 +836,30 @@ function runStoryFactorySafe(topic, character, tone) {
   });
 }
 
+// v51: Story Library safe wrappers
+function listStoredStoriesSafe() {
+  return withMonitor_('listStoredStoriesSafe', function() {
+    return listStoredStories();
+  });
+}
+function getStoredStorySafe(storyKey) {
+  return withMonitor_('getStoredStorySafe', function() {
+    return getStoredStory(storyKey);
+  });
+}
+
+// v51: Curriculum safe wrappers
+function getTodayContentSafe(child) {
+  return withMonitor_('getTodayContentSafe', function() {
+    return getTodayContent_(child);
+  });
+}
+function seedWeek1CurriculumSafe() {
+  return withMonitor_('seedWeek1CurriculumSafe', function() {
+    return seedWeek1Curriculum();
+  });
+}
+
 // v44: Deployed versions — calls all get*Version() functions from GASHardening
 function getDeployedVersionsSafe() {
   return withMonitor_('getDeployedVersionsSafe', function() {
@@ -1018,7 +1047,13 @@ function healthCheck() {
     // v43: Story Factory
     'runStoryFactory', 'runStoryFactorySafe',
     // v44: Deployed Versions
-    'getDeployedVersions', 'getDeployedVersionsSafe'
+    'getDeployedVersions', 'getDeployedVersionsSafe',
+    // v51: Story Library + Curriculum
+    'listStoredStories', 'listStoredStoriesSafe',
+    'getStoredStory', 'getStoredStorySafe',
+    'getTodayContent_', 'getTodayContentSafe',
+    'ensureCurriculumTab_', 'seedWeek1Curriculum', 'seedWeek1CurriculumSafe',
+    'addBedtimeStoryChore'
   ];
   var allOk = true;
   for (var fi = 0; fi < fns.length; fi++) {
@@ -1030,7 +1065,7 @@ function healthCheck() {
   }
 
   Logger.log('─── HTML Files (2-Surface Architecture) ───');
-  var activeFiles = ['TheVein', 'ThePulse', 'Vault', 'KidsHub', 'TheSpine', 'TheSoul'];
+  var activeFiles = ['TheVein', 'ThePulse', 'Vault', 'KidsHub', 'TheSpine', 'TheSoul', 'StoryLibrary'];
   for (var ai = 0; ai < activeFiles.length; ai++) {
     var fname = activeFiles[ai];
     try {
@@ -1319,4 +1354,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v50
+// END OF FILE — Code.gs v51
