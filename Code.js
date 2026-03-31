@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v56 — Apps Script Router (TBM Consolidated)
+// Code.gs v57 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 56; }
+function getCodeVersion() { return 57; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -215,6 +215,7 @@ function servePage(page, e) {
     'kidshub':  { file: 'KidsHub',        title: 'Kids Hub — Ring Quest' },
     'buggsy':   { file: 'KidsHub',        title: '⭕ Buggsy — Ring Quest', child: 'buggsy' },
     'jj':       { file: 'KidsHub',        title: '⭐ JJ\'s Sparkle Stars', child: 'jj' },
+    'parent':   { file: 'KidsHub',        title: '⚙ Kids Hub — Parent Dashboard', child: 'buggsy', view: 'parent' },
     'spine':    { file: 'TheSpine',       title: 'The Spine — Thompson Office Display' },
     'soul':     { file: 'TheSoul',        title: 'The Soul — Thompson Family Display' },
     'debt':     { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
@@ -243,9 +244,9 @@ function servePage(page, e) {
         .setTitle(route.title)
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
-    if (page === 'kidshub' || page === 'buggsy' || page === 'jj') {
+    if (page === 'kidshub' || page === 'buggsy' || page === 'jj' || page === 'parent') {
       var child = (route && route.child) || (e && e.parameter && e.parameter.child) || 'buggsy';
-      var view  = (e && e.parameter && e.parameter.view)  || 'kid';
+      var view  = (route && route.view) || (e && e.parameter && e.parameter.view)  || 'kid';
       var tmpl = HtmlService.createTemplateFromFile('KidsHub');
       tmpl.INIT_CHILD = child.toLowerCase();
       tmpl.INIT_VIEW  = view.toLowerCase();
@@ -280,18 +281,18 @@ function serveData(e) {
         'vein': 'TheVein', 'pulse': 'ThePulse', 'vault': 'Vault',
         'kidshub': 'KidsHub', 'spine': 'TheSpine', 'soul': 'TheSoul',
         'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse',
-        'story-library': 'StoryLibrary',
+        'parent': 'KidsHub', 'story-library': 'StoryLibrary',
         'comic-studio': 'ComicStudio', 'progress': 'ProgressReport',
         'story': 'StoryReader'
       };
       var filename = routes[page] || 'ThePulse';
       try {
         var content;
-        if (page === 'kidshub' || page === 'buggsy' || page === 'jj') {
+        if (page === 'kidshub' || page === 'buggsy' || page === 'jj' || page === 'parent') {
           var tmpl = HtmlService.createTemplateFromFile('KidsHub');
           var _childParam = page === 'jj' ? 'jj' : (page === 'buggsy' ? 'buggsy' : (e.parameter.child || 'buggsy'));
           tmpl.INIT_CHILD = _childParam.toLowerCase();
-          tmpl.INIT_VIEW  = (e.parameter.view  || 'kid').toLowerCase();
+          tmpl.INIT_VIEW  = page === 'parent' ? 'parent' : (e.parameter.view  || 'kid').toLowerCase();
           content = tmpl.evaluate().getContent();
         } else if (page === 'vault') {
           var tmpl = HtmlService.createTemplateFromFile('Vault');
@@ -1638,4 +1639,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v56
+// END OF FILE — Code.gs v57

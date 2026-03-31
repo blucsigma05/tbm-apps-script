@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmRegressionSuite.gs v2 — Phase A3: Post-Deploy Behavioral Assertions
+// tbmRegressionSuite.gs v3 — Phase A3: Post-Deploy Behavioral Assertions
 // WRITES TO: (none — read-only assertions)
 // READS FROM: All sheets (for regression assertions)
 // ════════════════════════════════════════════════════════════════════
@@ -20,7 +20,7 @@
 // USAGE: Run tbmRegressionSuite() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getRegressionSuiteVersion() { return 2; }
+function getRegressionSuiteVersion() { return 3; }
 
 /**
  * Main entry point. Run after every deploy.
@@ -543,6 +543,30 @@ function runEnvironmentAssertions_(results) {
     results.assertions.push(a);
   })();
 
+  // ── ENV-006B: Wiring — every google.script.run has withFailureHandler ──
+  (function() {
+    var a = { id: 'ENV-006B', category: 'wiring', description: 'Every google.script.run call has withFailureHandler', status: 'PASS', details: '' };
+    var htmlFiles = ['KidsHub', 'ThePulse', 'TheVein', 'TheSoul', 'TheSpine'];
+    var violations = [];
+    for (var f = 0; f < htmlFiles.length; f++) {
+      try {
+        var content = HtmlService.createHtmlOutputFromFile(htmlFiles[f]).getContent();
+        var runCount = (content.match(/google\.script\.run/g) || []).length;
+        var handlerCount = (content.match(/withFailureHandler/g) || []).length;
+        if (runCount !== handlerCount) {
+          violations.push(htmlFiles[f] + ': ' + runCount + ' run calls but ' + handlerCount + ' failure handlers');
+        }
+      } catch(e) { /* file may not exist, skip */ }
+    }
+    if (violations.length > 0) {
+      a.status = 'FAIL';
+      a.details = violations.join('; ');
+    } else {
+      a.details = 'All HTML files have matching withFailureHandler counts.';
+    }
+    results.assertions.push(a);
+  })();
+
   // ── ENV-007: DebtModel Column O mapping (SoFi incident prevention)
   // The $72K SoFi missing-debt incident was caused by Column O mismatch.
   (function() {
@@ -763,4 +787,4 @@ function regressionEnvOnly() {
 }
 
 
-// END OF FILE — tbmRegressionSuite.gs v2
+// END OF FILE — tbmRegressionSuite.gs v3
