@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="tbm-version" content="v61">
 <title>The Vein v61 — Household Command Center</title>
 <!-- TheVein v61 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -678,6 +679,32 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
   <div class="fnote-preview" id="fnotePreview"><span>Shows on kitchen &amp; office displays</span></div>
 </div>
 
+<!-- ═══ Dinner Plan (v61) ═══ -->
+<div class="fnote-wrap" id="dinnerWrap">
+  <div class="fnote-header">
+    <div class="fnote-title">&#x1F37D;&#xFE0F; Tonight's Dinner</div>
+    <div class="fnote-status" id="dinnerStatus"></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+    <div style="flex:2;min-width:140px;">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Meal</div>
+      <input type="text" id="dinnerMeal" class="fnote-input" placeholder="What's for dinner?" maxlength="200" style="width:100%;resize:none;height:36px;padding:6px 10px;">
+    </div>
+    <div style="flex:0 0 90px;">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Cook</div>
+      <select id="dinnerCook" style="width:100%;height:36px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;">
+        <option value="JT">JT</option>
+        <option value="LT">LT</option>
+      </select>
+    </div>
+    <div style="flex:2;min-width:120px;">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Notes</div>
+      <input type="text" id="dinnerNotes" class="fnote-input" placeholder="Optional" maxlength="300" style="width:100%;resize:none;height:36px;padding:6px 10px;">
+    </div>
+    <button class="fnote-save" id="dinnerSave" onclick="saveDinner()" style="height:36px;">Save</button>
+  </div>
+</div>
+
 <!-- ═══ Kids Hub Widget ═══ -->
 <div class="kids-widget" id="kidsHubWidget" style="position:relative;z-index:2;">
   <div class="kids-widget-header">
@@ -687,6 +714,10 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
     </div>
     <div id="kidsAlertBadge" style="display:none" class="kids-alert-badge">
       — pending
+    </div>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <img class="kid-avatar" src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" alt="Buggsy" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid #f5d58a;box-shadow:0 1px 4px rgba(0,0,0,0.12)">
+      <img class="kid-avatar" src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" alt="JJ" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid #f5b8cc;box-shadow:0 1px 4px rgba(0,0,0,0.12)">
     </div>
   </div>
   <div id="kidsWidgetBody">
@@ -1046,6 +1077,7 @@ REFRESH_MINS: 0,
 
 var IS_EMBEDDED=(function(){try{return!!google.script.run;}catch(e){return false;}})();
 // v61: Confidence Rail + Graceful Degradation
+var TBM_VERSION = 'v61';
 var _veinLastFetch = null;
 var _veinLastGoodEngine = null;
 function markVeinFresh() {
@@ -1724,7 +1756,7 @@ $('footerSrc').textContent='Source: Tiller BudgetMaster · '+d.month+' '+d.year+
 // v25 FIX: dynamic footer version tag reads DE version from _meta
 var _vTag=$('veinVersionTag');
 if(_vTag){var _nowStr=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});// v35: footer version tag
-_vTag.textContent='Updated '+_nowStr+(d._meta?' \u00b7 DE v'+(d._meta.version||'?'):'')+ ' \u00b7 The Vein v61';}
+_vTag.textContent='Updated '+_nowStr+(d._meta?' \u00b7 DE v'+(d._meta.version||'?'):'')+ ' \u00b7 The Vein '+TBM_VERSION;}
 $('badgeWrap').innerHTML=live?'':
 '<span style="font-size:8px;padding:2px 6px;background:var(--gold-wash);color:var(--gold);border-radius:4px;">Snapshot</span>';
 }
@@ -2153,6 +2185,41 @@ function saveFamilyNote() {
       status.className = 'fnote-status show';
     })
     .updateFamilyNoteSafe(val);
+}
+
+// v61: Dinner Plan save handler
+function saveDinner() {
+  var mealEl = document.getElementById('dinnerMeal');
+  var cookEl = document.getElementById('dinnerCook');
+  var notesEl = document.getElementById('dinnerNotes');
+  var btn = document.getElementById('dinnerSave');
+  var status = document.getElementById('dinnerStatus');
+  if (!mealEl || !btn) return;
+  var meal = mealEl.value.trim();
+  if (!meal) { status.textContent = 'Enter a meal name'; status.className = 'fnote-status show'; return; }
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  google.script.run
+    .withSuccessHandler(function(result) {
+      btn.disabled = false;
+      if (result && result.success) {
+        btn.textContent = 'Save';
+        status.textContent = 'Saved \u2713';
+        status.className = 'fnote-status show';
+        setTimeout(function() { status.className = 'fnote-status'; }, 2500);
+      } else {
+        btn.textContent = 'Save';
+        status.textContent = (result && result.message) || 'Error';
+        status.className = 'fnote-status show';
+      }
+    })
+    .withFailureHandler(function() {
+      btn.disabled = false;
+      btn.textContent = 'Save';
+      status.textContent = 'Failed \u2014 try again';
+      status.className = 'fnote-status show';
+    })
+    .updateMealPlanSafe({ meal: meal, cook: cookEl.value, notes: notesEl.value.trim() });
 }
 
 /* ——— TREND CHARTS ——— */

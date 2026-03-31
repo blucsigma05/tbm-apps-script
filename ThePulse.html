@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="tbm-version" content="v58">
 <title>The Pulse v58 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -500,6 +501,7 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
 <div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 
 <script>
+var TBM_VERSION = 'v58';
 var _lastFetchTime = null;
 var _lastGoodSim = null;
 
@@ -731,7 +733,7 @@ function render(){
   if(!showingCurrent){heroDate='N/A';heroMonths='—';cfpStr='N/A';}
   var html='';
   // HEADER
-  html+='<div class="header"><div class="h-eyebrow">The Pulse \u00B7 v58</div><div class="h-title">Thompson Household</div>';
+  html+='<div class="header"><div class="h-eyebrow">The Pulse \u00B7 '+TBM_VERSION+'</div><div class="h-title">Thompson Household</div>';
   var _headerDate=(customRange&&_customRangeData&&_customRangeData.periodLabel)?_customRangeData.periodLabel:(!showingCurrent&&monthData.periodLabel)?monthData.periodLabel:(MONTHS[now.getMonth()]+' '+now.getFullYear()+' · Day '+now.getDate());
   html+='<div class="h-sub">'+_headerDate+'</div>';
   html+='<div class="h-actions"><button class="refresh-btn" onclick="loadData()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></button><div class="h-pulse"></div></div></div>';
@@ -758,6 +760,19 @@ function render(){
   html+='<div id="kidsAlertBadge" style="display:none" class="kids-alert-badge">— pending</div>';
   html+='</div>';
   html+='<div id="kidsWidgetBody"><div class="kids-loading">Loading kids data...</div></div>';
+  html+='</div></div>';
+
+  // DINNER PLAN INPUT
+  html+='<div class="sec a1"><div class="sec-label">Dinner Plan</div>';
+  html+='<div style="background:#FFFDF9;border-radius:12px;padding:14px 16px;border:1px solid #e8e4dc;">';
+  html+='<div style="font-weight:700;font-size:14px;color:#1e3a5f;margin-bottom:10px;">&#x1F37D;&#xFE0F; Tonight\'s Dinner</div>';
+  html+='<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">';
+  html+='<div style="flex:2;min-width:120px;"><div style="font-size:10px;color:#94a3b8;margin-bottom:2px;">Meal</div><input type="text" id="dinnerMeal" placeholder="What\'s for dinner?" maxlength="200" style="width:100%;height:36px;padding:6px 10px;border-radius:8px;border:1px solid #e8e4dc;font-family:DM Sans,sans-serif;font-size:13px;"></div>';
+  html+='<div style="flex:0 0 80px;"><div style="font-size:10px;color:#94a3b8;margin-bottom:2px;">Cook</div><select id="dinnerCook" style="width:100%;height:36px;padding:4px 8px;border-radius:8px;border:1px solid #e8e4dc;font-family:DM Sans,sans-serif;font-size:13px;"><option value="JT">JT</option><option value="LT">LT</option></select></div>';
+  html+='<div style="flex:2;min-width:100px;"><div style="font-size:10px;color:#94a3b8;margin-bottom:2px;">Notes</div><input type="text" id="dinnerNotes" placeholder="Optional" maxlength="300" style="width:100%;height:36px;padding:6px 10px;border-radius:8px;border:1px solid #e8e4dc;font-family:DM Sans,sans-serif;font-size:13px;"></div>';
+  html+='<button id="dinnerSaveBtn" onclick="saveDinnerPulse()" style="height:36px;padding:0 16px;border-radius:8px;border:none;background:var(--green,#6B9D7D);color:white;font-weight:700;font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;">Save</button>';
+  html+='</div>';
+  html+='<div id="dinnerStatus" style="font-size:11px;margin-top:6px;color:#94a3b8;min-height:16px;"></div>';
   html+='</div></div>';
 
   // 1. QUICK PULSE CARDS
@@ -1098,6 +1113,37 @@ function _initKidsWidgetCore() {
       if (b) b.innerHTML = '<div class="kids-error">Kids Hub unavailable: ' + (e.message || 'connection error') + '</div>';
     })
     .getKidsHubWidgetDataSafe('summary');
+}
+
+// v58: Dinner plan save handler
+function saveDinnerPulse() {
+  var mealEl = document.getElementById('dinnerMeal');
+  var cookEl = document.getElementById('dinnerCook');
+  var notesEl = document.getElementById('dinnerNotes');
+  var btn = document.getElementById('dinnerSaveBtn');
+  var status = document.getElementById('dinnerStatus');
+  if (!mealEl || !btn) return;
+  var meal = mealEl.value.trim();
+  if (!meal) { if (status) status.textContent = 'Enter a meal name'; return; }
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  google.script.run
+    .withSuccessHandler(function(result) {
+      btn.disabled = false;
+      btn.textContent = 'Save';
+      if (result && result.success) {
+        if (status) { status.textContent = 'Saved \u2713'; status.style.color = 'var(--green,#6B9D7D)'; }
+        setTimeout(function() { if (status) status.textContent = ''; }, 2500);
+      } else {
+        if (status) { status.textContent = (result && result.message) || 'Error'; status.style.color = '#d97706'; }
+      }
+    })
+    .withFailureHandler(function() {
+      btn.disabled = false;
+      btn.textContent = 'Save';
+      if (status) { status.textContent = 'Failed \u2014 try again'; status.style.color = '#d97706'; }
+    })
+    .updateMealPlanSafe({ meal: meal, cook: cookEl.value, notes: notesEl.value.trim() });
 }
 
 function _kidsGatePeriod(req) {

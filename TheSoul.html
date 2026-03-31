@@ -921,7 +921,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
       <div class="identity-photo">
         <div class="identity-photo-inner">
           <img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson Family Crest" style="width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 10px 22px rgba(16,8,31,.28))" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-          <div class="family-crest" style="display:none" aria-hidden="true">
+          <div class="family-crest" aria-hidden="true">
             <svg viewBox="0 0 240 280" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <linearGradient id="soulCrestField" x1="0" y1="0" x2="0" y2="1">
@@ -1346,8 +1346,15 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
     }
 
     var total = householdEvents.length + kidsEvents.length;
-    $('todayMain').textContent = total ? total + ' event' + (total !== 1 ? 's' : '') : 'Clear day';
-    $('todaySub').textContent = 'Household ' + householdEvents.length + ' \u00B7 Kids ' + kidsEvents.length;
+    // v78: Dinner display — show tonight's meal in the Today chip when set
+    var dinner = board.dinner;
+    if (dinner && dinner.meal) {
+      $('todayMain').textContent = '\uD83C\uDF7D\uFE0F ' + dinner.meal;
+      $('todaySub').textContent = (dinner.cook ? dinner.cook + ' cooking' : '') + (dinner.notes ? ' \u00B7 ' + dinner.notes : '');
+    } else {
+      $('todayMain').textContent = total ? total + ' event' + (total !== 1 ? 's' : '') : 'Clear day';
+      $('todaySub').textContent = 'Household ' + householdEvents.length + ' \u00B7 Kids ' + kidsEvents.length;
+    }
 
     if(nextEvent){
       $('nextMain').textContent = evTitle(nextEvent);

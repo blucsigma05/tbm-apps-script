@@ -223,7 +223,9 @@ var TAB_MAP = {
   'Feedback':         '💻 Feedback',
   'MealPlan':         '💻 MealPlan',
   // 📋 Board Config
-  'Board_Config':     '📋 Board_Config'
+  'Board_Config':     '📋 Board_Config',
+  // 💻 Meal Plan (v78)
+  'MealPlan':         '💻 MealPlan'
 };
 
 // v73: Request-scoped sheet data cache — same pattern as KidsHub v25.
@@ -3086,7 +3088,37 @@ function getBoardData() {
     if (typeof logError_ === 'function') logError_('de_getBoardData_FamilyNote', e);
   }
 
-  // ── 8. Return payload ─────────────────────────────────────────────
+  // ── 8. Tonight's dinner from MealPlan tab (v78) ────────────────
+  var dinner = null;
+  try {
+    var mpData = de_readSheet_('MealPlan');
+    if (mpData && mpData.length > 1) {
+      var todayStr = now.getFullYear() + '-' + (now.getMonth() + 1 < 10 ? '0' : '') + (now.getMonth() + 1) + '-' + (now.getDate() < 10 ? '0' : '') + now.getDate();
+      for (var mp = 1; mp < mpData.length; mp++) {
+        var mpDate = mpData[mp][0];
+        if (mpDate instanceof Date) {
+          var mpY = mpDate.getFullYear();
+          var mpM = mpDate.getMonth() + 1;
+          var mpD = mpDate.getDate();
+          mpDate = mpY + '-' + (mpM < 10 ? '0' : '') + mpM + '-' + (mpD < 10 ? '0' : '') + mpD;
+        }
+        if (String(mpDate).indexOf(todayStr) === 0) {
+          dinner = {
+            meal: String(mpData[mp][1] || ''),
+            cook: String(mpData[mp][2] || ''),
+            notes: String(mpData[mp][3] || ''),
+            updatedBy: String(mpData[mp][4] || ''),
+            updatedAt: String(mpData[mp][5] || '')
+          };
+          break;
+        }
+      }
+    }
+  } catch(e) {
+    if (typeof logError_ === 'function') logError_('de_getBoardData_Dinner', e);
+  }
+
+  // ── 9. Return payload ─────────────────────────────────────────────
   return {
     greeting:         greeting,
     date:             dateStr,
@@ -3110,8 +3142,31 @@ function getBoardData() {
         return ageHours > 6;
       } catch(e) { return false; }
     })(),
+    dinner:           dinner,
     refreshedAt:      now.toISOString()
   };
+}
+
+// v78: Setup MealPlan sheet — run once from editor
+function setupMealPlanSheet() {
+  var ss = getDESS_();
+  var tabName = TAB_MAP['MealPlan'] || '💻 MealPlan';
+  var sheet = ss.getSheetByName(tabName);
+  if (!sheet) {
+    sheet = ss.insertSheet(tabName);
+    sheet.appendRow(['Date', 'Meal', 'Cook', 'Notes', 'UpdatedBy', 'UpdatedAt']);
+    sheet.setFrozenRows(1);
+    sheet.getRange('1:1').setFontWeight('bold');
+    sheet.setColumnWidth(1, 120);
+    sheet.setColumnWidth(2, 250);
+    sheet.setColumnWidth(3, 80);
+    sheet.setColumnWidth(4, 250);
+    sheet.setColumnWidth(5, 100);
+    sheet.setColumnWidth(6, 160);
+    Logger.log('MealPlan sheet created: ' + tabName);
+  } else {
+    Logger.log('MealPlan sheet already exists.');
+  }
 }
 
 
