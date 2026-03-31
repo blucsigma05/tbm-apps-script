@@ -5,6 +5,7 @@ node_modules/**
 *.jsx
 generate-audio.js
 cloudflare-worker.js
+wrangler.toml
 phrases.json
 audit-source.sh
 audit-wiring.sh
