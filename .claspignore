@@ -4,6 +4,7 @@ node_modules/**
 *.md
 *.jsx
 generate-audio.js
+cloudflare-worker.js
 phrases.json
 audit-source.sh
 audit-wiring.sh
