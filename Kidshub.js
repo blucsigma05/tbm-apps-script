@@ -766,7 +766,8 @@ function readChores_(child, isAll) {
     var rowChild = String(row[khCol_(h, 'Child')] || '').trim();
     var isShared = rowChild.toUpperCase() === 'BOTH';
     if (!isAll && !isShared && rowChild.toLowerCase() !== child) continue;
-    if (String(row[khCol_(h, 'Active')] || '').toUpperCase() !== 'YES') continue;
+    var _activeVal = row[khCol_(h, 'Active')];
+    if (_activeVal !== true && String(_activeVal || '').toUpperCase() !== 'YES') continue;
 
     var freq = String(row[khCol_(h, 'Frequency')] || 'Daily').trim();
 
@@ -853,7 +854,8 @@ function readRewards_(child, isAll) {
     var rChild = String(row[khCol_(h, 'Child')] || '').trim();
     var isShared = rChild.toUpperCase() === 'BOTH';
     if (!isAll && !isShared && rChild.toLowerCase() !== child) continue;
-    if (String(row[khCol_(h, 'Active')] || '').toUpperCase() !== 'YES') continue;
+    var _activeVal = row[khCol_(h, 'Active')];
+    if (_activeVal !== true && String(_activeVal || '').toUpperCase() !== 'YES') continue;
     rewards.push({
       rewardID:  String(row[khCol_(h, 'Reward_ID')]  || ''),
       child:     rChild,
@@ -1147,7 +1149,7 @@ function getRequiredStatus_(child) {
         var rrChild = String(rr[rChildCol] || '').trim();
         var rrIsMatch = rrChild.toLowerCase() === child || rrChild.toUpperCase() === 'BOTH';
         if (!rrIsMatch) continue;
-        if (String(rr[rActiveCol] || '').toUpperCase() !== 'YES') continue;
+        if (rr[rActiveCol] !== true && String(rr[rActiveCol] || '').toUpperCase() !== 'YES') continue;
         var rrDone = rr[rCompCol] === true || String(rr[rCompCol]).toUpperCase() === 'TRUE';
         var rrAppr = rr[rApprCol] === true || String(rr[rApprCol]).toUpperCase() === 'TRUE';
         if (!rrDone || rrAppr) continue;
@@ -1192,7 +1194,8 @@ function readAllowance_(child, isAll) {
     var row = data[i];
     var aChild = String(row[khCol_(h, 'Child')] || '').toLowerCase();
     if (!isAll && aChild !== child) continue;
-    if (String(row[khCol_(h, 'Active')] || '').toUpperCase() !== 'YES') continue;
+    var _activeVal = row[khCol_(h, 'Active')];
+    if (_activeVal !== true && String(_activeVal || '').toUpperCase() !== 'YES') continue;
     allowance[aChild] = {
       weeklyAmount:  Number(row[khCol_(h, 'Weekly_Amount')]) || 0,
       effectiveDate: String(row[khCol_(h, 'Effective_Date')] || '')
@@ -2141,8 +2144,8 @@ function khAddBonusTask(child, taskName, points, icon, timeOfDay) {
       else if (col === 'Money')       row.push(0);
       else if (col === 'Snacks')      row.push(0);
       else if (col === 'Frequency')   row.push('One-Time');
-      else if (col === 'Active')      row.push(true);
-      else if (col === 'Required')    row.push(false);
+      else if (col === 'Active')      row.push('YES');
+      else if (col === 'Required')    row.push('NO');
       else if (col === 'Bonus_Multiplier') row.push(1);
       else if (col === 'Streak_Threshold') row.push(0);
       else if (col === 'Max_Bonus_Per_Week') row.push(0);

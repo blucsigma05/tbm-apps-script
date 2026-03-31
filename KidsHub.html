@@ -148,13 +148,13 @@ body { min-height: 100vh; }
 /* ════════════════════════════════════════
    JJ THEME
    ════════════════════════════════════════ */
-.jj-body { font-family: 'Nunito', sans-serif; min-height: 100vh; background: #1a0a2e; background-image: radial-gradient(ellipse 80% 50% at 25% 15%, rgba(255,182,225,0.3) 0%, transparent 55%), radial-gradient(ellipse 60% 45% at 75% 65%, rgba(167,139,250,0.25) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 50% 40%, rgba(253,224,71,0.08) 0%, transparent 60%), radial-gradient(ellipse 90% 30% at 50% 90%, rgba(236,72,153,0.2) 0%, transparent 50%), linear-gradient(180deg, #1a0a2e 0%, #200e38 50%, #1a0a2e 100%); color: #fff; padding-bottom: 80px; overflow-x: hidden; }
+.jj-body { font-family: 'Nunito', sans-serif; min-height: 100vh; background: #1f0e35; background-image: radial-gradient(ellipse 80% 50% at 25% 15%, rgba(255,182,225,0.25) 0%, transparent 55%), radial-gradient(ellipse 60% 45% at 75% 65%, rgba(167,139,250,0.2) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 50% 40%, rgba(253,224,71,0.06) 0%, transparent 60%), radial-gradient(ellipse 90% 30% at 50% 90%, rgba(236,72,153,0.15) 0%, transparent 50%), linear-gradient(180deg, #1f0e35 0%, #251240 50%, #1f0e35 100%); color: #fff; padding-bottom: 80px; overflow-x: hidden; }
 @keyframes jj-rainbow-shimmer { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
 .jj-body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background:linear-gradient(135deg, rgba(253,224,71,0.03), rgba(236,72,153,0.04), rgba(167,139,250,0.03), rgba(34,211,238,0.02), rgba(253,224,71,0.03)); background-size:400% 400%; animation:jj-rainbow-shimmer 20s ease infinite; }
 .jj-sparkle-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
 .jj-sparkle-bg span { position: absolute; font-size: 14px; opacity: 0; animation: sparkle-drift var(--d, 8s) var(--delay, 0s) infinite ease-in-out; }
 @keyframes sparkle-drift { 0%{opacity:0;transform:translateY(100vh) rotate(0deg) scale(0.5)} 20%{opacity:0.7} 80%{opacity:0.5} 100%{opacity:0;transform:translateY(-20vh) rotate(360deg) scale(1.2)} }
-.jj-body #loading { background: #1a0a2e; }
+.jj-body #loading { background: #1f0e35; }
 .jj-body .load-ring { border-top-color: #ec4899; border-right-color: #a855f7; }
 .jj-body .load-text { font-family: 'Fredoka One', cursive; font-size: 18px; color: #f9a8d4; letter-spacing: 1px; }
 .jj-wrap { max-width: 480px; margin: 0 auto; padding: 0 14px; position: relative; z-index: 1; }
@@ -866,6 +866,21 @@ function pNavGo(page) {
   if (_pNavBaseUrl) { window.top.location.href = _pNavBaseUrl + '?page=' + page + suffix; }
   else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page + suffix; }).getScriptUrlSafe(); }
 }
+window.switchView = function(target) {
+  var _base = _pNavBaseUrl;
+  function go(url) { window.top.location.href = url; }
+  if (_base) {
+    if (target === 'parent') go(_base + '?page=kidshub&view=parent');
+    else if (target === 'buggsy') go(_base + '?page=buggsy');
+    else if (target === 'jj') go(_base + '?page=jj');
+  } else {
+    google.script.run.withSuccessHandler(function(u) {
+      if (target === 'parent') go(u + '?page=kidshub&view=parent');
+      else if (target === 'buggsy') go(u + '?page=buggsy');
+      else if (target === 'jj') go(u + '?page=jj');
+    }).getScriptUrlSafe();
+  }
+};
 
 // v27: Animate number tick-up (ES5 safe, 400ms)
 function animateNumber(el, from, to, fmt) {
@@ -1187,7 +1202,7 @@ function onKidData(raw) {
     if (data.levelsJJ && data.levelsJJ.length) { serverLevelsJJ = data.levelsJJ; }
     console.log('KH_BALANCES', JSON.stringify(balances));
     console.log('KH_TASKS', tasks.length, 'completed:', tasks.filter(function(t){return t.completed;}).length);
-  } catch(e) { console.log('KH_CATCH', e.message); tasks = []; rewards = []; }
+  } catch(e) { console.log('KH_CATCH', e.message, e.stack); }
 
   // v26: Track 10 — detect newly approved tasks for celebration
   var newlyApproved = [];
@@ -1205,7 +1220,16 @@ function onKidData(raw) {
   setSyncState('synced', 'Synced');
   document.getElementById('loading').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  var _savedTab = currentTab;
+  var _pinWasOpen = parentMode || (IS_JJ ? (document.getElementById('jjPinOverlay') && document.getElementById('jjPinOverlay').style.display === 'flex') : (document.getElementById('bPinOverlay') && document.getElementById('bPinOverlay').style.display === 'flex'));
   if (IS_JJ) renderJJ(); else renderBuggsy();
+  if (_savedTab && _savedTab !== 'quests') {
+    if (IS_JJ) jjTab(_savedTab); else bTab(_savedTab);
+  }
+  if (_pinWasOpen) {
+    var _pinEl = document.getElementById(IS_JJ ? 'jjPinOverlay' : 'bPinOverlay');
+    if (_pinEl) { _pinEl.style.display = 'flex'; setTimeout(function() { var _inp = document.getElementById(IS_JJ ? 'jjPinInput' : 'bPinInput'); if (_inp) _inp.focus(); }, 80); }
+  }
 
   // v26: Track 10 — celebrate newly approved tasks
   if (newlyApproved.length > 0 && !IS_PARENT) {
@@ -1282,13 +1306,13 @@ function renderBuggsy() { document.getElementById('app').innerHTML = buildBuggsy
 function buildBuggsyUI() {
   return '<div class="pin-overlay" id="bPinOverlay" style="display:none"><div class="pin-box"><div class="pin-title">🔐 PARENT ACCESS</div><input class="pin-input" type="password" maxlength="6" id="bPinInput" placeholder="••••"><button class="pin-submit" onclick="bSubmitPin()">ENTER</button><button class="pin-cancel" onclick="bCancelPin()">cancel</button><div class="pin-error" id="bPinError" style="display:none">WRONG PIN</div></div></div>'+
   '<div class="b-hdr"><div style="max-width:720px;margin:0 auto"><div class="b-hdr-top"><div class="b-title"><img src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" class="char-avatar" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px"><span style="display:inline-block;width:16px;height:16px;border:3px solid #ffd700;border-radius:50%;box-shadow:0 0 6px rgba(255,215,0,0.4);vertical-align:middle;margin-right:6px"></span>RING<span> QUEST</span></div><button class="b-parent-btn" id="bParentBtn" onclick="bToggleParent()">⚙ PARENT</button></div>'+
-  '<div class="b-stats" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;align-items:stretch;width:100%"><div class="b-stat"><span class="b-stat-icon"><img src="https://i.ibb.co/d0KSS8zh/1773982478792.png" class="char-stat-img" style="width:28px;height:28px;border-radius:50%;object-fit:cover"></span><div><div class="b-stat-val" id="bRings">0</div><div class="b-stat-lbl">RINGS</div></div></div><div class="b-stat"><span class="b-stat-icon">📺</span><div><div class="b-stat-val" id="bTV" style="color:#38bdf8">0</div><div class="b-stat-lbl">TV MIN</div></div></div><div class="b-stat"><span class="b-stat-icon">💵</span><div><div class="b-stat-val" id="bMoney" style="color:#22c55e">$0</div><div class="b-stat-lbl">EARNED</div></div></div><div class="b-refresh-coin" id="bRefreshCoin" onclick="bRefresh()" style="position:static;width:36px;height:36px;border:5px solid #ffd700;border-radius:50%;box-shadow:0 0 10px rgba(255,215,0,0.5),inset 0 0 4px rgba(255,215,0,0.25);background:linear-gradient(135deg,rgba(255,235,100,0.25) 0%,transparent 50%);cursor:pointer;flex-shrink:0;margin-left:8px"></div></div></div></div>'+
+  '<div class="b-stats" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;align-items:stretch;width:100%"><div class="b-stat"><span class="b-stat-icon"><img src="https://i.ibb.co/d0KSS8zh/1773982478792.png" class="char-stat-img" style="width:28px;height:28px;border-radius:50%;object-fit:cover"></span><div><div class="b-stat-val" id="bRings">0</div><div class="b-stat-lbl">RINGS</div></div></div><div class="b-stat"><span class="b-stat-icon">📺</span><div><div class="b-stat-val" id="bTV" style="color:#38bdf8">0</div><div class="b-stat-lbl">TV</div></div></div><div class="b-stat"><span class="b-stat-icon">🎮</span><div><div class="b-stat-val" id="bGame" style="color:#a78bfa">0</div><div class="b-stat-lbl">GAME</div></div></div><div class="b-stat"><span class="b-stat-icon">💵</span><div><div class="b-stat-val" id="bMoney" style="color:#22c55e">$0</div><div class="b-stat-lbl">EARNED</div></div></div><div class="b-refresh-coin" id="bRefreshCoin" onclick="bRefresh()" style="position:static;width:36px;height:36px;border:5px solid #ffd700;border-radius:50%;box-shadow:0 0 10px rgba(255,215,0,0.5),inset 0 0 4px rgba(255,215,0,0.25);background:linear-gradient(135deg,rgba(255,235,100,0.25) 0%,transparent 50%);cursor:pointer;flex-shrink:0;margin-left:8px"></div></div></div></div>'+
   '<div class="b-level"><div class="b-lvl-row"><div class="b-lvl-badge" id="bLvlBadge">1</div><div><div class="b-lvl-name" id="bLvlName">Noob</div><div class="b-lvl-xp" id="bLvlXP">0 rings</div></div><span id="bMasteryRank" style="display:none;font-size:10px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,0.1);padding:2px 8px;border-radius:10px;letter-spacing:0.5px"></span><div class="b-lvl-next" id="bLvlNext"></div></div><div class="b-bar-track"><div class="b-bar-fill" id="bLvlBar" style="width:0%"></div></div><div id="bStreakDisplay" style="display:none;text-align:center;font-size:12px;font-weight:700;color:#f59e0b;padding:4px 0;letter-spacing:0.3px"></div></div>'+
   '<div class="b-tabs"><button class="b-tab active" id="btab-quests" onclick="bTab(\'quests\')">⚔ QUESTS</button><button class="b-tab" id="btab-rewards" onclick="bTab(\'rewards\')">🏆 REWARDS</button><button class="b-tab" id="btab-events" onclick="bTab(\'events\')">✋ ASK</button><button class="b-tab" id="btab-parent" onclick="bTab(\'parent\')" style="display:none">👑 PARENT</button></div>'+
   '<div id="bView-quests"><div class="b-sec"><span class="b-sec-title" id="bQLabel">QUESTS</span><span class="b-sec-badge" id="bQBadge">—</span></div><div class="b-two-col"><div class="b-col-main"><div class="b-sec"><span class="b-sec-title" style="color:#4ade80">⚔ CHALLENGES</span></div><div class="b-list" id="bQuestList"></div></div><div class="b-col-pending"><div class="b-sec"><span class="b-sec-title" style="color:#fbbf24">📦 PENDING</span><span class="b-sec-badge" id="bPendBadge">0</span></div><div class="b-list" id="bPendList"></div></div></div></div>'+
   '<div id="bView-rewards" style="display:none"><div class="b-sec"><span class="b-sec-title">REWARD VAULT</span><span class="b-sec-badge" id="bRBadge">0 RINGS</span></div><div class="b-rewards-grid" id="bRewardGrid"></div></div>'+
   '<div id="bView-events" style="display:none"><div class="b-sec"><span class="b-sec-title">✋ ASK YOUR PARENTS</span></div><div class="b-list"><div class="ask-bank-display" id="bAskBank">BANK: $0.00</div><div class="ev-form"><div class="ev-field"><label class="ev-label">TYPE</label><div class="ask-types" id="bAskTypes"><div class="ask-type-btn active" data-type="Money" onclick="pickAskType(\'b\',\'Money\',this)">💰 MONEY</div><div class="ask-type-btn" data-type="Purchase" onclick="pickAskType(\'b\',\'Purchase\',this)">🛒 BUY</div><div class="ask-type-btn" data-type="Activity" onclick="pickAskType(\'b\',\'Activity\',this)">🎯 DO</div><div class="ask-type-btn" data-type="Other" onclick="pickAskType(\'b\',\'Other\',this)">💬 OTHER</div></div></div><div class="ev-field"><label class="ev-label">WHAT DO YOU WANT?</label><input class="ev-input" type="text" id="bAskTitle" placeholder="What do you want to ask?"></div><div class="ev-field" id="bAskAmountWrap"><label class="ev-label">HOW MUCH?</label><input class="ev-input" type="number" id="bAskAmount" placeholder="$0.00" min="0" step="0.01"></div><div class="ev-field"><label class="ev-label">TELL YOUR PARENTS WHY</label><textarea class="ev-input" id="bAskNotes" rows="2" placeholder="Tell your parents why!" style="resize:none"></textarea></div><button class="b-claim" style="width:100%;padding:12px;font-size:9px;margin-top:6px" onclick="submitAsk(\'buggsy\')">✋ ASK!</button><div class="ev-status" id="bAskStatus" style="display:none"></div></div><div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title">📋 RECENT ASKS</span></div><div id="bRecentAsks"></div><div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title">🎁 I WANT THIS!</span></div><div id="bAskRewards"></div></div></div>'+
-'<div id="bView-parent" style="display:none;padding-top:8px"><div class="b-sec"><span class="b-sec-title">PARENT CONTROLS</span></div><div class="b-parent-panel"><div class="b-pp-inner"><div class="b-pp-title">⚙ MANAGE QUESTS — BUGGSY</div><div class="b-pp-actions"><button class="b-pp-btn blue" onclick="bReset(\'daily\',\'buggsy\')">🔄 RESET DAILY QUESTS</button><button class="b-pp-btn purple" onclick="bReset(\'weekly\',\'buggsy\')">📅 RESET WEEKLY QUESTS</button><button class="b-pp-btn red" onclick="bReset(\'all\',\'buggsy\')">⚠ RESET ALL — BUGGSY</button></div></div></div></div>'+
+'<div id="bView-parent" style="display:none;padding-top:8px"><div class="b-sec"><span class="b-sec-title">PARENT CONTROLS</span></div><div class="b-parent-panel"><div class="b-pp-inner"><div class="b-pp-title">⚙ MANAGE QUESTS — BUGGSY</div><div class="b-pp-actions"><button class="b-pp-btn blue" onclick="bReset(\'daily\',\'buggsy\')">🔄 RESET DAILY QUESTS</button><button class="b-pp-btn purple" onclick="bReset(\'weekly\',\'buggsy\')">📅 RESET WEEKLY QUESTS</button><button class="b-pp-btn red" onclick="bReset(\'all\',\'buggsy\')">⚠ RESET ALL — BUGGSY</button></div><div style="margin-top:12px;text-align:center"><a onclick="window.switchView(\'parent\')" style="color:#a5b4fc;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline">Open Full Parent Dashboard</a></div></div></div></div>'+
   '';
 }
 
@@ -1303,15 +1327,16 @@ function updateBuggsy() {
   // v22: TV reads from Screen Time Bank (deposits - withdrawals), not task tvMinutes
   var tvBank = (screenTimeBank.TV && typeof screenTimeBank.TV.balance === 'number') ? screenTimeBank.TV.balance : 0;
   var gamingBank = (screenTimeBank.Gaming && typeof screenTimeBank.Gaming.balance === 'number') ? screenTimeBank.Gaming.balance : 0;
-  var tv    = tvBank + gamingBank;
   var money = approved.reduce(function(s,t){return s+t.money;},0);
 
   var bRingsEl = document.getElementById('bRings');
   var bTVEl = document.getElementById('bTV');
+  var bGameEl = document.getElementById('bGame');
   var prevRings = parseInt(bRingsEl.textContent) || 0;
   var prevTV = parseInt(bTVEl.textContent) || 0;
   animateNumber(bRingsEl, prevRings, rings);
-  animateNumber(bTVEl, prevTV, tv);
+  animateNumber(bTVEl, prevTV, tvBank);
+  if (bGameEl) { var prevGame = parseInt(bGameEl.textContent) || 0; animateNumber(bGameEl, prevGame, gamingBank); }
   document.getElementById('bMoney').textContent  = '$' + money.toFixed(2);
   document.getElementById('bRBadge').textContent = rings + ' RINGS';
 
@@ -1709,6 +1734,7 @@ function bRefresh() {
   loadKidData();
 }
 function bTab(tab) {
+  currentTab = tab;
   ['quests','rewards','events','parent'].forEach(function(t){
     var btn = document.getElementById('btab-'+t); var view = document.getElementById('bView-'+t);
     if(btn) btn.classList.toggle('active',t===tab); if(view) view.style.display=t===tab?'block':'none';
@@ -1753,7 +1779,7 @@ function buildJJUI() {
   '<div id="jjView-quests" style="margin-top:12px"><div class="jj-sec-title">Your Sparkle Jobs! 💕</div><div class="jj-two-col"><div class="jj-col-main"><div class="jj-sec-title" style="color:#c084fc">🌸 Sparkle Jobs</div><div class="jj-list" id="jjTaskList"></div></div><div class="jj-col-pending"><div class="jj-sec-title" style="color:#f9a8d4">✨ Pending</div><div class="jj-list" id="jjPendList"></div></div></div></div>'+
   '<div id="jjView-rewards" style="display:none;margin-top:12px"><div class="jj-sec-title">Princess Prizes! 👑</div><div class="jj-rewards" id="jjRewards"></div></div>'+
   '<div id="jjView-events" style="display:none;margin-top:12px"><div class="jj-sec-title">Ask Your Parents! ✨</div><div class="jj-list" style="padding:0 14px"><div class="ask-bank-display" id="jjAskBank">Bank: $0.00</div><div class="ev-form"><div class="ev-field"><label class="ev-label">What kind of ask?</label><div class="ask-types" id="jjAskTypes"><div class="ask-type-btn active" data-type="Money" onclick="pickAskType(\'jj\',\'Money\',this)">💰 Money</div><div class="ask-type-btn" data-type="Purchase" onclick="pickAskType(\'jj\',\'Purchase\',this)">🛒 Buy</div><div class="ask-type-btn" data-type="Activity" onclick="pickAskType(\'jj\',\'Activity\',this)">🎯 Do</div><div class="ask-type-btn" data-type="Other" onclick="pickAskType(\'jj\',\'Other\',this)">💬 Other</div></div></div><div class="ev-field"><label class="ev-label">What do you want?</label><input class="ev-input" type="text" id="jjAskTitle" placeholder="What do you want to ask?"></div><div class="ev-field" id="jjAskAmountWrap"><label class="ev-label">How much?</label><input class="ev-input" type="number" id="jjAskAmount" placeholder="$0.00" min="0" step="0.01"></div><div class="ev-field"><label class="ev-label">Tell your parents why!</label><textarea class="ev-input" id="jjAskNotes" rows="2" placeholder="Tell your parents why!" style="resize:none"></textarea></div><button class="jj-do-it-btn" style="width:100%;padding:14px;font-size:15px;margin-top:6px" onclick="submitAsk(\'jj\')">✨ Ask!</button><div class="ev-status" id="jjAskStatus" style="display:none"></div></div><div class="jj-sec-title" style="padding-top:8px">Recent Asks 📋</div><div id="jjRecentAsks"></div><div class="jj-sec-title" style="padding-top:8px">I Want This! 🎁</div><div id="jjAskRewards"></div></div></div>'+
-'<div id="jjView-parent" style="display:none;margin-top:12px"><div class="jj-sec-title">Parent Controls 🔐</div><div class="jj-parent-wrap"><div class="jj-parent-inner"><div class="jj-parent-title">⚙ JJ\'s Chore Settings</div><div class="jj-parent-actions"><button class="jj-pab pink" onclick="jjReset(\'daily\',\'jj\')">🌸 Reset Today\'s Jobs</button><button class="jj-pab purple" onclick="jjReset(\'weekly\',\'jj\')">💜 Reset Weekly Jobs</button><button class="jj-pab red" onclick="jjReset(\'all\',\'jj\')">🗑️ Reset All of JJ\'s Jobs</button></div></div></div></div></div>'+
+'<div id="jjView-parent" style="display:none;margin-top:12px"><div class="jj-sec-title">Parent Controls 🔐</div><div class="jj-parent-wrap"><div class="jj-parent-inner"><div class="jj-parent-title">⚙ JJ\'s Chore Settings</div><div class="jj-parent-actions"><button class="jj-pab pink" onclick="jjReset(\'daily\',\'jj\')">🌸 Reset Today\'s Jobs</button><button class="jj-pab purple" onclick="jjReset(\'weekly\',\'jj\')">💜 Reset Weekly Jobs</button><button class="jj-pab red" onclick="jjReset(\'all\',\'jj\')">🗑️ Reset All of JJ\'s Jobs</button></div><div style="margin-top:12px;text-align:center"><a onclick="window.switchView(\'parent\')" style="color:#c084fc;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline">Open Full Parent Dashboard</a></div></div></div></div></div>'+
   '';
 }
 
@@ -1765,7 +1791,6 @@ function updateJJ() {
   // v22: TV reads from Screen Time Bank, not task tvMinutes
   var jjTvBank = (screenTimeBank.TV && typeof screenTimeBank.TV.balance === 'number') ? screenTimeBank.TV.balance : 0;
   var jjGamingBank = (screenTimeBank.Gaming && typeof screenTimeBank.Gaming.balance === 'number') ? screenTimeBank.Gaming.balance : 0;
-  var displayTV = jjTvBank + jjGamingBank;
   var earnedSnack = approved.reduce(function(s,t){return s + (t.snacks || 0);},0);
   var jjStarsEl = document.getElementById('jjStars');
   var jjTVEl = document.getElementById('jjTV');
@@ -1774,7 +1799,7 @@ function updateJJ() {
   var prevJJTV = parseInt(jjTVEl.textContent) || 0;
   var prevSnack = parseInt(jjSnackEl.textContent) || 0;
   animateNumber(jjStarsEl, prevStars, stars);
-  animateNumber(jjTVEl, prevJJTV, displayTV, function(v) { return v + 'm'; });
+  animateNumber(jjTVEl, prevJJTV, jjTvBank, function(v) { return v + 'm'; });
   animateNumber(jjSnackEl, prevSnack, earnedSnack);
   var jjLevelInfo = getLevel(stars, 'jj');
   var jjLevel = jjLevelInfo.level;
@@ -2091,7 +2116,7 @@ function jjRefresh() {
   jjConfetti(20);
   loadKidData();
 }
-function jjTab(tab){['quests','rewards','events','parent'].forEach(function(t){var btn=document.getElementById('jjtab-'+t);var view=document.getElementById('jjView-'+t);if(btn)btn.classList.toggle('active',t===tab);if(view)view.style.display=t===tab?'block':'none';});}
+function jjTab(tab){currentTab=tab;['quests','rewards','events','parent'].forEach(function(t){var btn=document.getElementById('jjtab-'+t);var view=document.getElementById('jjView-'+t);if(btn)btn.classList.toggle('active',t===tab);if(view)view.style.display=t===tab?'block':'none';});}
 function jjToggleParent() {
   if(parentMode){parentMode=false;document.getElementById('jjParentBtn').classList.remove('active');document.getElementById('jjtab-parent').style.display='none';jjTab('quests');updateJJ();
   }else{document.getElementById('jjPinOverlay').style.display='flex';setTimeout(function(){document.getElementById('jjPinInput').focus();},80);}
@@ -2542,23 +2567,9 @@ function pReset(mode, child) {
   if (!IS_PARENT) return;
   var c = document.getElementById('p-emboss');
   if (!c) return;
-  c.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-10deg);opacity:0.10;pointer-events:none">' +
-    '<svg viewBox="0 0 240 280" xmlns="http://www.w3.org/2000/svg" width="320" height="370">' +
-    '<defs><linearGradient id="khCrestField" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3f8a"/><stop offset="100%" stop-color="#162d6a"/></linearGradient>' +
-    '<linearGradient id="khCrestGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e8c050"/><stop offset="100%" stop-color="#c49a38"/></linearGradient></defs>' +
-    '<path d="M120 18 L192 46 V122 C192 176 163 220 120 248 C77 220 48 176 48 122 V46 Z" fill="url(#khCrestField)" stroke="#c49a38" stroke-width="6"/>' +
-    '<path d="M120 40 L172 61 V121 C172 158 153 190 120 214 C87 190 68 158 68 121 V61 Z" fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="2"/>' +
-    '<path d="M120 61 V213" stroke="#ffffff" stroke-opacity=".3" stroke-width="2"/>' +
-    '<path d="M68 124 H172" stroke="#ffffff" stroke-opacity=".3" stroke-width="2"/>' +
-    '<circle cx="120" cy="124" r="24" fill="#0e1f45" stroke="#c49a38" stroke-width="4"/>' +
-    '<path d="M120 108 V142" stroke="#c49a38" stroke-width="6" stroke-linecap="round"/>' +
-    '<path d="M104 108 H136" stroke="#c49a38" stroke-width="6" stroke-linecap="round"/>' +
-    '<path d="M88 82 l5 10 11 2-8 7 2 10-10-6-10 6 2-10-8-7 11-2z" fill="#ffffff"/>' +
-    '<path d="M145 82 l5 10 11 2-8 7 2 10-10-6-10 6 2-10-8-7 11-2z" fill="#5a9ae0"/>' +
-    '<path d="M88 147 l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z" fill="#ffffff"/>' +
-    '<path d="M145 146 l12 23h-24z" fill="url(#khCrestGold)"/>' +
-    '<path d="M62 30 C84 8 156 8 178 30" fill="none" stroke="#d4a843" stroke-width="10" stroke-linecap="round"/>' +
-    '</svg></div>';
+  c.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.10;pointer-events:none">' +
+    '<img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson Family Crest" style="width:320px;height:320px;object-fit:contain" onerror="this.parentElement.style.display=\'none\'">' +
+    '</div>';
 })();
 </script>
 <!-- ═══ V2 TOAST ═══ -->

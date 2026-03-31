@@ -213,6 +213,8 @@ function servePage(page, e) {
     'pulse':    { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
     'vault':    { file: 'Vault',          title: 'LT Watch Vault' },
     'kidshub':  { file: 'KidsHub',        title: 'Kids Hub — Ring Quest' },
+    'buggsy':   { file: 'KidsHub',        title: '⭕ Buggsy — Ring Quest', child: 'buggsy' },
+    'jj':       { file: 'KidsHub',        title: '⭐ JJ\'s Sparkle Stars', child: 'jj' },
     'spine':    { file: 'TheSpine',       title: 'The Spine — Thompson Office Display' },
     'soul':     { file: 'TheSoul',        title: 'The Soul — Thompson Family Display' },
     'debt':     { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
@@ -241,8 +243,8 @@ function servePage(page, e) {
         .setTitle(route.title)
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
-    if (page === 'kidshub') {
-      var child = (e && e.parameter && e.parameter.child) || 'buggsy';
+    if (page === 'kidshub' || page === 'buggsy' || page === 'jj') {
+      var child = (route && route.child) || (e && e.parameter && e.parameter.child) || 'buggsy';
       var view  = (e && e.parameter && e.parameter.view)  || 'kid';
       var tmpl = HtmlService.createTemplateFromFile('KidsHub');
       tmpl.INIT_CHILD = child.toLowerCase();
@@ -285,9 +287,10 @@ function serveData(e) {
       var filename = routes[page] || 'ThePulse';
       try {
         var content;
-        if (page === 'kidshub') {
+        if (page === 'kidshub' || page === 'buggsy' || page === 'jj') {
           var tmpl = HtmlService.createTemplateFromFile('KidsHub');
-          tmpl.INIT_CHILD = (e.parameter.child || 'buggsy').toLowerCase();
+          var _childParam = page === 'jj' ? 'jj' : (page === 'buggsy' ? 'buggsy' : (e.parameter.child || 'buggsy'));
+          tmpl.INIT_CHILD = _childParam.toLowerCase();
           tmpl.INIT_VIEW  = (e.parameter.view  || 'kid').toLowerCase();
           content = tmpl.evaluate().getContent();
         } else if (page === 'vault') {
