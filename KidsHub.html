@@ -2793,9 +2793,9 @@ function pReset(mode, child) {
     h += rReset();
     h += rGuide();
     body.innerHTML = h;
-    // Fetch API stats asynchronously
+    // Fetch API stats asynchronously (guarded for CF proxy)
     try {
-      google.script.run
+      var _sfRunner = google.script.run
         .withSuccessHandler(function(stats) {
           var el = document.getElementById('sfApiStats');
           if (el && stats) el.textContent = 'Stories: ' + (stats.storyCount || 0) + ' | API calls: ' + (stats.apiCalls || 0);
@@ -2803,10 +2803,12 @@ function pReset(mode, child) {
         .withFailureHandler(function() {
           var el = document.getElementById('sfApiStats');
           if (el) el.textContent = '';
-        })
-        .getStoryApiStatsSafe();
+        });
+      if (typeof _sfRunner.getStoryApiStatsSafe === 'function') {
+        _sfRunner.getStoryApiStatsSafe();
+      }
     } catch(e) {
-      // Function doesn't exist on server — ignore, stats are cosmetic
+      // Function doesn't exist — ignore, stats are cosmetic
     }
   }
   function sc(icon, val, lbl, color) {
