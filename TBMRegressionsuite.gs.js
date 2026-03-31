@@ -552,6 +552,9 @@ function runEnvironmentAssertions_(results) {
       try {
         var content = HtmlService.createHtmlOutputFromFile(htmlFiles[f]).getContent();
         var runCount = (content.match(/google\.script\.run/g) || []).length;
+        // Subtract false positives: !!google.script.run (existence checks, not calls)
+        var falsePos = (content.match(/!!google\.script\.run/g) || []).length;
+        runCount -= falsePos;
         var handlerCount = (content.match(/withFailureHandler/g) || []).length;
         if (runCount !== handlerCount) {
           violations.push(htmlFiles[f] + ': ' + runCount + ' run calls but ' + handlerCount + ' failure handlers');
