@@ -152,6 +152,27 @@ All .gs files share one scope. Constants and TAB_MAP from DataEngine.gs are avai
 
 ---
 
+## Autonomous Pipeline
+
+When building a feature or fix, Code runs the FULL pipeline:
+
+```
+1. EDIT      → Make changes locally
+2. ES5 CHECK → grep ES5 banned patterns on changed .html files
+3. PUSH      → clasp push
+4. TEST      → Hit ?action=runTests, read result
+5. IF FAIL   → fix, go to step 2
+6. IF PASS   → clasp deploy -i <deploymentId>
+7. BRANCH    → git checkout -b <branch-name>
+8. COMMIT    → git add <files> && git commit -m "<message>"
+9. PUSH      → git push origin <branch-name>
+10. PR       → gh pr create --title "<title>" --body "<body>"
+```
+
+Do NOT ask LT for permission at each step. Run the full pipeline and report the result. LT's only action: review PR and approve.
+
+---
+
 ## Deploy Manifest (MANDATORY before declaring QA ready)
 
 Every build spec produces a manifest — one grep per feature. The manifest is written WHEN THE SPEC IS CREATED, not after the build. The builder does not check their own work — the manifest was defined before code was written.
