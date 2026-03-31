@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v77 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v78 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 77; }
+function getDataEngineVersion() { return 78; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -154,6 +154,25 @@ var LOAN_PAYMENT_MAP = [
   [/comenity/i, 'Comenity'], [/nefurnmart/i, 'Comenity'], [/nfm/i, 'Comenity'],
   [/barclaycard/i, 'Barclaycard']
 ];
+// v78: BUDGET_MAP — single source of truth for debt-to-label mapping.
+// Used by both getData() and getSimulatorData() for debtPaymentBudget.
+// Previously duplicated inside both functions — hoisted to prevent drift.
+var BUDGET_MAP = {
+  'Chase':         [/prime visa/i, /southwest/i, /sapphire/i, /chase/i],
+  'Discover':      [/discover/i],
+  'Citi':          [/citi/i],
+  'BofA':          [/boa/i, /bof.?a/i, /bank of america/i, /bk of amer/i],
+  'LT-LOC':        [/lt.?loc/i, /x8840/i],
+  'JT-LOC':        [/jt.?loc/i, /x4540/i],
+  'Comenity':      [/comenity/i, /nfm/i, /nefurnmart/i],
+  'Barclaycard':   [/barclaycard/i, /barclays/i],
+  'CACU':          [/cacu/i, /community america/i],
+  'UMB':           [/umb/i],
+  'SoFi Loan':     [/sofi/i, /personal loan/i],
+  'Auto Loan':     [/auto/i, /telluride/i],
+  'Student Loans': [/nelnet/i, /sloan/i, /student/i, /servic/i],
+  'Solar Panel':   [/solar/i]
+};
 // v54: TAB_MAP — emoji-prefixed tab name resolution.
 // After workbook consolidation, all TBM tabs renamed with category prefixes.
 // Every getSheetByName() call MUST use TAB_MAP[logicalName].
@@ -202,6 +221,7 @@ var TAB_MAP = {
   // 💻 Education + System
   'Curriculum':       '💻 Curriculum',
   'Feedback':         '💻 Feedback',
+  'MealPlan':         '💻 MealPlan',
   // 📋 Board Config
   'Board_Config':     '📋 Board_Config'
 };
@@ -587,22 +607,6 @@ function getData(startStr, endStr, includeDebt) {
   // Maps each BUDGET_MAP label → sum of Debt_Export minimums for accounts in
   // that group. TheVein v40 reads debtPaymentBudget[label] for $actual/$budget.
   var debtPaymentBudget = {};
-  var BUDGET_MAP = {
-    'Chase':         [/prime visa/i, /southwest/i, /sapphire/i, /chase/i],
-    'Discover':      [/discover/i],
-    'Citi':          [/citi/i],
-    'BofA':          [/boa/i, /bof.?a/i, /bank of america/i, /bk of amer/i],
-    'LT-LOC':        [/lt.?loc/i, /x8840/i],
-    'JT-LOC':        [/jt.?loc/i, /x4540/i],
-    'Comenity':      [/comenity/i, /nfm/i, /nefurnmart/i],
-    'Barclaycard':   [/barclaycard/i, /barclays/i],
-    'CACU':          [/cacu/i, /community america/i],
-    'UMB':           [/umb/i],
-    'SoFi Loan':     [/sofi/i, /personal loan/i],
-    'Auto Loan':     [/auto/i, /telluride/i],
-    'Student Loans': [/nelnet/i, /sloan/i, /student/i, /servic/i],
-    'Solar Panel':   [/solar/i]
-  };
   var _allDebtsForBudget = debts.concat(excludedDebtsFromExport);
   var _unmatchedBudgetDebts = [];
   for (var _bmi = 0; _bmi < _allDebtsForBudget.length; _bmi++) {
@@ -2149,22 +2153,6 @@ function getSimulatorData() {
   // Maps each CC_MAP label → sum of DebtModel minimums for accounts in
   // that group. ThePulse v12 reads debtPaymentBudget[label] for $actual/$budget.
   var debtPaymentBudget = {};
-  var BUDGET_MAP = {
-    'Chase':         [/prime visa/i, /southwest/i, /sapphire/i, /chase/i],
-    'Discover':      [/discover/i],
-    'Citi':          [/citi/i],
-    'BofA':          [/boa/i, /bof.?a/i, /bank of america/i, /bk of amer/i],
-    'LT-LOC':        [/lt.?loc/i, /x8840/i],
-    'JT-LOC':        [/jt.?loc/i, /x4540/i],
-    'Comenity':      [/comenity/i, /nfm/i, /nefurnmart/i],
-    'Barclaycard':   [/barclaycard/i, /barclays/i],
-    'CACU':          [/cacu/i, /community america/i],
-    'UMB':           [/umb/i],
-    'SoFi Loan':     [/sofi/i, /personal loan/i],
-    'Auto Loan':     [/auto/i, /telluride/i],
-    'Student Loans': [/nelnet/i, /sloan/i, /student/i, /servic/i],
-    'Solar Panel':   [/solar/i]
-  };
   var _allDebtsForBudget = activeDebts.concat(excludedDebts);
   var _unmatchedBudgetDebts = []; // v46 FIX #10: track unmatched debts
   for (var _bmi = 0; _bmi < _allDebtsForBudget.length; _bmi++) {
@@ -2443,55 +2431,38 @@ function getSimulatorData() {
     gapAfterDebt: roundTo(earnedIncome - operatingExpenses - totalMinimums, 2),
     // v46 FIX #10: Unmatched debt warning
     unmatchedBudgetDebts: _unmatchedBudgetDebts,
-    // v77: Pulse Summary — informational narrative
-    pulseSummary: (function() {
-      // Compute budget totals from Budget_Data for pace comparison
-      var _psBdData = de_readSheet_('Budget_Data');
-      var _psBB = { fixedExpenses: 0, necessaryLiving: 0, discretionary: 0, debtCost: 0 };
-      if (_psBdData && _psBdData.length >= 2) {
-        var _psPBM = getPartnerBucketMap();
-        var _psBK = { 'Fixed Expenses': 'fixedExpenses', 'Necessary Living': 'necessaryLiving', 'Discretionary': 'discretionary', 'Debt Cost': 'debtCost' };
-        var _psXFER = ['Transfer: Internal', 'Transfer: LOC Draw', 'Balance Transfers', 'CC Payment', 'LOC Payment', 'Loan Payment', 'Investment', 'Payroll Deduction', 'Duplicate - Exclude', 'Debt Offset', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
-        var _psINC = ['JT Income', 'LT Income', 'Bonus Income', 'Other Income', 'Interest Income'];
-        for (var _pb = 1; _pb < _psBdData.length; _pb++) {
-          var _psYM = String(_psBdData[_pb][1] || '').trim();
-          var _psCat = String(_psBdData[_pb][2] || '').trim();
-          var _psAmt = parseFloat(_psBdData[_pb][4]) || 0;
-          if (_psYM !== ym || !_psCat) continue;
-          if (_psINC.indexOf(_psCat) >= 0 || _psXFER.indexOf(_psCat) >= 0) continue;
-          var _psRawB = _psPBM[_psCat] || '';
-          var _psBKey = _psBK[_psRawB];
-          if (_psBKey) _psBB[_psBKey] += Math.abs(_psAmt);
+    // v78: Use shared de_buildPulseSummary_() — single source of truth
+    pulseSummary: de_buildPulseSummary_({
+      operatingExpenses: roundTo(operatingExpenses, 2),
+      'expenses.fixed_expenses.actual': roundTo(bucketTotals.fixedExpenses, 2),
+      'expenses.necessary_living.actual': roundTo(bucketTotals.necessaryLiving, 2),
+      'expenses.discretionary.actual': roundTo(bucketTotals.discretionary, 2),
+      'expenses.fixed_expenses.budget': (function() {
+        var _bdD = de_readSheet_('Budget_Data');
+        if (!_bdD || _bdD.length < 2) return 0;
+        var _pbm = getPartnerBucketMap();
+        var _total = 0;
+        var _XFER = ['Transfer: Internal', 'Transfer: LOC Draw', 'Balance Transfers', 'CC Payment', 'LOC Payment', 'Loan Payment', 'Investment', 'Payroll Deduction', 'Duplicate - Exclude', 'Debt Offset', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
+        var _INC = ['JT Income', 'LT Income', 'Bonus Income', 'Other Income', 'Interest Income'];
+        for (var _b = 1; _b < _bdD.length; _b++) {
+          var _ym = String(_bdD[_b][1] || '').trim();
+          var _cat = String(_bdD[_b][2] || '').trim();
+          var _amt = parseFloat(_bdD[_b][4]) || 0;
+          if (_ym !== ym || !_cat) continue;
+          if (_INC.indexOf(_cat) >= 0 || _XFER.indexOf(_cat) >= 0) continue;
+          if ((_pbm[_cat] || '') === 'Fixed Expenses') _total += Math.abs(_amt);
         }
-      }
-      var _psBudgetTotal = _psBB.fixedExpenses + _psBB.necessaryLiving + _psBB.discretionary + _psBB.debtCost;
-      var _psNow = new Date();
-      var _psDom = _psNow.getDate();
-      var _psDim = new Date(_psNow.getFullYear(), _psNow.getMonth() + 1, 0).getDate();
-      var _psTimePct = (_psDom / _psDim) * 100;
-      var _psSpendPct = _psBudgetTotal > 0 ? (operatingExpenses / _psBudgetTotal) * 100 : 0;
-      var _psHeadline;
-      if (_psSpendPct <= _psTimePct - 10) _psHeadline = 'On track this month.';
-      else if (_psSpendPct <= _psTimePct + 10) _psHeadline = 'Tracking close to budget.';
-      else _psHeadline = 'Spending is ahead of pace.';
-      var _psDetails = [];
-      var _bks = [
-        { name: 'Discretionary', actual: bucketTotals.discretionary || 0, budget: _psBB.discretionary },
-        { name: 'Necessary Living', actual: bucketTotals.necessaryLiving || 0, budget: _psBB.necessaryLiving },
-        { name: 'Fixed Expenses', actual: bucketTotals.fixedExpenses || 0, budget: _psBB.fixedExpenses }
-      ];
-      for (var _bi = 0; _bi < _bks.length; _bi++) {
-        if (_bks[_bi].budget > 0 && _bks[_bi].actual > _bks[_bi].budget) {
-          _psDetails.push(_bks[_bi].name + ' is $' + Math.round(_bks[_bi].actual - _bks[_bi].budget) + ' over budget.');
-          break;
-        }
-      }
-      var _psThrottle = earnedIncome - operatingExpenses - debtPaymentsMTD;
-      if (_psThrottle < 0) _psDetails.push('Spending $' + Math.abs(Math.round(_psThrottle)) + ' more than earned so far.');
-      var _psRemain = _psDim - _psDom;
-      if (_psRemain <= 7 && _psRemain > 0) _psDetails.push(_psRemain + ' days left in the month.');
-      return { headline: _psHeadline, detail: _psDetails.join(' '), alert: null };
-    })(),
+        return _total;
+      })(),
+      'expenses.necessary_living.budget': 0, // filled by de_buildPulseSummary_ from payload
+      'expenses.discretionary.budget': 0,
+      'expenses.debt_cost.budget': 0,
+      dayOfMonth: new Date().getDate(),
+      daysInMonth: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate(),
+      daysRemaining: (function() { var n = new Date(); return new Date(n.getFullYear(), n.getMonth() + 1, 0).getDate() - n.getDate(); })(),
+      incomeThrottle: roundTo(earnedIncome - operatingExpenses - debtPaymentsMTD, 2),
+      integrityErrors: null
+    }),
     _meta: de_buildMeta_('simulator', ym)
   };
   } finally {
@@ -3356,4 +3327,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v77
+// END OF FILE — DataEngine v78
