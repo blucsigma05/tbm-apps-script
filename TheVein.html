@@ -587,8 +587,8 @@ h1{font-size:22px;} .cval{font-size:22px;}
 // v59: ES5-safe URL param reader (replaces URLSearchParams)
 function getParam_(name){var r=new RegExp('[?&]'+name+'=([^&#]*)');var m=r.exec(window.location.search);return m?decodeURIComponent(m[1]):null;}
 var _tbmBaseUrl=''; var _isPartnerMode=getParam_('jt')==='1';
-try{google.script.run.withSuccessHandler(function(url){_tbmBaseUrl=url;}).getScriptUrlSafe();}catch(e){}
-function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.location.href=_tbmBaseUrl+'?page='+p+s;}else{try{google.script.run.withSuccessHandler(function(url){window.top.location.href=url+'?page='+p+s;}).getScriptUrlSafe();}catch(e){}}}
+try{google.script.run.withSuccessHandler(function(url){_tbmBaseUrl=url;}).withFailureHandler(function(){}).getScriptUrlSafe();}catch(e){}
+function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.location.href=_tbmBaseUrl+'?page='+p+s;}else{try{google.script.run.withSuccessHandler(function(url){window.top.location.href=url+'?page='+p+s;}).withFailureHandler(function(){}).getScriptUrlSafe();}catch(e){}}}
 (function(){var c=getParam_('page')||'vein';var e=document.getElementById('nav-'+c);if(e){e.classList.add('on');}if(_isPartnerMode){var v=document.getElementById('nav-vein');if(v){v.textContent='Kids Dashboard';v.setAttribute('onclick',"tbmNav('kidshub&view=parent')");v.style.color='rgba(255,255,255,0.6)';v.style.display='';}}})();
 </script>
 
@@ -1075,7 +1075,7 @@ MONTHS: [],
 REFRESH_MINS: 0,
 };
 
-var IS_EMBEDDED=(function(){try{return!!google.script.run;}catch(e){return false;}})();
+var IS_EMBEDDED=(function(){try{var g=google;return!!g.script.run;}catch(e){return false;}})();
 // v61: Confidence Rail + Graceful Degradation
 var TBM_VERSION = 'v61';
 var _veinLastFetch = null;
