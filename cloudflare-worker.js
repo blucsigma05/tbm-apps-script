@@ -249,7 +249,9 @@ function getShimScript() {
 '    "getVaultDataSafe","runStoryFactorySafe",\n' +
 '    "getDeployedVersionsSafe",\n' +
 '    "runMERGatesSafe","stampCloseMonthSafe",\n' +
-'    "addKidsEventSafe"\n' +
+'    "addKidsEventSafe",\n' +
+'    "getKHLastModifiedSafe","getStoryApiStatsSafe",\n' +
+'    "khBatchApproveSafe","updateMealPlanSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +
