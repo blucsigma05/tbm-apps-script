@@ -146,6 +146,9 @@ All .gs files share one scope. Constants and TAB_MAP from DataEngine.gs are avai
 10. HANDOFF  → Write thread handoff summary to Notion Thread Handoff Archive:
                  Page ID: 322cea3cd9e881bb8afcd560fe772481
                  Include: what changed, what was tested, what's next
+11. VERIFY   → curl all CF proxy endpoints, expect 200:
+                 thompsonfams.com/pulse, /parent, /buggsy, /jj, /soul, /spine
+12. RELEASE  → gh release create v<version> --notes "<smoke test summary>"
 ```
 
 **Never stop at step 4.** Push without pre-QA+deploy+git+Notion is incomplete work.
@@ -167,6 +170,8 @@ When building a feature or fix, Code runs the FULL pipeline:
 8. COMMIT    → git add <files> && git commit -m "<message>"
 9. PUSH      → git push origin <branch-name>
 10. PR       → gh pr create --title "<title>" --body "<body>"
+11. VERIFY   → curl thompsonfams.com/pulse, /parent, /buggsy, /jj (expect 200)
+12. RELEASE  → gh release create v<version> --notes "<test summary>"
 ```
 
 Do NOT ask LT for permission at each step. Run the full pipeline and report the result. LT's only action: review PR and approve.
