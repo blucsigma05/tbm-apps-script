@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kids Hub v31</title>
+<title>Kids Hub v32</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -783,9 +783,10 @@ body { min-height: 100vh; }
   animation: b-claim-fly 0.78s cubic-bezier(0.22,0.8,0.25,1) forwards;
 }
 @keyframes b-claim-fly {
-  0%   { opacity: 1; transform: translate(-50%,-50%) scale(1.35); }
+  0%   { opacity: 1; transform: translate(-50%,-50%) scale(1.35) rotate(0deg); }
+  40%  { opacity: 1; transform: translate(calc(-50% + var(--dx)*0.4), calc(-50% + var(--dy)*0.3 + var(--arc, -25px))) scale(1.1) rotate(180deg); }
   70%  { opacity: 1; }
-  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.25); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.25) rotate(360deg); }
 }
 .jj-stat-pill.collect-hit {
   animation: jj-collect-hit 0.52s ease-out;
@@ -808,8 +809,9 @@ body { min-height: 100vh; }
 }
 @keyframes jj-claim-fly {
   0%   { opacity: 1; transform: translate(-50%,-50%) scale(1.3) rotate(0deg); }
+  35%  { opacity: 1; transform: translate(calc(-50% + var(--dx)*0.4), calc(-50% + var(--dy)*0.3 - 30px)) scale(1.1) rotate(180deg); }
   70%  { opacity: 1; }
-  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.35) rotate(320deg); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.35) rotate(540deg); }
 }
 </style>
 </head>
@@ -847,7 +849,7 @@ var INIT_VIEW  = "<?= INIT_VIEW ?>";
 .b-col-main,.jj-col-main,.b-col-pending,.jj-col-pending{width:100%}
 .b-col-pending,.jj-col-pending{margin-top:16px}
 .b-two-col .b-list,.jj-two-col .jj-list{max-width:none}
-@media(min-width:700px){
+@media(min-width:620px){
 .jj-wrap{max-width:720px}
 .b-two-col,.jj-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 .b-col-pending,.jj-col-pending{margin-top:0}
@@ -858,9 +860,9 @@ var INIT_VIEW  = "<?= INIT_VIEW ?>";
   position: fixed;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: 320px; height: 320px;
+  width: 85vw; height: 85vh;
   background: url('https://i.ibb.co/FLDTT6QH/1774020751171.png') center/contain no-repeat;
-  opacity: 0.035;
+  opacity: 0.04;
   pointer-events: none;
   z-index: 0;
 }
@@ -944,11 +946,11 @@ var IS_PARENT = INIT_VIEW  === 'parent';
 
 // v27: Parent nav — fetch base URL and navigate between surfaces
 var _pNavBaseUrl = '';
-if (IS_PARENT) { google.script.run.withSuccessHandler(function(u) { _pNavBaseUrl = u; }).getScriptUrlSafe(); }
+if (IS_PARENT) { google.script.run.withSuccessHandler(function(u) { _pNavBaseUrl = u; }).withFailureHandler(function(){}).getScriptUrlSafe(); }
 function pNavGo(page) {
   var suffix = '&jt=1';
   if (_pNavBaseUrl) { window.top.location.href = _pNavBaseUrl + '?page=' + page + suffix; }
-  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page + suffix; }).getScriptUrlSafe(); }
+  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page + suffix; }).withFailureHandler(function(){}).getScriptUrlSafe(); }
 }
 window.switchView = function(target) {
   var _base = _pNavBaseUrl;
@@ -962,7 +964,7 @@ window.switchView = function(target) {
       if (target === 'parent') go(u + '?page=kidshub&view=parent');
       else if (target === 'buggsy') go(u + '?page=buggsy');
       else if (target === 'jj') go(u + '?page=jj');
-    }).getScriptUrlSafe();
+    }).withFailureHandler(function(){}).getScriptUrlSafe();
   }
 };
 
@@ -1351,7 +1353,7 @@ function onKidData(raw) {
   }
 
   // v24: Capture heartbeat on load so smart poll can compare
-  google.script.run.withSuccessHandler(function(ts) { if (ts) _lastHeartbeat = ts; }).getKHLastModifiedSafe();
+  google.script.run.withSuccessHandler(function(ts) { if (ts) _lastHeartbeat = ts; }).withFailureHandler(function(){}).getKHLastModifiedSafe();
 
   // v23 Fix 5: Win animation — celebrate when balance increases after refresh
   var newBal = Number(balances.balance) || 0;
@@ -1676,7 +1678,7 @@ function bOverride(taskID, e) {
 }
 function bReset(mode, child) {
   if (!confirm('Reset ' + mode + ' quests for ' + child + '?')) return;
-  google.script.run.withSuccessHandler(function(){loadKidData();}).khResetTasksSafe(mode, child);
+  google.script.run.withSuccessHandler(function(){loadKidData();}).withFailureHandler(function(){}).khResetTasksSafe(mode, child);
 }
 function showBXP(e, text) {
   var p = document.createElement('div'); p.className = 'xp-pop'; p.textContent = text;
@@ -1710,7 +1712,7 @@ function bSendRingsToCounter(e, count) {
     })(i);
   }
 }
-// Send rings toward pending chest (not balance counter)
+// Send rings toward pending chest (not balance counter) — arc trajectory
 function bSendRingsToPending(e, count) {
   if (!e) return;
   var target = document.getElementById('bChest') || document.getElementById('bPendList');
@@ -1727,6 +1729,7 @@ function bSendRingsToPending(e, count) {
         ring.style.top = e.clientY + 'px';
         ring.style.setProperty('--dx', (tx - e.clientX + (Math.random() * 18 - 9)) + 'px');
         ring.style.setProperty('--dy', (ty - e.clientY + (Math.random() * 14 - 7)) + 'px');
+        ring.style.setProperty('--arc', (-25 - Math.random() * 20) + 'px');
         document.body.appendChild(ring);
         setTimeout(function(){ ring.remove(); }, 820);
       }, idx * 55);
@@ -1871,7 +1874,7 @@ function bSubmitPin() {
       parentMode = true; document.getElementById('bParentBtn').classList.add('active');
       document.getElementById('btab-parent').style.display = 'block'; bTab('parent'); updateBuggsy();
     } else { document.getElementById('bPinError').style.display = 'block'; }
-  }).khVerifyPinSafe(pin);
+  }).withFailureHandler(function(){ document.getElementById('bPinError').style.display = 'block'; }).khVerifyPinSafe(pin);
 }
 function bCancelPin() { document.getElementById('bPinOverlay').style.display='none'; document.getElementById('bPinInput').value=''; }
 
@@ -2161,7 +2164,7 @@ function jjOverride(taskID, e) {
     .withFailureHandler(function(err){ _fetching = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.completed = false; t.parentApproved = false; updateJJ(); })
     .khOverrideTaskSafe(t.rowIndex, t.taskID);
 }
-function jjReset(mode, child) { if(!confirm('Reset '+mode+' for JJ?'))return; google.script.run.withSuccessHandler(function(){loadKidData();}).khResetTasksSafe(mode, child); }
+function jjReset(mode, child) { if(!confirm('Reset '+mode+' for JJ?'))return; google.script.run.withSuccessHandler(function(){loadKidData();}).withFailureHandler(function(){}).khResetTasksSafe(mode, child); }
 function jjConfetti(n) {
   var emojis=['💖','✨','🌸','⭐','💫','🎀','💕'];
   for(var i=0;i<n;i++){var p=document.createElement('div');p.className='jj-confetti';p.textContent=emojis[Math.floor(Math.random()*emojis.length)];
@@ -2274,7 +2277,7 @@ function jjSubmitPin() {
       parentMode=true; document.getElementById('jjParentBtn').classList.add('active');
       document.getElementById('jjtab-parent').style.display='block'; jjTab('parent'); updateJJ();
     } else { document.getElementById('jjPinError').style.display='block'; }
-  }).khVerifyPinSafe(pin);
+  }).withFailureHandler(function(){ document.getElementById('jjPinError').style.display='block'; }).khVerifyPinSafe(pin);
 }
 function jjCancelPin(){document.getElementById('jjPinOverlay').style.display='none';document.getElementById('jjPinInput').value='';}
 // ── v17: ASK SYSTEM ──────────────────────────────────────────
@@ -2578,6 +2581,7 @@ function loadParentData() {
         }
       } catch(e){}
     })
+    .withFailureHandler(function(){})
     .getKHAppUrlsSafe();
 }
 function buildParentContent(buggsyTasks, jjTasks, bDone, jDone) {
@@ -2642,14 +2646,14 @@ function pApprove(taskID, child) {
   var allTasks = child === 'jj' ? parentAllData.jj : parentAllData.buggsy;
   var t = _findByKey(allTasks, 'taskID', taskID);
   if (!t) return;
-  google.script.run.withSuccessHandler(function(){ loadParentData(); }).khApproveTaskSafe(t.rowIndex, t.taskID);
+  google.script.run.withSuccessHandler(function(){ loadParentData(); }).withFailureHandler(function(){}).khApproveTaskSafe(t.rowIndex, t.taskID);
 }
 function pUncomplete(taskID, child) {
   if (!confirm('Mark this task as not done?')) return;
   var allTasks = child === 'jj' ? parentAllData.jj : parentAllData.buggsy;
   var t = _findByKey(allTasks, 'taskID', taskID);
   if (!t) return;
-  google.script.run.withSuccessHandler(function(){ loadParentData(); }).khUncompleteTaskSafe(t.rowIndex, t.taskID);
+  google.script.run.withSuccessHandler(function(){ loadParentData(); }).withFailureHandler(function(){}).khUncompleteTaskSafe(t.rowIndex, t.taskID);
 }
 function pToggleSection(id) {
   var el = document.getElementById(id);
@@ -2700,7 +2704,7 @@ function pBatchApprove(child) {
 }
 function pReset(mode, child) {
   if (!confirm('Reset ' + mode + ' tasks for ' + child + '?')) return;
-  google.script.run.withSuccessHandler(function(){ loadParentData(); }).khResetTasksSafe(mode, child);
+  google.script.run.withSuccessHandler(function(){ loadParentData(); }).withFailureHandler(function(){}).khResetTasksSafe(mode, child);
 }
 </script>
 <!-- Family crest watermark (parent only) -->
@@ -2790,10 +2794,20 @@ function pReset(mode, child) {
     h += rGuide();
     body.innerHTML = h;
     // Fetch API stats asynchronously
-    google.script.run.withSuccessHandler(function(stats) {
-      var el = document.getElementById('sfApiStats');
-      if (el && stats) el.textContent = 'Stories: ' + (stats.storyCount || 0) + ' | API calls: ' + (stats.apiCalls || 0);
-    }).getStoryApiStatsSafe();
+    try {
+      google.script.run
+        .withSuccessHandler(function(stats) {
+          var el = document.getElementById('sfApiStats');
+          if (el && stats) el.textContent = 'Stories: ' + (stats.storyCount || 0) + ' | API calls: ' + (stats.apiCalls || 0);
+        })
+        .withFailureHandler(function() {
+          var el = document.getElementById('sfApiStats');
+          if (el) el.textContent = '';
+        })
+        .getStoryApiStatsSafe();
+    } catch(e) {
+      // Function doesn't exist on server — ignore, stats are cosmetic
+    }
   }
   function sc(icon, val, lbl, color) {
     return '<div class="p-sum-card"><div class="p-sum-icon">' + icon + '</div><div class="p-sum-val" style="color:' + color + '">' + val + '</div><div class="p-sum-lbl">' + lbl + '</div></div>';
