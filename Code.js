@@ -337,7 +337,7 @@ function serveData(e) {
         'khApproveWithBonusSafe': khApproveWithBonusSafe, 'khResetTasksSafe': khResetTasksSafe,
         'khRedeemRewardSafe': khRedeemRewardSafe, 'khSubmitRequestSafe': khSubmitRequestSafe,
         'khApproveRequestSafe': khApproveRequestSafe, 'khDenyRequestSafe': khDenyRequestSafe,
-        'khAddBonusTaskSafe': khAddBonusTaskSafe, 'khDebitScreenTimeSafe': khDebitScreenTimeSafe,
+        'khAddBonusTaskSafe': khAddBonusTaskSafe, 'khDebitScreenTimeSafe': khDebitScreenTimeSafe, 'updateMealPlanSafe': updateMealPlanSafe, 'getStoryApiStatsSafe': getStoryApiStatsSafe,
         'khSetBankOpeningSafe': khSetBankOpeningSafe, 'khVerifyPinSafe': khVerifyPinSafe,
         'khAddDeductionSafe': khAddDeductionSafe, 'khHealthCheckSafe': khHealthCheckSafe, 'khBatchApproveSafe': khBatchApproveSafe,
         'khSubmitGradeSafe': khSubmitGradeSafe, 'khGetGradeHistorySafe': khGetGradeHistorySafe,
@@ -834,6 +834,17 @@ function khDebitScreenTimeSafe(child, screenType, minutes) {
   });
 }
 
+function getStoryApiStatsSafe() {
+  return withMonitor_('getStoryApiStatsSafe', function() {
+    return getStoryApiStats();
+  });
+}
+function updateMealPlanSafe(meal, cook, notes) {
+  return withMonitor_('updateMealPlanSafe', function() {
+    try { return JSON.parse(updateMealPlan(meal, cook, notes)); }
+    catch(e) { _khDiag_('updateMealPlanSafe', {meal: meal, cook: cook}, e); throw e; }
+  });
+}
 // v48: Grade Bonus safe wrappers
 function khSubmitGradeSafe(params) {
   return withMonitor_('khSubmitGradeSafe', function() {

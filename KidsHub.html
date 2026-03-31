@@ -491,28 +491,16 @@ body { min-height: 100vh; }
 .sf-error { font-size: 12px; color: #fca5a5; background: rgba(220,38,38,0.15); padding: 8px 12px; border-radius: 8px; margin-top: 10px; text-align: center; }
 .p-spinner { display: flex; align-items: center; justify-content: center; padding: 40px; }
 .p-spin-ring { width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.1); border-top-color: #d4a843; animation: spin 0.8s linear infinite; }
-#p-emboss { position: fixed; inset: -150px; z-index: 0; pointer-events: none; transform: rotate(-10deg); overflow: hidden; display: none; }
+#p-emboss { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; display: none; }
 .parent-body #p-emboss { display: block; }
-.p-emboss-row { display: flex; flex-wrap: nowrap; white-space: nowrap; line-height: 1; }
-.p-emboss-row.offset { margin-left: -110px; }
-.p-emboss-word {
-  font-family: 'Georgia', 'Times New Roman', serif; font-size: 14px;
-  font-weight: 700; font-style: italic; letter-spacing: 0.12em;
-  padding: 11px 18px; color: transparent; user-select: none; flex-shrink: 0;
-  text-shadow:
-    -1px -1px 0px rgba(160,170,200,0.55),
-    -0.5px -0.5px 0px rgba(140,150,180,0.35),
-    1px 1px 0px rgba(20,15,30,0.15),
-    1.5px 1.5px 0.5px rgba(15,10,25,0.08),
-    0px 0px 2px rgba(60,70,100,0.04);
-}
 @media (max-width: 480px) { .p-summary { grid-template-columns: 1fr 1fr; } .p-kids { grid-template-columns: 1fr; } .p-reset-grid { grid-template-columns: 1fr 1fr; } }
+.gold-ring { display:inline-block;width:1em;height:1em;border:3px solid #fbbf24;border-radius:50%;vertical-align:middle;box-sizing:border-box; }
 /* ════════════════════════════════════════
    V2 — PARENT ONE-TAP UX + WEEKLY GRID
    ════════════════════════════════════════ */
 .p-v2-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
 .p-v2-tab {
-  flex: 1; font-size: 13px; font-weight: 700; padding: 10px; border-radius: 8px;
+  flex: 1; font-size: 15px; font-weight: 700; padding: 12px; border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.1); background: rgba(20,20,40,0.3);
   color: #94a3b8; cursor: pointer; text-align: center; transition: all 0.15s;
 }
@@ -952,6 +940,7 @@ var TIME_ORDER = {'1-Morning':1,'2-Afternoon':2,'3-Evening':3};
 // ── State ─────────────────────────────────────────────────────
 var tasks      = [];
 var rewards    = [];   // v1 TBM: from server (KH_Rewards)
+var GOLD_RING = '<span class="gold-ring"></span>';
 var balances   = { earned:0, spent:0, deducted:0, balance:0 }; // v1 TBM: server-computed
 var streakData = {};   // v1 TBM: from KH_Streaks cache
 var parentMode = false;
@@ -2243,7 +2232,7 @@ function renderAskRewards(child, containerId) {
     h += '<div class="ask-reward-row" onclick="askFromReward(\'' + child + '\',\'' + escHtml(r.name).replace(/'/g,'\\\'') + '\',' + r.cost + ')">';
     h += '<div class="ask-reward-icon">' + r.icon + '</div>';
     h += '<div class="ask-reward-info"><div class="ask-reward-name">' + escHtml(r.name) + '</div>';
-    h += '<div class="ask-reward-cost">' + r.cost + ' ' + (child === 'jj' ? '⭐' : '⭕') + '</div></div>';
+    h += '<div class="ask-reward-cost">' + r.cost + ' ' + (child === 'jj' ? '⭐' : GOLD_RING) + '</div></div>';
     h += '<div class="ask-want-btn">I want this!</div>';
     h += '</div>';
   });
@@ -2347,7 +2336,7 @@ function renderParent() {
 function buildParentUI() {
   return '<div class="p-nav" id="pNav"><a onclick="pNavGo(\'pulse\')">The Pulse</a><a class="pnav-active">Kids Dashboard</a></div>'+
   '<div class="p-hdr"><div class="p-hdr-top"><div class="p-hdr-title">KIDS HUB <span>/ PARENT</span></div><div class="p-links" id="pLinks"><span style="font-size:11px;color:#64748b;font-weight:700;align-self:center">OPEN:</span></div></div></div>'+
-  '<div class="p-body"><div id="pSpinner" class="p-spinner"><div class="p-spin-ring"></div></div>'+
+  '<div class="p-body"><div id="pSpinner" class="p-spinner"><div style="text-align:center"><div class="p-spin-ring" style="margin:0 auto 12px"></div><div style="font-size:13px;font-weight:600;color:#94a3b8">Loading dashboard...</div></div></div>'+
   '<div id="pContent" style="display:none">'+
   '<div class="p-summary" id="pSummary"></div>'+
   '<div class="p-kids" id="pKids"></div>'+
@@ -2433,12 +2422,12 @@ function buildParentContent(buggsyTasks, jjTasks, bDone, jDone) {
   var jPend  = jjTasks.filter(function(t){return t.completed && !t.parentApproved;});
   var totalPend = bPend.length + jPend.length;
   document.getElementById('pSummary').innerHTML =
-    '<div class="p-sum-card"><div class="p-sum-icon">⭕</div><div class="p-sum-val" style="color:#f59e0b">'+bRings+'</div><div class="p-sum-lbl">Buggsy Rings</div></div>'+
+    '<div class="p-sum-card"><div class="p-sum-icon">' + GOLD_RING + '</div><div class="p-sum-val" style="color:#f59e0b">'+bRings+'</div><div class="p-sum-lbl">Buggsy Rings</div></div>'+
     '<div class="p-sum-card"><div class="p-sum-icon">⭐</div><div class="p-sum-val" style="color:#ec4899">'+jStars+'</div><div class="p-sum-lbl">JJ Stars</div></div>'+
     '<div class="p-sum-card"><div class="p-sum-icon">⏳</div><div class="p-sum-val" style="color:'+(totalPend>0?'#f59e0b':'#22c55e')+'">'+totalPend+'</div><div class="p-sum-lbl">Need Approval</div></div>'+
     '<div class="p-sum-card"><div class="p-sum-icon">✅</div><div class="p-sum-val" style="color:#22c55e">'+(bDone.length+jDone.length)+'</div><div class="p-sum-lbl">Total Done Today</div></div>';
   document.getElementById('pKids').innerHTML =
-    buildKidColumn('Buggsy', buggsyTasks, bRings, 'buggsy', '⭕', '#f59e0b') +
+    buildKidColumn('Buggsy', buggsyTasks, bRings, 'buggsy', GOLD_RING, '#f59e0b') +
     buildKidColumn('JJ', jjTasks, jStars, 'jj', '⭐', '#ec4899');
 }
 function buildKidColumn(name, kidTasks, score, cls, icon, color) {
@@ -2547,31 +2536,46 @@ function pReset(mode, child) {
   google.script.run.withSuccessHandler(function(){ loadParentData(); }).khResetTasksSafe(mode, child);
 }
 </script>
-<!-- Embossed Thompson2016 generator (parent only) -->
+<!-- Family crest watermark (parent only) -->
 <script>
 (function(){
   if (!IS_PARENT) return;
   var c = document.getElementById('p-emboss');
   if (!c) return;
-  var w = 'Thompson2016', rH = 44, tW = 150;
-  var rows = Math.ceil((window.innerHeight + 350) / rH) + 2;
-  var cols = Math.ceil((window.innerWidth + 400) / tW) + 3;
-  for (var r = 0; r < rows; r++) {
-    var row = document.createElement('div');
-    row.className = 'p-emboss-row' + (r % 2 === 1 ? ' offset' : '');
-    for (var cc = 0; cc < cols; cc++) {
-      var s = document.createElement('span');
-      s.className = 'p-emboss-word';
-      s.textContent = w;
-      row.appendChild(s);
-    }
-    c.appendChild(row);
-  }
+  c.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-10deg);opacity:0.10;pointer-events:none">' +
+    '<svg viewBox="0 0 240 280" xmlns="http://www.w3.org/2000/svg" width="320" height="370">' +
+    '<defs><linearGradient id="khCrestField" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1e3f8a"/><stop offset="100%" stop-color="#162d6a"/></linearGradient>' +
+    '<linearGradient id="khCrestGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#e8c050"/><stop offset="100%" stop-color="#c49a38"/></linearGradient></defs>' +
+    '<path d="M120 18 L192 46 V122 C192 176 163 220 120 248 C77 220 48 176 48 122 V46 Z" fill="url(#khCrestField)" stroke="#c49a38" stroke-width="6"/>' +
+    '<path d="M120 40 L172 61 V121 C172 158 153 190 120 214 C87 190 68 158 68 121 V61 Z" fill="none" stroke="#ffffff" stroke-opacity=".6" stroke-width="2"/>' +
+    '<path d="M120 61 V213" stroke="#ffffff" stroke-opacity=".3" stroke-width="2"/>' +
+    '<path d="M68 124 H172" stroke="#ffffff" stroke-opacity=".3" stroke-width="2"/>' +
+    '<circle cx="120" cy="124" r="24" fill="#0e1f45" stroke="#c49a38" stroke-width="4"/>' +
+    '<path d="M120 108 V142" stroke="#c49a38" stroke-width="6" stroke-linecap="round"/>' +
+    '<path d="M104 108 H136" stroke="#c49a38" stroke-width="6" stroke-linecap="round"/>' +
+    '<path d="M88 82 l5 10 11 2-8 7 2 10-10-6-10 6 2-10-8-7 11-2z" fill="#ffffff"/>' +
+    '<path d="M145 82 l5 10 11 2-8 7 2 10-10-6-10 6 2-10-8-7 11-2z" fill="#5a9ae0"/>' +
+    '<path d="M88 147 l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z" fill="#ffffff"/>' +
+    '<path d="M145 146 l12 23h-24z" fill="url(#khCrestGold)"/>' +
+    '<path d="M62 30 C84 8 156 8 178 30" fill="none" stroke="#d4a843" stroke-width="10" stroke-linecap="round"/>' +
+    '</svg></div>';
 })();
 </script>
 <!-- ═══ V2 TOAST ═══ -->
 <div id="syncStrip" class="sync-strip" style="display:none"><span class="sync-dot green"></span><span class="sync-text">Synced</span></div>
 <div id="p-toast" class="p-toast"></div>
+<div id="clearModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);align-items:center;justify-content:center">
+  <div style="background:#1e293b;border-radius:12px;padding:24px;max-width:320px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
+    <div style="font-size:16px;font-weight:700;color:#e2e8f0;margin-bottom:16px;text-align:center" id="clearModalTitle">Clear task?</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="window._v2ClearConfirm(1)" style="padding:12px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">✓ Full points</button>
+      <button onclick="window._v2ClearConfirm(0.5)" style="padding:12px;background:#f59e0b;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">½ Half points</button>
+      <button onclick="window._v2ClearConfirm(0)" style="padding:12px;background:#6b7280;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">✕ No points</button>
+      <input type="text" id="clearReason" placeholder="Reason (snow day, vacation...)" style="padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:13px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0;outline:none">
+      <button onclick="window._v2ClearCancel()" style="padding:10px;background:transparent;color:#94a3b8;border:1px solid #475569;border-radius:8px;font-size:13px;cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
 <!-- ═══ V2 PARENT UX — ONE-TAP + WEEKLY GRID ═══ -->
 <script>
 (function() {
@@ -2601,14 +2605,19 @@ function pReset(mode, child) {
     var pending = tasks.filter(function(t) { return t.completed && !t.parentApproved; });
     var completed = tasks.filter(function(t) { return t.completed && t.parentApproved; });
     var bBal = (bal.buggsy || {}).balance || 0, jBal = (bal.jj || {}).balance || 0;
+    var bb = data.bankBalances || {};
+    var bBank = Number(bb.buggsy || 0), jBank = Number(bb.jj || 0);
     var body = document.querySelector('.p-body');
     if (!body) { body = document.createElement('div'); body.className = 'p-body'; document.body.appendChild(body); }
     var h = '';
     h += '<div class="p-summary">';
-    h += sc('⭕', bBal, 'BUGGSY PTS', '#f59e0b');
+    h += sc(GOLD_RING, bBal, 'BUGGSY PTS', '#f59e0b');
     h += sc('⭐', jBal, 'JJ STARS', '#ec4899');
-    h += sc('⏳', pending.length, 'PENDING', '#f59e0b');
-    h += sc('✅', completed.length, 'APPROVED', '#16a34a');
+    h += sc('💰', '$' + bBank.toFixed(2), 'B BANK', '#22c55e');
+    h += sc('💰', '$' + jBank.toFixed(2), 'J BANK', '#22c55e');
+    h += '</div>';
+    h += '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px;font-size:11px;color:#94a3b8">';
+    h += '<span>⏳ ' + pending.length + ' pending</span><span>✅ ' + completed.length + ' approved</span>';
     h += '</div>';
     h += '<div class="p-v2-tabs">';
     h += tb('pending', '⏳ Pending (' + pending.length + ')');
@@ -2621,9 +2630,17 @@ function pReset(mode, child) {
     h += rAskQueue(data.requests || []);
     h += rStoryFactory();
     h += rDeduction();
+    h += rAddTask();
+    h += rScreenTime(data.screenTime || {});
+    h += rDinner();
     h += rReset();
     h += rGuide();
     body.innerHTML = h;
+    // Fetch API stats asynchronously
+    google.script.run.withSuccessHandler(function(stats) {
+      var el = document.getElementById('sfApiStats');
+      if (el && stats) el.textContent = 'Stories: ' + (stats.storyCount || 0) + ' | API calls: ' + (stats.apiCalls || 0);
+    }).getStoryApiStatsSafe();
   }
   function sc(icon, val, lbl, color) {
     return '<div class="p-sum-card"><div class="p-sum-icon">' + icon + '</div><div class="p-sum-val" style="color:' + color + '">' + val + '</div><div class="p-sum-lbl">' + lbl + '</div></div>';
@@ -2646,19 +2663,9 @@ function pReset(mode, child) {
       var remaining = req.remaining || [];
       if (!list.length && !remaining.length) return;
       rendered = true;
-      h += '<div class="p-kid-col"><div class="p-kid-hdr ' + kid + '"><span class="p-kid-name">' + (kid === 'buggsy' ? '⭕ BUGGSY' : '⭐ JJ') + '</span><span class="p-kid-score ' + kid + '">' + (req.allClear ? 'All clear' : (Math.max((req.total || 0) - (req.done || 0), 0) + ' must-do left')) + '</span></div><div class="p-kid-body">';
-      if (remaining.length) {
-        h += '<div class="p-kid-section-title">↪ Required overrides</div>';
-        remaining.forEach(function(t) {
-          h += '<div class="p-task-item"><div class="p-task-icon">' + (t.icon || '🔒') + '</div>';
-          h += '<div class="p-task-info"><div class="p-task-name">' + t.task + '</div><div class="p-task-meta">Must-do · clear only · 0 pts</div></div>';
-          h += '<div class="p-onetap">';
-          h += '<button class="p-onetap-btn approve" onclick="window._v2Override(' + t.rowIndex + ',\'' + t.taskID + '\')">↩ Clear</button>';
-          h += '</div></div>';
-        });
-      }
+      h += '<div class="p-kid-col"><div class="p-kid-hdr ' + kid + '"><span class="p-kid-name">' + (kid === 'buggsy' ? GOLD_RING + ' BUGGSY' : '⭐ JJ') + '</span><span class="p-kid-score ' + kid + '">' + (req.allClear ? 'All clear' : (Math.max((req.total || 0) - (req.done || 0), 0) + ' must-do left')) + '</span></div><div class="p-kid-body">';
       if (list.length) {
-        h += '<div class="p-kid-section-title" style="margin-top:' + (remaining.length ? '14px' : '0') + '">⏳ Pending approvals</div>';
+        h += '<div class="p-kid-section-title" style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:8px 12px;margin-bottom:8px">⏳ Pending approvals (' + list.length + ')</div>';
         list.forEach(function(t) {
           h += '<div class="p-task-item"><div class="p-task-icon">' + (t.icon || '⭐') + '</div>';
           h += '<div class="p-task-info"><div class="p-task-name">' + t.task + '</div><div class="p-task-meta">' + t.points + ' pts · ' + t.category + '</div></div>';
@@ -2669,6 +2676,19 @@ function pReset(mode, child) {
           h += '<button class="p-onetap-btn reject" onclick="window._v2Reject(' + t.rowIndex + ',\'' + t.taskID + '\')">✕</button>';
           h += '</div></div>';
         });
+      }
+      if (remaining.length) {
+        var _colId = 'mustdo-' + kid;
+        h += '<div class="p-kid-section-title" style="margin-top:' + (list.length ? '14px' : '0') + ';cursor:pointer;user-select:none" onclick="window._v2Toggle(\'' + _colId + '\',this)"><span class="p-collapse-arrow" style="display:inline-block;transition:transform 0.2s;transform:rotate(0deg);margin-right:6px">▸</span>↪ Must-do (' + remaining.length + ')</div>';
+        h += '<div id="' + _colId + '" style="max-height:0;overflow:hidden;transition:max-height 0.3s ease">';
+        remaining.forEach(function(t) {
+          h += '<div class="p-task-item"><div class="p-task-icon">' + (t.icon || '🔒') + '</div>';
+          h += '<div class="p-task-info"><div class="p-task-name">' + t.task + '</div><div class="p-task-meta">Must-do · clear only · 0 pts</div></div>';
+          h += '<div class="p-onetap">';
+          h += '<button class="p-onetap-btn approve" onclick="window._v2Override(' + t.rowIndex + ',\'' + t.taskID + '\')">↩ Clear</button>';
+          h += '</div></div>';
+        });
+        h += '</div>';
       }
       h += '</div></div>';
     });
@@ -2693,7 +2713,7 @@ function pReset(mode, child) {
     h += '<div class="p-weekly-range">' + (wg.weekStart || '') + ' — ' + (wg.weekEnd || '') + '</div>';
     h += '<div class="p-weekly-kid-filter">';
     ['all','buggsy','jj'].forEach(function(k) {
-      var lbl = k === 'all' ? '👨‍👩‍👧‍👦 All' : (k === 'buggsy' ? '⭕ Buggsy' : '⭐ JJ');
+      var lbl = k === 'all' ? '👨‍👩‍👧‍👦 All' : (k === 'buggsy' ? GOLD_RING + ' Buggsy' : '⭐ JJ');
       h += '<div class="p-weekly-kid-btn' + (currentWeeklyKid === k ? ' active' : '') + '" onclick="window._v2WeekKid(\'' + k + '\')">' + lbl + '</div>';
     });
     h += '</div><div class="p-weekly-grid">';
@@ -2734,6 +2754,7 @@ function pReset(mode, child) {
       '<div class="sf-loading-msg" id="sfMsg">Writing the story...</div>' +
       '</div>' +
       '<div id="sfResult" style="display:none" class="sf-result"></div>' +
+      '<div id="sfApiStats" style="font-size:11px;color:#64748b;text-align:center;margin-top:8px">Loading usage...</div>' +
       '</div>';
   }
   function rDeduction() {
@@ -2745,8 +2766,62 @@ function pReset(mode, child) {
       '<input type="number" id="dedAmount" placeholder="Points" min="1" max="100" style="flex:1;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">' +
       '</div>' +
       '<input type="text" id="dedReason" placeholder="Reason (e.g. Didn\'t listen, Fought with sibling)" style="padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;font-family:inherit;outline:none">' +
-      '<button onclick="window._v2Deduct()" style="padding:12px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">⚡ Apply Deduction</button>' +
+      '<button id="dedBtn" onclick="window._v2Deduct()" style="padding:12px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">⚡ Apply Deduction</button>' +
       '<div id="dedStatus" style="display:none;font-size:12px;padding:6px 10px;border-radius:6px;text-align:center"></div>' +
+      '</div></div>';
+  }
+  function rAddTask() {
+    return '<div class="p-reset-panel" style="margin-bottom:20px"><div class="p-reset-title">➕ ADD TASK</div>' +
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+      '<div style="display:flex;gap:10px">' +
+      '<select id="atChild" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0">' +
+      '<option value="Buggsy">' + GOLD_RING + ' Buggsy</option><option value="JJ">⭐ JJ</option></select>' +
+      '<select id="atTime" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0">' +
+      '<option value="1-Morning">Morning</option><option value="2-Afternoon" selected>Afternoon</option><option value="3-Evening">Evening</option></select>' +
+      '</div>' +
+      '<div style="display:flex;gap:10px">' +
+      '<input type="text" id="atName" placeholder="Task name" style="flex:3;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0;outline:none">' +
+      '<input type="number" id="atPoints" placeholder="Pts" value="25" min="1" max="500" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0;outline:none">' +
+      '</div>' +
+      '<button id="atBtn" onclick="window._v2AddTask()" style="padding:12px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">➕ Add Task</button>' +
+      '<div id="atStatus" style="display:none;font-size:12px;padding:6px 10px;border-radius:6px;text-align:center"></div>' +
+      '</div></div>';
+  }
+  function rDinner() {
+    return '<div class="p-reset-panel" style="margin-bottom:20px"><div class="p-reset-title">🍽 DINNER LOG</div>' +
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+      '<input type="text" id="dinnerMeal" placeholder="What\'s for dinner?" style="padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0;outline:none">' +
+      '<div style="display:flex;gap:10px">' +
+      '<select id="dinnerCook" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0">' +
+      '<option value="JT">JT cooked</option><option value="LT">LT cooked</option><option value="Takeout">Takeout</option><option value="Other">Other</option></select>' +
+      '<input type="text" id="dinnerNotes" placeholder="Notes (optional)" style="flex:2;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0;outline:none">' +
+      '</div>' +
+      '<button id="dinnerBtn" onclick="window._v2LogDinner()" style="padding:12px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🍽 Log Dinner</button>' +
+      '<div id="dinnerStatus" style="display:none;font-size:12px;padding:6px 10px;border-radius:6px;text-align:center"></div>' +
+      '</div></div>';
+  }
+  function rScreenTime(st) {
+    var bST = st.buggsy || { TV: { balance: 0 }, Gaming: { balance: 0 } };
+    var jST = st.jj || { TV: { balance: 0 }, Gaming: { balance: 0 } };
+    var bTV = (bST.TV && bST.TV.balance) || 0, bGame = (bST.Gaming && bST.Gaming.balance) || 0;
+    var jTV = (jST.TV && jST.TV.balance) || 0;
+    return '<div class="p-reset-panel" style="margin-bottom:20px"><div class="p-reset-title">📺 SCREEN TIME</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+      '<div style="text-align:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px">' +
+      '<div style="font-size:11px;font-weight:700;color:#f59e0b;margin-bottom:6px">' + GOLD_RING + ' Buggsy</div>' +
+      '<div style="font-size:12px;color:#e2e8f0;margin-bottom:4px">📺 TV: <b>' + bTV + 'm</b></div>' +
+      '<div style="font-size:12px;color:#e2e8f0;margin-bottom:8px">🎮 Gaming: <b>' + bGame + 'm</b></div>' +
+      '<div style="display:flex;gap:6px;justify-content:center">' +
+      '<button onclick="window._v2DebitScreen(\'buggsy\',\'TV\',15)" style="padding:6px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">-15m TV</button>' +
+      '<button onclick="window._v2DebitScreen(\'buggsy\',\'Gaming\',30)" style="padding:6px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">-30m Game</button>' +
+      '</div></div>' +
+      '<div style="text-align:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px">' +
+      '<div style="font-size:11px;font-weight:700;color:#ec4899;margin-bottom:6px">⭐ JJ</div>' +
+      '<div style="font-size:12px;color:#e2e8f0;margin-bottom:4px">📺 TV: <b>' + jTV + 'm</b></div>' +
+      '<div style="font-size:12px;color:#e2e8f0;margin-bottom:8px">&nbsp;</div>' +
+      '<div style="display:flex;gap:6px;justify-content:center">' +
+      '<button onclick="window._v2DebitScreen(\'jj\',\'TV\',15)" style="padding:6px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">-15m TV</button>' +
+      '</div></div>' +
       '</div></div>';
   }
   function rReset() {
@@ -2773,7 +2848,7 @@ function pReset(mode, child) {
     var h = '<div class="p-ask-section"><div class="p-ask-hdr">✋ Pending Asks <span class="p-ask-badge">' + pending.length + '</span></div>';
     pending.forEach(function(r) {
       var icon = typeIcons[r.type] || '💬';
-      var childIcon = (r.child || '').toLowerCase() === 'jj' ? '⭐' : '⭕';
+      var childIcon = (r.child || '').toLowerCase() === 'jj' ? '⭐' : GOLD_RING;
       var childName = (r.child || '').toLowerCase() === 'jj' ? 'JJ' : 'Buggsy';
       h += '<div class="p-ask-card" data-ask-uid="' + r.requestUID + '">';
       h += '<div class="p-ask-icon">' + icon + '</div>';
@@ -2845,8 +2920,29 @@ function pReset(mode, child) {
     if (!confirm('Reject this task? Points will be reversed.')) return;
     toast('Rejecting...'); google.script.run.withSuccessHandler(function(raw) { var r=safeParse(raw); if (r.status==='ok') { toast('✕ Rejected — '+r.reversedPoints+' pts reversed'); window.renderParent(); } else toast('Error: '+(r.error||'unknown')); }).withFailureHandler(function(e) { toast('Error: '+e.message); }).khRejectTaskSafe(ri, tid);
   };
+  window._clearPending = null;
   window._v2Override = function(ri, tid) {
-    toast('Clearing must-do...'); google.script.run.withSuccessHandler(function(raw) { var r=safeParse(raw); if (r.status==='ok') { toast('↩ Cleared — gate updated'); window.renderParent(); } else toast('Error: '+(r.error||'unknown')); }).withFailureHandler(function(e) { toast('Error: '+e.message); }).khOverrideTaskSafe(ri, tid);
+    window._clearPending = { ri: ri, tid: tid };
+    var modal = document.getElementById('clearModal');
+    if (modal) { modal.style.display = 'flex'; }
+  };
+  window._v2ClearConfirm = function(mult) {
+    var p = window._clearPending;
+    if (!p) return;
+    window._clearPending = null;
+    var modal = document.getElementById('clearModal');
+    if (modal) modal.style.display = 'none';
+    toast('Clearing must-do...');
+    google.script.run.withSuccessHandler(function(raw) {
+      var r = safeParse(raw);
+      if (r.status === 'ok') { toast('↩ Cleared — gate updated'); window.renderParent(); }
+      else toast('Error: ' + (r.error || 'unknown'));
+    }).withFailureHandler(function(e) { toast('Error: ' + e.message); }).khOverrideTaskSafe(p.ri, p.tid);
+  };
+  window._v2ClearCancel = function() {
+    window._clearPending = null;
+    var modal = document.getElementById('clearModal');
+    if (modal) modal.style.display = 'none';
   };
   // v26: Track 3 — Ask approve/deny handlers
   window._v2AskApprove = function(uid, type, amount, childName) {
@@ -2914,10 +3010,15 @@ function pReset(mode, child) {
     var reason = (document.getElementById('dedReason').value || '').trim();
     var amount = parseInt(document.getElementById('dedAmount').value) || 0;
     var statusEl = document.getElementById('dedStatus');
+    var btn = document.getElementById('dedBtn');
     if (!reason) { statusEl.style.display = 'block'; statusEl.style.background = '#fef2f2'; statusEl.style.color = '#ef4444'; statusEl.textContent = 'Need a reason'; return; }
     if (amount < 1) { statusEl.style.display = 'block'; statusEl.style.background = '#fef2f2'; statusEl.style.color = '#ef4444'; statusEl.textContent = 'Amount must be at least 1'; return; }
+    btn.disabled = true;
+    btn.textContent = 'Applying...';
     toast('Applying deduction...');
     google.script.run.withSuccessHandler(function(raw) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Apply Deduction';
       var r = safeParse(raw);
       if (r.status === 'ok') {
         toast('⚡ -' + amount + ' pts from ' + child);
@@ -2932,8 +3033,97 @@ function pReset(mode, child) {
         statusEl.textContent = 'Failed: ' + (r.error || 'unknown');
       }
     }).withFailureHandler(function(e) {
+      btn.disabled = false;
+      btn.textContent = '⚡ Apply Deduction';
       toast('Error: ' + e.message);
     }).khAddDeductionSafe(child, reason, amount);
+  };
+  window._v2Toggle = function(id, hdrEl) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var arrow = hdrEl.querySelector('.p-collapse-arrow');
+    if (el.style.maxHeight && el.style.maxHeight !== '0px') {
+      el.style.maxHeight = '0px';
+      if (arrow) arrow.style.transform = 'rotate(0deg)';
+    } else {
+      el.style.maxHeight = el.scrollHeight + 'px';
+      if (arrow) arrow.style.transform = 'rotate(90deg)';
+    }
+  };
+  window._v2AddTask = function() {
+    var child = document.getElementById('atChild').value;
+    var name = (document.getElementById('atName').value || '').trim();
+    var points = parseInt(document.getElementById('atPoints').value) || 25;
+    var timeBlock = document.getElementById('atTime').value;
+    var statusEl = document.getElementById('atStatus');
+    var btn = document.getElementById('atBtn');
+    if (!name) { statusEl.style.display = 'block'; statusEl.style.background = '#fef2f2'; statusEl.style.color = '#ef4444'; statusEl.textContent = 'Enter a task name'; return; }
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+    google.script.run.withSuccessHandler(function(raw) {
+      btn.disabled = false;
+      btn.textContent = '➕ Add Task';
+      var r = safeParse(raw);
+      if (r.status === 'ok') {
+        document.getElementById('atName').value = '';
+        statusEl.style.display = 'block'; statusEl.style.background = '#f0fdf4'; statusEl.style.color = '#16a34a';
+        statusEl.textContent = 'Added: ' + name + ' (' + points + ' pts) for ' + child;
+        toast('➕ Task added for ' + child);
+        window.renderParent();
+      } else {
+        statusEl.style.display = 'block'; statusEl.style.background = '#fef2f2'; statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Error: ' + (r.error || 'unknown');
+      }
+    }).withFailureHandler(function(e) {
+      btn.disabled = false;
+      btn.textContent = '➕ Add Task';
+      toast('Error: ' + e.message);
+    }).khAddBonusTaskSafe(child, name, points, '⭐', timeBlock);
+  };
+  window._v2LogDinner = function() {
+    var meal = (document.getElementById('dinnerMeal').value || '').trim();
+    var cook = document.getElementById('dinnerCook').value;
+    var notes = (document.getElementById('dinnerNotes').value || '').trim();
+    var statusEl = document.getElementById('dinnerStatus');
+    var btn = document.getElementById('dinnerBtn');
+    if (!meal) { statusEl.style.display = 'block'; statusEl.style.background = '#fef2f2'; statusEl.style.color = '#ef4444'; statusEl.textContent = 'Enter a meal name'; return; }
+    btn.disabled = true;
+    btn.textContent = 'Logging...';
+    google.script.run.withSuccessHandler(function(raw) {
+      btn.disabled = false;
+      btn.textContent = '🍽 Log Dinner';
+      var r = safeParse(raw);
+      if (r.status === 'ok') {
+        document.getElementById('dinnerMeal').value = '';
+        document.getElementById('dinnerNotes').value = '';
+        statusEl.style.display = 'block'; statusEl.style.background = '#f0fdf4'; statusEl.style.color = '#16a34a';
+        statusEl.textContent = 'Logged: ' + r.meal + ' (by ' + r.cook + ')';
+        toast('🍽 Dinner logged!');
+      } else {
+        statusEl.style.display = 'block'; statusEl.style.background = '#fef2f2'; statusEl.style.color = '#ef4444';
+        statusEl.textContent = 'Error: ' + (r.error || r.message || 'unknown');
+      }
+    }).withFailureHandler(function(e) {
+      btn.disabled = false;
+      btn.textContent = '🍽 Log Dinner';
+      toast('Error: ' + e.message);
+    }).updateMealPlanSafe(meal, cook, notes);
+  };
+  window._v2DebitScreen = function(child, screenType, minutes) {
+    var label = screenType === 'TV' ? '📺 TV' : '🎮 Gaming';
+    if (!confirm('Use ' + minutes + 'm of ' + label + ' for ' + child + '?')) return;
+    toast('Debiting ' + minutes + 'm ' + label + '...');
+    google.script.run.withSuccessHandler(function(raw) {
+      var r = safeParse(raw);
+      if (r.status === 'ok') {
+        toast('✓ Used ' + minutes + 'm ' + label + ' for ' + child);
+        window.renderParent();
+      } else {
+        toast('Error: ' + (r.message || r.error || 'unknown'));
+      }
+    }).withFailureHandler(function(e) {
+      toast('Error: ' + e.message);
+    }).khDebitScreenTimeSafe(child, screenType, minutes);
   };
   window._v2Reset = function(mode, child) {
     if (!confirm('Run '+mode+' reset for '+child+'?')) return;
@@ -2943,7 +3133,7 @@ function pReset(mode, child) {
   var _sfMsgs = [
     'Writing the story...', 'Building the world...', 'Drawing the characters...',
     'Painting the pictures...', 'Adding the colors...', 'Binding the book...',
-    'Almost done...', 'Final touches...'
+    'Polishing the pages...', 'Checking the spelling...', 'Adding the sparkle...', 'Almost there!'
   ];
   var _sfMsgIdx = 0, _sfMsgTimer = null;
   window._v2CreateStory = function() {

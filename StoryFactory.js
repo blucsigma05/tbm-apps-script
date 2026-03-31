@@ -9,6 +9,15 @@
 
 function getStoryFactoryVersion() { return 8; }
 
+// v30: API cost tracking — returns counts for parent dashboard
+function getStoryApiStats() {
+  var props = PropertiesService.getScriptProperties();
+  return {
+    apiCalls: parseInt(props.getProperty('SF_API_CALLS') || '0') || 0,
+    storyCount: parseInt(props.getProperty('SF_STORY_COUNT') || '0') || 0
+  };
+}
+
 var CONFIG = {
 GEMINI_API_KEY:  PropertiesService.getScriptProperties().getProperty('JJ Stories'),
 NOTION_TOKEN:    PropertiesService.getScriptProperties().getProperty('NOTION_TOKEN'),
@@ -330,6 +339,16 @@ return facts;
 // ── SAFE API FETCH ───────────────────────────────────────────
 
 function safeFetch(url, options) {
+// v30: Track API calls for cost monitoring
+try {
+  var props = PropertiesService.getScriptProperties();
+  var count = parseInt(props.getProperty('SF_API_CALLS') || '0') || 0;
+  props.setProperty('SF_API_CALLS', String(count + 1));
+  var stories = parseInt(props.getProperty('SF_STORY_COUNT') || '0') || 0;
+  if (url.indexOf('generateContent') >= 0) {
+    props.setProperty('SF_STORY_COUNT', String(stories + 1));
+  }
+} catch(e) { /* non-critical */ }
 var response = UrlFetchApp.fetch(url, options);
 var code = response.getResponseCode();
 var text = response.getContentText();
@@ -396,6 +415,7 @@ toneGuide +
 '- Story MUST end with the main character in bed asleep\n' +
 '- Each scene needs a vivid image_prompt for comic book illustration\n' +
 '- image_prompt should describe the scene visually WITHOUT naming real characters or IP\n' +
+'- image_prompt MUST describe each character\'s outfit appropriate to the setting (pool=swimwear, school=uniform, bedtime=PJs, formal=dress clothes, default=casual)\n' +
 '- Each scene must include a characters_in_scene array listing which characters appear\n' +
 '- Keep it warm, funny, and age-appropriate\n' +
 '- If referencing a previous story, do it with a quick natural callback — not a recap\n\n' +
@@ -690,6 +710,17 @@ if (sceneChars.length > 0) {
 }
 
 var fullPrompt = scenes[sceneIndex].image_prompt;
+// v30: Inject local wardrobe data for setting-appropriate outfits
+var _scText = (scenes[sceneIndex].text || '').toLowerCase();
+var _setting = 'casual';
+if (_scText.indexOf('pool') >= 0 || _scText.indexOf('swim') >= 0 || _scText.indexOf('beach') >= 0) _setting = 'beach';
+else if (_scText.indexOf('school') >= 0 || _scText.indexOf('class') >= 0) _setting = 'school';
+else if (_scText.indexOf('bed') >= 0 || _scText.indexOf('sleep') >= 0 || _scText.indexOf('pajama') >= 0 || _scText.indexOf('pillow') >= 0) _setting = 'bedtime';
+else if (_scText.indexOf('formal') >= 0 || _scText.indexOf('church') >= 0 || _scText.indexOf('wedding') >= 0) _setting = 'formal';
+else if (_scText.indexOf('sport') >= 0 || _scText.indexOf('basket') >= 0 || _scText.indexOf('soccer') >= 0) _setting = 'sports';
+var _wardrobeNames = sceneChars.length > 0 ? sceneChars : ['Buggsy', 'JJ'];
+var _wardrobeBlock = buildWardrobePrompt_(_wardrobeNames, _setting);
+if (_wardrobeBlock) fullPrompt = _wardrobeBlock + '\\n' + fullPrompt;
 if (sceneVisuals) fullPrompt = sceneVisuals + '\\n\\n' + fullPrompt;
 
 // Add framing instructions
@@ -891,7 +922,7 @@ var parts = [];
 parts.push('<!DOCTYPE html>');
 parts.push('<html><head><meta charset="utf-8">');
 parts.push('<style>');
-parts.push('body { font-family: Georgia, serif; max-width: 650px; margin: 0 auto; padding: 40px 30px; color: #1E293B; background: #FFF0F5; }');
+parts.push('body { font-family: Georgia, serif; max-width: 650px; margin: 0 auto; padding: 40px 30px; color: #1E293B; background: #FFE0EB; }');
 parts.push('h1 { color: #7C3AED; text-align: center; font-size: 28px; margin-bottom: 4px; }');
 parts.push('.subtitle { text-align: center; color: #94A3B8; font-style: italic; font-size: 15px; margin-bottom: 30px; }');
 parts.push('.scene-img { display: block; margin: 20px auto; border-radius: 8px; }');

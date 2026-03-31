@@ -32,6 +32,7 @@ Before declaring ANY build item complete, grep for the function name in the push
 13. Pushing to GAS without running audit-source.sh first
 14. Adding a google.script.run call without adding the Safe function to smoke test wiring check
 15. Writing code against assumed field names without grep verification (see Verify-Before-Assert Rule)
+16. Replacing an HTML file without first grepping the CURRENT file for all interactive elements (buttons, forms, modals, onclick handlers) and verifying they exist in the new file. If any are missing, STOP and report.
 
 ---
 
@@ -235,6 +236,7 @@ If any match: fix before pushing.
 1. Update PM Active Versions table with new version numbers
 2. Write thread handoff to Archive page
 3. Update deploy page title (just the version number, NOT the icon)
+4. Code owns this step — it has real visibility into what shipped. Never skip.
 
 ### Notion update rules:
 - `notion-update-page` with `old_str`/`new_str` requires EXACT whitespace matching

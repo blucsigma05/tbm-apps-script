@@ -2053,6 +2053,34 @@ function khDebitScreenTime(child, screenType, minutes) {
 }
 
 
+// v30: Meal Plan — log dinner entry from Parent Dashboard
+function updateMealPlan(meal, cook, notes) {
+  var mealName = String(meal || '').trim();
+  var cookedBy = String(cook || '').trim();
+  var mealNotes = String(notes || '').trim();
+  if (!mealName) return JSON.stringify({ status: 'error', message: 'Meal name required' });
+  if (!cookedBy) cookedBy = 'JT';
+
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked', message: 'Try again.' });
+  try {
+    var ss = getKHSS_();
+    var tabName = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['MealPlan'] || 'MealPlan') : 'MealPlan';
+    var sheet = ss.getSheetByName(tabName);
+    if (!sheet) {
+      sheet = ss.insertSheet(tabName);
+      sheet.appendRow(['Date', 'Meal', 'Cook', 'Notes', 'Timestamp']);
+    }
+    var today = getTodayISO_();
+    var now = getNowISO_();
+    sheet.appendRow([today, mealName, cookedBy, mealNotes, now]);
+    stampKHHeartbeat_();
+    return JSON.stringify({ status: 'ok', meal: mealName, cook: cookedBy });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
 // v18: Internal helper — writes a deposit row to KH_ScreenTime (auto-creates tab if missing)
 function depositScreenTime_(child, screenType, minutes, source) {
   var sheet = getKHSheet_('KH_ScreenTime');

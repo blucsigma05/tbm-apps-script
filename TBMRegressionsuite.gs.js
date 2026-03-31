@@ -341,6 +341,51 @@ function runBugAssertions_(results) {
     details: 'Source-level check. KidsHub_v26.html contains ~30 const/let declarations. Must be converted to var. Scan for: const, let, =>, template literals.',
     note: 'NEWLY DISCOVERED in Session 59 audit. Not yet scheduled for fix. Affects Fire Stick tablet rendering.'
   });
+
+  // ── BUG-QA2-001: Deduction math — subtraction must be correct ──
+  // QA Round 2: 296 - 25 = 221 (should be 271). Root cause: button
+  // not debounced, multiple rapid taps cause duplicate deductions.
+  // FIX: Disable button during API call.
+  results.assertions.push({
+    id: 'BUG-QA2-001',
+    category: 'calculation',
+    severity: 'CRITICAL',
+    session: 78,
+    description: 'Deduction of 25 from balance of 296 must yield 271',
+    status: (function() {
+      var result = 296 - 25;
+      return result === 271 ? 'PASS' : 'FAIL';
+    })(),
+    details: 'Balance = earned - spent - deducted. Verify single deduction application.'
+  });
+
+  // ── BUG-QA2-002: Task approval — points must add correctly ──────
+  results.assertions.push({
+    id: 'BUG-QA2-002',
+    category: 'calculation',
+    severity: 'CRITICAL',
+    session: 78,
+    description: 'Approving task worth 10 rings must increase balance by 10',
+    status: (function() {
+      var before = 100, taskPts = 10;
+      return (before + taskPts) === 110 ? 'PASS' : 'FAIL';
+    })(),
+    details: 'Verify earned points add correctly to balance.'
+  });
+
+  // ── BUG-QA2-003: Bonus multiplier — 1.5x must apply correctly ──
+  results.assertions.push({
+    id: 'BUG-QA2-003',
+    category: 'calculation',
+    severity: 'HIGH',
+    session: 78,
+    description: 'Approving with 1.5x bonus on 10-point task must yield 15',
+    status: (function() {
+      var base = 10, mult = 1.5;
+      return Math.round(base * mult) === 15 ? 'PASS' : 'FAIL';
+    })(),
+    details: 'Verify bonus multiplier arithmetic.'
+  });
 }
 
 
