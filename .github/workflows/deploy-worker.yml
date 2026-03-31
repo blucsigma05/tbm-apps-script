@@ -6,6 +6,7 @@ on:
     paths:
       - 'cloudflare-worker.js'
       - 'wrangler.toml'
+  workflow_dispatch:
 
 jobs:
   deploy:

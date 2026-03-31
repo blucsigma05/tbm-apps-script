@@ -1,6 +1,6 @@
 name = "tbm-smart-proxy"
 main = "cloudflare-worker.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-09-01"
 
 # Route: thompsonfams.com/* → this Worker
 # Configure route in Cloudflare dashboard or uncomment below:
