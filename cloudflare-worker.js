@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v2.2 — thompsonfams.com
+// TBM Smart Proxy v2.3 — thompsonfams.com
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -267,11 +267,12 @@ function getShimScript() {
 '        })\n' +
 '        .then(function(r) { return r.text(); })\n' +
 '        .then(function(t) {\n' +
-'          try { self._ok(JSON.parse(t)); }\n' +
-'          catch(e) { self._ok(t); }\n' +
+'          var parsed;\n' +
+'          try { parsed = JSON.parse(t); } catch(e) { parsed = t; }\n' +
+'          try { self._ok(parsed); } catch(e2) { console.error("[TBM] Handler error in " + name + ":", e2); }\n' +
 '        })\n' +
 '        .catch(function(err) {\n' +
-'          self._err({ message: err.message || "Network error" });\n' +
+'          try { self._err({ message: err.message || "Network error" }); } catch(e) {}\n' +
 '        });\n' +
 '      };\n' +
 '    })(FNS[i]);\n' +
