@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="tbm-module" content="baseline-diagnostic">
+<meta name="tbm-version" content="v1">
+<title>Baseline Diagnostic - Thompson Education Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* === RESET === */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background: #0B0F1A;
+  color: #E2E8F0;
+  font-family: 'Nunito', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+body.sparkle-mode {
+  background: linear-gradient(170deg, #FFF5F9 0%, #FFF0F9 40%, #F5F0FF 100%);
+  color: #4A1942;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+}
+
+/* === ANIMATIONS === */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes esFeedbackSlide {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === STARFIELD (Buggsy) === */
+#starfield {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #93C5FD;
+  opacity: 0.3;
+}
+body.sparkle-mode #starfield { display: none; }
+
+/* === SPARKLE BG (JJ) === */
+#sparkle-bg {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+body.sparkle-mode #sparkle-bg { display: block; }
+.sparkle-dot {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.15;
+}
+
+/* === STICKY HEADER === */
+#app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(11,15,26,0.92);
+  border-bottom: 1px solid #1E2A4A;
+  padding: 10px 16px;
+}
+body.sparkle-mode #app-header {
+  background: rgba(255,245,249,0.92);
+  border-bottom: 2px solid #FFD6E8;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo { font-size: 22px; }
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #60A5FA, #93C5FD);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+body.sparkle-mode .header-title {
+  font-family: 'Fredoka', sans-serif;
+  font-size: 16px;
+  background: linear-gradient(90deg, #FF69B4, #DA70D6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.header-subtitle {
+  font-size: 9px;
+  color: #64748B;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 2px;
+}
+body.sparkle-mode .header-subtitle {
+  font-family: 'Fredoka', sans-serif;
+  color: #C490B8;
+}
+.progress-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #94A3B8;
+  background: #171D30;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #1E2A4A;
+}
+body.sparkle-mode .progress-badge {
+  background: rgba(255,215,0,0.15);
+  border-color: rgba(255,215,0,0.3);
+  color: #4A1942;
+  font-family: 'Fredoka', sans-serif;
+}
+
+/* === MAIN CONTAINER === */
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+  position: relative;
+  z-index: 10;
+}
+body.sparkle-mode main { max-width: 500px; }
+
+/* === PLAN OVERLAY === */
+#plan-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11,15,26,0.95);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+body.sparkle-mode #plan-overlay {
+  background: rgba(255,240,249,0.97);
+}
+.plan-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: fadeSlide 0.4s ease;
+}
+body.sparkle-mode .plan-card {
+  background: linear-gradient(135deg, #fff0f5 0%, #fce4ec 100%);
+  border: 2px solid #ffb6c1;
+}
+.plan-icon { font-size: 48px; margin-bottom: 12px; }
+.plan-card h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #60A5FA;
+  margin-bottom: 12px;
+}
+body.sparkle-mode .plan-card h2 {
+  font-family: 'Fredoka', sans-serif;
+  color: #d63384;
+  font-size: 22px;
+}
+.plan-card p {
+  font-size: 14px;
+  color: #94A3B8;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+body.sparkle-mode .plan-card p { color: #e91e8e; }
+.plan-sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 16px 0;
+}
+.plan-pill {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #c0c4d6;
+}
+body.sparkle-mode .plan-pill {
+  background: rgba(255,105,180,0.08);
+  border-color: #ffb6c1;
+  color: #c2185b;
+}
+.plan-pill-type {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6c63ff;
+  display: block;
+  margin-bottom: 2px;
+}
+body.sparkle-mode .plan-pill-type { color: #d63384; }
+.plan-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99,102,241,0.1);
+  border: 1px solid rgba(99,102,241,0.2);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #a5b4fc;
+  margin: 12px 0;
+}
+body.sparkle-mode .plan-time {
+  background: rgba(255,105,180,0.1);
+  border-color: rgba(255,105,180,0.3);
+  color: #c2185b;
+}
+.plan-start-btn {
+  background: linear-gradient(135deg, #6c63ff 0%, #8b5cf6 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: transform 0.15s, box-shadow 0.15s;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 1px;
+}
+.plan-start-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(108,99,255,0.4); }
+.plan-start-btn:active { transform: translateY(0); }
+body.sparkle-mode .plan-start-btn {
+  background: linear-gradient(135deg, #ff69b4 0%, #da70d6 100%);
+  font-size: 20px;
+  padding: 18px 50px;
+  border-radius: 30px;
+  font-family: 'Fredoka', sans-serif;
+}
+
+/* === SESSION TIMER === */
+.es-session-timer {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  background: rgba(15,15,30,0.85);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #a5b4fc;
+  font-family: 'JetBrains Mono', monospace;
+  z-index: 100;
+}
+body.sparkle-mode .es-session-timer {
+  background: rgba(255,182,193,0.9);
+  color: #880e4f;
+  border-color: #ff69b4;
+}
+
+/* === QUESTION CARD === */
+.q-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 14px;
+  animation: fadeSlide 0.3s ease both;
+}
+body.sparkle-mode .q-card {
+  background: #fff;
+  border: 2px solid #FFD6E8;
+  border-radius: 20px;
+  padding: 24px;
+}
+.q-section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #6c63ff;
+  margin-bottom: 4px;
+  font-weight: 700;
+}
+body.sparkle-mode .q-section-label { color: #d63384; }
+.q-teks-tag {
+  font-size: 10px;
+  color: #64748B;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 12px;
+}
+body.sparkle-mode .q-teks-tag { color: #C490B8; }
+.q-number {
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+body.sparkle-mode .q-number { color: #C490B8; font-size: 14px; }
+.q-text {
+  font-size: 16px;
+  color: #E2E8F0;
+  margin-bottom: 16px;
+  line-height: 1.6;
+  font-weight: 600;
+}
+body.sparkle-mode .q-text {
+  color: #4A1942;
+  font-size: 20px;
+  font-weight: 700;
+}
+.q-passage {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: #CBD5E1;
+  line-height: 1.7;
+  font-style: italic;
+}
+body.sparkle-mode .q-passage {
+  background: rgba(255,105,180,0.05);
+  border-color: #FFD6E8;
+  color: #6B3A60;
+}
+
+/* MC Options (Buggsy - text) */
+.mc-options { display: flex; flex-direction: column; gap: 8px; }
+.mc-option {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #E2E8F0;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  display: block;
+  width: 100%;
+}
+.mc-option:hover {
+  background: rgba(99,102,241,0.08);
+  border-color: rgba(99,102,241,0.3);
+}
+.mc-option.selected {
+  background: rgba(99,102,241,0.12);
+  border-color: #6c63ff;
+  color: #a5b4fc;
+}
+.mc-option.selected-correct {
+  background: rgba(34,197,94,0.1);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+.mc-option.selected-wrong {
+  background: rgba(251,191,36,0.08);
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+.mc-option.reveal-correct {
+  background: rgba(34,197,94,0.06);
+  border-color: rgba(34,197,94,0.3);
+}
+
+/* MC Options (JJ - big visual buttons) */
+body.sparkle-mode .mc-options {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+body.sparkle-mode .mc-option {
+  background: #fff;
+  border: 3px solid #FFD6E8;
+  border-radius: 20px;
+  padding: 18px 16px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #4A1942;
+  text-align: center;
+  min-width: 120px;
+  min-height: 64px;
+  flex: 0 0 calc(50% - 6px);
+}
+body.sparkle-mode .mc-option:hover {
+  background: #FFF0F5;
+  border-color: #FF69B4;
+}
+body.sparkle-mode .mc-option.selected {
+  background: rgba(255,105,180,0.12);
+  border-color: #FF69B4;
+  color: #FF69B4;
+}
+body.sparkle-mode .mc-option.selected-correct {
+  background: rgba(255,215,0,0.15);
+  border-color: #FFD700;
+  color: #B8860B;
+}
+body.sparkle-mode .mc-option.selected-wrong {
+  background: rgba(218,112,214,0.1);
+  border-color: #DA70D6;
+  color: #DA70D6;
+}
+
+/* Writing textarea */
+.q-textarea {
+  width: 100%;
+  min-height: 120px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 14px;
+  color: #E2E8F0;
+  font-size: 14px;
+  font-family: 'Nunito', sans-serif;
+  resize: vertical;
+}
+.q-textarea:focus { outline: none; border-color: #6c63ff; }
+body.sparkle-mode .q-textarea {
+  background: #fff;
+  border: 2px solid #FFD6E8;
+  color: #4A1942;
+  font-size: 18px;
+  border-radius: 16px;
+}
+body.sparkle-mode .q-textarea:focus { border-color: #FF69B4; }
+
+/* Feedback area */
+.q-feedback {
+  margin-top: 10px;
+  min-height: 20px;
+}
+.es-feedback {
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0;
+  animation: esFeedbackSlide 0.3s ease-out;
+}
+.es-feedback.correct {
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.2);
+}
+.es-feedback.wrong {
+  background: rgba(251,191,36,0.06);
+  border: 1px solid rgba(251,191,36,0.15);
+}
+.es-feedback .es-fb-icon {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.es-feedback.correct .es-fb-icon { color: #22c55e; }
+.es-feedback.wrong .es-fb-icon { color: #fbbf24; }
+.es-feedback .es-fb-text {
+  font-size: 14px;
+  color: #d0d0d0;
+  line-height: 1.5;
+}
+/* JJ sparkle feedback */
+.es-feedback.sparkle-correct {
+  background: rgba(255,215,0,0.1);
+  border: 2px solid #ffd700;
+  text-align: center;
+}
+.es-feedback.sparkle-correct .es-fb-icon { font-size: 32px; color: #ffd700; }
+.es-feedback.sparkle-wrong {
+  background: rgba(218,112,214,0.08);
+  border: 2px solid rgba(218,112,214,0.3);
+  text-align: center;
+}
+.es-feedback.sparkle-wrong .es-fb-icon { font-size: 24px; color: #da70d6; }
+
+/* === NAV DOTS === */
+.nav-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 20px 0 12px;
+  flex-wrap: wrap;
+}
+.nav-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nav-dot.current {
+  background: #6c63ff;
+  border-color: #8b5cf6;
+  transform: scale(1.3);
+}
+.nav-dot.answered {
+  background: rgba(34,197,94,0.4);
+  border-color: #22c55e;
+}
+.nav-dot.skipped {
+  background: rgba(251,191,36,0.3);
+  border-color: #fbbf24;
+}
+body.sparkle-mode .nav-dot {
+  width: 14px;
+  height: 14px;
+  background: rgba(255,105,180,0.15);
+  border-color: #FFD6E8;
+}
+body.sparkle-mode .nav-dot.current {
+  background: #FF69B4;
+  border-color: #FF69B4;
+}
+body.sparkle-mode .nav-dot.answered {
+  background: rgba(255,215,0,0.5);
+  border-color: #FFD700;
+}
+
+/* === BOTTOM CONTROLS === */
+.bottom-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+  gap: 12px;
+}
+.btn-skip {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 13px;
+  color: #64748B;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+}
+.btn-skip:hover { border-color: rgba(255,255,255,0.3); color: #94A3B8; }
+body.sparkle-mode .btn-skip {
+  border-color: #FFD6E8;
+  color: #C490B8;
+  border-radius: 20px;
+  font-size: 16px;
+  padding: 12px 24px;
+}
+.btn-next {
+  background: linear-gradient(135deg, #6c63ff 0%, #8b5cf6 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 28px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-next:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(108,99,255,0.3); }
+.btn-next:disabled { opacity: 0.4; cursor: default; transform: none; box-shadow: none; }
+body.sparkle-mode .btn-next {
+  background: linear-gradient(135deg, #ff69b4 0%, #da70d6 100%);
+  border-radius: 20px;
+  font-size: 18px;
+  padding: 14px 36px;
+  font-family: 'Fredoka', sans-serif;
+}
+
+/* === RESULTS SCREEN === */
+#results-screen { display: none; animation: fadeSlide 0.4s ease; }
+.results-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 28px 24px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+body.sparkle-mode .results-card {
+  background: #fff;
+  border: 2px solid #FFD6E8;
+  border-radius: 24px;
+}
+.results-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  color: #60A5FA;
+  margin-bottom: 8px;
+}
+body.sparkle-mode .results-title {
+  font-family: 'Fredoka', sans-serif;
+  color: #FF69B4;
+  font-size: 24px;
+}
+.results-subtitle {
+  font-size: 14px;
+  color: #94A3B8;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+body.sparkle-mode .results-subtitle { color: #C490B8; }
+.results-section {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 8px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+body.sparkle-mode .results-section {
+  background: rgba(255,105,180,0.04);
+  border-color: #FFD6E8;
+  border-radius: 16px;
+}
+.results-section-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #E2E8F0;
+}
+body.sparkle-mode .results-section-name { color: #4A1942; }
+.results-section-score {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 6px;
+}
+.score-green { background: rgba(34,197,94,0.12); color: #22c55e; }
+.score-yellow { background: rgba(251,191,36,0.12); color: #fbbf24; }
+.score-red { background: rgba(239,68,68,0.12); color: #ef4444; }
+.results-total {
+  font-size: 28px;
+  font-weight: 800;
+  color: #fbbf24;
+  margin: 16px 0 8px;
+}
+body.sparkle-mode .results-total { color: #FF69B4; }
+.results-message {
+  font-size: 15px;
+  color: #94A3B8;
+  line-height: 1.6;
+  margin: 12px 0 20px;
+}
+body.sparkle-mode .results-message { color: #C490B8; font-size: 18px; }
+.btn-send-results {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 32px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: transform 0.15s;
+  margin-top: 8px;
+}
+.btn-send-results:hover { transform: translateY(-1px); }
+.btn-send-results:disabled { opacity: 0.5; cursor: default; transform: none; }
+body.sparkle-mode .btn-send-results {
+  border-radius: 20px;
+  font-size: 18px;
+  padding: 14px 36px;
+  font-family: 'Fredoka', sans-serif;
+}
+.send-status {
+  font-size: 13px;
+  margin-top: 8px;
+  min-height: 20px;
+}
+
+/* === AUDIO BTN (JJ) === */
+.audio-btn {
+  display: none;
+  background: rgba(255,105,180,0.1);
+  border: 2px solid #FFD6E8;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  font-size: 22px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+body.sparkle-mode .audio-btn { display: inline-block; }
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1E2A4A; border-radius: 3px; }
+body.sparkle-mode ::-webkit-scrollbar-thumb { background: #FFD6E8; }
+
+textarea::-webkit-input-placeholder { color: #64748B; }
+textarea:-moz-placeholder { color: #64748B; }
+textarea::-moz-placeholder { color: #64748B; }
+textarea:-ms-input-placeholder { color: #64748B; }
+</style>
+</head>
+<body>
+
+<!-- Starfield (Buggsy) -->
+<div id="starfield"></div>
+
+<!-- Sparkle BG (JJ) -->
+<div id="sparkle-bg"></div>
+
+<!-- Sticky Header -->
+<div id="app-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <span class="header-logo" id="header-emoji">&#128202;</span>
+      <div>
+        <div class="header-title" id="header-title-text">BASELINE DIAGNOSTIC</div>
+        <div class="header-subtitle" id="header-subtitle-text">CALIBRATION ASSESSMENT</div>
+      </div>
+    </div>
+    <div class="progress-badge" id="progress-badge">Q 0/0</div>
+  </div>
+</div>
+
+<!-- Plan Your Attack Overlay -->
+<div id="plan-overlay">
+  <div class="plan-card" id="plan-card">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<!-- Main Content -->
+<main id="main-content" style="display:none;">
+  <div id="question-area"></div>
+  <div class="nav-dots" id="nav-dots"></div>
+  <div class="bottom-controls" id="bottom-controls">
+    <button class="btn-skip" id="btn-skip" onclick="Diag.skip()">Skip</button>
+    <button class="btn-next" id="btn-next" onclick="Diag.next()" disabled>Next</button>
+  </div>
+</main>
+
+<!-- Results Screen -->
+<div id="results-screen">
+  <div class="results-card" id="results-card">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<script>
+// ============================================================
+// BASELINE DIAGNOSTIC ENGINE - ES5 ONLY
+// Thompson Education Platform
+// ============================================================
+var Diag = (function() {
+  'use strict';
+
+  // --- Parse child from URL ---
+  var CHILD = 'buggsy';
+  (function() {
+    var search = window.location.search || '';
+    if (search.indexOf('?') === 0) { search = search.substring(1); }
+    var parts = search.split('&');
+    for (var i = 0; i < parts.length; i++) {
+      var kv = parts[i].split('=');
+      if (kv[0] === 'child' && kv[1]) {
+        CHILD = kv[1].toLowerCase();
+      }
+    }
+  })();
+
+  var IS_SPARKLE = (CHILD === 'jj');
+
+  // --- Session Timer State ---
+  var _sessionStartTime = null;
+  var _sessionTimerInterval = null;
+  var _timerEl = null;
+
+  // --- Question State ---
+  var questions = [];
+  var currentIndex = 0;
+  var answers = []; // { selected: index|string, isCorrect: bool|null }
+  var feedbackShown = false;
+
+  // ============================================================
+  // BUGGSY QUESTIONS (4th Grade, 17 total)
+  // ============================================================
+  var BUGGSY_QUESTIONS = [
+    // MATH Section (6)
+    {
+      section: 'Math', teks: 'TEKS 4.2A', type: 'mc',
+      text: 'What is the value of the 7 in 47,832?',
+      options: ['7', '700', '7,000', '70,000'],
+      correct: 2
+    },
+    {
+      section: 'Math', teks: 'TEKS 4.4B', type: 'mc',
+      text: 'What is 34 \u00D7 6?',
+      options: ['194', '204', '214', '40'],
+      correct: 1
+    },
+    {
+      section: 'Math', teks: 'TEKS 4.3C', type: 'mc',
+      text: 'Which fraction is equivalent to 2/4?',
+      options: ['1/2', '3/4', '2/3', '1/4'],
+      correct: 0
+    },
+    {
+      section: 'Math', teks: 'TEKS 4.6B', type: 'mc',
+      text: 'How many lines of symmetry does a square have?',
+      options: ['1', '2', '4', '0'],
+      correct: 2
+    },
+    {
+      section: 'Math', teks: 'TEKS 4.8B', type: 'mc',
+      text: 'How many inches are in 2 feet?',
+      options: ['12', '24', '36', '6'],
+      correct: 1
+    },
+    {
+      section: 'Math', teks: 'TEKS 4.3E', type: 'mc',
+      text: 'A pizza has 8 slices. Nathan eats 3/8 and Buggsy eats 2/8. How much is left?',
+      options: ['5/8', '3/8', '1/8', '4/8'],
+      correct: 1
+    },
+    // SCIENCE Section (5)
+    {
+      section: 'Science', teks: 'TEKS 4.6A', type: 'mc',
+      text: 'Which of these is a physical change?',
+      options: ['Burning wood', 'Rusting iron', 'Folding paper', 'Baking a cake'],
+      correct: 2
+    },
+    {
+      section: 'Science', teks: 'TEKS 4.7A', type: 'mc',
+      text: 'What type of force slows down a moving object?',
+      options: ['Gravity', 'Magnetism', 'Friction', 'Inertia'],
+      correct: 2
+    },
+    {
+      section: 'Science', teks: 'TEKS 4.9A', type: 'mc',
+      text: 'Which is a renewable resource?',
+      options: ['Coal', 'Natural gas', 'Solar energy', 'Oil'],
+      correct: 2
+    },
+    {
+      section: 'Science', teks: 'TEKS 4.12A', type: 'mc',
+      text: 'In a food chain, what is a producer?',
+      options: ['A plant', 'A rabbit', 'A hawk', 'A mushroom'],
+      correct: 0
+    },
+    {
+      section: 'Science', teks: 'TEKS 4.10A', type: 'mc',
+      text: 'What causes day and night on Earth?',
+      options: ["Earth's revolution", "Earth's rotation", "Moon's orbit", "Sun's movement"],
+      correct: 1
+    },
+    // READING / RLA Section (5)
+    {
+      section: 'Reading', teks: 'TEKS ELA 4.6', type: 'mc',
+      passage: 'Max the golden retriever loved going to the park every Saturday. He would chase squirrels, splash in the pond, and roll in the grass until he was covered in mud. Saturday was always his favorite day of the week.',
+      text: 'What is the MAIN IDEA of this passage?',
+      options: [
+        'Max likes to roll in mud',
+        'Max enjoys his Saturday trips to the park',
+        'Golden retrievers are the best dogs',
+        'Parks are fun places for people'
+      ],
+      correct: 1
+    },
+    {
+      section: 'Reading', teks: 'TEKS ELA 4.3B', type: 'mc',
+      text: 'Which word is a SYNONYM for "enormous"?',
+      options: ['Tiny', 'Huge', 'Fast', 'Old'],
+      correct: 1
+    },
+    {
+      section: 'Reading', teks: 'TEKS ELA 4.11', type: 'mc',
+      text: 'Which sentence has correct punctuation?',
+      options: [
+        'The dog ran fast, and it jumped over the fence.',
+        'The dog ran fast and, it jumped over the fence.',
+        'The dog, ran fast and it jumped over the fence.',
+        'The dog ran fast and it jumped, over the fence.'
+      ],
+      correct: 0
+    },
+    {
+      section: 'Reading', teks: 'TEKS ELA 4.10', type: 'mc',
+      passage: 'Honeybees are some of the hardest workers in nature. A single bee visits between 50 and 1,000 flowers in one trip. Without bees, many of the fruits and vegetables we eat would not grow.',
+      text: 'The author wrote this passage MAINLY to \u2014',
+      options: [
+        'entertain readers with a funny bee story',
+        'inform readers about how important bees are',
+        'persuade readers to become beekeepers',
+        'describe what a beehive looks like'
+      ],
+      correct: 1
+    },
+    {
+      section: 'Reading', teks: 'TEKS ELA 4.3B', type: 'mc',
+      text: '"The hikers were exhausted after the long trail." What does EXHAUSTED mean?',
+      options: ['Excited', 'Very tired', 'Angry', 'Confused'],
+      correct: 1
+    },
+    // WRITING Section (1 open-ended)
+    {
+      section: 'Writing', teks: 'TEKS ELA 4.11', type: 'open',
+      text: 'Write 2\u20133 sentences about your favorite thing to do after school.',
+      placeholder: 'Write your answer here...'
+    }
+  ];
+
+  // ============================================================
+  // JJ QUESTIONS (Pre-K, 10 visual/audio)
+  // ============================================================
+  var JJ_QUESTIONS = [
+    // Letter Recognition (3)
+    {
+      section: 'Letters', teks: 'Pre-K Literacy', type: 'mc',
+      text: 'What letter is this?',
+      visual: 'A',
+      audioText: 'What letter is this? Look at the big letter on the screen.',
+      options: ['A', 'B', 'C', 'D'],
+      correct: 0
+    },
+    {
+      section: 'Letters', teks: 'Pre-K Literacy', type: 'mc',
+      text: 'What letter is this?',
+      visual: 'M',
+      audioText: 'What letter is this? Look at the big letter on the screen.',
+      options: ['N', 'M', 'W', 'H'],
+      correct: 1
+    },
+    {
+      section: 'Letters', teks: 'Pre-K Literacy', type: 'mc',
+      text: 'What letter is this?',
+      visual: 'S',
+      audioText: 'What letter is this? Look at the big letter on the screen.',
+      options: ['Z', 'C', 'S', 'O'],
+      correct: 2
+    },
+    // Counting (3)
+    {
+      section: 'Counting', teks: 'Pre-K Math', type: 'mc',
+      text: 'How many stars do you see?',
+      visual: '\u2B50\u2B50\u2B50',
+      audioText: 'How many stars do you see? Count them!',
+      options: ['2', '3', '4', '5'],
+      correct: 1
+    },
+    {
+      section: 'Counting', teks: 'Pre-K Math', type: 'mc',
+      text: 'How many hearts do you see?',
+      visual: '\u2764\uFE0F\u2764\uFE0F\u2764\uFE0F\u2764\uFE0F\u2764\uFE0F',
+      audioText: 'How many hearts do you see? Count them!',
+      options: ['3', '4', '5', '6'],
+      correct: 2
+    },
+    {
+      section: 'Counting', teks: 'Pre-K Math', type: 'mc',
+      text: 'How many apples do you see?',
+      visual: '\uD83C\uDF4E',
+      audioText: 'How many apples do you see?',
+      options: ['1', '2', '3', '4'],
+      correct: 0
+    },
+    // Colors (2)
+    {
+      section: 'Colors', teks: 'Pre-K Science', type: 'mc',
+      text: 'What color is this?',
+      visual: '\uD83D\uDFE6',
+      audioText: 'What color is this square?',
+      options: ['Red', 'Blue', 'Green', 'Yellow'],
+      correct: 1
+    },
+    {
+      section: 'Colors', teks: 'Pre-K Science', type: 'mc',
+      text: 'What color is this?',
+      visual: '\uD83D\uDFE9',
+      audioText: 'What color is this square?',
+      options: ['Orange', 'Purple', 'Green', 'Pink'],
+      correct: 2
+    },
+    // Shapes (2)
+    {
+      section: 'Shapes', teks: 'Pre-K Math', type: 'mc',
+      text: 'What shape is this?',
+      visual: '\u25CF',
+      audioText: 'What shape is this? Is it a circle, square, triangle, or star?',
+      options: ['Circle', 'Square', 'Triangle', 'Star'],
+      correct: 0
+    },
+    {
+      section: 'Shapes', teks: 'Pre-K Math', type: 'mc',
+      text: 'What shape is this?',
+      visual: '\u25B2',
+      audioText: 'What shape is this?',
+      options: ['Circle', 'Square', 'Triangle', 'Diamond'],
+      correct: 2
+    }
+  ];
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  function init() {
+    if (IS_SPARKLE) {
+      document.body.className = 'sparkle-mode';
+      document.getElementById('header-emoji').innerHTML = '\u2728';
+      document.getElementById('header-title-text').textContent = 'JJ\'s Checkup!';
+      document.getElementById('header-subtitle-text').textContent = 'LET\'S SEE WHAT YOU KNOW';
+      questions = JJ_QUESTIONS;
+    } else {
+      questions = BUGGSY_QUESTIONS;
+    }
+
+    // Init answers array
+    answers = [];
+    for (var i = 0; i < questions.length; i++) {
+      answers.push({ selected: null, isCorrect: null });
+    }
+
+    buildStarfield();
+    buildPlanScreen();
+  }
+
+  // ============================================================
+  // STARFIELD / SPARKLE BG
+  // ============================================================
+  function buildStarfield() {
+    if (IS_SPARKLE) {
+      var container = document.getElementById('sparkle-bg');
+      var colors = ['#FFB6C1', '#DA70D6', '#FFD700', '#FF69B4', '#DDA0DD'];
+      for (var i = 0; i < 40; i++) {
+        var dot = document.createElement('div');
+        dot.className = 'sparkle-dot';
+        var size = Math.floor(Math.random() * 8) + 4;
+        dot.style.width = size + 'px';
+        dot.style.height = size + 'px';
+        dot.style.left = Math.floor(Math.random() * 100) + '%';
+        dot.style.top = Math.floor(Math.random() * 100) + '%';
+        dot.style.background = colors[Math.floor(Math.random() * colors.length)];
+        dot.style.animation = 'twinkle ' + (Math.random() * 4 + 3) + 's ease-in-out infinite';
+        dot.style.animationDelay = (Math.random() * 5) + 's';
+        container.appendChild(dot);
+      }
+    } else {
+      var sf = document.getElementById('starfield');
+      for (var j = 0; j < 60; j++) {
+        var star = document.createElement('div');
+        star.className = 'star';
+        var s = Math.floor(Math.random() * 3) + 1;
+        star.style.width = s + 'px';
+        star.style.height = s + 'px';
+        star.style.left = Math.floor(Math.random() * 100) + '%';
+        star.style.top = Math.floor(Math.random() * 100) + '%';
+        star.style.animation = 'twinkle ' + (Math.random() * 4 + 2) + 's ease-in-out infinite';
+        star.style.animationDelay = (Math.random() * 5) + 's';
+        sf.appendChild(star);
+      }
+    }
+  }
+
+  // ============================================================
+  // PLAN YOUR ATTACK SCREEN
+  // ============================================================
+  function buildPlanScreen() {
+    var card = document.getElementById('plan-card');
+    var timeEst = IS_SPARKLE ? 8 : 15;
+
+    // Build section overview pills
+    var sections = {};
+    for (var i = 0; i < questions.length; i++) {
+      var sec = questions[i].section;
+      if (!sections[sec]) { sections[sec] = 0; }
+      sections[sec]++;
+    }
+
+    var pillsHtml = '';
+    for (var name in sections) {
+      if (sections.hasOwnProperty(name)) {
+        pillsHtml += '<div class="plan-pill">' +
+          '<span class="plan-pill-type">' + name + '</span>' +
+          sections[name] + ' question' + (sections[name] > 1 ? 's' : '') +
+          '</div>';
+      }
+    }
+
+    var icon = IS_SPARKLE ? '\u2728' : '\uD83D\uDCCA';
+    var title = IS_SPARKLE ? "Let's Get Ready!" : 'PLAN YOUR ATTACK';
+    var subtitle = IS_SPARKLE
+      ? "Here's what we're doing today! Just answer what you can \u2014 no wrong answers!"
+      : 'This diagnostic checks where you are right now. No grade, no pressure \u2014 just a starting point.';
+    var btnText = IS_SPARKLE ? "Let's Go!" : "I'm Ready \u2014 Start Diagnostic";
+
+    card.innerHTML =
+      '<div class="plan-icon">' + icon + '</div>' +
+      '<h2>' + title + '</h2>' +
+      '<p>' + subtitle + '</p>' +
+      '<div class="plan-time">&#9202; About ~' + timeEst + ' minutes</div>' +
+      '<div class="plan-sections">' + pillsHtml + '</div>' +
+      '<button class="plan-start-btn" onclick="Diag.startDiagnostic()">' + btnText + '</button>';
+  }
+
+  // ============================================================
+  // START DIAGNOSTIC
+  // ============================================================
+  function startDiagnostic() {
+    document.getElementById('plan-overlay').style.display = 'none';
+    document.getElementById('main-content').style.display = 'block';
+    startSessionTimer();
+    currentIndex = 0;
+    renderQuestion();
+    renderDots();
+    updateProgressBadge();
+  }
+
+  // ============================================================
+  // SESSION TIMER
+  // ============================================================
+  function startSessionTimer() {
+    _sessionStartTime = Date.now();
+    _timerEl = document.createElement('div');
+    _timerEl.className = 'es-session-timer';
+    _timerEl.innerHTML = '0:00';
+    document.body.appendChild(_timerEl);
+
+    _sessionTimerInterval = setInterval(function() {
+      var elapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+      var min = Math.floor(elapsed / 60);
+      var sec = elapsed % 60;
+      _timerEl.innerHTML = min + ':' + (sec < 10 ? '0' : '') + sec;
+    }, 1000);
+  }
+
+  function stopSessionTimer() {
+    if (_sessionTimerInterval) {
+      clearInterval(_sessionTimerInterval);
+      _sessionTimerInterval = null;
+    }
+    var elapsed = 0;
+    if (_sessionStartTime) {
+      elapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+    }
+    if (_timerEl && _timerEl.parentNode) {
+      _timerEl.parentNode.removeChild(_timerEl);
+    }
+    return elapsed;
+  }
+
+  // ============================================================
+  // RENDER QUESTION
+  // ============================================================
+  function renderQuestion() {
+    feedbackShown = false;
+    var q = questions[currentIndex];
+    var area = document.getElementById('question-area');
+    var html = '';
+
+    html += '<div class="q-card">';
+
+    // Section label + TEKS
+    html += '<div class="q-section-label">' + q.section + '</div>';
+    html += '<div class="q-teks-tag">' + q.teks + '</div>';
+    html += '<div class="q-number">Question ' + (currentIndex + 1) + ' of ' + questions.length + '</div>';
+
+    // Audio button (JJ only)
+    if (IS_SPARKLE && q.audioText) {
+      html += '<button class="audio-btn" onclick="Diag.speakQuestion()">&#128266;</button>';
+    }
+
+    // Visual display (JJ letter/counting/shapes)
+    if (q.visual) {
+      var visualSize = IS_SPARKLE ? '72px' : '48px';
+      html += '<div style="font-size:' + visualSize + ';text-align:center;margin:12px 0 16px;line-height:1.2;">' + q.visual + '</div>';
+    }
+
+    // Passage (reading questions)
+    if (q.passage) {
+      html += '<div class="q-passage">' + q.passage + '</div>';
+    }
+
+    // Question text
+    html += '<div class="q-text">' + q.text + '</div>';
+
+    // Answer input
+    if (q.type === 'mc') {
+      html += '<div class="mc-options" id="mc-options">';
+      var labels = ['A', 'B', 'C', 'D'];
+      for (var i = 0; i < q.options.length; i++) {
+        var selectedClass = '';
+        if (answers[currentIndex].selected === i) {
+          selectedClass = ' selected';
+        }
+        html += '<button class="mc-option' + selectedClass + '" data-idx="' + i + '" onclick="Diag.selectOption(' + i + ')">';
+        html += '<strong>' + labels[i] + ')</strong> ' + q.options[i];
+        html += '</button>';
+      }
+      html += '</div>';
+    } else if (q.type === 'open') {
+      var val = answers[currentIndex].selected || '';
+      html += '<textarea class="q-textarea" id="open-textarea" placeholder="' + (q.placeholder || 'Write your answer here...') + '" oninput="Diag.onTextInput()">' + val + '</textarea>';
+    }
+
+    // Feedback area
+    html += '<div class="q-feedback" id="q-feedback"></div>';
+    html += '</div>';
+
+    area.innerHTML = html;
+
+    // Update button states
+    updateButtons();
+
+    // Auto-speak for JJ
+    if (IS_SPARKLE && q.audioText) {
+      setTimeout(function() { speakQuestion(); }, 600);
+    }
+  }
+
+  // ============================================================
+  // OPTION SELECTION
+  // ============================================================
+  function selectOption(idx) {
+    if (feedbackShown) { return; }
+    answers[currentIndex].selected = idx;
+
+    // Highlight selected
+    var btns = document.querySelectorAll('.mc-option');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].className = 'mc-option';
+    }
+    btns[idx].className = 'mc-option selected';
+
+    // Show feedback immediately
+    showNeutralFeedback(idx);
+  }
+
+  function onTextInput() {
+    var ta = document.getElementById('open-textarea');
+    if (ta) {
+      answers[currentIndex].selected = ta.value;
+      answers[currentIndex].isCorrect = null; // open-ended, no auto-grade
+    }
+    updateButtons();
+  }
+
+  // ============================================================
+  // NEUTRAL FEEDBACK
+  // ============================================================
+  function showNeutralFeedback(selectedIdx) {
+    feedbackShown = true;
+    var q = questions[currentIndex];
+    var isCorrect = (selectedIdx === q.correct);
+    answers[currentIndex].isCorrect = isCorrect;
+
+    // Highlight options
+    var btns = document.querySelectorAll('.mc-option');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].className = 'mc-option';
+    }
+    if (isCorrect) {
+      btns[selectedIdx].className = 'mc-option selected-correct';
+    } else {
+      btns[selectedIdx].className = 'mc-option selected-wrong';
+      btns[q.correct].className = 'mc-option reveal-correct';
+    }
+
+    // Disable further clicks
+    for (var j = 0; j < btns.length; j++) {
+      btns[j].disabled = true;
+      btns[j].style.pointerEvents = 'none';
+    }
+
+    // Feedback message (neutral tone)
+    var fbEl = document.getElementById('q-feedback');
+    var fbHtml = '';
+    if (IS_SPARKLE) {
+      if (isCorrect) {
+        fbHtml = '<div class="es-feedback sparkle-correct">' +
+          '<div class="es-fb-icon">&#11088; You got it! &#11088;</div>' +
+          '</div>';
+      } else {
+        fbHtml = '<div class="es-feedback sparkle-wrong">' +
+          '<div class="es-fb-icon">&#128156; Let\'s work on that one!</div>' +
+          '</div>';
+      }
+    } else {
+      if (isCorrect) {
+        fbHtml = '<div class="es-feedback correct">' +
+          '<div class="es-fb-icon">&#9989; Got it!</div>' +
+          '</div>';
+      } else {
+        fbHtml = '<div class="es-feedback wrong">' +
+          '<div class="es-fb-icon">&#128161; Let\'s work on that</div>' +
+          '<div class="es-fb-text">The answer is: ' + q.options[q.correct] + '</div>' +
+          '</div>';
+      }
+    }
+    fbEl.innerHTML = fbHtml;
+
+    // Update dot + buttons
+    renderDots();
+    updateButtons();
+  }
+
+  // ============================================================
+  // NAVIGATION
+  // ============================================================
+  function next() {
+    if (currentIndex < questions.length - 1) {
+      currentIndex++;
+      renderQuestion();
+      renderDots();
+      updateProgressBadge();
+    } else {
+      showResults();
+    }
+  }
+
+  function skip() {
+    answers[currentIndex].selected = '__skipped__';
+    answers[currentIndex].isCorrect = false;
+    renderDots();
+    next();
+  }
+
+  function goToQuestion(idx) {
+    currentIndex = idx;
+    renderQuestion();
+    renderDots();
+    updateProgressBadge();
+  }
+
+  function updateButtons() {
+    var q = questions[currentIndex];
+    var btnNext = document.getElementById('btn-next');
+    var hasAnswer = (answers[currentIndex].selected !== null);
+
+    if (q.type === 'open') {
+      var text = answers[currentIndex].selected || '';
+      btnNext.disabled = (text.length < 1);
+    } else {
+      btnNext.disabled = !feedbackShown;
+    }
+
+    // Last question: change text
+    if (currentIndex === questions.length - 1) {
+      btnNext.textContent = IS_SPARKLE ? 'All Done!' : 'Finish Diagnostic';
+    } else {
+      btnNext.textContent = IS_SPARKLE ? 'Next!' : 'Next';
+    }
+  }
+
+  function updateProgressBadge() {
+    var answered = 0;
+    for (var i = 0; i < answers.length; i++) {
+      if (answers[i].selected !== null) { answered++; }
+    }
+    document.getElementById('progress-badge').textContent = 'Q ' + (currentIndex + 1) + '/' + questions.length;
+  }
+
+  // ============================================================
+  // NAV DOTS
+  // ============================================================
+  function renderDots() {
+    var container = document.getElementById('nav-dots');
+    var html = '';
+    for (var i = 0; i < questions.length; i++) {
+      var cls = 'nav-dot';
+      if (i === currentIndex) { cls += ' current'; }
+      if (answers[i].selected !== null && answers[i].selected !== '__skipped__') { cls += ' answered'; }
+      if (answers[i].selected === '__skipped__') { cls += ' skipped'; }
+      html += '<span class="' + cls + '" onclick="Diag.goToQuestion(' + i + ')"></span>';
+    }
+    container.innerHTML = html;
+  }
+
+  // ============================================================
+  // WEB SPEECH API (JJ Audio)
+  // ============================================================
+  function speakQuestion() {
+    if (!('speechSynthesis' in window)) { return; }
+    window.speechSynthesis.cancel();
+    var q = questions[currentIndex];
+    var textToSpeak = q.audioText || q.text;
+    var utter = new SpeechSynthesisUtterance(textToSpeak);
+    utter.rate = 0.85;
+    utter.pitch = 1.1;
+    utter.volume = 1;
+    window.speechSynthesis.speak(utter);
+  }
+
+  // ============================================================
+  // RESULTS SCREEN
+  // ============================================================
+  function showResults() {
+    var elapsed = stopSessionTimer();
+    var min = Math.floor(elapsed / 60);
+    var sec = elapsed % 60;
+    var timeStr = min + ':' + (sec < 10 ? '0' : '') + sec;
+
+    document.getElementById('main-content').style.display = 'none';
+    var resultsScreen = document.getElementById('results-screen');
+    resultsScreen.style.display = 'block';
+
+    // Calculate section scores
+    var sectionData = {};
+    var totalCorrect = 0;
+    var totalGraded = 0;
+    var hasWriting = false;
+
+    for (var i = 0; i < questions.length; i++) {
+      var q = questions[i];
+      var sec = q.section;
+
+      if (q.type === 'open') {
+        hasWriting = true;
+        continue;
+      }
+
+      if (!sectionData[sec]) {
+        sectionData[sec] = { correct: 0, total: 0 };
+      }
+      sectionData[sec].total++;
+      totalGraded++;
+
+      if (answers[i].isCorrect) {
+        sectionData[sec].correct++;
+        totalCorrect++;
+      }
+    }
+
+    // Build results HTML
+    var card = document.getElementById('results-card');
+    var html = '';
+
+    var icon = IS_SPARKLE ? '\u2728' : '\uD83D\uDCCA';
+    var title = IS_SPARKLE ? 'All Done!' : 'Diagnostic Complete';
+
+    html += '<div style="font-size:48px;margin-bottom:8px;">' + icon + '</div>';
+    html += '<div class="results-title">' + title + '</div>';
+    html += '<div class="results-subtitle">Thanks! This helps us build YOUR perfect learning path.</div>';
+    html += '<div style="font-size:13px;color:#64748B;margin-bottom:16px;">Time: ' + timeStr + '</div>';
+
+    // Total score
+    html += '<div class="results-total">' + totalCorrect + ' / ' + totalGraded + '</div>';
+
+    // Section breakdowns
+    for (var name in sectionData) {
+      if (sectionData.hasOwnProperty(name)) {
+        var sd = sectionData[name];
+        var pct = sd.total > 0 ? Math.round((sd.correct / sd.total) * 100) : 0;
+        var scoreClass = 'score-green';
+        if (pct < 80) { scoreClass = 'score-yellow'; }
+        if (pct < 60) { scoreClass = 'score-red'; }
+
+        html += '<div class="results-section">';
+        html += '<div class="results-section-name">' + name + '</div>';
+        html += '<div class="results-section-score ' + scoreClass + '">' + sd.correct + '/' + sd.total + ' (' + pct + '%)</div>';
+        html += '</div>';
+      }
+    }
+
+    // Writing section
+    if (hasWriting) {
+      html += '<div class="results-section">';
+      html += '<div class="results-section-name">Writing</div>';
+      html += '<div class="results-section-score" style="background:rgba(99,102,241,0.12);color:#a5b4fc;">Submitted for review</div>';
+      html += '</div>';
+    }
+
+    // Strengths / Areas to Grow
+    var strengths = [];
+    var areasToGrow = [];
+    for (var sName in sectionData) {
+      if (sectionData.hasOwnProperty(sName)) {
+        var sPct = sectionData[sName].total > 0 ? Math.round((sectionData[sName].correct / sectionData[sName].total) * 100) : 0;
+        if (sPct >= 80) {
+          strengths.push(sName);
+        } else {
+          areasToGrow.push(sName);
+        }
+      }
+    }
+
+    if (strengths.length > 0) {
+      html += '<div style="margin-top:16px;text-align:left;">';
+      html += '<div style="font-size:12px;color:#22c55e;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">&#9989; Strengths</div>';
+      for (var si = 0; si < strengths.length; si++) {
+        html += '<div style="font-size:14px;color:#E2E8F0;padding:2px 0;">' + strengths[si] + '</div>';
+      }
+      html += '</div>';
+    }
+
+    if (areasToGrow.length > 0) {
+      html += '<div style="margin-top:12px;text-align:left;">';
+      html += '<div style="font-size:12px;color:#fbbf24;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">&#128161; Areas to Grow</div>';
+      for (var ai = 0; ai < areasToGrow.length; ai++) {
+        html += '<div style="font-size:14px;color:#E2E8F0;padding:2px 0;">' + areasToGrow[ai] + '</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '<div class="results-message">No rings for the diagnostic \u2014 this is your starting line, not a mission. We\'ll use these results to make sure every lesson is just right for you.</div>';
+
+    // Send Results button
+    html += '<button class="btn-send-results" id="btn-send-results" onclick="Diag.sendResults()">&#128640; Send Results</button>';
+    html += '<div class="send-status" id="send-status"></div>';
+
+    card.innerHTML = html;
+  }
+
+  // ============================================================
+  // SEND RESULTS TO GAS BACKEND
+  // ============================================================
+  function sendResults() {
+    var btn = document.getElementById('btn-send-results');
+    var status = document.getElementById('send-status');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    status.textContent = '';
+    status.style.color = '#94A3B8';
+
+    // Build section breakdown
+    var sectionScores = {};
+    var totalCorrect = 0;
+    var totalGraded = 0;
+
+    for (var i = 0; i < questions.length; i++) {
+      var q = questions[i];
+      if (q.type === 'open') { continue; }
+      var sec = q.section;
+      if (!sectionScores[sec]) { sectionScores[sec] = { correct: 0, total: 0 }; }
+      sectionScores[sec].total++;
+      totalGraded++;
+      if (answers[i].isCorrect) {
+        sectionScores[sec].correct++;
+        totalCorrect++;
+      }
+    }
+
+    // Collect writing sample
+    var writingSample = '';
+    for (var w = 0; w < questions.length; w++) {
+      if (questions[w].type === 'open' && answers[w].selected && answers[w].selected !== '__skipped__') {
+        writingSample = answers[w].selected;
+      }
+    }
+
+    var payload = {
+      child: CHILD,
+      subject: 'Baseline',
+      assignment: 'Baseline Diagnostic',
+      score: totalCorrect,
+      total: totalGraded,
+      breakdown: sectionScores,
+      writingSample: writingSample,
+      date: new Date().toISOString()
+    };
+
+    try {
+      google.script.run
+        .withSuccessHandler(function() {
+          btn.textContent = '&#9989; Results Sent!';
+          status.textContent = 'Saved successfully.';
+          status.style.color = '#22c55e';
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Retry Send';
+          status.textContent = 'Error: ' + (err && err.message ? err.message : 'Unknown error');
+          status.style.color = '#ef4444';
+        })
+        .logHomeworkCompletion(payload);
+    } catch (e) {
+      // Not running inside GAS — show debug info
+      btn.disabled = false;
+      btn.textContent = 'Retry Send';
+      status.textContent = 'Not connected to server (standalone mode)';
+      status.style.color = '#fbbf24';
+    }
+  }
+
+  // ============================================================
+  // PUBLIC API
+  // ============================================================
+  return {
+    init: init,
+    startDiagnostic: startDiagnostic,
+    selectOption: selectOption,
+    onTextInput: onTextInput,
+    next: next,
+    skip: skip,
+    goToQuestion: goToQuestion,
+    speakQuestion: speakQuestion,
+    sendResults: sendResults
+  };
+})();
+
+// ============================================================
+// BOOT
+// ============================================================
+(function() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', Diag.init);
+  } else {
+    Diag.init();
+  }
+})();
+</script>
+</body>
+</html>

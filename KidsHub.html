@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kids Hub v32</title>
+<title>Kids Hub v33</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -590,6 +590,15 @@ body { min-height: 100vh; }
 @keyframes jj-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 .jj-sync-star.shake { animation: jj-shake 0.4s ease 3; }
 @keyframes jj-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+/* v32: Education nav strip */
+.edu-nav { display:flex; align-items:center; justify-content:center; gap:6px; padding:8px 14px; flex-wrap:wrap; }
+.edu-nav a { padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700; letter-spacing:0.3px; cursor:pointer; text-decoration:none; transition:all 0.15s; display:inline-block; }
+.b-edu-nav { background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.2); margin:0 14px 8px; border-radius:10px; }
+.b-edu-nav a { color:rgba(34,197,94,0.7); }
+.b-edu-nav a:hover { color:#22c55e; background:rgba(34,197,94,0.15); }
+.jj-edu-nav { background:rgba(196,132,252,0.08); border:1px solid rgba(196,132,252,0.2); margin:0 14px 8px; border-radius:10px; }
+.jj-edu-nav a { color:rgba(196,132,252,0.7); }
+.jj-edu-nav a:hover { color:#c084fc; background:rgba(196,132,252,0.15); }
 /* v26: Track 9 — disabled buttons */
 .b-claim:disabled, .b-approve:disabled, .b-redeem-btn:disabled,
 .jj-do-it-btn:disabled, .jj-approve-btn:disabled, .jj-redeem-btn:disabled,
@@ -947,6 +956,22 @@ var IS_PARENT = INIT_VIEW  === 'parent';
 // v27: Parent nav — fetch base URL and navigate between surfaces
 var _pNavBaseUrl = '';
 if (IS_PARENT) { google.script.run.withSuccessHandler(function(u) { _pNavBaseUrl = u; }).withFailureHandler(function(){}).getScriptUrlSafe(); }
+// v32: Education nav helper — builds URL for education module pages
+var _eduBaseUrl = '';
+(function() {
+  var loc = window.location;
+  if (loc.hostname && loc.hostname !== 'script.google.com' && loc.hostname.indexOf('googleusercontent') === -1) {
+    _eduBaseUrl = loc.origin;
+  }
+})();
+function eduGo(page) {
+  if (_eduBaseUrl) { window.top.location.href = _eduBaseUrl + '/' + page; }
+  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page; }).withFailureHandler(function(){}).getScriptUrlSafe(); }
+}
+function eduGoChild(page, child) {
+  if (_eduBaseUrl) { window.top.location.href = _eduBaseUrl + '/' + page + '?child=' + child; }
+  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page + '&child=' + child; }).withFailureHandler(function(){}).getScriptUrlSafe(); }
+}
 function pNavGo(page) {
   var suffix = '&jt=1';
   if (_pNavBaseUrl) { window.top.location.href = _pNavBaseUrl + '?page=' + page + suffix; }
@@ -1394,6 +1419,7 @@ function buildBuggsyUI() {
   '<div class="b-hdr"><div style="max-width:720px;margin:0 auto"><div class="b-hdr-top"><div class="b-title"><img src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" class="char-avatar" style="width:48px;height:48px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px"><span style="display:inline-block;width:16px;height:16px;border:3px solid #ffd700;border-radius:50%;box-shadow:0 0 6px rgba(255,215,0,0.4);vertical-align:middle;margin-right:6px"></span>RING<span> QUEST</span></div><button class="b-parent-btn" id="bParentBtn" onclick="bToggleParent()">⚙ PARENT</button></div>'+
   '<div class="b-stats" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;align-items:stretch;width:100%"><div class="b-stat"><span class="b-stat-icon"><img src="https://i.ibb.co/d0KSS8zh/1773982478792.png" class="char-stat-img" style="width:48px;height:48px;border-radius:50%;object-fit:cover"></span><div><div class="b-stat-val" id="bRings">0</div><div class="b-stat-lbl">RINGS</div></div></div><div class="b-stat"><span class="b-stat-icon">📺</span><div><div class="b-stat-val" id="bTV" style="color:#38bdf8">0</div><div class="b-stat-lbl">TV</div></div></div><div class="b-stat"><span class="b-stat-icon">🎮</span><div><div class="b-stat-val" id="bGame" style="color:#a78bfa">0</div><div class="b-stat-lbl">GAME</div></div></div><div class="b-stat"><span class="b-stat-icon">💵</span><div><div class="b-stat-val" id="bMoney" style="color:#22c55e">$0</div><div class="b-stat-lbl">EARNED</div></div></div><div class="b-refresh-coin" id="bRefreshCoin" onclick="bRefresh()" style="position:static;width:36px;height:36px;border:5px solid #ffd700;border-radius:50%;box-shadow:0 0 10px rgba(255,215,0,0.5),inset 0 0 4px rgba(255,215,0,0.25);background:linear-gradient(135deg,rgba(255,235,100,0.25) 0%,transparent 50%);cursor:pointer;flex-shrink:0;margin-left:8px"></div></div></div></div>'+
   '<div class="b-level"><div class="b-lvl-row"><div class="b-lvl-badge" id="bLvlBadge">1</div><div><div class="b-lvl-name" id="bLvlName">Noob</div><div class="b-lvl-xp" id="bLvlXP">0 rings</div></div><span id="bMasteryRank" style="display:none;font-size:10px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,0.1);padding:2px 8px;border-radius:10px;letter-spacing:0.5px"></span><div class="b-lvl-next" id="bLvlNext"></div></div><div class="b-bar-track"><div class="b-bar-fill" id="bLvlBar" style="width:0%"></div></div><div id="bStreakDisplay" style="display:none;text-align:center;font-size:12px;font-weight:700;color:#f59e0b;padding:4px 0;letter-spacing:0.3px"></div></div>'+
+  '<div class="edu-nav b-edu-nav"><span style="font-size:10px;color:#4a6080;font-weight:800;letter-spacing:0.5px;font-family:\'Press Start 2P\',monospace">HOMEWORK:</span><a onclick="eduGo(\'homework\')">MATH/SCI</a><a onclick="eduGo(\'wolfkid\')">WOLFKID</a><a onclick="eduGo(\'reading\')">READING</a><a onclick="eduGo(\'writing\')">WRITING</a><a onclick="eduGo(\'facts\')">DRILL</a><a onclick="eduGo(\'comic-studio\')">COMICS</a><a onclick="eduGo(\'daily-missions\')">MISSIONS</a></div>'+
   '<div class="b-tabs"><button class="b-tab active" id="btab-quests" onclick="bTab(\'quests\')">⚔ QUESTS</button><button class="b-tab" id="btab-rewards" onclick="bTab(\'rewards\')">🏆 REWARDS</button><button class="b-tab" id="btab-events" onclick="bTab(\'events\')">✋ ASK</button><button class="b-tab" id="btab-parent" onclick="bTab(\'parent\')" style="display:none">👑 PARENT</button></div>'+
   '<div id="bView-quests"><div class="b-sec"><span class="b-sec-title" id="bQLabel">QUESTS</span><span class="b-sec-badge" id="bQBadge">—</span></div><div class="b-two-col"><div class="b-col-main"><div class="b-sec"><span class="b-sec-title" style="color:#4ade80">⚔ CHALLENGES</span></div><div class="b-list" id="bQuestList"></div></div><div class="b-col-pending"><div class="b-sec"><span class="b-sec-title" style="color:#fbbf24">📦 PENDING</span><span class="b-sec-badge" id="bPendBadge">0</span></div><div class="b-list" id="bPendList"></div></div></div></div>'+
   '<div id="bView-rewards" style="display:none"><div class="b-sec"><span class="b-sec-title">REWARD VAULT</span><span class="b-sec-badge" id="bRBadge">0 RINGS</span></div><div class="b-rewards-grid" id="bRewardGrid"></div></div>'+
@@ -1889,6 +1915,7 @@ function buildJJUI() {
   '<div style="display:flex;align-items:center;gap:10px;margin:0 14px 16px"><div class="jj-stat-pills" style="flex:1;margin:0"><div class="jj-stat-pill"><div class="jj-stat-pill-icon">⭐</div><div class="jj-stat-pill-val" id="jjStars">0</div><div class="jj-stat-pill-lbl">Stars</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">📺</div><div class="jj-stat-pill-val" id="jjTV">0m</div><div class="jj-stat-pill-lbl">TV</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">🍪</div><div class="jj-stat-pill-val" id="jjSnack">0</div><div class="jj-stat-pill-lbl">Snacks</div></div></div><img src="https://i.ibb.co/5h2hYsNp/1773982672701.png" class="char-stat-img" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0"><div class="jj-refresh-star" id="jjRefreshStar" onclick="jjRefresh()" style="position:static;flex-shrink:0">✨</div></div>'+
   '<div style="margin:0 14px 12px;text-align:center"><div id="jjLevelChip" style="display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.22);font-size:13px;font-weight:800;color:#fde68a;letter-spacing:1px;text-transform:uppercase">LEVEL 1 \u00B7 SPROUT</div><div id="jjMasteryRank" style="display:none;margin-top:4px;font-size:11px;font-weight:800;color:#f9a8d4;letter-spacing:0.5px"></div><div id="jjStreakDisplay" style="display:none;margin-top:4px;font-size:18px;text-align:center"></div></div>'+
   '<div class="jj-progress-wrap"><div class="jj-prog-label">Next reward unlocks at <span id="jjNextCost">10</span> ⭐<span id="jjProgNums">0 / 10</span></div><div class="jj-prog-track"><div class="jj-prog-fill" id="jjProgBar" style="width:0%"></div></div></div>'+
+  '<div class="edu-nav jj-edu-nav"><span style="font-size:13px;font-weight:800;color:#f9a8d4;font-family:\'Fredoka One\',cursive">Learning:</span><a onclick="eduGo(\'sparkle\')">Sparkle Games</a><a onclick="eduGo(\'story-library\')">Stories</a><a onclick="eduGoChild(\'daily-missions\',\'jj\')">Missions</a></div>'+
   '<div class="jj-tabs"><button class="jj-tab active" id="jjtab-quests" onclick="jjTab(\'quests\')">🌸 Jobs</button><button class="jj-tab" id="jjtab-rewards" onclick="jjTab(\'rewards\')">🎀 Prizes</button><button class="jj-tab" id="jjtab-events" onclick="jjTab(\'events\')">✨ Ask</button><button class="jj-tab" id="jjtab-parent" onclick="jjTab(\'parent\')" style="display:none">⚙ Parent</button></div>'+
   '<div id="jjView-quests" style="margin-top:12px"><div class="jj-sec-title">Your Sparkle Jobs! 💕</div><div class="jj-two-col"><div class="jj-col-main"><div class="jj-sec-title" style="color:#c084fc">🌸 Sparkle Jobs</div><div class="jj-list" id="jjTaskList"></div></div><div class="jj-col-pending"><div class="jj-sec-title" style="color:#f9a8d4">✨ Pending</div><div class="jj-list" id="jjPendList"></div></div></div></div>'+
   '<div id="jjView-rewards" style="display:none;margin-top:12px"><div class="jj-sec-title">Princess Prizes! 👑</div><div class="jj-rewards" id="jjRewards"></div></div>'+
@@ -2776,6 +2803,21 @@ function pReset(mode, child) {
     h += '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px;font-size:11px;color:#94a3b8">';
     h += '<span>⏳ ' + pending.length + ' pending</span><span>✅ ' + completed.length + ' approved</span>';
     h += '</div>';
+    // v32: Education section — shows today's homework status + module links
+    h += '<div class="p-triage-hdr" onclick="pToggleSection(\'eduSection\')" style="display:flex;align-items:center;gap:8px;padding:14px 16px;background:rgba(34,197,94,0.1);border-radius:8px;margin:0 0 8px;cursor:pointer;font-weight:700;font-size:13px;color:#86efac"><span id="eduChevron" style="transition:transform 0.2s">&#x25BC;</span> EDUCATION</div>';
+    h += '<div id="eduSection">';
+    h += '<div class="p-reset-panel" style="margin-bottom:12px"><div class="p-reset-title">&#x1f4da; TODAY\'S HOMEWORK</div>';
+    h += '<div id="eduStatus" style="padding:8px 12px;font-size:13px;color:#94a3b8;text-align:center">Loading education data...</div>';
+    h += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:center">';
+    h += '<a onclick="eduGo(\'homework\')" style="padding:8px 14px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:8px;color:#86efac;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">Math/Science</a>';
+    h += '<a onclick="eduGo(\'wolfkid\')" style="padding:8px 14px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:8px;color:#fbbf24;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">Wolfkid CER</a>';
+    h += '<a onclick="eduGo(\'reading\')" style="padding:8px 14px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);border-radius:8px;color:#a5b4fc;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">Reading</a>';
+    h += '<a onclick="eduGo(\'sparkle\')" style="padding:8px 14px;background:rgba(196,132,252,0.12);border:1px solid rgba(196,132,252,0.3);border-radius:8px;color:#d8b4fe;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">Sparkle (JJ)</a>';
+    h += '<a onclick="eduGo(\'progress\')" style="padding:8px 14px;background:rgba(236,72,153,0.12);border:1px solid rgba(236,72,153,0.3);border-radius:8px;color:#f9a8d4;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">Progress Report</a>';
+    h += '<a onclick="eduGo(\'daily-missions\')" style="padding:8px 14px;background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:8px;color:#7dd3fc;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">Daily Missions</a>';
+    h += '<a onclick="eduGo(\'investigation\')" style="padding:8px 14px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:8px;color:#86efac;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">Investigation</a>';
+    h += '<a onclick="eduGo(\'baseline\')" style="padding:8px 14px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);border-radius:8px;color:#fde68a;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">Baseline</a>';
+    h += '</div></div></div>';
     h += '<div class="p-v2-tabs">';
     h += tb('pending', '⏳ Pending (' + pending.length + ')');
     h += tb('completed', '✅ Completed (' + completed.length + ')');
@@ -2810,6 +2852,53 @@ function pReset(mode, child) {
     } catch(e) {
       // Function doesn't exist — ignore, stats are cosmetic
     }
+    // v32: Fetch education status for parent dashboard
+    try {
+      var kids = ['buggsy', 'jj'];
+      var eduResults = {};
+      var eduDone = 0;
+      for (var ki = 0; ki < kids.length; ki++) {
+        (function(kid) {
+          google.script.run
+            .withSuccessHandler(function(content) {
+              eduResults[kid] = content;
+              eduDone++;
+              if (eduDone === kids.length) renderEduStatus(eduResults);
+            })
+            .withFailureHandler(function() {
+              eduResults[kid] = null;
+              eduDone++;
+              if (eduDone === kids.length) renderEduStatus(eduResults);
+            })
+            .getTodayContentSafe(kid);
+        })(kids[ki]);
+      }
+    } catch(e) {
+      var eduEl = document.getElementById('eduStatus');
+      if (eduEl) eduEl.textContent = 'Education data unavailable';
+    }
+  }
+  function renderEduStatus(results) {
+    var el = document.getElementById('eduStatus');
+    if (!el) return;
+    var h = '';
+    var kids = ['buggsy', 'jj'];
+    for (var i = 0; i < kids.length; i++) {
+      var kid = kids[i];
+      var data = results[kid];
+      var label = kid === 'buggsy' ? GOLD_RING + ' Buggsy' : '⭐ JJ';
+      if (!data || data.error) {
+        h += '<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><strong style="color:#e2e8f0">' + label + '</strong> — <span style="color:#94a3b8">No content loaded today</span></div>';
+      } else {
+        var subject = data.subject || 'Homework';
+        var title = data.title || '';
+        var completed = data.completed ? '&#x2705;' : '&#x23F3;';
+        h += '<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><strong style="color:#e2e8f0">' + label + '</strong> — ' + completed + ' <span style="color:#c4b5fd;font-weight:700">' + subject + '</span>';
+        if (title) h += ' <span style="color:#94a3b8;font-size:12px">(' + title + ')</span>';
+        h += '</div>';
+      }
+    }
+    el.innerHTML = h || '<span style="color:#94a3b8">No homework scheduled today</span>';
   }
   function sc(icon, val, lbl, color) {
     return '<div class="p-sum-card"><div class="p-sum-icon">' + icon + '</div><div class="p-sum-val" style="color:' + color + '">' + val + '</div><div class="p-sum-lbl">' + lbl + '</div></div>';

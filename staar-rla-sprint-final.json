@@ -1,0 +1,509 @@
+{
+  "_meta": {
+    "name": "STAAR RLA Sprint — April 1-7, 2026",
+    "schedule_override": true,
+    "description": "All days are RLA prep. STAAR RLA test: April 8, 2026.",
+    "ring_economy": "16/day: 2 per MC, 3 per short_answer, 5 per quick_write"
+  },
+  "buggsy": {
+    "tuesday": {
+      "subject": "Reading/RLA",
+      "title": "The Nighttime Flyers",
+      "type": "informational",
+      "schedule_override": true,
+      "passage": "Bats are one of the most misunderstood animals in the world. Many people think bats are blind, dangerous, or dirty. But the truth about bats is far more interesting than the myths.\n\nThere are more than 1,400 species of bats. They live on every continent except Antarctica. Most bats eat insects. A single brown bat can eat more than 1,000 mosquitoes in one hour. Farmers love bats because they help control pests that damage crops.\n\nBats are the only mammals that can truly fly. Their wings are made of thin skin stretched between long finger bones. Unlike birds, bats flap their whole hand when they fly. This gives them incredible control in the air. Some bats can fly at speeds of over 100 miles per hour.\n\nMany bats use a special ability called echolocation to find food and navigate in the dark. They send out high-pitched sounds that bounce off objects and return to their ears. By listening to these echoes, bats can tell the size, shape, distance, and even the speed of an insect. This system is so precise that a bat can catch a tiny moth in complete darkness.\n\nSadly, bat populations are declining around the world. A disease called white-nose syndrome has killed millions of bats in North America. Habitat loss and wind turbines also threaten bat colonies. Scientists are working hard to protect these important creatures because without bats, insect populations would explode, and many plants would lose their pollinators.",
+      "word_count": 215,
+      "questions": [
+        {
+          "id": "t1-q1",
+          "type": "multiple_choice",
+          "teks": "4.6A",
+          "skill": "Main Idea",
+          "stem": "What is the MAIN idea of this passage?",
+          "options": [
+            "A. Bats are blind and dangerous animals.",
+            "B. Bats are important animals that are often misunderstood.",
+            "C. Scientists should stop studying bats.",
+            "D. Bats only eat mosquitoes."
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "t1-q2",
+          "type": "multiple_choice",
+          "teks": "4.6F",
+          "skill": "Author's Purpose",
+          "stem": "The author wrote this passage MAINLY to —",
+          "options": [
+            "A. entertain readers with a funny story about bats",
+            "B. persuade readers to adopt bats as pets",
+            "C. inform readers about the characteristics and importance of bats",
+            "D. describe a personal experience with bats"
+          ],
+          "answer": "C",
+          "rings": 2
+        },
+        {
+          "id": "t1-q3",
+          "type": "multiple_choice",
+          "teks": "4.3B",
+          "skill": "Context Clues / Vocabulary",
+          "stem": "In paragraph 4, the word 'precise' means —",
+          "options": [
+            "A. loud and powerful",
+            "B. exact and accurate",
+            "C. slow and careful",
+            "D. bright and colorful"
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "t1-q4",
+          "type": "multiple_choice",
+          "teks": "4.6G",
+          "skill": "Supporting Details",
+          "stem": "According to the passage, what is ONE reason bat populations are declining?",
+          "options": [
+            "A. Bats are eating too many mosquitoes.",
+            "B. A disease called white-nose syndrome has killed millions of bats.",
+            "C. Bats are moving to Antarctica.",
+            "D. People are keeping too many bats as pets."
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "t1-q5",
+          "type": "short_answer",
+          "teks": "4.6H",
+          "skill": "Text Evidence",
+          "stem": "How does echolocation help bats survive? Use evidence from the passage to support your answer.",
+          "rubric": "Must reference paragraph 4. Should mention: sending sounds, bouncing off objects, detecting size/shape/speed of insects. 2+ sentences expected.",
+          "rings": 3
+        },
+        {
+          "id": "t1-q6",
+          "type": "quick_write",
+          "teks": "4.8A",
+          "skill": "Author's Purpose + Independent Thinking",
+          "stem": "The author says bats are 'misunderstood.' Think of another animal that people are often scared of but that is actually helpful. Write 3-5 sentences explaining why that animal is important. Use the CER structure: Claim, Evidence, Reasoning.",
+          "rubric": "CER structure: claim about an animal, evidence of its helpfulness, reasoning connecting back. Grade on structure, not factual precision.",
+          "rings": 5
+        }
+      ]
+    },
+    "wednesday": {
+      "subject": "Reading/RLA",
+      "title": "The Last Marble",
+      "type": "fiction",
+      "schedule_override": true,
+      "passage": "Mateo pressed his nose against the dusty glass case in his grandfather's workshop. Inside sat a single blue marble, streaked with white like a tiny frozen ocean.\n\n\"Abuelo, can I have it?\" Mateo asked.\n\nHis grandfather set down his tools and smiled. \"That marble has a story, mijo. You want to hear it before you decide?\"\n\nMateo nodded.\n\n\"When I was your age in Mexico, my best friend Santiago and I played marbles every day after school. We played in the dirt behind the church, and whoever won took the other's best marble. I was good, but Santiago was better. By the end of that summer, he had won every single one of my marbles. Every one except this blue one.\"\n\nAbuelo paused and looked at the marble like it was an old friend.\n\n\"The day before my family moved to Texas, Santiago came to my house. He was crying. He said he didn't want all my marbles if it meant I was leaving. He tried to give them all back. Every single one.\"\n\n\"Did you take them?\" Mateo asked.\n\n\"No,\" Abuelo said quietly. \"I told him to keep them so he'd always remember me. But he made me keep this last blue one so I'd remember him too.\"\n\nMateo stared at the marble. It wasn't just glass anymore.\n\n\"So,\" Abuelo said, pulling open the case, \"do you still want it?\"\n\nMateo thought for a long time. Then he gently closed the case. \"I think it should stay right here, Abuelo. Where it belongs.\"\n\nHis grandfather hugged him tight. \"That,\" he whispered, \"is exactly what Santiago would have said.\"",
+      "word_count": 268,
+      "questions": [
+        {
+          "id": "w1-q1",
+          "type": "multiple_choice",
+          "teks": "4.7C",
+          "skill": "Character Analysis",
+          "stem": "What does Mateo's decision at the end of the story BEST show about him?",
+          "options": [
+            "A. He doesn't like marbles.",
+            "B. He understands the marble's meaning is more important than having it.",
+            "C. He is afraid of breaking the marble.",
+            "D. He thinks the marble is too old."
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "w1-q2",
+          "type": "multiple_choice",
+          "teks": "4.7D",
+          "skill": "Theme",
+          "stem": "Which of these BEST describes the theme of this story?",
+          "options": [
+            "A. Winning is the most important thing in life.",
+            "B. Old things should be thrown away.",
+            "C. Some things have value that goes beyond what they are worth.",
+            "D. Children should always listen to their grandparents."
+          ],
+          "answer": "C",
+          "rings": 2
+        },
+        {
+          "id": "w1-q3",
+          "type": "multiple_choice",
+          "teks": "4.6F",
+          "skill": "Inference",
+          "stem": "Why did Santiago cry the day before Abuelo moved to Texas?",
+          "options": [
+            "A. He lost at marbles that day.",
+            "B. He was sad about losing his best friend.",
+            "C. He broke his favorite marble.",
+            "D. He didn't like playing marbles anymore."
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "w1-q4",
+          "type": "multiple_choice",
+          "teks": "4.8D",
+          "skill": "Figurative Language",
+          "stem": "In the first paragraph, the marble is described as 'streaked with white like a tiny frozen ocean.' This is an example of —",
+          "options": [
+            "A. alliteration",
+            "B. personification",
+            "C. simile",
+            "D. onomatopoeia"
+          ],
+          "answer": "C",
+          "rings": 2
+        },
+        {
+          "id": "w1-q5",
+          "type": "short_answer",
+          "teks": "4.7C",
+          "skill": "Character Motivation",
+          "stem": "Why do you think Abuelo kept the blue marble for so many years instead of giving it away or losing it? Use evidence from the story.",
+          "rubric": "Should connect to friendship with Santiago, the emotional significance, the promise to remember each other. Evidence from text required.",
+          "rings": 3
+        },
+        {
+          "id": "w1-q6",
+          "type": "quick_write",
+          "teks": "4.7D",
+          "skill": "Theme Connection + Independent Thinking",
+          "stem": "Think of something you own that has a special story behind it. It doesn't have to be expensive — just meaningful. Write 3-5 sentences using CER: What is it (claim)? What is the story behind it (evidence)? Why does it matter to you (reasoning)?",
+          "rubric": "Personal connection with CER structure. Award full credit for thoughtful attempt regardless of writing mechanics.",
+          "rings": 5
+        }
+      ]
+    },
+    "thursday": {
+      "subject": "Reading/RLA",
+      "title": "Built to Last: The Great Wall of China",
+      "type": "informational",
+      "schedule_override": true,
+      "unlock": "comic-studio",
+      "passage": "The Great Wall of China is one of the most famous structures ever built. Stretching more than 13,000 miles across northern China, it is the longest wall in the world. But the Wall was not built all at once. It took more than 2,000 years and millions of workers to complete.\n\nThe first sections of the Wall were built around 700 BC by different Chinese states trying to protect their borders from invaders. In 221 BC, Emperor Qin Shi Huang ordered these separate walls to be connected into one great barrier. Hundreds of thousands of soldiers, peasants, and prisoners were forced to do the backbreaking work. Many workers died from exhaustion, hunger, and the brutal conditions.\n\nThe Wall was built using whatever materials were nearby. In the mountains, workers cut and carried heavy stones. In the deserts, they packed layers of earth and gravel between wooden frames. Later dynasties rebuilt sections using bricks and mortar, which made the Wall stronger and longer-lasting.\n\nThe Wall was not just a wall. It included watchtowers, guard stations, and signal towers. Soldiers used smoke signals during the day and fire signals at night to warn of approaching enemies. A message could travel the entire length of the Wall in just a few hours — faster than any horse could ride.\n\nToday, the Great Wall is a UNESCO World Heritage Site visited by millions of tourists each year. While much of the original Wall has crumbled, the surviving sections stand as a reminder of what humans can achieve through determination and effort — even at great cost.",
+      "word_count": 240,
+      "questions": [
+        {
+          "id": "th1-q1",
+          "type": "multiple_choice",
+          "teks": "4.6B",
+          "skill": "Sequence / Chronology",
+          "stem": "Based on the passage, which event happened FIRST?",
+          "options": [
+            "A. Emperor Qin Shi Huang connected the walls.",
+            "B. Later dynasties rebuilt sections with bricks.",
+            "C. Different Chinese states built separate walls.",
+            "D. The Wall became a UNESCO World Heritage Site."
+          ],
+          "answer": "C",
+          "rings": 2
+        },
+        {
+          "id": "th1-q2",
+          "type": "multiple_choice",
+          "teks": "4.6G",
+          "skill": "Supporting Details",
+          "stem": "How did soldiers communicate along the Great Wall?",
+          "options": [
+            "A. They sent letters by horse.",
+            "B. They used smoke signals during the day and fire signals at night.",
+            "C. They shouted from tower to tower.",
+            "D. They used drums and trumpets."
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "th1-q3",
+          "type": "multiple_choice",
+          "teks": "4.3B",
+          "skill": "Context Clues",
+          "stem": "In paragraph 2, the word 'brutal' most likely means —",
+          "options": [
+            "A. gentle and kind",
+            "B. very harsh and severe",
+            "C. exciting and fun",
+            "D. quiet and peaceful"
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "th1-q4",
+          "type": "multiple_choice",
+          "teks": "4.6A",
+          "skill": "Main Idea",
+          "stem": "What is the MAIN idea of paragraph 3?",
+          "options": [
+            "A. The Wall was very expensive to build.",
+            "B. Workers used different materials depending on where they were building.",
+            "C. Bricks are better than stones for building.",
+            "D. The desert sections of the Wall were the longest."
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "th1-q5",
+          "type": "short_answer",
+          "teks": "4.6H",
+          "skill": "Text Evidence + Evaluation",
+          "stem": "The passage says the Great Wall shows 'what humans can achieve through determination and effort — even at great cost.' What was the 'great cost'? Support your answer with details from the passage.",
+          "rubric": "Must cite paragraph 2: worker deaths, forced labor, exhaustion, hunger. 2+ sentences with text evidence.",
+          "rings": 3
+        },
+        {
+          "id": "th1-q6",
+          "type": "quick_write",
+          "teks": "4.8A",
+          "skill": "Evaluate + Independent Thinking",
+          "stem": "Was it right for Emperor Qin Shi Huang to force people to build the Wall? Some would say it protected millions of people. Others would say no achievement is worth human lives. What do YOU think? Write 3-5 sentences using CER structure.",
+          "rubric": "No single correct answer. Evaluate on: clear claim, reference to passage details, reasoning that connects evidence to position. Award full credit for well-reasoned argument on either side.",
+          "rings": 5
+        }
+      ]
+    },
+    "friday": {
+      "subject": "Reading/RLA",
+      "title": "What Abuela Taught Me",
+      "type": "fiction",
+      "schedule_override": true,
+      "self_reflection": true,
+      "passage": "Every summer, Sofia spent two weeks at Abuela Rosa's house in the hill country. It wasn't fancy — just a small yellow house with a garden that seemed to grow everything.\n\nThis summer, Sofia arrived with her tablet, her headphones, and a plan to spend most of her time watching videos. But on the first morning, Abuela unplugged the Wi-Fi router and set it on top of the refrigerator.\n\n\"Two weeks,\" Abuela said. \"You will survive.\"\n\nSofia did not think she would survive.\n\nBut by the third day, something shifted. Without her screen, Sofia noticed things. She noticed the hummingbirds that visited the red flowers every morning at exactly 7:15. She noticed that the soil in the garden smelled different after rain — dark and alive, like the earth was breathing. She noticed that her abuela talked to the tomato plants in Spanish, and that somehow, they seemed to listen.\n\n\"Why do you talk to them?\" Sofia asked.\n\n\"Because everything grows better when someone pays attention to it,\" Abuela said. \"Plants. Gardens. People. Even you, mija.\"\n\nOn the last day, Abuela handed Sofia a small clay pot with a seedling inside. \"Take care of it. It will teach you what I taught you, but slower.\"\n\nSofia held the pot carefully during the whole drive home. When she got to her room, she set it on her windowsill — right next to her tablet, which stayed dark for three more days before she remembered to charge it.",
+      "word_count": 237,
+      "questions": [
+        {
+          "id": "f1-q1",
+          "type": "multiple_choice",
+          "teks": "4.7C",
+          "skill": "Character Change",
+          "stem": "How does Sofia change from the BEGINNING to the END of the story?",
+          "options": [
+            "A. She goes from being shy to being outgoing.",
+            "B. She goes from being focused on her screen to noticing the world around her.",
+            "C. She goes from loving gardening to disliking it.",
+            "D. She goes from being scared of her abuela to being her best friend."
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "f1-q2",
+          "type": "multiple_choice",
+          "teks": "4.7D",
+          "skill": "Theme",
+          "stem": "Which statement BEST describes the theme of this story?",
+          "options": [
+            "A. Technology is always bad for children.",
+            "B. Grandparents know everything.",
+            "C. Paying attention to the world around you helps you grow.",
+            "D. Gardening is the best hobby for kids."
+          ],
+          "answer": "C",
+          "rings": 2
+        },
+        {
+          "id": "f1-q3",
+          "type": "multiple_choice",
+          "teks": "4.8D",
+          "skill": "Figurative Language",
+          "stem": "When the author writes that the soil smelled 'like the earth was breathing,' this is an example of —",
+          "options": [
+            "A. simile",
+            "B. hyperbole",
+            "C. personification",
+            "D. idiom"
+          ],
+          "answer": "C",
+          "rings": 2
+        },
+        {
+          "id": "f1-q4",
+          "type": "multiple_choice",
+          "teks": "4.6F",
+          "skill": "Inference",
+          "stem": "Why did Sofia's tablet stay dark for three more days after she got home?",
+          "options": [
+            "A. The tablet was broken.",
+            "B. Her parents took it away.",
+            "C. She was still focused on the things she had learned at Abuela's house.",
+            "D. She forgot where she put it."
+          ],
+          "answer": "C",
+          "rings": 2
+        },
+        {
+          "id": "f1-q5",
+          "type": "short_answer",
+          "teks": "4.7C",
+          "skill": "Symbolism + Evidence",
+          "stem": "Why does Abuela give Sofia a seedling at the end? What does it represent? Use evidence from the passage.",
+          "rubric": "Should connect to Abuela's lesson about paying attention. The seedling represents continued growth and the lesson extending beyond the visit. Text evidence from the quote about paying attention.",
+          "rings": 3
+        },
+        {
+          "id": "f1-q6",
+          "type": "quick_write",
+          "teks": "4.8A",
+          "skill": "Self-Reflection + Independent Thinking",
+          "stem": "Sofia discovered that unplugging helped her notice things she had been missing. Think about your own life: is there something you might notice more if you put down your screen? Write 3-5 sentences. Be honest — this is just for you and your parents.",
+          "rubric": "Personal reflection. No wrong answer. Grade on thoughtfulness and honest self-assessment, not writing mechanics.",
+          "rings": 5
+        }
+      ],
+      "weekly_reflection": {
+        "prompt": "This was your STAAR prep week! Answer these two questions:\n1. What was the HARDEST part of this week's reading practice?\n2. What is ONE thing you feel MORE confident about now than you did on Tuesday?",
+        "rings": 3
+      }
+    },
+    "monday": {
+      "subject": "Reading/RLA",
+      "title": "Storm Chasers",
+      "type": "informational",
+      "schedule_override": true,
+      "note": "Full STAAR-length passage (430 words). Final prep before test day.",
+      "passage": "When most people see dark clouds forming on the horizon, they head indoors. But for a small group of scientists and adventurers, a storm is exactly what they have been waiting for. These are storm chasers — people who drive directly toward tornadoes, hurricanes, and severe thunderstorms to study them up close.\n\nStorm chasing began in the 1950s when a few brave meteorologists realized that the best way to understand tornadoes was to observe them in person. At that time, weather radar was still primitive, and satellite imagery did not exist. The only way to learn how a tornado formed was to watch it happen. These early chasers drove ordinary cars, carried simple cameras, and relied on their own weather knowledge to stay safe.\n\nToday, storm chasing has become more sophisticated. Chasers use advanced GPS systems, portable weather stations, and real-time radar on their laptops to track storms. Some teams drive specially armored vehicles designed to withstand flying debris and extreme winds. The most famous of these is the Tornado Intercept Vehicle, or TIV, which weighs 16,000 pounds and can anchor itself to the ground.\n\nBut technology alone does not keep storm chasers safe. Every chase involves life-or-death decisions. Tornadoes can change direction in seconds. Roads can flood without warning. Hail the size of baseballs can shatter windshields. Even experienced chasers have been caught off guard. In 2013, three veteran storm chasers were killed by a massive tornado near El Reno, Oklahoma — a tragic reminder that no amount of experience guarantees safety.\n\nSo why do they do it? For scientists, the data collected during chases saves lives. Information gathered near tornadoes helps improve warning systems that give communities more time to take shelter. Before modern storm chasing, the average tornado warning gave people only five minutes to react. Today, thanks in part to data collected by chasers, that number has grown to thirteen minutes. Those extra eight minutes have saved thousands of lives.\n\nFor others, the motivation is harder to explain. Many chasers describe a deep respect for the power of nature. They talk about the beauty of a supercell thunderstorm — the way it towers 60,000 feet into the atmosphere, lit from within by constant lightning. They describe the sound of a tornado, not like a freight train as people often say, but more like a continuous waterfall of noise that surrounds you completely.\n\nStorm chasing is not for everyone. It requires knowledge, preparation, courage, and a willingness to accept risk. But for those who do it, there is no experience on Earth quite like standing in the path of nature's most powerful force and choosing not to run.",
+      "word_count": 430,
+      "questions": [
+        {
+          "id": "m1-q1",
+          "type": "multiple_choice",
+          "teks": "4.6A",
+          "skill": "Main Idea",
+          "stem": "What is the MAIN idea of this passage?",
+          "options": [
+            "A. Storm chasers are reckless people who enjoy danger.",
+            "B. Tornadoes are the most dangerous weather events in the world.",
+            "C. Storm chasing is a dangerous but important activity that helps save lives.",
+            "D. Technology has made storm chasing completely safe."
+          ],
+          "answer": "C",
+          "rings": 2
+        },
+        {
+          "id": "m1-q2",
+          "type": "multiple_choice",
+          "teks": "4.6B",
+          "skill": "Sequence / Contrast",
+          "stem": "How has storm chasing CHANGED from the 1950s to today?",
+          "options": [
+            "A. Early chasers used armored vehicles, but today they use ordinary cars.",
+            "B. Early chasers had simple equipment, but today they use advanced technology.",
+            "C. Early chasers were scientists, but today they are all adventurers.",
+            "D. Storm chasing was safe in the 1950s but dangerous today."
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "m1-q3",
+          "type": "multiple_choice",
+          "teks": "4.3B",
+          "skill": "Context Clues",
+          "stem": "In paragraph 3, the word 'sophisticated' means —",
+          "options": [
+            "A. simple and basic",
+            "B. advanced and complex",
+            "C. expensive and wasteful",
+            "D. old and outdated"
+          ],
+          "answer": "B",
+          "rings": 2
+        },
+        {
+          "id": "m1-q4",
+          "type": "multiple_choice",
+          "teks": "4.6G",
+          "skill": "Supporting Details / Data",
+          "stem": "According to the passage, how has storm chasing improved tornado warnings?",
+          "options": [
+            "A. Warning time increased from 5 minutes to 13 minutes.",
+            "B. Warning time increased from 1 minute to 5 minutes.",
+            "C. People no longer need tornado warnings.",
+            "D. Warnings are now sent by storm chasers directly."
+          ],
+          "answer": "A",
+          "rings": 2
+        },
+        {
+          "id": "m1-q5",
+          "type": "short_answer",
+          "teks": "4.6H",
+          "skill": "Evaluate Argument",
+          "stem": "The author gives two different reasons people chase storms: science and personal motivation. Which reason do you think is more important? Use evidence from the passage to explain your answer.",
+          "rubric": "Either answer valid. Must cite specific text (data saves lives, beauty of supercell, respect for nature). 2+ sentences with evidence.",
+          "rings": 3
+        },
+        {
+          "id": "m1-q6",
+          "type": "quick_write",
+          "teks": "4.8A",
+          "skill": "Synthesis + STAAR Readiness",
+          "stem": "This week you read about bats, a grandfather's marble, the Great Wall of China, an abuela's garden lesson, and storm chasers. All five passages had one thing in common: they were about people (or animals) facing challenges. Pick TWO of the five passages and explain what challenge was faced and how it was handled. Use CER structure for each one (6-10 sentences total).",
+          "rubric": "This is the capstone question. Grade on: clear claims about two different passages, specific text evidence from each, reasoning connecting challenges to outcomes. Full CER structure x2. This simulates a STAAR extended constructed response.",
+          "rings": 5
+        }
+      ]
+    }
+  },
+  "jj": {
+    "tuesday": {
+      "subject": "Pre-K Reading",
+      "title": "Letter K Day",
+      "activities": [
+        { "type": "letter_trace", "letter": "K", "prompt": "Trace the letter K — the first letter in your real name, KINDLE!" },
+        { "type": "letter_find", "letter": "K", "prompt": "Find 3 things in the room that start with K" },
+        { "type": "sound_match", "letter": "K", "prompt": "What sound does K make? K-k-k-KINDLE!" }
+      ],
+      "stars": 3
+    },
+    "wednesday": {
+      "subject": "Pre-K Math",
+      "title": "Counting Colors",
+      "activities": [
+        { "type": "counting", "range": "1-5", "prompt": "Count the red crayons. How many? Count the blue crayons. How many?" },
+        { "type": "sorting", "prompt": "Sort your crayons into color groups. Which group has the most?" },
+        { "type": "pattern", "prompt": "Make a pattern: red, blue, red, blue. What comes next?" }
+      ],
+      "stars": 3
+    },
+    "thursday": {
+      "subject": "Pre-K Reading",
+      "title": "Letter I Day",
+      "activities": [
+        { "type": "letter_trace", "letter": "I", "prompt": "Trace the letter I — the second letter in KINDLE!" },
+        { "type": "letter_find", "letter": "I", "prompt": "I is in your name! K-I-N-D-L-E. Point to the I!" },
+        { "type": "story_time", "prompt": "Listen to a story from the Story Library", "link": "story-library" }
+      ],
+      "stars": 3
+    },
+    "friday": {
+      "subject": "Pre-K Review",
+      "title": "Sparkle Review Day",
+      "activities": [
+        { "type": "letter_review", "letters": ["K", "I"], "prompt": "Can you find K and I? They are in your name!" },
+        { "type": "counting_review", "range": "1-5", "prompt": "Count to 5! Hold up your fingers!" },
+        { "type": "free_play", "prompt": "Pick your favorite Sparkle game to play!" }
+      ],
+      "stars": 4
+    },
+    "monday": {
+      "subject": "Pre-K Reading",
+      "title": "Letter N Day",
+      "activities": [
+        { "type": "letter_trace", "letter": "N", "prompt": "Trace the letter N — the third letter in KINDLE! K-I-N!" },
+        { "type": "letter_find", "letter": "N", "prompt": "N is for your Nana! Find 3 things that start with N." },
+        { "type": "sound_match", "letter": "N", "prompt": "What sound does N make? Nnn-nnn-Nana!" }
+      ],
+      "stars": 3
+    }
+  }
+}

@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v57 — Apps Script Router (TBM Consolidated)
+// Code.gs v58 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 57; }
+function getCodeVersion() { return 59; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -231,7 +231,10 @@ function servePage(page, e) {
     'story-library': { file: 'StoryLibrary',   title: 'Story Library — Thompson Family Stories' },
     'comic-studio':  { file: 'ComicStudio',    title: 'Wolfkid Comic Studio' },
     'progress':      { file: 'ProgressReport', title: 'Weekly Progress Report' },
-    'story':         { file: 'StoryReader',    title: 'Story Reader' }
+    'story':         { file: 'StoryReader',    title: 'Story Reader' },
+    'investigation': { file: 'investigation-module', title: 'Field Investigation — Science' },
+    'daily-missions':{ file: 'daily-missions', title: 'Daily Missions — Thompson Education' },
+    'baseline':      { file: 'BaselineDiagnostic', title: 'Baseline Diagnostic — Thompson Education' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -268,6 +271,26 @@ function servePage(page, e) {
 }
 
 
+// v59: doPost — handles POST requests for large payloads (e.g. curriculum seeding)
+function doPost(e) {
+  try {
+    var body = JSON.parse(e.postData.contents);
+    var fn = body.fn;
+    var args = body.args || [];
+    var whitelist = { 'seedStaarRlaSprintSafe': seedStaarRlaSprintSafe };
+    if (!whitelist[fn]) {
+      return ContentService.createTextOutput(JSON.stringify({ error: 'Function not in POST whitelist: ' + fn }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    var result = whitelist[fn].apply(null, args);
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ error: err.message }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
 function serveData(e) {
   var action = e.parameter.action || 'data';
 
@@ -283,7 +306,13 @@ function serveData(e) {
         'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse',
         'parent': 'KidsHub', 'story-library': 'StoryLibrary',
         'comic-studio': 'ComicStudio', 'progress': 'ProgressReport',
-        'story': 'StoryReader'
+        'story': 'StoryReader',
+        'homework': 'HomeworkModule', 'sparkle': 'SparkleLearning',
+        'wolfkid': 'WolfkidCER', 'dashboard': 'DesignDashboard',
+        'facts': 'fact-sprint', 'reading': 'reading-module',
+        'writing': 'writing-module',
+        'investigation': 'investigation-module', 'daily-missions': 'daily-missions',
+        'baseline': 'BaselineDiagnostic'
       };
       var filename = routes[page] || 'ThePulse';
       try {
@@ -345,11 +374,11 @@ function serveData(e) {
         'khSetBankOpeningSafe': khSetBankOpeningSafe, 'khVerifyPinSafe': khVerifyPinSafe,
         'khAddDeductionSafe': khAddDeductionSafe, 'khHealthCheckSafe': khHealthCheckSafe, 'khBatchApproveSafe': khBatchApproveSafe,
         'khSubmitGradeSafe': khSubmitGradeSafe, 'khGetGradeHistorySafe': khGetGradeHistorySafe,
-        'updateFamilyNoteSafe': updateFamilyNoteSafe,
+        'updateFamilyNoteSafe': updateFamilyNoteSafe, 'addKidsEventSafe': addKidsEventSafe,
         'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
         'getVaultDataSafe': getVaultDataSafe, 'runStoryFactorySafe': runStoryFactorySafe,
         'listStoredStoriesSafe': listStoredStoriesSafe, 'getStoredStorySafe': getStoredStorySafe,
-        'getTodayContentSafe': getTodayContentSafe, 'seedWeek1CurriculumSafe': seedWeek1CurriculumSafe,
+        'getTodayContentSafe': getTodayContentSafe, 'seedWeek1CurriculumSafe': seedWeek1CurriculumSafe, 'seedStaarRlaSprintSafe': seedStaarRlaSprintSafe,
         'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe,
         'submitFeedbackSafe': submitFeedbackSafe, 'getAudioBatchSafe': getAudioBatchSafe,
         'logHomeworkCompletionSafe': logHomeworkCompletionSafe, 'logSparkleProgressSafe': logSparkleProgressSafe,
@@ -914,6 +943,12 @@ function getTodayContentSafe(child) {
 function seedWeek1CurriculumSafe() {
   return withMonitor_('seedWeek1CurriculumSafe', function() {
     return seedWeek1Curriculum();
+  });
+}
+// v58: STAAR RLA Sprint seed
+function seedStaarRlaSprintSafe(jsonStr) {
+  return withMonitor_('seedStaarRlaSprintSafe', function() {
+    return seedStaarRlaSprint(jsonStr);
   });
 }
 
@@ -1639,4 +1674,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v57
+// END OF FILE — Code.gs v58

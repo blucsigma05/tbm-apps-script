@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tbm-module" content="daily-missions">
+<meta name="tbm-version" content="v1">
+<title>Daily Missions</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: #0B0F1A;
+  color: #E2E8F0;
+  font-family: 'Nunito', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+@keyframes celebrateBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes sparkleFloat {
+  0% { opacity: 0; transform: translateY(100vh) scale(0.4); }
+  15% { opacity: 0.5; }
+  50% { opacity: 0.3; }
+  100% { opacity: 0; transform: translateY(-10vh) scale(0.9); }
+}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1E2A4A; border-radius: 3px; }
+
+/* ─── Starfield (Buggsy) ─── */
+#starfield {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #93C5FD;
+  opacity: 0.3;
+}
+
+/* ─── Header (Buggsy) ─── */
+#app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(11,15,26,0.95);
+  border-bottom: 1px solid #1E2A4A;
+  padding: 10px 16px;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo { font-size: 22px; }
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #60A5FA, #93C5FD);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+.header-subtitle {
+  font-size: 9px;
+  color: #64748B;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 2px;
+}
+.header-date {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #94A3B8;
+  background: #171D30;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #1E2A4A;
+}
+
+/* ─── Main Content ─── */
+.main-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px 16px 100px;
+  position: relative;
+  z-index: 10;
+}
+
+/* ─── Greeting ─── */
+.greeting {
+  font-size: 16px;
+  font-weight: 600;
+  color: #94A3B8;
+  margin-bottom: 6px;
+  animation: fadeSlide 0.4s ease;
+}
+.day-focus {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #60A5FA;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+  animation: fadeSlide 0.5s ease;
+}
+
+/* ─── Mission Card ─── */
+.mission-card {
+  background: #111827;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  animation: fadeSlide 0.4s ease;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.mission-card:hover {
+  border-color: rgba(96,165,250,0.3);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.mission-card.completed {
+  border-color: rgba(34,197,94,0.3);
+  opacity: 0.7;
+}
+.mission-number {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1E2A4A, #111827);
+  border: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #60A5FA;
+  flex-shrink: 0;
+}
+.mission-card.completed .mission-number {
+  background: linear-gradient(135deg, #14532D, #111827);
+  border-color: #22C55E;
+  color: #22C55E;
+}
+.mission-info {
+  flex: 1;
+  min-width: 0;
+}
+.mission-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #E2E8F0;
+  margin-bottom: 4px;
+}
+.mission-card.completed .mission-name {
+  text-decoration: line-through;
+  color: #64748B;
+}
+.mission-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mission-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #64748B;
+}
+.mission-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.tag-math { background: rgba(96,165,250,0.15); color: #60A5FA; border: 1px solid rgba(96,165,250,0.3); }
+.tag-rla { background: rgba(168,85,247,0.15); color: #A855F7; border: 1px solid rgba(168,85,247,0.3); }
+.tag-science { background: rgba(34,197,94,0.15); color: #22C55E; border: 1px solid rgba(34,197,94,0.3); }
+.tag-review { background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3); }
+.tag-creative { background: rgba(236,72,153,0.15); color: #EC4899; border: 1px solid rgba(236,72,153,0.3); }
+
+.mission-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.launch-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1E3A5F, #1E2A4A);
+  border: 1px solid #60A5FA;
+  color: #60A5FA;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  letter-spacing: 1px;
+  min-height: 36px;
+}
+.launch-btn:hover {
+  box-shadow: 0 0 12px rgba(96,165,250,0.3);
+  background: linear-gradient(135deg, #1E4A6F, #1E3A5F);
+}
+.check-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #334155;
+  background: transparent;
+  color: #64748B;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.15s;
+  padding: 0;
+}
+.check-btn:hover {
+  border-color: #22C55E;
+  color: #22C55E;
+}
+.check-btn.checked {
+  background: #22C55E;
+  border-color: #22C55E;
+  color: #fff;
+}
+
+/* ─── Footer Summary ─── */
+.footer-summary {
+  background: #111827;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 8px;
+  text-align: center;
+}
+.total-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #94A3B8;
+  margin-bottom: 8px;
+}
+.ring-reward {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  color: #F59E0B;
+  letter-spacing: 0.5px;
+  animation: ringPulse 2s ease infinite;
+  display: inline-block;
+}
+
+/* ─── Celebration Banner ─── */
+.celebration-banner {
+  background: linear-gradient(135deg, #14532D, #1A3A1A);
+  border: 2px solid #22C55E;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 16px;
+  animation: celebrateBounce 1s ease infinite;
+  display: none;
+}
+.celebration-banner.active { display: block; }
+.celebration-emoji { font-size: 36px; margin-bottom: 8px; }
+.celebration-text {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #22C55E;
+  letter-spacing: 1px;
+}
+.celebration-sub {
+  font-size: 12px;
+  color: #94A3B8;
+  margin-top: 4px;
+}
+
+/* ─── Weekend ─── */
+.weekend-card {
+  background: #111827;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 40px 20px;
+  text-align: center;
+}
+.weekend-emoji { font-size: 48px; margin-bottom: 12px; }
+.weekend-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #94A3B8;
+  margin-bottom: 16px;
+}
+.bonus-card {
+  background: linear-gradient(135deg, #1A1400, #261800);
+  border: 1px solid rgba(245,158,11,0.3);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+  text-align: center;
+}
+.bonus-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  color: #F59E0B;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.bonus-desc {
+  font-size: 13px;
+  color: #94A3B8;
+}
+
+/* ════════════════════════════════════════
+   JJ / SPARKLE THEME
+   ════════════════════════════════════════ */
+body.jj-theme {
+  background: linear-gradient(170deg, #FFF5F9 0%, #FFF0F9 40%, #F5F0FF 100%);
+  color: #4A1942;
+  font-family: 'Nunito', sans-serif;
+}
+body.jj-theme ::-webkit-scrollbar-thumb { background: #FFD6E8; }
+
+/* JJ sparkle bg */
+.jj-sparkle-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  display: none;
+}
+body.jj-theme .jj-sparkle-bg { display: block; }
+body.jj-theme #starfield { display: none; }
+.jj-sparkle-dot {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.15;
+}
+
+/* JJ Header */
+body.jj-theme #app-header {
+  background: rgba(255,245,249,0.95);
+  border-bottom: 2px solid #FFD6E8;
+}
+body.jj-theme .header-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 18px;
+  background: none;
+  -webkit-background-clip: initial;
+  -webkit-text-fill-color: #FF69B4;
+  letter-spacing: 0;
+}
+body.jj-theme .header-subtitle {
+  font-family: 'Fredoka One', cursive;
+  color: #C490B8;
+  letter-spacing: 1px;
+}
+body.jj-theme .header-date {
+  background: rgba(255,215,0,0.15);
+  border-color: rgba(255,215,0,0.3);
+  color: #4A1942;
+}
+
+/* JJ Greeting */
+body.jj-theme .greeting {
+  color: #FF69B4;
+  font-family: 'Fredoka One', cursive;
+  font-size: 22px;
+  font-weight: 400;
+}
+body.jj-theme .day-focus {
+  font-family: 'Fredoka One', cursive;
+  color: #C490B8;
+  font-size: 13px;
+}
+
+/* JJ Mission Cards */
+body.jj-theme .mission-card {
+  background: #FFFFFF;
+  border: 2px solid #FFD6E8;
+  border-radius: 16px;
+  padding: 16px;
+  min-height: 80px;
+}
+body.jj-theme .mission-card:hover {
+  border-color: #FF69B4;
+  box-shadow: 0 4px 16px rgba(255,105,180,0.15);
+}
+body.jj-theme .mission-card.completed {
+  border-color: rgba(255,215,0,0.5);
+  opacity: 0.75;
+}
+body.jj-theme .mission-number {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFE4F0, #FFF0F5);
+  border: 2px solid #FFD6E8;
+  font-family: 'Fredoka One', cursive;
+  font-size: 20px;
+  color: #FF69B4;
+}
+body.jj-theme .mission-card.completed .mission-number {
+  background: linear-gradient(135deg, #FFF8DC, #FFFACD);
+  border-color: #FFD700;
+  color: #FFD700;
+}
+body.jj-theme .mission-name {
+  font-family: 'Fredoka One', cursive;
+  font-size: 17px;
+  font-weight: 400;
+  color: #4A1942;
+}
+body.jj-theme .mission-card.completed .mission-name {
+  text-decoration: line-through;
+  color: #C490B8;
+}
+body.jj-theme .mission-meta { display: none; }
+.star-reward {
+  display: none;
+  font-size: 13px;
+  color: #FFD700;
+  font-family: 'Fredoka One', cursive;
+}
+body.jj-theme .star-reward {
+  display: block;
+  margin-top: 2px;
+}
+body.jj-theme .launch-btn {
+  font-family: 'Fredoka One', cursive;
+  font-size: 13px;
+  background: linear-gradient(135deg, #FF69B4, #FF85C8);
+  border: 2px solid #FF69B4;
+  color: #FFFFFF;
+  padding: 10px 18px;
+  border-radius: 24px;
+  letter-spacing: 0;
+  min-height: 44px;
+  min-width: 64px;
+}
+body.jj-theme .launch-btn:hover {
+  box-shadow: 0 0 16px rgba(255,105,180,0.4);
+}
+body.jj-theme .check-btn {
+  width: 36px;
+  height: 36px;
+  border-color: #FFD6E8;
+  font-size: 18px;
+}
+body.jj-theme .check-btn:hover {
+  border-color: #FFD700;
+  color: #FFD700;
+}
+body.jj-theme .check-btn.checked {
+  background: #FFD700;
+  border-color: #FFD700;
+  color: #FFF;
+}
+
+/* JJ Footer */
+body.jj-theme .footer-summary {
+  background: #FFFFFF;
+  border-color: #FFD6E8;
+}
+body.jj-theme .total-time {
+  color: #C490B8;
+  font-family: 'Fredoka One', cursive;
+}
+body.jj-theme .ring-reward {
+  font-family: 'Fredoka One', cursive;
+  color: #FFD700;
+}
+
+/* JJ Celebration */
+body.jj-theme .celebration-banner {
+  background: linear-gradient(135deg, #FFF8DC, #FFFACD);
+  border-color: #FFD700;
+}
+body.jj-theme .celebration-text {
+  font-family: 'Fredoka One', cursive;
+  color: #FF69B4;
+}
+body.jj-theme .celebration-sub { color: #C490B8; }
+
+/* JJ Weekend */
+body.jj-theme .weekend-card {
+  background: #FFFFFF;
+  border-color: #FFD6E8;
+}
+body.jj-theme .weekend-text {
+  font-family: 'Fredoka One', cursive;
+  color: #FF69B4;
+}
+body.jj-theme .bonus-card {
+  background: linear-gradient(135deg, #FFF8DC, #FFF0F5);
+  border-color: rgba(255,105,180,0.3);
+}
+body.jj-theme .bonus-title {
+  font-family: 'Fredoka One', cursive;
+  color: #FF69B4;
+}
+body.jj-theme .bonus-desc { color: #C490B8; }
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+<div class="jj-sparkle-bg" id="jj-sparkle-bg"></div>
+
+<div id="app-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-logo" id="header-emoji"></div>
+      <div>
+        <div class="header-title" id="header-title">DAILY MISSIONS</div>
+        <div class="header-subtitle" id="header-subtitle">THOMPSON EDUCATION</div>
+      </div>
+    </div>
+    <div class="header-date" id="header-date"></div>
+  </div>
+</div>
+
+<div class="main-content" id="main-content">
+  <!-- Rendered by JS -->
+</div>
+
+<script>
+// ============================================================
+// ES5 STRICT — Daily Missions Landing Page
+// ============================================================
+
+// ── Schedule Data ──
+var BUGGSY_SCHEDULE = {
+  1: { // Monday
+    focus: 'Math',
+    tag: 'math',
+    blocks: [
+      { name: 'Fact Sprint', time: 3, page: 'facts' },
+      { name: 'Math Module (6Q)', time: 12, page: 'homework' },
+      { name: 'STAAR Practice (3-4Q)', time: 10, page: 'homework' },
+      { name: 'Error Journal', time: 5, page: 'homework' }
+    ]
+  },
+  2: { // Tuesday
+    focus: 'Reading + Writing',
+    tag: 'rla',
+    blocks: [
+      { name: 'Vocabulary (3 words)', time: 3, page: 'reading' },
+      { name: 'Cold Passage + Comprehension', time: 15, page: 'reading' },
+      { name: 'Quick Write', time: 12, page: 'writing' }
+    ]
+  },
+  3: { // Wednesday
+    focus: 'Science',
+    tag: 'science',
+    blocks: [
+      { name: 'Vocabulary (3 terms)', time: 3, page: 'homework' },
+      { name: 'Science Module (6Q)', time: 15, page: 'homework' },
+      { name: 'Investigation Prompt', time: 12, page: 'investigation' }
+    ]
+  },
+  4: { // Thursday
+    focus: 'Reading + Creative',
+    tag: 'creative',
+    blocks: [
+      { name: 'Grammar Sprint (5Q)', time: 3, page: 'reading' },
+      { name: 'Wolfkid Episode CER/ECR', time: 15, page: 'wolfkid' },
+      { name: 'Comic Studio', time: 12, page: 'comic-studio' }
+    ]
+  },
+  5: { // Friday
+    focus: 'Review + Flex',
+    tag: 'review',
+    blocks: [
+      { name: 'Weekly Review Quiz (8Q)', time: 10, page: 'homework' },
+      { name: 'STAAR Sim (5Q)', time: 10, page: 'homework' },
+      { name: "Kid's Choice", time: 10, page: 'homework' }
+    ]
+  }
+};
+
+var JJ_SCHEDULE = {
+  1: { // Monday
+    focus: 'Letters',
+    blocks: [
+      { name: 'Letter Intro', stars: 1, page: 'sparkle', activity: 'letter-intro' },
+      { name: 'Find the Letter', stars: 1, page: 'sparkle', activity: 'find-letter' },
+      { name: 'Name Builder', stars: 2, page: 'sparkle', activity: 'name-builder' }
+    ]
+  },
+  2: { // Tuesday
+    focus: 'Numbers',
+    blocks: [
+      { name: 'Count with Me', stars: 1, page: 'sparkle', activity: 'count' },
+      { name: 'Find the Number', stars: 1, page: 'sparkle', activity: 'find-number' },
+      { name: 'Quantity Matching', stars: 2, page: 'sparkle', activity: 'quantity-match' }
+    ]
+  },
+  3: { // Wednesday
+    focus: 'Colors & Shapes',
+    blocks: [
+      { name: 'Color Hunt', stars: 1, page: 'sparkle', activity: 'color-hunt' },
+      { name: 'Shape Match', stars: 1, page: 'sparkle', activity: 'shape-match' },
+      { name: 'What Comes Next?', stars: 2, page: 'sparkle', activity: 'pattern' }
+    ]
+  },
+  4: { // Thursday
+    focus: 'Letter Review',
+    blocks: [
+      { name: 'Sounds Review', stars: 1, page: 'sparkle', activity: 'sounds' },
+      { name: 'Letter Trace', stars: 1, page: 'sparkle', activity: 'trace' },
+      { name: 'Audio Story', stars: 2, page: 'sparkle', activity: 'audio-story' }
+    ]
+  },
+  5: { // Friday
+    focus: 'Free Play',
+    blocks: [
+      { name: 'Sparkle Challenge', stars: 2, page: 'sparkle', activity: 'challenge' },
+      { name: 'Free Draw', stars: 1, page: 'sparkle', activity: 'draw' },
+      { name: 'Star Celebration', stars: 3, page: 'sparkle', activity: 'celebration' }
+    ]
+  }
+};
+
+var DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// ── Globals ──
+var currentChild = 'buggsy';
+var todayKey = '';
+var dayOfWeek = 0;
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  parseChildParam();
+  setupDate();
+
+  if (currentChild === 'jj') {
+    applyJJTheme();
+  } else {
+    buildStarfield();
+  }
+
+  render();
+}
+
+// ============================================================
+// URL PARAM PARSING (no URLSearchParams)
+// ============================================================
+function parseChildParam() {
+  var search = window.location.search;
+  if (!search || search.length < 2) return;
+  var qs = search.substring(1);
+  var pairs = qs.split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var kv = pairs[i].split('=');
+    if (kv[0] === 'child' && kv[1]) {
+      var val = decodeURIComponent(kv[1]).toLowerCase();
+      if (val === 'jj') {
+        currentChild = 'jj';
+      }
+    }
+  }
+}
+
+// ============================================================
+// DATE SETUP
+// ============================================================
+function setupDate() {
+  var now = new Date();
+  dayOfWeek = now.getDay();
+  var y = now.getFullYear();
+  var m = String(now.getMonth() + 1);
+  var d = String(now.getDate());
+  if (m.length < 2) m = '0' + m;
+  if (d.length < 2) d = '0' + d;
+  todayKey = 'missions_' + y + '-' + m + '-' + d;
+
+  var dateStr = DAY_NAMES[dayOfWeek] + ', ' + MONTH_NAMES[now.getMonth()] + ' ' + now.getDate();
+  document.getElementById('header-date').textContent = dateStr;
+}
+
+// ============================================================
+// STARFIELD
+// ============================================================
+function buildStarfield() {
+  var container = document.getElementById('starfield');
+  var html = '';
+  for (var i = 0; i < 60; i++) {
+    var size = Math.random() * 2 + 1;
+    var x = Math.random() * 100;
+    var y = Math.random() * 100;
+    var delay = Math.random() * 4;
+    var dur = Math.random() * 3 + 2;
+    html += '<div class="star" style="' +
+      'width:' + size + 'px;' +
+      'height:' + size + 'px;' +
+      'left:' + x + '%;' +
+      'top:' + y + '%;' +
+      'animation:twinkle ' + dur + 's ' + delay + 's infinite;' +
+      '"></div>';
+  }
+  container.innerHTML = html;
+}
+
+// ============================================================
+// JJ THEME
+// ============================================================
+function applyJJTheme() {
+  document.body.className = 'jj-theme';
+  document.getElementById('header-emoji').textContent = '\u2728';
+  document.getElementById('header-title').textContent = "JJ's Missions";
+  document.getElementById('header-subtitle').textContent = 'SPARKLE LEARNING';
+  buildSparkles();
+}
+
+function buildSparkles() {
+  var container = document.getElementById('jj-sparkle-bg');
+  var colors = ['#FF69B4', '#FFD700', '#FF85C8', '#B388FF', '#FF9CE3'];
+  var html = '';
+  for (var i = 0; i < 30; i++) {
+    var size = Math.random() * 8 + 4;
+    var x = Math.random() * 100;
+    var y = Math.random() * 100;
+    var c = colors[Math.floor(Math.random() * colors.length)];
+    html += '<div class="jj-sparkle-dot" style="' +
+      'width:' + size + 'px;' +
+      'height:' + size + 'px;' +
+      'left:' + x + '%;' +
+      'top:' + y + '%;' +
+      'background:' + c + ';' +
+      '"></div>';
+  }
+  container.innerHTML = html;
+}
+
+// ============================================================
+// LOCALSTORAGE HELPERS
+// ============================================================
+function getMissionState() {
+  try {
+    var raw = localStorage.getItem(todayKey);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* ignore */ }
+  return {};
+}
+
+function setMissionState(state) {
+  try {
+    localStorage.setItem(todayKey, JSON.stringify(state));
+  } catch (e) { /* ignore */ }
+}
+
+function isMissionDone(missionId) {
+  var state = getMissionState();
+  return state[missionId] === true;
+}
+
+function toggleMission(missionId) {
+  var state = getMissionState();
+  if (state[missionId]) {
+    delete state[missionId];
+  } else {
+    state[missionId] = true;
+  }
+  setMissionState(state);
+  render();
+}
+
+// ============================================================
+// GREETING
+// ============================================================
+function getGreeting() {
+  var hour = new Date().getHours();
+  if (currentChild === 'jj') {
+    return 'Hi JJ! Let\'s play!';
+  }
+  var timeOfDay = 'morning';
+  if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
+  if (hour >= 17) timeOfDay = 'evening';
+  return 'Good ' + timeOfDay + ', Wolfkid. Here\'s today\'s mission briefing.';
+}
+
+// ============================================================
+// BUILD LAUNCH URL
+// ============================================================
+function buildLaunchUrl(block) {
+  var url = '?page=' + block.page;
+  if (block.activity) {
+    url += '&activity=' + block.activity;
+  }
+  if (currentChild === 'jj') {
+    url += '&child=jj';
+  }
+  return url;
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  var container = document.getElementById('main-content');
+
+  // Set header emoji for Buggsy
+  if (currentChild !== 'jj') {
+    document.getElementById('header-emoji').textContent = '\uD83C\uDFAF';
+  }
+
+  // Weekend check
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    renderWeekend(container);
+    return;
+  }
+
+  var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
+  var dayData = schedule[dayOfWeek];
+  if (!dayData) {
+    renderWeekend(container);
+    return;
+  }
+
+  var blocks = dayData.blocks;
+  var state = getMissionState();
+  var doneCount = 0;
+  var totalTime = 0;
+
+  for (var i = 0; i < blocks.length; i++) {
+    var mId = blocks[i].page + '_' + i;
+    if (state[mId]) doneCount++;
+    if (blocks[i].time) totalTime += blocks[i].time;
+  }
+
+  var allDone = doneCount === blocks.length;
+  var html = '';
+
+  // Celebration banner
+  html += '<div class="celebration-banner' + (allDone ? ' active' : '') + '">';
+  if (currentChild === 'jj') {
+    html += '<div class="celebration-emoji">\uD83C\uDF1F\u2728\uD83C\uDF1F</div>';
+    html += '<div class="celebration-text">YAY! ALL DONE!</div>';
+    html += '<div class="celebration-sub">You earned all your stars today!</div>';
+  } else {
+    html += '<div class="celebration-emoji">\uD83C\uDF89\uD83D\uDE80\uD83C\uDF89</div>';
+    html += '<div class="celebration-text">ALL MISSIONS COMPLETE</div>';
+    html += '<div class="celebration-sub">+10 Bonus Rings earned! Great work, Wolfkid.</div>';
+  }
+  html += '</div>';
+
+  // Greeting
+  html += '<div class="greeting">' + getGreeting() + '</div>';
+  html += '<div class="day-focus">' + DAY_NAMES[dayOfWeek].toUpperCase() + ' \u2014 ' + dayData.focus.toUpperCase() + '</div>';
+
+  // Mission cards
+  for (var j = 0; j < blocks.length; j++) {
+    var block = blocks[j];
+    var missionId = block.page + '_' + j;
+    var done = state[missionId] === true;
+    var cardClass = 'mission-card' + (done ? ' completed' : '');
+
+    html += '<div class="' + cardClass + '" style="animation-delay:' + (j * 0.08) + 's">';
+
+    // Number
+    if (done) {
+      html += '<div class="mission-number">\u2713</div>';
+    } else {
+      html += '<div class="mission-number">' + (j + 1) + '</div>';
+    }
+
+    // Info
+    html += '<div class="mission-info">';
+    html += '<div class="mission-name">' + block.name + '</div>';
+
+    // Star reward for JJ
+    if (currentChild === 'jj' && block.stars) {
+      var starStr = '';
+      for (var s = 0; s < block.stars; s++) {
+        starStr += '\u2B50';
+      }
+      html += '<div class="star-reward">' + starStr + '</div>';
+    }
+
+    // Meta (Buggsy only — hidden for JJ via CSS)
+    html += '<div class="mission-meta">';
+    if (block.time) {
+      html += '<span class="mission-time">~' + block.time + ' min</span>';
+    }
+    if (dayData.tag) {
+      html += '<span class="mission-tag tag-' + dayData.tag + '">' + dayData.focus + '</span>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    // Actions
+    html += '<div class="mission-actions">';
+    if (!done) {
+      var launchUrl = buildLaunchUrl(block);
+      if (currentChild === 'jj') {
+        html += '<button class="launch-btn" onclick="window.location.href=\'' + launchUrl + '\'">Let\'s Go!</button>';
+      } else {
+        html += '<button class="launch-btn" onclick="window.location.href=\'' + launchUrl + '\'">LAUNCH</button>';
+      }
+    }
+    html += '<button class="check-btn' + (done ? ' checked' : '') + '" onclick="toggleMission(\'' + missionId + '\')" title="' + (done ? 'Mark incomplete' : 'Mark complete') + '">' +
+      (done ? '\u2713' : '') + '</button>';
+    html += '</div>';
+
+    html += '</div>';
+  }
+
+  // Footer summary
+  html += '<div class="footer-summary">';
+  if (currentChild === 'jj') {
+    var totalStars = 0;
+    for (var k = 0; k < blocks.length; k++) {
+      if (blocks[k].stars) totalStars += blocks[k].stars;
+    }
+    html += '<div class="total-time">' + doneCount + ' of ' + blocks.length + ' activities done</div>';
+    html += '<div class="ring-reward">Complete all for ' + totalStars + ' \u2B50 bonus stars!</div>';
+  } else {
+    html += '<div class="total-time">Total estimated time: ~' + totalTime + ' min \u00B7 ' + doneCount + '/' + blocks.length + ' complete</div>';
+    if (!allDone) {
+      html += '<div class="ring-reward">\uD83D\uDCAD Complete all missions for +10 bonus Rings</div>';
+    } else {
+      html += '<div class="ring-reward">\u2728 +10 Bonus Rings EARNED \u2728</div>';
+    }
+  }
+  html += '</div>';
+
+  container.innerHTML = html;
+}
+
+// ============================================================
+// RENDER WEEKEND
+// ============================================================
+function renderWeekend(container) {
+  var html = '<div class="weekend-card">';
+  if (currentChild === 'jj') {
+    html += '<div class="weekend-emoji">\uD83C\uDF08</div>';
+    html += '<div class="weekend-text">No activities today! Enjoy your weekend, JJ!</div>';
+  } else {
+    html += '<div class="weekend-emoji">\uD83C\uDFAE</div>';
+    html += '<div class="weekend-text">No missions today! Enjoy your weekend, Wolfkid.</div>';
+  }
+
+  // Bonus challenge card
+  html += '<div class="bonus-card">';
+  if (currentChild === 'jj') {
+    html += '<div class="bonus-title">\u2728 SPARKLE BONUS \u2728</div>';
+    html += '<div class="bonus-desc">Want to play a learning game for extra stars?</div>';
+    html += '<div style="margin-top:12px">';
+    html += '<button class="launch-btn" onclick="window.location.href=\'?page=sparkle&activity=challenge&child=jj\'">Play!</button>';
+    html += '</div>';
+  } else {
+    html += '<div class="bonus-title">\uD83D\uDE80 BONUS CHALLENGE</div>';
+    html += '<div class="bonus-desc">Want extra credit? Try a bonus practice round for +5 Rings.</div>';
+    html += '<div style="margin-top:12px">';
+    html += '<button class="launch-btn" onclick="window.location.href=\'?page=homework\'">LAUNCH BONUS</button>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+init();
+</script>
+</body>
+</html>

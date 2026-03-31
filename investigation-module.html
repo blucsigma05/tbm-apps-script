@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tbm-module" content="investigation-module">
+<meta name="tbm-version" content="v1">
+<title>Wolfkid Investigation Module</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: #0B0F1A;
+  color: #E2E8F0;
+  font-family: 'Nunito', sans-serif;
+  position: relative;
+  overflow-x: hidden;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.6; }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+@keyframes lockFlash {
+  0% { background: rgba(16,185,129,0.3); }
+  100% { background: rgba(16,185,129,0); }
+}
+textarea::-webkit-input-placeholder { color: #64748B; }
+textarea:-moz-placeholder { color: #64748B; }
+textarea::-moz-placeholder { color: #64748B; }
+textarea:-ms-input-placeholder { color: #64748B; }
+input::-webkit-input-placeholder { color: #64748B; }
+input:-moz-placeholder { color: #64748B; }
+input::-moz-placeholder { color: #64748B; }
+input:-ms-input-placeholder { color: #64748B; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1E2A4A; border-radius: 3px; }
+
+/* Starfield */
+#starfield {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #6EE7B7;
+  opacity: 0.3;
+}
+
+/* Header */
+#app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(11,15,26,0.92);
+  border-bottom: 1px solid #1E2A4A;
+  padding: 10px 16px;
+}
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.header-logo { font-size: 22px; }
+.header-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #10B981, #6EE7B7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+.header-subtitle {
+  font-size: 9px;
+  color: #64748B;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 2px;
+}
+
+/* Progress indicator */
+.progress-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #94A3B8;
+  background: #171D30;
+  padding: 4px 12px;
+  border-radius: 8px;
+  border: 1px solid #1E2A4A;
+}
+
+/* Progress bar */
+.progress-bar-wrap {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 12px 16px 0;
+  position: relative;
+  z-index: 10;
+}
+.progress-bar-track {
+  height: 4px;
+  background: #1E2A4A;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10B981, #6EE7B7);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+.progress-step {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #475569;
+  transition: color 0.3s;
+}
+.progress-step.active { color: #10B981; font-weight: 700; }
+.progress-step.done { color: #6EE7B7; }
+
+/* Main content */
+main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px 16px 40px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Prompt card */
+.prompt-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  animation: fadeSlide 0.3s ease both;
+}
+.prompt-label {
+  font-size: 11px;
+  font-family: 'Orbitron', sans-serif;
+  color: #10B981;
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+}
+.prompt-text {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #E2E8F0;
+  margin-bottom: 8px;
+}
+.prompt-teks {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  color: #64748B;
+}
+
+/* Section card */
+.section-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  animation: fadeSlide 0.3s ease both;
+}
+.section-card.locked {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.section-card.completed {
+  border-color: rgba(16,185,129,0.3);
+  animation: lockFlash 0.6s ease;
+}
+.section-number {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+  text-align: center;
+  border-radius: 50%;
+  background: rgba(16,185,129,0.15);
+  color: #10B981;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  margin-right: 8px;
+}
+.section-card.completed .section-number {
+  background: #10B981;
+  color: #0B0F1A;
+}
+.section-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #10B981;
+  display: inline;
+  vertical-align: middle;
+}
+.section-wolfname {
+  font-size: 11px;
+  color: #6EE7B7;
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+  margin-bottom: 10px;
+}
+.section-instructions {
+  font-size: 13px;
+  color: #94A3B8;
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+.section-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  background: #131829;
+  border: 1px solid #1E2A4A;
+  border-radius: 8px;
+  color: #E2E8F0;
+  font-size: 14px;
+  font-family: 'Nunito', sans-serif;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+}
+.section-textarea:focus { border-color: #10B981; }
+.section-textarea:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Procedure step inputs */
+.step-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.step-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #10B981;
+  font-weight: 700;
+  min-width: 24px;
+  text-align: center;
+}
+.step-input {
+  flex: 1;
+  padding: 10px 12px;
+  background: #131829;
+  border: 1px solid #1E2A4A;
+  border-radius: 8px;
+  color: #E2E8F0;
+  font-size: 14px;
+  font-family: 'Nunito', sans-serif;
+  outline: none;
+}
+.step-input:focus { border-color: #10B981; }
+.step-input:disabled { opacity: 0.6; cursor: not-allowed; }
+.add-step-btn {
+  background: rgba(16,185,129,0.1);
+  border: 1px dashed rgba(16,185,129,0.3);
+  border-radius: 8px;
+  padding: 8px 16px;
+  color: #10B981;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+.add-step-btn:hover { background: rgba(16,185,129,0.2); }
+.add-step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Lock In button */
+.lock-btn {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 12px 20px;
+  background: #10B981;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.lock-btn:hover { background: #34D399; }
+.lock-btn:disabled {
+  background: #1E2A4A;
+  color: #64748B;
+  cursor: not-allowed;
+}
+
+/* Locked answer display */
+.locked-answer {
+  background: rgba(16,185,129,0.06);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #E2E8F0;
+}
+.locked-answer .locked-label {
+  font-size: 10px;
+  color: #10B981;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 4px;
+}
+
+/* Plan overlay */
+#plan-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11,15,26,0.95);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.plan-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: fadeSlide 0.4s ease;
+}
+.plan-icon { font-size: 48px; margin-bottom: 12px; }
+.plan-card h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #10B981;
+  margin-bottom: 12px;
+}
+.plan-card p {
+  font-size: 14px;
+  color: #94A3B8;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.plan-card .es-time-estimate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.2);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #6EE7B7;
+  margin-bottom: 16px;
+}
+.plan-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.plan-pill {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #c0c4d6;
+}
+.plan-pill .pill-step {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #10B981;
+  display: block;
+  margin-bottom: 2px;
+}
+.start-btn {
+  background: #10B981;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 36px;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.start-btn:hover { background: #34D399; }
+
+/* Completion overlay */
+#completion-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11,15,26,0.95);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+.comp-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 32px 24px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: fadeSlide 0.4s ease;
+  margin: auto;
+}
+.ring-award {
+  display: inline-block;
+  animation: ringPulse 2s ease-in-out infinite;
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+/* Error Journal / Reflection containers */
+#error-journal-section, #friday-reflection-section {
+  max-width: 800px;
+  margin: 16px auto;
+  padding: 0 16px;
+  position: relative;
+  z-index: 10;
+}
+
+/* ─── ExecSkills Component Styles (inlined) ─── */
+.es-plan-attack {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 16px 0;
+  text-align: center;
+}
+.es-plan-attack h2 {
+  font-size: 20px;
+  color: #f0f0f0;
+  margin: 0 0 8px 0;
+  font-family: 'Orbitron', 'Segoe UI', sans-serif;
+  letter-spacing: 1px;
+}
+.es-plan-attack .es-subtitle {
+  font-size: 13px;
+  color: #8b8fa3;
+  margin: 0 0 20px 0;
+}
+.es-plan-overview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 16px 0;
+}
+.es-plan-pill {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #c0c4d6;
+}
+.es-plan-pill .es-pill-type {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #6c63ff;
+  display: block;
+  margin-bottom: 2px;
+}
+.es-time-estimate {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #a5b4fc;
+  margin: 12px 0;
+}
+.es-ready-btn {
+  background: linear-gradient(135deg, #6c63ff 0%, #8b5cf6 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.es-ready-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(108,99,255,0.4); }
+.es-ready-btn:active { transform: translateY(0); }
+
+.es-session-timer {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  background: rgba(15,15,30,0.85);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #a5b4fc;
+  font-family: 'JetBrains Mono', monospace;
+  z-index: 100;
+}
+
+.es-error-journal {
+  background: linear-gradient(135deg, #1a1a2e 0%, #1e1e3a 100%);
+  border: 1px solid rgba(255,193,7,0.2);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 16px 0;
+}
+.es-error-journal h3 {
+  color: #ffc107;
+  font-size: 16px;
+  margin: 0 0 4px 0;
+}
+.es-error-journal .es-ej-subtitle {
+  color: #8b8fa3;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+}
+.es-missed-q {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 8px 0;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.es-missed-q.selected {
+  border-color: #ffc107;
+  background: rgba(255,193,7,0.06);
+}
+.es-missed-q .es-mq-label {
+  font-size: 12px;
+  color: #ef4444;
+  margin-bottom: 4px;
+}
+.es-missed-q .es-mq-text {
+  font-size: 14px;
+  color: #e0e0e0;
+}
+.es-journal-textarea {
+  width: 100%;
+  min-height: 80px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 12px;
+  color: #e0e0e0;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  margin-top: 12px;
+  box-sizing: border-box;
+}
+.es-journal-textarea:focus {
+  outline: none;
+  border-color: #ffc107;
+}
+.es-journal-prompt {
+  color: #ffc107;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 16px 0 6px 0;
+}
+
+.es-reflection {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 16px 0;
+}
+.es-reflection h3 {
+  color: #a78bfa;
+  font-size: 16px;
+  margin: 0 0 4px 0;
+}
+.es-reflection .es-ref-subtitle {
+  color: #8b8fa3;
+  font-size: 13px;
+  margin: 0 0 16px 0;
+}
+.es-ref-prompt {
+  color: #c4b5fd;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 14px 0 6px 0;
+}
+.es-ref-textarea {
+  width: 100%;
+  min-height: 60px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 10px;
+  padding: 12px;
+  color: #e0e0e0;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.es-ref-textarea:focus {
+  outline: none;
+  border-color: #a78bfa;
+}
+
+.es-feedback {
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0;
+  animation: esFeedbackSlide 0.3s ease-out;
+}
+.es-feedback.correct {
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.2);
+}
+.es-feedback.wrong {
+  background: rgba(251,191,36,0.06);
+  border: 1px solid rgba(251,191,36,0.15);
+}
+.es-feedback .es-fb-icon {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.es-feedback.correct .es-fb-icon { color: #22c55e; }
+.es-feedback.wrong .es-fb-icon { color: #fbbf24; }
+.es-feedback .es-fb-text {
+  font-size: 14px;
+  color: #d0d0d0;
+  line-height: 1.5;
+}
+.es-feedback .es-fb-why {
+  font-size: 13px;
+  color: #9ca3af;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+@keyframes esFeedbackSlide {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+
+<!-- Star field -->
+<div id="starfield"></div>
+
+<!-- Header -->
+<header id="app-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <span class="header-logo">&#x1F52C;</span>
+      <div>
+        <div class="header-title">WOLFKID SCIENCE</div>
+        <div class="header-subtitle">FIELD INVESTIGATION</div>
+      </div>
+    </div>
+    <div class="progress-badge" id="progress-badge">0/4</div>
+  </div>
+</header>
+
+<!-- Progress bar -->
+<div class="progress-bar-wrap">
+  <div class="progress-bar-track">
+    <div class="progress-bar-fill" id="progress-fill"></div>
+  </div>
+  <div class="progress-steps">
+    <span class="progress-step active" id="pstep-1">Hypothesis</span>
+    <span class="progress-step" id="pstep-2">Procedure</span>
+    <span class="progress-step" id="pstep-3">Prediction</span>
+    <span class="progress-step" id="pstep-4">Conclusion</span>
+  </div>
+</div>
+
+<!-- Main Content -->
+<main id="main-content" style="display:none;">
+  <!-- Investigation Prompt -->
+  <div class="prompt-card" id="prompt-card">
+    <div class="prompt-label">INTEL REPORT</div>
+    <div class="prompt-text" id="prompt-text"></div>
+    <div class="prompt-teks" id="prompt-teks"></div>
+  </div>
+
+  <!-- Section 1: Hypothesis -->
+  <div class="section-card" id="section-1">
+    <div>
+      <span class="section-number">1</span>
+      <span class="section-label">HYPOTHESIS</span>
+    </div>
+    <div class="section-wolfname">Wolfkid's Theory</div>
+    <div class="section-instructions">What do you THINK will happen and WHY? A good hypothesis uses "I think... because..."</div>
+    <div id="section-1-input">
+      <textarea class="section-textarea" id="hypothesis-text" placeholder="I think... because..."></textarea>
+    </div>
+    <div id="section-1-locked" style="display:none;"></div>
+    <button class="lock-btn" id="lock-btn-1" onclick="lockSection(1)">LOCK IN THEORY</button>
+  </div>
+
+  <!-- Section 2: Procedure -->
+  <div class="section-card locked" id="section-2">
+    <div>
+      <span class="section-number">2</span>
+      <span class="section-label">PROCEDURE</span>
+    </div>
+    <div class="section-wolfname">Mission Protocol</div>
+    <div class="section-instructions">List your steps (at least 3). Be specific enough that another wolfkid could follow them.</div>
+    <div id="section-2-input">
+      <div id="steps-container">
+        <div class="step-row" id="step-row-1">
+          <span class="step-num">1.</span>
+          <input type="text" class="step-input" id="step-1" placeholder="First, I would...">
+        </div>
+        <div class="step-row" id="step-row-2">
+          <span class="step-num">2.</span>
+          <input type="text" class="step-input" id="step-2" placeholder="Next, I would...">
+        </div>
+        <div class="step-row" id="step-row-3">
+          <span class="step-num">3.</span>
+          <input type="text" class="step-input" id="step-3" placeholder="Then, I would...">
+        </div>
+      </div>
+      <button class="add-step-btn" id="add-step-btn" onclick="addStep()">+ Add Step</button>
+    </div>
+    <div id="section-2-locked" style="display:none;"></div>
+    <button class="lock-btn" id="lock-btn-2" onclick="lockSection(2)" disabled>LOCK IN PROTOCOL</button>
+  </div>
+
+  <!-- Section 3: Prediction -->
+  <div class="section-card locked" id="section-3">
+    <div>
+      <span class="section-number">3</span>
+      <span class="section-label">PREDICTION</span>
+    </div>
+    <div class="section-wolfname">Expected Outcome</div>
+    <div class="section-instructions">What specific result do you expect? Use numbers, comparisons, or measurements if you can.</div>
+    <div id="section-3-input">
+      <textarea class="section-textarea" id="prediction-text" placeholder="I predict that..."></textarea>
+    </div>
+    <div id="section-3-locked" style="display:none;"></div>
+    <button class="lock-btn" id="lock-btn-3" onclick="lockSection(3)" disabled>LOCK IN PREDICTION</button>
+  </div>
+
+  <!-- Section 4: Conclusion -->
+  <div class="section-card locked" id="section-4">
+    <div>
+      <span class="section-number">4</span>
+      <span class="section-label">CONCLUSION</span>
+    </div>
+    <div class="section-wolfname">Field Report</div>
+    <div class="section-instructions">What did you learn? Was your hypothesis correct? Explain what the results would tell you.</div>
+    <div id="section-4-input">
+      <textarea class="section-textarea" id="conclusion-text" placeholder="Based on my investigation, I learned that..."></textarea>
+    </div>
+    <div id="section-4-locked" style="display:none;"></div>
+    <button class="lock-btn" id="lock-btn-4" onclick="lockSection(4)" disabled>LOCK IN FIELD REPORT</button>
+  </div>
+</main>
+
+<!-- Error Journal / Friday Reflection containers -->
+<div id="error-journal-section" style="display:none;"></div>
+<div id="friday-reflection-section" style="display:none;"></div>
+
+<!-- Plan Your Attack Overlay -->
+<div id="plan-overlay"></div>
+
+<!-- Completion Overlay -->
+<div id="completion-overlay">
+  <div class="comp-card" id="comp-card"></div>
+</div>
+
+<script>
+// ============================================================
+// ExecSkills IIFE — ES5 ONLY
+// Inlined from executive-skills-components.html
+// ============================================================
+var ExecSkills = (function() {
+  'use strict';
+
+  var _sessionStartTime = null;
+  var _sessionTimerInterval = null;
+  var _planAttackCallback = null;
+  var _isSparkle = false;
+
+  function showPlanYourAttack(options) {
+    _isSparkle = (options.child === 'jj' || options.child === 'kindle');
+    _planAttackCallback = options.onReady;
+
+    var themeClass = _isSparkle ? ' sparkle' : '';
+    var title = _isSparkle ? 'Let\'s Get Ready!' : 'PLAN YOUR ATTACK';
+    var subtitle = _isSparkle
+      ? 'Here\'s what we\'re playing today!'
+      : 'Scan the mission. Know what you\'re walking into.';
+    var btnText = _isSparkle ? 'Let\'s Go!' : 'I\'m Ready \u2014 Start Mission';
+
+    var pills = '';
+    for (var i = 0; i < options.questions.length; i++) {
+      var q = options.questions[i];
+      pills += '<div class="es-plan-pill">' +
+        '<span class="es-pill-type">' + (q.type || 'Step ' + (i + 1)) + '</span>' +
+        (q.topic || q.subject || 'Q' + (i + 1)) +
+        '</div>';
+    }
+
+    var html = '<div class="es-plan-attack' + themeClass + '">' +
+      '<h2>' + title + '</h2>' +
+      '<p class="es-subtitle">' + subtitle + '</p>' +
+      '<div class="es-time-estimate">' +
+        '&#9202; Estimated time: ~' + (options.timeEstimate || 12) + ' min' +
+      '</div>' +
+      '<div class="es-plan-overview">' + pills + '</div>' +
+      '<button class="es-ready-btn" onclick="ExecSkills._onPlanReady()">' +
+        btnText +
+      '</button>' +
+    '</div>';
+
+    var container = document.getElementById(options.container);
+    container.innerHTML = html;
+  }
+
+  function _onPlanReady() {
+    startSessionTimer(_isSparkle);
+    if (_planAttackCallback) _planAttackCallback();
+  }
+
+  function startSessionTimer(isSparkle) {
+    _sessionStartTime = Date.now();
+    var timerEl = document.createElement('div');
+    timerEl.id = 'es-session-timer';
+    timerEl.className = 'es-session-timer' + (isSparkle ? ' sparkle' : '');
+    timerEl.innerHTML = '0:00';
+    document.body.appendChild(timerEl);
+
+    _sessionTimerInterval = setInterval(function() {
+      var elapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+      var min = Math.floor(elapsed / 60);
+      var sec = elapsed % 60;
+      timerEl.innerHTML = min + ':' + (sec < 10 ? '0' : '') + sec;
+    }, 1000);
+  }
+
+  function stopSessionTimer() {
+    if (_sessionTimerInterval) {
+      clearInterval(_sessionTimerInterval);
+      _sessionTimerInterval = null;
+    }
+    var elapsed = 0;
+    if (_sessionStartTime) {
+      elapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+    }
+    return elapsed;
+  }
+
+  function getSessionMinutes() {
+    if (!_sessionStartTime) return 0;
+    return Math.floor((Date.now() - _sessionStartTime) / 60000);
+  }
+
+  function showFeedback(container, isCorrect, options) {
+    var sparkle = options && options.isSparkle;
+    var el = document.getElementById(container);
+    var html = '';
+
+    if (isCorrect) {
+      if (sparkle) {
+        html = '<div class="es-feedback sparkle-correct">' +
+          '<div class="es-fb-icon">&#11088; Amazing! &#11088;</div>' +
+        '</div>';
+      } else {
+        html = '<div class="es-feedback correct">' +
+          '<div class="es-fb-icon">&#9989; Nice work!</div>' +
+          (options.explanation ? '<div class="es-fb-text">' + options.explanation + '</div>' : '') +
+        '</div>';
+      }
+    } else {
+      if (sparkle) {
+        html = '<div class="es-feedback sparkle-wrong">' +
+          '<div class="es-fb-icon">&#128156; Almost! Try again!</div>' +
+        '</div>';
+      } else {
+        html = '<div class="es-feedback wrong">' +
+          '<div class="es-fb-icon">Not quite!</div>' +
+          '<div class="es-fb-text">The answer is: ' + (options.answer || '') + '</div>' +
+          (options.explanation ? '<div class="es-fb-why">' + options.explanation + '</div>' : '') +
+        '</div>';
+      }
+    }
+
+    el.innerHTML = html;
+  }
+
+  function showErrorJournal(container, missedQuestions) {
+    if (!missedQuestions || missedQuestions.length === 0) {
+      var el = document.getElementById(container);
+      el.innerHTML = '<div class="es-error-journal">' +
+        '<h3>&#127942; Perfect Score \u2014 No Errors!</h3>' +
+        '<p class="es-ej-subtitle">Nothing to journal today. Keep it up!</p>' +
+      '</div>';
+      return;
+    }
+
+    var qCards = '';
+    for (var i = 0; i < missedQuestions.length; i++) {
+      var mq = missedQuestions[i];
+      qCards += '<div class="es-missed-q" onclick="ExecSkills._selectMissedQ(' + i + ')" id="es-mq-' + i + '">' +
+        '<div class="es-mq-label">&#10060; Missed</div>' +
+        '<div class="es-mq-text">' + mq.question + '</div>' +
+        '<div style="font-size:12px;color:#6b7280;margin-top:4px;">' +
+          'Your answer: ' + mq.userAnswer + ' | Correct: ' + mq.correctAnswer +
+        '</div>' +
+      '</div>';
+    }
+
+    var html = '<div class="es-error-journal">' +
+      '<h3>&#128221; Error Journal</h3>' +
+      '<p class="es-ej-subtitle">Pick one question you missed. Tap it, then explain WHY you got it wrong.</p>' +
+      qCards +
+      '<div class="es-journal-prompt" id="es-ej-prompt" style="display:none;">' +
+        'WHY did you get this wrong? (Not "what\'s the right answer" \u2014 WHY did you pick the wrong one?)' +
+      '</div>' +
+      '<textarea class="es-journal-textarea" id="es-ej-textarea" style="display:none;" ' +
+        'placeholder="I got this wrong because..."></textarea>' +
+      '<div id="es-ej-submit" style="display:none;text-align:center;margin-top:12px;">' +
+        '<button class="es-ready-btn" onclick="ExecSkills._submitErrorJournal()" style="font-size:14px;padding:10px 30px;">' +
+          'Log It &#128220;' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+    document.getElementById(container).innerHTML = html;
+  }
+
+  var _selectedMissedQ = -1;
+  function _selectMissedQ(index) {
+    _selectedMissedQ = index;
+    var all = document.querySelectorAll('.es-missed-q');
+    for (var i = 0; i < all.length; i++) {
+      all[i].className = 'es-missed-q';
+    }
+    var el = document.getElementById('es-mq-' + index);
+    if (el) el.className = 'es-missed-q selected';
+    document.getElementById('es-ej-prompt').style.display = 'block';
+    document.getElementById('es-ej-textarea').style.display = 'block';
+    document.getElementById('es-ej-submit').style.display = 'block';
+    document.getElementById('es-ej-textarea').focus();
+  }
+
+  function _submitErrorJournal() {
+    var text = document.getElementById('es-ej-textarea').value;
+    if (!text || text.trim().length < 5) {
+      document.getElementById('es-ej-textarea').style.borderColor = '#ffc107';
+      document.getElementById('es-ej-textarea').placeholder = 'Write at least one sentence about WHY...';
+      return;
+    }
+    ExecSkills._journalData = {
+      questionIndex: _selectedMissedQ,
+      reflection: text.trim(),
+      timestamp: new Date().toISOString()
+    };
+    document.getElementById('es-ej-prompt').innerHTML = '&#9989; Logged! Understanding WHY you miss something is how you stop missing it.';
+    document.getElementById('es-ej-textarea').style.display = 'none';
+    document.getElementById('es-ej-submit').style.display = 'none';
+  }
+
+  function showFridayReflection(container) {
+    var html = '<div class="es-reflection">' +
+      '<h3>&#128588; Weekly Debrief</h3>' +
+      '<p class="es-ref-subtitle">Quick reflection \u2014 just two sentences.</p>' +
+      '<div class="es-ref-prompt">What was the hardest thing this week?</div>' +
+      '<textarea class="es-ref-textarea" id="es-ref-hard" ' +
+        'placeholder="The hardest thing was..."></textarea>' +
+      '<div class="es-ref-prompt">What are you proud of?</div>' +
+      '<textarea class="es-ref-textarea" id="es-ref-proud" ' +
+        'placeholder="I\'m proud that I..."></textarea>' +
+      '<div style="text-align:center;margin-top:16px;">' +
+        '<button class="es-ready-btn" onclick="ExecSkills._submitReflection()" ' +
+          'style="font-size:14px;padding:10px 30px;background:linear-gradient(135deg,#7c3aed,#a78bfa);">' +
+          'Submit Reflection &#127775;' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+    document.getElementById(container).innerHTML = html;
+  }
+
+  function _submitReflection() {
+    var hard = document.getElementById('es-ref-hard').value;
+    var proud = document.getElementById('es-ref-proud').value;
+    if (!hard || hard.trim().length < 3 || !proud || proud.trim().length < 3) {
+      if (!hard || hard.trim().length < 3) {
+        document.getElementById('es-ref-hard').style.borderColor = '#a78bfa';
+      }
+      if (!proud || proud.trim().length < 3) {
+        document.getElementById('es-ref-proud').style.borderColor = '#a78bfa';
+      }
+      return;
+    }
+    ExecSkills._reflectionData = {
+      hardest: hard.trim(),
+      proudOf: proud.trim(),
+      timestamp: new Date().toISOString()
+    };
+    var container = document.getElementById('es-ref-hard').parentNode;
+    container.innerHTML = '<div class="es-reflection">' +
+      '<h3>&#127775; Reflection Logged!</h3>' +
+      '<p class="es-ref-subtitle">Great week. Come back Monday ready to level up.</p>' +
+    '</div>';
+  }
+
+  function showCompletion(container, options) {
+    var elapsed = stopSessionTimer();
+    var min = Math.floor(elapsed / 60);
+    var sec = elapsed % 60;
+    var timeStr = min + ':' + (sec < 10 ? '0' : '') + sec;
+    var pct = options.total > 0 ? Math.round((options.score / options.total) * 100) : 0;
+
+    var skillsEarned = [];
+    skillsEarned.push('&#127919; Sustained Attention \u2014 ' + timeStr + ' focused');
+    skillsEarned.push('&#128203; Planning \u2014 scanned before starting');
+    if (pct >= 80) skillsEarned.push('&#127942; Goal-Directed Persistence \u2014 80%+ accuracy');
+    if (options.dayOfWeek === 'Monday') skillsEarned.push('&#128221; Metacognition \u2014 Error Journal');
+    if (options.dayOfWeek === 'Friday') skillsEarned.push('&#129518; Self-Reflection \u2014 Weekly Debrief');
+
+    var skillsList = '';
+    for (var i = 0; i < skillsEarned.length; i++) {
+      skillsList += '<div style="font-size:13px;color:#a5b4fc;padding:4px 0;">' + skillsEarned[i] + '</div>';
+    }
+
+    var html = '<div style="text-align:center;padding:24px;">' +
+      '<div style="font-size:48px;margin-bottom:8px;">' + (pct >= 80 ? '&#127942;' : '&#128170;') + '</div>' +
+      '<h2 style="color:#f0f0f0;margin:0 0 4px 0;">Mission Complete!</h2>' +
+      '<div style="font-size:14px;color:#8b8fa3;margin-bottom:16px;">Time: ' + timeStr + '</div>' +
+      '<div style="font-size:32px;font-weight:800;color:#fbbf24;margin:8px 0;">' +
+        options.score + ' / ' + options.total + ' (' + pct + '%)' +
+      '</div>' +
+      '<div style="font-size:18px;color:#22c55e;font-weight:700;margin:12px 0;">+' +
+        options.rings + ' Rings Earned</div>' +
+      '<div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;margin:16px 0;text-align:left;">' +
+        '<div style="font-size:11px;color:#6c63ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">' +
+          'Executive Skills Built Today' +
+        '</div>' +
+        skillsList +
+      '</div>' +
+    '</div>';
+
+    document.getElementById(container).innerHTML = html;
+  }
+
+  return {
+    showPlanYourAttack: showPlanYourAttack,
+    startSessionTimer: startSessionTimer,
+    stopSessionTimer: stopSessionTimer,
+    getSessionMinutes: getSessionMinutes,
+    showFeedback: showFeedback,
+    showErrorJournal: showErrorJournal,
+    showFridayReflection: showFridayReflection,
+    showCompletion: showCompletion,
+    _onPlanReady: _onPlanReady,
+    _selectMissedQ: _selectMissedQ,
+    _submitErrorJournal: _submitErrorJournal,
+    _submitReflection: _submitReflection,
+    _journalData: null,
+    _reflectionData: null
+  };
+})();
+</script>
+
+<script>
+/* ============================================================
+   InvestigationModule v1 — ES5 vanilla, single-file
+   Wednesday Science: Open-ended investigation + scientific method
+   TEKS-Aligned. STAAR-Ready. Executive Skills-Driven.
+   ============================================================ */
+
+var MODULE_VERSION = 'v1';
+var CHILD = 'buggsy';
+var RINGS_BASE = 8;
+var MAX_STEPS = 8;
+var currentStepCount = 3;
+var currentSection = 0; // 0 = not started, 1-4 = active section
+var completedSections = 0;
+var sectionData = {
+  hypothesis: '',
+  procedure: [],
+  prediction: '',
+  conclusion: ''
+};
+
+// ─── INVESTIGATION PROMPT (hardcoded — will be replaced by GAS backend) ───
+var INVESTIGATION = {
+  prompt: 'Your pack discovered something strange... Ice cubes melt faster on a metal tray than on a wooden cutting board. Design an investigation to find out why.',
+  teks: 'TEKS 4.1A, 4.7A',
+  subject: 'Science'
+};
+
+// ─── DAY OF WEEK ───
+function getDayOfWeek() {
+  var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  return days[new Date().getDay()];
+}
+
+// ─── STARFIELD ───
+function buildStarField() {
+  var container = document.getElementById('starfield');
+  var html = '';
+  for (var i = 0; i < 30; i++) {
+    var x = Math.random() * 100;
+    var y = Math.random() * 100;
+    var size = Math.random() * 2 + 0.5;
+    var delay = Math.random() * 4;
+    var dur = Math.random() * 3 + 2;
+    html += '<div class="star" style="left:' + x + '%;top:' + y + '%;width:' + size + 'px;height:' + size + 'px;animation:twinkle ' + dur + 's ease-in-out ' + delay + 's infinite;"></div>';
+  }
+  container.innerHTML = html;
+}
+
+// ─── UPDATE PROGRESS ───
+function updateProgress() {
+  var badge = document.getElementById('progress-badge');
+  badge.textContent = completedSections + '/4';
+
+  var fill = document.getElementById('progress-fill');
+  fill.style.width = (completedSections / 4 * 100) + '%';
+
+  for (var i = 1; i <= 4; i++) {
+    var step = document.getElementById('pstep-' + i);
+    if (i <= completedSections) {
+      step.className = 'progress-step done';
+    } else if (i === completedSections + 1) {
+      step.className = 'progress-step active';
+    } else {
+      step.className = 'progress-step';
+    }
+  }
+}
+
+// ─── ADD PROCEDURE STEP ───
+function addStep() {
+  if (currentStepCount >= MAX_STEPS) return;
+  currentStepCount++;
+  var container = document.getElementById('steps-container');
+  var placeholders = [
+    '', '', '',
+    'After that, I would...',
+    'Next, I would...',
+    'Then, I would...',
+    'Additionally, I would...',
+    'Finally, I would...'
+  ];
+  var row = document.createElement('div');
+  row.className = 'step-row';
+  row.id = 'step-row-' + currentStepCount;
+  row.innerHTML = '<span class="step-num">' + currentStepCount + '.</span>' +
+    '<input type="text" class="step-input" id="step-' + currentStepCount + '" placeholder="' + (placeholders[currentStepCount - 1] || 'Next step...') + '">';
+  container.appendChild(row);
+
+  if (currentStepCount >= MAX_STEPS) {
+    document.getElementById('add-step-btn').disabled = true;
+  }
+}
+
+// ─── LOCK SECTION ───
+function lockSection(num) {
+  var valid = false;
+  var lockedHtml = '';
+
+  if (num === 1) {
+    var text = document.getElementById('hypothesis-text').value.trim();
+    if (text.length < 10) {
+      document.getElementById('hypothesis-text').style.borderColor = '#EF4444';
+      document.getElementById('hypothesis-text').placeholder = 'Write at least one full sentence for your hypothesis...';
+      return;
+    }
+    sectionData.hypothesis = text;
+    lockedHtml = '<div class="locked-answer">' +
+      '<div class="locked-label">LOCKED IN</div>' +
+      escapeHtml(text) +
+    '</div>';
+    valid = true;
+  }
+
+  if (num === 2) {
+    var steps = [];
+    var allFilled = true;
+    for (var i = 1; i <= currentStepCount; i++) {
+      var stepEl = document.getElementById('step-' + i);
+      if (stepEl) {
+        var val = stepEl.value.trim();
+        if (i <= 3 && val.length < 5) {
+          allFilled = false;
+          stepEl.style.borderColor = '#EF4444';
+        }
+        if (val.length > 0) {
+          steps.push(val);
+        }
+      }
+    }
+    if (!allFilled || steps.length < 3) {
+      return;
+    }
+    sectionData.procedure = steps;
+    lockedHtml = '<div class="locked-answer"><div class="locked-label">LOCKED IN</div>';
+    for (var j = 0; j < steps.length; j++) {
+      lockedHtml += '<div style="padding:2px 0;"><span style="color:#10B981;font-weight:700;">' + (j + 1) + '.</span> ' + escapeHtml(steps[j]) + '</div>';
+    }
+    lockedHtml += '</div>';
+    valid = true;
+  }
+
+  if (num === 3) {
+    var predText = document.getElementById('prediction-text').value.trim();
+    if (predText.length < 10) {
+      document.getElementById('prediction-text').style.borderColor = '#EF4444';
+      document.getElementById('prediction-text').placeholder = 'Write at least one full sentence for your prediction...';
+      return;
+    }
+    sectionData.prediction = predText;
+    lockedHtml = '<div class="locked-answer">' +
+      '<div class="locked-label">LOCKED IN</div>' +
+      escapeHtml(predText) +
+    '</div>';
+    valid = true;
+  }
+
+  if (num === 4) {
+    var concText = document.getElementById('conclusion-text').value.trim();
+    if (concText.length < 10) {
+      document.getElementById('conclusion-text').style.borderColor = '#EF4444';
+      document.getElementById('conclusion-text').placeholder = 'Write at least one full sentence for your conclusion...';
+      return;
+    }
+    sectionData.conclusion = concText;
+    lockedHtml = '<div class="locked-answer">' +
+      '<div class="locked-label">LOCKED IN</div>' +
+      escapeHtml(concText) +
+    '</div>';
+    valid = true;
+  }
+
+  if (!valid) return;
+
+  // Hide input, show locked answer
+  document.getElementById('section-' + num + '-input').style.display = 'none';
+  document.getElementById('section-' + num + '-locked').style.display = 'block';
+  document.getElementById('section-' + num + '-locked').innerHTML = lockedHtml;
+
+  // Hide lock button
+  document.getElementById('lock-btn-' + num).style.display = 'none';
+
+  // Mark section as completed
+  document.getElementById('section-' + num).className = 'section-card completed';
+  completedSections++;
+  currentSection = completedSections + 1;
+  updateProgress();
+
+  // Unlock next section
+  if (num < 4) {
+    var nextSection = document.getElementById('section-' + (num + 1));
+    nextSection.className = 'section-card';
+    document.getElementById('lock-btn-' + (num + 1)).disabled = false;
+
+    // Scroll to next section
+    setTimeout(function() {
+      nextSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+  }
+
+  // All 4 completed — show completion
+  if (completedSections === 4) {
+    setTimeout(function() {
+      showCompletionScreen();
+    }, 600);
+  }
+}
+
+// ─── ESCAPE HTML ───
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+// ─── COMPLETION SCREEN ───
+function showCompletionScreen() {
+  var dayOfWeek = getDayOfWeek();
+
+  // Show completion via ExecSkills
+  ExecSkills.showCompletion('comp-card', {
+    score: 4,
+    total: 4,
+    rings: RINGS_BASE,
+    dayOfWeek: dayOfWeek
+  });
+
+  // Add submit button below ExecSkills completion
+  var submitHtml = '<div style="text-align:center;margin-top:16px;">' +
+    '<button class="start-btn" id="submit-btn" onclick="submitForReview()" style="margin-bottom:12px;">' +
+      'SUBMIT FOR REVIEW' +
+    '</button>' +
+    '<div id="submit-status" style="font-size:12px;color:#64748B;margin-top:6px;"></div>' +
+  '</div>';
+  document.getElementById('comp-card').innerHTML += submitHtml;
+
+  // Monday Error Journal — investigation-specific
+  if (dayOfWeek === 'Monday') {
+    document.getElementById('error-journal-section').style.display = 'block';
+    var ejContainer = document.getElementById('error-journal-section');
+    ejContainer.innerHTML = '<div class="es-error-journal">' +
+      '<h3>&#128221; Investigation Journal</h3>' +
+      '<p class="es-ej-subtitle">Review your hypothesis vs conclusion \u2014 were you surprised?</p>' +
+      '<div class="es-missed-q" style="cursor:default;">' +
+        '<div class="es-mq-label">Your Hypothesis</div>' +
+        '<div class="es-mq-text">' + escapeHtml(sectionData.hypothesis) + '</div>' +
+      '</div>' +
+      '<div class="es-missed-q" style="cursor:default;">' +
+        '<div class="es-mq-label" style="color:#10B981;">Your Conclusion</div>' +
+        '<div class="es-mq-text">' + escapeHtml(sectionData.conclusion) + '</div>' +
+      '</div>' +
+      '<div class="es-journal-prompt">Were you surprised by anything? What would you change if you ran this investigation again?</div>' +
+      '<textarea class="es-journal-textarea" id="investigation-journal" ' +
+        'placeholder="I was surprised that... Next time I would..."></textarea>' +
+      '<div style="text-align:center;margin-top:12px;">' +
+        '<button class="es-ready-btn" onclick="submitInvestigationJournal()" style="font-size:14px;padding:10px 30px;">' +
+          'Log It &#128220;' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // Friday Reflection
+  if (dayOfWeek === 'Friday') {
+    document.getElementById('friday-reflection-section').style.display = 'block';
+    ExecSkills.showFridayReflection('friday-reflection-section');
+  }
+
+  var overlay = document.getElementById('completion-overlay');
+  overlay.style.display = 'flex';
+}
+
+// ─── INVESTIGATION JOURNAL SUBMIT (Monday) ───
+function submitInvestigationJournal() {
+  var text = document.getElementById('investigation-journal').value;
+  if (!text || text.trim().length < 5) {
+    document.getElementById('investigation-journal').style.borderColor = '#ffc107';
+    document.getElementById('investigation-journal').placeholder = 'Write at least one sentence...';
+    return;
+  }
+  ExecSkills._journalData = {
+    type: 'investigation-reflection',
+    hypothesis: sectionData.hypothesis,
+    conclusion: sectionData.conclusion,
+    reflection: text.trim(),
+    timestamp: new Date().toISOString()
+  };
+  var prompt = document.querySelector('.es-journal-prompt');
+  if (prompt) prompt.innerHTML = '&#9989; Logged! Comparing your hypothesis to results is real scientific thinking.';
+  document.getElementById('investigation-journal').style.display = 'none';
+  var btn = prompt.nextElementSibling;
+  if (btn) btn.style.display = 'none';
+}
+
+// ─── SUBMIT FOR REVIEW ───
+function submitForReview() {
+  var btn = document.getElementById('submit-btn');
+  var status = document.getElementById('submit-status');
+  btn.disabled = true;
+  btn.textContent = 'SUBMITTING...';
+
+  var data = {
+    child: CHILD,
+    module: 'investigation',
+    subject: INVESTIGATION.subject,
+    teks: INVESTIGATION.teks,
+    prompt: INVESTIGATION.prompt,
+    hypothesis: sectionData.hypothesis,
+    procedure: sectionData.procedure,
+    prediction: sectionData.prediction,
+    conclusion: sectionData.conclusion,
+    sessionMinutes: ExecSkills.getSessionMinutes(),
+    date: new Date().toISOString().split('T')[0],
+    version: MODULE_VERSION
+  };
+
+  // Award rings
+  try {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function() {
+          status.style.color = '#10B981';
+          status.textContent = 'Rings awarded!';
+        })
+        .withFailureHandler(function(err) {
+          status.style.color = '#EF4444';
+          status.textContent = 'Ring award failed: ' + (err.message || err);
+        })
+        .awardRings('buggsy', RINGS_BASE, 'investigation');
+    }
+  } catch (e) {
+    // Standalone mode
+  }
+
+  // Log completion
+  try {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function() {
+          btn.textContent = 'SUBMITTED';
+          btn.style.background = '#22C55E';
+          status.style.color = '#10B981';
+          status.textContent = 'Investigation logged successfully!';
+        })
+        .withFailureHandler(function(err) {
+          btn.textContent = 'RETRY';
+          btn.disabled = false;
+          status.style.color = '#EF4444';
+          status.textContent = 'Error: ' + (err.message || err);
+        })
+        .logHomeworkCompletion(data);
+    } else {
+      // Standalone mode — simulate success
+      btn.textContent = 'SUBMITTED';
+      btn.style.background = '#22C55E';
+      status.style.color = '#10B981';
+      status.textContent = 'Investigation complete! (standalone mode)';
+    }
+  } catch (e) {
+    btn.textContent = 'SUBMITTED';
+    btn.style.background = '#22C55E';
+    status.style.color = '#10B981';
+    status.textContent = 'Investigation complete! (standalone mode)';
+  }
+}
+
+// ─── INIT ───
+function init() {
+  buildStarField();
+
+  // Render prompt
+  document.getElementById('prompt-text').textContent = 'Intel Report: ' + INVESTIGATION.prompt;
+  document.getElementById('prompt-teks').textContent = INVESTIGATION.teks;
+
+  // Show Plan Your Attack
+  ExecSkills.showPlanYourAttack({
+    container: 'plan-overlay',
+    child: CHILD,
+    timeEstimate: 12,
+    questions: [
+      { type: 'Step 1', topic: 'Hypothesis' },
+      { type: 'Step 2', topic: 'Procedure' },
+      { type: 'Step 3', topic: 'Prediction' },
+      { type: 'Step 4', topic: 'Conclusion' }
+    ],
+    onReady: function() {
+      document.getElementById('plan-overlay').style.display = 'none';
+      document.getElementById('main-content').style.display = 'block';
+      currentSection = 1;
+      updateProgress();
+    }
+  });
+}
+
+// ─── Start ───
+init();
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v2.4 — thompsonfams.com
+// TBM Smart Proxy v2.6 — thompsonfams.com
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -14,7 +14,22 @@ const PATH_ROUTES = {
   '/vein':   { page: 'vein' },
   '/spine':  { page: 'spine' },
   '/soul':   { page: 'soul' },
-  '/vault':  { page: 'vault' }
+  '/vault':  { page: 'vault' },
+  // Education modules (v2.5)
+  '/homework':      { page: 'homework' },
+  '/sparkle':       { page: 'sparkle' },
+  '/wolfkid':       { page: 'wolfkid' },
+  '/dashboard':     { page: 'dashboard' },
+  '/facts':         { page: 'facts' },
+  '/reading':       { page: 'reading' },
+  '/writing':       { page: 'writing' },
+  '/story-library': { page: 'story-library' },
+  '/comic-studio':  { page: 'comic-studio' },
+  '/progress':      { page: 'progress' },
+  '/story':         { page: 'story' },
+  '/investigation': { page: 'investigation' },
+  '/daily-missions':{ page: 'daily-missions' },
+  '/baseline':      { page: 'baseline' }
 };
 
 export default {
@@ -257,7 +272,10 @@ function getShimScript() {
 '    "runMERGatesSafe","stampCloseMonthSafe",\n' +
 '    "addKidsEventSafe",\n' +
 '    "getKHLastModifiedSafe","getStoryApiStatsSafe",\n' +
-'    "khBatchApproveSafe","updateMealPlanSafe"\n' +
+'    "khBatchApproveSafe","updateMealPlanSafe",\n' +
+'    "getTodayContentSafe","getAudioBatchSafe",\n' +
+'    "logHomeworkCompletionSafe","logSparkleProgressSafe",\n' +
+'    "awardRingsSafe","seedWeek1CurriculumSafe","seedStaarRlaSprintSafe","submitFeedbackSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +

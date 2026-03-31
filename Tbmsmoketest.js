@@ -595,7 +595,10 @@ function checkHTMLContracts_() {
   var htmlFiles = [
     'ThePulse', 'TheVein', 'KidsHub', 'TheSpine', 'TheSoul',
     'SparkleLearning', 'HomeworkModule', 'StoryLibrary',
-    'WolfkidCER', 'fact-sprint', 'reading-module', 'writing-module'
+    'WolfkidCER', 'fact-sprint', 'reading-module', 'writing-module',
+    'ComicStudio', 'DesignDashboard', 'ProgressReport', 'StoryReader',
+    'investigation-module', 'daily-missions', 'BaselineDiagnostic',
+    'executive-skills-components'
   ];
 
   // Banned patterns: [regex, description, severity]

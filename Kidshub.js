@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v31 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v33 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 31; }
+function getKidsHubVersion() { return 33; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2584,6 +2584,32 @@ function seedWeek1Curriculum() {
 }
 
 
+// v33: Seed STAAR RLA sprint content into Curriculum tab.
+// jsonStr = full JSON string from staar-rla-sprint-final.json
+// Writes buggsy + jj rows for week 2 with override flag.
+function seedSTAARSprint(jsonStr) {
+  var sheet = ensureCurriculumTab_();
+  var parsed = JSON.parse(jsonStr);
+  var bugsyContent = parsed.buggsy || {};
+  var jjContent = parsed.jj || {};
+  var bugsyJSON = JSON.stringify(bugsyContent);
+  var jjJSON = JSON.stringify(jjContent);
+  var nextRow = sheet.getLastRow() + 1;
+  sheet.getRange(nextRow, 1, 2, 4).setValues([
+    [2, 'buggsy', '2026-04-01', bugsyJSON],
+    [2, 'jj',     '2026-04-01', jjJSON]
+  ]);
+  Logger.log('✅ STAAR RLA sprint seeded — Week 2 (StartDate: 2026-04-01). Buggsy: ' + bugsyJSON.length + ' chars, JJ: ' + jjJSON.length + ' chars.');
+  return { status: 'seeded', week: 2, bugsySize: bugsyJSON.length, jjSize: jjJSON.length };
+}
+
+function seedStaarRlaSprintSafe(jsonStr) {
+  return withMonitor_('seedStaarRlaSprintSafe', function() {
+    return seedSTAARSprint(jsonStr);
+  });
+}
+
+
 // v29: Add the "Read JJ bedtime story" chore to the live KH_Chores sheet.
 // Run once from Script Editor. Idempotent — skips if BUGG_BEDTIME_STORY already exists.
 function addBedtimeStoryChore() {
@@ -3074,4 +3100,52 @@ function kh_computeMasteryRank_(totalPoints, child) {
     if (totalPoints >= ranks[i].min) rank = ranks[i];
   }
   return rank.name;
+}
+
+
+// v32: Seed STAAR RLA Sprint into Curriculum tab.
+// Reads staar-rla-sprint-final.json content (passed as argument or hardcoded).
+// Adds Week 2 rows for buggsy + jj with StartDate = 2026-04-01.
+function seedStaarRlaSprint(jsonStr) {
+  var sheet = ensureCurriculumTab_();
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(String);
+  var weekCol = headers.indexOf('Week');
+  var childCol = headers.indexOf('Child');
+  var startCol = headers.indexOf('StartDate');
+
+  // Check for existing STAAR sprint rows (idempotent)
+  for (var i = 1; i < data.length; i++) {
+    var startVal = data[i][startCol];
+    var startStr = startVal instanceof Date ? Utilities.formatDate(startVal, 'America/Chicago', 'yyyy-MM-dd') : String(startVal);
+    if (startStr === '2026-04-01') {
+      Logger.log('STAAR RLA sprint already seeded (StartDate 2026-04-01 found). Skipping.');
+      return { status: 'skipped', reason: 'already seeded' };
+    }
+  }
+
+  var parsed;
+  if (jsonStr) {
+    parsed = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
+  } else {
+    // Fallback: read from Drive file named staar-rla-sprint-final.json
+    var files = DriveApp.getFilesByName('staar-rla-sprint-final.json');
+    if (!files.hasNext()) return { status: 'error', message: 'staar-rla-sprint-final.json not found in Drive' };
+    parsed = JSON.parse(files.next().getBlob().getDataAsString());
+  }
+
+  var bugsyContent = parsed.buggsy || {};
+  var jjContent = parsed.jj || {};
+  var nextWeek = sheet.getLastRow(); // 1-indexed, header = row 1
+
+  var bugsyJSON = JSON.stringify(bugsyContent);
+  var jjJSON = JSON.stringify(jjContent);
+
+  sheet.getRange(nextWeek + 1, 1, 2, 4).setValues([
+    [2, 'buggsy', '2026-04-01', bugsyJSON],
+    [2, 'jj',     '2026-04-01', jjJSON]
+  ]);
+
+  Logger.log('STAAR RLA sprint seeded: buggsy=' + bugsyJSON.length + ' bytes, jj=' + jjJSON.length + ' bytes');
+  return { status: 'seeded', bugsySize: bugsyJSON.length, jjSize: jjJSON.length };
 }

@@ -147,7 +147,9 @@ All .gs files share one scope. Constants and TAB_MAP from DataEngine.gs are avai
                  Page ID: 322cea3cd9e881bb8afcd560fe772481
                  Include: what changed, what was tested, what's next
 11. VERIFY   → curl all CF proxy endpoints, expect 200:
-                 thompsonfams.com/pulse, /parent, /buggsy, /jj, /soul, /spine
+                 thompsonfams.com/pulse, /parent, /buggsy, /jj, /soul, /spine,
+                 /homework, /sparkle, /wolfkid, /reading, /writing, /facts,
+                 /dashboard, /progress, /comic-studio, /story-library
 12. RELEASE  → gh release create v<version> --notes "<smoke test summary>"
 ```
 
@@ -170,7 +172,7 @@ When building a feature or fix, Code runs the FULL pipeline:
 8. COMMIT    → git add <files> && git commit -m "<message>"
 9. PUSH      → git push origin <branch-name>
 10. PR       → gh pr create --title "<title>" --body "<body>"
-11. VERIFY   → curl thompsonfams.com/pulse, /parent, /buggsy, /jj (expect 200)
+11. VERIFY   → curl thompsonfams.com/{pulse,vein,parent,buggsy,jj,homework,sparkle,wolfkid,reading,writing,facts,comic-studio,progress,story-library,story,investigation,daily-missions,baseline} (expect 200)
 12. RELEASE  → gh release create v<version> --notes "<test summary>"
 ```
 
