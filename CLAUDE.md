@@ -152,6 +152,33 @@ All .gs files share one scope. Constants and TAB_MAP from DataEngine.gs are avai
 
 ---
 
+## Deploy Manifest (MANDATORY before declaring QA ready)
+
+Every build spec produces a manifest — one grep per feature. The manifest is written WHEN THE SPEC IS CREATED, not after the build. The builder does not check their own work — the manifest was defined before code was written.
+
+Before declaring "QA ready" or "deploy ready," run every manifest line. If ANY grep returns zero or shows a feature hidden/stubbed (e.g., display:none), that item is NOT DONE.
+
+### Manifest format:
+```
+# [Build Spec Name] — Deploy Manifest
+grep -n "[unique identifier]" [file]    → expected: [what should be there]
+grep -n "[unique identifier]" [file]    → expected: [what should be there]
+```
+
+### Example (Session 75):
+```
+grep -n "family-crest" TheSoul.html               → must exist, NO display:none
+grep -n "tbmNav" KidsHub.html                     → must exist (parent nav bar)
+grep -n "tbm-version" ThePulse.html TheVein.html  → must exist (version meta)
+grep -n "approve.*btn" ThePulse.html              → must exist (inline approve)
+grep -n "padding" TheSoul.html                    → must be symmetric
+```
+
+### Why this exists:
+Automated gates (smoke test, regression, diagPreQA) answer "is what's deployed healthy?" They do NOT answer "did we build everything we said we would?" A feature with display:none passes every health check. A missing nav bar has zero broken wiring. The manifest catches what health checks can't — features that were specced but never shipped.
+
+---
+
 ## Audit Tools (run from C:\Dev\tbm-apps-script in Git Bash)
 
 | Tool | When | Command |
