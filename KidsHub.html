@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kids Hub v30</title>
+<title>Kids Hub v31</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -1045,7 +1045,7 @@ var streakData = {};   // v1 TBM: from KH_Streaks cache
 var parentMode = false;
 var currentTab = 'quests';
 var _fetching  = false;   // v5: fetch guard — prevents ghost taps during reload (#57)
-// v30: Confidence Rail + Graceful Degradation
+// Confidence Rail + Graceful Degradation
 var _khLastFetch = null;
 var _khLastGoodRaw = null;
 function _khMarkFresh() {
@@ -1276,7 +1276,7 @@ function onKidData(raw) {
     streakData = data.streaks   || {};
     requiredStatus = data.requiredStatus || null;
     requests = data.requests || [];
-    // v30: Meta-Progression
+    // Meta-Progression
     window._metaProgression = data.metaProgression || {};
     pendingRequestCount = data.pendingRequestCount || {};
     // v22: Screen Time Bank from server
@@ -1445,7 +1445,7 @@ function updateBuggsy() {
     bar.style.boxShadow  = '0 0 8px ' + lvl.color + '66';
   }
 
-  // v30: Streak + Mastery Rank
+  // Streak + Mastery Rank
   var _bMeta = (window._metaProgression || {}).buggsy || {};
   var _bStreakEl = document.getElementById('bStreakDisplay');
   if (_bStreakEl) {
@@ -1710,7 +1710,7 @@ function bSendRingsToCounter(e, count) {
     })(i);
   }
 }
-// v31: Send rings toward pending chest (not balance counter)
+// Send rings toward pending chest (not balance counter)
 function bSendRingsToPending(e, count) {
   if (!e) return;
   var target = document.getElementById('bChest') || document.getElementById('bPendList');
@@ -1922,7 +1922,7 @@ function updateJJ() {
     jjChip.style.boxShadow = '0 0 18px ' + jjLevel.color + '33';
     jjChip.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.12), ' + jjLevel.color + '22)';
   }
-  // v30: Streak + Mastery Rank for JJ
+  // Streak + Mastery Rank for JJ
   var _jMeta = (window._metaProgression || {}).jj || {};
   var _jStreakEl = document.getElementById('jjStreakDisplay');
   if (_jStreakEl) {
@@ -2197,7 +2197,7 @@ function jjSendStarsToCounter(e, count) {
     })(i);
   }
 }
-// v31: Send stars toward pending jar (not balance counter)
+// Send stars toward pending jar (not balance counter)
 function jjSendStarsToPending(e, count) {
   if (!e) return;
   var target = document.getElementById('jjJar') || document.getElementById('jjPendList');
