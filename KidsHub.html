@@ -251,7 +251,7 @@ body { min-height: 100vh; }
    CHARACTER ART + IMAGE HANDLING
    ════════════════════════════════════════ */
 .char-avatar {
-  width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
+  width: 48px; height: 48px; border-radius: 50%; object-fit: cover;
   vertical-align: middle; flex-shrink: 0;
 }
 .char-empty-art {
@@ -260,11 +260,11 @@ body { min-height: 100vh; }
 }
 .char-flavor {
   position: fixed; bottom: 90px; left: 14px;
-  width: 64px; height: 64px; object-fit: contain;
-  pointer-events: none; z-index: 1; opacity: 0.3;
+  width: 140px; height: 140px; object-fit: contain;
+  pointer-events: none; z-index: 1; opacity: 0.25;
 }
 .char-stat-img {
-  width: 36px; height: 36px; object-fit: contain;
+  width: 48px; height: 48px; object-fit: contain;
   flex-shrink: 0; opacity: 0.85;
 }
 /* ════════════════════════════════════════
@@ -852,6 +852,90 @@ var INIT_VIEW  = "<?= INIT_VIEW ?>";
 .b-two-col,.jj-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 .b-col-pending,.jj-col-pending{margin-top:0}
 }
+/* ── Board watermarks (Thompson Family Crest) ── */
+.buggsy-body::before, .jj-body::before {
+  content: '';
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px; height: 320px;
+  background: url('https://i.ibb.co/FLDTT6QH/1774020751171.png') center/contain no-repeat;
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 0;
+}
+/* ── Pending container styles ── */
+.b-pending-chest {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; margin: 0 0 10px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.12), rgba(245,158,11,0.08));
+  border: 2px solid rgba(251,191,36,0.35);
+  border-radius: 12px;
+  animation: chest-pulse 2.5s ease-in-out infinite;
+}
+.b-pending-chest .chest-icon { font-size: 28px; }
+.b-pending-chest .chest-label { font-family: 'Press Start 2P', monospace; font-size: 7px; color: #fbbf24; line-height: 1.6; flex: 1; }
+.b-pending-chest .chest-badge {
+  background: rgba(245,158,11,0.25); color: #fde68a;
+  font-family: 'Press Start 2P', monospace; font-size: 9px; font-weight: 900;
+  padding: 4px 10px; border-radius: 10px;
+}
+@keyframes chest-pulse {
+  0%,100% { border-color: rgba(251,191,36,0.35); box-shadow: 0 0 0 rgba(251,191,36,0); }
+  50% { border-color: rgba(251,191,36,0.6); box-shadow: 0 0 12px rgba(251,191,36,0.15); }
+}
+.jj-pending-jar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; margin: 0 14px 10px;
+  background: linear-gradient(135deg, rgba(236,72,153,0.12), rgba(168,85,247,0.08));
+  border: 2px solid rgba(236,72,153,0.35);
+  border-radius: 18px;
+  animation: jar-sparkle 2.5s ease-in-out infinite;
+}
+.jj-pending-jar .jar-icon { font-size: 28px; }
+.jj-pending-jar .jar-label { font-size: 14px; font-weight: 800; color: #f9a8d4; flex: 1; }
+.jj-pending-jar .jar-badge {
+  background: rgba(236,72,153,0.25); color: #fde68a;
+  font-size: 13px; font-weight: 900;
+  padding: 4px 10px; border-radius: 14px;
+}
+@keyframes jar-sparkle {
+  0%,100% { border-color: rgba(236,72,153,0.35); box-shadow: 0 0 0 rgba(236,72,153,0); }
+  50% { border-color: rgba(236,72,153,0.6); box-shadow: 0 0 14px rgba(236,72,153,0.15); }
+}
+/* ── Task completion animation ── */
+.b-card.claiming { animation: card-bounce 0.4s ease-out; }
+.jj-card.claiming { animation: card-bounce 0.4s ease-out; }
+@keyframes card-bounce {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.08); }
+  55% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+.b-card.claim-success { background: rgba(34,197,94,0.12); transition: background 0.3s; }
+.jj-card.claim-success { background: rgba(134,239,172,0.15); transition: background 0.3s; }
+.b-card.claim-error, .jj-card.claim-error { animation: card-shake 0.3s ease-in-out 3; }
+@keyframes card-shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+/* ── 8-inch tablet breakpoint ── */
+@media (min-width: 600px) and (max-width: 850px) {
+  .b-stat-val { font-size: 26px; }
+  .b-stat { padding: 12px; min-height: 64px; }
+  .b-card { margin-bottom: 8px; }
+  .b-name { font-size: 16px; }
+  .b-pts { font-size: 28px; }
+  .b-claim, .b-approve { font-size: 10px; padding: 10px 12px; }
+  .jj-card { padding: 16px 18px; gap: 14px; }
+  .jj-card-icon { font-size: 36px; width: 52px; }
+  .jj-card-name { font-size: 19px; }
+  .jj-pts-num { font-size: 24px; }
+  .jj-do-it-btn { font-size: 15px; padding: 10px 14px; }
+  .jj-star-count { font-size: 48px; }
+  .jj-stat-pill-val { font-size: 26px; }
+}
 </style>
 <script>
 // ── Config ────────────────────────────────────────────────────
@@ -1147,7 +1231,7 @@ function addFlavorArt(child) {
   var art = document.createElement('div');
   art.className = 'char-flavor';
   var img = document.createElement('img');
-  img.style.cssText = 'width:48px;height:48px;border-radius:50%;object-fit:cover;opacity:0.7';
+  img.style.cssText = 'width:140px;height:140px;border-radius:50%;object-fit:cover;opacity:0.7';
   if (child === 'jj') {
     img.src = 'https://i.ibb.co/cS2zHkMg/1773982793158.png';
     img.onerror = function(){ art.innerHTML = getUnicornSVG(48); };
@@ -1305,8 +1389,8 @@ function renderBuggsy() { document.getElementById('app').innerHTML = buildBuggsy
 
 function buildBuggsyUI() {
   return '<div class="pin-overlay" id="bPinOverlay" style="display:none"><div class="pin-box"><div class="pin-title">🔐 PARENT ACCESS</div><input class="pin-input" type="password" maxlength="6" id="bPinInput" placeholder="••••"><button class="pin-submit" onclick="bSubmitPin()">ENTER</button><button class="pin-cancel" onclick="bCancelPin()">cancel</button><div class="pin-error" id="bPinError" style="display:none">WRONG PIN</div></div></div>'+
-  '<div class="b-hdr"><div style="max-width:720px;margin:0 auto"><div class="b-hdr-top"><div class="b-title"><img src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" class="char-avatar" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px"><span style="display:inline-block;width:16px;height:16px;border:3px solid #ffd700;border-radius:50%;box-shadow:0 0 6px rgba(255,215,0,0.4);vertical-align:middle;margin-right:6px"></span>RING<span> QUEST</span></div><button class="b-parent-btn" id="bParentBtn" onclick="bToggleParent()">⚙ PARENT</button></div>'+
-  '<div class="b-stats" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;align-items:stretch;width:100%"><div class="b-stat"><span class="b-stat-icon"><img src="https://i.ibb.co/d0KSS8zh/1773982478792.png" class="char-stat-img" style="width:28px;height:28px;border-radius:50%;object-fit:cover"></span><div><div class="b-stat-val" id="bRings">0</div><div class="b-stat-lbl">RINGS</div></div></div><div class="b-stat"><span class="b-stat-icon">📺</span><div><div class="b-stat-val" id="bTV" style="color:#38bdf8">0</div><div class="b-stat-lbl">TV</div></div></div><div class="b-stat"><span class="b-stat-icon">🎮</span><div><div class="b-stat-val" id="bGame" style="color:#a78bfa">0</div><div class="b-stat-lbl">GAME</div></div></div><div class="b-stat"><span class="b-stat-icon">💵</span><div><div class="b-stat-val" id="bMoney" style="color:#22c55e">$0</div><div class="b-stat-lbl">EARNED</div></div></div><div class="b-refresh-coin" id="bRefreshCoin" onclick="bRefresh()" style="position:static;width:36px;height:36px;border:5px solid #ffd700;border-radius:50%;box-shadow:0 0 10px rgba(255,215,0,0.5),inset 0 0 4px rgba(255,215,0,0.25);background:linear-gradient(135deg,rgba(255,235,100,0.25) 0%,transparent 50%);cursor:pointer;flex-shrink:0;margin-left:8px"></div></div></div></div>'+
+  '<div class="b-hdr"><div style="max-width:720px;margin:0 auto"><div class="b-hdr-top"><div class="b-title"><img src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" class="char-avatar" style="width:48px;height:48px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px"><span style="display:inline-block;width:16px;height:16px;border:3px solid #ffd700;border-radius:50%;box-shadow:0 0 6px rgba(255,215,0,0.4);vertical-align:middle;margin-right:6px"></span>RING<span> QUEST</span></div><button class="b-parent-btn" id="bParentBtn" onclick="bToggleParent()">⚙ PARENT</button></div>'+
+  '<div class="b-stats" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;align-items:stretch;width:100%"><div class="b-stat"><span class="b-stat-icon"><img src="https://i.ibb.co/d0KSS8zh/1773982478792.png" class="char-stat-img" style="width:48px;height:48px;border-radius:50%;object-fit:cover"></span><div><div class="b-stat-val" id="bRings">0</div><div class="b-stat-lbl">RINGS</div></div></div><div class="b-stat"><span class="b-stat-icon">📺</span><div><div class="b-stat-val" id="bTV" style="color:#38bdf8">0</div><div class="b-stat-lbl">TV</div></div></div><div class="b-stat"><span class="b-stat-icon">🎮</span><div><div class="b-stat-val" id="bGame" style="color:#a78bfa">0</div><div class="b-stat-lbl">GAME</div></div></div><div class="b-stat"><span class="b-stat-icon">💵</span><div><div class="b-stat-val" id="bMoney" style="color:#22c55e">$0</div><div class="b-stat-lbl">EARNED</div></div></div><div class="b-refresh-coin" id="bRefreshCoin" onclick="bRefresh()" style="position:static;width:36px;height:36px;border:5px solid #ffd700;border-radius:50%;box-shadow:0 0 10px rgba(255,215,0,0.5),inset 0 0 4px rgba(255,215,0,0.25);background:linear-gradient(135deg,rgba(255,235,100,0.25) 0%,transparent 50%);cursor:pointer;flex-shrink:0;margin-left:8px"></div></div></div></div>'+
   '<div class="b-level"><div class="b-lvl-row"><div class="b-lvl-badge" id="bLvlBadge">1</div><div><div class="b-lvl-name" id="bLvlName">Noob</div><div class="b-lvl-xp" id="bLvlXP">0 rings</div></div><span id="bMasteryRank" style="display:none;font-size:10px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,0.1);padding:2px 8px;border-radius:10px;letter-spacing:0.5px"></span><div class="b-lvl-next" id="bLvlNext"></div></div><div class="b-bar-track"><div class="b-bar-fill" id="bLvlBar" style="width:0%"></div></div><div id="bStreakDisplay" style="display:none;text-align:center;font-size:12px;font-weight:700;color:#f59e0b;padding:4px 0;letter-spacing:0.3px"></div></div>'+
   '<div class="b-tabs"><button class="b-tab active" id="btab-quests" onclick="bTab(\'quests\')">⚔ QUESTS</button><button class="b-tab" id="btab-rewards" onclick="bTab(\'rewards\')">🏆 REWARDS</button><button class="b-tab" id="btab-events" onclick="bTab(\'events\')">✋ ASK</button><button class="b-tab" id="btab-parent" onclick="bTab(\'parent\')" style="display:none">👑 PARENT</button></div>'+
   '<div id="bView-quests"><div class="b-sec"><span class="b-sec-title" id="bQLabel">QUESTS</span><span class="b-sec-badge" id="bQBadge">—</span></div><div class="b-two-col"><div class="b-col-main"><div class="b-sec"><span class="b-sec-title" style="color:#4ade80">⚔ CHALLENGES</span></div><div class="b-list" id="bQuestList"></div></div><div class="b-col-pending"><div class="b-sec"><span class="b-sec-title" style="color:#fbbf24">📦 PENDING</span><span class="b-sec-badge" id="bPendBadge">0</span></div><div class="b-list" id="bPendList"></div></div></div></div>'+
@@ -1469,9 +1553,10 @@ function updateBuggsy() {
       var pendBadge = document.getElementById('bPendBadge');
       if (pendBadge) pendBadge.textContent = pendingTasks.length;
       if (pendingTasks.length === 0) {
-        pl.innerHTML = '<div style="text-align:center;padding:16px 8px"><img src="https://i.ibb.co/8L0ccf6p/1773982420674.png" alt="Wolfkid celebrating" style="width:80px;height:80px;object-fit:contain;margin-bottom:8px" onerror="this.style.display=\'none\'"><div style="font-family:\'Press Start 2P\',monospace;font-size:7px;color:#fbbf24;line-height:1.6">ALL CLEAR!<br>NO QUESTS WAITING!</div></div>';
+        pl.innerHTML = '<div style="text-align:center;padding:16px 8px;position:relative"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:280px;height:280px;background:url(https://i.ibb.co/FLDTT6QH/1774020751171.png) center/contain no-repeat;opacity:0.06;pointer-events:none"></div><img src="https://i.ibb.co/8L0ccf6p/1773982420674.png" alt="Wolfkid celebrating" style="width:180px;height:180px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 6px 16px rgba(255,215,0,0.3))" onerror="this.style.display=\'none\'"><div style="font-family:\'Press Start 2P\',monospace;font-size:14px;color:#fbbf24;line-height:1.6;text-shadow:0 0 12px rgba(255,215,0,0.4)">ALL CLEAR!<br>NO QUESTS WAITING!</div></div>';
       } else {
-        var pendHtml = '';
+        var pendRings = pendingTasks.reduce(function(s,t){return s+t.points;},0);
+        var pendHtml = '<div class="b-pending-chest" id="bChest"><span class="chest-icon">\uD83D\uDC8E</span><span class="chest-label">TREASURE CHEST</span><span class="chest-badge" id="bChestBadge">' + pendingTasks.length + ' \u00B7 ' + pendRings + ' rings</span></div>';
         pendingTasks.forEach(function(task, i) { pendHtml += buildBCardHTML(task, i); });
         pl.innerHTML = pendHtml;
       }
@@ -1531,16 +1616,19 @@ function bClaim(taskID, e) {
   if (!t || t.completed) return;
   _fetching = true;
   var btn = e.target; if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  var card = btn ? btn.closest('.b-card') : null;
+  if (card) { card.classList.add('claiming'); setTimeout(function(){ card.classList.remove('claiming'); }, 420); }
+  charReact('bounce');
+  // Float coin toward pending column (chest), not balance counter
+  var chest = document.getElementById('bPendList');
+  if (chest) { bSendRingsToPending(e, Math.max(3, Math.min(6, t.points || 3))); }
   t.completed = true;
   updateBuggsy();
-  showBXP(e, '📦 PENDING!');
-  showCheckPop(btn ? btn.closest('.b-card') : null);
-  charReact('bounce');
-  bSendRingsToCounter(e, Math.max(3, Math.min(6, t.points || 3)));
+  showBXP(e, '\uD83D\uDCE6 PENDING!');
   setSyncState('saving', 'Claiming...');
   google.script.run
-    .withSuccessHandler(function(){ _fetching = false; setSyncState('synced', 'Claimed!'); })
-    .withFailureHandler(function(err){ _fetching = false; setSyncState('failed', 'Try again'); showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.completed=false; updateBuggsy(); })
+    .withSuccessHandler(function(){ _fetching = false; setSyncState('synced', 'Claimed!'); if (card) { card.classList.add('claim-success'); setTimeout(function(){ card.classList.remove('claim-success'); }, 600); } })
+    .withFailureHandler(function(err){ _fetching = false; setSyncState('failed', 'Try again'); if (card) { card.classList.add('claim-error'); setTimeout(function(){ card.classList.remove('claim-error'); }, 900); } showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '\u274C OOPS!'); t.completed=false; updateBuggsy(); })
     .khCompleteTaskSafe(t.rowIndex, t.taskID);
 }
 // ── v10 FIX 4: bApprove — added return value check for duplicate guard ──
@@ -1607,6 +1695,29 @@ function bSendRingsToCounter(e, count) {
     stat.classList.add('collect-hit');
     setTimeout(function(){ stat.classList.remove('collect-hit'); }, 520);
   }
+  for (var i = 0; i < count; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var ring = document.createElement('div');
+        ring.className = 'b-claim-ring';
+        ring.style.left = e.clientX + 'px';
+        ring.style.top = e.clientY + 'px';
+        ring.style.setProperty('--dx', (tx - e.clientX + (Math.random() * 18 - 9)) + 'px');
+        ring.style.setProperty('--dy', (ty - e.clientY + (Math.random() * 14 - 7)) + 'px');
+        document.body.appendChild(ring);
+        setTimeout(function(){ ring.remove(); }, 820);
+      }, idx * 55);
+    })(i);
+  }
+}
+// v31: Send rings toward pending chest (not balance counter)
+function bSendRingsToPending(e, count) {
+  if (!e) return;
+  var target = document.getElementById('bChest') || document.getElementById('bPendList');
+  if (!target) return;
+  var tr = target.getBoundingClientRect();
+  var tx = tr.left + tr.width / 2;
+  var ty = tr.top + tr.height / 2;
   for (var i = 0; i < count; i++) {
     (function(idx) {
       setTimeout(function() {
@@ -1771,8 +1882,8 @@ function renderJJ() { document.getElementById('app').innerHTML = buildJJUI(); up
 
 function buildJJUI() {
   return '<div class="jj-pin-overlay" id="jjPinOverlay" style="display:none"><div class="jj-pin-box"><div class="jj-pin-title">🔐 Parent Access</div><input class="jj-pin-input" type="password" maxlength="6" id="jjPinInput" placeholder="••••"><button class="jj-pin-submit" onclick="jjSubmitPin()">Let Me In! ✨</button><button class="jj-pin-cancel" onclick="jjCancelPin()">never mind</button><div class="jj-pin-error" id="jjPinError" style="display:none">Hmm, try again! 💕</div></div></div>'+
-  '<div class="jj-wrap"><div class="jj-hdr"><div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="jj-parent-btn" id="jjParentBtn" onclick="jjToggleParent()">⚙ Parent</button></div><img src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" class="char-avatar" style="width:28px;height:28px;border-radius:50%;object-fit:cover;margin-bottom:4px"><span class="jj-crown">👑</span><div class="jj-title">JJ\'s Sparkle Stars</div><div class="jj-sub">Little Diva Helper Board ✨</div></div>'+
-  '<div style="display:flex;align-items:center;gap:10px;margin:0 14px 16px"><div class="jj-stat-pills" style="flex:1;margin:0"><div class="jj-stat-pill"><div class="jj-stat-pill-icon">⭐</div><div class="jj-stat-pill-val" id="jjStars">0</div><div class="jj-stat-pill-lbl">Stars</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">📺</div><div class="jj-stat-pill-val" id="jjTV">0m</div><div class="jj-stat-pill-lbl">TV</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">🍪</div><div class="jj-stat-pill-val" id="jjSnack">0</div><div class="jj-stat-pill-lbl">Snacks</div></div></div><img src="https://i.ibb.co/5h2hYsNp/1773982672701.png" class="char-stat-img" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0"><div class="jj-refresh-star" id="jjRefreshStar" onclick="jjRefresh()" style="position:static;flex-shrink:0">✨</div></div>'+
+  '<div class="jj-wrap"><div class="jj-hdr"><div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="jj-parent-btn" id="jjParentBtn" onclick="jjToggleParent()">⚙ Parent</button></div><img src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" class="char-avatar" style="width:48px;height:48px;border-radius:50%;object-fit:cover;margin-bottom:4px"><span class="jj-crown">👑</span><div class="jj-title">JJ\'s Sparkle Stars</div><div class="jj-sub">Little Diva Helper Board ✨</div></div>'+
+  '<div style="display:flex;align-items:center;gap:10px;margin:0 14px 16px"><div class="jj-stat-pills" style="flex:1;margin:0"><div class="jj-stat-pill"><div class="jj-stat-pill-icon">⭐</div><div class="jj-stat-pill-val" id="jjStars">0</div><div class="jj-stat-pill-lbl">Stars</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">📺</div><div class="jj-stat-pill-val" id="jjTV">0m</div><div class="jj-stat-pill-lbl">TV</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">🍪</div><div class="jj-stat-pill-val" id="jjSnack">0</div><div class="jj-stat-pill-lbl">Snacks</div></div></div><img src="https://i.ibb.co/5h2hYsNp/1773982672701.png" class="char-stat-img" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0"><div class="jj-refresh-star" id="jjRefreshStar" onclick="jjRefresh()" style="position:static;flex-shrink:0">✨</div></div>'+
   '<div style="margin:0 14px 12px;text-align:center"><div id="jjLevelChip" style="display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.22);font-size:13px;font-weight:800;color:#fde68a;letter-spacing:1px;text-transform:uppercase">LEVEL 1 \u00B7 SPROUT</div><div id="jjMasteryRank" style="display:none;margin-top:4px;font-size:11px;font-weight:800;color:#f9a8d4;letter-spacing:0.5px"></div><div id="jjStreakDisplay" style="display:none;margin-top:4px;font-size:18px;text-align:center"></div></div>'+
   '<div class="jj-progress-wrap"><div class="jj-prog-label">Next reward unlocks at <span id="jjNextCost">10</span> ⭐<span id="jjProgNums">0 / 10</span></div><div class="jj-prog-track"><div class="jj-prog-fill" id="jjProgBar" style="width:0%"></div></div></div>'+
   '<div class="jj-tabs"><button class="jj-tab active" id="jjtab-quests" onclick="jjTab(\'quests\')">🌸 Jobs</button><button class="jj-tab" id="jjtab-rewards" onclick="jjTab(\'rewards\')">🎀 Prizes</button><button class="jj-tab" id="jjtab-events" onclick="jjTab(\'events\')">✨ Ask</button><button class="jj-tab" id="jjtab-parent" onclick="jjTab(\'parent\')" style="display:none">⚙ Parent</button></div>'+
@@ -1923,9 +2034,10 @@ function updateJJ() {
     var jpl = document.getElementById('jjPendList');
     if (jpl) {
       if (pendingTasks.length === 0) {
-        jpl.innerHTML = '<div style="text-align:center;padding:16px 8px"><img src="https://i.ibb.co/9md3x6zp/1773982606233.png" alt="JJ celebrating" style="width:80px;height:80px;object-fit:contain;margin-bottom:8px" onerror="this.style.display=\'none\'"><div style="font-size:14px;color:rgba(255,255,255,0.55);font-weight:800;">All done! Nothing waiting! 💕</div></div>';
+        jpl.innerHTML = '<div style="text-align:center;padding:16px 8px;position:relative"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:280px;height:280px;background:url(https://i.ibb.co/FLDTT6QH/1774020751171.png) center/contain no-repeat;opacity:0.06;pointer-events:none"></div><img src="https://i.ibb.co/9md3x6zp/1773982606233.png" alt="JJ celebrating" style="width:180px;height:180px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 6px 16px rgba(236,72,153,0.3))" onerror="this.style.display=\'none\'"><div style="font-size:20px;color:rgba(255,255,255,0.7);font-weight:800;text-shadow:0 0 12px rgba(236,72,153,0.3)">All done! Nothing waiting! \u{1F495}</div></div>';
       } else {
-        var jPendHtml = '';
+        var jPendStars = pendingTasks.reduce(function(s,t){return s+t.points;},0);
+        var jPendHtml = '<div class="jj-pending-jar" id="jjJar"><span class="jar-icon">\u2728</span><span class="jar-label">Sparkle Jar</span><span class="jar-badge" id="jjJarBadge">' + pendingTasks.length + ' \u00B7 ' + jPendStars + ' stars</span></div>';
         pendingTasks.forEach(function(t,i){ jPendHtml += buildJJCardHTML(t, i); });
         jpl.innerHTML = jPendHtml;
       }
@@ -1990,12 +2102,18 @@ function jjClaim(taskID, e) {
   var t = _findByKey(tasks, 'taskID', taskID);
   if (!t||t.completed) return;
   _fetching = true;
-  var btn = e.target; if (btn) { btn.disabled = true; btn.innerHTML = '⭐'; btn.classList.add('spinning'); }
-  t.completed=true; updateJJ(); jjConfetti(8); jjStarPop(e,'✨ I did it!'); showCheckPop(btn ? btn.closest('.jj-card') : null); charReact('bounce'); jjSendStarsToCounter(e, Math.max(3, Math.min(6, t.points || 3)));
+  var btn = e.target; if (btn) { btn.disabled = true; btn.innerHTML = '\u2B50'; btn.classList.add('spinning'); }
+  var card = btn ? btn.closest('.jj-card') : null;
+  if (card) { card.classList.add('claiming'); setTimeout(function(){ card.classList.remove('claiming'); }, 420); }
+  charReact('bounce');
+  // Float stars toward pending jar, not balance counter
+  var jar = document.getElementById('jjPendList');
+  if (jar) { jjSendStarsToPending(e, Math.max(3, Math.min(6, t.points || 3))); }
+  t.completed=true; updateJJ(); jjConfetti(8); jjStarPop(e,'\u2728 I did it!');
   setSyncState('saving', 'Claiming...');
   google.script.run
-    .withSuccessHandler(function(){ _fetching = false; setSyncState('synced', 'Done!'); })
-    .withFailureHandler(function(err){ _fetching = false; setSyncState('failed'); jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.completed=false; updateJJ(); })
+    .withSuccessHandler(function(){ _fetching = false; setSyncState('synced', 'Done!'); if (card) { card.classList.add('claim-success'); setTimeout(function(){ card.classList.remove('claim-success'); }, 600); } })
+    .withFailureHandler(function(err){ _fetching = false; setSyncState('failed'); if (card) { card.classList.add('claim-error'); setTimeout(function(){ card.classList.remove('claim-error'); }, 900); } jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again \u{1F495}'); t.completed=false; updateJJ(); })
     .khCompleteTaskSafe(t.rowIndex, t.taskID);
 }
 // ── v10 FIX 3: jjApprove — added return value check for duplicate guard ──
@@ -2069,6 +2187,30 @@ function jjSendStarsToCounter(e, count) {
         var star = document.createElement('div');
         star.className = 'jj-claim-star';
         star.textContent = '⭐';
+        star.style.left = e.clientX + 'px';
+        star.style.top = e.clientY + 'px';
+        star.style.setProperty('--dx', (tx - e.clientX + (Math.random() * 16 - 8)) + 'px');
+        star.style.setProperty('--dy', (ty - e.clientY + (Math.random() * 14 - 7)) + 'px');
+        document.body.appendChild(star);
+        setTimeout(function(){ star.remove(); }, 860);
+      }, idx * 60);
+    })(i);
+  }
+}
+// v31: Send stars toward pending jar (not balance counter)
+function jjSendStarsToPending(e, count) {
+  if (!e) return;
+  var target = document.getElementById('jjJar') || document.getElementById('jjPendList');
+  if (!target) return;
+  var tr = target.getBoundingClientRect();
+  var tx = tr.left + tr.width / 2;
+  var ty = tr.top + tr.height / 2;
+  for (var i = 0; i < count; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var star = document.createElement('div');
+        star.className = 'jj-claim-star';
+        star.textContent = '\u2B50';
         star.style.left = e.clientX + 'px';
         star.style.top = e.clientY + 'px';
         star.style.setProperty('--dx', (tx - e.clientX + (Math.random() * 16 - 8)) + 'px');

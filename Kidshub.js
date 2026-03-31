@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v30 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v31 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 30; }
+function getKidsHubVersion() { return 31; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -1037,7 +1037,7 @@ function sumHistoryPoints_(child) {
   var data = readSheet_('KH_History');
   if (!data || data.length < 2) return 0;
   var h = data[0].map(String);
-  var POINT_EVENTS = ['approval', 'bonus', 'rejection'];
+  var POINT_EVENTS = ['approval', 'bonus', 'rejection', 'education'];
   var total = 0;
   for (var i = 1; i < data.length; i++) {
     var row = data[i];

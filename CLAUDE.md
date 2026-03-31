@@ -191,6 +191,55 @@ Automated gates (smoke test, regression, diagPreQA) answer "is what's deployed h
 ### Permissions
 Claude Code permissions are configured in `~/.claude/settings.json` under `"permissions": {"allow": [...]}`. If Code prompts for permission on every tool call, check that file.
 
+### Pre-Push Gate 1: Wiring Verification (catches missing Safe wrappers)
+
+Before every `clasp push`, verify that every `google.script.run.XXX` call in HTML has a matching `function XXX` in a .js file locally. Run via PowerShell:
+
+```powershell
+$htmlCalls = Get-ChildItem -Path "C:\Dev\tbm-apps-script\*.html" |
+  Select-String -Pattern '\.(\w+Safe\w*)\(' -AllMatches |
+  ForEach-Object { $_.Matches } |
+  ForEach-Object { $_.Groups[1].Value } |
+  Sort-Object -Unique
+$missing = @()
+foreach ($fn in $htmlCalls) {
+  $found = Get-ChildItem -Path "C:\Dev\tbm-apps-script\*.js" |
+    Select-String -Pattern "function $fn\b" -Quiet
+  if (-not $found) { $missing += $fn }
+}
+if ($missing.Count -gt 0) {
+  Write-Host "WIRING FAIL" -ForegroundColor Red
+  $missing | ForEach-Object { Write-Host "  MISSING: $_" -ForegroundColor Red }
+} else {
+  Write-Host "WIRING PASS — all $($htmlCalls.Count) calls verified" -ForegroundColor Green
+}
+```
+
+### Pre-Push Gate 2: Visual Regression Check (KidsHub.html only)
+
+Before every `clasp push` that touches KidsHub.html, verify approved CSS values haven't regressed. Reference: KidsHub Visual Spec (locked in session 78).
+
+```powershell
+$file = "C:\Dev\tbm-apps-script\KidsHub.html"
+$fails = @()
+if (-not (Select-String -Path $file -Pattern "\.char-avatar" -Context 0,2 | Select-String -Pattern "48px" -Quiet)) { $fails += "char-avatar not 48px" }
+if (-not (Select-String -Path $file -Pattern "\.char-stat-img" -Context 0,2 | Select-String -Pattern "48px" -Quiet)) { $fails += "char-stat-img not 48px" }
+if (-not (Select-String -Path $file -Pattern "\.char-flavor" -Context 0,2 | Select-String -Pattern "140px" -Quiet)) { $fails += "char-flavor not 140px" }
+if (-not (Select-String -Path $file -Pattern "Wolfkid celebrating" | Select-String -Pattern "180px" -Quiet)) { $fails += "ALL CLEAR Wolfkid not 180px" }
+if (-not (Select-String -Path $file -Pattern "JJ celebrating" | Select-String -Pattern "180px" -Quiet)) { $fails += "ALL CLEAR JJ not 180px" }
+if ($fails.Count -gt 0) { $fails | ForEach-Object { Write-Host "FAIL: $_" -ForegroundColor Red } }
+else { Write-Host "VISUAL PASS" -ForegroundColor Green }
+```
+
+### Pre-Push Gate 3: Version Consistency
+
+Every changed .gs file must have matching versions in 3 locations: line 3 header comment, `get*Version()` return value, and last line EOF comment. Grep all three before pushing.
+
+### Why these gates exist
+- Gate 1 catches the March 31 `getStoryApiStatsSafe` regression — function called in HTML but missing from .js
+- Gate 2 catches visual regressions where approved sizes get silently reverted during rebuilds
+- Gate 3 catches version mismatches across the 3 required locations
+
 ---
 
 ## ES5 Enforcement (ALL .html files)
