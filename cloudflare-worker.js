@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v2.3 — thompsonfams.com
+// TBM Smart Proxy v2.4 — thompsonfams.com
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -95,13 +95,19 @@ async function servePage(request, url) {
       } catch(e) {}
     }
 
-    // Inject shim BEFORE any other scripts run
+    // Two-phase shim injection:
+    // Phase 1: Block GAS from defining google.script.run (in <head>)
+    // Phase 2: Install our full shim AFTER all GAS scripts (before </body>)
+    var blocker = '<script>Object.defineProperty(window,"google",{value:{},writable:true,configurable:true});</script>';
     if (html.indexOf('<head>') !== -1) {
-      html = html.replace('<head>', '<head>\n' + getShimScript());
-    } else if (html.indexOf('<HEAD>') !== -1) {
-      html = html.replace('<HEAD>', '<HEAD>\n' + getShimScript());
+      html = html.replace('<head>', '<head>\n' + blocker);
+    }
+    if (html.indexOf('</body>') !== -1) {
+      html = html.replace('</body>', getShimScript() + '\n</body>');
+    } else if (html.indexOf('</html>') !== -1) {
+      html = html.replace('</html>', getShimScript() + '\n</html>');
     } else {
-      html = getShimScript() + '\n' + html;
+      html = html + '\n' + getShimScript();
     }
 
     return new Response(html, {
