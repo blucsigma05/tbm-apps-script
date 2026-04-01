@@ -385,6 +385,7 @@ function serveData(e) {
         'logHomeworkCompletionSafe': logHomeworkCompletionSafe, 'logSparkleProgressSafe': logSparkleProgressSafe,
         'awardRingsSafe': awardRingsSafe,
         'logQuestionResultSafe': logQuestionResultSafe,
+        'savePowerScanResultsSafe': savePowerScanResultsSafe,
         'runTestsSafe': runTestsSafe
       };
 

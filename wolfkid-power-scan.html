@@ -639,6 +639,39 @@
     document.getElementById('res-stress').textContent = document.getElementById('brain-stress').value || '(not answered)';
     document.getElementById('res-triggers').textContent = document.getElementById('triggers').value || '(not answered)';
     document.getElementById('res-recharge').textContent = document.getElementById('recharge').value || '(not answered)';
+
+    // Auto-save to server
+    var saveRatings = {};
+    for (var si = 0; si < powers.length; si++) {
+      saveRatings[powers[si].id] = ratings[powers[si].id] || 0;
+    }
+    var saveOpen = {
+      best: document.getElementById('brain-best').value || '',
+      stress: document.getElementById('brain-stress').value || '',
+      triggers: document.getElementById('triggers').value || '',
+      recharge: document.getElementById('recharge').value || ''
+    };
+    var urlParams = window.location.search;
+    var childMatch = urlParams.match(/[?&]child=([^&]*)/);
+    var childName = childMatch ? decodeURIComponent(childMatch[1]) : 'buggsy';
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function() {
+          var saved = document.createElement('div');
+          saved.style.cssText = 'text-align:center;color:#44ff88;font-size:13px;margin-top:8px;';
+          saved.textContent = 'Results saved!';
+          document.getElementById('copy-confirm').parentNode.appendChild(saved);
+          setTimeout(function() { saved.style.display = 'none'; }, 3000);
+        })
+        .withFailureHandler(function(err) {
+          var errEl = document.createElement('div');
+          errEl.style.cssText = 'text-align:center;color:#ff6666;font-size:13px;margin-top:8px;';
+          errEl.textContent = 'Save failed — use Copy button as backup';
+          document.getElementById('copy-confirm').parentNode.appendChild(errEl);
+        })
+        .savePowerScanResultsSafe(childName, saveRatings, saveOpen);
+    }
   }
 
   function copyResults() {

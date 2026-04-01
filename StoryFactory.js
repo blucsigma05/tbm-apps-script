@@ -3,11 +3,11 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 8.0
+// Version: 9.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 8; }
+function getStoryFactoryVersion() { return 9; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -49,6 +49,14 @@ var STORY_CHARACTERS = {
     physical: 'African-American boy, age 8-9, short hair with clean fade, slim build, brown eyes, small lightning bolt temporary tattoo on left side of neck',
     personality: 'Cool and quiet, hands often in pockets, walks with purpose, secretly caring toward JJ, into Wolfkid Universe comics and drawing',
     default_outfit: 'Blue/white plaid button-up shirt (untucked), dark jeans, grey/white sneakers',
+    casual_pool: [
+      'Blue/white plaid button-up (untucked), dark jeans, grey sneakers',
+      'Green hoodie with headphones around neck, black joggers, white high-tops',
+      'Red graphic tee with wolf design, cargo shorts, black sneakers',
+      'Navy baseball jersey, light jeans, red/white Jordans',
+      'Grey henley shirt, khaki joggers, olive green sneakers',
+      'Black bomber jacket over white tee, dark jeans, grey Vans'
+    ],
     wardrobe: {
       sports: 'Basketball jersey or athletic shorts and t-shirt, basketball shoes',
       beach: 'Swim trunks with a cool pattern, no shirt or a tank top, sandals',
@@ -62,6 +70,14 @@ var STORY_CHARACTERS = {
     physical: 'African-American girl, age 4-5, natural curly/coily hair in two puffs, brown eyes, small for her age but big personality, unicorn headband with horn (ALWAYS present, never removed)',
     personality: 'Bossy in the best way, owns an imaginary restaurant, princess warrior, negotiates everything, falls asleep in the car after every adventure',
     default_outfit: 'Graphic t-shirt (Sonic/superhero), pink tutu skirt with blue trim, pink sneakers',
+    casual_pool: [
+      'Graphic t-shirt (Sonic/superhero), pink tutu, pink sneakers, unicorn headband',
+      'Yellow sunflower dress with sparkle belt, white sneakers, unicorn headband',
+      'Purple unicorn hoodie, rainbow leggings, light-up shoes, unicorn headband',
+      'Denim overall dress over striped tee, pink boots, unicorn headband',
+      'Mint green tee with star pattern, lavender tutu, gold sandals, unicorn headband',
+      'Red polka-dot top, jean skirt with tutu underneath, pink high-tops, unicorn headband'
+    ],
     wardrobe: {
       sports: 'Pink tutu over athletic leggings, sneakers (she wears the tutu everywhere)',
       beach: 'Pink swimsuit with tutu cover-up, water shoes, unicorn headband stays',
@@ -415,7 +431,9 @@ toneGuide +
 '- Story MUST end with the main character in bed asleep\n' +
 '- Each scene needs a vivid image_prompt for comic book illustration\n' +
 '- image_prompt should describe the scene visually WITHOUT naming real characters or IP\n' +
-'- image_prompt MUST describe each character\'s outfit appropriate to the setting (pool=swimwear, school=uniform, bedtime=PJs, formal=dress clothes, default=casual)\n' +
+'- image_prompt MUST describe each character\'s SPECIFIC outfit for THIS scene. Be creative — vary colors, patterns, and styles across stories. Never default to the same outfit.\n' +
+'- JJ ALWAYS wears her unicorn headband with horn, no matter the outfit.\n' +
+'- Outfit ideas: themed graphic tees, different colored tutus for JJ, various button-ups or hoodies for Buggsy, seasonal clothing, activity-specific gear.\n' +
 '- Each scene must include a characters_in_scene array listing which characters appear\n' +
 '- Keep it warm, funny, and age-appropriate\n' +
 '- If referencing a previous story, do it with a quick natural callback — not a recap\n\n' +
@@ -554,7 +572,12 @@ function buildWardrobePrompt_(charNames, setting) {
     if (key === 'jt') key = 'dad';
     var char = STORY_CHARACTERS[key];
     if (!char) continue;
-    var outfit = (char.wardrobe && char.wardrobe[setting]) || char.default_outfit;
+    var outfit;
+    if (setting === 'casual' && char.casual_pool) {
+      outfit = char.casual_pool[Math.floor(Math.random() * char.casual_pool.length)];
+    } else {
+      outfit = (char.wardrobe && char.wardrobe[setting]) || char.default_outfit;
+    }
     prompt += 'CHARACTER: ' + charNames[i] + ' — ' + char.physical + '. Wearing: ' + outfit + '.\n';
   }
   return prompt;
@@ -793,7 +816,9 @@ data: refImages[r].data
 contentParts.push({
 text: 'The images above are CHARACTER REFERENCE sheets. ' +
 'Draw these EXACT same characters in the scene below. ' +
-'Match their faces, hair, clothing, and proportions exactly. ' +
+'Match their FACES, HAIR, and BODY PROPORTIONS from the reference images. ' +
+'CLOTHING should match what is described in the scene prompt — NOT the reference image clothing. ' +
+'Each scene has unique outfits appropriate to the setting. ' +
 'Keep the same comic book art style.\n\n' +
 IMAGE_STYLE + '\n\n' + prompt
 });

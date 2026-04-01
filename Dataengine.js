@@ -218,6 +218,7 @@ var TAB_MAP = {
   'KH_Requests':      '🧹📅 KH_Requests',
   'KH_ScreenTime':    '🧹📅 KH_ScreenTime',
   'KH_Grades':        '🧹📅 KH_Grades',
+  'KH_PowerScan':     '🧹📅 KH_PowerScan',
   // 💻 Education + System
   'Curriculum':       '💻 Curriculum',
   'QuestionLog':      '💻 QuestionLog',
