@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v79 — Dynamic KPI Computation from Raw Tiller Data
-// WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule
+// DATA ENGINE v80 — Dynamic KPI Computation from Raw Tiller Data
+// WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config, 💻 MealPlan
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 79; }
+function getDataEngineVersion() { return 80; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -66,7 +66,7 @@ function de_testGetDebtByType_() {
  * Diagnostic — run this to see exactly what Balance History + Debt_Export contain.
  */
 function diagBalanceSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getDESS_();
 
   var bh = ss.getSheetByName(TAB_MAP['Balance History']);
   var headers = bh.getRange(1, 1, 1, 15).getValues()[0];
@@ -225,9 +225,7 @@ var TAB_MAP = {
   'Feedback':         '💻 Feedback',
   'MealPlan':         '💻 MealPlan',
   // 📋 Board Config
-  'Board_Config':     '📋 Board_Config',
-  // 💻 Meal Plan (v78)
-  'MealPlan':         '💻 MealPlan'
+  'Board_Config':     '📋 Board_Config'
 };
 
 // v73: Request-scoped sheet data cache — same pattern as KidsHub v25.
@@ -1172,7 +1170,7 @@ function getMonthFractions(startDate, endDate) {
     var rangeEnd = endDate < monthEnd ? endDate : monthEnd;
     var coveredDays = Math.floor((rangeEnd - rangeStart) / 86400000) + 1;
     var fraction = Math.min(1, Math.max(0, coveredDays / daysInMonth));
-    var ym = y + '-' + String(m + 1).padStart(2, '0');
+    var ym = y + '-' + leftPad2_(m + 1);
     fractions[ym] = fraction;
     cursor = new Date(y, m + 1, 1);
   }
@@ -1188,7 +1186,7 @@ function formatDate(d) {
   if (!d) return null;
   if (typeof d === 'string') return d;
   if (d instanceof Date) {
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + leftPad2_(d.getMonth() + 1) + '-' + leftPad2_(d.getDate());
   }
   return String(d);
 }
@@ -1427,7 +1425,7 @@ function getLOCCapacity() {
     if (!txDate) continue;
     if (typeof txDate === 'string') txDate = new Date(txDate);
     if (!(txDate instanceof Date) || isNaN(txDate.getTime())) continue;
-    var ym = txDate.getFullYear() + '-' + String(txDate.getMonth() + 1).padStart(2, '0');
+    var ym = txDate.getFullYear() + '-' + leftPad2_(txDate.getMonth() + 1);
     if (!drawsByMonth[ym]) drawsByMonth[ym] = 0;
     drawsByMonth[ym] += txAmt;
   }
@@ -1442,7 +1440,7 @@ function getLOCCapacity() {
     drawHistory.push({ ym: ym, label: label, amount: roundTo(drawsByMonth[ym], 2) });
   }
 
-  var currentYM = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var currentYM = now.getFullYear() + '-' + leftPad2_(now.getMonth() + 1);
   var recentDraws = [];
   for (var r = drawHistory.length - 1; r >= 0 && recentDraws.length < 3; r--) {
     if (drawHistory[r].ym === currentYM) continue;
@@ -1633,7 +1631,7 @@ function getCashFlowForecast() {
     if (!txDate || !txCat) continue;
     if (typeof txDate === 'string') txDate = new Date(txDate);
     if (!(txDate instanceof Date) || isNaN(txDate.getTime())) continue;
-    var ym = txDate.getFullYear() + '-' + String(txDate.getMonth() + 1).padStart(2, '0');
+    var ym = txDate.getFullYear() + '-' + leftPad2_(txDate.getMonth() + 1);
     if (!monthActuals[ym]) monthActuals[ym] = { income: 0, opex: 0 };
     if (EARNED_CATS.indexOf(txCat) >= 0 && txAmt > 0) monthActuals[ym].income += txAmt;
     if (txAmt < 0 && XFER_CATS.indexOf(txCat) < 0) monthActuals[ym].opex += Math.abs(txAmt);
@@ -1641,7 +1639,7 @@ function getCashFlowForecast() {
 
   var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var dec2026 = monthBudgets['2026-12'] || {};
-  var currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  var currentMonth = now.getFullYear() + '-' + leftPad2_(now.getMonth() + 1);
 
   // v30 FIX: Budget_Data stores ALL amounts as positive. Must use category name to determine income vs expense.
   var CFF_INCOME_CATS = ['JT Income', 'LT Income', 'Bonus Income', 'Other Income', 'Interest Income', 'Loan Proceeds'];
@@ -1668,7 +1666,7 @@ function getCashFlowForecast() {
   // v26: If dec 2026 is empty, scan backward for last populated month
   if (baseIncome === 0 || baseExpense === 0) {
     for (var _fb = 11; _fb >= 0; _fb--) {
-      var _fbYM = '2026-' + String(_fb + 1).padStart(2, '0');
+      var _fbYM = '2026-' + leftPad2_(_fb + 1);
       if (monthBudgets[_fbYM]) {
         var _fbSplit = cffSplitBudget(monthBudgets[_fbYM]);
         if (baseIncome === 0 && _fbSplit.income > 0) baseIncome = _fbSplit.income;
@@ -1689,7 +1687,7 @@ function getCashFlowForecast() {
 
   for (var yr = 2026; yr <= 2027; yr++) {
     for (var mo = 1; mo <= 12; mo++) {
-      var ym = yr + '-' + String(mo).padStart(2, '0');
+      var ym = yr + '-' + leftPad2_(mo);
       var label = MONTHS[mo - 1] + ' ' + yr;
       var projDate = new Date(yr, mo - 1, 15);
       var events = [];
@@ -1732,8 +1730,8 @@ function getCashFlowForecast() {
 
   return {
     months: months,
-    sofiJTPayoff: sofiJTPayoff.getFullYear() + '-' + String(sofiJTPayoff.getMonth() + 1).padStart(2, '0'),
-    sofiLTPayoff: sofiLTPayoff.getFullYear() + '-' + String(sofiLTPayoff.getMonth() + 1).padStart(2, '0'),
+    sofiJTPayoff: sofiJTPayoff.getFullYear() + '-' + leftPad2_(sofiJTPayoff.getMonth() + 1),
+    sofiLTPayoff: sofiLTPayoff.getFullYear() + '-' + leftPad2_(sofiLTPayoff.getMonth() + 1),
     cashPositiveYM: cashPositiveYM,
     // v26: Server-canonical cash-flow-positive date — kills hardcoded childcareDrop in WT/DS
     cashFlowPositiveDate: cashPositiveYM ? cashPositiveYM + '-01' : null,
@@ -2017,7 +2015,7 @@ function getSimulatorData() {
   var now = new Date();
   var y = now.getFullYear();
   var m = now.getMonth(); // 0-indexed
-  var ym = y + '-' + String(m + 1).padStart(2, '0');
+  var ym = y + '-' + leftPad2_(m + 1);
 
   var partnerBucketMap = getPartnerBucketMap();
   var BUCKET_KEYS = {
@@ -2487,7 +2485,7 @@ function getWeeklyTrackerData() {
   var y = now.getFullYear();
   var m = now.getMonth();
 
-  function pad(n) { return String(n).padStart(2, '0'); }
+  function pad(n) { return leftPad2_(n); }
   function fmtDate(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function monthDays(yr, mo) { return new Date(yr, mo + 1, 0).getDate(); }
 
@@ -2541,9 +2539,9 @@ function getWeeklyTrackerData() {
 function verifyDataEngineFixes() {
   var now = new Date();
   var y = now.getFullYear();
-  var m = String(now.getMonth() + 1).padStart(2, '0');
+  var m = leftPad2_(now.getMonth() + 1);
   var start = y + '-' + m + '-01';
-  var end = y + '-' + m + '-' + String(now.getDate()).padStart(2, '0');
+  var end = y + '-' + m + '-' + leftPad2_(now.getDate());
 
   var data = getData(start, end, true);
   var deployedVersion = (data._meta && data._meta.version) ? data._meta.version : '?';
@@ -3212,7 +3210,7 @@ function _boardFormatEvent(evt, calName) {
   var m = start.getMinutes();
   var ampm = h >= 12 ? 'PM' : 'AM';
   var h12 = h % 12 || 12;
-  var timeStr = isAllDay ? 'All day' : h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+  var timeStr = isAllDay ? 'All day' : h12 + ':' + leftPad2_(m) + ' ' + ampm;
   return {
     title:        evt.getTitle(),
     timeStr:      timeStr,
@@ -3261,7 +3259,7 @@ function de_openMeteoIcon_(code) {
 // ════════════════════════════════════════════════════════════════════
 
 function setupBoardConfig() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = getDESS_();
   var existing = ss.getSheetByName('📋 Board_Config');
   if (existing) {
     Logger.log('📋 Board_Config already exists — no action taken.');
@@ -3384,4 +3382,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v79
+// END OF FILE — DataEngine v80
