@@ -821,9 +821,11 @@ function startTimer() {
     var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
     var mins = Math.floor(elapsed / 60);
     var secs = elapsed % 60;
-    var display = mins + ':' + (secs < 10 ? '0' : '') + secs;
     var el = document.getElementById('session-timer');
-    if (el) el.textContent = 'Session: ' + display;
+    if (el) {
+      if (mins < 1) { el.textContent = 'Just started'; }
+      else { el.textContent = 'Working for ' + mins + ' min'; }
+    }
   }, 1000);
 }
 
@@ -872,9 +874,15 @@ function doneReading() {
   currentView = 'questions';
   var passageEl = document.getElementById('section-passage');
   var questionsEl = document.getElementById('section-questions');
-  passageEl.style.display = 'none';
+  // Keep passage visible above questions — collapse to scrollable summary
+  passageEl.style.maxHeight = '35vh';
+  passageEl.style.overflowY = 'auto';
+  passageEl.style.borderBottom = '2px solid rgba(255,255,255,0.1)';
+  passageEl.style.marginBottom = '12px';
+  passageEl.style.paddingBottom = '8px';
   questionsEl.style.display = 'block';
   renderQuestions();
+  questionsEl.scrollIntoView({ behavior: 'smooth' });
 }
 
 // ─── BUILD RE-READ TOGGLE ───

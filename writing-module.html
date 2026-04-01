@@ -1017,7 +1017,11 @@ function startSessionTimer() {
     var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
     var m = Math.floor(elapsed / 60);
     var s = elapsed % 60;
-    document.getElementById('sessionTimer').textContent = padTwo(m) + ':' + padTwo(s);
+    var el = document.getElementById('sessionTimer');
+    if (el) {
+      if (m < 1) { el.textContent = 'Just started'; }
+      else { el.textContent = 'Working for ' + m + ' min'; }
+    }
   }, 1000);
 }
 

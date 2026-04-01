@@ -3156,3 +3156,81 @@ function seedStaarRlaSprint(jsonStr) {
   Logger.log('STAAR RLA sprint seeded: buggsy=' + bugsyJSON.length + ' bytes, jj=' + jjJSON.length + ' bytes');
   return { status: 'seeded', bugsySize: bugsyJSON.length, jjSize: jjJSON.length };
 }
+
+// ════════════════════════════════════════════════════════════════════
+// v36: QuestionLog — per-question result tracking for education modules
+// ════════════════════════════════════════════════════════════════════
+
+var QUESTION_LOG_HEADERS = [
+  'Question_UID', 'Child', 'Date', 'Day_Of_Week', 'Subject', 'TEKS_Code',
+  'Question_Type', 'Distractor_Level', 'Difficulty', 'Correct',
+  'Time_Spent_Seconds', 'Session_Module', 'Timestamp'
+];
+
+function ensureQuestionLogTab_() {
+  var ss = getKHSS_();
+  var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['QuestionLog']) || 'QuestionLog';
+  var sheet = ss.getSheetByName(tabName);
+  if (sheet) return sheet;
+  sheet = ss.insertSheet(tabName);
+  sheet.appendRow(QUESTION_LOG_HEADERS);
+  sheet.setFrozenRows(1);
+  sheet.getRange('1:1').setFontWeight('bold');
+  Logger.log('ensureQuestionLogTab_: Created ' + tabName);
+  return sheet;
+}
+
+function logQuestionResult(data) {
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var sheet = ensureQuestionLogTab_();
+    var child = String(data.child || '').toLowerCase();
+    var today = getTodayISO_();
+    var now = getNowISO_();
+    var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var dayOfWeek = dayNames[new Date().getDay()];
+    var uid = String(data.questionUID || '');
+    if (!uid) uid = child + '_' + today + '_' + String(data.subject || '') + '_' + String(data.questionIndex || Math.random());
+
+    // Dedup guard
+    var lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+      var scanStart = Math.max(2, lastRow - 200);
+      var scanData = sheet.getRange(scanStart, 1, lastRow - scanStart + 1, 1).getValues();
+      for (var i = 0; i < scanData.length; i++) {
+        if (String(scanData[i][0]) === uid) {
+          return JSON.stringify({ status: 'duplicate', uid: uid });
+        }
+      }
+    }
+
+    sheet.appendRow([
+      uid,
+      child,
+      today,
+      dayOfWeek,
+      String(data.subject || ''),
+      String(data.teksCode || ''),
+      String(data.questionType || 'MC'),
+      Number(data.distractorLevel) || 1,
+      String(data.difficulty || 'standard'),
+      data.correct === true || data.correct === 'true',
+      Number(data.timeSpentSeconds) || 0,
+      String(data.sessionModule || ''),
+      now
+    ]);
+    stampKHHeartbeat_();
+    return JSON.stringify({ status: 'ok', uid: uid });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function logQuestionResultSafe(data) {
+  return withMonitor_('logQuestionResultSafe', function() {
+    return JSON.parse(JSON.stringify(
+      typeof data === 'string' ? JSON.parse(logQuestionResult(JSON.parse(data))) : JSON.parse(logQuestionResult(data))
+    ));
+  });
+}
