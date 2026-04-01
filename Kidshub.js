@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v35 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v36 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 35; }
+function getKidsHubVersion() { return 36; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -1296,6 +1296,19 @@ function khCompleteTask(rowIndex, expectedTaskID) {
     row[khCol_(h, 'Completed')] = true;
     row[khCol_(h, 'Completed_Date')] = getTodayISO_();
     sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
+    // v36: Verify write persisted (diagnostic for task-revert bug)
+    var verifyRow = sheet.getRange(rowIndex, 1, 1, h.length).getValues()[0];
+    var verifyDone = verifyRow[khCol_(h, 'Completed')] === true ||
+      String(verifyRow[khCol_(h, 'Completed')]).toUpperCase() === 'TRUE';
+    if (!verifyDone) {
+      console.log('KH_VERIFY_FAIL', JSON.stringify({
+        fn: 'khCompleteTask', taskID: taskID, rowIndex: rowIndex,
+        wrote: true, readBack: verifyRow[khCol_(h, 'Completed')],
+        timestamp: getNowISO_()
+      }));
+      sheet.getRange(rowIndex, khCol_(h, 'Completed') + 1).setValue(true);
+      sheet.getRange(rowIndex, khCol_(h, 'Completed_Date') + 1).setValue(getTodayISO_());
+    }
     appendHistory_(uid, taskID, child, task, 0, basePoints, mult, 'completion', today, now);
     updateStreakCache_(child.toLowerCase(), taskID, today);
     if (child.toUpperCase() === 'BOTH') {
@@ -1316,7 +1329,11 @@ function khCompleteTask(rowIndex, expectedTaskID) {
         var childDisplay = child.charAt(0).toUpperCase() + child.slice(1).toLowerCase();
         sendPush_('Chore Completed', childDisplay + ' completed "' + task + '" — needs approval', 'BOTH', 0);
       }
-    } catch(e) { /* non-blocking */ }
+    } catch(e) {
+      console.log('KH_PUSH_FAIL', JSON.stringify({
+        task: task, child: child, error: e.message, stack: e.stack
+      }));
+    }
     return _result;
   } finally {
     lk.lock.releaseLock();
@@ -1416,6 +1433,18 @@ function khApproveTask(rowIndex, expectedTaskID) {
       row[khCol_(h, 'Active')] = false;
     }
     sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
+    // v36: Verify write persisted (diagnostic for task-revert bug)
+    var verifyRow = sheet.getRange(rowIndex, 1, 1, h.length).getValues()[0];
+    var verifyApproved = verifyRow[khCol_(h, 'Parent_Approved')] === true ||
+      String(verifyRow[khCol_(h, 'Parent_Approved')]).toUpperCase() === 'TRUE';
+    if (!verifyApproved) {
+      console.log('KH_VERIFY_FAIL', JSON.stringify({
+        fn: 'khApproveTask', taskID: taskID, rowIndex: rowIndex,
+        wrote: true, readBack: verifyRow[khCol_(h, 'Parent_Approved')],
+        timestamp: getNowISO_()
+      }));
+      sheet.getRange(rowIndex, khCol_(h, 'Parent_Approved') + 1).setValue(true);
+    }
     appendHistory_(approvalUID, taskID, child, task, earnedPoints, basePoints, mult, 'approval', today, now);
     console.log('KH_WRITE', JSON.stringify({ fn: 'khApproveTask', status: 'ok', uid: approvalUID, child: child, points: earnedPoints }));
     var _result = JSON.stringify({ status: 'ok', uid: approvalUID, child: child, points: earnedPoints, rowIndex: rowIndex });

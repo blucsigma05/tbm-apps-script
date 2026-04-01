@@ -1273,9 +1273,9 @@ window.onload = function () {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     renderParent();
-    // v35: Parent dashboard heartbeat poll — 120s, visibility+interaction-gated
+    // v36: Parent dashboard heartbeat poll — 120s, visibility+interaction+story-gated
     setInterval(function() {
-      if (_fetching || document.hidden) return;
+      if (_fetching || document.hidden || window._storyInProgress) return;
       var active = document.activeElement;
       if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
       if (document.querySelector('.pin-overlay[style*="block"]') || document.querySelector('.jj-pin-overlay[style*="block"]')) return;
@@ -1315,6 +1315,7 @@ document.addEventListener('visibilitychange', function() {
     if (now - _lastWake < 5000) return;
     _lastWake = now;
     if (IS_PARENT && typeof window.renderParent === 'function') {
+      if (window._storyInProgress) return;
       window.renderParent();
     } else if (!IS_PARENT) {
       setSyncState('saving', 'Refreshing...');
@@ -1624,7 +1625,7 @@ function updateBuggsy() {
         var todHint = mustDoAvailable[0].timeOfDay ? mustDoAvailable[0].timeOfDay.replace(/^\d+-/,'') : '';
         gateMsg = '⚡ Last one! ' + (todHint ? todHint + ': ' : '') + lastTask;
       } else {
-        var periodHint = req.currentPeriod === 'morning' ? 'morning ' : (req.currentPeriod === 'afternoon' ? 'daytime ' : '');
+        var periodHint = req.currentPeriod === 'morning' ? 'morning ' : (req.currentPeriod === 'afternoon' ? 'morning + afternoon ' : '');
         gateMsg = '🔒 Clear ' + leftCount + ' of ' + (req.total || 0) + ' ' + periodHint + 'must-do' + ((req.total || 0) === 1 ? '' : 's') + ' to unlock rewards!';
       }
       qlHtml += '<div style="margin-bottom:10px;padding:10px 12px;border-radius:8px;border:1px solid ' + (req.allClear ? 'rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);color:#86efac' : 'rgba(245,158,11,0.35);background:rgba(245,158,11,0.08);color:#fbbf24') + ';font-family:\'Press Start 2P\', monospace;font-size:7px;line-height:1.8">' + gateMsg + '</div>';
@@ -2122,7 +2123,7 @@ function updateJJ() {
         jjGateMsg = periodLabel + ' · ' + (req.done || 0) + '/' + (req.total || 0) + ' clear';
         jjGateDetail = '⚡ Last one! ' + (todHint ? todHint + ': ' : '') + lastTask;
       } else {
-        var periodHint = req.currentPeriod === 'morning' ? 'morning ' : (req.currentPeriod === 'afternoon' ? 'daytime ' : '');
+        var periodHint = req.currentPeriod === 'morning' ? 'morning ' : (req.currentPeriod === 'afternoon' ? 'morning + afternoon ' : '');
         jjGateMsg = periodLabel + ' · ' + (req.done || 0) + '/' + (req.total || 0) + ' clear';
         jjGateDetail = 'Clear ' + leftCount + ' of ' + (req.total || 0) + ' ' + periodHint + 'must-do' + ((req.total || 0) === 1 ? '' : 's') + ' to unlock rewards!';
       }
@@ -2887,8 +2888,10 @@ function pReset(mode, child) {
 (function() {
   if (typeof INIT_VIEW === 'undefined' || INIT_VIEW !== 'parent') return;
   var currentTab = 'pending', currentWeeklyKid = 'all', parentData = null;
+  window._storyInProgress = false;
   var origRP = window.renderParent;
   window.renderParent = function() {
+    if (window._storyInProgress) return;
     parentData = null;
     document.getElementById('app').innerHTML = buildParentUI();
     document.getElementById('loading').style.display = 'none';
@@ -3286,7 +3289,7 @@ function pReset(mode, child) {
         toast('✅ Approved!');
         setSyncState('synced', 'Approved!');
         clearTimeout(window._parentRefreshTimer);
-        window._parentRefreshTimer = setTimeout(function() { window.renderParent(); }, 8000);
+        window._parentRefreshTimer = setTimeout(function() { if (!window._storyInProgress) window.renderParent(); }, 8000);
       } else {
         for (var i = 0; i < btns.length; i++) { btns[i].disabled = false; }
         toast('Error: ' + (r.error || 'unknown'));
@@ -3351,7 +3354,7 @@ function pReset(mode, child) {
         toast('✅ Ask approved!');
         setSyncState('synced', 'Approved!');
         clearTimeout(window._parentRefreshTimer);
-        window._parentRefreshTimer = setTimeout(function() { window.renderParent(); }, 8000);
+        window._parentRefreshTimer = setTimeout(function() { if (!window._storyInProgress) window.renderParent(); }, 8000);
       } else {
         for (var i = 0; i < btns.length; i++) { btns[i].disabled = false; }
         toast('Error: ' + (r.error || 'unknown'));
@@ -3380,7 +3383,7 @@ function pReset(mode, child) {
         }
         toast('✕ Ask denied');
         clearTimeout(window._parentRefreshTimer);
-        window._parentRefreshTimer = setTimeout(function() { window.renderParent(); }, 8000);
+        window._parentRefreshTimer = setTimeout(function() { if (!window._storyInProgress) window.renderParent(); }, 8000);
       } else {
         for (var i = 0; i < btns.length; i++) { btns[i].disabled = false; }
         toast('Error: ' + (r.error || 'unknown'));
@@ -3539,6 +3542,7 @@ function pReset(mode, child) {
     var character = document.getElementById('sfChar').value;
     var tone = document.getElementById('sfTone').value;
     if (!topic) { toast('Enter a story topic!'); return; }
+    window._storyInProgress = true;
     // Show loading, hide form
     document.getElementById('sfForm').style.display = 'none';
     document.getElementById('sfLoading').style.display = 'block';
@@ -3554,6 +3558,7 @@ function pReset(mode, child) {
     toast('📖 Creating story...');
     google.script.run
       .withSuccessHandler(function(result) {
+        window._storyInProgress = false;
         clearInterval(_sfMsgTimer);
         document.getElementById('sfLoading').style.display = 'none';
         var res = document.getElementById('sfResult');
@@ -3573,6 +3578,7 @@ function pReset(mode, child) {
         }
       })
       .withFailureHandler(function(err) {
+        window._storyInProgress = false;
         clearInterval(_sfMsgTimer);
         document.getElementById('sfLoading').style.display = 'none';
         document.getElementById('sfForm').style.display = 'block';

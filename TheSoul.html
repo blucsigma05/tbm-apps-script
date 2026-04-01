@@ -1,4 +1,4 @@
-<!-- TheSoul v41 — F24 grid fix, F26 crest watermark -->
+<!-- TheSoul v42 — F24 grid fix, F26 crest watermark, remove finance text -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1372,7 +1372,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
       $('nextSub').textContent = evTime(nextEvent) + (evMeta(nextEvent) ? ' \u00B7 ' + evMeta(nextEvent) : '');
     } else {
       $('nextMain').textContent = 'Nothing queued';
-      $('nextSub').textContent = 'No upcoming non-finance events';
+      $('nextSub').textContent = 'No upcoming events';
     }
 
     $('refreshSub').textContent = 'Board + Kids';
