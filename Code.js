@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v61 — Apps Script Router (TBM Consolidated)
+// Code.gs v62 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 61; }
+function getCodeVersion() { return 62; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -179,7 +179,7 @@ function bustCache() {
 /** Read KH heartbeat timestamp from Helpers!Z1. Lightweight single-cell read. */
 function getKHLastModified() {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(SSID);
     var hn = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['Helpers'] || 'Helpers') : 'Helpers';
     var sh = ss.getSheetByName(hn);
     if (sh) {
@@ -287,7 +287,8 @@ function doPost(e) {
     return ContentService.createTextOutput(JSON.stringify(result))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ error: err.message }))
+    if (typeof logError_ === 'function') logError_('doPost', err);
+    return ContentService.createTextOutput(JSON.stringify({ error: 'Request failed' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -313,7 +314,8 @@ function serveData(e) {
         'facts': 'fact-sprint', 'reading': 'reading-module',
         'writing': 'writing-module',
         'investigation': 'investigation-module', 'daily-missions': 'daily-missions',
-        'baseline': 'BaselineDiagnostic'
+        'baseline': 'BaselineDiagnostic',
+        'power-scan': 'wolfkid-power-scan'
       };
       var filename = routes[page] || 'ThePulse';
       try {
@@ -532,7 +534,7 @@ function getDataSafe(paramsOrStart, endArg, debtArg) {
       var cached = getCachedPayload_(cacheKey);
       if (cached) return cached;
     }
-    try { SpreadsheetApp.getActiveSpreadsheet().getSheetByName(TAB_MAP['Helpers'] || 'Helpers').getRange('Z1').setValue(new Date().toISOString()); } catch(e) { if (typeof logError_ === 'function') logError_('getDataSafe_heartbeat', e); }
+    try { SpreadsheetApp.openById(SSID).getSheetByName(TAB_MAP['Helpers'] || 'Helpers').getRange('Z1').setValue(new Date().toISOString()); } catch(e) { if (typeof logError_ === 'function') logError_('getDataSafe_heartbeat', e); }
     var raw = getData(start, end, true);
     var result = JSON.parse(JSON.stringify(raw));
     if (isCurrentMonth) {
@@ -753,7 +755,7 @@ function getSubscriptionDataSafe(start, end) {
 // ── KidsHub write wrappers ───────────────────────────────────────
 function _khDiag_(label, args, e) {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(SSID);
     var hn = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['KH_History'] || 'KH_History') : 'KH_History';
     var sh = ss ? ss.getSheetByName(hn) : null;
     if (sh) sh.appendRow(['ERROR_DIAG', label, JSON.stringify(args), e.message, 0, 0, 0, 'error', '',
@@ -1187,7 +1189,7 @@ function getBoardDataSafe() {
 // ════════════════════════════════════════════════════════════════════
 
 function getMERGateStatus() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SSID);
   var qa = ss.getSheetByName(TAB_MAP['QA_Gates']);
   if (!qa) return { error: true, message: 'QA_Gates sheet not found' };
   var data = qa.getRange('A1:G15').getValues();
@@ -1232,7 +1234,7 @@ function getAllVaultData() {
 }
 function readVaultSheet(sheetName) {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(SSID);
     var sheet = ss.getSheetByName(TAB_MAP[sheetName] || sheetName);
     if (!sheet) return [];
     var data = sheet.getDataRange().getValues();
@@ -1264,7 +1266,7 @@ function getVaultDataSafe() {
 // ════════════════════════════════════════════════════════════════════
 
 function healthCheck() {
-  Logger.log('═══ Code.gs v49 Health Check ═══');
+  Logger.log('═══ Code.gs v62 Health Check ═══');
 
   var fns = [
     'doGet', 'servePage', 'serveData', 'getDataSafe', 'getMonthsSafe',
@@ -1323,7 +1325,12 @@ function healthCheck() {
     // v53: Feedback + Audio + Notion write-backs
     'setupFeedbackSheet', 'submitFeedbackSafe',
     'getAudioBatchSafe',
-    'logHomeworkCompletionSafe', 'logSparkleProgressSafe'
+    'logHomeworkCompletionSafe', 'logSparkleProgressSafe',
+    // v62: Education + Batch + PowerScan
+    'awardRingsSafe', 'getKHLastModifiedSafe', 'khBatchApproveSafe',
+    'runTestsSafe', 'seedStaarRlaSprintSafe',
+    'savePowerScanResultsSafe', 'logQuestionResultSafe',
+    'getWeeklyProgressSafe'
   ];
   var allOk = true;
   for (var fi = 0; fi < fns.length; fi++) {
@@ -1335,7 +1342,10 @@ function healthCheck() {
   }
 
   Logger.log('─── HTML Files (2-Surface Architecture) ───');
-  var activeFiles = ['TheVein', 'ThePulse', 'Vault', 'KidsHub', 'TheSpine', 'TheSoul', 'StoryLibrary'];
+  var activeFiles = ['TheVein', 'ThePulse', 'Vault', 'KidsHub', 'TheSpine', 'TheSoul', 'StoryLibrary',
+    'HomeworkModule', 'SparkleLearning', 'fact-sprint', 'reading-module', 'writing-module',
+    'wolfkid-power-scan', 'investigation-module', 'daily-missions', 'BaselineDiagnostic',
+    'StoryReader', 'ComicStudio', 'ProgressReport', 'WolfkidCER', 'DesignDashboard'];
   for (var ai = 0; ai < activeFiles.length; ai++) {
     var fname = activeFiles[ai];
     try {
@@ -1405,7 +1415,7 @@ function healthCheck() {
   }
 
   Logger.log('─── Legacy Checks ───');
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SSID);
   var pe = ss.getSheetByName(TAB_MAP['Partner_Export'] || 'Partner_Export');
   Logger.log('  Partner_Export: ' + (pe ? '✓ (' + pe.getLastRow() + ' rows)' : '✗ NOT FOUND'));
 
@@ -1577,7 +1587,7 @@ function reconcileVeinPulseSafe() {
 // 8. RECONCILE STATUS SHEET + TRIGGER
 // ════════════════════════════════════════════════════════════════════
 function writeReconcileStatus_(result) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SSID);
   var tabName = TAB_MAP['RECONCILE_STATUS'] || 'RECONCILE_STATUS';
   var sheet = ss.getSheetByName(tabName);
   if (!sheet) {
@@ -1596,7 +1606,7 @@ function writeReconcileStatus_(result) {
 function getReconcileStatusSafe() {
   return withMonitor_('getReconcileStatusSafe', function() {
     try {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = SpreadsheetApp.openById(SSID);
       var sheet = ss.getSheetByName(TAB_MAP['RECONCILE_STATUS'] || 'RECONCILE_STATUS');
       if (!sheet) return { lastReconcileAt: null, lastReconcileStatus: 'UNKNOWN', lastReconcileVersions: '' };
       return {
@@ -1624,4 +1634,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v58
+// END OF FILE — Code.gs v62
