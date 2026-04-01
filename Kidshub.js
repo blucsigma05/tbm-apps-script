@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v34 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v35 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 34; }
+function getKidsHubVersion() { return 35; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -1310,6 +1310,13 @@ function khCompleteTask(rowIndex, expectedTaskID) {
     }
     var _result = JSON.stringify({ status: 'ok', uid: uid });
     stampKHHeartbeat_();
+    // v31: Push notification on task completion — notify parents
+    try {
+      if (typeof sendPush_ === 'function') {
+        var childDisplay = child.charAt(0).toUpperCase() + child.slice(1).toLowerCase();
+        sendPush_('Chore Completed', childDisplay + ' completed "' + task + '" — needs approval', 'BOTH', 0);
+      }
+    } catch(e) { /* non-blocking */ }
     return _result;
   } finally {
     lk.lock.releaseLock();

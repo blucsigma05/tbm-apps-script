@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<title>TheSpine v41 — Office Ambient Display</title>
+<title>TheSpine v42 — Office Ambient Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -129,8 +129,8 @@ body.evening{
 .right-merged .value.gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .debt-hero{padding:6px 10px;display:grid;grid-template-rows:auto 1fr auto auto;gap:3px;min-height:0}
 .debt-hero > *{position:relative;z-index:1}
-.right-crest-watermark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;opacity:.25}
-.right-crest-watermark img{width:400px;height:auto;max-width:95%;max-height:95%;filter:drop-shadow(0 0 20px rgba(212,168,67,.18))}
+.right-crest-watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:85vw;height:85vh;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:0;opacity:.04}
+.right-crest-watermark img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 0 20px rgba(212,168,67,.18))}
 .accent-bar{height:3px;border-radius:999px;background:linear-gradient(90deg,var(--rose-soft),var(--ice),var(--gold),var(--ice),var(--rose-soft));background-size:200% 100%;animation:shimmer 5s linear infinite}
 .hero-kicker{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
 .hero-amount{font-size:26px;font-weight:800;line-height:.95;background:linear-gradient(90deg,var(--rose-soft),var(--steel),var(--ice),var(--gold),var(--rose-soft));background-size:200% 100%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 8s linear infinite,heroGlow 4s ease-in-out infinite}
@@ -162,7 +162,7 @@ body.evening{
 .tl-date.ice{background:linear-gradient(135deg,var(--steel),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .debt-footer{display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:3px;align-items:center;padding-top:3px;border-top:1px solid rgba(255,255,255,.08)}
 .v-sep{width:1px;height:20px;background:rgba(255,255,255,.08)}
-.stat{display:flex;flex-direction:column;gap:1px}.stat .num{font-size:14px;font-weight:800;line-height:1}
+.stat{display:flex;flex-direction:column;gap:1px}.stat .num{font-size:20px;font-weight:800;line-height:1}
 .stat .num.rose{background:linear-gradient(135deg,var(--rose),var(--rose-soft));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .stat .num.mint{background:linear-gradient(135deg,var(--mint),var(--ice));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .stat .num.gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
@@ -180,12 +180,12 @@ body.evening{
 .kid-card::after{content:'';position:absolute;right:-12px;bottom:-14px;width:90px;height:90px;border-radius:50%;pointer-events:none;opacity:.22;filter:blur(26px)}
 .kid-card.buggsy{background:rgba(60,58,48,.78)}.kid-card.buggsy::after{background:radial-gradient(circle,rgba(212,168,67,.38),transparent 68%)}
 .kid-card.jj{background:rgba(72,56,58,.72)}.kid-card.jj::after{background:radial-gradient(circle,rgba(232,152,184,.30),transparent 68%)}
-.kid-head{display:flex;justify-content:space-between;align-items:flex-end}.kid-head-main{display:flex;align-items:flex-end;gap:6px}.kid-avatar{width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.16);box-shadow:0 2px 8px rgba(0,0,0,.24)}.kid-avatar.gold{border-color:rgba(212,168,67,.38)}.kid-avatar.rose{border-color:rgba(232,152,184,.38)}.kid-name{font-size:15px;font-weight:800;line-height:1}
+.kid-head{display:flex;justify-content:space-between;align-items:flex-end}.kid-head-main{display:flex;align-items:flex-end;gap:6px}.kid-avatar{width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid rgba(255,255,255,.16);box-shadow:0 2px 8px rgba(0,0,0,.24)}.kid-avatar.gold{border-color:rgba(212,168,67,.38)}.kid-avatar.rose{border-color:rgba(232,152,184,.38)}.kid-name{font-size:18px;font-weight:800;line-height:1}
 .kid-name.gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .kid-name.rose{background:linear-gradient(135deg,var(--rose),var(--rose-soft));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 /* v32: 4 stat pills per kid */
 .kid-pills{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}.kid-pill{padding:2px 4px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);text-align:center}
-.kid-pill .v{font-size:12px;font-weight:800;line-height:1;animation:statPulse 3s ease-in-out infinite}
+.kid-pill .v{font-size:16px;font-weight:800;line-height:1;animation:statPulse 3s ease-in-out infinite}
 @keyframes statPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}.kid-pill .t{font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin-top:1px}
 .kid-pill .v.gold{background:linear-gradient(135deg,var(--gold),var(--gold-dim));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .kid-pill .v.rose{background:linear-gradient(135deg,var(--rose),var(--rose-soft));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
@@ -207,7 +207,7 @@ body.evening{
 .kid-task{display:flex;align-items:center;gap:5px;padding:3px 6px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
 .kid-task.done{opacity:.5}
 .kid-task-icon{font-size:12px;flex-shrink:0;width:16px;text-align:center}
-.kid-task-name{font-size:11px;font-weight:700;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.kid-task-name{font-size:14px;font-weight:700;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
 .kid-task.done .kid-task-name{text-decoration:line-through;color:var(--text-dim)}
 .kid-task-badge{font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;flex-shrink:0;letter-spacing:.04em;text-transform:uppercase}
 .kid-task-badge.pts{background:rgba(232,196,104,.18);color:var(--gold)}
