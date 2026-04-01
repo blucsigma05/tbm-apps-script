@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v2.6 — thompsonfams.com
+// TBM Smart Proxy v2.7 — thompsonfams.com
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -110,19 +110,22 @@ async function servePage(request, url) {
       } catch(e) {}
     }
 
-    // Two-phase shim injection:
-    // Phase 1: Block GAS from defining google.script.run (in <head>)
-    // Phase 2: Install our full shim AFTER all GAS scripts (before </body>)
-    var blocker = '<script>Object.defineProperty(window,"google",{value:{},writable:true,configurable:true});</script>';
+    // v2.7: Inject full shim in <head> so it loads BEFORE any
+    // page scripts that call google.script.run.
+    // OLD (v2.4-v2.6): blocker in <head> + shim at </body> = race condition.
+    //   The blocker set google={} but NOT google.script.run, so inline
+    //   scripts crashed with "Cannot read properties of undefined".
+    // NEW: full shim in <head> = guaranteed ready before any inline script.
+    // Safety net: also inject at </body> in case anything overwrites mid-page.
+    var shim = getShimScript();
     if (html.indexOf('<head>') !== -1) {
-      html = html.replace('<head>', '<head>\n' + blocker);
-    }
-    if (html.indexOf('</body>') !== -1) {
-      html = html.replace('</body>', getShimScript() + '\n</body>');
-    } else if (html.indexOf('</html>') !== -1) {
-      html = html.replace('</html>', getShimScript() + '\n</html>');
+      html = html.replace('<head>', '<head>\n' + shim);
     } else {
-      html = html + '\n' + getShimScript();
+      html = shim + '\n' + html;
+    }
+    // Safety net: re-inject at </body> to override any mid-page overwrites
+    if (html.indexOf('</body>') !== -1) {
+      html = html.replace('</body>', shim + '\n</body>');
     }
 
     return new Response(html, {
