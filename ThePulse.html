@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="tbm-version" content="v58">
-<title>The Pulse v58 — Thompson Household</title>
+<meta name="tbm-version" content="v59">
+<title>The Pulse v59 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
 --ink:#F5E6E0;--ink2:rgba(245,230,224,0.5);--ink3:rgba(245,230,224,0.35);
---paper:#5c2833;--card:rgba(196,133,142,0.25);--card-border:rgba(212,160,137,0.35);
+--paper:#5c2833;--card:rgba(92,40,51,0.95);--card-border:rgba(212,160,137,0.45);
 --red:#F0B4B4;--red-bg:rgba(240,180,180,0.1);--green:#8ECDA0;--green-bg:rgba(142,205,160,0.1);
 --amber:#D4A853;--amber-bg:rgba(212,168,83,0.1);--blue:#B76E79;--blue-bg:rgba(183,110,121,0.1);
 --border:rgba(245,230,224,0.08);--shadow:0 2px 12px rgba(0,0,0,0.15);--r:16px;--r-sm:10px;--r-lg:20px;
@@ -30,19 +30,8 @@ radial-gradient(ellipse 50% 30% at 70% 60%, rgba(183,110,121,0.05) 0%, transpare
 body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.04;
 background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }
-#jt-emboss{position:fixed;inset:-150px;z-index:0;pointer-events:none;transform:rotate(-10deg);overflow:hidden}
-.jt-emboss-row{display:flex;flex-wrap:nowrap;white-space:nowrap;line-height:1}
-.jt-emboss-row.offset{margin-left:-110px}
-.jt-emboss-word{
-font-family:'Georgia','Times New Roman',serif;font-size:14px;font-weight:700;font-style:italic;
-letter-spacing:0.12em;padding:11px 18px;color:transparent;user-select:none;flex-shrink:0;
-text-shadow:
--1px -1px 0px rgba(220,175,155,0.85),
--0.5px -0.5px 0px rgba(210,165,145,0.65),
-1px  1px 0px rgba(60,20,15,0.2),
-1.5px 1.5px 0.5px rgba(50,15,10,0.1),
-0px 0px 2px rgba(140,60,50,0.06);
-}
+#jt-emboss{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:85vw;height:85vh;z-index:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
+#jt-emboss img{width:100%;height:100%;object-fit:contain;opacity:0.04}
 .app{max-width:440px;margin:0 auto;padding:0 0 80px;position:relative;z-index:1}
 .header{padding:44px 24px 28px;background:transparent;color:var(--ink);position:relative;overflow:hidden}
 .header::before{content:none}
@@ -65,7 +54,7 @@ text-shadow:
 .sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-soft),transparent)}
 .card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--r);box-shadow:none;padding:22px}
 .pulse-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
-.pulse-card{background:rgba(196,133,142,0.35);border:1px solid rgba(212,160,137,0.4);border-radius:var(--r);box-shadow:0 2px 16px rgba(0,0,0,0.2);padding:16px;text-align:center}
+.pulse-card{background:rgba(92,40,51,0.92);border:1px solid rgba(212,160,137,0.5);border-radius:var(--r);box-shadow:0 2px 16px rgba(0,0,0,0.2);padding:16px;text-align:center}
 .pulse-card.wide{grid-column:1/-1}
 .pc-label{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(201,168,76,0.75);margin-bottom:4px}
 .pc-value{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;line-height:1.2;color:var(--ink)}
@@ -467,7 +456,7 @@ input[type=range]::-webkit-slider-thumb{width:36px;height:36px}
 </style>
 </head>
 <body>
-<div id="jt-emboss"></div>
+<div id="jt-emboss"><img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson Family Crest"></div>
 <div id="tbm-nav" style="position:sticky;top:0;z-index:1000;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;padding:6px 12px;background:rgba(183,110,121,0.95);border-bottom:1px solid rgba(255,255,255,0.15);font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:0.4px;">
 <a id="nav-pulse" onclick="tbmNav('pulse')" style="padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.6);transition:all 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.9)';this.style.background='rgba(255,255,255,0.1)'" onmouseout="if(!this.classList.contains('tbm-active')){this.style.color='rgba(255,255,255,0.6)';this.style.background='transparent'}"><span style="display:inline-flex;align-items:center;gap:6px;"><img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson crest" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px;opacity:0.85;border-radius:50%" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="pulse-crest-chip" style="display:none" aria-hidden="true"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5 18.5 5v6c0 4.4-2.7 8.1-6.5 10-3.8-1.9-6.5-5.6-6.5-10V5Z" fill="#1E3A8A" stroke="#C9A84C" stroke-width="1.4"/><path d="M12 7.5v8" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/><path d="M9.4 7.5h5.2" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>The Pulse</span></span></a>
 <a id="nav-vein" onclick="tbmNav('vein')" style="padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.6);transition:all 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.9)';this.style.background='rgba(255,255,255,0.1)'" onmouseout="if(!this.classList.contains('tbm-active')){this.style.color='rgba(255,255,255,0.6)';this.style.background='transparent'}">Command Center</a>
@@ -1301,22 +1290,7 @@ document.addEventListener('visibilitychange', function() {
   }
 });
 </script>
-<script>
-(function(){
-var c=document.getElementById('jt-emboss');if(!c)return;
-var w='Thompson2016',rH=44,tW=150;
-var rows=Math.ceil((window.innerHeight+350)/rH)+2;
-var cols=Math.ceil((window.innerWidth+400)/tW)+3;
-for(var r=0;r<rows;r++){
-var row=document.createElement('div');
-row.className='jt-emboss-row'+(r%2===1?' offset':'');
-for(var cc=0;cc<cols;cc++){
-var s=document.createElement('span');s.className='jt-emboss-word';s.textContent=w;row.appendChild(s);
-}
-c.appendChild(row);
-}
-})();
-</script>
+<!-- Thompson2016 text watermark removed in v59 — replaced with family crest image -->
 <script>
 /* ═══ ?diag=1 DOM Self-Check (Wave 2) ═══ */
 (function(){

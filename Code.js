@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v58 — Apps Script Router (TBM Consolidated)
+// Code.gs v60 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 59; }
+function getCodeVersion() { return 60; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -383,7 +383,6 @@ function serveData(e) {
         'submitFeedbackSafe': submitFeedbackSafe, 'getAudioBatchSafe': getAudioBatchSafe,
         'logHomeworkCompletionSafe': logHomeworkCompletionSafe, 'logSparkleProgressSafe': logSparkleProgressSafe,
         'awardRingsSafe': awardRingsSafe,
-        'updateMealPlanSafe': updateMealPlanSafe,
         'runTestsSafe': runTestsSafe
       };
 
@@ -1000,59 +999,7 @@ function submitFeedbackSafe(payload) {
   });
 }
 
-// v55: MealPlan — write/update today's dinner
-function updateMealPlanSafe(payload) {
-  return withMonitor_('updateMealPlanSafe', function() {
-    var meal = String(payload.meal || '').substring(0, 200);
-    var cook = String(payload.cook || '').substring(0, 50);
-    var notes = String(payload.notes || '').substring(0, 300);
-    if (!meal) {
-      return JSON.parse(JSON.stringify({ error: true, message: 'Meal name is required' }));
-    }
-
-    var lock = LockService.getScriptLock();
-    try { lock.waitLock(30000); } catch(e) {
-      return JSON.parse(JSON.stringify({ error: true, message: 'System is busy' }));
-    }
-    try {
-      var ss = SpreadsheetApp.openById(SSID);
-      var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['MealPlan']) || '💻 MealPlan';
-      var sheet = ss.getSheetByName(tabName);
-      if (!sheet) {
-        return JSON.parse(JSON.stringify({ error: true, message: 'MealPlan sheet not found. Run setupMealPlanSheet() first.' }));
-      }
-
-      var now = new Date();
-      var todayStr = now.getFullYear() + '-' + (now.getMonth() + 1 < 10 ? '0' : '') + (now.getMonth() + 1) + '-' + (now.getDate() < 10 ? '0' : '') + now.getDate();
-      var data = sheet.getDataRange().getValues();
-      var existingRow = -1;
-
-      for (var i = 1; i < data.length; i++) {
-        var rowDate = data[i][0];
-        if (rowDate instanceof Date) {
-          var ry = rowDate.getFullYear();
-          var rm = rowDate.getMonth() + 1;
-          var rd = rowDate.getDate();
-          rowDate = ry + '-' + (rm < 10 ? '0' : '') + rm + '-' + (rd < 10 ? '0' : '') + rd;
-        }
-        if (String(rowDate).indexOf(todayStr) === 0) {
-          existingRow = i + 1;
-          break;
-        }
-      }
-
-      var rowData = [todayStr, meal, cook, notes, 'web', now.toISOString()];
-      if (existingRow > 0) {
-        sheet.getRange(existingRow, 1, 1, 6).setValues([rowData]);
-      } else {
-        sheet.appendRow(rowData);
-      }
-      return JSON.parse(JSON.stringify({ success: true }));
-    } finally {
-      lock.releaseLock();
-    }
-  });
-}
+// v55 REMOVED: Duplicate updateMealPlanSafe deleted — original at ~line 876 handles (meal, cook, notes) correctly
 
 // v52: Audio Wiring — batch fetch audio clips from Drive as base64
 function getAudioBatchSafe(filenames) {

@@ -157,7 +157,7 @@ body { min-height: 100vh; }
 .jj-body #loading { background: #1f0e35; }
 .jj-body .load-ring { border-top-color: #ec4899; border-right-color: #a855f7; }
 .jj-body .load-text { font-family: 'Fredoka One', cursive; font-size: 18px; color: #f9a8d4; letter-spacing: 1px; }
-.jj-wrap { max-width: 480px; margin: 0 auto; padding: 0 14px; position: relative; z-index: 1; }
+.jj-wrap { max-width: 720px; margin: 0 auto; padding: 0 14px; position: relative; z-index: 1; }
 .jj-hdr { text-align: center; padding: 28px 14px 20px; position: relative; }
 .jj-crown { font-size: 36px; display: block; margin-bottom: 4px; animation: crown-bob 2s ease-in-out infinite; }
 @keyframes crown-bob { 0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)} }
@@ -173,7 +173,7 @@ body { min-height: 100vh; }
 .jj-mini-stat { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.7); }
 .jj-mini-stat span { color: #a5f3fc; }
 /* ── JJ STAT PILLS — mirrors TheSoul v9 Currency/RewardA/RewardB ── */
-.jj-stat-pills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 14px 16px; }
+.jj-stat-pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0 14px 16px; }
 .jj-stat-pill { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.22); border-radius: 18px; padding: 14px 8px; text-align: center; box-shadow: 0 4px 16px rgba(236,72,153,0.15); transition: all 0.2s; }
 .jj-stat-pill-icon { font-size: 24px; margin-bottom: 4px; }
 .jj-stat-pill-val { font-family: 'Fredoka One', cursive; font-size: 28px; color: #fde68a; line-height: 1; text-shadow: 0 0 12px rgba(253,230,138,0.5); }
@@ -1273,9 +1273,12 @@ window.onload = function () {
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     renderParent();
-    // v27: Parent dashboard heartbeat poll — 60s, visibility-gated
+    // v35: Parent dashboard heartbeat poll — 120s, visibility+interaction-gated
     setInterval(function() {
       if (_fetching || document.hidden) return;
+      var active = document.activeElement;
+      if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
+      if (document.querySelector('.pin-overlay[style*="block"]') || document.querySelector('.jj-pin-overlay[style*="block"]')) return;
       google.script.run
         .withSuccessHandler(function(ts) {
           if (ts && ts !== _lastHeartbeat) {
@@ -1285,7 +1288,7 @@ window.onload = function () {
         })
         .withFailureHandler(function() { })
         .getKHLastModifiedSafe();
-    }, 60000);
+    }, 120000);
   } else {
     loadKidData();
     // v24: Smart polling — check heartbeat timestamp before full fetch
@@ -1622,7 +1625,7 @@ function updateBuggsy() {
         gateMsg = '⚡ Last one! ' + (todHint ? todHint + ': ' : '') + lastTask;
       } else {
         var periodHint = req.currentPeriod === 'morning' ? 'morning ' : (req.currentPeriod === 'afternoon' ? 'daytime ' : '');
-        gateMsg = '🔒 Clear ' + leftCount + ' of ' + mustDoAvailable.length + ' ' + periodHint + 'must-do' + (mustDoAvailable.length === 1 ? '' : 's') + ' to unlock rewards!';
+        gateMsg = '🔒 Clear ' + leftCount + ' of ' + (req.total || 0) + ' ' + periodHint + 'must-do' + ((req.total || 0) === 1 ? '' : 's') + ' to unlock rewards!';
       }
       qlHtml += '<div style="margin-bottom:10px;padding:10px 12px;border-radius:8px;border:1px solid ' + (req.allClear ? 'rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);color:#86efac' : 'rgba(245,158,11,0.35);background:rgba(245,158,11,0.08);color:#fbbf24') + ';font-family:\'Press Start 2P\', monospace;font-size:7px;line-height:1.8">' + gateMsg + '</div>';
       qlHtml += '<div class="b-sec" style="padding:0 0 8px;max-width:none;margin:0"><span class="b-sec-title" style="color:#22c55e">✅ MUST DO</span><span class="b-sec-badge">' + mustDoAvailable.length + '</span></div>';
@@ -2018,7 +2021,7 @@ function renderJJ() { document.getElementById('app').innerHTML = buildJJUI(); up
 function buildJJUI() {
   return '<div class="jj-pin-overlay" id="jjPinOverlay" style="display:none"><div class="jj-pin-box"><div class="jj-pin-title">🔐 Parent Access</div><input class="jj-pin-input" type="password" maxlength="6" id="jjPinInput" placeholder="••••"><button class="jj-pin-submit" onclick="jjSubmitPin()">Let Me In! ✨</button><button class="jj-pin-cancel" onclick="jjCancelPin()">never mind</button><div class="jj-pin-error" id="jjPinError" style="display:none">Hmm, try again! 💕</div></div></div>'+
   '<div class="jj-wrap"><div class="jj-hdr"><div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="jj-parent-btn" id="jjParentBtn" onclick="jjToggleParent()">⚙ Parent</button></div><img src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" class="char-avatar" style="width:48px;height:48px;border-radius:50%;object-fit:cover;margin-bottom:4px"><span class="jj-crown">👑</span><div class="jj-title">JJ\'s Sparkle Stars</div><div class="jj-sub">Little Diva Helper Board ✨</div></div>'+
-  '<div style="display:flex;align-items:center;gap:10px;margin:0 14px 16px"><div class="jj-stat-pills" style="flex:1;margin:0"><div class="jj-stat-pill"><div class="jj-stat-pill-icon">⭐</div><div class="jj-stat-pill-val" id="jjStars">0</div><div class="jj-stat-pill-lbl">Stars</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">📺</div><div class="jj-stat-pill-val" id="jjTV">0m</div><div class="jj-stat-pill-lbl">TV</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">🍪</div><div class="jj-stat-pill-val" id="jjSnack">0</div><div class="jj-stat-pill-lbl">Snacks</div></div></div><img src="https://i.ibb.co/5h2hYsNp/1773982672701.png" class="char-stat-img" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0"><div class="jj-refresh-star" id="jjRefreshStar" onclick="jjRefresh()" style="position:static;flex-shrink:0">✨</div></div>'+
+  '<div style="display:flex;align-items:center;gap:10px;margin:0 14px 16px"><div class="jj-stat-pills" style="flex:1;margin:0"><div class="jj-stat-pill"><div class="jj-stat-pill-icon">⭐</div><div class="jj-stat-pill-val" id="jjStars">0</div><div class="jj-stat-pill-lbl">Stars</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">📺</div><div class="jj-stat-pill-val" id="jjTV">0m</div><div class="jj-stat-pill-lbl">TV</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">🍪</div><div class="jj-stat-pill-val" id="jjSnack">0</div><div class="jj-stat-pill-lbl">Snacks</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">💵</div><div class="jj-stat-pill-val" id="jjEarned" style="color:#22c55e">$0</div><div class="jj-stat-pill-lbl">Earned</div></div></div><img src="https://i.ibb.co/5h2hYsNp/1773982672701.png" class="char-stat-img" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0"><div class="jj-refresh-star" id="jjRefreshStar" onclick="jjRefresh()" style="position:static;flex-shrink:0">✨</div></div>'+
   '<div style="margin:0 14px 12px;text-align:center"><div id="jjLevelChip" style="display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.22);font-size:13px;font-weight:800;color:#fde68a;letter-spacing:1px;text-transform:uppercase">LEVEL 1 \u00B7 SPROUT</div><div id="jjMasteryRank" style="display:none;margin-top:4px;font-size:11px;font-weight:800;color:#f9a8d4;letter-spacing:0.5px"></div><div id="jjStreakDisplay" style="display:none;margin-top:4px;font-size:18px;text-align:center"></div></div>'+
   '<div class="jj-progress-wrap"><div class="jj-prog-label">Next reward unlocks at <span id="jjNextCost">10</span> ⭐<span id="jjProgNums">0 / 10</span></div><div class="jj-prog-track"><div class="jj-prog-fill" id="jjProgBar" style="width:0%"></div></div></div>'+
   '<div class="edu-nav jj-edu-nav"><span style="font-size:13px;font-weight:800;color:#f9a8d4;font-family:\'Fredoka One\',cursive">Learning:</span><a onclick="eduGo(\'sparkle\')">Sparkle Games</a><a onclick="eduGo(\'story-library\')">Stories</a><a onclick="eduGoChild(\'daily-missions\',\'jj\')">Missions</a></div>'+
@@ -2048,6 +2051,11 @@ function updateJJ() {
   animateNumber(jjStarsEl, prevStars, stars);
   animateNumber(jjTVEl, prevJJTV, jjTvBank, function(v) { return v + 'm'; });
   animateNumber(jjSnackEl, prevSnack, earnedSnack);
+  var jjEarnedEl = document.getElementById('jjEarned');
+  if (jjEarnedEl) {
+    var jjMoney = Number(balances && balances.earnedMoney) || 0;
+    jjEarnedEl.textContent = '$' + jjMoney.toFixed(0);
+  }
   var jjLevelInfo = getLevel(stars, 'jj');
   var jjLevel = jjLevelInfo.level;
   var jjChip = document.getElementById('jjLevelChip');
@@ -2116,7 +2124,7 @@ function updateJJ() {
       } else {
         var periodHint = req.currentPeriod === 'morning' ? 'morning ' : (req.currentPeriod === 'afternoon' ? 'daytime ' : '');
         jjGateMsg = periodLabel + ' · ' + (req.done || 0) + '/' + (req.total || 0) + ' clear';
-        jjGateDetail = 'Clear ' + leftCount + ' of ' + mustDoAvailable.length + ' ' + periodHint + 'must-do' + (mustDoAvailable.length === 1 ? '' : 's') + ' to unlock rewards!';
+        jjGateDetail = 'Clear ' + leftCount + ' of ' + (req.total || 0) + ' ' + periodHint + 'must-do' + ((req.total || 0) === 1 ? '' : 's') + ' to unlock rewards!';
       }
       tlHtml += '<div style="margin:0 14px 10px;padding:12px 14px;border-radius:18px;border:2px solid ' + (req.allClear ? 'rgba(134,239,172,0.45);background:rgba(134,239,172,0.12);color:#86efac' : 'rgba(253,230,138,0.4);background:rgba(253,230,138,0.12);color:#fde68a') + ';font-size:14px;font-weight:800;text-align:center">' + jjGateMsg + '<div style="font-size:12px;font-weight:700;margin-top:4px">' + jjGateDetail + '</div></div>';
       tlHtml += '<div class="jj-sec-title" style="color:#86efac;padding-top:0">✅ Must-Do</div>';
@@ -2854,8 +2862,8 @@ function pReset(mode, child) {
   if (!IS_PARENT) return;
   var c = document.getElementById('p-emboss');
   if (!c) return;
-  c.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.10;pointer-events:none">' +
-    '<img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson Family Crest" style="width:320px;height:320px;object-fit:contain" onerror="this.parentElement.style.display=\'none\'">' +
+  c.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.04;pointer-events:none">' +
+    '<img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson Family Crest" style="width:85vw;height:85vh;object-fit:contain" onerror="this.parentElement.style.display=\'none\'">' +
     '</div>';
 })();
 </script>
@@ -2903,16 +2911,16 @@ function pReset(mode, child) {
     var pending = tasks.filter(function(t) { return t.completed && !t.parentApproved; });
     var completed = tasks.filter(function(t) { return t.completed && t.parentApproved; });
     var bBal = (bal.buggsy || {}).balance || 0, jBal = (bal.jj || {}).balance || 0;
-    var bb = data.bankBalances || {};
-    var bBank = Number(bb.buggsy || 0), jBank = Number(bb.jj || 0);
+    var bBank = Number((bal.buggsy || {}).bankBalance || 0);
+    var jBank = Number((bal.jj || {}).bankBalance || 0);
     var body = document.querySelector('.p-body');
     if (!body) { body = document.createElement('div'); body.className = 'p-body'; document.body.appendChild(body); }
     var h = '';
     h += '<div class="p-summary">';
     h += sc(GOLD_RING, bBal, 'BUGGSY PTS', '#f59e0b');
     h += sc('⭐', jBal, 'JJ STARS', '#ec4899');
-    h += sc('💰', '$' + bBank.toFixed(2), 'B BANK', '#22c55e');
-    h += sc('💰', '$' + jBank.toFixed(2), 'J BANK', '#22c55e');
+    h += sc('💰', '$' + bBank.toFixed(2), 'BUGGSY BANK', '#22c55e');
+    h += sc('💰', '$' + jBank.toFixed(2), 'JJ BANK', '#22c55e');
     h += '</div>';
     h += '<div style="display:flex;justify-content:center;gap:16px;margin-bottom:12px;font-size:11px;color:#94a3b8">';
     h += '<span>⏳ ' + pending.length + ' pending</span><span>✅ ' + completed.length + ' approved</span>';
@@ -3183,16 +3191,21 @@ function pReset(mode, child) {
       '<div style="font-size:11px;font-weight:700;color:#f59e0b;margin-bottom:6px">' + GOLD_RING + ' Buggsy</div>' +
       '<div style="font-size:12px;color:#e2e8f0;margin-bottom:4px">📺 TV: <b>' + bTV + 'm</b></div>' +
       '<div style="font-size:12px;color:#e2e8f0;margin-bottom:8px">🎮 Gaming: <b>' + bGame + 'm</b></div>' +
-      '<div style="display:flex;gap:6px;justify-content:center">' +
-      '<button onclick="window._v2DebitScreen(\'buggsy\',\'TV\',15)" style="padding:6px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">-15m TV</button>' +
-      '<button onclick="window._v2DebitScreen(\'buggsy\',\'Gaming\',30)" style="padding:6px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">-30m Game</button>' +
+      '<div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap">' +
+      '<select id="bScreenType" style="padding:5px 8px;background:#1e293b;color:#e2e8f0;border:1px solid rgba(255,255,255,0.15);border-radius:6px;font-size:11px">' +
+      '<option value="TV">📺 TV</option><option value="Gaming">🎮 Game</option></select>' +
+      '<input type="number" id="bScreenMin" min="15" max="999" step="15" value="30" style="width:60px;padding:5px 8px;background:#1e293b;color:#e2e8f0;border:1px solid rgba(255,255,255,0.15);border-radius:6px;font-size:11px;text-align:center">'+
+      '<span style="font-size:10px;color:#94a3b8">min</span>' +
+      '<button onclick="window._v2DebitScreenCustom(\'buggsy\')" style="padding:6px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">Debit</button>' +
       '</div></div>' +
       '<div style="text-align:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:8px">' +
       '<div style="font-size:11px;font-weight:700;color:#ec4899;margin-bottom:6px">⭐ JJ</div>' +
       '<div style="font-size:12px;color:#e2e8f0;margin-bottom:4px">📺 TV: <b>' + jTV + 'm</b></div>' +
       '<div style="font-size:12px;color:#e2e8f0;margin-bottom:8px">&nbsp;</div>' +
-      '<div style="display:flex;gap:6px;justify-content:center">' +
-      '<button onclick="window._v2DebitScreen(\'jj\',\'TV\',15)" style="padding:6px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">-15m TV</button>' +
+      '<div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap">' +
+      '<input type="number" id="jjScreenMin" min="15" max="999" step="15" value="30" style="width:60px;padding:5px 8px;background:#1e293b;color:#e2e8f0;border:1px solid rgba(255,255,255,0.15);border-radius:6px;font-size:11px;text-align:center">'+
+      '<span style="font-size:10px;color:#94a3b8">min TV</span>' +
+      '<button onclick="window._v2DebitScreenCustom(\'jj\')" style="padding:6px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">Debit</button>' +
       '</div></div>' +
       '</div></div>';
   }
@@ -3496,6 +3509,19 @@ function pReset(mode, child) {
     }).withFailureHandler(function(e) {
       toast('Error: ' + e.message);
     }).khDebitScreenTimeSafe(child, screenType, minutes);
+  };
+  window._v2DebitScreenCustom = function(child) {
+    var screenType, minutes;
+    if (child === 'buggsy') {
+      var sel = document.getElementById('bScreenType');
+      screenType = sel ? sel.value : 'TV';
+      minutes = parseInt(document.getElementById('bScreenMin').value, 10) || 30;
+    } else {
+      screenType = 'TV';
+      minutes = parseInt(document.getElementById('jjScreenMin').value, 10) || 30;
+    }
+    if (minutes < 15) { toast('Minimum 15 minutes'); return; }
+    window._v2DebitScreen(child, screenType, minutes);
   };
   window._v2Reset = function(mode, child) {
     if (!confirm('Run '+mode+' reset for '+child+'?')) return;
