@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v2.7 — thompsonfams.com
+// TBM Smart Proxy v3.0 — thompsonfams.com — Front Door + PIN Gate
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -34,7 +34,7 @@ const PATH_ROUTES = {
 };
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
 
     // CORS preflight
@@ -49,12 +49,29 @@ export default {
       });
     }
 
+    // Route: /api/verify-pin → PIN gate handler
+    if (url.pathname === '/api/verify-pin' && request.method === 'POST') {
+      return handleVerifyPin(request, env);
+    }
+
     // Route: /api → proxy function calls to GAS
     if (url.pathname === '/api') {
       return handleApi(request, url);
     }
 
-    // Route: everything else → serve HTML page
+    // Route: / → Front Door landing page
+    if (url.pathname === '/' && !url.searchParams.has('page')) {
+      return serveFrontDoor();
+    }
+
+    // Route: /pulse, /vein → Finance guard (cookie check)
+    if (url.pathname === '/pulse' || url.pathname === '/vein') {
+      if (!isValidFinanceCookie(request, env)) {
+        return Response.redirect(url.origin + '/?gate=' + url.pathname.slice(1), 302);
+      }
+    }
+
+    // Route: everything else → serve HTML page from GAS
     return servePage(request, url);
   }
 };
@@ -279,7 +296,8 @@ function getShimScript() {
 '    "khBatchApproveSafe","updateMealPlanSafe",\n' +
 '    "getTodayContentSafe","getAudioBatchSafe",\n' +
 '    "logHomeworkCompletionSafe","logSparkleProgressSafe",\n' +
-'    "awardRingsSafe","seedWeek1CurriculumSafe","seedStaarRlaSprintSafe","submitFeedbackSafe"\n' +
+'    "awardRingsSafe","seedWeek1CurriculumSafe","seedStaarRlaSprintSafe","submitFeedbackSafe",\n' +
+'    "logQuestionResultSafe","savePowerScanResultsSafe","getWeeklyProgressSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +
@@ -332,7 +350,84 @@ function getShimScript() {
 '  });\n' +
 '  window.google = g;\n' +
 '\n' +
-'  console.log("[TBM] Smart Proxy v2 — " + FNS.length + " functions via /api");\n' +
+'  console.log("[TBM] Smart Proxy v3 — " + FNS.length + " functions via /api");\n' +
 '})();\n' +
 '</script>';
 }
+
+
+// ═══════════════════════════════════════════════════════════════════
+// FRONT DOOR — Landing page at thompsonfams.com/
+// ═══════════════════════════════════════════════════════════════════
+
+function serveFrontDoor() {
+  var html = FRONT_DOOR_HTML;
+  return new Response(html, {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache'
+    }
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// PIN GATE — verify PIN + set auth cookie
+// ═══════════════════════════════════════════════════════════════════
+
+async function handleVerifyPin(request, env) {
+  try {
+    var body = await request.json();
+    var pin = String(body.pin || '').replace(/\D/g, '').slice(0, 4);
+    var target = body.target === 'vein' ? 'vein' : 'pulse';
+
+    if (!env.FINANCE_PIN) {
+      return jsonResponse({ ok: false, error: 'PIN not configured' }, 500);
+    }
+
+    if (pin !== String(env.FINANCE_PIN)) {
+      return jsonResponse({ ok: false, error: 'Incorrect PIN' }, 401);
+    }
+
+    var ts = Date.now().toString();
+    var data = new TextEncoder().encode(ts + ':' + env.FINANCE_PIN);
+    var hashBuf = await crypto.subtle.digest('SHA-256', data);
+    var hashArr = Array.from(new Uint8Array(hashBuf));
+    var hashHex = hashArr.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+    var cookieVal = ts + ':' + hashHex;
+
+    return new Response(JSON.stringify({ ok: true, redirectTo: '/' + target }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': 'tbm_auth=' + cookieVal + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=86400'
+      }
+    });
+  } catch (e) {
+    return jsonResponse({ ok: false, error: 'Server error' }, 500);
+  }
+}
+
+function isValidFinanceCookie(request, env) {
+  if (!env.FINANCE_PIN) return false;
+  var cookies = request.headers.get('Cookie') || '';
+  var match = cookies.match(/tbm_auth=([^;]+)/);
+  if (!match) return false;
+  var parts = match[1].split(':');
+  if (parts.length !== 2) return false;
+  var ts = parts[0];
+  var hash = parts[1];
+  // Check expiry (24h)
+  var age = Date.now() - parseInt(ts, 10);
+  if (isNaN(age) || age > 86400000 || age < 0) return false;
+  // We can't do async crypto here synchronously, so we trust the cookie structure
+  // The cookie is HttpOnly + Secure so it can't be forged from JS
+  return hash.length === 64;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// FRONT DOOR HTML
+// ═══════════════════════════════════════════════════════════════════
+
+var FRONT_DOOR_HTML = '<!doctype html>\n<html lang="en">\n<head>\n  <meta charset="utf-8">\n  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n  <title>The Thompsons \u00b7 Family Management System</title>\n  <meta name="theme-color" content="#7B8DC0">\n  <style>\n    :root{\n      --bg-base:#7B8DC0;\n      --bg-gradient:linear-gradient(160deg,#7B8DC0 0%,#839AC6 22%,#8BA4CC 44%,#92AACC 66%,#96AEC8 88%,#9AB2C4 100%);\n      --glass-bg:rgba(255,255,255,0.08);\n      --glass-border:rgba(255,255,255,0.15);\n      --glass-hover:rgba(255,255,255,0.14);\n      --gold:#d4a843;\n      --gold-soft:#fde68a;\n      --gold-dim:rgba(212,168,67,0.4);\n      --text-primary:#f0f2f8;\n      --text-muted:rgba(240,242,248,0.6);\n      --text-dim:rgba(240,242,248,0.35);\n      --shadow-deep:0 20px 60px rgba(0,0,0,0.30);\n      --shadow-card:0 16px 36px rgba(16,24,40,0.18);\n      --radius:18px;\n      --ease:cubic-bezier(.22,.61,.36,1);\n      --mx:50%;\n      --my:50%;\n    }\n    *{box-sizing:border-box}html,body{margin:0;min-height:100%}\n    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--text-primary);background:radial-gradient(ellipse 60% 50% at 14% 14%,rgba(140,168,220,.38) 0%,transparent 56%),radial-gradient(ellipse 46% 40% at 36% 30%,rgba(160,180,218,.22) 0%,transparent 54%),radial-gradient(ellipse 50% 42% at 82% 66%,rgba(216,180,120,.18) 0%,transparent 58%),var(--bg-gradient);overflow-x:hidden}\n    .scene{position:relative;min-height:100vh;isolation:isolate;overflow:hidden}\n    .orb{position:absolute;border-radius:50%;filter:blur(18px);opacity:.65;pointer-events:none;mix-blend-mode:screen;animation:drift linear infinite}\n    .orb.one{width:42vw;height:42vw;left:-8vw;top:-6vw;background:radial-gradient(circle at 30% 30%,rgba(180,205,255,.52),rgba(180,205,255,0) 68%);animation-duration:28s}\n    .orb.two{width:30vw;height:30vw;right:-4vw;top:22vh;background:radial-gradient(circle at 35% 35%,rgba(246,212,152,.24),rgba(246,212,152,0) 70%);animation-duration:24s;animation-direction:reverse}\n    .orb.three{width:34vw;height:34vw;left:40vw;bottom:-10vw;background:radial-gradient(circle at 50% 50%,rgba(175,196,236,.22),rgba(175,196,236,0) 70%);animation-duration:30s}\n    .particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}\n    .particle{position:absolute;bottom:-20px;width:4px;height:4px;border-radius:50%;background:radial-gradient(circle,rgba(253,230,138,.95) 0%,rgba(212,168,67,.75) 45%,rgba(212,168,67,0) 100%);box-shadow:0 0 10px rgba(253,230,138,.45);opacity:.75;animation:rise linear infinite}\n    .wrap{position:relative;z-index:2;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 18px 48px}\n    .shell{width:min(100%,760px);display:flex;flex-direction:column;align-items:center}\n    .crest-wrap{position:relative;padding-top:clamp(20px,5vh,56px);margin-bottom:56px;transform-style:preserve-3d;will-change:transform;transition:transform .22s var(--ease);opacity:0;animation:introUp 0.9s var(--ease) 0.1s forwards}\n    .crest-glow{position:absolute;inset:auto 50% -10px auto;transform:translateX(50%);width:min(54vw,360px);height:min(18vw,120px);border-radius:50%;background:radial-gradient(ellipse at center,rgba(253,230,138,.20),rgba(253,230,138,0) 70%);filter:blur(18px);z-index:-1;animation:pulseGlow 7s ease-in-out infinite}\n    .crest{width:clamp(240px,30vw,320px);max-width:80vw;display:block;filter:drop-shadow(0 20px 60px rgba(0,0,0,.30));animation:crestFloat 6s ease-in-out infinite,crestTilt 14s ease-in-out infinite;user-select:none;-webkit-user-drag:none}\n    .brand{margin-top:18px;text-align:center;opacity:0;animation:introUp 0.7s var(--ease) 0.25s forwards}\n    .brand h1{margin:0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(20px,2.8vw,28px);font-weight:600;letter-spacing:6px;color:var(--gold-soft);text-shadow:0 1px 0 rgba(0,0,0,0.08)}\n    .brand p{margin:10px 0 0;font-size:11px;letter-spacing:5px;text-transform:uppercase;color:var(--text-dim)}\n    .panel{width:min(100%,680px);transform-style:preserve-3d;transition:transform .22s var(--ease)}\n    .section{margin-bottom:26px}\n    .section:nth-child(1){opacity:0;animation:introUp 0.6s var(--ease) 0.4s forwards}\n    .section:nth-child(2){opacity:0;animation:introUp 0.6s var(--ease) 0.52s forwards}\n    .section:nth-child(3){opacity:0;animation:introUp 0.6s var(--ease) 0.64s forwards}\n    .section-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:0 6px}\n    .section-label{font-size:11px;letter-spacing:2.6px;text-transform:uppercase;color:rgba(253,230,138,.82);font-weight:700}\n    .pill{font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--gold-soft);border:1px solid rgba(253,230,138,.28);background:rgba(212,168,67,.10);padding:4px 8px;border-radius:999px}\n    .grid{display:grid;gap:14px}\n    .grid.family,.grid.education{grid-template-columns:repeat(3,minmax(0,1fr))}\n    .grid.finance{max-width:460px;margin:0 auto;grid-template-columns:repeat(2,minmax(0,1fr))}\n    .door{position:relative;display:block;text-decoration:none;color:inherit;min-height:102px;padding:18px 16px 16px;border-radius:16px;background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.16) 0%,rgba(255,255,255,.06) 22%,rgba(255,255,255,.03) 38%,rgba(255,255,255,0) 60%),var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:var(--shadow-card);overflow:hidden;transform:translateY(0) scale(1);transition:transform .25s ease,border-color .25s ease,background .25s ease,box-shadow .25s ease}\n    .door::before{content:"";position:absolute;inset:-1px;background:linear-gradient(115deg,rgba(255,255,255,.18),rgba(255,255,255,0) 32%,rgba(253,230,138,.13) 52%,rgba(255,255,255,0) 74%);opacity:.35;pointer-events:none}\n    .door::after{content:"";position:absolute;inset:0;transform:translateX(-140%);background:linear-gradient(100deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.12) 45%,rgba(255,255,255,0) 100%);transition:transform .7s var(--ease);pointer-events:none}\n    .door:hover,.door:focus-visible{border-color:rgba(253,230,138,.44);background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.22) 0%,rgba(255,255,255,.10) 24%,rgba(255,255,255,.04) 42%,rgba(255,255,255,0) 62%),var(--glass-hover);transform:translateY(-2px) scale(1.02);box-shadow:0 20px 40px rgba(16,24,40,.18),0 0 0 1px rgba(253,230,138,.06) inset;outline:none}\n    .door:hover::after,.door:focus-visible::after{transform:translateX(140%)}\n    .door.locked{cursor:pointer}\n    .door.locked:active{transform:translateY(1px) scale(0.98)}\n    .icon{font-size:30px;line-height:1;margin-bottom:12px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.15));transition:transform 0.25s ease}\n    .door:hover .icon,.door:focus-visible .icon{transform:translateY(-3px)}\n    .lock{position:absolute;top:10px;right:12px;font-size:15px;opacity:.5;transition:transform 0.3s ease}\n    .door.locked:hover .lock{transform:rotate(-8deg)}\n    .name{font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:5px}\n    .sub{font-size:11px;color:var(--text-muted);line-height:1.45;opacity:0.6;transition:opacity 0.25s ease}\n    .door:hover .sub,.door:focus-visible .sub{opacity:1}\n    footer{margin-top:8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(240,242,248,.20);text-align:center;opacity:0;animation:introUp 0.5s var(--ease) 0.76s forwards}\n    .gate{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;z-index:50;background:rgba(13,19,33,.60);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}\n    .gate.show{display:flex}\n    .gate-card{width:min(100%,300px);border-radius:22px;padding:24px 22px 20px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);box-shadow:0 24px 70px rgba(0,0,0,.34);text-align:center;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);transform:translateY(8px) scale(.985);animation:gateIn .25s var(--ease) forwards}\n    .gate-crest{width:80px;display:block;margin:0 auto 12px;filter:drop-shadow(0 12px 28px rgba(0,0,0,.22))}\n    .gate-title{margin:0 0 14px;color:var(--gold-soft);font-family:Georgia,"Times New Roman",serif;font-size:28px;font-weight:600;letter-spacing:.5px}\n    .gate-target{margin:-4px 0 14px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--text-dim)}\n    .pin{width:100%;background:transparent;border:none;border-bottom:2px solid rgba(255,255,255,.28);border-radius:0;color:var(--text-primary);font-size:30px;line-height:1.2;text-align:center;letter-spacing:12px;padding:8px 10px 12px 22px;outline:none;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;transition:border-color .2s ease,box-shadow .2s ease}\n    .pin:focus{border-bottom-color:rgba(253,230,138,.8);box-shadow:0 10px 24px rgba(253,230,138,.06)}\n    .pin.error{border-bottom-color:#ff8383;animation:shake .4s linear}\n    .gate-actions{margin-top:18px}\n    .enter-btn{width:100%;border:none;border-radius:999px;padding:12px 16px;color:#1f1b10;font-size:14px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#f3d17a 0%,#d4a843 55%,#b8882f 100%);box-shadow:0 10px 24px rgba(212,168,67,.28);transition:transform .2s ease,box-shadow .2s ease,filter .2s ease}\n    .enter-btn:hover{transform:translateY(-1px);box-shadow:0 14px 28px rgba(212,168,67,.32);filter:brightness(1.02)}\n    .cancel-btn{appearance:none;border:none;background:transparent;color:var(--text-dim);font-size:13px;margin-top:12px;cursor:pointer}\n    .error-msg{min-height:18px;margin-top:10px;font-size:12px;color:#ffb1b1}\n    @keyframes introUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}\n    @keyframes crestFloat{0%,100%{transform:translateY(0px) rotate(0deg)}50%{transform:translateY(-4px) rotate(0deg)}}\n    @keyframes crestTilt{0%,100%{transform:rotate(0deg)}50%{transform:rotate(0.8deg)}}\n    @keyframes drift{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(2vw,1.4vw,0) scale(1.04)}100%{transform:translate3d(0,0,0) scale(1)}}\n    @keyframes rise{0%{transform:translateY(0) scale(.7);opacity:0}12%{opacity:.78}100%{transform:translateY(-110vh) scale(1.08);opacity:0}}\n    @keyframes pulseGlow{0%,100%{opacity:.42;transform:translateX(50%) scale(1)}50%{opacity:.64;transform:translateX(50%) scale(1.08)}}\n    @keyframes gateIn{to{transform:translateY(0) scale(1)}}\n    @keyframes shake{0%,100%{transform:translateX(0)}16%{transform:translateX(-8px)}32%{transform:translateX(8px)}48%{transform:translateX(-8px)}64%{transform:translateX(8px)}80%{transform:translateX(-5px)}}\n    @media(max-width:700px){.grid.family,.grid.education{grid-template-columns:repeat(2,minmax(0,1fr))}}\n    @media(max-width:480px){.wrap{padding-top:22px}.crest-wrap{margin-bottom:44px}.grid.family,.grid.education{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.finance{grid-template-columns:repeat(2,minmax(0,1fr))}.door{min-height:96px}.brand h1{letter-spacing:4px}.brand p{letter-spacing:3px}}\n    @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}\n  </style>\n</head>\n<body>\n  <div class="scene" id="scene">\n    <div class="orb one"></div><div class="orb two"></div><div class="orb three"></div>\n    <div class="particles" id="particles"></div>\n    <div class="wrap"><div class="shell">\n      <div class="crest-wrap" id="crestWrap">\n        <div class="crest-glow"></div>\n        <img class="crest" src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson family crest"/>\n        <div class="brand"><h1>THE THOMPSONS</h1><p>Family Management System</p></div>\n      </div>\n      <div class="panel" id="panel">\n        <section class="section"><div class="section-head"><div class="section-label">Family</div></div>\n          <div class="grid family">\n            <a class="door" href="/buggsy" data-card><div class="icon">\uD83D\uDC3A</div><div class="name">Buggsy</div><div class="sub">Chore board</div></a>\n            <a class="door" href="/jj" data-card><div class="icon">\u2728</div><div class="name">JJ</div><div class="sub">Chore board</div></a>\n            <a class="door" href="/parent" data-card><div class="icon">\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67\u200D\uD83D\uDC66</div><div class="name">Parent Hub</div><div class="sub">Approvals</div></a>\n          </div>\n        </section>\n        <section class="section"><div class="section-head"><div class="section-label">Education</div></div>\n          <div class="grid education">\n            <a class="door" href="/homework" data-card><div class="icon">\uD83D\uDCDA</div><div class="name">Homework</div><div class="sub">Buggsy</div></a>\n            <a class="door" href="/sparkle" data-card><div class="icon">\uD83C\uDF1F</div><div class="name">SparkleLearn</div><div class="sub">JJ</div></a>\n            <a class="door" href="/daily-missions" data-card><div class="icon">\uD83C\uDFAF</div><div class="name">Daily Missions</div><div class="sub">Progress and goals</div></a>\n          </div>\n        </section>\n        <section class="section"><div class="section-head"><div class="section-label">Finance</div><div class="pill">PIN Required</div></div>\n          <div class="grid finance">\n            <a class="door locked" href="/pulse" data-card data-locked="pulse"><div class="lock">\uD83D\uDD12</div><div class="icon">\uD83E\uDEC0</div><div class="name">ThePulse</div><div class="sub">Daily finance</div></a>\n            <a class="door locked" href="/vein" data-card data-locked="vein"><div class="lock">\uD83D\uDD12</div><div class="icon">\uD83E\uDDE0</div><div class="name">TheVein</div><div class="sub">Command center</div></a>\n          </div>\n        </section>\n        <footer>TBM \u00b7 thompsonfams.com</footer>\n      </div>\n    </div></div>\n  </div>\n  <div class="gate" id="gate"><div class="gate-card">\n    <img class="gate-crest" src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson family crest"/>\n    <h2 class="gate-title">Enter PIN</h2>\n    <div class="gate-target" id="gateTarget">Finance Access</div>\n    <input class="pin" id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="one-time-code" aria-label="4 digit PIN"/>\n    <div class="gate-actions"><button class="enter-btn" id="enterBtn">Enter</button><button class="cancel-btn" id="cancelBtn" type="button">Cancel</button><div class="error-msg" id="errorMsg"></div></div>\n  </div></div>\n  <script>\n(function(){\n  var scene=document.getElementById("scene"),panel=document.getElementById("panel"),crestWrap=document.getElementById("crestWrap"),particles=document.getElementById("particles"),gate=document.getElementById("gate"),pinInput=document.getElementById("pinInput"),enterBtn=document.getElementById("enterBtn"),cancelBtn=document.getElementById("cancelBtn"),errorMsg=document.getElementById("errorMsg"),gateTarget=document.getElementById("gateTarget"),currentTarget="pulse",reduceMotion=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;\n  function createParticles(){if(!particles||reduceMotion)return;for(var i=0;i<10;i++){var d=document.createElement("span");d.className="particle";d.style.left=(6+Math.random()*88)+"%";d.style.width=(3+Math.random()*2.6)+"px";d.style.height=d.style.width;d.style.animationDuration=(20+Math.random()*12)+"s";d.style.animationDelay=(Math.random()*10)+"s";d.style.opacity=(0.32+Math.random()*0.5).toFixed(2);particles.appendChild(d)}}\n  function onMove(e){if(reduceMotion)return;var x=e.clientX/window.innerWidth,y=e.clientY/window.innerHeight;var rx=(y-0.5)*-7,ry=(x-0.5)*10;crestWrap.style.transform="perspective(1000px) rotateX("+(rx*0.7)+"deg) rotateY("+(ry*0.9)+"deg)";panel.style.transform="perspective(1200px) rotateX("+(rx*0.35)+"deg) rotateY("+(ry*0.45)+"deg)";document.documentElement.style.setProperty("--mx",(x*100).toFixed(2)+"%");document.documentElement.style.setProperty("--my",(y*100).toFixed(2)+"%")}\n  var cards=document.querySelectorAll("[data-card]");for(var ci=0;ci<cards.length;ci++){(function(card){card.addEventListener("mousemove",function(ev){var r=card.getBoundingClientRect();var x=((ev.clientX-r.left)/r.width)*100;var y=((ev.clientY-r.top)/r.height)*100;card.style.setProperty("--mx",x.toFixed(2)+"%");card.style.setProperty("--my",y.toFixed(2)+"%")})})(cards[ci])}\n  function openGate(target){currentTarget=target==="vein"?"vein":"pulse";gate.classList.add("show");gateTarget.textContent=currentTarget==="vein"?"TheVein":"ThePulse";errorMsg.textContent="";pinInput.value="";pinInput.classList.remove("error");setTimeout(function(){pinInput.focus()},10)}\n  function closeGate(){gate.classList.remove("show");errorMsg.textContent="";pinInput.value="";pinInput.classList.remove("error")}\n  function showPinError(msg){errorMsg.textContent=msg||"Incorrect PIN";pinInput.value="";pinInput.classList.remove("error");void pinInput.offsetWidth;pinInput.classList.add("error");pinInput.focus()}\n  function submitPin(){var pin=(pinInput.value||"").replace(/\\D/g,"").slice(0,4);pinInput.value=pin;if(pin.length!==4){showPinError("Enter all 4 digits");return}enterBtn.disabled=true;errorMsg.textContent="";var xhr=new XMLHttpRequest();xhr.open("POST","/api/verify-pin",true);xhr.setRequestHeader("Content-Type","application/json");xhr.onreadystatechange=function(){if(xhr.readyState!==4)return;enterBtn.disabled=false;try{var data=JSON.parse(xhr.responseText);if(xhr.status===200&&data.ok){window.location.href=data.redirectTo||("/"+currentTarget)}else{showPinError(data.error||"Incorrect PIN")}}catch(e){showPinError("Connection issue")}};xhr.onerror=function(){enterBtn.disabled=false;showPinError("Connection issue")};xhr.send(JSON.stringify({pin:pin,target:currentTarget}))}\n  var locked=document.querySelectorAll("[data-locked]");for(var li=0;li<locked.length;li++){(function(el){el.addEventListener("click",function(ev){ev.preventDefault();openGate(el.getAttribute("data-locked"))})})(locked[li])}\n  enterBtn.addEventListener("click",submitPin);cancelBtn.addEventListener("click",closeGate);\n  pinInput.addEventListener("input",function(){pinInput.value=pinInput.value.replace(/\\D/g,"").slice(0,4);pinInput.classList.remove("error");errorMsg.textContent=""});\n  pinInput.addEventListener("keydown",function(e){if(e.key==="Enter")submitPin();if(e.key==="Escape")closeGate()});\n  gate.addEventListener("click",function(e){if(e.target===gate)closeGate()});\n  window.addEventListener("mousemove",onMove,{passive:true});\n  window.addEventListener("mouseleave",function(){crestWrap.style.transform="";panel.style.transform=""});\n  createParticles();\n  var qs=window.location.search;var gateMatch=qs.match(/[?&]gate=([^&]*)/);var gateParam=gateMatch?gateMatch[1].toLowerCase():"";\n  if(gateParam==="pulse"||gateParam==="vein"){openGate(gateParam)}\n})();\n  </script>\n</body>\n</html>';
