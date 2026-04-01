@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kids Hub v33</title>
+<title>Kids Hub v34</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -854,14 +854,18 @@ var INIT_VIEW  = "<?= INIT_VIEW ?>";
 <!-- CHUNK 3 OF 3 — JavaScript                 -->
 <!-- ══════════════════════════════════════════ -->
 <style>
-.b-two-col,.jj-two-col{display:block}
-.b-col-main,.jj-col-main,.b-col-pending,.jj-col-pending{width:100%}
-.b-col-pending,.jj-col-pending{margin-top:16px}
-.b-two-col .b-list,.jj-two-col .jj-list{max-width:none}
+/* ── Two-column layout: always grid on tablets+ ── */
+.b-two-col,.jj-two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start}
+.b-col-main,.jj-col-main,.b-col-pending,.jj-col-pending{width:100%;min-width:0}
+.b-two-col .b-list,.jj-two-col .jj-list{max-width:none;padding:0}
 @media(min-width:620px){
 .jj-wrap{max-width:720px}
-.b-two-col,.jj-two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
-.b-col-pending,.jj-col-pending{margin-top:0}
+.b-two-col,.jj-two-col{gap:16px}
+}
+/* ── Fallback to single column ONLY on very small phones ── */
+@media(max-width:359px){
+.b-two-col,.jj-two-col{display:block}
+.b-col-pending,.jj-col-pending{margin-top:12px}
 }
 /* ── Board watermarks (Thompson Family Crest) ── */
 .buggsy-body::before, .jj-body::before {
@@ -931,21 +935,115 @@ var INIT_VIEW  = "<?= INIT_VIEW ?>";
   25% { transform: translateX(-6px); }
   75% { transform: translateX(6px); }
 }
-/* ── 8-inch tablet breakpoint ── */
-@media (min-width: 600px) and (max-width: 850px) {
-  .b-stat-val { font-size: 26px; }
-  .b-stat { padding: 12px; min-height: 64px; }
-  .b-card { margin-bottom: 8px; }
-  .b-name { font-size: 16px; }
-  .b-pts { font-size: 28px; }
-  .b-claim, .b-approve { font-size: 10px; padding: 10px 12px; }
-  .jj-card { padding: 16px 18px; gap: 14px; }
-  .jj-card-icon { font-size: 36px; width: 52px; }
-  .jj-card-name { font-size: 19px; }
-  .jj-pts-num { font-size: 24px; }
-  .jj-do-it-btn { font-size: 15px; padding: 10px 14px; }
-  .jj-star-count { font-size: 48px; }
-  .jj-stat-pill-val { font-size: 26px; }
+/* ── Compact cards for tablet columns (~200-300px each) ── */
+@media (max-width: 850px) {
+  /* ── SHARED: Header compaction ── */
+  .b-hdr { padding: 8px 8px 6px; }
+  .b-hdr-top { margin-bottom: 6px; }
+  .b-stats { gap: 4px; }
+  .b-stat { padding: 6px 8px; min-height: 44px; gap: 6px; border-radius: 10px; }
+  .b-stat-icon { font-size: 16px; }
+  .b-stat-val { font-size: 18px; }
+  .b-stat-lbl { font-size: 7px; }
+  .b-level { padding: 6px 8px 0; }
+  .b-lvl-badge { width: 22px; height: 22px; font-size: 8px; }
+  .b-lvl-name { font-size: 7px; }
+  .b-lvl-xp { font-size: 11px; }
+  .b-lvl-next { font-size: 7px; }
+  .b-bar-track { height: 7px; }
+  .b-tabs { padding: 6px 8px 0; gap: 4px; }
+  .b-tab { padding: 6px 3px; min-height: 32px; font-size: 6px; }
+  .b-sec { padding: 6px 4px 3px; }
+  .b-sec-title { font-size: 7px; }
+  .b-list { padding: 0 4px; }
+  .edu-nav { padding: 4px 8px; gap: 3px; }
+  .edu-nav a { padding: 3px 6px; font-size: 8px; }
+
+  /* ── BUGGSY: Compact task cards ── */
+  .b-card { margin-bottom: 3px; border-radius: 6px; }
+  .b-card::before { width: 2px; }
+  .b-icon { width: 28px; height: 28px; font-size: 14px; }
+  .b-info { padding: 4px 4px 4px 2px; }
+  .b-name { font-size: 11px; margin-bottom: 1px; line-height: 1.15; }
+  .b-tags { gap: 2px; }
+  .b-tag { font-size: 5.5px; padding: 1px 3px; }
+  .b-right { padding: 4px 6px 4px 2px; gap: 2px; }
+  .b-pts { font-size: 16px; }
+  .b-pts-lbl { font-size: 5.5px; }
+  .b-claim { font-size: 6px; padding: 4px 6px; min-height: 28px; min-width: 28px; border-radius: 4px; }
+  .b-done-stamp { font-size: 5.5px; padding: 2px 3px; }
+  .b-pending { font-size: 5.5px; padding: 2px 3px; }
+  .b-approve { font-size: 6px; padding: 4px 6px; min-height: 28px; min-width: 28px; }
+  .b-tod-header { padding: 3px 0 1px; }
+  .b-tod-label { font-size: 6px; }
+  .b-tod-done { font-size: 6px; }
+  .b-empty { font-size: 7px; padding: 20px 10px; }
+  .b-bonus-badge { font-size: 5.5px; padding: 1px 3px; }
+  .b-approve-bonus { font-size: 6px; padding: 4px 5px; min-height: 28px; }
+
+  /* ── JJ: Compact header ── */
+  .jj-hdr { padding: 10px 8px 8px; }
+  .jj-crown { font-size: 24px; }
+  .jj-title { font-size: clamp(20px, 6vw, 30px); }
+  .jj-sub { font-size: 11px; }
+  .jj-star-count { font-size: 32px; }
+  .jj-stat-pills { gap: 4px; margin: 0 8px 8px; }
+  .jj-stat-pill { padding: 8px 4px; border-radius: 12px; }
+  .jj-stat-pill-icon { font-size: 16px; margin-bottom: 2px; }
+  .jj-stat-pill-val { font-size: 18px; }
+  .jj-stat-pill-lbl { font-size: 8px; }
+  .jj-progress-wrap { margin: 0 8px 10px; padding: 6px 10px; border-radius: 14px; }
+  .jj-prog-track { height: 12px; }
+  .jj-prog-label { font-size: 10px; }
+  .jj-tabs { padding: 6px 8px 0; gap: 3px; }
+  .jj-tab { font-size: 11px; padding: 6px; border-radius: 10px; }
+  .jj-sec-title { font-size: 14px; padding: 4px 8px 4px; }
+  .jj-list { padding: 0 4px; }
+
+  /* ── JJ: Compact task cards ── */
+  .jj-card { padding: 6px 8px; margin-bottom: 4px; gap: 6px; border-radius: 12px; }
+  .jj-card-icon { font-size: 18px; width: 28px; }
+  .jj-card-name { font-size: 12px; margin-bottom: 1px; }
+  .jj-card-cat { font-size: 8px; }
+  .jj-card-right { gap: 3px; }
+  .jj-pts-badge { padding: 3px 6px; border-radius: 8px; }
+  .jj-pts-num { font-size: 14px; }
+  .jj-pts-star { font-size: 7px; }
+  .jj-do-it-btn { font-size: 9px; padding: 4px 8px; border-radius: 8px; min-height: 28px; }
+  .jj-done-badge { padding: 3px 6px; font-size: 8px; border-radius: 6px; }
+  .jj-pending-badge { padding: 3px 5px; font-size: 7px; border-radius: 6px; }
+  .jj-approve-btn { padding: 4px 6px; font-size: 9px; border-radius: 6px; }
+  .jj-bonus-badge { font-size: 8px; padding: 2px 5px; }
+  .jj-approve-bonus-btn { font-size: 9px; padding: 4px 6px; border-radius: 6px; }
+
+  /* ── Pending containers: Compact ── */
+  .b-pending-chest { padding: 4px 8px; margin-bottom: 4px; border-radius: 8px; }
+  .b-pending-chest .chest-icon { font-size: 18px; }
+  .b-pending-chest .chest-label { font-size: 5.5px; }
+  .b-pending-chest .chest-badge { font-size: 7px; padding: 2px 6px; }
+  .jj-pending-jar { padding: 4px 8px; margin: 0 4px 4px; border-radius: 12px; }
+  .jj-pending-jar .jar-icon { font-size: 18px; }
+  .jj-pending-jar .jar-label { font-size: 10px; }
+  .jj-pending-jar .jar-badge { font-size: 10px; padding: 2px 6px; }
+
+  /* ── Rewards: Compact ── */
+  .b-rewards-grid { gap: 4px; padding: 0 8px; }
+  .b-reward { padding: 8px 6px; }
+  .b-reward-icon { font-size: 20px; margin-bottom: 3px; }
+  .b-reward-name { font-size: 11px; }
+  .b-reward-cost { font-size: 6px; }
+  .jj-rewards { padding: 0 8px; gap: 4px; }
+  .jj-reward-card { padding: 10px 8px; border-radius: 14px; }
+  .jj-reward-emoji { font-size: 22px; margin-bottom: 3px; }
+  .jj-reward-name { font-size: 11px; }
+
+  /* ── Refresh buttons ── */
+  .b-refresh-coin, .jj-refresh-star { width: 44px; height: 44px; font-size: 16px; bottom: 14px; right: 14px; }
+
+  /* ── Character art: smaller on tablets ── */
+  .char-flavor { width: 80px; height: 80px; bottom: 70px; }
+  .char-avatar { width: 32px; height: 32px; }
+  .char-stat-img { width: 32px; height: 32px; }
 }
 </style>
 <script>
@@ -1541,26 +1639,34 @@ function updateBuggsy() {
         var ungrouped = [];
         todGroups.forEach(function(grp) {
           var grpTasks = mustDoAvailable.filter(function(t){ return t.timeOfDay === grp.key; });
-          if (grpTasks.length > 0) {
-            qlHtml += '<div class="b-tod-header"><span class="b-tod-label ' + grp.cls + '">' + grp.label + '</span></div>';
-            grpTasks.forEach(function(task) { qlHtml += buildBCardHTML(task, cardIdx++); });
+          var grpApproved = approvedTasks.filter(function(t){ return t.required && t.timeOfDay === grp.key; });
+          if (grpTasks.length > 0 || grpApproved.length > 0) {
+            var doneCount = grpApproved.length;
+            var totalCount = grpTasks.length + doneCount;
+            qlHtml += '<div class="b-tod-header"><span class="b-tod-label ' + grp.cls + '">' + grp.label + '</span>' + (doneCount > 0 ? '<span class="b-tod-done">' + doneCount + '/' + totalCount + ' ✓</span>' : '') + '</div>';
+            for (var gi = 0; gi < grpTasks.length; gi++) { qlHtml += buildBCardHTML(grpTasks[gi], cardIdx++); }
+            for (var ga = 0; ga < grpApproved.length; ga++) { qlHtml += buildBCardHTML(grpApproved[ga], cardIdx++); }
           }
         });
         // Tasks with no timeOfDay
         ungrouped = mustDoAvailable.filter(function(t){ return !t.timeOfDay || !TIME_ORDER[t.timeOfDay]; });
-        if (ungrouped.length > 0) {
-          if (mustDoAvailable.length !== ungrouped.length) {
+        var ungroupedApproved = approvedTasks.filter(function(t){ return t.required && (!t.timeOfDay || !TIME_ORDER[t.timeOfDay]); });
+        if (ungrouped.length > 0 || ungroupedApproved.length > 0) {
+          if (mustDoAvailable.length !== ungrouped.length || ungroupedApproved.length > 0) {
             qlHtml += '<div class="b-tod-header"><span class="b-tod-label">📋 OTHER</span></div>';
           }
-          ungrouped.forEach(function(task) { qlHtml += buildBCardHTML(task, cardIdx++); });
+          for (var ui = 0; ui < ungrouped.length; ui++) { qlHtml += buildBCardHTML(ungrouped[ui], cardIdx++); }
+          for (var ua = 0; ua < ungroupedApproved.length; ua++) { qlHtml += buildBCardHTML(ungroupedApproved[ua], cardIdx++); }
         }
       }
       qlHtml += '<div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title" style="color:#fbbf24">⭐ BONUS QUESTS</span><span class="b-sec-badge">' + bonusAvailable.length + '</span></div>';
       if (bonusAvailable.length === 0) {
         qlHtml += '<div class="b-empty">No bonus quests right now</div>';
       } else {
-        bonusAvailable.forEach(function(task, i) { qlHtml += buildBCardHTML(task, i + mustDoAvailable.length); });
+        for (var bi = 0; bi < bonusAvailable.length; bi++) { qlHtml += buildBCardHTML(bonusAvailable[bi], bi + mustDoAvailable.length); }
       }
+      var approvedBonus = approvedTasks.filter(function(t){ return !t.required; });
+      for (var ab = 0; ab < approvedBonus.length; ab++) { qlHtml += buildBCardHTML(approvedBonus[ab], ab + mustDoAvailable.length + bonusAvailable.length); }
     }
     ql.innerHTML = qlHtml;
     // v19: Post-render stagger animation
@@ -2026,26 +2132,34 @@ function updateJJ() {
         var jjCardIdx = 0;
         jjTodGroups.forEach(function(grp) {
           var grpTasks = mustDoAvailable.filter(function(t){ return t.timeOfDay === grp.key; });
-          if (grpTasks.length > 0) {
-            tlHtml += '<div style="padding:6px 14px 2px;font-size:15px;font-weight:800;color:' + (grp.cls === 'morning' ? '#fde68a' : grp.cls === 'afternoon' ? '#93c5fd' : '#c4b5fd') + '">' + grp.label + '</div>';
-            grpTasks.forEach(function(t) { tlHtml += buildJJCardHTML(t, jjCardIdx++); });
+          var grpApproved = approvedTasks.filter(function(t){ return t.required && t.timeOfDay === grp.key; });
+          if (grpTasks.length > 0 || grpApproved.length > 0) {
+            var doneCount = grpApproved.length;
+            var totalCount = grpTasks.length + doneCount;
+            tlHtml += '<div style="padding:6px 14px 2px;font-size:15px;font-weight:800;color:' + (grp.cls === 'morning' ? '#fde68a' : grp.cls === 'afternoon' ? '#93c5fd' : '#c4b5fd') + '">' + grp.label + (doneCount > 0 ? ' <span style="font-size:11px;color:#86efac">' + doneCount + '/' + totalCount + ' ✓</span>' : '') + '</div>';
+            for (var ji = 0; ji < grpTasks.length; ji++) { tlHtml += buildJJCardHTML(grpTasks[ji], jjCardIdx++); }
+            for (var ja = 0; ja < grpApproved.length; ja++) { tlHtml += buildJJCardHTML(grpApproved[ja], jjCardIdx++); }
           }
         });
         // Tasks with no timeOfDay
         var jjUngrouped = mustDoAvailable.filter(function(t){ return !t.timeOfDay || !TIME_ORDER[t.timeOfDay]; });
-        if (jjUngrouped.length > 0) {
-          if (mustDoAvailable.length !== jjUngrouped.length) {
+        var jjUngroupedApproved = approvedTasks.filter(function(t){ return t.required && (!t.timeOfDay || !TIME_ORDER[t.timeOfDay]); });
+        if (jjUngrouped.length > 0 || jjUngroupedApproved.length > 0) {
+          if (mustDoAvailable.length !== jjUngrouped.length || jjUngroupedApproved.length > 0) {
             tlHtml += '<div style="padding:6px 14px 2px;font-size:15px;font-weight:800;color:#e2e8f0">📋 Other</div>';
           }
-          jjUngrouped.forEach(function(t) { tlHtml += buildJJCardHTML(t, jjCardIdx++); });
+          for (var jui = 0; jui < jjUngrouped.length; jui++) { tlHtml += buildJJCardHTML(jjUngrouped[jui], jjCardIdx++); }
+          for (var jua = 0; jua < jjUngroupedApproved.length; jua++) { tlHtml += buildJJCardHTML(jjUngroupedApproved[jua], jjCardIdx++); }
         }
       }
       tlHtml += '<div class="jj-sec-title" style="color:#fde68a">⭐ Bonus Jobs</div>';
       if (bonusAvailable.length === 0) {
         tlHtml += '<div style="text-align:center;padding:16px;font-size:14px;color:rgba(255,255,255,0.45);font-weight:800;">No bonus jobs right now 💕</div>';
       } else {
-        bonusAvailable.forEach(function(t,i){ tlHtml += buildJJCardHTML(t, i + mustDoAvailable.length); });
+        for (var jbi = 0; jbi < bonusAvailable.length; jbi++) { tlHtml += buildJJCardHTML(bonusAvailable[jbi], jbi + mustDoAvailable.length); }
       }
+      var jjApprovedBonus = approvedTasks.filter(function(t){ return !t.required; });
+      for (var jab = 0; jab < jjApprovedBonus.length; jab++) { tlHtml += buildJJCardHTML(jjApprovedBonus[jab], jab + mustDoAvailable.length + bonusAvailable.length); }
     }
     tl.innerHTML = tlHtml;
     // v19: Post-render stagger animation
