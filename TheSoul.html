@@ -1,4 +1,4 @@
-<!-- TheSoul v42 — F24 grid fix, F26 crest watermark, remove finance text -->
+<!-- TheSoul v43 — bg gradient, balance fix, gate language, finance text -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,7 +30,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-tap-highlight-color:transparent;overflow:hidden;height:100%}
-body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C0;color:var(--text);font-family:'Barlow Condensed',sans-serif;transition:background 2s ease}
+body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial-gradient(ellipse 100% 85% at 43% 39%,#8F8BA7 0%,#736473 20%,#5D4650 40%,#4C333A 58%,#3E2A32 74%,#231B24 100%);color:var(--text);font-family:'Barlow Condensed',sans-serif;transition:background 2s ease}
 
 .parent-body{
   background:
@@ -101,7 +101,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
   align-items:center;
   justify-content:center;
   gap:10px;
-  background:#8898C0;
+  background:#4C333A;
 }
 .load-ring{
   width:32px;
@@ -1607,11 +1607,11 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
     } else if(req.total){
       if(req.allClear){
         gateLabel = '\u2705 All clear';
-        gateSub = (Number(req.done || 0)) + '/' + (Number(req.total || 0)) + ' ' + ((req.currentPeriod || 'day') === 'morning' ? 'morning' : (req.currentPeriod === 'afternoon' ? 'daytime' : 'daily'));
+        gateSub = (Number(req.done || 0)) + '/' + (Number(req.total || 0)) + ' ' + ((req.currentPeriod || 'day') === 'morning' ? 'morning' : (req.currentPeriod === 'afternoon' ? 'morning + afternoon' : 'daily'));
         gateClass = 'clear pulse';
       } else {
         gateLabel = '\uD83D\uDD12 ' + remainingRequired + ' must-do' + (remainingRequired === 1 ? '' : 's') + ' left';
-        gateSub = (Number(req.done || 0)) + '/' + (Number(req.total || 0)) + ' ' + ((req.currentPeriod || 'day') === 'morning' ? 'morning' : (req.currentPeriod === 'afternoon' ? 'daytime' : 'daily'));
+        gateSub = (Number(req.done || 0)) + '/' + (Number(req.total || 0)) + ' ' + ((req.currentPeriod || 'day') === 'morning' ? 'morning' : (req.currentPeriod === 'afternoon' ? 'morning + afternoon' : 'daily'));
         gateClass = 'locked';
       }
     } else {
@@ -1754,8 +1754,8 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:#8898C
       }
       // Today's achievements
       var bals = state.kids.balances || {};
-      if (bals.jj && bals.jj.earned > 0) moments.push('JJ earned ' + bals.jj.earned + ' stars!');
-      if (bals.buggsy && bals.buggsy.earned > 0) moments.push('Buggsy earned ' + bals.buggsy.earned + ' rings!');
+      if (bals.jj && bals.jj.balance > 0) moments.push('JJ has ' + bals.jj.balance + ' stars!');
+      if (bals.buggsy && bals.buggsy.balance > 0) moments.push('Buggsy has ' + bals.buggsy.balance + ' rings!');
     }
     // Family note
     var fn = noteVal(state.board || {});

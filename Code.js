@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v60 — Apps Script Router (TBM Consolidated)
+// Code.gs v61 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 60; }
+function getCodeVersion() { return 61; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -234,7 +234,8 @@ function servePage(page, e) {
     'story':         { file: 'StoryReader',    title: 'Story Reader' },
     'investigation': { file: 'investigation-module', title: 'Field Investigation — Science' },
     'daily-missions':{ file: 'daily-missions', title: 'Daily Missions — Thompson Education' },
-    'baseline':      { file: 'BaselineDiagnostic', title: 'Baseline Diagnostic — Thompson Education' }
+    'baseline':      { file: 'BaselineDiagnostic', title: 'Baseline Diagnostic — Thompson Education' },
+    'power-scan':    { file: 'wolfkid-power-scan', title: 'Power Scan — Wolfkid Intelligence Division' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -383,6 +384,8 @@ function serveData(e) {
         'submitFeedbackSafe': submitFeedbackSafe, 'getAudioBatchSafe': getAudioBatchSafe,
         'logHomeworkCompletionSafe': logHomeworkCompletionSafe, 'logSparkleProgressSafe': logSparkleProgressSafe,
         'awardRingsSafe': awardRingsSafe,
+        'logQuestionResultSafe': logQuestionResultSafe,
+        'savePowerScanResultsSafe': savePowerScanResultsSafe,
         'runTestsSafe': runTestsSafe
       };
 

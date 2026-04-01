@@ -684,6 +684,24 @@ function init() {
   }
 
   render();
+
+  // Zero-decision start: auto-launch first incomplete mission after brief display
+  setTimeout(function() {
+    var day = new Date().getDay();
+    if (day === 0 || day === 6) return;
+    var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
+    var dayData = schedule[day];
+    if (!dayData) return;
+    var blocks = dayData.blocks;
+    var mState = getMissionState();
+    for (var a = 0; a < blocks.length; a++) {
+      var mId = blocks[a].page + '_' + a;
+      if (!mState[mId]) {
+        window.location.href = buildLaunchUrl(blocks[a]);
+        return;
+      }
+    }
+  }, 1500);
 }
 
 // ============================================================

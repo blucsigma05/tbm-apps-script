@@ -794,9 +794,11 @@ function startTimer() {
     var elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
     var mins = Math.floor(elapsed / 60);
     var secs = elapsed % 60;
-    var display = mins + ":" + (secs < 10 ? "0" : "") + secs;
     var el = document.getElementById("session-timer");
-    if (el) el.textContent = "Session: " + display;
+    if (el) {
+      if (mins < 1) { el.textContent = "Just started"; }
+      else { el.textContent = "Working for " + mins + " min"; }
+    }
   }, 1000);
 }
 
@@ -880,12 +882,25 @@ function switchTab(tab) {
 
     if (s === tab) {
       sectionEl.style.display = "block";
+      sectionEl.style.maxHeight = "";
+      sectionEl.style.overflowY = "";
       tabEl.className = "nav-tab active";
       tabEl.style.borderBottomColor = tabColors[s];
       tabEl.style.color = tabTextColors[s];
       tabEl.style.fontWeight = "700";
       tabEl.style.background = C.card;
       tabEl.style.borderColor = C.border;
+    } else if (s === "overview" && (tab === "science" || tab === "math")) {
+      // Keep overview/passage visible above questions in collapsed form
+      sectionEl.style.display = "block";
+      sectionEl.style.maxHeight = "30vh";
+      sectionEl.style.overflowY = "auto";
+      tabEl.className = "nav-tab";
+      tabEl.style.borderBottomColor = "transparent";
+      tabEl.style.color = C.textDim;
+      tabEl.style.fontWeight = "400";
+      tabEl.style.background = "transparent";
+      tabEl.style.borderColor = "transparent";
     } else {
       sectionEl.style.display = "none";
       tabEl.className = "nav-tab";

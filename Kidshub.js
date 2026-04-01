@@ -2863,47 +2863,98 @@ function verifyAudioFiles(expectedFilenames) {
  */
 function getWeeklyProgressSafe() {
   return withMonitor_('getWeeklyProgressSafe', function() {
-    var ss = SpreadsheetApp.openById(SSID);
     var today = new Date();
     var dayOfWeek = today.getDay();
     var mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     var monday = new Date(today);
     monday.setDate(today.getDate() + mondayOffset);
     monday.setHours(0, 0, 0, 0);
+    var mondayISO = monday.getFullYear() + '-' + (monday.getMonth() + 1 < 10 ? '0' : '') + (monday.getMonth() + 1) + '-' + (monday.getDate() < 10 ? '0' : '') + monday.getDate();
 
-    var result = {
-      buggsy: {
-        name: 'Buggsy',
-        ringsThisWeek: 0,
-        ringsTotal: 0,
-        streak: 0,
-        completionRate: 0,
-        sessionsCompleted: 0,
-        sessionsTotal: 5,
-        avgScore: 0,
-        timeSpent: 0,
-        subjects: [],
-        weekLog: [],
-        alerts: []
-      },
-      jj: {
-        name: 'JJ (Kindle)',
-        starsThisWeek: 0,
-        starsTotal: 0,
-        streak: 0,
-        completionRate: 0,
-        sessionsCompleted: 0,
-        sessionsTotal: 5,
-        milestones: [],
-        weekLog: [],
-        alerts: []
+    var children = ['buggsy', 'jj'];
+    var result = {};
+
+    // Read KH_History for chores this week
+    var histData = readSheet_('KH_History');
+    var histH = histData && histData.length > 0 ? histData[0].map(String) : [];
+
+    // Read KH_Grades for education data
+    var gradeData = readSheet_('KH_Grades');
+    var gradeH = gradeData && gradeData.length > 0 ? gradeData[0].map(String) : [];
+
+    for (var ci = 0; ci < children.length; ci++) {
+      var child = children[ci];
+      var choresCompleted = 0, ringsEarned = 0, streakDays = 0;
+      var questionsAnswered = 0, totalCorrect = 0, totalPossible = 0;
+      var subjectCounts = {};
+      var uniqueDays = {};
+
+      // Aggregate KH_History this week
+      if (histData && histH.length > 0) {
+        var hChild = histH.indexOf('Child');
+        var hDate = histH.indexOf('Date');
+        var hPoints = histH.indexOf('Points');
+        var hType = histH.indexOf('Event_Type');
+        for (var hi = 1; hi < histData.length; hi++) {
+          var row = histData[hi];
+          if (String(row[hChild] || '').toLowerCase() !== child) continue;
+          var rowDate = String(row[hDate] || '');
+          if (rowDate < mondayISO) continue;
+          var evType = String(row[hType] || '');
+          if (evType === 'completion' || evType === 'approval') {
+            choresCompleted++;
+            ringsEarned += Number(row[hPoints]) || 0;
+            uniqueDays[rowDate] = true;
+          }
+        }
       }
-    };
 
-    // TODO: Read from KH_Homework sheet, aggregate by week
-    // TODO: Read from KH_SparkleProgress sheet for JJ data
-    // TODO: Calculate streaks from consecutive completion dates
-    // TODO: Generate alerts based on score thresholds
+      // Streak: count consecutive days with chores from today backwards
+      var dayKeys = Object.keys(uniqueDays).sort().reverse();
+      var checkDate = new Date(today);
+      for (var di = 0; di < 7; di++) {
+        var checkISO = checkDate.getFullYear() + '-' + (checkDate.getMonth() + 1 < 10 ? '0' : '') + (checkDate.getMonth() + 1) + '-' + (checkDate.getDate() < 10 ? '0' : '') + checkDate.getDate();
+        if (uniqueDays[checkISO]) { streakDays++; } else if (di > 0) { break; }
+        checkDate.setDate(checkDate.getDate() - 1);
+      }
+
+      // Aggregate KH_Grades this week
+      if (gradeData && gradeH.length > 0) {
+        var gChild = gradeH.indexOf('Child');
+        var gDate = gradeH.indexOf('Date');
+        var gSubject = gradeH.indexOf('Subject');
+        var gScore = gradeH.indexOf('Score');
+        var gTotal = gradeH.indexOf('Total');
+        for (var gi = 1; gi < gradeData.length; gi++) {
+          var grow = gradeData[gi];
+          if (String(grow[gChild] || '').toLowerCase() !== child) continue;
+          var gRowDate = String(grow[gDate] || '');
+          if (gRowDate < mondayISO) continue;
+          questionsAnswered++;
+          totalCorrect += Number(grow[gScore]) || 0;
+          totalPossible += Number(grow[gTotal]) || 0;
+          var subj = String(grow[gSubject] || 'Other');
+          subjectCounts[subj] = (subjectCounts[subj] || 0) + 1;
+        }
+      }
+
+      var topSubject = '';
+      var topCount = 0;
+      for (var sk in subjectCounts) {
+        if (subjectCounts[sk] > topCount) { topCount = subjectCounts[sk]; topSubject = sk; }
+      }
+
+      result[child] = {
+        child: child,
+        weekLabel: 'Week of ' + (monday.getMonth() + 1) + '/' + monday.getDate(),
+        choresCompleted: choresCompleted,
+        ringsEarned: ringsEarned,
+        questionsAnswered: questionsAnswered,
+        accuracy: totalPossible > 0 ? Math.round((totalCorrect / totalPossible) * 100) / 100 : 0,
+        streakDays: streakDays,
+        topSubject: topSubject || 'None yet'
+      };
+    }
 
     return JSON.parse(JSON.stringify(result));
   });
@@ -3184,4 +3235,134 @@ function seedStaarRlaSprint(jsonStr) {
 
   Logger.log('STAAR RLA sprint seeded: buggsy=' + bugsyJSON.length + ' bytes, jj=' + jjJSON.length + ' bytes');
   return { status: 'seeded', bugsySize: bugsyJSON.length, jjSize: jjJSON.length };
+}
+
+// ════════════════════════════════════════════════════════════════════
+// v36: QuestionLog — per-question result tracking for education modules
+// ════════════════════════════════════════════════════════════════════
+
+var QUESTION_LOG_HEADERS = [
+  'Question_UID', 'Child', 'Date', 'Day_Of_Week', 'Subject', 'TEKS_Code',
+  'Question_Type', 'Distractor_Level', 'Difficulty', 'Correct',
+  'Time_Spent_Seconds', 'Session_Module', 'Timestamp'
+];
+
+function ensureQuestionLogTab_() {
+  var ss = getKHSS_();
+  var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['QuestionLog']) || 'QuestionLog';
+  var sheet = ss.getSheetByName(tabName);
+  if (sheet) return sheet;
+  sheet = ss.insertSheet(tabName);
+  sheet.appendRow(QUESTION_LOG_HEADERS);
+  sheet.setFrozenRows(1);
+  sheet.getRange('1:1').setFontWeight('bold');
+  Logger.log('ensureQuestionLogTab_: Created ' + tabName);
+  return sheet;
+}
+
+function logQuestionResult(data) {
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var sheet = ensureQuestionLogTab_();
+    var child = String(data.child || '').toLowerCase();
+    var today = getTodayISO_();
+    var now = getNowISO_();
+    var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var dayOfWeek = dayNames[new Date().getDay()];
+    var uid = String(data.questionUID || '');
+    if (!uid) uid = child + '_' + today + '_' + String(data.subject || '') + '_' + String(data.questionIndex || Math.random());
+
+    // Dedup guard
+    var lastRow = sheet.getLastRow();
+    if (lastRow > 1) {
+      var scanStart = Math.max(2, lastRow - 200);
+      var scanData = sheet.getRange(scanStart, 1, lastRow - scanStart + 1, 1).getValues();
+      for (var i = 0; i < scanData.length; i++) {
+        if (String(scanData[i][0]) === uid) {
+          return JSON.stringify({ status: 'duplicate', uid: uid });
+        }
+      }
+    }
+
+    sheet.appendRow([
+      uid,
+      child,
+      today,
+      dayOfWeek,
+      String(data.subject || ''),
+      String(data.teksCode || ''),
+      String(data.questionType || 'MC'),
+      Number(data.distractorLevel) || 1,
+      String(data.difficulty || 'standard'),
+      data.correct === true || data.correct === 'true',
+      Number(data.timeSpentSeconds) || 0,
+      String(data.sessionModule || ''),
+      now
+    ]);
+    stampKHHeartbeat_();
+    return JSON.stringify({ status: 'ok', uid: uid });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function logQuestionResultSafe(data) {
+  return withMonitor_('logQuestionResultSafe', function() {
+    return JSON.parse(JSON.stringify(
+      typeof data === 'string' ? JSON.parse(logQuestionResult(JSON.parse(data))) : JSON.parse(logQuestionResult(data))
+    ));
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════
+// v36: Power Scan — save executive skills self-assessment results
+// ════════════════════════════════════════════════════════════════════
+
+function savePowerScanResults(child, ratings, openResponses) {
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var ss = getKHSS_();
+    var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_PowerScan']) || 'KH_PowerScan';
+    var sheet = ss.getSheetByName(tabName);
+    if (!sheet) {
+      sheet = ss.insertSheet(tabName);
+      sheet.appendRow([
+        'Date', 'Child', 'Flexibility', 'Memory', 'Inhibition', 'Initiation',
+        'Planning', 'Organization', 'Time', 'Persistence', 'Metacognition', 'Emotion',
+        'FullPowerMode', 'GlitchMode', 'PowerDrains', 'RechargeMethod'
+      ]);
+      sheet.setFrozenRows(1);
+      sheet.getRange('1:1').setFontWeight('bold');
+    }
+    sheet.appendRow([
+      getTodayISO_(),
+      String(child || 'buggsy').toLowerCase(),
+      Number(ratings.flexibility) || 0,
+      Number(ratings.memory) || 0,
+      Number(ratings.inhibition) || 0,
+      Number(ratings.initiation) || 0,
+      Number(ratings.planning) || 0,
+      Number(ratings.organization) || 0,
+      Number(ratings.time) || 0,
+      Number(ratings.persistence) || 0,
+      Number(ratings.metacognition) || 0,
+      Number(ratings.emotion) || 0,
+      String(openResponses.best || ''),
+      String(openResponses.stress || ''),
+      String(openResponses.triggers || ''),
+      String(openResponses.recharge || '')
+    ]);
+    stampKHHeartbeat_();
+    return JSON.stringify({ status: 'ok' });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function savePowerScanResultsSafe(child, ratings, openResponses) {
+  return withMonitor_('savePowerScanResultsSafe', function() {
+    return JSON.parse(JSON.stringify(JSON.parse(savePowerScanResults(child, ratings, openResponses))));
+  });
 }

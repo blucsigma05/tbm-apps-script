@@ -513,22 +513,22 @@ main {
     <div class="complete-card">
       <div class="complete-icon" id="complete-icon">&#x1F3C6;</div>
       <h2 id="complete-title">SPRINT COMPLETE!</h2>
+      <div style="text-align:center;margin-bottom:16px">
+        <div class="stat-value gold" id="final-accuracy" style="font-size:48px;margin-bottom:4px">0%</div>
+        <div class="stat-label" style="font-size:14px;letter-spacing:2px">ACCURACY</div>
+      </div>
       <div class="stats-grid">
         <div class="stat-box">
-          <div class="stat-value blue" id="final-time">0:00</div>
-          <div class="stat-label">TIME</div>
-        </div>
-        <div class="stat-box">
           <div class="stat-value green" id="final-score">0/20</div>
-          <div class="stat-label">SCORE</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-value gold" id="final-accuracy">0%</div>
-          <div class="stat-label">ACCURACY</div>
+          <div class="stat-label">CORRECT</div>
         </div>
         <div class="stat-box">
           <div class="stat-value red" id="final-streak">0</div>
-          <div class="stat-label">LONGEST STREAK</div>
+          <div class="stat-label">BEST STREAK</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value blue" id="final-time" style="font-size:16px">0:00</div>
+          <div class="stat-label" style="font-size:8px">TIME</div>
         </div>
       </div>
       <div class="personal-best-banner" id="pb-banner">
@@ -995,7 +995,7 @@ function finishSprint() {
   stopTimer();
   var elapsed = getElapsedSeconds();
   var accuracy = Math.round((score / TOTAL_QUESTIONS) * 100);
-  var rings = 2;
+  var rings = score;
   var isPerfect = (score === TOTAL_QUESTIONS);
   if (isPerfect) rings += 2;
 
@@ -1018,19 +1018,22 @@ function finishSprint() {
     document.getElementById('perfect-bonus').style.display = 'none';
   }
 
-  // Icon and title
+  // Icon and title — lead with what they got right
   if (isPerfect) {
     document.getElementById('complete-icon').innerHTML = '&#x1F31F;';
-    document.getElementById('complete-title').textContent = 'PERFECT SPRINT!';
+    document.getElementById('complete-title').textContent = 'PERFECT! You nailed all ' + TOTAL_QUESTIONS + '!';
   } else if (score >= 18) {
     document.getElementById('complete-icon').innerHTML = '&#x1F3C6;';
-    document.getElementById('complete-title').textContent = 'INCREDIBLE!';
+    document.getElementById('complete-title').textContent = 'You nailed ' + score + ' out of ' + TOTAL_QUESTIONS + '!';
   } else if (score >= 15) {
     document.getElementById('complete-icon').innerHTML = '&#x1F4AA;';
-    document.getElementById('complete-title').textContent = 'SOLID WORK!';
+    document.getElementById('complete-title').textContent = 'You got ' + score + ' out of ' + TOTAL_QUESTIONS + '!';
+  } else if (score >= 10) {
+    document.getElementById('complete-icon').innerHTML = '&#x26A1;';
+    document.getElementById('complete-title').textContent = 'You got ' + score + ' right! Keep practicing!';
   } else {
     document.getElementById('complete-icon').innerHTML = '&#x26A1;';
-    document.getElementById('complete-title').textContent = 'SPRINT COMPLETE!';
+    document.getElementById('complete-title').textContent = 'Sprint done! Let\'s keep building!';
   }
 
   // Personal best checks
