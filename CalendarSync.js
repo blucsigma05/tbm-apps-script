@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// CalendarSync.gs v4 — Google Calendar Seeding & Sync from TBM Data
+// CalendarSync.gs v5 — Google Calendar Seeding & Sync from TBM Data
 // WRITES TO: (Google Calendar only — no sheet writes)
 // READS FROM: 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getCalendarSyncVersion() { return 4; }
+function getCalendarSyncVersion() { return 5; }
 
 // ────────────────────────────────────────────────────────────────────
 // v1 (2026-03-10):
@@ -911,3 +911,161 @@ function csResetAll() {
   Logger.log('csResetAll: cleared ' + deleted + ' tracked event IDs');
   return deleted;
 }
+
+// ════════════════════════════════════════════════════════════════════
+// v5: Calendar Diagnostic + NISD School Calendar Bulk Import
+// ════════════════════════════════════════════════════════════════════
+
+function diagCalendar() {
+  var cals = CalendarApp.getAllCalendars();
+  for (var i = 0; i < cals.length; i++) {
+    Logger.log('Calendar [' + i + ']: "' + cals[i].getName() + '" (ID: ' + cals[i].getId() + ')');
+  }
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  var targetNames = ['Thompson Household', 'Kids Activities', 'Bills and Financial'];
+  for (var t = 0; t < targetNames.length; t++) {
+    try {
+      var cal = CalendarApp.getCalendarsByName(targetNames[t]);
+      Logger.log('Looking for "' + targetNames[t] + '": found ' + cal.length + ' calendar(s)');
+      for (var c = 0; c < cal.length; c++) {
+        var events = cal[c].getEvents(today, tomorrow);
+        Logger.log('  "' + cal[c].getName() + '" has ' + events.length + ' events today');
+        for (var e = 0; e < Math.min(events.length, 5); e++) {
+          Logger.log('    Event: "' + events[e].getTitle() + '" at ' + events[e].getStartTime());
+        }
+      }
+    } catch (err) {
+      Logger.log('  ERROR for "' + targetNames[t] + '": ' + err.message);
+    }
+  }
+}
+
+function loadNanceSchoolCalendar() {
+  var calName = 'Kids Activities';
+  var cals = CalendarApp.getCalendarsByName(calName);
+  if (!cals.length) {
+    Logger.log('ERROR: Calendar "' + calName + '" not found. Available:');
+    var all = CalendarApp.getAllCalendars();
+    for (var a = 0; a < all.length; a++) { Logger.log('  ' + all[a].getName()); }
+    return;
+  }
+  var cal = cals[0];
+
+  var events = [
+    // 2025-2026 SCHOOL YEAR (Remainder)
+    { date: '2026-04-03', title: 'No School — Student Holiday / Teacher Flex', allDay: true },
+    { date: '2026-04-08', title: 'STAAR Testing', allDay: true },
+    { date: '2026-05-22', title: 'Early Release (11:45 AM)', allDay: true },
+    { date: '2026-05-22', title: 'Last Day of School / End of 4th Quarter', allDay: true },
+    // 2026-2027 SCHOOL YEAR (Full)
+    { date: '2026-08-12', title: 'First Day of School', allDay: true },
+    { date: '2026-09-07', title: 'No School — Labor Day Holiday', allDay: true },
+    { date: '2026-10-08', title: 'End of 1st Quarter', allDay: true },
+    { date: '2026-10-09', title: 'No School — Student Holiday / Teacher Flex', allDay: true },
+    { date: '2026-10-12', title: 'No School — Student Holiday / Teacher Planning', allDay: true },
+    { date: '2026-11-02', title: 'No School — Student & Staff Holiday', allDay: true },
+    { date: '2026-11-03', title: 'No School — Student Holiday / Teacher Prof Learning', allDay: true },
+    { date: '2026-11-23', title: 'No School — Student Holiday / Teacher Flex', allDay: true },
+    { date: '2026-11-24', title: 'No School — Student Holiday / Teacher Flex', allDay: true },
+    { date: '2026-11-25', title: 'No School — Thanksgiving Break', allDay: true },
+    { date: '2026-11-26', title: 'No School — Thanksgiving Break', allDay: true },
+    { date: '2026-11-27', title: 'No School — Thanksgiving Break', allDay: true },
+    { date: '2026-12-01', title: 'STAAR Testing Window Opens', allDay: true },
+    { date: '2026-12-11', title: 'STAAR Testing Window Closes', allDay: true },
+    { date: '2026-12-18', title: 'Early Release (11:45 AM) / End of 2nd Quarter', allDay: true },
+    { date: '2026-12-21', title: 'No School — Winter Break', allDay: true },
+    { date: '2026-12-22', title: 'No School — Winter Break', allDay: true },
+    { date: '2026-12-23', title: 'No School — Winter Break', allDay: true },
+    { date: '2026-12-24', title: 'No School — Winter Break', allDay: true },
+    { date: '2026-12-25', title: 'No School — Winter Break (Christmas)', allDay: true },
+    { date: '2026-12-26', title: 'No School — Winter Break', allDay: true },
+    { date: '2026-12-29', title: 'No School — Winter Break', allDay: true },
+    { date: '2026-12-30', title: 'No School — Winter Break', allDay: true },
+    { date: '2026-12-31', title: 'No School — Winter Break', allDay: true },
+    { date: '2027-01-01', title: 'No School — New Year\'s Day', allDay: true },
+    { date: '2027-01-04', title: 'No School — Student Holiday / Teacher Prof Learning', allDay: true },
+    { date: '2027-01-05', title: 'No School — Student Holiday / Teacher Prof Learning', allDay: true },
+    { date: '2027-01-18', title: 'No School — MLK Day Holiday', allDay: true },
+    { date: '2027-02-12', title: 'No School — Student & Staff Holiday', allDay: true },
+    { date: '2027-02-15', title: 'No School — Student Holiday / Teacher Planning', allDay: true },
+    { date: '2027-03-05', title: 'No School — Student Holiday / Teacher Prof Learning', allDay: true },
+    { date: '2027-03-12', title: 'End of 3rd Quarter', allDay: true },
+    { date: '2027-03-15', title: 'No School — Spring Break', allDay: true },
+    { date: '2027-03-16', title: 'No School — Spring Break', allDay: true },
+    { date: '2027-03-17', title: 'No School — Spring Break', allDay: true },
+    { date: '2027-03-18', title: 'No School — Spring Break', allDay: true },
+    { date: '2027-03-19', title: 'No School — Spring Break', allDay: true },
+    { date: '2027-03-22', title: 'No School — Student Holiday / Teacher Planning', allDay: true },
+    { date: '2027-03-26', title: 'No School — Student & Staff Holiday', allDay: true },
+    { date: '2027-04-06', title: 'STAAR Testing Window Opens', allDay: true },
+    { date: '2027-04-23', title: 'No School — Student Holiday / Teacher Flex', allDay: true },
+    { date: '2027-04-30', title: 'STAAR Testing Window Closes', allDay: true },
+    { date: '2027-05-21', title: 'Early Release (11:45 AM) / Last Day of School / End of 4th Quarter', allDay: true },
+    // 2027-2028 SCHOOL YEAR (Full)
+    { date: '2027-08-18', title: 'First Day of School', allDay: true },
+    { date: '2027-09-06', title: 'No School — Labor Day Holiday', allDay: true },
+    { date: '2027-10-07', title: 'End of 1st Quarter', allDay: true },
+    { date: '2027-10-08', title: 'No School — Student Holiday / Teacher Flex', allDay: true },
+    { date: '2027-10-11', title: 'No School — Student Holiday / Teacher Planning', allDay: true },
+    { date: '2027-11-01', title: 'No School — Student & Staff Holiday', allDay: true },
+    { date: '2027-11-02', title: 'No School — Student Holiday / Teacher Prof Learning', allDay: true },
+    { date: '2027-11-22', title: 'No School — Student Holiday / Teacher Flex', allDay: true },
+    { date: '2027-11-23', title: 'No School — Student Holiday / Teacher Flex', allDay: true },
+    { date: '2027-11-24', title: 'No School — Thanksgiving Break', allDay: true },
+    { date: '2027-11-25', title: 'No School — Thanksgiving Break', allDay: true },
+    { date: '2027-11-26', title: 'No School — Thanksgiving Break', allDay: true },
+    { date: '2027-12-17', title: 'Early Release (11:45 AM) / End of 2nd Quarter', allDay: true },
+    { date: '2027-12-20', title: 'No School — Winter Break', allDay: true },
+    { date: '2027-12-21', title: 'No School — Winter Break', allDay: true },
+    { date: '2027-12-22', title: 'No School — Winter Break', allDay: true },
+    { date: '2027-12-23', title: 'No School — Winter Break', allDay: true },
+    { date: '2027-12-24', title: 'No School — Winter Break (Christmas Eve)', allDay: true },
+    { date: '2027-12-27', title: 'No School — Winter Break', allDay: true },
+    { date: '2027-12-28', title: 'No School — Winter Break', allDay: true },
+    { date: '2027-12-29', title: 'No School — Winter Break', allDay: true },
+    { date: '2027-12-30', title: 'No School — Winter Break', allDay: true },
+    { date: '2027-12-31', title: 'No School — Winter Break', allDay: true },
+    { date: '2028-01-03', title: 'No School — Student Holiday / Teacher Prof Learning', allDay: true },
+    { date: '2028-01-04', title: 'No School — Student Holiday / Teacher Prof Learning', allDay: true },
+    { date: '2028-01-17', title: 'No School — MLK Day Holiday', allDay: true },
+    { date: '2028-02-18', title: 'No School — Student Holiday / Teacher Planning', allDay: true },
+    { date: '2028-02-21', title: 'No School — Presidents Day Holiday', allDay: true },
+    { date: '2028-03-10', title: 'End of 3rd Quarter', allDay: true },
+    { date: '2028-03-13', title: 'No School — Spring Break', allDay: true },
+    { date: '2028-03-14', title: 'No School — Spring Break', allDay: true },
+    { date: '2028-03-15', title: 'No School — Spring Break', allDay: true },
+    { date: '2028-03-16', title: 'No School — Spring Break', allDay: true },
+    { date: '2028-03-17', title: 'No School — Spring Break', allDay: true },
+    { date: '2028-03-20', title: 'No School — Student Holiday / Teacher Prof Learning', allDay: true },
+    { date: '2028-03-21', title: 'No School — Student Holiday / Teacher Prof Learning', allDay: true },
+    { date: '2028-04-14', title: 'No School — Student Holiday / Teacher Flex', allDay: true },
+    { date: '2028-05-25', title: 'Early Release (11:45 AM) / Last Day of School / End of 4th Quarter', allDay: true }
+  ];
+
+  var added = 0, skipped = 0;
+  for (var i = 0; i < events.length; i++) {
+    var ev = events[i];
+    var d = new Date(ev.date + 'T12:00:00');
+    var existing = cal.getEventsForDay(d);
+    var isDup = false;
+    for (var e = 0; e < existing.length; e++) {
+      if (existing[e].getTitle() === ev.title) { isDup = true; break; }
+    }
+    if (isDup) { skipped++; continue; }
+    if (ev.allDay) {
+      cal.createAllDayEvent(ev.title, d);
+    } else {
+      var start = new Date(ev.date + 'T' + (ev.startTime || '08:00') + ':00');
+      var end = new Date(ev.date + 'T' + (ev.endTime || '09:00') + ':00');
+      cal.createEvent(ev.title, start, end);
+    }
+    added++;
+    Logger.log('Added: ' + ev.title + ' on ' + ev.date);
+  }
+  Logger.log('School calendar import: ' + added + ' added, ' + skipped + ' skipped (duplicates)');
+}
+
+// END OF FILE — CalendarSync.gs v5
