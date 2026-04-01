@@ -234,7 +234,8 @@ function servePage(page, e) {
     'story':         { file: 'StoryReader',    title: 'Story Reader' },
     'investigation': { file: 'investigation-module', title: 'Field Investigation — Science' },
     'daily-missions':{ file: 'daily-missions', title: 'Daily Missions — Thompson Education' },
-    'baseline':      { file: 'BaselineDiagnostic', title: 'Baseline Diagnostic — Thompson Education' }
+    'baseline':      { file: 'BaselineDiagnostic', title: 'Baseline Diagnostic — Thompson Education' },
+    'power-scan':    { file: 'wolfkid-power-scan', title: 'Power Scan — Wolfkid Intelligence Division' }
   };
 
   var route = routes[page] || routes['pulse'];

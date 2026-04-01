@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WOLFKID — Power Scan</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0a0a1a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 20px 16px;
+  }
+
+  /* INTRO SCREEN */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .intro-logo {
+    text-align: center;
+    padding: 40px 0 20px;
+  }
+  .intro-logo h1 {
+    font-size: 28px;
+    color: #00e5ff;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-shadow: 0 0 20px rgba(0,229,255,0.4);
+  }
+  .intro-logo .subtitle {
+    font-size: 14px;
+    color: #ff6b35;
+    margin-top: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .intro-text {
+    background: linear-gradient(135deg, #1a1a3a 0%, #0d0d2b 100%);
+    border: 1px solid #2a2a5a;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 24px 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: #b0b0d0;
+  }
+  .intro-text strong { color: #00e5ff; }
+  .intro-text em { color: #ff6b35; font-style: normal; }
+
+  .start-btn {
+    display: block;
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #00e5ff 0%, #0091ea 100%);
+    color: #000;
+    font-size: 18px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 20px;
+  }
+  .start-btn:active { transform: scale(0.98); }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    background: #1a1a3a;
+    height: 6px;
+    border-radius: 3px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00e5ff, #ff6b35);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .step-label {
+    font-size: 12px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+
+  /* POWER LEVEL CARDS */
+  .power-card {
+    background: linear-gradient(135deg, #1a1a3a 0%, #0d0d2b 100%);
+    border: 1px solid #2a2a5a;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .power-card h3 {
+    font-size: 16px;
+    color: #00e5ff;
+    margin-bottom: 4px;
+  }
+  .power-card .desc {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .power-levels {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .power-levels button {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    border: 2px solid #2a2a5a;
+    background: #0a0a1a;
+    color: #666;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+  }
+  .power-levels button .lvl-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+  .power-levels button:active { transform: scale(0.95); }
+  .power-levels button.selected {
+    border-color: #00e5ff;
+    background: rgba(0,229,255,0.15);
+    color: #00e5ff;
+    box-shadow: 0 0 16px rgba(0,229,255,0.2);
+  }
+  .power-levels button.selected.low {
+    border-color: #ff4444;
+    background: rgba(255,68,68,0.15);
+    color: #ff6666;
+    box-shadow: 0 0 16px rgba(255,68,68,0.2);
+  }
+  .power-levels button.selected.mid {
+    border-color: #ffaa00;
+    background: rgba(255,170,0,0.15);
+    color: #ffcc44;
+    box-shadow: 0 0 16px rgba(255,170,0,0.2);
+  }
+  .power-levels button.selected.high {
+    border-color: #00e676;
+    background: rgba(0,230,118,0.15);
+    color: #44ff88;
+    box-shadow: 0 0 16px rgba(0,230,118,0.2);
+  }
+
+  /* OPEN RESPONSE */
+  .open-card {
+    background: linear-gradient(135deg, #1a1a3a 0%, #0d0d2b 100%);
+    border: 1px solid #2a2a5a;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .open-card h3 {
+    font-size: 18px;
+    color: #00e5ff;
+    margin-bottom: 6px;
+  }
+  .open-card .prompt {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  .open-card .example {
+    font-size: 12px;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 12px;
+    padding: 10px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    line-height: 1.5;
+  }
+  .open-card textarea {
+    width: 100%;
+    min-height: 100px;
+    background: #0a0a1a;
+    border: 1px solid #2a2a5a;
+    border-radius: 10px;
+    padding: 14px;
+    color: #e0e0e0;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.6;
+    resize: vertical;
+  }
+  .open-card textarea:focus {
+    outline: none;
+    border-color: #00e5ff;
+    box-shadow: 0 0 12px rgba(0,229,255,0.15);
+  }
+  .open-card textarea::placeholder { color: #444; }
+
+  .next-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #00e5ff 0%, #0091ea 100%);
+    color: #000;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 12px;
+  }
+  .next-btn:disabled {
+    background: #2a2a3a;
+    color: #555;
+    cursor: not-allowed;
+  }
+
+  /* RESULTS */
+  .results-header {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .results-header h2 {
+    font-size: 22px;
+    color: #00e5ff;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+  }
+  .results-header .sub {
+    color: #ff6b35;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  .result-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: #111128;
+    border-radius: 8px;
+  }
+  .result-bar .label {
+    font-size: 12px;
+    color: #999;
+    width: 120px;
+    flex-shrink: 0;
+  }
+  .result-bar .bar-track {
+    flex: 1;
+    height: 14px;
+    background: #1a1a3a;
+    border-radius: 7px;
+    overflow: hidden;
+  }
+  .result-bar .bar-fill {
+    height: 100%;
+    border-radius: 7px;
+    transition: width 0.6s ease;
+  }
+  .result-bar .val {
+    font-size: 14px;
+    font-weight: 700;
+    width: 24px;
+    text-align: right;
+  }
+  .strengths-box, .watch-box {
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+  }
+  .strengths-box {
+    background: rgba(0,230,118,0.08);
+    border: 1px solid rgba(0,230,118,0.2);
+  }
+  .strengths-box h4 { color: #44ff88; font-size: 14px; margin-bottom: 8px; }
+  .watch-box {
+    background: rgba(255,170,0,0.08);
+    border: 1px solid rgba(255,170,0,0.2);
+  }
+  .watch-box h4 { color: #ffcc44; font-size: 14px; margin-bottom: 8px; }
+  .tag { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 12px; margin: 2px 4px; }
+  .tag-green { background: rgba(0,230,118,0.15); color: #44ff88; }
+  .tag-yellow { background: rgba(255,170,0,0.15); color: #ffcc44; }
+
+  .open-response-display {
+    background: #111128;
+    border-radius: 10px;
+    padding: 14px;
+    margin: 8px 0;
+    font-size: 13px;
+    color: #b0b0d0;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+  .section-title {
+    font-size: 14px;
+    color: #00e5ff;
+    margin-top: 20px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .copy-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #ff6b35 0%, #e64a19 100%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 20px;
+  }
+  .parent-note {
+    margin-top: 16px;
+    padding: 14px;
+    background: rgba(255,107,53,0.08);
+    border: 1px solid rgba(255,107,53,0.2);
+    border-radius: 10px;
+    font-size: 12px;
+    color: #cc8866;
+    line-height: 1.6;
+  }
+  .parent-note strong { color: #ff6b35; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- SCREEN 0: INTRO -->
+  <div id="screen-intro" class="screen active">
+    <div class="intro-logo">
+      <h1>Power Scan</h1>
+      <div class="subtitle">Wolfkid Intelligence Division</div>
+    </div>
+    <div class="intro-text">
+      Every hero has a unique power profile. <strong>Wolfkid</strong> needs to know his stats before he can level up.
+      <br><br>
+      This scan reads <em>10 core brain powers</em>. There are no right or wrong answers — just honest ones.
+      Some powers will be high. Some will be lower. <strong>That's how every hero works.</strong> Even the strongest ones have powers they're still building.
+      <br><br>
+      The scan has 3 parts:
+      <br>1. <strong>Rate your 10 powers</strong> (1 = still building, 5 = superpower)
+      <br>2. <strong>When your powers are at full strength</strong>
+      <br>3. <strong>When your powers glitch</strong> + what causes it
+    </div>
+    <button class="start-btn" onclick="startScan()">Initialize Power Scan</button>
+  </div>
+
+  <!-- SCREEN 1: POWER RATINGS -->
+  <div id="screen-powers" class="screen">
+    <div class="progress-bar"><div class="progress-fill" id="progress" style="width: 0%"></div></div>
+    <div class="step-label">Part 1 of 3 — Power Levels</div>
+    <div id="power-cards"></div>
+    <button class="next-btn" id="powers-next" onclick="goToScreen2()" disabled>Next: Full Power Mode</button>
+  </div>
+
+  <!-- SCREEN 2: BRAIN AT ITS BEST -->
+  <div id="screen-best" class="screen">
+    <div class="progress-bar"><div class="progress-fill" style="width: 50%"></div></div>
+    <div class="step-label">Part 2 of 3 — Full Power Mode</div>
+
+    <div class="open-card">
+      <h3>When Your Powers Are Maxed Out</h3>
+      <div class="prompt">Think about a time your brain was running perfectly. You were focused, getting stuff done, feeling good. What were you doing? What did it feel like?</div>
+      <div class="example">Example: "I'm drawing my comic and I don't even notice time passing. I can hold the whole story in my head. I feel calm and locked in."</div>
+      <textarea id="brain-best" placeholder="My brain is at its best when..."></textarea>
+    </div>
+
+    <div class="open-card">
+      <h3>When Your Powers Glitch</h3>
+      <div class="prompt">Now think about the opposite. When your brain feels foggy, frustrated, or stuck. What happens? What does it feel like?</div>
+      <div class="example">Example: "I can't sit still. I keep starting things but not finishing. I get mad at myself and want to quit."</div>
+      <textarea id="brain-stress" placeholder="When my brain glitches, I..."></textarea>
+    </div>
+
+    <button class="next-btn" id="best-next" onclick="goToScreen3()">Next: Power Drains</button>
+  </div>
+
+  <!-- SCREEN 3: TRIGGERS -->
+  <div id="screen-triggers" class="screen">
+    <div class="progress-bar"><div class="progress-fill" style="width: 80%"></div></div>
+    <div class="step-label">Part 3 of 3 — Power Drains</div>
+
+    <div class="open-card">
+      <h3>What Drains Your Energy?</h3>
+      <div class="prompt">What situations, feelings, or environments make your brain switch into glitch mode? These are your <strong>power drains</strong> — knowing them is how you learn to avoid or prepare for them.</div>
+      <div class="example">Example: "Being told I have 5 minutes left. Too much noise. Being hungry. When someone changes the plan at the last second."</div>
+      <textarea id="triggers" placeholder="My power drains are..."></textarea>
+    </div>
+
+    <div class="open-card">
+      <h3>Your Secret Recharge</h3>
+      <div class="prompt">What helps you get your powers back when they glitch? What recharges you?</div>
+      <div class="example">Example: "Drawing. Going outside. Having snack time. Listening to music. Being left alone for a few minutes."</div>
+      <textarea id="recharge" placeholder="I recharge by..."></textarea>
+    </div>
+
+    <button class="next-btn" onclick="showResults()">Generate Power Report</button>
+  </div>
+
+  <!-- SCREEN 4: RESULTS -->
+  <div id="screen-results" class="screen">
+    <div class="results-header">
+      <h2>Power Scan Complete</h2>
+      <div class="sub">Wolfkid Intelligence Division — Classified</div>
+    </div>
+
+    <div id="results-bars"></div>
+    <div id="results-strengths"></div>
+    <div id="results-watch"></div>
+
+    <div class="section-title">Full Power Mode</div>
+    <div class="open-response-display" id="res-best"></div>
+
+    <div class="section-title">Glitch Mode</div>
+    <div class="open-response-display" id="res-stress"></div>
+
+    <div class="section-title">Power Drains</div>
+    <div class="open-response-display" id="res-triggers"></div>
+
+    <div class="section-title">Recharge Method</div>
+    <div class="open-response-display" id="res-recharge"></div>
+
+    <button class="copy-btn" onclick="copyResults()">Copy Full Report</button>
+    <div id="copy-confirm" style="text-align:center;color:#44ff88;font-size:13px;margin-top:8px;display:none;">Copied!</div>
+
+    <div class="parent-note">
+      <strong>Parent Note:</strong> This maps directly to the Smart but Scattered executive skills framework (Dawson &amp; Guare). The 10 powers are the 10 core executive skills. His ratings, open responses, triggers, and recharge strategies are clinical-grade self-assessment data you can share with his teacher or any future evaluator. These responses will also calibrate which executive skills the platform targets most aggressively in his daily modules.
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // === ES5 COMPATIBLE ===
+  var powers = [
+    {
+      id: 'flexibility',
+      name: 'Mental Agility',
+      skill: 'Cognitive Flexibility',
+      desc: 'Switching gears when plans change. Thinking about things in a new way when the first way isn\'t working. Rolling with surprises.'
+    },
+    {
+      id: 'memory',
+      name: 'Brain RAM',
+      skill: 'Working Memory',
+      desc: 'Holding multiple things in your head at once. Remembering instructions while doing them. Keeping track of a story while writing it.'
+    },
+    {
+      id: 'inhibition',
+      name: 'Pause Button',
+      skill: 'Inhibition (Self-Control)',
+      desc: 'Stopping yourself before you act. Thinking before you speak. Resisting distractions when you need to focus.'
+    },
+    {
+      id: 'initiation',
+      name: 'Ignition Switch',
+      skill: 'Task Initiation',
+      desc: 'Getting started on things without putting them off. Not needing someone to push you. Just... beginning.'
+    },
+    {
+      id: 'planning',
+      name: 'Mission Planner',
+      skill: 'Planning / Prioritization',
+      desc: 'Figuring out the steps to reach a goal. Deciding what to do first, second, third. Making a plan and sticking to it.'
+    },
+    {
+      id: 'organization',
+      name: 'Command Center',
+      skill: 'Organization',
+      desc: 'Keeping track of your stuff. Knowing where things are. Having a system that works for you.'
+    },
+    {
+      id: 'time',
+      name: 'Time Sense',
+      skill: 'Time Management',
+      desc: 'Knowing how long things take. Not being surprised when time runs out. Finishing before the deadline.'
+    },
+    {
+      id: 'persistence',
+      name: 'Endurance Mode',
+      skill: 'Goal-Directed Persistence',
+      desc: 'Sticking with something even when it gets hard or boring. Finishing what you start. Keeping your eye on the goal.'
+    },
+    {
+      id: 'metacognition',
+      name: 'Self-Scanner',
+      skill: 'Metacognition',
+      desc: 'Noticing how your own brain works. Knowing when you\'re confused. Being able to say "I need to try a different approach."'
+    },
+    {
+      id: 'emotion',
+      name: 'Emotional Shield',
+      skill: 'Emotional Regulation',
+      desc: 'Managing frustration without exploding. Handling disappointment. Staying calm enough to keep going when things go wrong.'
+    }
+  ];
+
+  var ratings = {};
+  var levelLabels = ['', 'Low', 'Build', 'Mid', 'Good', 'Max'];
+
+  function startScan() {
+    document.getElementById('screen-intro').className = 'screen';
+    document.getElementById('screen-powers').className = 'screen active';
+    renderPowerCards();
+  }
+
+  function renderPowerCards() {
+    var container = document.getElementById('power-cards');
+    var html = '';
+    for (var i = 0; i < powers.length; i++) {
+      var p = powers[i];
+      html += '<div class="power-card">';
+      html += '<h3>' + p.name + '</h3>';
+      html += '<div class="desc">' + p.desc + '</div>';
+      html += '<div class="power-levels" id="pl-' + p.id + '">';
+      for (var lvl = 1; lvl <= 5; lvl++) {
+        html += '<button onclick="ratePower(\'' + p.id + '\',' + lvl + ')" id="btn-' + p.id + '-' + lvl + '">';
+        html += lvl;
+        html += '<span class="lvl-label">' + levelLabels[lvl] + '</span>';
+        html += '</button>';
+      }
+      html += '</div>';
+      html += '</div>';
+    }
+    container.innerHTML = html;
+  }
+
+  function ratePower(id, level) {
+    ratings[id] = level;
+
+    // Clear old selection
+    for (var j = 1; j <= 5; j++) {
+      var btn = document.getElementById('btn-' + id + '-' + j);
+      btn.className = '';
+    }
+    // Set new
+    var selected = document.getElementById('btn-' + id + '-' + level);
+    var colorClass = level <= 2 ? 'selected low' : (level === 3 ? 'selected mid' : 'selected high');
+    selected.className = colorClass;
+
+    // Check if all rated
+    var count = 0;
+    for (var k = 0; k < powers.length; k++) {
+      if (ratings[powers[k].id]) count++;
+    }
+    var pct = Math.round((count / powers.length) * 33);
+    document.getElementById('progress').style.width = pct + '%';
+    document.getElementById('powers-next').disabled = (count < powers.length);
+  }
+
+  function goToScreen2() {
+    document.getElementById('screen-powers').className = 'screen';
+    document.getElementById('screen-best').className = 'screen active';
+    window.scrollTo(0, 0);
+  }
+
+  function goToScreen3() {
+    document.getElementById('screen-best').className = 'screen';
+    document.getElementById('screen-triggers').className = 'screen active';
+    window.scrollTo(0, 0);
+  }
+
+  function showResults() {
+    document.getElementById('screen-triggers').className = 'screen';
+    document.getElementById('screen-results').className = 'screen active';
+    window.scrollTo(0, 0);
+
+    // Render bars
+    var barsHtml = '';
+    var strengths = [];
+    var watchAreas = [];
+
+    for (var i = 0; i < powers.length; i++) {
+      var p = powers[i];
+      var val = ratings[p.id] || 3;
+      var pct = (val / 5) * 100;
+      var color = val <= 2 ? '#ff4444' : (val === 3 ? '#ffaa00' : '#00e676');
+
+      barsHtml += '<div class="result-bar">';
+      barsHtml += '<div class="label">' + p.name + '</div>';
+      barsHtml += '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>';
+      barsHtml += '<div class="val" style="color:' + color + '">' + val + '</div>';
+      barsHtml += '</div>';
+
+      if (val >= 4) strengths.push(p.name);
+      if (val <= 2) watchAreas.push(p.name);
+    }
+    document.getElementById('results-bars').innerHTML = barsHtml;
+
+    // Strengths
+    if (strengths.length > 0) {
+      var sHtml = '<div class="strengths-box"><h4>Superpowers (4-5)</h4>';
+      for (var s = 0; s < strengths.length; s++) {
+        sHtml += '<span class="tag tag-green">' + strengths[s] + '</span>';
+      }
+      sHtml += '</div>';
+      document.getElementById('results-strengths').innerHTML = sHtml;
+    }
+
+    if (watchAreas.length > 0) {
+      var wHtml = '<div class="watch-box"><h4>Powers to Build (1-2)</h4>';
+      for (var w = 0; w < watchAreas.length; w++) {
+        wHtml += '<span class="tag tag-yellow">' + watchAreas[w] + '</span>';
+      }
+      wHtml += '</div>';
+      document.getElementById('results-watch').innerHTML = wHtml;
+    }
+
+    // Open responses
+    document.getElementById('res-best').textContent = document.getElementById('brain-best').value || '(not answered)';
+    document.getElementById('res-stress').textContent = document.getElementById('brain-stress').value || '(not answered)';
+    document.getElementById('res-triggers').textContent = document.getElementById('triggers').value || '(not answered)';
+    document.getElementById('res-recharge').textContent = document.getElementById('recharge').value || '(not answered)';
+  }
+
+  function copyResults() {
+    var lines = [];
+    lines.push('WOLFKID POWER SCAN — ' + new Date().toLocaleDateString());
+    lines.push('');
+    lines.push('=== POWER LEVELS ===');
+    for (var i = 0; i < powers.length; i++) {
+      var p = powers[i];
+      var val = ratings[p.id] || '?';
+      lines.push(p.skill + ': ' + val + '/5');
+    }
+    lines.push('');
+    lines.push('=== FULL POWER MODE ===');
+    lines.push(document.getElementById('brain-best').value || '(not answered)');
+    lines.push('');
+    lines.push('=== GLITCH MODE ===');
+    lines.push(document.getElementById('brain-stress').value || '(not answered)');
+    lines.push('');
+    lines.push('=== POWER DRAINS ===');
+    lines.push(document.getElementById('triggers').value || '(not answered)');
+    lines.push('');
+    lines.push('=== RECHARGE METHOD ===');
+    lines.push(document.getElementById('recharge').value || '(not answered)');
+
+    var text = lines.join('\n');
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() {
+        var el = document.getElementById('copy-confirm');
+        el.style.display = 'block';
+        setTimeout(function() { el.style.display = 'none'; }, 2000);
+      });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      var el2 = document.getElementById('copy-confirm');
+      el2.style.display = 'block';
+      setTimeout(function() { el2.style.display = 'none'; }, 2000);
+    }
+  }
+</script>
+</body>
+</html>

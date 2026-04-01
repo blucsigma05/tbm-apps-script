@@ -29,7 +29,8 @@ const PATH_ROUTES = {
   '/story':         { page: 'story' },
   '/investigation': { page: 'investigation' },
   '/daily-missions':{ page: 'daily-missions' },
-  '/baseline':      { page: 'baseline' }
+  '/baseline':      { page: 'baseline' },
+  '/power-scan':    { page: 'power-scan' }
 };
 
 export default {
