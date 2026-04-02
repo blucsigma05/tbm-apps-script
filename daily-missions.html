@@ -978,14 +978,14 @@ function render() {
     document.getElementById('header-emoji').textContent = '\uD83C\uDFAF';
   }
 
-  // Weekend check
-  if (dayOfWeek === 0 || dayOfWeek === 6) {
+  var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
+  var dayData = schedule[dayOfWeek];
+
+  // Weekend check — but allow Day 1 (key 0) to pass through
+  if (!dayData && (dayOfWeek === 0 || dayOfWeek === 6)) {
     renderWeekend(container);
     return;
   }
-
-  var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
-  var dayData = schedule[dayOfWeek];
   if (!dayData) {
     renderWeekend(container);
     return;
