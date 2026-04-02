@@ -303,7 +303,8 @@ function getShimScript() {
 '    "saveMissionStateSafe","getMissionStateSafe",\n' +
 '    "submitHomeworkSafe","getEducationQueueSafe","approveHomeworkSafe",\n' +
 '    "getDailyScheduleSafe",\n' +
-'    "checkDay1Safe"\n' +
+'    "checkDay1Safe",\n' +
+'    "saveDesignChoicesSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +
