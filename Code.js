@@ -405,7 +405,8 @@ function serveData(e) {
         'approveHomeworkSafe': approveHomeworkSafe,
         'getDailyScheduleSafe': getDailyScheduleSafe,
         'checkDay1Safe': checkDay1Safe,
-        'saveDesignChoicesSafe': saveDesignChoicesSafe
+        'saveDesignChoicesSafe': saveDesignChoicesSafe,
+        'seedAllCurriculumSafe': seedAllCurriculumSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {

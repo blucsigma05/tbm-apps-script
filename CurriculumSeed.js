@@ -1,8 +1,8 @@
-// CurriculumSeed.gs — v2
+// CurriculumSeed.gs — v3
 // Owned by: KidsHub team
 // PURPOSE: One-time seed of 4 weeks of curriculum for JJ and Buggsy
 // Run seedAllCurriculum() from the Script Editor to populate the Curriculum tab.
-// CurriculumSeed.gs — v2
+// CurriculumSeed.gs — v3
 
 // ════════════════════════════════════════════════════════════════════
 // JJ CURRICULUM — Pre-K (Age 4, KINDLE letter sequence: K,I,N,D,L,E,J,B)
@@ -18,7 +18,7 @@ var JJ_WEEK_1 = {
   child: "jj",
   week: 1,
   phase: "Phase 1",
-  startDate: "2026-04-07",
+  startDate: "2026-04-06",
   focusLetters: ["K", "I"],
   focusNumbers: [1, 2, 3],
   focusColors: ["red"],
@@ -90,7 +90,7 @@ var JJ_WEEK_2 = {
   child: "jj",
   week: 2,
   phase: "Phase 1",
-  startDate: "2026-04-14",
+  startDate: "2026-04-13",
   focusLetters: ["N", "D"],
   focusNumbers: [1, 2, 3, 4],
   focusColors: ["blue"],
@@ -166,7 +166,7 @@ var JJ_WEEK_3 = {
   child: "jj",
   week: 3,
   phase: "Phase 1",
-  startDate: "2026-04-21",
+  startDate: "2026-04-20",
   focusLetters: ["L", "E"],
   focusNumbers: [1, 2, 3, 4, 5],
   focusColors: ["yellow"],
@@ -241,7 +241,7 @@ var JJ_WEEK_4 = {
   child: "jj",
   week: 4,
   phase: "Phase 1",
-  startDate: "2026-04-28",
+  startDate: "2026-04-27",
   focusLetters: ["J", "B"],
   focusNumbers: [1, 2, 3, 4, 5],
   focusColors: ["green"],
@@ -328,7 +328,7 @@ var JJ_WEEK_4 = {
 var BUGGSY_WEEK_1 = {
   child: "buggsy",
   week: 1,
-  startDate: "2026-04-07",
+  startDate: "2026-04-06",
   vocabulary: [
     { word: "observe", definition: "To watch something carefully to learn about it", sentence: "Scientists observe animals in the wild to understand their behavior." },
     { word: "signal", definition: "A sign or action that sends a message", sentence: "The traffic light gives a signal to stop or go." },
@@ -474,7 +474,7 @@ var BUGGSY_WEEK_1 = {
 var BUGGSY_WEEK_2 = {
   child: "buggsy",
   week: 2,
-  startDate: "2026-04-14",
+  startDate: "2026-04-13",
   vocabulary: [
     { word: "hesitate", definition: "To pause before doing something because you are unsure", sentence: "Don't hesitate — jump in and try your best!" },
     { word: "collision", definition: "When two things crash into each other", sentence: "The collision between the two bumper cars made a loud noise." },
@@ -620,7 +620,7 @@ var BUGGSY_WEEK_2 = {
 var BUGGSY_WEEK_3 = {
   child: "buggsy",
   week: 3,
-  startDate: "2026-04-21",
+  startDate: "2026-04-20",
   vocabulary: [
     { word: "erosion", definition: "The wearing away of land by water, wind, or ice", sentence: "The river caused erosion along the canyon walls over millions of years." },
     { word: "deposit", definition: "Material that has been left behind by wind, water, or ice", sentence: "The flood left a deposit of mud on the riverbank." },
@@ -767,7 +767,7 @@ var BUGGSY_WEEK_3 = {
 var BUGGSY_WEEK_4 = {
   child: "buggsy",
   week: 4,
-  startDate: "2026-04-28",
+  startDate: "2026-04-27",
   vocabulary: [
     { word: "scavenger", definition: "An animal that feeds on dead or decaying matter", sentence: "A vulture is a scavenger that eats animals that have already died." },
     { word: "adaptation", definition: "A trait or behavior that helps a living thing survive in its environment", sentence: "A polar bear's thick fur is an adaptation for cold weather." },
@@ -916,7 +916,7 @@ var BUGGSY_WEEK_4 = {
 // MAIN SEED FUNCTION
 // ════════════════════════════════════════════════════════════════════
 
-function getCurriculumSeedVersion() { return 2; }
+function getCurriculumSeedVersion() { return 3; }
 
 function seedAllCurriculum() {
   var sheet = ensureCurriculumTab_();
@@ -929,16 +929,16 @@ function seedAllCurriculum() {
   var rows = [];
 
   // JJ Weeks 1-4
-  rows.push([1, 'jj', '2026-04-07', JSON.stringify(JJ_WEEK_1)]);
-  rows.push([2, 'jj', '2026-04-14', JSON.stringify(JJ_WEEK_2)]);
-  rows.push([3, 'jj', '2026-04-21', JSON.stringify(JJ_WEEK_3)]);
-  rows.push([4, 'jj', '2026-04-28', JSON.stringify(JJ_WEEK_4)]);
+  rows.push([1, 'jj', JJ_WEEK_1.startDate, JSON.stringify(JJ_WEEK_1)]);
+  rows.push([2, 'jj', JJ_WEEK_2.startDate, JSON.stringify(JJ_WEEK_2)]);
+  rows.push([3, 'jj', JJ_WEEK_3.startDate, JSON.stringify(JJ_WEEK_3)]);
+  rows.push([4, 'jj', JJ_WEEK_4.startDate, JSON.stringify(JJ_WEEK_4)]);
 
   // Buggsy Weeks 1-4
-  rows.push([1, 'buggsy', '2026-04-07', JSON.stringify(BUGGSY_WEEK_1)]);
-  rows.push([2, 'buggsy', '2026-04-14', JSON.stringify(BUGGSY_WEEK_2)]);
-  rows.push([3, 'buggsy', '2026-04-21', JSON.stringify(BUGGSY_WEEK_3)]);
-  rows.push([4, 'buggsy', '2026-04-28', JSON.stringify(BUGGSY_WEEK_4)]);
+  rows.push([1, 'buggsy', BUGGSY_WEEK_1.startDate, JSON.stringify(BUGGSY_WEEK_1)]);
+  rows.push([2, 'buggsy', BUGGSY_WEEK_2.startDate, JSON.stringify(BUGGSY_WEEK_2)]);
+  rows.push([3, 'buggsy', BUGGSY_WEEK_3.startDate, JSON.stringify(BUGGSY_WEEK_3)]);
+  rows.push([4, 'buggsy', BUGGSY_WEEK_4.startDate, JSON.stringify(BUGGSY_WEEK_4)]);
 
   // Write all 8 rows at once
   sheet.getRange(2, 1, rows.length, 4).setValues(rows);
@@ -954,4 +954,10 @@ function seedAllCurriculum() {
   return { status: 'seeded', rowCount: rows.length };
 }
 
-// CurriculumSeed.gs — v2
+function seedAllCurriculumSafe() {
+  return withMonitor_('seedAllCurriculumSafe', function() {
+    return JSON.parse(JSON.stringify(seedAllCurriculum()));
+  });
+}
+
+// CurriculumSeed.gs — v3
