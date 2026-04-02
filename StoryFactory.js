@@ -1484,6 +1484,10 @@ function loadStoryToProps(storyKey, jsonString) {
     Logger.log('loadStoryToProps: Invalid JSON — ' + e.message);
     return 'ERROR: Invalid JSON';
   }
+  if (jsonString.length > 8000) {
+    Logger.log('loadStoryToProps: Story too large (' + jsonString.length + ' chars, limit 8000). Use Drive storage.');
+    return 'ERROR: Story exceeds PropertiesService per-key limit';
+  }
   PropertiesService.getScriptProperties().setProperty(meta.propertyKey, jsonString);
   Logger.log('loadStoryToProps: Stored ' + storyKey + ' (' + jsonString.length + ' chars)');
   return 'OK: ' + storyKey + ' loaded (' + jsonString.length + ' chars)';

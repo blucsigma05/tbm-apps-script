@@ -783,10 +783,10 @@ function khCompleteTaskSafe(rowIndex) {
     catch(e) { _khDiag_('khCompleteTaskSafe', {rowIndex: rowIndex}, e); throw e; }
   });
 }
-function khCompleteTaskWithBonusSafe(rowIndex, multiplier) {
+function khCompleteTaskWithBonusSafe(rowIndex, multiplier, expectedTaskID) {
   return withMonitor_('khCompleteTaskWithBonusSafe', function() {
-    try { return JSON.parse(khCompleteTaskWithBonus(rowIndex, multiplier)); }
-    catch(e) { _khDiag_('khCompleteTaskWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier}, e); throw e; }
+    try { return JSON.parse(khCompleteTaskWithBonus(rowIndex, multiplier, expectedTaskID)); }
+    catch(e) { _khDiag_('khCompleteTaskWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier, expectedTaskID: expectedTaskID}, e); throw e; }
   });
 }
 function khApproveTaskSafe(rowIndex) {
