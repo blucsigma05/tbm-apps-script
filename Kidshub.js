@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v38 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v39 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 38; }
+function getKidsHubVersion() { return 39; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3235,5 +3235,153 @@ function savePowerScanResultsSafe(child, ratings, openResponses) {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — KidsHub.gs v37
+// ════════════════════════════════════════════════════════════════════
+// v39: Education backend — save/load progress, scaffold logging, week progress
+// ════════════════════════════════════════════════════════════════════
+
+function saveProgress_(data) {
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var sheet = getKHSheet_('KH_History');
+    if (!sheet) return JSON.stringify({ status: 'error', message: 'KH_History not found' });
+    var now = new Date();
+    var today = getTodayISO_();
+    var nowISO = getNowISO_();
+    var child = String(data.child || 'jj').toLowerCase();
+    sheet.appendRow([
+      'PROGRESS_' + child + '_' + today,
+      child,
+      'SparkleLearn Progress',
+      Number(data.stars) || 0,
+      0,
+      1,
+      'education_progress',
+      today,
+      nowISO,
+      'Letters: ' + ((data.lettersCompleted || []).join(','))
+    ]);
+    stampKHHeartbeat_();
+    return JSON.stringify({ status: 'ok', stars: data.stars });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function saveProgressSafe(data) {
+  return withMonitor_('saveProgressSafe', function() {
+    return JSON.parse(JSON.stringify(JSON.parse(saveProgress_(data))));
+  });
+}
+
+function loadProgress_(child) {
+  var data = readSheet_('KH_History');
+  if (!data || data.length < 2) return { stars: 0, lettersCompleted: [], currentLetter: 'K' };
+  var h = data[0].map(String);
+  var hChild = h.indexOf('Child');
+  var hType = h.indexOf('Event_Type');
+  var hPoints = h.indexOf('Points');
+  var hTask = h.indexOf('Task');
+  for (var i = data.length - 1; i >= 1; i--) {
+    var row = data[i];
+    if (String(row[hChild] || '').toLowerCase() !== child.toLowerCase()) continue;
+    if (String(row[hType] || '') !== 'education_progress') continue;
+    var letters = String(row[hTask] || '').replace('Letters: ', '').split(',');
+    var filtered = [];
+    for (var j = 0; j < letters.length; j++) {
+      if (letters[j].length > 0) filtered.push(letters[j]);
+    }
+    return {
+      stars: Number(row[hPoints]) || 0,
+      lettersCompleted: filtered,
+      currentLetter: filtered.length > 0 ? filtered[filtered.length - 1] : 'K'
+    };
+  }
+  return { stars: 0, lettersCompleted: [], currentLetter: 'K' };
+}
+
+function loadProgressSafe(child) {
+  return withMonitor_('loadProgressSafe', function() {
+    return JSON.parse(JSON.stringify(loadProgress_(child)));
+  });
+}
+
+function logScaffoldEvent_(data) {
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var sheet = getKHSheet_('KH_History');
+    if (!sheet) return JSON.stringify({ status: 'error' });
+    var now = new Date();
+    var today = getTodayISO_();
+    var nowISO = getNowISO_();
+    sheet.appendRow([
+      'SCAFFOLD_' + today + '_' + Math.random().toString(36).substring(7),
+      String(data.child || 'buggsy').toLowerCase(),
+      String(data.module || ''),
+      0,
+      0,
+      1,
+      'scaffold',
+      today,
+      nowISO,
+      JSON.stringify({ event: data.event, data: data.data || {} })
+    ]);
+    stampKHHeartbeat_();
+    return JSON.stringify({ status: 'ok' });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function logScaffoldEventSafe(data) {
+  return withMonitor_('logScaffoldEventSafe', function() {
+    return JSON.parse(JSON.stringify(JSON.parse(logScaffoldEvent_(data))));
+  });
+}
+
+function getWeekProgress_(child) {
+  var data = readSheet_('KH_History');
+  if (!data || data.length < 2) return { daysCompleted: 0, goalMet: false };
+  var h = data[0].map(String);
+  var hChild = h.indexOf('Child');
+  var hType = h.indexOf('Event_Type');
+  var hDate = h.indexOf('Date');
+
+  var today = new Date();
+  var dayOfWeek = today.getDay();
+  var mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  var monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+  monday.setHours(0, 0, 0, 0);
+  var mondayStr = monday.getFullYear() + '-' + (monday.getMonth() + 1 < 10 ? '0' : '') + (monday.getMonth() + 1) + '-' + (monday.getDate() < 10 ? '0' : '') + monday.getDate();
+  var todayStr = getTodayISO_();
+  var daysSet = {};
+
+  for (var i = 1; i < data.length; i++) {
+    var row = data[i];
+    if (String(row[hChild] || '').toLowerCase() !== child.toLowerCase()) continue;
+    var evType = String(row[hType] || '');
+    if (evType !== 'education' && evType !== 'education_progress') continue;
+    var rowDate = String(row[hDate] || '');
+    if (rowDate >= mondayStr && rowDate <= todayStr) {
+      daysSet[rowDate] = true;
+    }
+  }
+
+  var count = 0;
+  for (var d in daysSet) {
+    if (daysSet.hasOwnProperty(d)) count++;
+  }
+
+  return { daysCompleted: count, goalMet: count >= 5 };
+}
+
+function getWeekProgressSafe(child) {
+  return withMonitor_('getWeekProgressSafe', function() {
+    return JSON.parse(JSON.stringify(getWeekProgress_(child)));
+  });
+}
+
+// END OF FILE — KidsHub.gs v39
 // ════════════════════════════════════════════════════════════════════
