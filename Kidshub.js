@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v41 — Kids Hub Server Backend (TBM Consolidated)
-// WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog
+// KidsHub.gs v42 — Kids Hub Server Backend (TBM Consolidated)
+// WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 41; }
+function getKidsHubVersion() { return 42; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -532,7 +532,7 @@ function backfillCompletedDatesToISO_() {
 var _cachedSS = null;
 
 function getKHSS_() {
-  if (!_cachedSS) _cachedSS = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  if (!_cachedSS) _cachedSS = SpreadsheetApp.openById(SSID);
   return _cachedSS;
 }
 
@@ -621,7 +621,7 @@ function getNowISO_() {
 function acquireLock_() {
   var lock = LockService.getScriptLock();
   var hasLock = false;
-  try { hasLock = lock.waitLock(30000); hasLock = true; } catch (e) { hasLock = false; }
+  try { lock.waitLock(30000); hasLock = true; } catch (e) { hasLock = false; }
   return { lock: lock, acquired: hasLock };
 }
 
@@ -3052,10 +3052,8 @@ function kh_batchApprove_(rowIndices, approver) {
 
 // v30: Streak + Mastery computation helpers
 function kh_computeWeeklyStreak_(child) {
-  var sheet = getKHSheet_('KH_History');
-  if (!sheet) return 0;
-  var data = sheet.getDataRange().getValues();
-  if (data.length < 2) return 0;
+  var data = readSheet_('KH_History');
+  if (!data || data.length < 2) return 0;
   var h = data[0];
   var childIdx = h.indexOf('Child');
   var eventIdx = h.indexOf('Event_Type');
@@ -3571,28 +3569,37 @@ function submitHomework_(data) {
         }
       } catch(e) { /* non-blocking */ }
 
-      // Gemini first-pass review (non-blocking — row already written)
-      if (data.responseText && String(data.responseText).length > 20) {
-        try {
-          var review = reviewWithGemini_({
-            child: data.child || 'buggsy',
-            subject: data.subject || '',
-            prompt: data.prompt || '',
-            response: data.responseText
-          });
-          if (review && review.feedback) {
-            var lastRow = sheet.getLastRow();
-            sheet.getRange(lastRow, 12).setValue(JSON.stringify(review));
+    }
+
+    var _lastRowForGemini = sheet.getLastRow();
+    // Release lock BEFORE Gemini call (can take 5-30s)
+    lk.lock.releaseLock();
+
+    // Gemini first-pass review (outside lock scope)
+    if (status === 'pending_review' && data.responseText && String(data.responseText).length > 20) {
+      try {
+        var review = reviewWithGemini_({
+          child: data.child || 'buggsy',
+          subject: data.subject || '',
+          prompt: data.prompt || '',
+          response: data.responseText
+        });
+        if (review && review.feedback) {
+          var lk2 = acquireLock_();
+          if (lk2.acquired) {
+            try { sheet.getRange(_lastRowForGemini, 12).setValue(JSON.stringify(review)); }
+            finally { lk2.lock.releaseLock(); }
           }
-        } catch(e2) {
-          if (typeof logError_ === 'function') logError_('submitHomework_:geminiReview', e2);
         }
+      } catch(e2) {
+        if (typeof logError_ === 'function') logError_('submitHomework_:geminiReview', e2);
       }
     }
 
     return JSON.stringify({ status: 'ok', autoApproved: isAutoGrade, ringsAwarded: rings });
-  } finally {
-    lk.lock.releaseLock();
+  } catch(e) {
+    if (lk && lk.lock) { try { lk.lock.releaseLock(); } catch(x) {} }
+    throw e;
   }
 }
 
@@ -3742,6 +3749,8 @@ function getDailySchedule_(child) {
               if (phase.type === 'quick_write') blocks.push({ page: 'writing', name: 'Writing', time: 10 });
             }
           }
+          if (dayContent.cold_passage || dayContent.coldPassage) blocks.push({ page: 'reading', name: 'Reading', time: 12 });
+          if (dayContent.quick_write || dayContent.quickWrite || dayContent.writing) blocks.push({ page: 'writing', name: 'Writing', time: 10 });
           if (dayContent.wolfkidEpisode || dayContent.wolfkid_episode) blocks.push({ page: 'wolfkid', name: 'Wolfkid CER', time: 15 });
           if (dayContent.investigation) blocks.push({ page: 'investigation', name: 'Investigation', time: 12 });
           if (dayContent.reviewQuiz || dayContent.review_quiz) blocks.push({ page: 'homework', name: 'Review Quiz', time: 10 });
@@ -3765,5 +3774,5 @@ function getDailyScheduleSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v41
+// END OF FILE — KidsHub.gs v42
 // ════════════════════════════════════════════════════════════════════

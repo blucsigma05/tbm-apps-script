@@ -580,6 +580,10 @@ var MODULE_NAME = 'comic-studio';
 var MODULE_VERSION = 'v1';
 var CHILD = 'buggsy';
 
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // State
 var panelCount = 2;
 var activePanel = 0;
@@ -882,7 +886,7 @@ function renderPreview() {
     html += '<div style="flex:0 0 ' + w + ';border:2px solid #1E2A4A;border-radius:6px;overflow:hidden;">';
     html += '<img src="' + dataUrl + '" style="width:100%;display:block;">';
     html += '<div style="background:#0B0F1A;color:#E2E8F0;padding:8px;font-size:12px;min-height:40px;">';
-    html += captions[i] || '<span style="color:#64748B;font-style:italic;">No caption</span>';
+    html += captions[i] ? escapeHtml(captions[i]) : '<span style="color:#64748B;font-style:italic;">No caption</span>';
     html += '</div></div>';
   }
   html += '</div>';

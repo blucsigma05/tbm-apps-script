@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v64 — Apps Script Router (TBM Consolidated)
+// Code.gs v65 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 64; }
+function getCodeVersion() { return 65; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -394,6 +394,7 @@ function serveData(e) {
         'loadProgressSafe': loadProgressSafe,
         'logScaffoldEventSafe': logScaffoldEventSafe,
         'getWeekProgressSafe': getWeekProgressSafe,
+        'getWeeklyProgressSafe': getWeeklyProgressSafe,
         'getStoryForReaderSafe': getStoryForReaderSafe,
         'getStoryImagesSafe': getStoryImagesSafe,
         'runTestsSafe': runTestsSafe,
@@ -782,10 +783,10 @@ function khCompleteTaskSafe(rowIndex) {
     catch(e) { _khDiag_('khCompleteTaskSafe', {rowIndex: rowIndex}, e); throw e; }
   });
 }
-function khCompleteTaskWithBonusSafe(rowIndex, multiplier) {
+function khCompleteTaskWithBonusSafe(rowIndex, multiplier, expectedTaskID) {
   return withMonitor_('khCompleteTaskWithBonusSafe', function() {
-    try { return JSON.parse(khCompleteTaskWithBonus(rowIndex, multiplier)); }
-    catch(e) { _khDiag_('khCompleteTaskWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier}, e); throw e; }
+    try { return JSON.parse(khCompleteTaskWithBonus(rowIndex, multiplier, expectedTaskID)); }
+    catch(e) { _khDiag_('khCompleteTaskWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier, expectedTaskID: expectedTaskID}, e); throw e; }
   });
 }
 function khApproveTaskSafe(rowIndex) {
@@ -962,7 +963,7 @@ function seedStaarRlaSprintSafe(jsonStr) {
 
 // v52: Feedback Form — setup + submit
 function setupFeedbackSheet() {
-  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  var ss = SpreadsheetApp.openById(SSID);
   var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Feedback']) || '💻 Feedback';
   var sheet = ss.getSheetByName(tabName);
   if (!sheet) {
@@ -994,7 +995,7 @@ function submitFeedbackSafe(payload) {
       return JSON.parse(JSON.stringify({ error: true, message: 'System is busy' }));
     }
     try {
-      var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+      var ss = SpreadsheetApp.openById(SSID);
       var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Feedback']) || '💻 Feedback';
       var sheet = ss.getSheetByName(tabName);
       if (!sheet) {
@@ -1237,7 +1238,7 @@ function getVaultDataSafe() {
 // ════════════════════════════════════════════════════════════════════
 
 function healthCheck() {
-  Logger.log('═══ Code.gs v63 Health Check ═══');
+  Logger.log('═══ Code.gs v' + getCodeVersion() + ' Health Check ═══');
 
   var fns = [
     'doGet', 'servePage', 'serveData', 'getDataSafe', 'getMonthsSafe',
@@ -1605,4 +1606,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v64
+// END OF FILE — Code.gs v65

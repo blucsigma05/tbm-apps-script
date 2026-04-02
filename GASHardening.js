@@ -1,11 +1,11 @@
 // ════════════════════════════════════════════════════════════════════
-// GAS HARDENING v6 — Centralized Monitoring, Logging & Maintenance
+// GAS HARDENING v7 — Centralized Monitoring, Logging & Maintenance
 // WRITES TO: ErrorLog, PerfLog
 // READS FROM: (all files for version reporting)
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 6; }
+function getGASHardeningVersion() { return 7; }
 
 // v6: openById migration — trigger-safe spreadsheet accessor
 var _ghSS = null;
@@ -1146,7 +1146,8 @@ function getDeployedVersions() {
     ['MonitorEngine', 'getMonitorEngineVersion'],
     ['CalendarSync',  'getCalendarSyncVersion'],
     ['AlertEngine',   'getAlertEngineVersion'],
-    ['StoryFactory',  'getStoryFactoryVersion']
+    ['StoryFactory',  'getStoryFactoryVersion'],
+    ['CurriculumSeed', 'getCurriculumSeedVersion']
   ];
   for (var i = 0; i < checks.length; i++) {
     var label = checks[i][0];
@@ -1882,5 +1883,5 @@ function diagPreQA() {
 }
 
 
-// END OF FILE — GAS HARDENING v6
+// END OF FILE — GAS HARDENING v7
 // ═══════════════════════════════════════════════════════════════

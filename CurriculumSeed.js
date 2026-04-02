@@ -360,9 +360,9 @@ var BUGGSY_WEEK_1 = {
         science: {
           title: "Earth Materials: Rocks & Minerals",
           questions: [
-            { q: "Which type of rock is formed when melted rock (magma) cools and hardens?", type: "recall", choices: ["Sedimentary", "Metamorphic", "Igneous", "Mineral"], correct: 2, standard: "TEKS 4.7A", explanation: "Igneous rocks form from cooled magma or lava." },
-            { q: "Sandstone is made of tiny bits of sand pressed together over time. What type of rock is it?", type: "application", choices: ["Igneous", "Sedimentary", "Metamorphic", "Crystal"], correct: 1, standard: "TEKS 4.7A", explanation: "Sedimentary rocks form from layers of material pressed together." },
-            { q: "What process changes one type of rock into another over millions of years?", type: "recall", choices: ["Erosion", "Evaporation", "The rock cycle", "Photosynthesis"], correct: 2, standard: "TEKS 4.7A", explanation: "The rock cycle describes how rocks transform between types." }
+            { q: "Which type of rock is formed when melted rock (magma) cools and hardens?", type: "multiple_choice", choices: ["Sedimentary", "Metamorphic", "Igneous", "Mineral"], correct: 2, standard: "TEKS 4.7A", explanation: "Igneous rocks form from cooled magma or lava." },
+            { q: "Sandstone is made of tiny bits of sand pressed together over time. What type of rock is it?", type: "multiple_choice", choices: ["Igneous", "Sedimentary", "Metamorphic", "Crystal"], correct: 1, standard: "TEKS 4.7A", explanation: "Sedimentary rocks form from layers of material pressed together." },
+            { q: "What process changes one type of rock into another over millions of years?", type: "multiple_choice", choices: ["Erosion", "Evaporation", "The rock cycle", "Photosynthesis"], correct: 2, standard: "TEKS 4.7A", explanation: "The rock cycle describes how rocks transform between types." }
           ]
         }
       },
@@ -377,10 +377,10 @@ var BUGGSY_WEEK_1 = {
         vocabWords: ["gorge", "carved", "layers"],
         passageVisibility: "full",
         questions: [
-          { q: "What created the Grand Canyon over millions of years?", type: "literal", choices: ["Earthquakes", "The Colorado River", "Volcanoes", "Wind storms"], correct: 1, standard: "TEKS 4.6A" },
-          { q: "Why do scientists study the canyon walls?", type: "inferential", choices: ["To find gold", "To learn about Earth's history", "To build bridges", "To count animals"], correct: 1, standard: "TEKS 4.6B" },
-          { q: "What does the word 'gorge' most likely mean in this passage?", type: "vocabulary", choices: ["A mountain", "A deep narrow valley", "A type of river", "A flat desert"], correct: 1, standard: "TEKS 4.2B" },
-          { q: "Which detail supports the idea that the Grand Canyon is very old?", type: "evidence", choices: ["It is in Arizona", "Visitors come from all over", "The oldest rocks are nearly 2 billion years old", "The walls change color"], correct: 2, standard: "TEKS 4.6C" }
+          { q: "What created the Grand Canyon over millions of years?", type: "multiple_choice", choices: ["Earthquakes", "The Colorado River", "Volcanoes", "Wind storms"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "Why do scientists study the canyon walls?", type: "multiple_choice", choices: ["To find gold", "To learn about Earth's history", "To build bridges", "To count animals"], correct: 1, standard: "TEKS 4.6B" },
+          { q: "What does the word 'gorge' most likely mean in this passage?", type: "multiple_choice", choices: ["A mountain", "A deep narrow valley", "A type of river", "A flat desert"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "Which detail supports the idea that the Grand Canyon is very old?", type: "multiple_choice", choices: ["It is in Arizona", "Visitors come from all over", "The oldest rocks are nearly 2 billion years old", "The walls change color"], correct: 2, standard: "TEKS 4.6C" }
         ]
       },
       writing: {
@@ -396,7 +396,7 @@ var BUGGSY_WEEK_1 = {
         math: {
           title: "Comparing Fractions",
           questions: [
-            { q: "Which fraction is greater: 3/4 or 2/3?", type: "comparison", choices: ["3/4", "2/3", "They are equal", "Cannot tell"], correct: 0, standard: "TEKS 4.3D", explanation: "3/4 = 9/12 and 2/3 = 8/12, so 3/4 is greater." },
+            { q: "Which fraction is greater: 3/4 or 2/3?", type: "multiple_choice", choices: ["3/4", "2/3", "They are equal", "Cannot tell"], correct: 0, standard: "TEKS 4.3D", explanation: "3/4 = 9/12 and 2/3 = 8/12, so 3/4 is greater." },
             { q: "What fraction is equivalent to 2/6?", type: "computation", choices: ["1/2", "1/3", "2/3", "3/6"], correct: 1, standard: "TEKS 4.3C", explanation: "2/6 simplifies to 1/3 (divide both by 2)." },
             { q: "Add: 3/8 + 2/8 = ?", type: "computation", choices: ["5/16", "5/8", "1/8", "6/8"], correct: 1, standard: "TEKS 4.3E", explanation: "Same denominator: 3 + 2 = 5, so 5/8." },
             { q: "Carlos ate 1/4 of a pizza and Maria ate 2/4. How much did they eat together?", type: "word_problem", choices: ["3/8", "3/4", "1/2", "2/8"], correct: 1, standard: "TEKS 4.3E", explanation: "1/4 + 2/4 = 3/4 of the pizza." }
@@ -405,9 +405,9 @@ var BUGGSY_WEEK_1 = {
         science: {
           title: "Weather & the Water Cycle",
           questions: [
-            { q: "What is the process called when water changes from liquid to gas?", type: "recall", choices: ["Condensation", "Precipitation", "Evaporation", "Collection"], correct: 2, standard: "TEKS 4.8A", explanation: "Evaporation is when liquid water becomes water vapor (gas)." },
-            { q: "What causes rain to fall from clouds?", type: "application", choices: ["Wind pushes it down", "Water droplets get too heavy", "The sun pulls it down", "Cold air freezes it"], correct: 1, standard: "TEKS 4.8A", explanation: "When water droplets in clouds become too heavy, they fall as precipitation." },
-            { q: "Which is the main source of energy that drives the water cycle?", type: "recall", choices: ["The moon", "The wind", "The sun", "The ocean"], correct: 2, standard: "TEKS 4.8A", explanation: "The sun's heat drives evaporation, powering the water cycle." }
+            { q: "What is the process called when water changes from liquid to gas?", type: "multiple_choice", choices: ["Condensation", "Precipitation", "Evaporation", "Collection"], correct: 2, standard: "TEKS 4.8A", explanation: "Evaporation is when liquid water becomes water vapor (gas)." },
+            { q: "What causes rain to fall from clouds?", type: "multiple_choice", choices: ["Wind pushes it down", "Water droplets get too heavy", "The sun pulls it down", "Cold air freezes it"], correct: 1, standard: "TEKS 4.8A", explanation: "When water droplets in clouds become too heavy, they fall as precipitation." },
+            { q: "Which is the main source of energy that drives the water cycle?", type: "multiple_choice", choices: ["The moon", "The wind", "The sun", "The ocean"], correct: 2, standard: "TEKS 4.8A", explanation: "The sun's heat drives evaporation, powering the water cycle." }
           ]
         }
       },
@@ -427,10 +427,10 @@ var BUGGSY_WEEK_1 = {
         vocabWords: ["migration", "navigate", "declining"],
         passageVisibility: "full",
         questions: [
-          { q: "How far do monarch butterflies travel during migration?", type: "literal", choices: ["300 miles", "1,000 miles", "Up to 3,000 miles", "30 miles"], correct: 2, standard: "TEKS 4.6A" },
-          { q: "What makes monarch migration different from bird migration?", type: "inferential", choices: ["They fly farther", "They fly faster", "Individual monarchs only make the trip once", "They fly at night"], correct: 2, standard: "TEKS 4.6B" },
-          { q: "What does 'declining' mean in the last paragraph?", type: "vocabulary", choices: ["Growing quickly", "Getting smaller in number", "Moving to a new place", "Changing color"], correct: 1, standard: "TEKS 4.2B" },
-          { q: "What are two reasons monarch populations are decreasing?", type: "evidence", choices: ["Cold weather and predators", "Habitat loss and pesticide use", "Disease and drought", "Pollution and noise"], correct: 1, standard: "TEKS 4.6C" }
+          { q: "How far do monarch butterflies travel during migration?", type: "multiple_choice", choices: ["300 miles", "1,000 miles", "Up to 3,000 miles", "30 miles"], correct: 2, standard: "TEKS 4.6A" },
+          { q: "What makes monarch migration different from bird migration?", type: "multiple_choice", choices: ["They fly farther", "They fly faster", "Individual monarchs only make the trip once", "They fly at night"], correct: 2, standard: "TEKS 4.6B" },
+          { q: "What does 'declining' mean in the last paragraph?", type: "multiple_choice", choices: ["Growing quickly", "Getting smaller in number", "Moving to a new place", "Changing color"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "What are two reasons monarch populations are decreasing?", type: "multiple_choice", choices: ["Cold weather and predators", "Habitat loss and pesticide use", "Disease and drought", "Pollution and noise"], correct: 1, standard: "TEKS 4.6C" }
         ]
       },
       wolfkidEpisode: {
@@ -449,14 +449,14 @@ var BUGGSY_WEEK_1 = {
             { q: "Nathan earns $8.50 per hour mowing lawns. If he works 4 hours, how much does he earn?", type: "word_problem", choices: ["$32.00", "$34.00", "$12.50", "$36.00"], correct: 1, standard: "TEKS 4.10A", explanation: "$8.50 x 4 = $34.00" },
             { q: "A rectangle has an area of 72 square cm and a length of 9 cm. What is the width?", type: "word_problem", choices: ["6 cm", "8 cm", "63 cm", "81 cm"], correct: 1, standard: "TEKS 4.5D", explanation: "A = l x w, so 72 = 9 x w, w = 8 cm" },
             { q: "You save $3.75 each week for 6 weeks. How much do you have?", type: "word_problem", choices: ["$22.50", "$18.75", "$22.00", "$9.75"], correct: 0, standard: "TEKS 4.10A", explanation: "$3.75 x 6 = $22.50" },
-            { q: "Which is a fixed expense?", type: "recall", choices: ["Movie tickets", "Monthly rent", "New shoes", "Birthday gift"], correct: 1, standard: "TEKS 4.10B", explanation: "Rent is the same amount every month — that makes it a fixed expense." }
+            { q: "Which is a fixed expense?", type: "multiple_choice", choices: ["Movie tickets", "Monthly rent", "New shoes", "Birthday gift"], correct: 1, standard: "TEKS 4.10B", explanation: "Rent is the same amount every month — that makes it a fixed expense." }
           ]
         },
         science: {
           title: "Weekly Science Review",
           questions: [
-            { q: "Which step of the water cycle forms clouds?", type: "recall", choices: ["Evaporation", "Condensation", "Precipitation", "Collection"], correct: 1, standard: "TEKS 4.8A", explanation: "Condensation is when water vapor cools and forms tiny droplets that make clouds." },
-            { q: "Marble is formed when limestone is changed by heat and pressure. What type of rock is marble?", type: "application", choices: ["Igneous", "Sedimentary", "Metamorphic", "Mineral"], correct: 2, standard: "TEKS 4.7A", explanation: "Metamorphic rocks form when existing rocks are changed by heat and pressure." }
+            { q: "Which step of the water cycle forms clouds?", type: "multiple_choice", choices: ["Evaporation", "Condensation", "Precipitation", "Collection"], correct: 1, standard: "TEKS 4.8A", explanation: "Condensation is when water vapor cools and forms tiny droplets that make clouds." },
+            { q: "Marble is formed when limestone is changed by heat and pressure. What type of rock is marble?", type: "multiple_choice", choices: ["Igneous", "Sedimentary", "Metamorphic", "Mineral"], correct: 2, standard: "TEKS 4.7A", explanation: "Metamorphic rocks form when existing rocks are changed by heat and pressure." }
           ]
         }
       },
@@ -506,9 +506,9 @@ var BUGGSY_WEEK_2 = {
         science: {
           title: "Animal Adaptations",
           questions: [
-            { q: "A cactus stores water in its thick stem. This is an example of what?", type: "application", choices: ["Behavior", "A structural adaptation", "Migration", "A life cycle"], correct: 1, standard: "TEKS 4.10A", explanation: "A thick stem that stores water is a structural (physical) adaptation." },
-            { q: "Why do some animals hibernate during winter?", type: "inferential", choices: ["They are lazy", "Food is scarce and it's cold", "They want to sleep", "They are scared of snow"], correct: 1, standard: "TEKS 4.10A", explanation: "Hibernation helps animals survive when food is hard to find and temperatures drop." },
-            { q: "A bird with a long thin beak is best adapted for eating what?", type: "application", choices: ["Seeds", "Insects from tree bark", "Large fish", "Grass"], correct: 1, standard: "TEKS 4.10A", explanation: "Long thin beaks help birds reach insects hiding in crevices." }
+            { q: "A cactus stores water in its thick stem. This is an example of what?", type: "multiple_choice", choices: ["Behavior", "A structural adaptation", "Migration", "A life cycle"], correct: 1, standard: "TEKS 4.10A", explanation: "A thick stem that stores water is a structural (physical) adaptation." },
+            { q: "Why do some animals hibernate during winter?", type: "multiple_choice", choices: ["They are lazy", "Food is scarce and it's cold", "They want to sleep", "They are scared of snow"], correct: 1, standard: "TEKS 4.10A", explanation: "Hibernation helps animals survive when food is hard to find and temperatures drop." },
+            { q: "A bird with a long thin beak is best adapted for eating what?", type: "multiple_choice", choices: ["Seeds", "Insects from tree bark", "Large fish", "Grass"], correct: 1, standard: "TEKS 4.10A", explanation: "Long thin beaks help birds reach insects hiding in crevices." }
           ]
         }
       },
@@ -523,10 +523,10 @@ var BUGGSY_WEEK_2 = {
         vocabWords: ["camouflage", "texture", "remarkable"],
         passageVisibility: "full",
         questions: [
-          { q: "What helps an octopus squeeze through tiny spaces?", type: "literal", choices: ["Hard shell", "Flexible arms and soft body", "Sharp teeth", "Strong legs"], correct: 1, standard: "TEKS 4.6A" },
-          { q: "Why would an octopus want to change its skin color?", type: "inferential", choices: ["To look pretty", "To hide from predators and hunt prey", "Because it is cold", "To attract mates"], correct: 1, standard: "TEKS 4.6B" },
-          { q: "What does 'camouflage' mean in this passage?", type: "vocabulary", choices: ["A type of food", "The ability to blend in with surroundings", "A way to swim fast", "A loud sound"], correct: 1, standard: "TEKS 4.2B" },
-          { q: "Which detail best supports the idea that octopuses are intelligent?", type: "evidence", choices: ["They have eight arms", "They live in the ocean", "They can solve puzzles and open jars", "They can squeeze through small spaces"], correct: 2, standard: "TEKS 4.6C" }
+          { q: "What helps an octopus squeeze through tiny spaces?", type: "multiple_choice", choices: ["Hard shell", "Flexible arms and soft body", "Sharp teeth", "Strong legs"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "Why would an octopus want to change its skin color?", type: "multiple_choice", choices: ["To look pretty", "To hide from predators and hunt prey", "Because it is cold", "To attract mates"], correct: 1, standard: "TEKS 4.6B" },
+          { q: "What does 'camouflage' mean in this passage?", type: "multiple_choice", choices: ["A type of food", "The ability to blend in with surroundings", "A way to swim fast", "A loud sound"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "Which detail best supports the idea that octopuses are intelligent?", type: "multiple_choice", choices: ["They have eight arms", "They live in the ocean", "They can solve puzzles and open jars", "They can squeeze through small spaces"], correct: 2, standard: "TEKS 4.6C" }
         ]
       },
       writing: {
@@ -543,7 +543,7 @@ var BUGGSY_WEEK_2 = {
           title: "Decimals — Tenths and Hundredths",
           questions: [
             { q: "Which decimal is equal to 3/10?", type: "computation", choices: ["0.03", "0.3", "3.0", "0.33"], correct: 1, standard: "TEKS 4.2G", explanation: "3/10 = 0.3" },
-            { q: "Order from least to greatest: 0.5, 0.35, 0.7", type: "comparison", choices: ["0.35, 0.5, 0.7", "0.5, 0.35, 0.7", "0.7, 0.5, 0.35", "0.35, 0.7, 0.5"], correct: 0, standard: "TEKS 4.2F", explanation: "0.35 < 0.5 < 0.7" },
+            { q: "Order from least to greatest: 0.5, 0.35, 0.7", type: "multiple_choice", choices: ["0.35, 0.5, 0.7", "0.5, 0.35, 0.7", "0.7, 0.5, 0.35", "0.35, 0.7, 0.5"], correct: 0, standard: "TEKS 4.2F", explanation: "0.35 < 0.5 < 0.7" },
             { q: "Elena has $4.75 and spends $2.30 on lunch. How much does she have left?", type: "word_problem", choices: ["$2.35", "$2.45", "$7.05", "$2.55"], correct: 1, standard: "TEKS 4.4A", explanation: "$4.75 - $2.30 = $2.45" },
             { q: "What is 0.6 + 0.25?", type: "computation", choices: ["0.31", "0.85", "0.65", "0.8"], correct: 1, standard: "TEKS 4.4A", explanation: "0.60 + 0.25 = 0.85" }
           ]
@@ -551,9 +551,9 @@ var BUGGSY_WEEK_2 = {
         science: {
           title: "Food Chains & Ecosystems",
           questions: [
-            { q: "In a food chain, what is the role of a producer?", type: "recall", choices: ["Eats other animals", "Makes its own food from sunlight", "Breaks down dead organisms", "Hunts for prey"], correct: 1, standard: "TEKS 4.9A", explanation: "Producers (like plants) use sunlight to make their own food through photosynthesis." },
-            { q: "Grass → Rabbit → Fox. In this food chain, the rabbit is a —", type: "application", choices: ["Producer", "Predator only", "Consumer (prey and predator)", "Decomposer"], correct: 2, standard: "TEKS 4.9A", explanation: "The rabbit consumes grass (prey role) and is hunted by the fox (also a predator of grass)." },
-            { q: "What would happen if all the rabbits disappeared from this food chain?", type: "inferential", choices: ["Foxes would have more food", "Foxes would have less food", "Grass would disappear", "Nothing would change"], correct: 1, standard: "TEKS 4.9B", explanation: "Without rabbits, foxes lose a food source and their population would likely decline." }
+            { q: "In a food chain, what is the role of a producer?", type: "multiple_choice", choices: ["Eats other animals", "Makes its own food from sunlight", "Breaks down dead organisms", "Hunts for prey"], correct: 1, standard: "TEKS 4.9A", explanation: "Producers (like plants) use sunlight to make their own food through photosynthesis." },
+            { q: "Grass → Rabbit → Fox. In this food chain, the rabbit is a —", type: "multiple_choice", choices: ["Producer", "Predator only", "Consumer (prey and predator)", "Decomposer"], correct: 2, standard: "TEKS 4.9A", explanation: "The rabbit consumes grass (prey role) and is hunted by the fox (also a predator of grass)." },
+            { q: "What would happen if all the rabbits disappeared from this food chain?", type: "multiple_choice", choices: ["Foxes would have more food", "Foxes would have less food", "Grass would disappear", "Nothing would change"], correct: 1, standard: "TEKS 4.9B", explanation: "Without rabbits, foxes lose a food source and their population would likely decline." }
           ]
         }
       },
@@ -573,10 +573,10 @@ var BUGGSY_WEEK_2 = {
         vocabWords: ["drought", "fertile", "windbreaks"],
         passageVisibility: "full",
         questions: [
-          { q: "What caused the soil to turn to dust during the Dust Bowl?", type: "literal", choices: ["Flooding", "Earthquakes", "Drought and poor farming", "Volcanic eruptions"], correct: 2, standard: "TEKS 4.6A" },
-          { q: "Why did families move to California?", type: "inferential", choices: ["For vacation", "To find work after losing farms", "Because of cold weather", "To go to school"], correct: 1, standard: "TEKS 4.6B" },
-          { q: "What does 'fertile' most likely mean?", type: "vocabulary", choices: ["Dry and sandy", "Good for growing crops", "Rocky and hard", "Covered in snow"], correct: 1, standard: "TEKS 4.2B" },
-          { q: "What evidence from the text shows the storms were very bad?", type: "evidence", choices: ["Families moved to California", "People could not see the sun at noon", "The government helped farmers", "Trees were planted"], correct: 1, standard: "TEKS 4.6C" }
+          { q: "What caused the soil to turn to dust during the Dust Bowl?", type: "multiple_choice", choices: ["Flooding", "Earthquakes", "Drought and poor farming", "Volcanic eruptions"], correct: 2, standard: "TEKS 4.6A" },
+          { q: "Why did families move to California?", type: "multiple_choice", choices: ["For vacation", "To find work after losing farms", "Because of cold weather", "To go to school"], correct: 1, standard: "TEKS 4.6B" },
+          { q: "What does 'fertile' most likely mean?", type: "multiple_choice", choices: ["Dry and sandy", "Good for growing crops", "Rocky and hard", "Covered in snow"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "What evidence from the text shows the storms were very bad?", type: "multiple_choice", choices: ["Families moved to California", "People could not see the sun at noon", "The government helped farmers", "Trees were planted"], correct: 1, standard: "TEKS 4.6C" }
         ]
       },
       wolfkidEpisode: {
@@ -592,17 +592,17 @@ var BUGGSY_WEEK_2 = {
         math: {
           title: "Patterns & Mixed Review",
           questions: [
-            { q: "What is the rule for this pattern? 5, 12, 19, 26, 33, ...", type: "pattern", choices: ["Add 5", "Add 7", "Multiply by 2", "Add 8"], correct: 1, standard: "TEKS 4.5B", explanation: "Each number increases by 7: 5+7=12, 12+7=19, etc." },
-            { q: "If the pattern continues, what is the next number? 3, 6, 12, 24, ...", type: "pattern", choices: ["36", "48", "30", "28"], correct: 1, standard: "TEKS 4.5B", explanation: "Each number is multiplied by 2: 24 x 2 = 48" },
+            { q: "What is the rule for this pattern? 5, 12, 19, 26, 33, ...", type: "multiple_choice", choices: ["Add 5", "Add 7", "Multiply by 2", "Add 8"], correct: 1, standard: "TEKS 4.5B", explanation: "Each number increases by 7: 5+7=12, 12+7=19, etc." },
+            { q: "If the pattern continues, what is the next number? 3, 6, 12, 24, ...", type: "multiple_choice", choices: ["36", "48", "30", "28"], correct: 1, standard: "TEKS 4.5B", explanation: "Each number is multiplied by 2: 24 x 2 = 48" },
             { q: "A bag has 156 marbles. You divide them equally into 8 bags. How many marbles in each bag and how many left over?", type: "word_problem", choices: ["19 R4", "20 R0", "19 R3", "18 R12"], correct: 0, standard: "TEKS 4.4F", explanation: "156 / 8 = 19 remainder 4 (8 x 19 = 152, 156 - 152 = 4)" },
-            { q: "Which is the best estimate for 398 x 5?", type: "estimation", choices: ["1,500", "2,000", "2,500", "1,000"], correct: 1, standard: "TEKS 4.4G", explanation: "Round 398 to 400. 400 x 5 = 2,000" }
+            { q: "Which is the best estimate for 398 x 5?", type: "multiple_choice", choices: ["1,500", "2,000", "2,500", "1,000"], correct: 1, standard: "TEKS 4.4G", explanation: "Round 398 to 400. 400 x 5 = 2,000" }
           ]
         },
         science: {
           title: "Weekly Science Review",
           questions: [
-            { q: "What is the difference between a predator and prey?", type: "recall", choices: ["Size", "Predators hunt, prey are hunted", "Color", "Where they live"], correct: 1, standard: "TEKS 4.9A", explanation: "A predator hunts and eats other animals (prey)." },
-            { q: "Bears hibernating during winter is an example of —", type: "application", choices: ["A structural adaptation", "A behavioral adaptation", "Migration", "Camouflage"], correct: 1, standard: "TEKS 4.10A", explanation: "Hibernation is a behavior that helps bears survive winter." }
+            { q: "What is the difference between a predator and prey?", type: "multiple_choice", choices: ["Size", "Predators hunt, prey are hunted", "Color", "Where they live"], correct: 1, standard: "TEKS 4.9A", explanation: "A predator hunts and eats other animals (prey)." },
+            { q: "Bears hibernating during winter is an example of —", type: "multiple_choice", choices: ["A structural adaptation", "A behavioral adaptation", "Migration", "Camouflage"], correct: 1, standard: "TEKS 4.10A", explanation: "Hibernation is a behavior that helps bears survive winter." }
           ]
         }
       },
@@ -645,17 +645,17 @@ var BUGGSY_WEEK_3 = {
           title: "Lines, Angles & Symmetry",
           questions: [
             { q: "How many lines of symmetry does a square have?", type: "visual", choices: ["1", "2", "4", "0"], correct: 2, standard: "TEKS 4.6B", explanation: "A square has 4 lines of symmetry: vertical, horizontal, and both diagonals." },
-            { q: "Which pair of lines will NEVER cross, no matter how far they extend?", type: "recall", choices: ["Perpendicular lines", "Intersecting lines", "Parallel lines", "Rays"], correct: 2, standard: "TEKS 4.6A", explanation: "Parallel lines run in the same direction and never cross." },
-            { q: "An angle that measures exactly 90 degrees is called a —", type: "recall", choices: ["Acute angle", "Obtuse angle", "Right angle", "Straight angle"], correct: 2, standard: "TEKS 4.6C", explanation: "A right angle is exactly 90 degrees, like the corner of a book." },
+            { q: "Which pair of lines will NEVER cross, no matter how far they extend?", type: "multiple_choice", choices: ["Perpendicular lines", "Intersecting lines", "Parallel lines", "Rays"], correct: 2, standard: "TEKS 4.6A", explanation: "Parallel lines run in the same direction and never cross." },
+            { q: "An angle that measures exactly 90 degrees is called a —", type: "multiple_choice", choices: ["Acute angle", "Obtuse angle", "Right angle", "Straight angle"], correct: 2, standard: "TEKS 4.6C", explanation: "A right angle is exactly 90 degrees, like the corner of a book." },
             { q: "A triangle with all three sides the same length has how many lines of symmetry?", type: "visual", choices: ["0", "1", "2", "3"], correct: 3, standard: "TEKS 4.6B", explanation: "An equilateral triangle has 3 lines of symmetry." }
           ]
         },
         science: {
           title: "Ecosystems & Habitats",
           questions: [
-            { q: "Which is NOT a part of an ecosystem?", type: "recall", choices: ["Air", "Water", "Living organisms", "A math textbook"], correct: 3, standard: "TEKS 4.9B", explanation: "An ecosystem includes living things (organisms) and non-living things (air, water, soil) — not man-made objects unrelated to the habitat." },
-            { q: "If a forest is cleared for buildings, what would MOST LIKELY happen to the animals?", type: "inferential", choices: ["They would grow bigger", "They would lose their habitat", "Nothing would change", "They would build new homes"], correct: 1, standard: "TEKS 4.9B", explanation: "Habitat destruction forces animals to leave or die because they lose food and shelter." },
-            { q: "A decomposer's main job in an ecosystem is to —", type: "recall", choices: ["Hunt prey", "Produce food from sunlight", "Break down dead organisms and return nutrients to soil", "Pollinate flowers"], correct: 2, standard: "TEKS 4.9A", explanation: "Decomposers like fungi and bacteria break down dead material, recycling nutrients." }
+            { q: "Which is NOT a part of an ecosystem?", type: "multiple_choice", choices: ["Air", "Water", "Living organisms", "A math textbook"], correct: 3, standard: "TEKS 4.9B", explanation: "An ecosystem includes living things (organisms) and non-living things (air, water, soil) — not man-made objects unrelated to the habitat." },
+            { q: "If a forest is cleared for buildings, what would MOST LIKELY happen to the animals?", type: "multiple_choice", choices: ["They would grow bigger", "They would lose their habitat", "Nothing would change", "They would build new homes"], correct: 1, standard: "TEKS 4.9B", explanation: "Habitat destruction forces animals to leave or die because they lose food and shelter." },
+            { q: "A decomposer's main job in an ecosystem is to —", type: "multiple_choice", choices: ["Hunt prey", "Produce food from sunlight", "Break down dead organisms and return nutrients to soil", "Pollinate flowers"], correct: 2, standard: "TEKS 4.9A", explanation: "Decomposers like fungi and bacteria break down dead material, recycling nutrients." }
           ]
         }
       },
@@ -670,10 +670,10 @@ var BUGGSY_WEEK_3 = {
         vocabWords: ["approximately", "network", "capture"],
         passageVisibility: "full",
         questions: [
-          { q: "How many people did Harriet Tubman guide to freedom?", type: "literal", choices: ["About 13", "About 70", "About 100", "About 1,000"], correct: 1, standard: "TEKS 4.6A" },
-          { q: "Why is it significant that Tubman returned to the South after escaping?", type: "inferential", choices: ["She missed her home", "She was forced to go back", "She risked her life to help others when she could have stayed safe", "She wanted to travel"], correct: 2, standard: "TEKS 4.6B" },
-          { q: "What does 'approximately' mean in this passage?", type: "vocabulary", choices: ["Exactly", "About or close to", "More than", "Less than"], correct: 1, standard: "TEKS 4.2B" },
-          { q: "Which quote from the text best shows Tubman never failed on a mission?", type: "evidence", choices: ["She escaped to freedom in 1849", "She risked her life again and again", "I never ran my train off the track and I never lost a passenger", "She served as a nurse and cook"], correct: 2, standard: "TEKS 4.6C" }
+          { q: "How many people did Harriet Tubman guide to freedom?", type: "multiple_choice", choices: ["About 13", "About 70", "About 100", "About 1,000"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "Why is it significant that Tubman returned to the South after escaping?", type: "multiple_choice", choices: ["She missed her home", "She was forced to go back", "She risked her life to help others when she could have stayed safe", "She wanted to travel"], correct: 2, standard: "TEKS 4.6B" },
+          { q: "What does 'approximately' mean in this passage?", type: "multiple_choice", choices: ["Exactly", "About or close to", "More than", "Less than"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "Which quote from the text best shows Tubman never failed on a mission?", type: "multiple_choice", choices: ["She escaped to freedom in 1849", "She risked her life again and again", "I never ran my train off the track and I never lost a passenger", "She served as a nurse and cook"], correct: 2, standard: "TEKS 4.6C" }
         ]
       },
       writing: {
@@ -691,16 +691,16 @@ var BUGGSY_WEEK_3 = {
           questions: [
             { q: "How many inches are in 3 feet?", type: "computation", choices: ["24", "30", "36", "48"], correct: 2, standard: "TEKS 4.8C", explanation: "1 foot = 12 inches, so 3 x 12 = 36 inches" },
             { q: "A recipe needs 2 quarts of milk. How many cups is that?", type: "word_problem", choices: ["4 cups", "6 cups", "8 cups", "16 cups"], correct: 2, standard: "TEKS 4.8C", explanation: "1 quart = 4 cups, so 2 x 4 = 8 cups" },
-            { q: "Which is longer: 5 meters or 400 centimeters?", type: "comparison", choices: ["5 meters", "400 centimeters", "They are equal", "Cannot tell"], correct: 0, standard: "TEKS 4.8C", explanation: "5 meters = 500 cm, which is more than 400 cm" },
+            { q: "Which is longer: 5 meters or 400 centimeters?", type: "multiple_choice", choices: ["5 meters", "400 centimeters", "They are equal", "Cannot tell"], correct: 0, standard: "TEKS 4.8C", explanation: "5 meters = 500 cm, which is more than 400 cm" },
             { q: "A football field is 100 yards long. How many feet is that?", type: "word_problem", choices: ["200 feet", "300 feet", "400 feet", "1,000 feet"], correct: 1, standard: "TEKS 4.8C", explanation: "1 yard = 3 feet, so 100 x 3 = 300 feet" }
           ]
         },
         science: {
           title: "Forces & Motion",
           questions: [
-            { q: "What happens to an object when balanced forces act on it?", type: "recall", choices: ["It speeds up", "It slows down", "It stays the same (no change in motion)", "It changes direction"], correct: 2, standard: "TEKS 4.6D", explanation: "Balanced forces cancel each other out, so the object's motion doesn't change." },
-            { q: "A soccer ball sitting still on the ground starts rolling when you kick it. This is an example of —", type: "application", choices: ["Balanced forces", "An unbalanced force", "Gravity only", "Friction"], correct: 1, standard: "TEKS 4.6D", explanation: "Your kick adds an unbalanced force that changes the ball's motion." },
-            { q: "Why does a ball eventually stop rolling on grass?", type: "application", choices: ["Gravity pulls it down", "The grass creates friction", "The wind stops it", "It runs out of energy"], correct: 1, standard: "TEKS 4.6D", explanation: "Friction between the ball and grass slows it down until it stops." }
+            { q: "What happens to an object when balanced forces act on it?", type: "multiple_choice", choices: ["It speeds up", "It slows down", "It stays the same (no change in motion)", "It changes direction"], correct: 2, standard: "TEKS 4.6D", explanation: "Balanced forces cancel each other out, so the object's motion doesn't change." },
+            { q: "A soccer ball sitting still on the ground starts rolling when you kick it. This is an example of —", type: "multiple_choice", choices: ["Balanced forces", "An unbalanced force", "Gravity only", "Friction"], correct: 1, standard: "TEKS 4.6D", explanation: "Your kick adds an unbalanced force that changes the ball's motion." },
+            { q: "Why does a ball eventually stop rolling on grass?", type: "multiple_choice", choices: ["Gravity pulls it down", "The grass creates friction", "The wind stops it", "It runs out of energy"], correct: 1, standard: "TEKS 4.6D", explanation: "Friction between the ball and grass slows it down until it stops." }
           ]
         }
       },
@@ -720,10 +720,10 @@ var BUGGSY_WEEK_3 = {
         vocabWords: ["supernatural", "unpredictable", "significantly"],
         passageVisibility: "full",
         questions: [
-          { q: "Where is the Bermuda Triangle located?", type: "literal", choices: ["Pacific Ocean", "Indian Ocean", "Atlantic Ocean between Miami, Bermuda, and Puerto Rico", "Arctic Ocean"], correct: 2, standard: "TEKS 4.6A" },
-          { q: "Why does the author include scientific explanations?", type: "inferential", choices: ["To make the story scarier", "To show there are logical reasons for the disappearances", "To prove aliens exist", "To describe the weather"], correct: 1, standard: "TEKS 4.6B" },
-          { q: "What does 'unpredictable' mean?", type: "vocabulary", choices: ["Very calm", "Easy to forecast", "Hard to know in advance", "Always the same"], correct: 2, standard: "TEKS 4.2B" },
-          { q: "Which detail from the text suggests the Bermuda Triangle is NOT as dangerous as people think?", type: "evidence", choices: ["Many ships have disappeared", "People believe in supernatural forces", "Disappearances are not significantly higher than other regions", "The Gulf Stream carries wreckage"], correct: 2, standard: "TEKS 4.6C" }
+          { q: "Where is the Bermuda Triangle located?", type: "multiple_choice", choices: ["Pacific Ocean", "Indian Ocean", "Atlantic Ocean between Miami, Bermuda, and Puerto Rico", "Arctic Ocean"], correct: 2, standard: "TEKS 4.6A" },
+          { q: "Why does the author include scientific explanations?", type: "multiple_choice", choices: ["To make the story scarier", "To show there are logical reasons for the disappearances", "To prove aliens exist", "To describe the weather"], correct: 1, standard: "TEKS 4.6B" },
+          { q: "What does 'unpredictable' mean?", type: "multiple_choice", choices: ["Very calm", "Easy to forecast", "Hard to know in advance", "Always the same"], correct: 2, standard: "TEKS 4.2B" },
+          { q: "Which detail from the text suggests the Bermuda Triangle is NOT as dangerous as people think?", type: "multiple_choice", choices: ["Many ships have disappeared", "People believe in supernatural forces", "Disappearances are not significantly higher than other regions", "The Gulf Stream carries wreckage"], correct: 2, standard: "TEKS 4.6C" }
         ]
       },
       wolfkidEpisode: {
@@ -739,7 +739,7 @@ var BUGGSY_WEEK_3 = {
         math: {
           title: "Data Analysis & Review",
           questions: [
-            { q: "A dot plot shows test scores: 85, 85, 90, 90, 90, 95, 100. What score appears most often?", type: "data_analysis", choices: ["85", "90", "95", "100"], correct: 1, standard: "TEKS 4.9A", explanation: "90 appears 3 times, which is more than any other score." },
+            { q: "A dot plot shows test scores: 85, 85, 90, 90, 90, 95, 100. What score appears most often?", type: "multiple_choice", choices: ["85", "90", "95", "100"], correct: 1, standard: "TEKS 4.9A", explanation: "90 appears 3 times, which is more than any other score." },
             { q: "What is the range of these scores: 85, 85, 90, 90, 90, 95, 100?", type: "computation", choices: ["5", "10", "15", "90"], correct: 2, standard: "TEKS 4.9A", explanation: "Range = highest - lowest = 100 - 85 = 15" },
             { q: "A rectangle has a perimeter of 30 cm. If the width is 5 cm, what is the length?", type: "multi_step", choices: ["10 cm", "15 cm", "20 cm", "25 cm"], correct: 0, standard: "TEKS 4.5D", explanation: "P = 2l + 2w; 30 = 2l + 10; 2l = 20; l = 10 cm" },
             { q: "Round 4,867 to the nearest hundred.", type: "computation", choices: ["4,800", "4,900", "4,870", "5,000"], correct: 1, standard: "TEKS 4.2D", explanation: "The tens digit is 6 (5 or more), so round up: 4,900" }
@@ -748,8 +748,8 @@ var BUGGSY_WEEK_3 = {
         science: {
           title: "Weekly Review",
           questions: [
-            { q: "What force keeps you from floating off your chair?", type: "recall", choices: ["Magnetism", "Friction", "Gravity", "Wind"], correct: 2, standard: "TEKS 4.6D", explanation: "Gravity pulls you toward Earth, keeping you in your seat." },
-            { q: "Which is an example of a decomposer?", type: "recall", choices: ["Eagle", "Mushroom", "Oak tree", "Rabbit"], correct: 1, standard: "TEKS 4.9A", explanation: "Mushrooms (fungi) are decomposers that break down dead organic material." }
+            { q: "What force keeps you from floating off your chair?", type: "multiple_choice", choices: ["Magnetism", "Friction", "Gravity", "Wind"], correct: 2, standard: "TEKS 4.6D", explanation: "Gravity pulls you toward Earth, keeping you in your seat." },
+            { q: "Which is an example of a decomposer?", type: "multiple_choice", choices: ["Eagle", "Mushroom", "Oak tree", "Rabbit"], correct: 1, standard: "TEKS 4.9A", explanation: "Mushrooms (fungi) are decomposers that break down dead organic material." }
           ]
         }
       },
@@ -800,9 +800,9 @@ var BUGGSY_WEEK_4 = {
         science: {
           title: "Natural Resources",
           questions: [
-            { q: "Which of these is a renewable resource?", type: "recall", choices: ["Coal", "Natural gas", "Solar energy", "Oil"], correct: 2, standard: "TEKS 4.7C", explanation: "Solar energy comes from the sun, which is constantly available — making it renewable." },
-            { q: "Why is it important to conserve nonrenewable resources?", type: "inferential", choices: ["They are ugly", "Once used up, they cannot be replaced", "They are too expensive", "They are dangerous"], correct: 1, standard: "TEKS 4.7C", explanation: "Nonrenewable resources like oil and coal take millions of years to form and will eventually run out." },
-            { q: "Trees are considered renewable because —", type: "application", choices: ["They never die", "New trees can be planted to replace them", "They grow very fast", "They are not useful"], correct: 1, standard: "TEKS 4.7C", explanation: "Trees can be replanted and regrown, making them a renewable resource (though it takes time)." }
+            { q: "Which of these is a renewable resource?", type: "multiple_choice", choices: ["Coal", "Natural gas", "Solar energy", "Oil"], correct: 2, standard: "TEKS 4.7C", explanation: "Solar energy comes from the sun, which is constantly available — making it renewable." },
+            { q: "Why is it important to conserve nonrenewable resources?", type: "multiple_choice", choices: ["They are ugly", "Once used up, they cannot be replaced", "They are too expensive", "They are dangerous"], correct: 1, standard: "TEKS 4.7C", explanation: "Nonrenewable resources like oil and coal take millions of years to form and will eventually run out." },
+            { q: "Trees are considered renewable because —", type: "multiple_choice", choices: ["They never die", "New trees can be planted to replace them", "They grow very fast", "They are not useful"], correct: 1, standard: "TEKS 4.7C", explanation: "Trees can be replanted and regrown, making them a renewable resource (though it takes time)." }
           ]
         }
       },
@@ -817,10 +817,10 @@ var BUGGSY_WEEK_4 = {
         vocabWords: ["microgravity", "continuously", "cooperation"],
         passageVisibility: "full",
         questions: [
-          { q: "How big is the International Space Station?", type: "literal", choices: ["Size of a car", "Size of a house", "Size of a football field", "Size of a city block"], correct: 2, standard: "TEKS 4.6A" },
-          { q: "Why must astronauts exercise two hours daily on the ISS?", type: "inferential", choices: ["To lose weight", "To pass the time", "Without gravity their muscles and bones would weaken", "To train for spacewalks"], correct: 2, standard: "TEKS 4.6B" },
-          { q: "What does 'microgravity' mean based on context clues?", type: "vocabulary", choices: ["Very strong gravity", "No atmosphere", "Near-weightless conditions", "Extreme cold"], correct: 2, standard: "TEKS 4.2B" },
-          { q: "Which detail best supports the idea that the ISS is an international effort?", type: "evidence", choices: ["It orbits 250 miles up", "Astronauts exercise daily", "The US, Russia, Japan, Canada, and Europe all contribute", "It has been occupied since 2000"], correct: 2, standard: "TEKS 4.6C" }
+          { q: "How big is the International Space Station?", type: "multiple_choice", choices: ["Size of a car", "Size of a house", "Size of a football field", "Size of a city block"], correct: 2, standard: "TEKS 4.6A" },
+          { q: "Why must astronauts exercise two hours daily on the ISS?", type: "multiple_choice", choices: ["To lose weight", "To pass the time", "Without gravity their muscles and bones would weaken", "To train for spacewalks"], correct: 2, standard: "TEKS 4.6B" },
+          { q: "What does 'microgravity' mean based on context clues?", type: "multiple_choice", choices: ["Very strong gravity", "No atmosphere", "Near-weightless conditions", "Extreme cold"], correct: 2, standard: "TEKS 4.2B" },
+          { q: "Which detail best supports the idea that the ISS is an international effort?", type: "multiple_choice", choices: ["It orbits 250 miles up", "Astronauts exercise daily", "The US, Russia, Japan, Canada, and Europe all contribute", "It has been occupied since 2000"], correct: 2, standard: "TEKS 4.6C" }
         ]
       },
       writing: {
@@ -837,7 +837,7 @@ var BUGGSY_WEEK_4 = {
           title: "Fractions — Adding, Subtracting & Comparing",
           questions: [
             { q: "5/8 - 2/8 = ?", type: "computation", choices: ["3/0", "3/8", "7/8", "3/16"], correct: 1, standard: "TEKS 4.3E", explanation: "Same denominator: 5 - 2 = 3, so 3/8" },
-            { q: "Which fraction is closest to 1/2?", type: "comparison", choices: ["1/8", "3/8", "5/8", "7/8"], correct: 1, standard: "TEKS 4.3D", explanation: "1/2 = 4/8. 3/8 is 1/8 away from 4/8, the closest option." },
+            { q: "Which fraction is closest to 1/2?", type: "multiple_choice", choices: ["1/8", "3/8", "5/8", "7/8"], correct: 1, standard: "TEKS 4.3D", explanation: "1/2 = 4/8. 3/8 is 1/8 away from 4/8, the closest option." },
             { q: "Write 0.75 as a fraction.", type: "computation", choices: ["7/5", "3/4", "75/10", "7/50"], correct: 1, standard: "TEKS 4.2G", explanation: "0.75 = 75/100 = 3/4" },
             { q: "A pizza is cut into 6 equal slices. Tim eats 2 slices and Ana eats 3 slices. What fraction of the pizza is LEFT?", type: "word_problem", choices: ["5/6", "1/6", "1/3", "0/6"], correct: 1, standard: "TEKS 4.3E", explanation: "2/6 + 3/6 = 5/6 eaten. 6/6 - 5/6 = 1/6 left." }
           ]
@@ -845,9 +845,9 @@ var BUGGSY_WEEK_4 = {
         science: {
           title: "Forms of Energy",
           questions: [
-            { q: "A light bulb converts electrical energy into —", type: "application", choices: ["Sound energy", "Light and heat energy", "Mechanical energy", "Chemical energy"], correct: 1, standard: "TEKS 4.6A", explanation: "Light bulbs transform electrical energy into light (and some heat)." },
-            { q: "Rubbing your hands together quickly makes them warm. This is an example of what type of energy change?", type: "application", choices: ["Light to sound", "Mechanical to thermal (heat)", "Chemical to electrical", "Sound to light"], correct: 1, standard: "TEKS 4.6A", explanation: "The motion (mechanical energy) of rubbing creates friction, which produces heat (thermal energy)." },
-            { q: "Which is an example of sound energy?", type: "recall", choices: ["A campfire", "A ringing bell", "A rolling ball", "A battery"], correct: 1, standard: "TEKS 4.6A", explanation: "A ringing bell produces vibrations that travel through the air as sound energy." }
+            { q: "A light bulb converts electrical energy into —", type: "multiple_choice", choices: ["Sound energy", "Light and heat energy", "Mechanical energy", "Chemical energy"], correct: 1, standard: "TEKS 4.6A", explanation: "Light bulbs transform electrical energy into light (and some heat)." },
+            { q: "Rubbing your hands together quickly makes them warm. This is an example of what type of energy change?", type: "multiple_choice", choices: ["Light to sound", "Mechanical to thermal (heat)", "Chemical to electrical", "Sound to light"], correct: 1, standard: "TEKS 4.6A", explanation: "The motion (mechanical energy) of rubbing creates friction, which produces heat (thermal energy)." },
+            { q: "Which is an example of sound energy?", type: "multiple_choice", choices: ["A campfire", "A ringing bell", "A rolling ball", "A battery"], correct: 1, standard: "TEKS 4.6A", explanation: "A ringing bell produces vibrations that travel through the air as sound energy." }
           ]
         }
       },
@@ -867,10 +867,10 @@ var BUGGSY_WEEK_4 = {
         vocabWords: ["vibrations", "commercial", "determination"],
         passageVisibility: "full",
         questions: [
-          { q: "What were the first words spoken on a telephone?", type: "literal", choices: ["Hello, can you hear me?", "Mr. Watson, come here. I want to see you.", "Testing, testing, 1-2-3", "Is this working?"], correct: 1, standard: "TEKS 4.6A" },
-          { q: "What inspired Bell to invent the telephone?", type: "inferential", choices: ["He wanted to be rich", "His work with deaf students and understanding of sound", "He was bored", "A friend suggested it"], correct: 1, standard: "TEKS 4.6B" },
-          { q: "What does 'commercial value' mean?", type: "vocabulary", choices: ["Scientific importance", "Worth money or useful for business", "Educational purpose", "Entertainment value"], correct: 1, standard: "TEKS 4.2B" },
-          { q: "Which detail shows that people eventually accepted the telephone?", type: "evidence", choices: ["Bell worked with deaf students", "Western Union called it a toy", "Within 10 years over 150,000 Americans had telephones", "Watson heard every word"], correct: 2, standard: "TEKS 4.6C" }
+          { q: "What were the first words spoken on a telephone?", type: "multiple_choice", choices: ["Hello, can you hear me?", "Mr. Watson, come here. I want to see you.", "Testing, testing, 1-2-3", "Is this working?"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "What inspired Bell to invent the telephone?", type: "multiple_choice", choices: ["He wanted to be rich", "His work with deaf students and understanding of sound", "He was bored", "A friend suggested it"], correct: 1, standard: "TEKS 4.6B" },
+          { q: "What does 'commercial value' mean?", type: "multiple_choice", choices: ["Scientific importance", "Worth money or useful for business", "Educational purpose", "Entertainment value"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "Which detail shows that people eventually accepted the telephone?", type: "multiple_choice", choices: ["Bell worked with deaf students", "Western Union called it a toy", "Within 10 years over 150,000 Americans had telephones", "Watson heard every word"], correct: 2, standard: "TEKS 4.6C" }
         ]
       },
       wolfkidEpisode: {
@@ -889,14 +889,14 @@ var BUGGSY_WEEK_4 = {
             { q: "What is 2,456 x 3?", type: "computation", choices: ["6,368", "7,368", "7,268", "7,468"], correct: 1, standard: "TEKS 4.4D", explanation: "2,456 x 3 = 7,368" },
             { q: "Which fraction is equivalent to 4/8?", type: "computation", choices: ["2/3", "1/2", "3/4", "2/8"], correct: 1, standard: "TEKS 4.3C", explanation: "4/8 = 1/2 (divide both by 4)" },
             { q: "A store sells notebooks for $2.25 each. If you buy 4 notebooks and pay with a $20 bill, how much change do you get?", type: "multi_step", choices: ["$10.00", "$11.00", "$9.00", "$11.25"], correct: 1, standard: "TEKS 4.4H, 4.10A", explanation: "4 x $2.25 = $9.00. $20.00 - $9.00 = $11.00 change." },
-            { q: "The school has 876 students and 24 classrooms. About how many students are in each class?", type: "estimation", choices: ["About 20", "About 30", "About 36", "About 40"], correct: 2, standard: "TEKS 4.4G", explanation: "876 / 24 = 36.5, so about 36 students per class." }
+            { q: "The school has 876 students and 24 classrooms. About how many students are in each class?", type: "multiple_choice", choices: ["About 20", "About 30", "About 36", "About 40"], correct: 2, standard: "TEKS 4.4G", explanation: "876 / 24 = 36.5, so about 36 students per class." }
           ]
         },
         science: {
           title: "April Science Review",
           questions: [
-            { q: "Name the 4 stages of the water cycle in order.", type: "recall", choices: ["Evaporation, Condensation, Precipitation, Collection", "Condensation, Evaporation, Collection, Precipitation", "Precipitation, Collection, Evaporation, Condensation", "Collection, Precipitation, Condensation, Evaporation"], correct: 0, standard: "TEKS 4.8A", explanation: "The water cycle: Evaporation (water becomes gas), Condensation (gas becomes droplets/clouds), Precipitation (water falls), Collection (water gathers in bodies of water)." },
-            { q: "An animal that eats BOTH plants and animals is called a —", type: "recall", choices: ["Herbivore", "Carnivore", "Omnivore", "Decomposer"], correct: 2, standard: "TEKS 4.9A", explanation: "Omnivores eat both plants and animals. Examples: bears, humans, pigs." }
+            { q: "Name the 4 stages of the water cycle in order.", type: "multiple_choice", choices: ["Evaporation, Condensation, Precipitation, Collection", "Condensation, Evaporation, Collection, Precipitation", "Precipitation, Collection, Evaporation, Condensation", "Collection, Precipitation, Condensation, Evaporation"], correct: 0, standard: "TEKS 4.8A", explanation: "The water cycle: Evaporation (water becomes gas), Condensation (gas becomes droplets/clouds), Precipitation (water falls), Collection (water gathers in bodies of water)." },
+            { q: "An animal that eats BOTH plants and animals is called a —", type: "multiple_choice", choices: ["Herbivore", "Carnivore", "Omnivore", "Decomposer"], correct: 2, standard: "TEKS 4.9A", explanation: "Omnivores eat both plants and animals. Examples: bears, humans, pigs." }
           ]
         }
       },
