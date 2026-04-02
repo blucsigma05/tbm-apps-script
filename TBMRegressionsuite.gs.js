@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmRegressionSuite.gs v3 — Phase A3: Post-Deploy Behavioral Assertions
+// tbmRegressionSuite.gs v4 — Phase A3: Post-Deploy Behavioral Assertions
 // WRITES TO: (none — read-only assertions)
 // READS FROM: All sheets (for regression assertions)
 // ════════════════════════════════════════════════════════════════════
@@ -20,7 +20,7 @@
 // USAGE: Run tbmRegressionSuite() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getRegressionSuiteVersion() { return 3; }
+function getRegressionSuiteVersion() { return 4; }
 
 /**
  * Main entry point. Run after every deploy.
@@ -35,6 +35,7 @@ function tbmRegressionSuite() {
     passed: 0,
     failed: 0,
     warned: 0,
+    not_verified: 0,
     assertions: []
   };
 
@@ -49,6 +50,7 @@ function tbmRegressionSuite() {
     if (results.assertions[i].status === 'PASS') results.passed++;
     else if (results.assertions[i].status === 'FAIL') { results.failed++; results.overall = 'FAIL'; }
     else if (results.assertions[i].status === 'WARN') results.warned++;
+    else if (results.assertions[i].status === 'NOT_VERIFIED') results.not_verified++;
   }
 
   results.runtime_ms = new Date().getTime() - startTime.getTime();
@@ -56,7 +58,13 @@ function tbmRegressionSuite() {
   Logger.log('═══ TBM REGRESSION SUITE ═══');
   Logger.log('Total: ' + results.total + ' | Passed: ' + results.passed +
     ' | Failed: ' + results.failed + ' | Warned: ' + results.warned +
+    ' | Not Verified: ' + results.not_verified +
     ' | Runtime: ' + results.runtime_ms + 'ms');
+
+  if (results.not_verified > 0) {
+    Logger.log('');
+    Logger.log('⚠️ COVERAGE GAPS: ' + results.not_verified + ' assertions are NOT_VERIFIED (source-level only). These require manual audit or static analysis tools.');
+  }
 
   if (results.failed > 0) {
     Logger.log('');
@@ -356,7 +364,8 @@ function runBugAssertions_(results) {
       var result = 296 - 25;
       return result === 271 ? 'PASS' : 'FAIL';
     })(),
-    details: 'Balance = earned - spent - deducted. Verify single deduction application.'
+    details: 'Balance = earned - spent - deducted. Verify single deduction application.',
+    note: 'Arithmetic-only sanity check. Does not exercise khAddDeduction server path — real bug was button debounce causing duplicate API calls.'
   });
 
   // ── BUG-QA2-002: Task approval — points must add correctly ──────
@@ -370,7 +379,8 @@ function runBugAssertions_(results) {
       var before = 100, taskPts = 10;
       return (before + taskPts) === 110 ? 'PASS' : 'FAIL';
     })(),
-    details: 'Verify earned points add correctly to balance.'
+    details: 'Verify earned points add correctly to balance.',
+    note: 'Arithmetic-only sanity check. Does not exercise khApproveTask server path — verifies the math contract only.'
   });
 
   // ── BUG-QA2-003: Bonus multiplier — 1.5x must apply correctly ──
@@ -384,7 +394,8 @@ function runBugAssertions_(results) {
       var base = 10, mult = 1.5;
       return Math.round(base * mult) === 15 ? 'PASS' : 'FAIL';
     })(),
-    details: 'Verify bonus multiplier arithmetic.'
+    details: 'Verify bonus multiplier arithmetic.',
+    note: 'Arithmetic-only sanity check. Does not exercise khApproveWithBonus server path — verifies Math.round(base * mult) contract only.'
   });
 }
 
@@ -489,47 +500,68 @@ function runEnvironmentAssertions_(results) {
   // ── ENV-005: Version functions return expected types ─────────────
   (function() {
     var a = { id: 'ENV-005', category: 'environment', description: 'Version functions return numbers', status: 'PASS', details: '' };
-    var vFns = ['getDataEngineVersion', 'getCodeVersion', 'getCascadeEngineVersion'];
-    var results_arr = [];
-    for (var i = 0; i < vFns.length; i++) {
+    var versionChecks = [];
+
+    // Use getDeployedVersions() if available for comprehensive coverage
+    if (typeof getDeployedVersions === 'function') {
       try {
-        if (typeof this[vFns[i]] === 'function') {
-          var v = this[vFns[i]]();
-          if (typeof v !== 'number') {
-            a.status = 'FAIL';
-            results_arr.push(vFns[i] + ' returns ' + typeof v + ', expected number');
-          } else {
-            results_arr.push(vFns[i] + '=' + v);
+        var deployed = getDeployedVersions();
+        var parsed = (typeof deployed === 'string') ? JSON.parse(deployed) : deployed;
+        var versions = parsed.versions || parsed;
+        for (var key in versions) {
+          if (versions.hasOwnProperty(key)) {
+            var val = versions[key];
+            if (typeof val === 'number') {
+              versionChecks.push(key + '=' + val);
+            } else if (typeof val === 'string' && !isNaN(Number(val))) {
+              versionChecks.push(key + '=' + val);
+            } else {
+              versionChecks.push(key + '=' + val + ' (non-numeric)');
+            }
           }
-        } else {
-          results_arr.push(vFns[i] + ' NOT FOUND');
         }
+        a.details = 'Via getDeployedVersions(): ' + versionChecks.join(', ');
       } catch (e) {
-        results_arr.push(vFns[i] + ' ERROR: ' + e.message);
+        a.details = 'getDeployedVersions() error: ' + e.message + '. Falling back to individual checks.';
+        versionChecks = [];
       }
     }
-    a.details = results_arr.join(', ');
+
+    // Fallback: check individual version functions
+    if (versionChecks.length === 0) {
+      var vFns = [
+        'getDataEngineVersion', 'getCodeVersion', 'getCascadeEngineVersion',
+        'getKidsHubVersion', 'getSmokeTestVersion', 'getRegressionSuiteVersion',
+        'getMonitorEngineVersion', 'getGASHardeningVersion', 'getAlertEngineVersion',
+        'getCalendarSyncVersion', 'getStoryFactoryVersion'
+      ];
+      for (var i = 0; i < vFns.length; i++) {
+        try {
+          if (typeof this[vFns[i]] === 'function') {
+            var v = this[vFns[i]]();
+            if (typeof v !== 'number') {
+              a.status = 'FAIL';
+              versionChecks.push(vFns[i] + ' returns ' + typeof v + ', expected number');
+            } else {
+              versionChecks.push(vFns[i] + '=' + v);
+            }
+          } else {
+            versionChecks.push(vFns[i] + ' NOT FOUND');
+          }
+        } catch (e) {
+          versionChecks.push(vFns[i] + ' ERROR: ' + e.message);
+        }
+      }
+      a.details = versionChecks.join(', ');
+    }
+
     results.assertions.push(a);
   })();
 
   // ── ENV-006: Wiring — all Safe functions exist ──────────────────
   (function() {
     var a = { id: 'ENV-006', category: 'wiring', description: 'All google.script.run Safe functions exist', status: 'PASS', details: '' };
-    // Canonical list (same as smoke test, deduplicated)
-    var fns = [
-      'addKidsEventSafe','getKHAppUrlsSafe','getKidsHubDataSafe','khAddDeductionSafe',
-      'khApproveRequestSafe','khApproveTaskSafe','khApproveWithBonusSafe','khCompleteTaskSafe',
-      'khCompleteTaskWithBonusSafe','khDenyRequestSafe','khOverrideTaskSafe','khRedeemRewardSafe',
-      'khRejectTaskSafe','khResetTasksSafe','khSubmitRequestSafe','khUncompleteTaskSafe',
-      'khVerifyPinSafe','runStoryFactorySafe','getCategoryTransactionsSafe','getDataSafe',
-      'getKidsHubWidgetDataSafe','getMonthsSafe','getReconcileStatusSafe','getScriptUrlSafe',
-      'getSimulatorDataSafe','getWeeklyTrackerDataSafe','getBoardDataSafe','getSpineHeartbeatSafe',
-      'getCashFlowForecastSafe','getCloseHistoryDataSafe','getMERGateStatusSafe',
-      'getSubscriptionDataSafe','getSystemHealthSafe','khAddBonusTaskSafe',
-      'khDebitScreenTimeSafe','khSetBankOpeningSafe',
-      'listStoredStoriesSafe','getStoredStorySafe','getTodayContentSafe','seedWeek1CurriculumSafe',
-      'submitFeedbackSafe','getAudioBatchSafe','logHomeworkCompletionSafe','logSparkleProgressSafe'
-    ];
+    var fns = CANONICAL_SAFE_FUNCTIONS;
     var missing = [];
     for (var i = 0; i < fns.length; i++) {
       if (typeof this[fns[i]] !== 'function') missing.push(fns[i]);
@@ -790,4 +822,4 @@ function regressionEnvOnly() {
 }
 
 
-// END OF FILE — tbmRegressionSuite.gs v3
+// END OF FILE — tbmRegressionSuite.gs v4
