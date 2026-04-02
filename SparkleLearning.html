@@ -801,18 +801,22 @@ function shuffleArray(arr) {
 function init() {
   initBgStars();
 
-  google.script.run
-    .withSuccessHandler(function(progress) {
-      if (progress) {
-        totalStars = progress.stars || 0;
-        updateStarCounter();
-      }
-      loadContent();
-    })
-    .withFailureHandler(function() {
-      loadContent();
-    })
-    .loadProgressSafe('jj');
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(progress) {
+        if (progress) {
+          totalStars = progress.stars || 0;
+          updateStarCounter();
+        }
+        loadContent();
+      })
+      .withFailureHandler(function() {
+        loadContent();
+      })
+      .loadProgressSafe('jj');
+  } else {
+    loadContent();
+  }
 
   /* Preload audio clips */
   var audioFiles = [];
@@ -820,34 +824,40 @@ function init() {
     audioFiles.push(String.fromCharCode(65 + i) + '.mp3');
   }
   audioFiles.push('correct.mp3', 'celebration.mp3', 'try-again.mp3');
-  google.script.run
-    .withSuccessHandler(function(batch) {
-      if (batch) {
-        for (var k in batch) {
-          if (batch.hasOwnProperty(k)) {
-            audioCache[k] = new Audio('data:audio/mp3;base64,' + batch[k]);
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(batch) {
+        if (batch) {
+          for (var k in batch) {
+            if (batch.hasOwnProperty(k)) {
+              audioCache[k] = new Audio('data:audio/mp3;base64,' + batch[k]);
+            }
           }
         }
-      }
-    })
-    .withFailureHandler(function() { /* continue without cached audio */ })
-    .getAudioBatchSafe(audioFiles);
+      })
+      .withFailureHandler(function() { /* continue without cached audio */ })
+      .getAudioBatchSafe(audioFiles);
+  }
 }
 
 function loadContent() {
-  google.script.run
-    .withSuccessHandler(function(content) {
-      if (content && content.content && content.content.activities) {
-        todayContent = content.content;
-        showReadyScreen(todayContent);
-      } else {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(content) {
+        if (content && content.content && content.content.activities) {
+          todayContent = content.content;
+          showReadyScreen(todayContent);
+        } else {
+          showFallback();
+        }
+      })
+      .withFailureHandler(function() {
         showFallback();
-      }
-    })
-    .withFailureHandler(function() {
-      showFallback();
-    })
-    .getTodayContentSafe('jj');
+      })
+      .getTodayContentSafe('jj');
+  } else {
+    showFallback();
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1977,21 +1987,21 @@ function showSessionComplete() {
     sessionStars += (completedActivities[i].starsEarned || 0);
   }
 
-  /* Save progress */
-  google.script.run
-    .withSuccessHandler(function() {})
-    .withFailureHandler(function(e) { console.error('Save:', e); })
-    .saveProgressSafe({
-      child: 'jj',
-      stars: totalStars,
-      lettersCompleted: lettersCompleted
-    });
-
-  /* Award rings */
-  google.script.run
-    .withSuccessHandler(function() {})
-    .withFailureHandler(function(e) { console.error('Award:', e); })
-    .awardRingsSafe('jj', sessionStars, 'sparkle-learn');
+  /* Save progress + award rings */
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function() {})
+      .withFailureHandler(function(e) { console.error('Save:', e); })
+      .saveProgressSafe({
+        child: 'jj',
+        stars: totalStars,
+        lettersCompleted: lettersCompleted
+      });
+    google.script.run
+      .withSuccessHandler(function() {})
+      .withFailureHandler(function(e) { console.error('Award:', e); })
+      .awardRingsSafe('jj', sessionStars, 'sparkle-learn');
+  }
 
   showCelebrationScreen(sessionStars);
 }

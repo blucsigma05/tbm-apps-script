@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tbm-module" content="homework-module">
+<meta name="tbm-version" content="v2">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -715,9 +717,9 @@ function logScaffold(eventType, data) {
   }
 }
 
-var scienceQs = MODULE.science.questions;
-var mathQs = MODULE.math.questions;
-var allQs = scienceQs.concat(mathQs);
+var scienceQs = [];
+var mathQs = [];
+var allQs = [];
 
 // ─── TYPE LABELS ───
 var TYPE_LABELS = {
@@ -1350,6 +1352,9 @@ function loadCurriculumContent() {
 
 // ─── INIT ───
 function init() {
+  scienceQs = MODULE.science ? MODULE.science.questions || [] : [];
+  mathQs = MODULE.math ? MODULE.math.questions || [] : [];
+  allQs = scienceQs.concat(mathQs);
   buildStarField();
   renderOverview();
   renderScience();
