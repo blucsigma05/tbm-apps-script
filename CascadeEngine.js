@@ -1,20 +1,21 @@
 // ════════════════════════════════════════════════════════════════════
-// CASCADE ENGINE v10 — Dynamic Debt Cascade Generator
+// CASCADE ENGINE v11 — Dynamic Debt Cascade Generator
 // WRITES TO: 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule
 // READS FROM: 💻🧮 DebtModel
 // ════════════════════════════════════════════════════════════════════
 // Version history tracked in Notion deploy page. Do not add version comments here.
 
-function getCascadeEngineVersion() { return 10; }
+function getCascadeEngineVersion() { return 11; }
 
-// v10: openById migration — trigger-safe spreadsheet accessor
+// v11: openById migration — uses global SSID from DataEngine
 var _ceSS = null;
 function ce_getSS_() {
-  if (!_ceSS) _ceSS = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  if (!_ceSS) _ceSS = SpreadsheetApp.openById(SSID);
   return _ceSS;
 }
 
-// TAB_MAP — owned by DataEngine.gs. Available via GAS global scope.
+// DEPENDENCIES: SSID, TAB_MAP, roundTo, leftPad2_, parseDebtExport,
+// readDebtExportMeta, writeDebtExportMeta — all from DataEngine.gs (global scope).
 // DO NOT redeclare var TAB_MAP in this file.
 /**
  * Main entry — regenerate all three Cascade tabs from live data.
@@ -673,10 +674,6 @@ function testCascade() {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// VERSION ACCESSOR (P3/#61 — dynamic version in Code.gs)
-// ════════════════════════════════════════════════════════════════════
-/**
-// ════════════════════════════════════════════════════════════════════
 // AUTOMATED CASCADE TRIGGER (P4/#62)
 // ════════════════════════════════════════════════════════════════════
 /**
@@ -707,5 +704,5 @@ function removeMonthlyCascadeRefresh() {
   }
 }
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — CascadeEngine v10
+// END OF FILE — CascadeEngine v11
 // ════════════════════════════════════════════════════════════════════

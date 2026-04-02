@@ -1,12 +1,12 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// AlertEngine.gs v6 — Push Notifications via Pushover API
+// AlertEngine.gs v7 — Push Notifications via Pushover API
 // WRITES TO: (Pushover API only — no sheet writes)
 // READS FROM: 💻🧮 Helpers (for config)
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
-function getAlertEngineVersion() { return 6; }
+function getAlertEngineVersion() { return 7; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor
 var _aeSS = null;
@@ -186,7 +186,10 @@ function checkPendingApprovals() {
   }
 
   // v5: Also check Asks on the same trigger cycle
-  try { checkPendingAsks(); } catch (e2) { console.log('ALERT_ERROR', 'checkPendingAsks piggyback: ' + e2.message); }
+  try { checkPendingAsks(); } catch (e2) {
+    console.log('ALERT_ERROR', 'checkPendingAsks piggyback: ' + e2.message);
+    if (typeof logError_ === 'function') logError_('checkPendingApprovals.piggyback', e2);
+  }
 }
 
 
@@ -372,7 +375,7 @@ function testPushoverBoth() {
 
 function diagnoseAlertEngine() {
   var results = [];
-  results.push('=== AlertEngine v4 Diagnostic ===');
+  results.push('=== AlertEngine v' + getAlertEngineVersion() + ' Diagnostic ===');
   results.push('Timestamp: ' + new Date().toString());
 
   // 1. Check Pushover config
@@ -609,5 +612,5 @@ function dailyHealthCheck() {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — AlertEngine v6
+// END OF FILE — AlertEngine v7
 // ════════════════════════════════════════════════════════════════════

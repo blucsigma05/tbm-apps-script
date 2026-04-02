@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// CalendarSync.gs v5 — Google Calendar Seeding & Sync from TBM Data
+// CalendarSync.gs v6 — Google Calendar Seeding & Sync from TBM Data
 // WRITES TO: (Google Calendar only — no sheet writes)
 // READS FROM: 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getCalendarSyncVersion() { return 5; }
+function getCalendarSyncVersion() { return 6; }
 
 // ────────────────────────────────────────────────────────────────────
 // v1 (2026-03-10):
@@ -32,14 +32,14 @@ function getCalendarSyncVersion() { return 5; }
 
 
 // ── CONFIG ──────────────────────────────────────────────────────────
-const CS_CAL_NAMES = {
+var CS_CAL_NAMES = {
   bills:     'Bills & Financial',
   household: 'Thompson Household',
   kids:      'Kids Activities'
 };
 
 // Reminder defaults (minutes before event)
-const CS_REMINDERS = {
+var CS_REMINDERS = {
   financial: [10080, 1440],   // 7 days, 1 day
   promo:     [43200, 10080, 1440], // 30 days, 7 days, 1 day
   milestone: [10080, 1440],   // 7 days, 1 day
@@ -47,14 +47,14 @@ const CS_REMINDERS = {
 };
 
 // PropertiesService key prefix
-const CS_PREFIX = 'calsync_';
+var CS_PREFIX = 'calsync_';
 
 
 // ── HELPERS ─────────────────────────────────────────────────────────
 
 function cs_getCalendar_(key) {
-  const name = CS_CAL_NAMES[key];
-  const cals = CalendarApp.getCalendarsByName(name);
+  var name = CS_CAL_NAMES[key];
+  var cals = CalendarApp.getCalendarsByName(name);
   if (!cals || cals.length === 0) {
     throw new Error('Calendar not found: "' + name + '". Create it first in Google Calendar.');
   }
@@ -70,15 +70,15 @@ function cs_props_() {
  * Returns the event ID.
  */
 function cs_upsertEvent_(cal, stableKey, title, startDate, endDate, options) {
-  const props = cs_props_();
-  const propKey = CS_PREFIX + stableKey;
-  const existingId = props.getProperty(propKey);
+  var props = cs_props_();
+  var propKey = CS_PREFIX + stableKey;
+  var existingId = props.getProperty(propKey);
   options = options || {};
 
   // Try to find existing event
   if (existingId) {
     try {
-      const existing = cal.getEventById(existingId);
+      var existing = cal.getEventById(existingId);
       if (existing) {
         // Update in place
         existing.setTitle(title);
@@ -124,15 +124,15 @@ function cs_upsertEvent_(cal, stableKey, title, startDate, endDate, options) {
  * Creates or updates a recurring event series idempotently.
  */
 function cs_upsertSeries_(cal, stableKey, title, startDate, recurrence, options) {
-  const props = cs_props_();
-  const propKey = CS_PREFIX + stableKey;
-  const existingId = props.getProperty(propKey);
+  var props = cs_props_();
+  var propKey = CS_PREFIX + stableKey;
+  var existingId = props.getProperty(propKey);
   options = options || {};
 
   // Delete existing series if found (can't easily update series)
   if (existingId) {
     try {
-      const existing = cal.getEventSeriesById(existingId);
+      var existing = cal.getEventSeriesById(existingId);
       if (existing) existing.deleteEventSeries();
     } catch(e) { /* already gone */ }
   }
@@ -154,16 +154,16 @@ function cs_upsertSeries_(cal, stableKey, title, startDate, recurrence, options)
 }
 
 function cs_getSheet_(name) {
-  // v3: openById migration — trigger-safe
-  const ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
-  const resolved = typeof TAB_MAP !== 'undefined' ? (TAB_MAP[name] || name) : name;
+  // v6: uses global SSID from DataEngine — trigger-safe
+  var ss = SpreadsheetApp.openById(SSID);
+  var resolved = typeof TAB_MAP !== 'undefined' ? (TAB_MAP[name] || name) : name;
   return ss.getSheetByName(resolved);
 }
 
 function cs_getSheetData_(name) {
-  const sheet = cs_getSheet_(name);
+  var sheet = cs_getSheet_(name);
   if (!sheet) return { headers: [], data: [] };
-  const all = sheet.getDataRange().getValues();
+  var all = sheet.getDataRange().getValues();
   if (all.length < 2) return { headers: all[0] ? all[0].map(String) : [], data: [] };
   return { headers: all[0].map(String), data: all.slice(1) };
 }
@@ -218,15 +218,15 @@ function seedBillsCalendar() {
  * Derives next pay date from most recent income transaction.
  */
 function seedPayDays_() {
-  const cal = cs_getCalendar_('bills');
-  const txData = cs_getSheetData_('Transactions');
+  var cal = cs_getCalendar_('bills');
+  var txData = cs_getSheetData_('Transactions');
   if (!txData.headers.length) { Logger.log('Transactions sheet not found — skipping paydays'); return; }
 
-  const h = txData.headers;
-  const dateCol = cs_col_(h, 'Date');
-  const catCol = cs_col_(h, 'Category');
-  const descCol = cs_col_(h, 'Description');
-  const amtCol = cs_col_(h, 'Amount');
+  var h = txData.headers;
+  var dateCol = cs_col_(h, 'Date');
+  var catCol = cs_col_(h, 'Category');
+  var descCol = cs_col_(h, 'Description');
+  var amtCol = cs_col_(h, 'Amount');
 
   // Find most recent LT and JT income transactions
   var ltLastPay = null, jtLastPay = null;
@@ -299,37 +299,37 @@ function seedPayDays_() {
  * Re-runnable: updates existing events.
  */
 function syncPromoCliffs() {
-  const cal = cs_getCalendar_('bills');
-  const dm = cs_getSheetData_('DebtModel');
+  var cal = cs_getCalendar_('bills');
+  var dm = cs_getSheetData_('DebtModel');
   if (!dm.headers.length) { Logger.log('DebtModel not found — skipping promo cliffs'); return; }
 
-  const h = dm.headers;
-  // Find columns — DebtModel columns vary, try common names
-  const nameCol = Math.max(
+  var h = dm.headers;
+  // Find columns — DebtModel columns var y, try common names
+  var nameCol = Math.max(
     cs_col_(h, 'Account'),
     cs_col_(h, 'Name'),
     cs_col_(h, 'Account Name')
   );
-  const promoEndCol = Math.max(
+  var promoEndCol = Math.max(
     cs_col_(h, 'Promo End Date'),
     cs_col_(h, 'PromoEnd'),
     cs_col_(h, 'Promo End')
   );
-  const aprCol = Math.max(
+  var aprCol = Math.max(
     cs_col_(h, 'APR'),
     cs_col_(h, 'Rate'),
     cs_col_(h, 'Interest Rate')
   );
-  const promoAprCol = Math.max(
+  var promoAprCol = Math.max(
     cs_col_(h, 'Promo APR'),
     cs_col_(h, 'PromoAPR'),
     cs_col_(h, 'Promo Rate')
   );
-  const balCol = Math.max(
+  var balCol = Math.max(
     cs_col_(h, 'Balance'),
     cs_col_(h, 'Current Balance')
   );
-  const minCol = Math.max(
+  var minCol = Math.max(
     cs_col_(h, 'Minimum'),
     cs_col_(h, 'Min Payment'),
     cs_col_(h, 'Min')
@@ -396,14 +396,14 @@ function syncPromoCliffs() {
  *   - Cash flow positive date
  */
 function syncDebtMilestones() {
-  const cal = cs_getCalendar_('bills');
+  var cal = cs_getCalendar_('bills');
 
   // ── 1. Debt-free target from Debt_Export ──────────────────────
   var deSheet = cs_getSheet_('Debt_Export');
   if (deSheet) {
     var deData = deSheet.getDataRange().getValues();
     // Debt_Export is typically key-value pairs or a metadata sheet
-    // Look for debtFreeTarget in various formats
+    // Look for debtFreeTarget in var ious formats
     var debtFreeDate = null;
     for (var i = 0; i < deData.length; i++) {
       var key = String(deData[i][0] || '').toLowerCase();
@@ -511,7 +511,7 @@ function syncDebtMilestones() {
  * 1st of each month.
  */
 function seedMERReminders_() {
-  const cal = cs_getCalendar_('bills');
+  var cal = cs_getCalendar_('bills');
   var now = cs_today_();
 
   // Start from next month's 1st
@@ -549,7 +549,7 @@ function seedMERReminders_() {
  * Reads bonus amount from Debt_Export (cached by syncDebtMilestones).
  */
 function seedAugustBonus_() {
-  const cal = cs_getCalendar_('bills');
+  var cal = cs_getCalendar_('bills');
   var bonusAmt = Number(cs_props_().getProperty(CS_PREFIX + '_bonusAmt')) || 19686;
   var now = cs_today_();
 
@@ -596,18 +596,18 @@ function seedHouseholdCalendar() {
  * from transaction patterns and creates monthly calendar events.
  */
 function seedSubscriptionRenewals_() {
-  const cal = cs_getCalendar_('household');
-  const txData = cs_getSheetData_('Transactions');
+  var cal = cs_getCalendar_('household');
+  var txData = cs_getSheetData_('Transactions');
   if (!txData.headers.length) { Logger.log('Transactions not found — skipping subscriptions'); return; }
 
-  const h = txData.headers;
-  const dateCol = cs_col_(h, 'Date');
-  const descCol = cs_col_(h, 'Description');
-  const amtCol = cs_col_(h, 'Amount');
-  const catCol = cs_col_(h, 'Category');
+  var h = txData.headers;
+  var dateCol = cs_col_(h, 'Date');
+  var descCol = cs_col_(h, 'Description');
+  var amtCol = cs_col_(h, 'Amount');
+  var catCol = cs_col_(h, 'Category');
 
   // Known subscription patterns (description substring → display name)
-  const SUBS = {
+  var SUBS = {
     'netflix':       { name: 'Netflix',        icon: '📺' },
     'spotify':       { name: 'Spotify',        icon: '🎵' },
     'hulu':          { name: 'Hulu',           icon: '📺' },
@@ -692,14 +692,14 @@ function seedSubscriptionRenewals_() {
  * (SoFi payoff, childcare drop-off, etc.) and creates calendar events.
  */
 function seedCFFMilestones_() {
-  const cal = cs_getCalendar_('household');
-  const cff = cs_getSheetData_('CashFlowForecast');
+  var cal = cs_getCalendar_('household');
+  var cff = cs_getSheetData_('CashFlowForecast');
   if (!cff.headers.length) { Logger.log('CashFlowForecast not found — skipping CFF milestones'); return; }
 
-  const h = cff.headers;
-  const eventCol = Math.max(cs_col_(h, 'Event'), cs_col_(h, 'Description'), cs_col_(h, 'Milestone'));
-  const dateCol = Math.max(cs_col_(h, 'Date'), cs_col_(h, 'Target Date'));
-  const impactCol = Math.max(cs_col_(h, 'Impact'), cs_col_(h, 'Monthly Impact'), cs_col_(h, 'Amount'));
+  var h = cff.headers;
+  var eventCol = Math.max(cs_col_(h, 'Event'), cs_col_(h, 'Description'), cs_col_(h, 'Milestone'));
+  var dateCol = Math.max(cs_col_(h, 'Date'), cs_col_(h, 'Target Date'));
+  var impactCol = Math.max(cs_col_(h, 'Impact'), cs_col_(h, 'Monthly Impact'), cs_col_(h, 'Amount'));
 
   if (eventCol < 0 || dateCol < 0) { Logger.log('CFF: required columns not found'); return; }
 
@@ -851,7 +851,7 @@ function syncAll() {
  */
 function csHealthCheck() {
   var results = {
-    version: 'CalendarSync.gs v3',
+    version: 'CalendarSync.gs v' + getCalendarSyncVersion(),
     timestamp: new Date().toISOString(),
     calendars: {},
     trackedEvents: 0,
@@ -1068,4 +1068,4 @@ function loadNanceSchoolCalendar() {
   Logger.log('School calendar import: ' + added + ' added, ' + skipped + ' skipped (duplicates)');
 }
 
-// END OF FILE — CalendarSync.gs v5
+// END OF FILE — CalendarSync.gs v6
