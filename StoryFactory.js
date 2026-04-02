@@ -3,11 +3,11 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 10.0
+// Version: 11.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 10; }
+function getStoryFactoryVersion() { return 11; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -803,6 +803,7 @@ var isSafetyBlock = msg.indexOf('SAFETY') >= 0 || msg.indexOf('safety') >= 0 || 
     Utilities.sleep(wait);
   } else {
     Logger.log('Image ' + sceneNumber + ' failed after ' + CONFIG.IMAGE_MAX_RETRIES + ' attempts: ' + msg);
+    sf_logError_('generateWithRetry.scene' + sceneNumber, new Error(msg));
   }
 }
 
@@ -1128,7 +1129,7 @@ return 7;
 // ── MAIN PIPELINE ────────────────────────────────────────────
 
 function runStoryFactory(topic, character, tone) {
-Logger.log('=== Story Factory v8.0 ===');
+Logger.log('=== Story Factory v' + getStoryFactoryVersion() + ' ===');
 Logger.log('Topic: ' + topic + ' | Character: ' + character + ' | Tone: ' + (tone || 'Funny'));
 
 try {
@@ -1269,6 +1270,7 @@ props.setProperty('SF_CONSECUTIVE_FAILS', '0');
 } else {
 updateNotionRow(pageId, null, 'Failed');
 Logger.log('Set to Failed. Change to Idea manually to retry.');
+sf_logError_('pollForNewStories', new Error('Story generation failed: ' + (r.error || 'unknown')));
 consecutiveFails++;
 props.setProperty('SF_CONSECUTIVE_FAILS', String(consecutiveFails));
 if (consecutiveFails >= 3) {
@@ -1591,5 +1593,5 @@ Logger.log('Drive authorized! Folder: ' + folder.getName());
 }
 
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — StoryFactory v10
+// END OF FILE — StoryFactory v11
 // ════════════════════════════════════════════════════════════════════
