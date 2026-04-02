@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v37 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v38 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 37; }
+function getKidsHubVersion() { return 38; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -384,7 +384,7 @@ function setupKHSheets() {
   setupKHDropdowns();
 
   ui.alert(
-    '✅ Kids Hub Setup Complete! v26\n\n' +
+    '✅ Kids Hub Setup Complete! v' + getKidsHubVersion() + '\n\n' +
     '10 tabs created:\n' +
     tabOrder.join(', ') + '\n\n' +
     'Seed data loaded for: KH_Children, KH_Chores, KH_Rewards, KH_Allowance\n' +
@@ -2322,57 +2322,71 @@ function getKHAppUrls() {
 // Rebuilt in KidsHub.gs v21 (was dead code in DataEngine using stale SSID).
 // ════════════════════════════════════════════════════════════════════
 
+// v38: Fixed F17 — same root cause as F16. Reads KH_History approval events
+// cross-referenced with KH_Chores task definitions. Survives daily reset.
 function getKidsAllowanceLog() {
-  var sheet = getKHSheet_('KH_Chores');
-  if (!sheet) return { error: 'KH_Chores sheet not found' };
-
   var now = new Date();
-  var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   var tz = Session.getScriptTimeZone();
+  var monthStart = Utilities.formatDate(new Date(now.getFullYear(), now.getMonth(), 1), tz, 'yyyy-MM-dd');
   var monthLabel = Utilities.formatDate(now, tz, 'MMMM yyyy');
 
-  var data = sheet.getDataRange().getValues();
-  var headers = getKHHeaders_(sheet);
+  var choreData = readSheet_('KH_Chores');
+  var taskDefs = {};
+  if (choreData && choreData.length >= 2) {
+    var cH = choreData[0].map(String);
+    var cTaskID = cH.indexOf('Task_ID');
+    var cTask = cH.indexOf('Task');
+    var cMoney = cH.indexOf('Money');
+    var cCategory = cH.indexOf('Category');
+    var cPoints = cH.indexOf('Points');
+    for (var ci = 1; ci < choreData.length; ci++) {
+      var tid = String(choreData[ci][cTaskID] || '');
+      if (tid) {
+        taskDefs[tid] = {
+          task: String(choreData[ci][cTask] || ''),
+          money: Number(choreData[ci][cMoney]) || 0,
+          category: String(choreData[ci][cCategory] || ''),
+          points: Number(choreData[ci][cPoints]) || 0
+        };
+      }
+    }
+  }
 
+  var histData = readSheet_('KH_History');
   var log = { buggsy: [], jj: [], summary: {} };
   var buggsyTotal = 0, jjTotal = 0;
 
-  for (var i = 1; i < data.length; i++) {
-    var r = data[i];
-    var task = String(r[khCol_(headers, 'Task')] || '').trim();
-    if (!task) continue;
+  if (histData && histData.length >= 2) {
+    var hH = histData[0].map(String);
+    var hChild = hH.indexOf('Child');
+    var hTaskID = hH.indexOf('Task_ID');
+    var hDate = hH.indexOf('Date');
+    var hType = hH.indexOf('Event_Type');
 
-    var active = String(r[khCol_(headers, 'Active')] || '').toUpperCase();
-    if (active !== 'YES') continue;
-
-    var approved = r[khCol_(headers, 'Parent_Approved')] === true ||
-                   String(r[khCol_(headers, 'Parent_Approved')]).toUpperCase() === 'TRUE';
-    if (!approved) continue;
-
-    var compRaw = r[khCol_(headers, 'Completed_Date')];
-    if (!compRaw) continue;
-    var compDate = compRaw instanceof Date ? compRaw : new Date(String(compRaw).trim());
-    if (isNaN(compDate.getTime()) || compDate < monthStart) continue;
-
-    var money = Number(r[khCol_(headers, 'Money')] || 0);
-    var child = String(r[khCol_(headers, 'Child')] || '').trim().toLowerCase();
-    var category = String(r[khCol_(headers, 'Category')] || '');
-    var points = Number(r[khCol_(headers, 'Points')] || 0);
-
-    var entry = {
-      date: Utilities.formatDate(compDate, tz, 'yyyy-MM-dd'),
-      task: task,
-      category: category,
-      points: points,
-      money: Math.round(money * 100) / 100
-    };
-
-    if (child === 'buggsy') { log.buggsy.push(entry); buggsyTotal += money; }
-    else if (child === 'jj') { log.jj.push(entry); jjTotal += money; }
+    for (var i = 1; i < histData.length; i++) {
+      var row = histData[i];
+      var evType = String(row[hType] || '').toLowerCase();
+      if (evType !== 'approval') continue;
+      var dateStr = String(row[hDate] || '').substring(0, 10);
+      if (dateStr < monthStart) continue;
+      var taskID = String(row[hTaskID] || '');
+      var def = taskDefs[taskID];
+      if (!def || def.money <= 0) continue;
+      var child = String(row[hChild] || '').toLowerCase();
+      var entry = {
+        date: dateStr,
+        task: def.task,
+        category: def.category,
+        points: def.points,
+        money: Math.round(def.money * 100) / 100
+      };
+      if (child === 'buggsy') { log.buggsy.push(entry); buggsyTotal += def.money; }
+      else if (child === 'jj') { log.jj.push(entry); jjTotal += def.money; }
+    }
   }
 
-  log.buggsy.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
-  log.jj.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+  log.buggsy.sort(function(a, b) { return b.date > a.date ? 1 : -1; });
+  log.jj.sort(function(a, b) { return b.date > a.date ? 1 : -1; });
 
   log.summary = {
     buggsyMTD:  Math.round(buggsyTotal * 100) / 100,
