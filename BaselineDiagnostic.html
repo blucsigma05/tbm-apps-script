@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="tbm-module" content="baseline-diagnostic">
-<meta name="tbm-version" content="v1">
+<meta name="tbm-version" content="v2">
 <title>Baseline Diagnostic - Thompson Education Platform</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -1615,7 +1615,7 @@ var Diag = (function() {
             status.textContent = 'Error: ' + (err && err.message ? err.message : 'Unknown error');
             status.style.color = '#ef4444';
           })
-          .logHomeworkCompletion(payload);
+          .logHomeworkCompletionSafe(payload);
       } catch (e) {
         // Not running inside GAS — show debug info
         btn.disabled = false;
