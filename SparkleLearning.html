@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v2">
-  <title>SparkleLearn v2 — JJ's Learning Games</title>
+  <meta name="tbm-version" content="v3">
+  <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* ═══════════════════════════════════════════════════
@@ -492,7 +492,7 @@
 
 <script>
 /* ═══════════════════════════════════════════════════════════
-   SparkleLearn v2 — JJ's Learning Games
+   SparkleLearn v3 — JJ's Learning Games
    ES5 ONLY — No let/const, arrow functions, template literals
    ═══════════════════════════════════════════════════════════ */
 
@@ -552,12 +552,16 @@ function speakOptions(options, index, callback) {
   });
 }
 
-function playAudioCached(name) {
+function playAudioCached(name, fallbackText) {
   if (audioCache[name]) {
     try {
       audioCache[name].currentTime = 0;
       audioCache[name].play();
-    } catch (e) { /* silent */ }
+      return;
+    } catch (e) { /* fall through */ }
+  }
+  if (fallbackText) {
+    speak(fallbackText);
   }
 }
 
@@ -830,10 +834,20 @@ function init() {
 
   /* Preload audio clips */
   var audioFiles = [];
-  for (var i = 0; i < 26; i++) {
-    audioFiles.push(String.fromCharCode(65 + i) + '.mp3');
-  }
+  for (var i = 0; i < 26; i++) { audioFiles.push(String.fromCharCode(65 + i) + '.mp3'); }
   audioFiles.push('correct.mp3', 'celebration.mp3', 'try-again.mp3');
+  var jjExtra = [
+    'jj_feedback_correct1.mp3','jj_feedback_correct2.mp3','jj_feedback_correct3.mp3','jj_feedback_correct4.mp3',
+    'jj_feedback_correct5.mp3','jj_feedback_correct6.mp3','jj_feedback_correct7.mp3','jj_feedback_correct8.mp3',
+    'jj_feedback_tryagain1.mp3','jj_feedback_tryagain2.mp3','jj_feedback_tryagain3.mp3','jj_feedback_tryagain4.mp3',
+    'jj_feedback_complete1.mp3','jj_feedback_complete2.mp3','jj_feedback_complete3.mp3','jj_feedback_star_earned.mp3',
+    'jj_instruction_welcome.mp3','jj_instruction_pick_game.mp3','jj_instruction_find_game.mp3',
+    'jj_instruction_trace_game.mp3','jj_instruction_sound_game.mp3','jj_instruction_name_game.mp3',
+    'jj_instruction_hear_it.mp3','jj_instruction_what_color.mp3','jj_instruction_count.mp3',
+    'jj_instruction_what_next.mp3','jj_instruction_great_session.mp3','jj_instruction_bye.mp3'
+  ];
+  for (var n = 1; n <= 10; n++) { jjExtra.push('jj_number_' + n + '.mp3'); }
+  for (var x = 0; x < jjExtra.length; x++) { audioFiles.push(jjExtra[x]); }
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function(batch) {
@@ -889,7 +903,7 @@ function showReadyScreen(content) {
   html += '</div>';
   mc.innerHTML = html;
 
-  speak("Hi JJ! You have " + actCount + " sparkle games today! Tap Let's Play to start!");
+  playAudioCached('jj_instruction_welcome.mp3', content.audioIntro || 'Time for sparkle learning!');
 }
 
 function startSession() {
@@ -974,16 +988,20 @@ function handleCorrectAnswer(activity, el) {
 
   playAudioCached('correct.mp3');
   showFeedback('Great job!', true);
-  speak("Great job!", function() {
-    advanceActivity(activity.stars || 1);
-  });
+  var celebClips = ['jj_feedback_correct1.mp3','jj_feedback_correct2.mp3','jj_feedback_correct3.mp3','jj_feedback_correct4.mp3','jj_feedback_correct5.mp3','jj_feedback_correct6.mp3','jj_feedback_correct7.mp3','jj_feedback_correct8.mp3'];
+  setTimeout(function() {
+    playAudioCached(celebClips[Math.floor(Math.random() * celebClips.length)], 'Great job!');
+    setTimeout(function() {
+      advanceActivity(activity.stars || 1);
+    }, 1200);
+  }, 500);
 }
 
 function handleWrongAnswer(el) {
   if (activityLocked) { return; }
   if (el) { el.className += ' wrong'; }
-  playAudioCached('try-again.mp3');
-  speak("Try again!");
+  var tryClips = ['jj_feedback_tryagain1.mp3','jj_feedback_tryagain2.mp3','jj_feedback_tryagain3.mp3','jj_feedback_tryagain4.mp3'];
+  playAudioCached(tryClips[Math.floor(Math.random() * tryClips.length)], 'Try again!');
   setTimeout(function() {
     if (el) {
       el.className = el.className.replace(' wrong', '');
@@ -1017,9 +1035,10 @@ function renderLetterIntro(activity) {
     lettersCompleted.push(letter.toUpperCase());
   }
 
-  speak("This is the letter " + letter.toUpperCase() + "!", function() {
+  playAudioCached(letter.toUpperCase() + '.mp3', activity.audioPhrase || ('This is the letter ' + letter.toUpperCase()));
+  setTimeout(function() {
     speak(letter.toUpperCase() + " is for " + words.join(", and "));
-  });
+  }, 1500);
 }
 
 function handleLetterIntroDone() {
@@ -1133,7 +1152,11 @@ function tapCountObject(idx) {
   countState.tapped++;
   el.className += ' tapped counted';
   showCountBadge(countState.tapped);
-  speak(String(countState.tapped));
+  if (countState.tapped <= 10) {
+    playAudioCached('jj_number_' + countState.tapped + '.mp3', String(countState.tapped));
+  } else {
+    speak(String(countState.tapped));
+  }
 
   var rect = el.getBoundingClientRect();
   spawnSparkles(rect.left + 28, rect.top + 28, 5);
@@ -1418,9 +1441,10 @@ function renderLetterSound(activity) {
   html += '</div>';
   mc.innerHTML = html;
 
-  speak(letter.toUpperCase() + " says " + sound + "!", function() {
+  playAudioCached(letter.toUpperCase() + '.mp3', letter.toUpperCase() + ' says ' + sound);
+  setTimeout(function() {
     speak(words[0] + " starts with " + sound);
-  });
+  }, 1500);
 }
 
 function handleLetterSoundDone() {
@@ -2098,9 +2122,10 @@ function showCelebrationScreen(sessionStars) {
   mc.innerHTML = html;
 
   playAudioCached('celebration.mp3');
-  speak("Amazing job JJ! You earned " + sessionStars + " stars today! You are a superstar!", function() {
-    speak("Tap Play Again to do more, or you are all done for today!");
-  });
+  playAudioCached('jj_feedback_complete3.mp3', 'Amazing job!');
+  setTimeout(function() {
+    playAudioCached('jj_instruction_great_session.mp3', 'Great learning today!');
+  }, 2000);
 }
 
 function replaySession() {
