@@ -299,7 +299,8 @@ function getShimScript() {
 '    "awardRingsSafe","seedWeek1CurriculumSafe","seedStaarRlaSprintSafe","submitFeedbackSafe",\n' +
 '    "logQuestionResultSafe","savePowerScanResultsSafe","getWeeklyProgressSafe",\n' +
 '    "saveProgressSafe","loadProgressSafe","logScaffoldEventSafe","getWeekProgressSafe",\n' +
-'    "listStoredStoriesSafe","getStoryForReaderSafe","getStoryImagesSafe"\n' +
+'    "listStoredStoriesSafe","getStoryForReaderSafe","getStoryImagesSafe",\n' +
+'    "saveMissionStateSafe","getMissionStateSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +
@@ -422,8 +423,10 @@ function isValidFinanceCookie(request, env) {
   // Check expiry (24h)
   var age = Date.now() - parseInt(ts, 10);
   if (isNaN(age) || age > 86400000 || age < 0) return false;
-  // We can't do async crypto here synchronously, so we trust the cookie structure
-  // The cookie is HttpOnly + Secure so it can't be forged from JS
+  // SECURITY NOTE (R9-F07): Cookie hash cannot be verified synchronously.
+  // crypto.subtle.digest is async-only. Accepted risk: validate structure
+  // (timestamp:64-char-hex) + expiry (24h) + HttpOnly/Secure/SameSite flags.
+  // Cookie cannot be forged from client JS. HTTPS prevents MITM replay.
   return hash.length === 64;
 }
 

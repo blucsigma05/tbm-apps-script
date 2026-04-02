@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v80 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v81 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config, 💻 MealPlan
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 80; }
+function getDataEngineVersion() { return 81; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -219,6 +219,7 @@ var TAB_MAP = {
   'KH_ScreenTime':    '🧹📅 KH_ScreenTime',
   'KH_Grades':        '🧹📅 KH_Grades',
   'KH_PowerScan':     '🧹📅 KH_PowerScan',
+  'KH_MissionState':  '🧹📅 KH_MissionState',
   // 💻 Education + System
   'Curriculum':       '💻 Curriculum',
   'QuestionLog':      '💻 QuestionLog',
@@ -3382,4 +3383,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v80
+// END OF FILE — DataEngine v81

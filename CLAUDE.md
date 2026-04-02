@@ -324,6 +324,27 @@ grep -rn "backdrop-filter" *.html
 
 ---
 
+## API Proxy Contract
+HTML modules served via Cloudflare use the `google.script.run` shim which
+POSTs to `/api?fn=FUNCTION_NAME`. When accessed directly via GAS (not
+Cloudflare), the XHR fallback in StoryLibrary.html uses
+`?action=api&fn=FUNCTION_NAME&args=[]` — this is handled by the same
+`serveData()` router branch in Code.gs. Both paths resolve to the same
+function execution.
+
+## ES5 Allowed Methods
+The following ES5.1 methods ARE allowed despite edge-case compatibility
+concerns, because they work in all target WebViews (Fully Kiosk 4.x+,
+Fire TV Silk, Samsung Internet 4+):
+- `Object.keys()`
+- `Array.isArray()`
+- `JSON.parse()` / `JSON.stringify()`
+- `Array.prototype.indexOf()`
+- `Array.prototype.forEach()`
+- `Array.prototype.map()`
+- `Array.prototype.filter()`
+- `String.prototype.trim()`
+
 ## Pattern Registry
 | Pattern | Canonical location |
 |---------|--------------------|

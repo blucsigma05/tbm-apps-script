@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v2">
+<meta name="tbm-version" content="v3">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -669,6 +669,8 @@ var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'
 var currentChild = 'buggsy';
 var todayKey = '';
 var dayOfWeek = 0;
+var _serverStateLoaded = false;
+var _cachedMissionState = {};
 
 // ============================================================
 // INIT
@@ -683,7 +685,9 @@ function init() {
     buildStarfield();
   }
 
-  render();
+  loadMissionStateFromServer(function() {
+    render();
+  });
 
 }
 
@@ -781,6 +785,7 @@ function buildSparkles() {
 // LOCALSTORAGE HELPERS
 // ============================================================
 function getMissionState() {
+  if (_serverStateLoaded) return _cachedMissionState;
   try {
     var raw = localStorage.getItem(todayKey);
     if (raw) return JSON.parse(raw);
@@ -792,6 +797,35 @@ function setMissionState(state) {
   try {
     localStorage.setItem(todayKey, JSON.stringify(state));
   } catch (e) { /* ignore */ }
+  _cachedMissionState = state;
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function() {})
+      .withFailureHandler(function(err) { console.log('Mission state save failed: ' + (err && err.message ? err.message : 'unknown')); })
+      .saveMissionStateSafe(currentChild, todayKey, state);
+  }
+}
+
+function loadMissionStateFromServer(callback) {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    _serverStateLoaded = true;
+    if (callback) callback();
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(state) {
+      if (state && typeof state === 'object') {
+        _cachedMissionState = state;
+        try { localStorage.setItem(todayKey, JSON.stringify(state)); } catch (e) {}
+      }
+      _serverStateLoaded = true;
+      if (callback) callback();
+    })
+    .withFailureHandler(function() {
+      _serverStateLoaded = true;
+      if (callback) callback();
+    })
+    .getMissionStateSafe(currentChild, todayKey);
 }
 
 function isMissionDone(missionId) {

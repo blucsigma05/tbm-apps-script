@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v39 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v40 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 39; }
+function getKidsHubVersion() { return 40; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3383,5 +3383,62 @@ function getWeekProgressSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v39
+function saveMissionState_(child, dateKey, state) {
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var ss = getKHSS_();
+    var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_MissionState']) || 'KH_MissionState';
+    var sheet = ss.getSheetByName(tabName);
+    if (!sheet) {
+      sheet = ss.insertSheet(tabName);
+      sheet.appendRow(['Child', 'DateKey', 'StateJSON', 'UpdatedAt']);
+      sheet.setFrozenRows(1);
+    }
+    var data = sheet.getDataRange().getValues();
+    var found = false;
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === child && String(data[i][1]) === dateKey) {
+        sheet.getRange(i + 1, 3).setValue(JSON.stringify(state));
+        sheet.getRange(i + 1, 4).setValue(new Date().toISOString());
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      sheet.appendRow([child, dateKey, JSON.stringify(state), new Date().toISOString()]);
+    }
+    return JSON.stringify({ status: 'ok' });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function saveMissionStateSafe(child, dateKey, state) {
+  return withMonitor_('saveMissionStateSafe', function() {
+    return JSON.parse(JSON.stringify(JSON.parse(saveMissionState_(child, dateKey, state))));
+  });
+}
+
+function getMissionState_(child, dateKey) {
+  var ss = getKHSS_();
+  var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_MissionState']) || 'KH_MissionState';
+  var sheet = ss.getSheetByName(tabName);
+  if (!sheet) return {};
+  var data = sheet.getDataRange().getValues();
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][0]) === child && String(data[i][1]) === dateKey) {
+      try { return JSON.parse(String(data[i][2])); } catch(e) { return {}; }
+    }
+  }
+  return {};
+}
+
+function getMissionStateSafe(child, dateKey) {
+  return withMonitor_('getMissionStateSafe', function() {
+    return JSON.parse(JSON.stringify(getMissionState_(child, dateKey)));
+  });
+}
+
+// END OF FILE — KidsHub.gs v40
 // ════════════════════════════════════════════════════════════════════
