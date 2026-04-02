@@ -908,14 +908,19 @@ function renderActivity(index) {
 
   switch (type) {
     case 'letter_intro':       renderLetterIntro(activity); break;
-    case 'find_letter':        renderFindLetter(activity); break;
-    case 'find_number':        renderFindNumber(activity); break;
+    case 'find_letter':
+    case 'find_the_letter':    renderFindLetter(activity); break;
+    case 'find_number':
+    case 'find_the_number':    renderFindNumber(activity); break;
     case 'count_with_me':      renderCountWithMe(activity); break;
-    case 'quantity_match':     renderQuantityMatch(activity); break;
+    case 'quantity_match':
+    case 'quantity_matching':  renderQuantityMatch(activity); break;
     case 'color_hunt':         renderColorHunt(activity); break;
     case 'shape_match':        renderShapeMatch(activity); break;
-    case 'pattern_next':       renderPatternNext(activity); break;
-    case 'letter_sound':       renderLetterSound(activity); break;
+    case 'pattern_next':
+    case 'pattern_completion': renderPatternNext(activity); break;
+    case 'letter_sound':
+    case 'what_sound':         renderLetterSound(activity); break;
     case 'beginning_sound':    renderBeginningSound(activity); break;
     case 'letter_trace':       renderLetterTrace(activity); break;
     case 'number_trace':       renderNumberTrace(activity); break;
@@ -923,7 +928,10 @@ function renderActivity(index) {
     case 'color_sort':         renderColorSort(activity); break;
     case 'more_or_less':       renderMoreOrLess(activity); break;
     case 'name_builder':       renderNameBuilder(activity); break;
-    case 'celebration':        renderCelebration(activity); break;
+    case 'celebration':
+    case 'star_celebration':   renderCelebration(activity); break;
+    case 'sparkle_challenge':  renderSparkleChallenge(activity); break;
+    case 'free_draw':          advanceActivity(activity.starsEarned || 1); break;
     default:
       /* Skip unknown types */
       advanceActivity(activity.stars || 0);
@@ -1952,6 +1960,51 @@ function tapNameLetter(bankIdx, letter) {
 /* ═══════════════════════════════════════════════════════════
    ACTIVITY 17: CELEBRATION
    ═══════════════════════════════════════════════════════════ */
+/* ═══ SPARKLE CHALLENGE — multi-question MC quiz ═══ */
+function renderSparkleChallenge(activity) {
+  var mc = getMainContent();
+  var qs = activity.questions || [];
+  if (!qs.length) { advanceActivity(activity.stars || 2); return; }
+  var qIdx = 0;
+  var correct = 0;
+
+  function showQ() {
+    if (qIdx >= qs.length) {
+      var html = '<div class="activity-card">';
+      html += '<p class="instruction" style="font-size:28px;">' + escapeHtml(correct + '/' + qs.length + ' correct!') + '</p>';
+      html += '<button class="btn-big btn-green" onclick="advanceActivity(' + (activity.stars || 2) + ')" style="margin-top:20px;">Next! &#x2728;</button>';
+      html += '</div>';
+      mc.innerHTML = html;
+      speak('You got ' + correct + ' out of ' + qs.length + '!');
+      return;
+    }
+    var q = qs[qIdx];
+    var html = '<div class="activity-card">';
+    html += '<p class="instruction">' + escapeHtml(q.prompt || 'Pick the answer:') + '</p>';
+    html += '<div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">';
+    for (var i = 0; i < (q.options || []).length; i++) {
+      html += '<button class="btn-big" style="min-height:64px;font-size:22px;" onclick="handleSC(' + i + ')">' + escapeHtml(q.options[i]) + '</button>';
+    }
+    html += '</div></div>';
+    mc.innerHTML = html;
+    speak(q.prompt || 'Pick the answer');
+    speakOptions(q.options || [], 0);
+  }
+
+  window.handleSC = function(idx) {
+    var q = qs[qIdx];
+    var picked = q.options[idx];
+    if (String(picked) === String(q.answer)) {
+      correct++;
+      speak('Yes! ' + picked + '!', function() { qIdx++; showQ(); });
+    } else {
+      speak('Not quite. The answer is ' + q.answer, function() { qIdx++; showQ(); });
+    }
+  };
+
+  showQ();
+}
+
 function renderCelebration(activity) {
   var mc = getMainContent();
   var message = activity.message || 'You are a superstar!';
