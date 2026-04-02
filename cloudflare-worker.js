@@ -18,6 +18,7 @@ const PATH_ROUTES = {
   // Education modules (v2.5)
   '/homework':      { page: 'homework' },
   '/sparkle':       { page: 'sparkle' },
+  '/sparkle-free':  { page: 'sparkle', mode: 'freeplay' },
   '/wolfkid':       { page: 'wolfkid' },
   '/dashboard':     { page: 'dashboard' },
   '/facts':         { page: 'facts' },

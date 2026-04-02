@@ -782,6 +782,30 @@ if (TBM_TEST_MODE) {
   document.body.style.paddingTop = '28px';
 }
 
+// ── Audio System (Marco / ElevenLabs) ──
+var audioCache = {};
+function preloadBugsyAudio() {
+  var files = [
+    'buggsy_feedback_correct1.mp3','buggsy_feedback_correct2.mp3','buggsy_feedback_correct3.mp3','buggsy_feedback_correct4.mp3',
+    'buggsy_feedback_correct5.mp3','buggsy_feedback_correct6.mp3','buggsy_feedback_correct7.mp3','buggsy_feedback_correct8.mp3',
+    'buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3',
+    'buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3','buggsy_feedback_rings.mp3','buggsy_feedback_submitted.mp3','hype_lets_go.mp3',
+    'buggsy_cer_claim.mp3','buggsy_cer_evidence.mp3','buggsy_cer_read.mp3','buggsy_cer_reasoning.mp3',
+    'buggsy_cer_submit.mp3','buggsy_cer_timer_half.mp3','buggsy_cer_timer_start.mp3','buggsy_nav_wolfkid.mp3'
+  ];
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  google.script.run
+    .withSuccessHandler(function(batch) {
+      if (batch) { for (var k in batch) { if (batch.hasOwnProperty(k)) { audioCache[k] = new Audio('data:audio/mp3;base64,' + batch[k]); } } }
+    })
+    .withFailureHandler(function() {})
+    .getAudioBatchSafe(files);
+}
+function playBugsyAudio(name) { if (audioCache[name]) { try { audioCache[name].currentTime = 0; audioCache[name].play(); return true; } catch(e) {} } return false; }
+function playBugsyCorrect() { var c = ['buggsy_feedback_correct1.mp3','buggsy_feedback_correct2.mp3','buggsy_feedback_correct3.mp3','buggsy_feedback_correct4.mp3','buggsy_feedback_correct5.mp3','buggsy_feedback_correct6.mp3','buggsy_feedback_correct7.mp3','buggsy_feedback_correct8.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
+function playBugsyWrong() { var c = ['buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
+function playBugsyComplete() { var c = ['buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
+
 // ─── Episode Data ───
 var EPISODE = null;
 var FALLBACK_EPISODE = {
@@ -1111,6 +1135,7 @@ function updateCounts() {
 
 // ─── Submit ───
 function handleSubmit() {
+  playBugsyAudio('buggsy_cer_submit.mp3');
   submitted = true;
   // Stop writing timer
   if (timerRunning) {
@@ -1151,6 +1176,7 @@ function handleSubmit() {
   }
 
   switchView("completion");
+  playBugsyComplete();
 }
 
 // ─── Review Render ───
@@ -1246,6 +1272,7 @@ function loadCurriculumContent() {
 
 // ─── Boot ───
 loadCurriculumContent();
+preloadBugsyAudio();
 </script>
 </body>
 </html>
