@@ -2830,6 +2830,7 @@ function pBatchApprove(child) {
     h += '<a onclick="eduGo(\'investigation\')" style="padding:8px 14px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);border-radius:8px;color:#86efac;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">Investigation</a>';
     h += '<a onclick="eduGo(\'baseline\')" style="padding:8px 14px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);border-radius:8px;color:#fde68a;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none">Baseline</a>';
     h += '</div></div></div>';
+    h += '<div id="v2-education"></div>';
     h += '<div class="p-v2-tabs">';
     h += tb('pending', '⏳ Pending (' + pending.length + ')');
     h += tb('completed', '✅ Completed (' + completed.length + ')');
@@ -2888,6 +2889,15 @@ function pBatchApprove(child) {
     } catch(e) {
       var eduEl = document.getElementById('eduStatus');
       if (eduEl) eduEl.textContent = 'Education data unavailable';
+    }
+    // Load education queue
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(eduData) {
+          _v2RenderEducation(eduData);
+        })
+        .withFailureHandler(function() {})
+        .getEducationQueueSafe();
     }
   }
   function renderEduStatus(results) {
@@ -3478,6 +3488,84 @@ function pBatchApprove(child) {
         toast('Story failed — try again');
       })
       .runStoryFactorySafe(topic, character, tone);
+  };
+  function _v2RenderEducation(data) {
+    var container = document.getElementById('v2-education');
+    if (!container) return;
+    if (!data) { container.innerHTML = ''; return; }
+    var h = '';
+
+    if (data.pending && data.pending.length > 0) {
+      h += '<div class="p-reset-panel" style="margin-bottom:12px"><div class="p-reset-title" style="color:#fbbf24">NEEDS YOUR REVIEW (' + data.pending.length + ')</div>';
+      for (var i = 0; i < data.pending.length; i++) {
+        var p = data.pending[i];
+        var childLabel = p.child === 'jj' ? 'JJ' : 'Buggsy';
+        h += '<div style="background:rgba(0,0,0,0.15);border-radius:8px;padding:10px;margin-bottom:6px">';
+        h += '<div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:13px;color:#e2e8f0">' + escHtml(childLabel + ' — ' + p.subject) + '</span>';
+        h += '<span style="font-size:11px;color:#94a3b8">' + escHtml(p.module) + '</span></div>';
+        if (p.score > 0) {
+          h += '<div style="font-size:11px;color:#94a3b8;margin-top:4px">Auto-graded: ' + p.score + '%</div>';
+        }
+        if (p.responseText) {
+          h += '<div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:8px;margin-top:8px;font-size:12px;color:#cbd5e1;max-height:120px;overflow-y:auto;white-space:pre-wrap">' + escHtml(p.responseText) + '</div>';
+        }
+        if (p.geminiFeedback) {
+          try {
+            var gf = JSON.parse(p.geminiFeedback);
+            if (gf && gf.feedback) {
+              h += '<div style="background:rgba(99,102,241,0.08);border-radius:6px;padding:8px;margin-top:6px;font-size:11px;color:#a5b4fc"><span style="font-weight:700">AI Review:</span> ' + escHtml(gf.feedback) + '</div>';
+            }
+          } catch(e) {}
+        }
+        h += '<div style="display:flex;gap:8px;margin-top:8px">';
+        h += '<button onclick="window._v2ApproveEdu(' + p.rowIndex + ')" style="flex:1;padding:8px;border-radius:6px;border:none;background:#065f46;color:#6ee7b7;font-weight:700;font-size:12px;cursor:pointer">Approve (+10 rings)</button>';
+        h += '<button onclick="window._v2ReturnEdu(' + p.rowIndex + ')" style="flex:1;padding:8px;border-radius:6px;border:none;background:#7f1d1d;color:#fca5a5;font-weight:700;font-size:12px;cursor:pointer">Return</button>';
+        h += '</div></div>';
+      }
+      h += '</div>';
+    }
+
+    if (data.today && data.today.length > 0) {
+      h += '<div class="p-reset-panel"><div class="p-reset-title" style="color:#a5b4fc">EDUCATION TODAY</div>';
+      for (var j = 0; j < data.today.length; j++) {
+        var t = data.today[j];
+        var sIcon = t.status === 'auto_approved' || t.status === 'approved' ? '✅' : t.status === 'returned' ? '↩️' : '⏳';
+        var cIcon = t.child === 'jj' ? '✨' : '🐺';
+        h += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:12px">';
+        h += '<span>' + sIcon + '</span><span>' + cIcon + '</span>';
+        h += '<span style="font-weight:600;color:#e2e8f0">' + escHtml(t.subject) + '</span>';
+        h += '<span style="color:#64748b"> — ' + escHtml(t.module) + '</span>';
+        if (t.ringsAwarded > 0) { h += '<span style="color:#fbbf24;font-weight:700;margin-left:auto">+' + t.ringsAwarded + '</span>'; }
+        h += '</div>';
+      }
+      h += '</div>';
+    }
+
+    container.innerHTML = h;
+  }
+  window._v2ApproveEdu = function(rowIndex) {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result && result.status === 'ok') {
+          toast('Approved! Rings awarded.');
+          google.script.run.withSuccessHandler(function(d) { _v2RenderEducation(d); }).withFailureHandler(function(){}).getEducationQueueSafe();
+        }
+      })
+      .withFailureHandler(function() { toast('Failed to approve.'); })
+      .approveHomeworkSafe(rowIndex, 'approve', '');
+  };
+  window._v2ReturnEdu = function(rowIndex) {
+    var notes = prompt('Feedback for the kid (optional):');
+    if (notes === null) return;
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result && result.status === 'ok') {
+          toast('Returned with feedback.');
+          google.script.run.withSuccessHandler(function(d) { _v2RenderEducation(d); }).withFailureHandler(function(){}).getEducationQueueSafe();
+        }
+      })
+      .withFailureHandler(function() { toast('Failed to return.'); })
+      .approveHomeworkSafe(rowIndex, 'return', notes || 'Please try again');
   };
 })();
 </script>

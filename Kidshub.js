@@ -3451,6 +3451,66 @@ function getMissionStateSafe(child, dateKey) {
 }
 
 // ════════════════════════════════════════════════════════════════════
+// v41: Gemini grading + Audio audit
+// ════════════════════════════════════════════════════════════════════
+
+function reviewWithGemini_(data) {
+  var apiKey = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  if (!apiKey) return { feedback: null, error: 'No GEMINI_API_KEY' };
+  try {
+    var prompt = 'You are reviewing a ' + (data.child === 'jj' ? '4-year-old' : '10-year-old 4th grader') +
+      "'s " + (data.subject || 'homework') + " response.\n\n" +
+      "Assignment: " + (data.prompt || 'N/A') + "\n" +
+      "Student response: " + (data.response || '') + "\n\n" +
+      "Provide briefly: (1) spelling errors, (2) grammar notes, (3) structure score (A/B/C/Incomplete), " +
+      "(4) one encouraging comment, (5) one improvement suggestion. Keep it under 150 words. This is for the parent.";
+    var resp = UrlFetchApp.fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + apiKey,
+      { method: 'post', contentType: 'application/json',
+        payload: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        muteHttpExceptions: true }
+    );
+    var json = JSON.parse(resp.getContentText());
+    var text = '';
+    if (json.candidates && json.candidates[0] && json.candidates[0].content) {
+      text = json.candidates[0].content.parts[0].text;
+    }
+    return { feedback: text, timestamp: new Date().toISOString() };
+  } catch(e) {
+    if (typeof logError_ === 'function') logError_('reviewWithGemini_', e);
+    return { feedback: null, error: e.message };
+  }
+}
+
+function auditAudioClips() {
+  var folderId = '1rXWVBD9QMruWOj6AlNB4mY2E9wzWGctm';
+  var folder = DriveApp.getFolderById(folderId);
+  var inventory = { jj: [], buggsy: [], other: [] };
+  var subs = folder.getFolders();
+  while (subs.hasNext()) {
+    var sub = subs.next();
+    var subName = sub.getName().toLowerCase();
+    var files = sub.getFiles();
+    while (files.hasNext()) {
+      var f = files.next();
+      if (subName === 'jj') inventory.jj.push(f.getName());
+      else if (subName === 'buggsy') inventory.buggsy.push(f.getName());
+      else inventory.other.push(subName + '/' + f.getName());
+    }
+  }
+  var rootFiles = folder.getFiles();
+  while (rootFiles.hasNext()) { inventory.other.push(rootFiles.next().getName()); }
+  Logger.log('=== AUDIO INVENTORY ===');
+  Logger.log('JJ clips: ' + inventory.jj.length);
+  Logger.log('Buggsy clips: ' + inventory.buggsy.length);
+  Logger.log('Other: ' + inventory.other.length);
+  Logger.log('TOTAL: ' + (inventory.jj.length + inventory.buggsy.length + inventory.other.length));
+  Logger.log('JJ: ' + JSON.stringify(inventory.jj.sort()));
+  Logger.log('Buggsy: ' + JSON.stringify(inventory.buggsy.sort()));
+  return inventory;
+}
+
+// ════════════════════════════════════════════════════════════════════
 // v41: Education submission + parent approval pipeline
 // ════════════════════════════════════════════════════════════════════
 
@@ -3510,6 +3570,24 @@ function submitHomework_(data) {
           sendPush_(childDisplay + ' submitted ' + (data.subject || 'homework'), 'Needs your review on Parent Dashboard', 'BOTH', 0);
         }
       } catch(e) { /* non-blocking */ }
+
+      // Gemini first-pass review (non-blocking — row already written)
+      if (data.responseText && String(data.responseText).length > 20) {
+        try {
+          var review = reviewWithGemini_({
+            child: data.child || 'buggsy',
+            subject: data.subject || '',
+            prompt: data.prompt || '',
+            response: data.responseText
+          });
+          if (review && review.feedback) {
+            var lastRow = sheet.getLastRow();
+            sheet.getRange(lastRow, 12).setValue(JSON.stringify(review));
+          }
+        } catch(e2) {
+          if (typeof logError_ === 'function') logError_('submitHomework_:geminiReview', e2);
+        }
+      }
     }
 
     return JSON.stringify({ status: 'ok', autoApproved: isAutoGrade, ringsAwarded: rings });
@@ -3610,6 +3688,80 @@ function approveHomework_(rowIndex, action, notes) {
 function approveHomeworkSafe(rowIndex, action, notes) {
   return withMonitor_('approveHomeworkSafe', function() {
     return JSON.parse(JSON.stringify(JSON.parse(approveHomework_(rowIndex, action, notes))));
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════
+// v41: Dynamic schedule from curriculum
+// ════════════════════════════════════════════════════════════════════
+
+function getDailySchedule_(child) {
+  var sheet = ensureCurriculumTab_();
+  if (sheet.getLastRow() < 2) return null;
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(String);
+  var childCol = headers.indexOf('Child');
+  var startCol = headers.indexOf('StartDate');
+  var jsonCol = headers.indexOf('ContentJSON');
+  if (childCol < 0 || startCol < 0 || jsonCol < 0) return null;
+
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var dayNames = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday'];
+  var dayName = dayNames[today.getDay()];
+  var capDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
+  for (var i = 1; i < data.length; i++) {
+    if (String(data[i][childCol] || '').toLowerCase() !== child.toLowerCase()) continue;
+    var startDate = data[i][startCol];
+    if (startDate instanceof Date) startDate = new Date(startDate);
+    else startDate = new Date(String(startDate));
+    startDate.setHours(0, 0, 0, 0);
+    if (isNaN(startDate.getTime())) continue;
+    var endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 7);
+    if (today >= startDate && today < endDate) {
+      try {
+        var weekContent = JSON.parse(data[i][jsonCol]);
+        var daySource = weekContent.days || weekContent;
+        var dayContent = daySource[dayName] || daySource[capDay] || null;
+        if (!dayContent) return null;
+
+        var blocks = [];
+        if (child.toLowerCase() === 'jj') {
+          if (dayContent.activities && dayContent.activities.length > 0) {
+            blocks.push({ page: 'sparkle', name: dayContent.title || 'Sparkle Learning', time: 10 });
+          }
+        } else {
+          if (dayContent.mathModule || dayContent.module) blocks.push({ page: 'homework', name: 'Homework', time: 15 });
+          if (dayContent.factSprint || dayContent.fact_sprint) blocks.push({ page: 'facts', name: 'Fact Sprint', time: 5 });
+          if (dayContent.mission && dayContent.mission.phases) {
+            for (var p = 0; p < dayContent.mission.phases.length; p++) {
+              var phase = dayContent.mission.phases[p];
+              if (phase.type === 'cold_passage') blocks.push({ page: 'reading', name: 'Reading', time: 12 });
+              if (phase.type === 'quick_write') blocks.push({ page: 'writing', name: 'Writing', time: 10 });
+            }
+          }
+          if (dayContent.wolfkidEpisode || dayContent.wolfkid_episode) blocks.push({ page: 'wolfkid', name: 'Wolfkid CER', time: 15 });
+          if (dayContent.investigation) blocks.push({ page: 'investigation', name: 'Investigation', time: 12 });
+          if (dayContent.reviewQuiz || dayContent.review_quiz) blocks.push({ page: 'homework', name: 'Review Quiz', time: 10 });
+          if (dayContent.staarSim || dayContent.staar_sim) blocks.push({ page: 'homework', name: 'STAAR Sim', time: 10 });
+          if (dayContent.grammarSprint || dayContent.grammar_sprint) blocks.push({ page: 'writing', name: 'Grammar Sprint', time: 8 });
+        }
+
+        return { blocks: blocks, dayName: dayName, theme: dayContent.theme || '' };
+      } catch(e) {
+        if (typeof logError_ === 'function') logError_('getDailySchedule_:parse', e);
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
+function getDailyScheduleSafe(child) {
+  return withMonitor_('getDailyScheduleSafe', function() {
+    return JSON.parse(JSON.stringify(getDailySchedule_(child) || { blocks: [] }));
   });
 }
 

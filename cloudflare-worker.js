@@ -301,7 +301,8 @@ function getShimScript() {
 '    "saveProgressSafe","loadProgressSafe","logScaffoldEventSafe","getWeekProgressSafe",\n' +
 '    "listStoredStoriesSafe","getStoryForReaderSafe","getStoryImagesSafe",\n' +
 '    "saveMissionStateSafe","getMissionStateSafe",\n' +
-'    "submitHomeworkSafe","getEducationQueueSafe","approveHomeworkSafe"\n' +
+'    "submitHomeworkSafe","getEducationQueueSafe","approveHomeworkSafe",\n' +
+'    "getDailyScheduleSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +

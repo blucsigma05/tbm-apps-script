@@ -401,7 +401,8 @@ function serveData(e) {
         'getMissionStateSafe': getMissionStateSafe,
         'submitHomeworkSafe': submitHomeworkSafe,
         'getEducationQueueSafe': getEducationQueueSafe,
-        'approveHomeworkSafe': approveHomeworkSafe
+        'approveHomeworkSafe': approveHomeworkSafe,
+        'getDailyScheduleSafe': getDailyScheduleSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
