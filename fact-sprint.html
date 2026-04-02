@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="fact-sprint">
-<meta name="tbm-version" content="v1">
+<meta name="tbm-version" content="v2">
 <title>Wolfkid Fact Sprint</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -950,8 +950,21 @@ function startCountdown() {
 // ============================================================
 // SPRINT LOGIC
 // ============================================================
-function beginSprint() {
+function initWithQuestions(questionArray) {
+  questions = questionArray;
+  TOTAL_QUESTIONS = questions.length;
+}
+
+function initWithFallback() {
+  // FALLBACK: use hardcoded question generators when server has no curriculum
   questions = generateSprint();
+  TOTAL_QUESTIONS = questions.length;
+}
+
+function beginSprint() {
+  if (!questions || questions.length === 0) {
+    initWithFallback();
+  }
   currentIndex = 0;
   score = 0;
   streak = 0;
@@ -1167,6 +1180,9 @@ function finishSprint() {
       .withFailureHandler(function(err) { console.error('Ring award failed:', err); })
       .awardRingsSafe(CHILD, rings, 'fact-sprint');
   }
+
+  // Persist PBs to server
+  savePersonalBests();
 }
 
 // ============================================================
@@ -1191,9 +1207,9 @@ function setLS(key, val) {
 }
 
 // ============================================================
-// LOAD PERSONAL BESTS FOR PLAN SCREEN
+// PERSONAL BESTS — DISPLAY + SERVER PERSISTENCE
 // ============================================================
-function loadPersonalBests() {
+function updatePBDisplay() {
   var bt = getLS(LS_BEST_TIME);
   var bs = getLS(LS_BEST_SCORE);
   var bk = getLS(LS_BEST_STREAK);
@@ -1203,12 +1219,75 @@ function loadPersonalBests() {
   document.getElementById('pb-streak-display').textContent = bk ? bk : '--';
 }
 
+function loadPersonalBests() {
+  updatePBDisplay(); // show localStorage cache immediately
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(progress) {
+        if (progress) {
+          if (progress.bestTime) setLS(LS_BEST_TIME, progress.bestTime);
+          if (progress.bestScore) setLS(LS_BEST_SCORE, progress.bestScore);
+          if (progress.bestStreak) setLS(LS_BEST_STREAK, progress.bestStreak);
+          if (progress.totalSprints) setLS(LS_TOTAL_SPRINTS, progress.totalSprints);
+          updatePBDisplay();
+        }
+      })
+      .withFailureHandler(function(err) {
+        console.log('PB load failed, using localStorage cache');
+      })
+      .loadProgressSafe('buggsy');
+  }
+}
+
+function savePersonalBests() {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function() { console.log('PBs saved to server'); })
+      .withFailureHandler(function(err) { console.error('PB server save failed:', err); })
+      .saveProgressSafe({
+        child: 'buggsy',
+        stars: 0,
+        lettersCompleted: [],
+        bestTime: parseInt(getLS(LS_BEST_TIME), 10) || 0,
+        bestScore: parseInt(getLS(LS_BEST_SCORE), 10) || 0,
+        bestStreak: parseInt(getLS(LS_BEST_STREAK), 10) || 0,
+        totalSprints: parseInt(getLS(LS_TOTAL_SPRINTS), 10) || 0
+      });
+  }
+}
+
+// ============================================================
+// CURRICULUM LOADING
+// ============================================================
+function loadFactSprintContent() {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(response) {
+        if (response && response.content && response.content.fact_sprint && response.content.fact_sprint.questions) {
+          var fs = response.content.fact_sprint;
+          if (fs.timeLimit) { _countdownFrom = fs.timeLimit; }
+          initWithQuestions(fs.questions);
+        } else {
+          initWithFallback();
+        }
+      })
+      .withFailureHandler(function(err) {
+        console.log('Fact sprint load failed: ' + (err && err.message ? err.message : 'unknown'));
+        initWithFallback();
+      })
+      .getTodayContentSafe('buggsy');
+  } else {
+    initWithFallback();
+  }
+}
+
 // ============================================================
 // INIT
 // ============================================================
 function init() {
   buildStarfield();
   loadPersonalBests();
+  loadFactSprintContent();
   showScreen('plan-screen');
 }
 

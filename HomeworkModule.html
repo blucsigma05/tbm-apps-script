@@ -512,7 +512,8 @@ main {
    ============================================================ */
 
 // ─── MODULE DATA ───
-var MODULE = {
+var MODULE = null;
+var FALLBACK_MODULE = {
   date: "Monday Module",
   science: {
     strand: "Force, Motion, and Energy",
@@ -1313,6 +1314,35 @@ function renderInhibitionReminder(dayConfig) {
   return '<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#fbbf24;text-align:center">' + escapeHtml(dayConfig.inhibitionReminder) + '</div>';
 }
 
+// ─── CURRICULUM LOADING ───
+function loadCurriculumContent() {
+  google.script.run
+    .withSuccessHandler(function(response) {
+      if (response && response.content) {
+        var c = response.content;
+        if (c.module && c.module.questions && c.module.questions.length > 0) {
+          MODULE = c.module;
+          init();
+        } else if (c.review_quiz && c.review_quiz.length > 0) {
+          MODULE = { science: { title: 'Review', questions: c.review_quiz }, math: { title: 'Review', questions: [] } };
+          init();
+        } else {
+          MODULE = FALLBACK_MODULE;
+          init();
+        }
+      } else {
+        MODULE = FALLBACK_MODULE;
+        init();
+      }
+    })
+    .withFailureHandler(function(err) {
+      console.log('Curriculum load failed: ' + (err && err.message ? err.message : 'unknown'));
+      MODULE = FALLBACK_MODULE;
+      init();
+    })
+    .getTodayContentSafe('buggsy');
+}
+
 // ─── INIT ───
 function init() {
   buildStarField();
@@ -1323,7 +1353,7 @@ function init() {
   updateProgress();
 }
 
-init();
+loadCurriculumContent();
 </script>
 </body>
 </html>

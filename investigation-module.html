@@ -1137,7 +1137,8 @@ var sectionData = {
 };
 
 // ─── INVESTIGATION PROMPT (hardcoded — will be replaced by GAS backend) ───
-var INVESTIGATION = {
+var INVESTIGATION = null;
+var FALLBACK_INVESTIGATION = {
   prompt: 'Your pack discovered something strange... Ice cubes melt faster on a metal tray than on a wooden cutting board. Design an investigation to find out why.',
   teks: 'TEKS 4.1A, 4.7A',
   subject: 'Science'
@@ -1480,6 +1481,26 @@ function submitForReview() {
   }
 }
 
+// ─── CURRICULUM LOADING ───
+function loadCurriculumContent() {
+  google.script.run
+    .withSuccessHandler(function(response) {
+      if (response && response.content && response.content.investigation) {
+        INVESTIGATION = response.content.investigation;
+        init();
+      } else {
+        INVESTIGATION = FALLBACK_INVESTIGATION;
+        init();
+      }
+    })
+    .withFailureHandler(function(err) {
+      console.log('Curriculum load failed: ' + (err && err.message ? err.message : 'unknown'));
+      INVESTIGATION = FALLBACK_INVESTIGATION;
+      init();
+    })
+    .getTodayContentSafe('buggsy');
+}
+
 // ─── INIT ───
 function init() {
   buildStarField();
@@ -1509,7 +1530,7 @@ function init() {
 }
 
 // ─── Start ───
-init();
+loadCurriculumContent();
 </script>
 </body>
 </html>

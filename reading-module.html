@@ -607,7 +607,9 @@ var MODULE_VERSION = 'v1';
 var CHILD = 'buggsy';
 
 // ─── PASSAGE DATA ───
-var PASSAGE = {
+var PASSAGE = null;
+var QUESTIONS = null;
+var FALLBACK_PASSAGE = {
   title: 'The Deep Ocean',
   paragraphs: [
     'The ocean is the largest habitat on Earth, covering more than 70 percent of the planet\'s surface. Most people are familiar with the shallow waters near the shore, where sunlight brightens the sandy bottom and waves lap against the beach. But the ocean is far deeper than most people realize. In some places, it plunges nearly seven miles below the surface. Scientists divide the ocean into distinct zones based on how much sunlight reaches each depth, and the deeper you go, the more alien the world becomes.',
@@ -620,7 +622,7 @@ var PASSAGE = {
 };
 
 // ─── QUESTIONS DATA ───
-var QUESTIONS = [
+var FALLBACK_QUESTIONS = [
   {
     id: 1,
     type: 'multiple_choice',
@@ -1399,6 +1401,30 @@ function applyPassageVisibility(visibility) {
   }
 }
 
+// ─── CURRICULUM LOADING ───
+function loadCurriculumContent() {
+  google.script.run
+    .withSuccessHandler(function(response) {
+      if (response && response.content && response.content.cold_passage) {
+        var cp = response.content.cold_passage;
+        PASSAGE = { title: cp.title || 'Reading Passage', text: cp.passage || cp.text || '', paragraphs: cp.paragraphs || [], vocabWords: cp.vocabWords || [], passageVisibility: cp.passageVisibility };
+        QUESTIONS = cp.questions || [];
+        init();
+      } else {
+        PASSAGE = FALLBACK_PASSAGE;
+        QUESTIONS = FALLBACK_QUESTIONS;
+        init();
+      }
+    })
+    .withFailureHandler(function(err) {
+      console.log('Curriculum load failed: ' + (err && err.message ? err.message : 'unknown'));
+      PASSAGE = FALLBACK_PASSAGE;
+      QUESTIONS = FALLBACK_QUESTIONS;
+      init();
+    })
+    .getTodayContentSafe('buggsy');
+}
+
 // ─── INIT ───
 function init() {
   buildStarField();
@@ -1406,7 +1432,7 @@ function init() {
   setupTextareaListeners();
 }
 
-init();
+loadCurriculumContent();
 </script>
 </body>
 </html>
