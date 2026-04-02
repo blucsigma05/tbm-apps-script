@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kids Hub v35</title>
+<title>Kids Hub v36</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -1481,7 +1481,7 @@ function onKidData(raw) {
   }
 
   // v24: Capture heartbeat on load so smart poll can compare
-  google.script.run.withSuccessHandler(function(ts) { if (ts) _lastHeartbeat = ts; }).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).getKHLastModifiedSafe();
+  google.script.run.withSuccessHandler(function(ts) { if (ts) _lastHeartbeat = ts; }).withFailureHandler(function(e){ console.log('Heartbeat check failed: ' + (e && e.message ? e.message : 'unknown')); }).getKHLastModifiedSafe();
 
   // v23 Fix 5: Win animation — celebrate when balance increases after refresh
   var newBal = Number(balances.balance) || 0;
@@ -1815,7 +1815,7 @@ function bOverride(taskID, e) {
 }
 function bReset(mode, child) {
   if (!confirm('Reset ' + mode + ' quests for ' + child + '?')) return;
-  google.script.run.withSuccessHandler(function(){loadKidData();}).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).khResetTasksSafe(mode, child);
+  google.script.run.withSuccessHandler(function(){loadKidData();}).withFailureHandler(function(e){ console.log('Reset failed: ' + (e && e.message ? e.message : 'unknown')); }).khResetTasksSafe(mode, child);
 }
 function showBXP(e, text) {
   var p = document.createElement('div'); p.className = 'xp-pop'; p.textContent = text;
@@ -2315,7 +2315,7 @@ function jjOverride(taskID, e) {
     .withFailureHandler(function(err){ _actionInFlight = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.completed = false; t.parentApproved = false; updateJJ(); })
     .khOverrideTaskSafe(t.rowIndex, t.taskID);
 }
-function jjReset(mode, child) { if(!confirm('Reset '+mode+' for JJ?'))return; google.script.run.withSuccessHandler(function(){loadKidData();}).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).khResetTasksSafe(mode, child); }
+function jjReset(mode, child) { if(!confirm('Reset '+mode+' for JJ?'))return; google.script.run.withSuccessHandler(function(){loadKidData();}).withFailureHandler(function(e){ console.log('Reset failed: ' + (e && e.message ? e.message : 'unknown')); }).khResetTasksSafe(mode, child); }
 function jjConfetti(n) {
   var emojis=['💖','✨','🌸','⭐','💫','🎀','💕'];
   for(var i=0;i<n;i++){var p=document.createElement('div');p.className='jj-confetti';p.textContent=emojis[Math.floor(Math.random()*emojis.length)];
@@ -2682,12 +2682,12 @@ function buildParentUI() {
 '<div id="adminSection" style="display:none">'+
 '<div class="p-reset-panel"><div class="p-reset-title">\u2699 QUICK RESET</div>'+
   '<div class="p-reset-grid">'+
-  '<button class="p-reset-btn blue-b" onclick="pReset(\'daily\',\'buggsy\')">\ud83d\udd04 Buggsy<br>Daily Reset</button>'+
-  '<button class="p-reset-btn pink-b" onclick="pReset(\'daily\',\'jj\')">\ud83c\udf38 JJ<br>Daily Reset</button>'+
-  '<button class="p-reset-btn red-b" onclick="pReset(\'weekly\',\'buggsy\')">\ud83d\udcc5 Buggsy<br>Weekly Reset</button>'+
-  '<button class="p-reset-btn" style="color:#a855f7;border-color:#e9d5ff" onclick="pReset(\'weekly\',\'jj\')">\ud83d\udc9c JJ<br>Weekly Reset</button>'+
-  '<button class="p-reset-btn all-b" onclick="pReset(\'all\',\'buggsy\')">\u26a0 Buggsy<br>Reset All</button>'+
-  '<button class="p-reset-btn all-b" onclick="pReset(\'all\',\'jj\')">\u26a0 JJ<br>Reset All</button>'+
+  '<button class="p-reset-btn blue-b" onclick="window._v2Reset(\'daily\',\'buggsy\')">\ud83d\udd04 Buggsy<br>Daily Reset</button>'+
+  '<button class="p-reset-btn pink-b" onclick="window._v2Reset(\'daily\',\'jj\')">\ud83c\udf38 JJ<br>Daily Reset</button>'+
+  '<button class="p-reset-btn red-b" onclick="window._v2Reset(\'weekly\',\'buggsy\')">\ud83d\udcc5 Buggsy<br>Weekly Reset</button>'+
+  '<button class="p-reset-btn" style="color:#a855f7;border-color:#e9d5ff" onclick="window._v2Reset(\'weekly\',\'jj\')">\ud83d\udc9c JJ<br>Weekly Reset</button>'+
+  '<button class="p-reset-btn all-b" onclick="window._v2Reset(\'all\',\'buggsy\')">\u26a0 Buggsy<br>Reset All</button>'+
+  '<button class="p-reset-btn all-b" onclick="window._v2Reset(\'all\',\'jj\')">\u26a0 JJ<br>Reset All</button>'+
   '</div></div>'+
   '<div class="p-sheet-guide"><div class="p-sheet-title">\ud83d\udccb How the KH_ Tabs work</div>'+
   '<div class="p-sheet-row"><div class="p-sheet-dot"></div><b>KH_Chores</b> \u2014 add a row to create a task. It shows up in the app on next refresh.</div>'+
