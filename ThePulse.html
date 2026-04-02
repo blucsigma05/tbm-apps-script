@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="tbm-version" content="v59">
-<title>The Pulse v59 — Thompson Household</title>
+<meta name="tbm-version" content="v60">
+<title>The Pulse v60 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -464,8 +464,8 @@ input[type=range]::-webkit-slider-thumb{width:36px;height:36px}
 <script>
 function _getParam(n){var m=new RegExp('[?&]'+n+'=([^&]*)').exec(window.location.search);return m?decodeURIComponent(m[1]):null;}
 var _tbmBaseUrl='';var _isPartnerMode=_getParam('jt')==='1';
-google.script.run.withSuccessHandler(function(u){_tbmBaseUrl=u;}).withFailureHandler(function(){}).getScriptUrlSafe();
-function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.top.location.href=_tbmBaseUrl+'?page='+p+suffix;else google.script.run.withSuccessHandler(function(u){window.top.location.href=u+'?page='+p+suffix;}).withFailureHandler(function(){}).getScriptUrlSafe();}
+google.script.run.withSuccessHandler(function(u){_tbmBaseUrl=u;}).withFailureHandler(function(e){console.warn('getScriptUrl failed:',e);}).getScriptUrlSafe();
+function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.top.location.href=_tbmBaseUrl+'?page='+p+suffix;else google.script.run.withSuccessHandler(function(u){window.top.location.href=u+'?page='+p+suffix;}).withFailureHandler(function(e){console.warn('tbmNav getScriptUrl failed:',e);}).getScriptUrlSafe();}
 (function(){var c=_getParam('page')||'pulse';var e=document.getElementById('nav-'+c);if(e){e.style.color='#fff';e.style.background='rgba(255,255,255,0.1)';e.style.fontWeight='600';e.classList.add('tbm-active');}if(_isPartnerMode){
   var v=document.getElementById('nav-vein');
   if(v){
@@ -490,7 +490,8 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
 <div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 
 <script>
-var TBM_VERSION = 'v58';
+var TBM_VERSION = 'v60';
+function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 var _lastFetchTime = null;
 var _lastGoodSim = null;
 
@@ -602,7 +603,7 @@ else{var _iv=setInterval(function(){if(document.querySelector('.footer')){clearI
 function loadData(){document.getElementById('loading-overlay').style.display='flex';document.getElementById('error-overlay').style.display='none';
   google.script.run.withSuccessHandler(onSimData).withFailureHandler(onError).getSimulatorDataSafe();
   google.script.run.withSuccessHandler(onTrackerData).withFailureHandler(function(e){console.error('Tracker load failed:',e);_trackerError=e;tryRender();}).getWeeklyTrackerDataSafe();
-  google.script.run.withSuccessHandler(function(m){_serverMonths=m||[];if(_tracker)onTrackerData(_tracker);}).withFailureHandler(function(){}).getMonthsSafe();
+  google.script.run.withSuccessHandler(function(m){_serverMonths=m||[];if(_tracker)onTrackerData(_tracker);}).withFailureHandler(function(e){console.warn('getMonths failed:',e);}).getMonthsSafe();
   loadReconcileBadge();}
 function onSimData(r){if(!r||!r.debts){onError('Empty simulator data');return;}_sim=r;_lastGoodSim=r;markDataFresh();
   DEBT_CONFIG._raw = r;
@@ -730,13 +731,13 @@ function render(){
   // v58: PULSE SUMMARY — informational narrative block
   var _ps = DEBT_CONFIG._pulseSummary;
   if (_ps && _ps.headline) {
-    html += '<div id="summaryBlock" style="background:#f0f9ff;border-left:4px solid #2563eb;padding:14px 16px;margin:0 16px 16px;border-radius:0 8px 8px 0;">';
-    html += '<div style="font-weight:600;font-size:15px;color:#1e3a5f;margin-bottom:4px;">' + escapeHtml(_ps.headline) + '</div>';
+    html += '<div id="summaryBlock" style="background:var(--card);border-left:4px solid var(--gold-soft);padding:14px 16px;margin:0 16px 16px;border-radius:0 8px 8px 0;">';
+    html += '<div style="font-weight:600;font-size:15px;color:var(--ink);margin-bottom:4px;">' + escapeHtml(_ps.headline) + '</div>';
     if (_ps.detail) {
-      html += '<div style="font-size:13px;color:#475569;">' + escapeHtml(_ps.detail) + '</div>';
+      html += '<div style="font-size:13px;color:var(--ink2);">' + escapeHtml(_ps.detail) + '</div>';
     }
     if (_ps.alert) {
-      html += '<div style="font-size:12px;color:#d97706;margin-top:6px;padding:6px 10px;background:#fffbeb;border-radius:6px;">' + escapeHtml(_ps.alert) + '</div>';
+      html += '<div style="font-size:12px;color:var(--amber);margin-top:6px;padding:6px 10px;background:var(--amber-bg);border-radius:6px;">' + escapeHtml(_ps.alert) + '</div>';
     }
     html += '</div>';
   }
@@ -771,7 +772,8 @@ function render(){
   var _debtPmtsCF = !showingCurrent ? Math.round(monthData.debtPaymentsMTD||0) : Math.round(DEBT_CONFIG._debtPaymentsMTD||0);
   var _moneyIn = Math.round(earnedIncome + bridgeCash);
   var _moneyOut = Math.round(opExpenses + _debtPmtsCF);
-  var _cfResult = _moneyIn - _moneyOut;
+  // v60: Prefer server-canonical netCF when available; fall back to client derivation
+  var _cfResult = (_serverNetCF != null) ? netCF : (_moneyIn - _moneyOut);
   var _cfSurplus = _cfResult >= 0;
   var cfCardHTML = '<div class="cf-eq-card'+(_cfSurplus?' surplus':'')+'">' +
     '<div class="pc-label">Monthly cash flow</div>' +
@@ -1022,7 +1024,7 @@ function toggleDebtGroup(type){_debtGroupAccordion[type]=!_debtGroupAccordion[ty
 function toggleMoreCats(){_moreCatsOpen=!_moreCatsOpen;var e=document.getElementById('more-cats'),t=document.getElementById('more-cats-text');if(e)e.style.display=_moreCatsOpen?'block':'none';if(t)t.textContent=_moreCatsOpen?'Hide extras ▲':t.textContent.replace('▲','▼');}
 function switchView(v){currentView=v;render();}
 function onMonthSelect(v){selectedMonthIdx=parseInt(v);customRange=null;render();}
-function onMonthSelectYM(ym){_selectedYM=ym;customRange=null;var parts=ym.split('-');var yr=parseInt(parts[0]);var mo=parseInt(parts[1])-1;if(_tracker&&_tracker.currentMonth&&_tracker.currentMonth.ym===ym){selectedMonthIdx=mo;render();return;}if(_tracker&&_tracker.priorMonth&&_tracker.priorMonth.ym===ym){selectedMonthIdx=mo;render();return;}var dim=new Date(yr,mo+1,0).getDate();function pad(n){return String(n).padStart(2,'0');}var ss=yr+'-'+pad(mo+1)+'-01',ee=yr+'-'+pad(mo+1)+'-'+pad(dim);customRange={start:ss,end:ee};selectedMonthIdx=mo;document.getElementById('loading-overlay').style.display='flex';google.script.run.withSuccessHandler(function(r){document.getElementById('loading-overlay').style.display='none';if(!r)return;_customRangeData=r;currentView='monthly';render();}).withFailureHandler(function(err){document.getElementById('loading-overlay').style.display='none';}).getDataSafe(ss,ee,true);}
+function onMonthSelectYM(ym){_selectedYM=ym;customRange=null;var parts=ym.split('-');var yr=parseInt(parts[0]);var mo=parseInt(parts[1])-1;if(_tracker&&_tracker.currentMonth&&_tracker.currentMonth.ym===ym){selectedMonthIdx=mo;render();return;}if(_tracker&&_tracker.priorMonth&&_tracker.priorMonth.ym===ym){selectedMonthIdx=mo;render();return;}var dim=new Date(yr,mo+1,0).getDate();function pad(n){return n<10?'0'+n:String(n);}var ss=yr+'-'+pad(mo+1)+'-01',ee=yr+'-'+pad(mo+1)+'-'+pad(dim);customRange={start:ss,end:ee};selectedMonthIdx=mo;document.getElementById('loading-overlay').style.display='flex';google.script.run.withSuccessHandler(function(r){document.getElementById('loading-overlay').style.display='none';if(!r)return;_customRangeData=r;currentView='monthly';render();}).withFailureHandler(function(err){document.getElementById('loading-overlay').style.display='none';}).getDataSafe(ss,ee,true);}
 function loadRange(){
   var s=document.getElementById('rangeStart'),e=document.getElementById('rangeEnd');
   if(!s||!e||!s.value||!e.value){return;}
@@ -1037,8 +1039,8 @@ function loadRange(){
     console.error('Range load error:',err);
   }).getDataSafe(customRange.start,customRange.end,true);
 }
-function toggleCatDrill(el,catName){var row=el.closest('.gb-acc-row')||el.closest('.cap-row');if(!row)return;var ex=row.nextElementSibling;if(ex&&ex.classList.contains('cap-txns')){ex.remove();return;}
-  var now=new Date(),y=now.getFullYear(),m=selectedMonthIdx;function pad(n){return String(n).padStart(2,'0');}
+function toggleCatDrill(el,catName){var row=closest_(el,'.gb-acc-row')||closest_(el,'.cap-row');if(!row)return;var ex=row.nextElementSibling;if(ex&&ex.classList.contains('cap-txns')){if(ex.parentNode)ex.parentNode.removeChild(ex);return;}
+  var now=new Date(),y=now.getFullYear(),m=selectedMonthIdx;function pad(n){return n<10?'0'+n:String(n);}
   var dim=new Date(y,m+1,0).getDate(),ss=y+'-'+pad(m+1)+'-01',ee=y+'-'+pad(m+1)+'-'+pad(dim);
   var pn=document.createElement('div');pn.className='cap-txns';pn.innerHTML='<div style="text-align:center;padding:8px;font-size:11px;color:var(--ink3)">Loading…</div>';row.parentNode.insertBefore(pn,row.nextSibling);
   google.script.run.withSuccessHandler(function(r){if(!r||!r.transactions||!r.transactions.length){pn.innerHTML='<div style="text-align:center;padding:8px;font-size:11px;color:var(--ink3);font-style:italic">No transactions</div>';return;}
@@ -1063,7 +1065,7 @@ function escapeHtml(s) {
 // v49: Debounced wrapper — both onSimData and onTrackerData call render()→initKidsWidget().
 // Without debounce, two server fetches fire back-to-back causing visible double-render.
 function initKidsWidget(urls) {
-  if (urls) _kidsWidgetUrls = Object.assign(_kidsWidgetUrls, urls);
+  if (urls) { for (var k in urls) { if (urls.hasOwnProperty(k)) _kidsWidgetUrls[k] = urls[k]; } }
   if (_kidsWidgetTimer) clearTimeout(_kidsWidgetTimer);
   _kidsWidgetTimer = setTimeout(function() { _kidsWidgetTimer = null; _initKidsWidgetCore(); }, 100);
 }
@@ -1075,11 +1077,12 @@ function _initKidsWidgetCore() {
         _tbmBaseUrl=u;
         _kidsWidgetUrls.buggsyUrl=u+'?page=kidshub&child=buggsy';
         _kidsWidgetUrls.jjUrl=u+'?page=kidshub&child=jj';
-        document.querySelectorAll('a.kids-link-btn').forEach(function(a){
+        var _klBtns=document.querySelectorAll('a.kids-link-btn');
+          for(var _ki=0;_ki<_klBtns.length;_ki++){var a=_klBtns[_ki];
           if(a.classList.contains('buggsy')){a.href=_kidsWidgetUrls.buggsyUrl;a.style.opacity='1';a.style.pointerEvents='auto';a.removeAttribute('aria-disabled');}
           if(a.classList.contains('jj')){a.href=_kidsWidgetUrls.jjUrl;a.style.opacity='1';a.style.pointerEvents='auto';a.removeAttribute('aria-disabled');}
-        });
-      }).withFailureHandler(function(){}).getScriptUrlSafe(); } catch(e){}
+          }
+      }).withFailureHandler(function(e){console.warn('kidsWidget getScriptUrl failed:',e);}).getScriptUrlSafe(); } catch(e){}
     } else {
       _kidsWidgetUrls.buggsyUrl=base+'?page=kidshub&child=buggsy';
       _kidsWidgetUrls.jjUrl=base+'?page=kidshub&child=jj';
@@ -1307,7 +1310,7 @@ rows+='<tr><td style="padding:5px 10px;font-size:11px;border-bottom:1px solid rg
 var allPass=fail===0;
 var p=document.createElement('div');p.id='diagPanel';
 p.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;max-height:45vh;overflow:auto;background:#1a1a2e;color:#e0e0e0;font-family:JetBrains Mono,monospace;font-size:11px;border-top:4px solid '+(allPass?'#4ade80':'#f87171')+';box-shadow:0 -4px 20px rgba(0,0,0,.5);';
-p.innerHTML='<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;background:#12122a;"><span style="font-weight:700;letter-spacing:1px;font-size:12px;">🔍 DOM Self-Check · ThePulse v52</span><span style="display:flex;gap:8px;align-items:center;"><span style="font-size:10px;color:#9ca3af;">'+pass+'/'+T1.length+' fields</span><span style="padding:3px 10px;border-radius:4px;font-weight:700;font-size:10px;letter-spacing:.5px;background:'+(allPass?'#166534':'#7f1d1d')+';color:'+(allPass?'#4ade80':'#fca5a5')+'">'+(allPass?'ALL PASS':'FAIL')+'</span><button onclick="document.getElementById(\x27diagPanel\x27).remove()" style="padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#9ca3af;cursor:pointer;font-size:10px;">Close</button></span></div><table style="width:100%;border-collapse:collapse;"><tr style="background:#12122a;"><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">TIER 1 FIELD</th><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">PAYLOAD VALUE</th></tr>'+rows+'</table>';
+p.innerHTML='<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;background:#12122a;"><span style="font-weight:700;letter-spacing:1px;font-size:12px;">🔍 DOM Self-Check · ThePulse v52</span><span style="display:flex;gap:8px;align-items:center;"><span style="font-size:10px;color:#9ca3af;">'+pass+'/'+T1.length+' fields</span><span style="padding:3px 10px;border-radius:4px;font-weight:700;font-size:10px;letter-spacing:.5px;background:'+(allPass?'#166534':'#7f1d1d')+';color:'+(allPass?'#4ade80':'#fca5a5')+'">'+(allPass?'ALL PASS':'FAIL')+'</span><button onclick="var _dp=document.getElementById(\x27diagPanel\x27);if(_dp&&_dp.parentNode)_dp.parentNode.removeChild(_dp)" style="padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#9ca3af;cursor:pointer;font-size:10px;">Close</button></span></div><table style="width:100%;border-collapse:collapse;"><tr style="background:#12122a;"><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">TIER 1 FIELD</th><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">PAYLOAD VALUE</th></tr>'+rows+'</table>';
 document.body.appendChild(p);
 document.body.style.border=allPass?'3px solid #4ade80':'3px solid #f87171';
 });
