@@ -509,6 +509,11 @@ var traceState = {};
 var sortState = {};
 var nameState = {};
 
+/* ─── Escape HTML ─── */
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 /* ─── Color Map ─── */
 var COLOR_MAP = {
   red: '#ef4444', blue: '#3b82f6', green: '#10b981',
@@ -971,7 +976,7 @@ function renderLetterIntro(activity) {
   html += '<p class="instruction" style="font-size:20px;">and lowercase: <span style="font-size:80px;color:#a855f7;">' + letter.toLowerCase() + '</span></p>';
   html += '<div class="word-cards">';
   for (var i = 0; i < words.length; i++) {
-    html += '<div class="word-card" onclick="speak(\'' + words[i].replace(/'/g, "\\'") + '\')">' + words[i] + '</div>';
+    html += '<div class="word-card" onclick="speak(\'' + words[i].replace(/'/g, "\\'") + '\')">' + escapeHtml(words[i]) + '</div>';
   }
   html += '</div>';
   html += '<button class="btn-big btn-green" onclick="handleLetterIntroDone()" style="margin-top:20px;">I got it! &#128077;</button>';
@@ -1074,7 +1079,7 @@ function renderCountWithMe(activity) {
   countState = { total: count, tapped: 0, done: false };
 
   var html = '<div class="activity-card">';
-  html += '<p class="instruction">Tap each ' + shape + ' to count!</p>';
+  html += '<p class="instruction">Tap each ' + escapeHtml(shape) + ' to count!</p>';
   html += '<div class="scatter-area" id="scatterArea">';
 
   var positions = scatterObjects(count, 320, 280, 80);
@@ -1150,7 +1155,7 @@ function renderQuantityMatch(activity) {
   var shuffledN = shuffleArray(groups);
   for (var j = 0; j < shuffledN.length; j++) {
     html += '<button class="option-btn" id="qmNum' + j + '" style="display:block;margin:8px auto;min-width:100px;" ';
-    html += 'onclick="tapQmNum(' + j + ',' + shuffledN[j].dots + ')">' + shuffledN[j].numeral + '</button>';
+    html += 'onclick="tapQmNum(' + j + ',' + shuffledN[j].dots + ')">' + escapeHtml(shuffledN[j].numeral) + '</button>';
   }
   html += '</div>';
 
@@ -1239,7 +1244,7 @@ function renderColorHunt(activity) {
   window._chState = { targetColor: targetColor, found: 0, total: targetCount };
 
   var html = '<div class="activity-card">';
-  html += '<p class="instruction">Tap all the <span style="color:' + (COLOR_MAP[targetColor] || targetColor) + ';font-weight:800;">' + targetColor + '</span> shapes!</p>';
+  html += '<p class="instruction">Tap all the <span style="color:' + (COLOR_MAP[targetColor] || targetColor) + ';font-weight:800;">' + escapeHtml(targetColor) + '</span> shapes!</p>';
   html += '<div class="scatter-area" id="colorHuntArea">';
 
   var positions = scatterObjects(shapes.length, 320, 280, 80);
@@ -1291,7 +1296,7 @@ function renderShapeMatch(activity) {
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Find the shape:</p>';
   html += '<div style="margin:16px 0;">' + renderShape(target, 'gold', 120) + '</div>';
-  html += '<p class="instruction" style="font-size:20px;">Which one is the ' + target + '?</p>';
+  html += '<p class="instruction" style="font-size:20px;">Which one is the ' + escapeHtml(target) + '?</p>';
   html += '<div class="grid-2x2">';
   for (var i = 0; i < options.length; i++) {
     html += '<button class="option-btn" style="padding:12px;" onclick="checkShapeMatch(this,\'' + options[i] + '\',\'' + target + '\')">';
@@ -1371,12 +1376,12 @@ function renderLetterSound(activity) {
 
   var html = '<div class="activity-card">';
   html += '<div class="big-letter">' + letter.toUpperCase() + '</div>';
-  html += '<p class="instruction">' + letter.toUpperCase() + ' says "' + sound + '"!</p>';
+  html += '<p class="instruction">' + letter.toUpperCase() + ' says "' + escapeHtml(sound) + '"!</p>';
   html += '<button class="btn-big btn-purple" onclick="speak(\'' + letter.toUpperCase() + ' says ' + sound + '\')" style="margin:10px;">&#128266; Hear it again</button>';
   html += '<div class="word-cards">';
   for (var i = 0; i < words.length; i++) {
     html += '<div class="word-card" onclick="speak(\'' + words[i].replace(/'/g, "\\'") + ' starts with ' + sound + '\')">';
-    html += '<span style="color:#ec4899;font-size:28px;">' + words[i].charAt(0).toUpperCase() + '</span>' + words[i].substring(1);
+    html += '<span style="color:#ec4899;font-size:28px;">' + escapeHtml(words[i].charAt(0).toUpperCase()) + '</span>' + escapeHtml(words[i].substring(1));
     html += '</div>';
   }
   html += '</div>';
@@ -1410,7 +1415,7 @@ function renderBeginningSound(activity) {
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">What letter does this word start with?</p>';
-  html += '<button class="btn-big btn-purple" onclick="speak(\'' + word.replace(/'/g, "\\'") + '\')" style="font-size:32px;margin:16px;">&#128266; ' + word + '</button>';
+  html += '<button class="btn-big btn-purple" onclick="speak(\'' + word.replace(/'/g, "\\'") + '\')" style="font-size:32px;margin:16px;">&#128266; ' + escapeHtml(word) + '</button>';
   html += '<div class="grid-2x2">';
   for (var i = 0; i < options.length; i++) {
     html += '<button class="option-btn" onclick="checkBeginningSound(this,\'' + options[i] + '\',\'' + answer + '\')">' + options[i].toUpperCase() + '</button>';
@@ -1659,14 +1664,14 @@ function renderAudioStory(activity) {
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Listen to the story!</p>';
-  html += '<div class="story-panel" id="storyText">' + story + '</div>';
+  html += '<div class="story-panel" id="storyText">' + escapeHtml(story) + '</div>';
   html += '<button class="btn-big btn-purple" id="storyPlayBtn" onclick="playStoryAudio()">&#128266; Listen Again</button>';
   html += '<div id="storyQuestion" style="display:none;">';
-  html += '<p class="instruction" style="margin-top:20px;">' + question + '</p>';
+  html += '<p class="instruction" style="margin-top:20px;">' + escapeHtml(question) + '</p>';
   html += '<div class="option-grid">';
   for (var i = 0; i < options.length; i++) {
     html += '<button class="option-btn" style="font-size:24px;min-width:100px;" ';
-    html += 'onclick="checkStoryAnswer(this,\'' + options[i].replace(/'/g, "\\'") + '\')">' + options[i] + '</button>';
+    html += 'onclick="checkStoryAnswer(this,\'' + options[i].replace(/'/g, "\\'") + '\')">' + escapeHtml(options[i]) + '</button>';
   }
   html += '</div></div></div>';
   mc.innerHTML = html;
@@ -1733,7 +1738,7 @@ function renderColorSort(activity) {
     html += '<div class="color-bin" id="sortBin' + b + '" ';
     html += 'style="background:' + (COLOR_MAP[bins[b]] || bins[b]) + ';" ';
     html += 'onclick="tapSortBin(' + b + ',\'' + bins[b] + '\')">';
-    html += bins[b];
+    html += escapeHtml(bins[b]);
     html += '</div>';
   }
   html += '</div></div>';
@@ -1808,7 +1813,7 @@ function renderMoreOrLess(activity) {
   window._molState = { answer: answerSide };
 
   var html = '<div class="activity-card">';
-  html += '<p class="instruction">Which group has <span style="color:#ec4899;font-weight:800;">' + mode + '</span>?</p>';
+  html += '<p class="instruction">Which group has <span style="color:#ec4899;font-weight:800;">' + escapeHtml(mode) + '</span>?</p>';
 
   html += '<div style="display:-webkit-flex;display:flex;-webkit-justify-content:space-around;justify-content:space-around;gap:16px;">';
 
@@ -1872,7 +1877,7 @@ function renderNameBuilder(activity) {
   };
 
   var html = '<div class="activity-card">';
-  html += '<p class="instruction">Build the name: <span style="color:#ec4899;font-size:32px;">' + target + '</span></p>';
+  html += '<p class="instruction">Build the name: <span style="color:#ec4899;font-size:32px;">' + escapeHtml(target) + '</span></p>';
 
   /* Slots */
   html += '<div class="name-slots" id="nameSlots">';
@@ -1944,7 +1949,7 @@ function renderCelebration(activity) {
 
   var html = '<div class="celebration-wrap">';
   html += '<div class="celebration-stars">&#11088;&#11088;&#11088;</div>';
-  html += '<div class="ready-title" style="font-size:48px;">' + message + '</div>';
+  html += '<div class="ready-title" style="font-size:48px;">' + escapeHtml(message) + '</div>';
   html += '<p class="instruction">You earned ' + starsAwarded + ' bonus stars!</p>';
   html += '<button class="btn-big btn-gold" onclick="handleCelebrationDone()" style="font-size:32px;margin-top:24px;">';
   html += 'Yay! &#127881;</button>';
