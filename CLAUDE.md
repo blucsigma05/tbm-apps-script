@@ -69,6 +69,15 @@ Read source before writing assertions. Never claim a feature is missing, a value
 ## Identity
 Google Apps Script + HtmlService system for household finance, kid chore management, and education dashboards. Google Sheets is the data layer, Tiller Money syncs bank data, HTML dashboards served via GAS web app, Cloudflare proxy at thompsonfams.com.
 
+- **QA Framework:** 7 Gates + 2 Audits. See Notion: https://www.notion.so/336cea3cd9e881798061e9032cee48c3
+- Gates 1-3: automated (audit-source, diagPreQA, runTests)
+- Gate 4: Deploy Manifest (feature exists?)
+- Gate 5: Feature Verification Checklist (feature correct?)
+- Gate 6: QA Round (real device testing)
+- Gate 7: Post-deploy check (still working?)
+- Audit A: Code Quality Lab (periodic architecture/security)
+- Audit B: Cross-surface consistency (periodic skeleton parity)
+
 - **SSID:** `1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c`
 - **Deployment ID:** Run `clasp deployments` to find it. Always use `clasp deploy -i <ID>`. Never create new.
 
@@ -189,13 +198,53 @@ Run steps 1–13 autonomously. Report results at end. LT's only action: review P
 
 **Never stop at step 6.**
 
-## Deploy Manifest
+## Deploy Manifest (Gate 4)
 Every build spec produces a grep manifest WHEN THE SPEC IS CREATED — not after the build. Before declaring "QA ready," run every manifest line. Zero matches or `display:none` = NOT DONE.
 
 Format:
 ```
 # [Build Spec Name] — Deploy Manifest
 grep -n "[unique identifier]" [file]    → expected: [what should be there]
+```
+
+---
+
+## Feature Verification Checklist (Gate 5)
+
+Every build spec must include BOTH a Deploy Manifest (Gate 4) AND a Feature Verification Checklist (Gate 5).
+
+- Deploy Manifest answers: "Does this feature EXIST?"
+- Feature Verification answers: "Is this feature CORRECT?"
+
+### Rules:
+1. Checklist is created AT SPEC TIME by Chat. Code does NOT define its own checklist.
+2. Each item has a specific, measurable pass condition — not "looks good" but "background is #2D1B69" or "avatar is 120px" or "streak shows consecutive days."
+3. The checklist is CUMULATIVE. Prior verified items carry forward to every future build of that surface. When fixing audit findings, re-verify ALL cumulative items plus new ones.
+4. Before declaring "QA ready" or writing a handoff that says "complete," verify every checklist item by grep or by running the function and reading output.
+5. Items verified only by reading source don't count. Run it, read Logger output, confirm the value.
+
+### What goes on the checklist:
+- Specific hex colors ("background must be #2D1B69")
+- Pixel dimensions ("avatar must be 120px", "watermark must fill ~85vw")
+- Math/formula outputs ("streak counter shows consecutive days")
+- Conditional logic ("if streak=0 show X, if streak>0 show Y")
+- Text content ("header says 'Buggsy's Quest Board'")
+- State transitions ("clicking DONE moves task to completed")
+- Interaction behavior ("PIN modal appears on parent actions only")
+
+### Checklist format (produced by Chat, verified by Code):
+```
+# [Surface] Feature Verification Checklist
+# Spec: [source spec name]
+# Created: [date]
+# Cumulative items: [count]
+# New items: [count]
+
+## Cumulative (from prior verified builds)
+- [ ] [item]: [expected value] (verified [version], spec: [source])
+
+## New (this build)
+- [ ] [item]: [expected value]
 ```
 
 ---
@@ -308,6 +357,20 @@ grep -rn "backdrop-filter" *.html
 - `old_str`/`new_str` requires EXACT whitespace matching — fetch page first
 - Table cell updates via MCP fail — flag for manual edit
 - NEVER set icon and title together (double-emoji bug)
+
+---
+
+## Post-Deploy Check (Gate 7)
+
+After deploy, verify production is stable — not just at deploy time but an hour later.
+
+### Check:
+1. MonitorEngine log: zero errors since deploy timestamp
+2. KidsHub heartbeat cache: age < 120 seconds
+3. No Pushover error alerts fired since deploy
+4. Hit each surface URL once, confirm no 500/error screen
+
+For evening deploys, next-morning check is acceptable.
 
 ---
 
