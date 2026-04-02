@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v65 — Apps Script Router (TBM Consolidated)
+// Code.gs v66 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 65; }
+function getCodeVersion() { return 66; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -403,7 +403,8 @@ function serveData(e) {
         'submitHomeworkSafe': submitHomeworkSafe,
         'getEducationQueueSafe': getEducationQueueSafe,
         'approveHomeworkSafe': approveHomeworkSafe,
-        'getDailyScheduleSafe': getDailyScheduleSafe
+        'getDailyScheduleSafe': getDailyScheduleSafe,
+        'checkDay1Safe': checkDay1Safe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
@@ -1606,4 +1607,4 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v65
+// END OF FILE — Code.gs v66

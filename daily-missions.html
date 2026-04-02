@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v3">
+<meta name="tbm-version" content="v4">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -581,6 +581,15 @@ if (TBM_TEST_MODE) {
 
 // ── Schedule Data ──
 var BUGGSY_SCHEDULE = {
+  0: { // Day 1 Setup
+    focus: 'Day 1 Setup',
+    tag: 'review',
+    blocks: [
+      { name: 'Design Your Dashboard', time: 10, page: 'dashboard' },
+      { name: 'Baseline Diagnostic', time: 15, page: 'baseline' },
+      { name: 'Power Scan', time: 10, page: 'power-scan' }
+    ]
+  },
   1: { // Monday
     focus: 'Math',
     tag: 'math',
@@ -630,6 +639,12 @@ var BUGGSY_SCHEDULE = {
 };
 
 var JJ_SCHEDULE = {
+  0: { // Day 1 Setup
+    focus: 'Day 1 Setup',
+    blocks: [
+      { name: 'Sparkle Intro', stars: 3, page: 'sparkle' }
+    ]
+  },
   1: { // Monday
     focus: 'Letters',
     blocks: [
@@ -684,6 +699,33 @@ var _cachedMissionState = {};
 var dynamicSchedule = null;
 
 // ============================================================
+// DAY 1 DETECTION
+// ============================================================
+function isDay1(callback) {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    callback(false);
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(result) {
+      try {
+        var data = (typeof result === 'string') ? JSON.parse(result) : result;
+        if (data && data.isDay1 === true) {
+          callback(true);
+        } else {
+          callback(false);
+        }
+      } catch(e) {
+        callback(false);
+      }
+    })
+    .withFailureHandler(function() {
+      callback(false);
+    })
+    .checkDay1Safe(currentChild);
+}
+
+// ============================================================
 // INIT
 // ============================================================
 function init() {
@@ -696,18 +738,20 @@ function init() {
     buildStarfield();
   }
 
-  loadMissionStateFromServer(function() {
-    loadSchedule(function(dynamicBlocks) {
-      if (dynamicBlocks) {
-        var day = new Date().getDay();
-        if (day > 0 && day < 6) {
+  isDay1(function(firstTime) {
+    if (firstTime) {
+      dayOfWeek = 0;
+    }
+    loadMissionStateFromServer(function() {
+      loadSchedule(function(dynamicBlocks) {
+        if (dayOfWeek !== 0 && dynamicBlocks) {
           var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
-          if (schedule[day]) {
-            schedule[day].blocks = dynamicBlocks;
+          if (schedule[dayOfWeek]) {
+            schedule[dayOfWeek].blocks = dynamicBlocks;
           }
         }
-      }
-      render();
+        render();
+      });
     });
   });
 

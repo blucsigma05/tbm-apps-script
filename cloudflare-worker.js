@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v3.1 — thompsonfams.com — Front Door + PIN Gate
+// TBM Smart Proxy v3.2 — thompsonfams.com — Front Door + PIN Gate
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -302,7 +302,8 @@ function getShimScript() {
 '    "listStoredStoriesSafe","getStoryForReaderSafe","getStoryImagesSafe",\n' +
 '    "saveMissionStateSafe","getMissionStateSafe",\n' +
 '    "submitHomeworkSafe","getEducationQueueSafe","approveHomeworkSafe",\n' +
-'    "getDailyScheduleSafe"\n' +
+'    "getDailyScheduleSafe",\n' +
+'    "checkDay1Safe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +

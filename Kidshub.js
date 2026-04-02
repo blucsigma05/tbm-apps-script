@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v42 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v43 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 42; }
+function getKidsHubVersion() { return 43; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3774,5 +3774,32 @@ function getDailyScheduleSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v42
+// ── DAY 1 DETECTION ─────────────────────────────────────────────
+/**
+ * Check if this child has ever completed any education activity.
+ * If no education events found in KH_History, it's Day 1.
+ */
+function checkDay1_(child) {
+  child = String(child || '').toLowerCase();
+  if (child !== 'buggsy' && child !== 'jj') {
+    return { isDay1: false };
+  }
+  var data = readSheet_('KH_History');
+  for (var i = 0; i < data.length; i++) {
+    var rowChild = String(data[i][2] || '').toLowerCase();
+    var eventType = String(data[i][7] || '').toLowerCase();
+    if (rowChild === child && eventType === 'education') {
+      return { isDay1: false };
+    }
+  }
+  return { isDay1: true };
+}
+
+function checkDay1Safe(child) {
+  return withMonitor_('checkDay1Safe', function() {
+    return JSON.parse(JSON.stringify(checkDay1_(child)));
+  });
+}
+
+// END OF FILE — KidsHub.gs v43
 // ════════════════════════════════════════════════════════════════════
