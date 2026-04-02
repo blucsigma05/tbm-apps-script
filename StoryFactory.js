@@ -3,11 +3,11 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 12.0
+// Version: 13.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 12; }
+function getStoryFactoryVersion() { return 13; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -134,7 +134,8 @@ muteHttpExceptions: true
 }
 
 function notionPatch(endpoint, payload) {
-var response = UrlFetchApp.fetch('https://api.notion.com/v1/' + endpoint, {
+try {
+safeFetch('https://api.notion.com/v1/' + endpoint, {
 method: 'PATCH',
 headers: {
 'Authorization': 'Bearer ' + CONFIG.NOTION_TOKEN,
@@ -145,11 +146,12 @@ contentType: 'application/json',
 payload: JSON.stringify(payload),
 muteHttpExceptions: true
 });
-var code = response.getResponseCode();
-if (code >= 400) {
-Logger.log('notionPatch FAILED (' + code + '): ' + endpoint + ' — ' + response.getContentText().substring(0, 300));
+return 200;
+} catch(e) {
+Logger.log('notionPatch FAILED: ' + endpoint + ' — ' + e.message.substring(0, 300));
+sf_logError_('notionPatch', e.message);
+return 500;
 }
-return code;
 }
 
 // ── PHASE 1: CHARACTER TRUTH FROM NOTION ─────────────────────
@@ -1616,5 +1618,5 @@ function listStoredStoriesSafe() {
   });
 }
 
-// END OF FILE — StoryFactory v12
+// END OF FILE — StoryFactory v13
 // ════════════════════════════════════════════════════════════════════

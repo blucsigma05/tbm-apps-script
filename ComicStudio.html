@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v1">
+<meta name="tbm-version" content="v2">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -602,14 +602,14 @@ var activeTab = 'draw';
 
 var COLORS = ['#000000', '#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC4899', '#FFFFFF'];
 
-var VOCAB_WORDS = [
+var FALLBACK_VOCAB = [
   { word: 'VALIANT', def: 'Showing courage or determination.', prompt: 'Use "valiant" in one of your captions to describe Wolfkid!' },
   { word: 'LURKING', def: 'Waiting in hiding, ready to attack.', prompt: 'Use "lurking" to describe a villain or danger in your comic!' },
   { word: 'TRIUMPH', def: 'A great victory or achievement.', prompt: 'Use "triumph" in a caption about Wolfkid winning!' },
   { word: 'PERILOUS', def: 'Full of danger or risk.', prompt: 'Use "perilous" to describe the setting or mission!' },
   { word: 'CUNNING', def: 'Having skill in achieving goals by deceit or cleverness.', prompt: 'Use "cunning" to describe a plan or a character!' }
 ];
-var todayVocab = VOCAB_WORDS[new Date().getDay() % VOCAB_WORDS.length];
+var todayVocab = FALLBACK_VOCAB[new Date().getDay() % FALLBACK_VOCAB.length];
 
 var LAYOUTS = [
   { count: 2, label: '2 Panels', icon: '||' },
@@ -942,6 +942,32 @@ function finishComic() {
   }
 }
 
+function loadCurriculumVocab() {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  google.script.run
+    .withSuccessHandler(function(result) {
+      try {
+        var data = (typeof result === 'string') ? JSON.parse(result) : result;
+        var vocabArr = data && data.vocabulary;
+        if (vocabArr && vocabArr.length > 0) {
+          var mapped = [];
+          for (var i = 0; i < vocabArr.length; i++) {
+            var v = vocabArr[i];
+            mapped.push({
+              word: (v.word || '').toUpperCase(),
+              def: v.definition || v.def || '',
+              prompt: 'Use "' + (v.word || '') + '" in one of your comic captions!'
+            });
+          }
+          todayVocab = mapped[new Date().getDay() % mapped.length];
+          renderVocab();
+        }
+      } catch(e) { /* keep fallback */ }
+    })
+    .withFailureHandler(function() { /* keep fallback */ })
+    .getTodayContentSafe(CHILD);
+}
+
 // Init
 function init() {
   createStars();
@@ -950,6 +976,7 @@ function init() {
   buildPanelGrid();
   renderCaptions();
   renderVocab();
+  loadCurriculumVocab();
 }
 
 init();
