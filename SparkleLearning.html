@@ -506,6 +506,16 @@ if (TBM_TEST_MODE) {
   document.body.style.paddingTop = '28px';
 }
 
+/* ─── Known Activity Types (validation) ─── */
+var KNOWN_ACTIVITY_TYPES = [
+  'letter_intro', 'find_letter', 'find_the_letter', 'find_number', 'find_the_number',
+  'count_with_me', 'quantity_match', 'quantity_matching', 'color_hunt', 'shape_match',
+  'pattern_next', 'pattern_completion', 'letter_sound', 'what_sound', 'beginning_sound',
+  'letter_trace', 'number_trace', 'audio_story', 'story_listen', 'color_sort',
+  'more_or_less', 'name_builder', 'celebration', 'star_celebration',
+  'sparkle_challenge', 'free_draw'
+];
+
 /* ─── Global State ─── */
 var todayContent = null;
 var currentActivityIndex = 0;

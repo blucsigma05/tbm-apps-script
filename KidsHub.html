@@ -2950,7 +2950,7 @@ function pBatchApprove(child) {
           h += '<div class="p-task-item"><div class="p-task-icon">' + (t.icon || '⭐') + '</div>';
           h += '<div class="p-task-info"><div class="p-task-name">' + t.task + '</div><div class="p-task-meta">' + t.points + ' pts · ' + t.category + '</div></div>';
           h += '<div class="p-onetap">';
-          h += '<button class="p-onetap-btn approve" onclick="window._v2Approve(' + t.rowIndex + ',\'' + t.taskID + '\')">✓</button>';
+          h += '<button class="p-onetap-btn approve" onclick="window._v2Approve(' + t.rowIndex + ',\'' + t.taskID + '\', event)">✓</button>';
           h += '<button class="p-onetap-btn bonus15" onclick="window._v2Bonus(' + t.rowIndex + ',1.5,\'' + t.taskID + '\')">⚡️1.5x</button>';
           h += '<button class="p-onetap-btn bonus2" onclick="window._v2Bonus(' + t.rowIndex + ',2,\'' + t.taskID + '\')">⚡2x</button>';
           h += '<button class="p-onetap-btn reject" onclick="window._v2Reject(' + t.rowIndex + ',\'' + t.taskID + '\')">✕</button>';
@@ -3142,8 +3142,8 @@ function pBatchApprove(child) {
       if (r.amount) h += '<div class="p-ask-amount">$' + Number(r.amount).toFixed(2) + '</div>';
       if (r.notes) h += '<div class="p-ask-notes">"' + r.notes + '"</div>';
       h += '</div><div class="p-ask-btns">';
-      h += '<button class="p-ask-btn approve" onclick="window._v2AskApprove(\'' + r.requestUID + '\', \'' + r.type + '\', ' + (r.amount || 0) + ', \'' + childName + '\')">✓ Approve</button>';
-      h += '<button class="p-ask-btn deny" onclick="window._v2AskDeny(\'' + r.requestUID + '\')">✕ Deny</button>';
+      h += '<button class="p-ask-btn approve" onclick="window._v2AskApprove(\'' + r.requestUID + '\', \'' + r.type + '\', ' + (r.amount || 0) + ', \'' + childName + '\', event)">✓ Approve</button>';
+      h += '<button class="p-ask-btn deny" onclick="window._v2AskDeny(\'' + r.requestUID + '\', event)">✕ Deny</button>';
       h += '</div></div>';
     });
     h += '</div>';
@@ -3168,8 +3168,8 @@ function pBatchApprove(child) {
   window._v2Tab = function(t) { currentTab = t; if (parentData) renderV2(parentData); };
   window._v2WeekKid = function(k) { currentWeeklyKid = k; if (parentData) renderV2(parentData); };
   // v26: Track 9B — inline card removal instead of full DOM rebuild
-  window._v2Approve = function(ri, tid) {
-    var btn = event.target;
+  window._v2Approve = function(ri, tid, e) {
+    var btn = e ? e.target : null;
     var card = btn ? btn.closest('.p-task-item') : null;
     var btns = card ? card.querySelectorAll('.p-onetap-btn') : [];
     for (var i = 0; i < btns.length; i++) { btns[i].disabled = true; }
@@ -3230,11 +3230,11 @@ function pBatchApprove(child) {
     if (modal) modal.style.display = 'none';
   };
   // v26: Track 3 — Ask approve/deny handlers
-  window._v2AskApprove = function(uid, type, amount, childName) {
+  window._v2AskApprove = function(uid, type, amount, childName, e) {
     if (type === 'Money' && amount > 0) {
       if (!confirm('Deduct $' + Number(amount).toFixed(2) + ' from ' + childName + "'s bank?")) return;
     }
-    var btn = event.target;
+    var btn = e ? e.target : null;
     var card = btn ? btn.closest('.p-ask-card') : null;
     var btns = card ? card.querySelectorAll('.p-ask-btn') : [];
     for (var i = 0; i < btns.length; i++) { btns[i].disabled = true; }
@@ -3263,9 +3263,9 @@ function pBatchApprove(child) {
       setSyncState('failed');
     }).khApproveRequestSafe(uid);
   };
-  window._v2AskDeny = function(uid) {
+  window._v2AskDeny = function(uid, e) {
     var note = prompt('Deny reason (optional):') || '';
-    var btn = event.target;
+    var btn = e ? e.target : null;
     var card = btn ? btn.closest('.p-ask-card') : null;
     var btns = card ? card.querySelectorAll('.p-ask-btn') : [];
     for (var i = 0; i < btns.length; i++) { btns[i].disabled = true; }

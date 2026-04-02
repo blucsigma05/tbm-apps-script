@@ -940,24 +940,14 @@ function runStoryFactorySafe(topic, character, tone) {
   });
 }
 
-// v51: Story Library safe wrappers
-function listStoredStoriesSafe() {
-  return withMonitor_('listStoredStoriesSafe', function() {
-    return listStoredStories();
-  });
-}
+// v51: Story Library safe wrappers (listStoredStoriesSafe moved to StoryFactory.js)
 function getStoredStorySafe(storyKey) {
   return withMonitor_('getStoredStorySafe', function() {
     return getStoredStory(storyKey);
   });
 }
 
-// v51: Curriculum safe wrappers
-function getTodayContentSafe(child) {
-  return withMonitor_('getTodayContentSafe', function() {
-    return getTodayContent_(child);
-  });
-}
+// v51: Curriculum safe wrappers (getTodayContentSafe moved to KidsHub.js)
 function seedWeek1CurriculumSafe() {
   return withMonitor_('seedWeek1CurriculumSafe', function() {
     return seedWeek1Curriculum();
@@ -1020,40 +1010,7 @@ function submitFeedbackSafe(payload) {
 
 // v55 REMOVED: Duplicate updateMealPlanSafe deleted — original at ~line 876 handles (meal, cook, notes) correctly
 
-// v52: Audio Wiring — batch fetch audio clips from Drive as base64
-function getAudioBatchSafe(filenames) {
-  return withMonitor_('getAudioBatchSafe', function() {
-    var folderId = '1rXWVBD9QMruWOj6AlNB4mY2E9wzWGctm';
-    var folder = DriveApp.getFolderById(folderId);
-    var result = {};
-    for (var i = 0; i < filenames.length; i++) {
-      var files = folder.getFilesByName(filenames[i]);
-      if (files.hasNext()) {
-        result[filenames[i]] = Utilities.base64Encode(files.next().getBlob().getBytes());
-      }
-    }
-    // Check subfolders for missing files
-    var missing = [];
-    for (var k = 0; k < filenames.length; k++) {
-      if (!result[filenames[k]]) missing.push(filenames[k]);
-    }
-    if (missing.length > 0) {
-      var subs = folder.getFolders();
-      while (subs.hasNext()) {
-        var sub = subs.next();
-        for (var m = 0; m < missing.length; m++) {
-          if (!result[missing[m]]) {
-            var sf = sub.getFilesByName(missing[m]);
-            if (sf.hasNext()) {
-              result[missing[m]] = Utilities.base64Encode(sf.next().getBlob().getBytes());
-            }
-          }
-        }
-      }
-    }
-    return JSON.parse(JSON.stringify(result));
-  });
-}
+// v52: Audio Wiring — getAudioBatchSafe moved to KidsHub.js
 
 // v52: Notion write-backs — log homework and sparkle progress
 function logHomeworkCompletionSafe(data) {

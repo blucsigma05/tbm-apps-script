@@ -122,6 +122,7 @@ main {
   z-index: 10;
 }
 
+/* TODO: Build 17C — PYA timing refactor: render PYA overlay relative to content loading, not static */
 /* Plan Your Attack screen */
 #plan-screen {
   display: flex;
@@ -561,6 +562,7 @@ if (TBM_TEST_MODE) {
 var MODULE_VERSION = 'v1';
 var CHILD = 'buggsy';
 var TOTAL_QUESTIONS = 20;
+var _usingFallback = false;
 
 // State
 var questions = [];
@@ -972,6 +974,7 @@ function initWithQuestions(questionArray) {
 
 function initWithFallback() {
   // FALLBACK: use hardcoded question generators when server has no curriculum
+  _usingFallback = true;
   questions = generateSprint();
   TOTAL_QUESTIONS = questions.length;
 }
@@ -1192,6 +1195,8 @@ function finishSprint() {
   if (TBM_TEST_MODE) {
     console.log('[TEST MODE] awardRingsSafe skipped, rings=' + rings);
     console.log('[TEST MODE] submitHomeworkSafe skipped');
+  } else if (_usingFallback) {
+    console.log('Practice mode — rings not awarded');
   } else if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function(result) {
@@ -1309,6 +1314,7 @@ function loadFactSprintContent() {
       })
       .withFailureHandler(function(err) {
         console.log('Fact sprint load failed: ' + (err && err.message ? err.message : 'unknown'));
+        _usingFallback = true;
         initWithFallback();
       })
       .getTodayContentSafe('buggsy');

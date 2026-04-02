@@ -136,6 +136,7 @@ main {
   z-index: 10;
 }
 
+/* TODO: Build 17C — PYA timing refactor: render PYA overlay relative to content loading, not static */
 /* Plan Your Attack overlay */
 #plan-overlay {
   position: fixed;
@@ -523,8 +524,16 @@ if (TBM_TEST_MODE) {
   document.body.style.paddingTop = '28px';
 }
 
+// ─── KNOWN QUESTION TYPES (validation) ───
+var KNOWN_QUESTION_TYPES = [
+  'multiple_choice', 'computation', 'word_problem', 'error_analysis', 'multi_step',
+  'open_ended', 'short_answer', 'why_question', 'visual', 'real_world',
+  'fill_blank', 'griddable', 'estimation'
+];
+
 // ─── MODULE DATA ───
 var MODULE = null;
+var _usingFallback = false;
 var FALLBACK_MODULE = {
   date: "Monday Module",
   science: {
@@ -1254,6 +1263,8 @@ function renderResults() {
         console.log('[TEST MODE] awardRingsSafe skipped, rings=' + ringsEarned);
         console.log('[TEST MODE] submitHomeworkSafe skipped');
         console.log('[TEST MODE] logHomeworkCompletionSafe skipped');
+      } else if (_usingFallback) {
+        console.log('Practice mode — rings not awarded');
       } else {
         google.script.run
           .withSuccessHandler(function(result) {
@@ -1353,6 +1364,7 @@ function renderInhibitionReminder(dayConfig) {
 // ─── CURRICULUM LOADING ───
 function loadCurriculumContent() {
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    _usingFallback = true;
     MODULE = FALLBACK_MODULE;
     init();
     return;
@@ -1368,16 +1380,19 @@ function loadCurriculumContent() {
           MODULE = { science: { title: 'Review', questions: c.review_quiz }, math: { title: 'Review', questions: [] } };
           init();
         } else {
+          _usingFallback = true;
           MODULE = FALLBACK_MODULE;
           init();
         }
       } else {
+        _usingFallback = true;
         MODULE = FALLBACK_MODULE;
         init();
       }
     })
     .withFailureHandler(function(err) {
       console.log('Curriculum load failed: ' + (err && err.message ? err.message : 'unknown'));
+      _usingFallback = true;
       MODULE = FALLBACK_MODULE;
       init();
     })

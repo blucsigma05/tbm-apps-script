@@ -135,6 +135,7 @@
     z-index: 10;
   }
 
+  /* TODO: Build 17C — PYA timing refactor: render PYA overlay relative to content loading, not static */
   /* ─── Plan Your Attack ─── */
   .plan-attack {
     background: rgba(236,72,153,0.06);
@@ -605,6 +606,7 @@ if (TBM_TEST_MODE) {
 var MODULE_VERSION = 'v1';
 var CHILD = 'buggsy';
 var TARGET_MINUTES = 12;
+var _usingFallback = false;
 
 // ─── 4 Writing Formats ───
 var FORMATS = [
@@ -1096,7 +1098,9 @@ function handleSubmit() {
   showScreen('completion');
 
   // Submit homework via GAS backend (if available)
-  if (!TBM_TEST_MODE) {
+  if (_usingFallback) {
+    console.log('Practice mode — rings not awarded');
+  } else if (!TBM_TEST_MODE) {
     try {
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
@@ -1119,7 +1123,9 @@ function handleSubmit() {
   }
 
   // Award rings via GAS backend (if available)
-  if (TBM_TEST_MODE) {
+  if (_usingFallback) {
+    // Already logged above
+  } else if (TBM_TEST_MODE) {
     console.log('[TEST MODE] awardRingsSafe skipped, rings=3');
   } else {
     try {
@@ -1159,8 +1165,46 @@ function handleSubmit() {
   }
 }
 
+// ─── CURRICULUM LOADING ───
+function loadWritingContent() {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    _usingFallback = true;
+    init();
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.content) {
+        var c = result.content;
+        if (c.quick_write || c.grammar_sprint) {
+          // Use curriculum content to override default prompts
+          if (c.quick_write && c.quick_write.prompt) {
+            for (var i = 0; i < FORMATS.length; i++) {
+              if (FORMATS[i].id === 'quick_write' || FORMATS[i].id === 'journal') {
+                FORMATS[i].prompt = c.quick_write.prompt;
+                if (c.quick_write.guidance) { FORMATS[i].guidance = c.quick_write.guidance; }
+              }
+            }
+          }
+          init();
+        } else {
+          _usingFallback = true;
+          init();
+        }
+      } else {
+        _usingFallback = true;
+        init();
+      }
+    })
+    .withFailureHandler(function() {
+      _usingFallback = true;
+      init();
+    })
+    .getTodayContentSafe('buggsy');
+}
+
 // ─── Start ───
-init();
+loadWritingContent();
 </script>
 </body>
 </html>
