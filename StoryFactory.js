@@ -1606,5 +1606,11 @@ function getStoryImagesSafe(storyKey) {
 }
 
 // ════════════════════════════════════════════════════════════════════
+function listStoredStoriesSafe() {
+  return withMonitor_('listStoredStoriesSafe', function() {
+    return JSON.parse(JSON.stringify(listStoredStories()));
+  });
+}
+
 // END OF FILE — StoryFactory v12
 // ════════════════════════════════════════════════════════════════════

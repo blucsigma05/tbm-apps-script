@@ -934,7 +934,7 @@ function finishComic() {
     google.script.run
       .withSuccessHandler(function() { })
       .withFailureHandler(function(err) { })
-      .awardRings(CHILD, rings, MODULE_NAME);
+      .awardRingsSafe(CHILD, rings, MODULE_NAME);
   }
 }
 
