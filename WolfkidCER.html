@@ -772,7 +772,8 @@
 // ─── ES5 ONLY ───
 
 // ─── Episode Data ───
-var EPISODE = {
+var EPISODE = null;
+var FALLBACK_EPISODE = {
   number: 3,
   title: "The Locker Room Problem",
   passage: [
@@ -1184,8 +1185,28 @@ function renderReview() {
   }
 }
 
+// ─── CURRICULUM LOADING ───
+function loadCurriculumContent() {
+  google.script.run
+    .withSuccessHandler(function(response) {
+      if (response && response.content && response.content.wolfkid_episode) {
+        EPISODE = response.content.wolfkid_episode;
+        init();
+      } else {
+        EPISODE = FALLBACK_EPISODE;
+        init();
+      }
+    })
+    .withFailureHandler(function(err) {
+      console.log('Curriculum load failed: ' + (err && err.message ? err.message : 'unknown'));
+      EPISODE = FALLBACK_EPISODE;
+      init();
+    })
+    .getTodayContentSafe('buggsy');
+}
+
 // ─── Boot ───
-init();
+loadCurriculumContent();
 </script>
 </body>
 </html>
