@@ -124,6 +124,37 @@ fi
 
 echo ""
 
+# ── SUBMIT/SAVE WITHOUT SERVER CALL ─────────────────────────
+echo "--- Submit/Save Server Wiring ---"
+
+SUBMIT_FAIL=0
+for htmlfile in *.html; do
+  # Skip non-routed component file
+  case "$htmlfile" in
+    executive-skills-components.html) continue ;;
+  esac
+
+  # Check if file has onclick with submit/send/save/lock/complete keywords
+  HAS_ACTION=$(grep -il 'onclick=.*\(submit\|send\|save\|lock\|complete\|finish\)' "$htmlfile" 2>/dev/null)
+  if [ -n "$HAS_ACTION" ]; then
+    # Verify google.script.run exists in the same file
+    HAS_SERVER=$(grep -l "google\.script\.run$" "$htmlfile" 2>/dev/null)
+    if [ -z "$HAS_SERVER" ]; then
+      echo "  X $htmlfile: has submit/save action but NO google.script.run call"
+      SUBMIT_FAIL=1
+    fi
+  fi
+done
+
+if [ $SUBMIT_FAIL -eq 1 ]; then
+  echo "  FAIL -- Submit/save wiring FAILED"
+  FAIL=1
+else
+  echo "  OK -- All submit/save actions have server calls"
+fi
+
+echo ""
+
 # ── getActiveSpreadsheet() USAGE ──────────────────────────────
 echo "--- Trigger-Safe Spreadsheet Access ---"
 
