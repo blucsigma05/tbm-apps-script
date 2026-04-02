@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="tbm-version" content="v2">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   @keyframes fadeUp {
@@ -542,8 +543,38 @@ function updateDashName(el) {
 }
 
 function lockItIn() {
-  state.submitted = true;
-  render();
+  var payload = {
+    child: 'buggsy',
+    theme: state.theme,
+    dashName: state.dashName,
+    mascot: state.mascot,
+    sectionHomework: state.sectionHomework,
+    sectionChores: state.sectionChores,
+    sectionRewards: state.sectionRewards,
+    date: new Date().toISOString()
+  };
+
+  if (TBM_TEST_MODE) {
+    console.log('[TEST MODE] saveDesignChoicesSafe skipped', payload);
+    state.submitted = true;
+    render();
+    return;
+  }
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function() {
+        state.submitted = true;
+        render();
+      })
+      .withFailureHandler(function(err) {
+        alert('Save failed — ' + (err && err.message ? err.message : 'unknown error') + '. Try again.');
+      })
+      .saveDesignChoicesSafe(payload);
+  } else {
+    state.submitted = true;
+    render();
+  }
 }
 
 /* ===== RENDER ===== */

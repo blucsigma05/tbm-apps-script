@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v43 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v44 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 43; }
+function getKidsHubVersion() { return 44; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3801,5 +3801,22 @@ function checkDay1Safe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v43
+// ── DESIGN CHOICES ──────────────────────────────────────────────
+function saveDesignChoices_(payload) {
+  var child = String(payload && payload.child || '').toLowerCase();
+  if (child !== 'buggsy' && child !== 'jj') {
+    return { error: true, message: 'Invalid child' };
+  }
+  var props = PropertiesService.getScriptProperties();
+  props.setProperty('DESIGN_CHOICES_' + child, JSON.stringify(payload));
+  return { status: 'ok' };
+}
+
+function saveDesignChoicesSafe(payload) {
+  return withMonitor_('saveDesignChoicesSafe', function() {
+    return JSON.parse(JSON.stringify(saveDesignChoices_(payload)));
+  });
+}
+
+// END OF FILE — KidsHub.gs v44
 // ════════════════════════════════════════════════════════════════════
