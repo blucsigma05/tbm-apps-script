@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v44 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v45 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 44; }
+function getKidsHubVersion() { return 45; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3529,24 +3529,23 @@ function ensureKHEducationTab_() {
 function submitHomework_(data) {
   var lk = acquireLock_();
   if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  var isAutoGrade = !data.responseText || String(data.responseText).trim().length === 0;
+  var status = isAutoGrade ? 'auto_approved' : 'pending_review';
+  var rings = 0;
+  var childLower = String(data.child || 'buggsy').toLowerCase();
+  var sheet = null;
+  var lastRowForGemini = 0;
+
+  if (isAutoGrade) {
+    rings = Number(data.rings) || 5;
+  }
+
+  // Phase 1: Write row under lock
   try {
-    var sheet = ensureKHEducationTab_();
-    var isAutoGrade = !data.responseText || String(data.responseText).trim().length === 0;
-    var status = isAutoGrade ? 'auto_approved' : 'pending_review';
-    var rings = 0;
-
-    if (isAutoGrade) {
-      rings = Number(data.rings) || 5;
-      try {
-        if (typeof kh_awardEducationPoints_ === 'function') {
-          kh_awardEducationPoints_(String(data.child || 'buggsy').toLowerCase(), rings, data.module + ' — ' + data.subject);
-        }
-      } catch(e) { if (typeof logError_ === 'function') logError_('submitHomework_:awardRings', e); }
-    }
-
+    sheet = ensureKHEducationTab_();
     sheet.appendRow([
       new Date(),
-      String(data.child || 'buggsy').toLowerCase(),
+      childLower,
       String(data.module || 'homework'),
       String(data.subject || 'General'),
       Number(data.score) || 0,
@@ -3558,49 +3557,53 @@ function submitHomework_(data) {
       '',
       ''
     ]);
-
     stampKHHeartbeat_();
-
-    if (status === 'pending_review') {
-      try {
-        if (typeof sendPush_ === 'function') {
-          var childDisplay = String(data.child || 'buggsy').charAt(0).toUpperCase() + String(data.child || 'buggsy').slice(1);
-          sendPush_(childDisplay + ' submitted ' + (data.subject || 'homework'), 'Needs your review on Parent Dashboard', 'BOTH', 0);
-        }
-      } catch(e) { /* non-blocking */ }
-
-    }
-
-    var _lastRowForGemini = sheet.getLastRow();
-    // Release lock BEFORE Gemini call (can take 5-30s)
+    lastRowForGemini = sheet.getLastRow();
+  } finally {
     lk.lock.releaseLock();
-
-    // Gemini first-pass review (outside lock scope)
-    if (status === 'pending_review' && data.responseText && String(data.responseText).length > 20) {
-      try {
-        var review = reviewWithGemini_({
-          child: data.child || 'buggsy',
-          subject: data.subject || '',
-          prompt: data.prompt || '',
-          response: data.responseText
-        });
-        if (review && review.feedback) {
-          var lk2 = acquireLock_();
-          if (lk2.acquired) {
-            try { sheet.getRange(_lastRowForGemini, 12).setValue(JSON.stringify(review)); }
-            finally { lk2.lock.releaseLock(); }
-          }
-        }
-      } catch(e2) {
-        if (typeof logError_ === 'function') logError_('submitHomework_:geminiReview', e2);
-      }
-    }
-
-    return JSON.stringify({ status: 'ok', autoApproved: isAutoGrade, ringsAwarded: rings });
-  } catch(e) {
-    if (lk && lk.lock) { try { lk.lock.releaseLock(); } catch(x) {} }
-    throw e;
   }
+
+  // Phase 2: Push notification (no lock needed)
+  if (status === 'pending_review') {
+    try {
+      if (typeof sendPush_ === 'function') {
+        var childDisplay = childLower.charAt(0).toUpperCase() + childLower.slice(1);
+        sendPush_(childDisplay + ' submitted ' + (data.subject || 'homework'), 'Needs your review on Parent Dashboard', 'BOTH', 0);
+      }
+    } catch(e) { /* non-blocking */ }
+  }
+
+  // Phase 3: Award rings AFTER lock release (acquires its own lock)
+  if (isAutoGrade && rings > 0) {
+    try {
+      if (typeof kh_awardEducationPoints_ === 'function') {
+        kh_awardEducationPoints_(childLower, rings, data.module + ' — ' + data.subject);
+      }
+    } catch(e) { if (typeof logError_ === 'function') logError_('submitHomework_:awardRings', e); }
+  }
+
+  // Phase 4: Gemini review (outside lock, can take 5-30s)
+  if (status === 'pending_review' && data.responseText && String(data.responseText).length > 20) {
+    try {
+      var review = reviewWithGemini_({
+        child: data.child || 'buggsy',
+        subject: data.subject || '',
+        prompt: data.prompt || '',
+        response: data.responseText
+      });
+      if (review && review.feedback && sheet && lastRowForGemini > 0) {
+        var lk2 = acquireLock_();
+        if (lk2.acquired) {
+          try { sheet.getRange(lastRowForGemini, 12).setValue(JSON.stringify(review)); }
+          finally { lk2.lock.releaseLock(); }
+        }
+      }
+    } catch(e2) {
+      if (typeof logError_ === 'function') logError_('submitHomework_:geminiReview', e2);
+    }
+  }
+
+  return JSON.stringify({ status: 'ok', autoApproved: isAutoGrade, ringsAwarded: rings });
 }
 
 function submitHomeworkSafe(data) {
@@ -3653,32 +3656,25 @@ function getEducationQueueSafe() {
 function approveHomework_(rowIndex, action, notes) {
   var lk = acquireLock_();
   if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  var child = '';
+  var module = '';
+  var subject = '';
+  var rings = 0;
+
+  // Phase 1: Sheet writes under lock
   try {
     var sheet = ensureKHEducationTab_();
     var row = sheet.getRange(rowIndex, 1, 1, 12).getValues()[0];
-    var child = String(row[1]);
-    var module = String(row[2]);
-    var subject = String(row[3]);
+    child = String(row[1]);
+    module = String(row[2]);
+    subject = String(row[3]);
 
     if (action === 'approve') {
-      var rings = 10;
+      rings = 10;
       sheet.getRange(rowIndex, 8).setValue('approved');
       sheet.getRange(rowIndex, 9).setValue(String(notes || ''));
       sheet.getRange(rowIndex, 10).setValue(rings);
       sheet.getRange(rowIndex, 11).setValue(new Date());
-
-      try {
-        if (typeof kh_awardEducationPoints_ === 'function') {
-          kh_awardEducationPoints_(child, rings, module + ' — ' + subject + ' (Parent Approved)');
-        }
-      } catch(e) { if (typeof logError_ === 'function') logError_('approveHomework_:awardRings', e); }
-
-      try {
-        if (typeof sendPush_ === 'function') {
-          var childDisplay = child.charAt(0).toUpperCase() + child.slice(1);
-          sendPush_(childDisplay + ': Writing approved! +' + rings + ' rings', String(notes || 'Great work!'), 'BOTH', 0);
-        }
-      } catch(e) { /* non-blocking */ }
     } else if (action === 'return') {
       sheet.getRange(rowIndex, 8).setValue('returned');
       sheet.getRange(rowIndex, 9).setValue(String(notes || 'Please try again'));
@@ -3686,10 +3682,27 @@ function approveHomework_(rowIndex, action, notes) {
     }
 
     stampKHHeartbeat_();
-    return JSON.stringify({ status: 'ok', action: action });
   } finally {
     lk.lock.releaseLock();
   }
+
+  // Phase 2: Award rings + push notification AFTER lock release
+  if (action === 'approve' && rings > 0) {
+    try {
+      if (typeof kh_awardEducationPoints_ === 'function') {
+        kh_awardEducationPoints_(child, rings, module + ' — ' + subject + ' (Parent Approved)');
+      }
+    } catch(e) { if (typeof logError_ === 'function') logError_('approveHomework_:awardRings', e); }
+
+    try {
+      if (typeof sendPush_ === 'function') {
+        var childDisplay = child.charAt(0).toUpperCase() + child.slice(1);
+        sendPush_(childDisplay + ': Writing approved! +' + rings + ' rings', String(notes || 'Great work!'), 'BOTH', 0);
+      }
+    } catch(e) { /* non-blocking */ }
+  }
+
+  return JSON.stringify({ status: 'ok', action: action });
 }
 
 function approveHomeworkSafe(rowIndex, action, notes) {
@@ -3818,5 +3831,5 @@ function saveDesignChoicesSafe(payload) {
   });
 }
 
-// END OF FILE — KidsHub.gs v44
+// END OF FILE — KidsHub.gs v45
 // ════════════════════════════════════════════════════════════════════
