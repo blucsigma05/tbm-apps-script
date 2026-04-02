@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kids Hub v34</title>
+<title>Kids Hub v35</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -1053,7 +1053,7 @@ var IS_PARENT = INIT_VIEW  === 'parent';
 
 // v27: Parent nav — fetch base URL and navigate between surfaces
 var _pNavBaseUrl = '';
-if (IS_PARENT) { google.script.run.withSuccessHandler(function(u) { _pNavBaseUrl = u; }).withFailureHandler(function(){}).getScriptUrlSafe(); }
+if (IS_PARENT) { google.script.run.withSuccessHandler(function(u) { _pNavBaseUrl = u; }).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).getScriptUrlSafe(); }
 // v32: Education nav helper — builds URL for education module pages
 var _eduBaseUrl = '';
 (function() {
@@ -1064,16 +1064,16 @@ var _eduBaseUrl = '';
 })();
 function eduGo(page) {
   if (_eduBaseUrl) { window.top.location.href = _eduBaseUrl + '/' + page; }
-  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page; }).withFailureHandler(function(){}).getScriptUrlSafe(); }
+  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page; }).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).getScriptUrlSafe(); }
 }
 function eduGoChild(page, child) {
   if (_eduBaseUrl) { window.top.location.href = _eduBaseUrl + '/' + page + '?child=' + child; }
-  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page + '&child=' + child; }).withFailureHandler(function(){}).getScriptUrlSafe(); }
+  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page + '&child=' + child; }).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).getScriptUrlSafe(); }
 }
 function pNavGo(page) {
   var suffix = '&jt=1';
   if (_pNavBaseUrl) { window.top.location.href = _pNavBaseUrl + '?page=' + page + suffix; }
-  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page + suffix; }).withFailureHandler(function(){}).getScriptUrlSafe(); }
+  else { google.script.run.withSuccessHandler(function(u) { window.top.location.href = u + '?page=' + page + suffix; }).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).getScriptUrlSafe(); }
 }
 window.switchView = function(target) {
   var _base = _pNavBaseUrl;
@@ -1087,7 +1087,7 @@ window.switchView = function(target) {
       if (target === 'parent') go(u + '?page=kidshub&view=parent');
       else if (target === 'buggsy') go(u + '?page=buggsy');
       else if (target === 'jj') go(u + '?page=jj');
-    }).withFailureHandler(function(){}).getScriptUrlSafe();
+    }).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).getScriptUrlSafe();
   }
 };
 
@@ -1169,7 +1169,8 @@ var balances   = { earned:0, spent:0, deducted:0, balance:0 }; // v1 TBM: server
 var streakData = {};   // v1 TBM: from KH_Streaks cache
 var parentMode = false;
 var currentTab = 'quests';
-var _fetching  = false;   // v5: fetch guard — prevents ghost taps during reload (#57)
+var _dataLoading = false;
+var _actionInFlight = false;
 // Confidence Rail + Graceful Degradation
 var _khLastFetch = null;
 var _khLastGoodRaw = null;
@@ -1275,7 +1276,7 @@ window.onload = function () {
     renderParent();
     // v36: Parent dashboard heartbeat poll — 120s, visibility+interaction+story-gated
     setInterval(function() {
-      if (_fetching || document.hidden || window._storyInProgress) return;
+      if (_dataLoading || _actionInFlight || document.hidden || window._storyInProgress) return;
       var active = document.activeElement;
       if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
       if (document.querySelector('.pin-overlay[style*="block"]') || document.querySelector('.jj-pin-overlay[style*="block"]')) return;
@@ -1294,7 +1295,7 @@ window.onload = function () {
     // v24: Smart polling — check heartbeat timestamp before full fetch
     // Only does full data load when something actually changed
     setInterval(function() {
-      if (_fetching || document.hidden) return;
+      if (_dataLoading || _actionInFlight || document.hidden) return;
       google.script.run
         .withSuccessHandler(function(ts) {
           if (ts && ts !== _lastHeartbeat) {
@@ -1378,12 +1379,12 @@ function getUnicornSVG(size) {
 
 // ── KID DATA LOAD — v1 TBM: uses getKidsHubData() ────────────
 function loadKidData() {
-  _fetching = true;  // v5: lock actions during fetch (#57)
+  _dataLoading = true;  // v5: lock actions during fetch (#57)
   window._allClearCelebrated = false; // v19: reset celebration flag on data reload
   setSyncState('saving', 'Loading...');
   google.script.run
     .withSuccessHandler(onKidData)
-    .withFailureHandler(function(e){ _fetching = false; setSyncState('failed'); console.log('KH_FAIL', e);
+    .withFailureHandler(function(e){ _dataLoading = false; setSyncState('failed'); console.log('KH_FAIL', e);
       if (_khLastGoodRaw) { var rail = document.getElementById('confidenceRail'); if (rail) { rail.textContent = 'Retrying\u2026 showing cached data'; rail.style.color = '#f59e0b'; } setTimeout(loadKidData, 30000); return; }
       onErr(e); })
     .getKidsHubDataSafe(IS_PARENT ? 'all' : INIT_CHILD);
@@ -1480,7 +1481,7 @@ function onKidData(raw) {
   }
 
   // v24: Capture heartbeat on load so smart poll can compare
-  google.script.run.withSuccessHandler(function(ts) { if (ts) _lastHeartbeat = ts; }).withFailureHandler(function(){}).getKHLastModifiedSafe();
+  google.script.run.withSuccessHandler(function(ts) { if (ts) _lastHeartbeat = ts; }).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).getKHLastModifiedSafe();
 
   // v23 Fix 5: Win animation — celebrate when balance increases after refresh
   var newBal = Number(balances.balance) || 0;
@@ -1500,7 +1501,7 @@ function onKidData(raw) {
   if (ql) ql.style.opacity = '1';
 
   // v5: post-render cooldown — ghost-tap guard stays active through card animation (#57)
-  setTimeout(function(){ _fetching = false; }, 350);
+  setTimeout(function(){ _dataLoading = false; }, 350);
 }
 
 function onErr(e) { showErr(e.message || 'Connection error'); }
@@ -1522,10 +1523,10 @@ function buildBuggsyUI() {
   '<div class="b-stats" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;align-items:stretch;width:100%"><div class="b-stat"><span class="b-stat-icon"><img src="https://i.ibb.co/d0KSS8zh/1773982478792.png" class="char-stat-img" style="width:48px;height:48px;border-radius:50%;object-fit:cover"></span><div><div class="b-stat-val" id="bRings">0</div><div class="b-stat-lbl">RINGS</div></div></div><div class="b-stat"><span class="b-stat-icon">📺</span><div><div class="b-stat-val" id="bTV" style="color:#38bdf8">0</div><div class="b-stat-lbl">TV</div></div></div><div class="b-stat"><span class="b-stat-icon">🎮</span><div><div class="b-stat-val" id="bGame" style="color:#a78bfa">0</div><div class="b-stat-lbl">GAME</div></div></div><div class="b-stat"><span class="b-stat-icon">💵</span><div><div class="b-stat-val" id="bMoney" style="color:#22c55e">$0</div><div class="b-stat-lbl">EARNED</div></div></div><div class="b-refresh-coin" id="bRefreshCoin" onclick="bRefresh()" style="position:static;width:36px;height:36px;border:5px solid #ffd700;border-radius:50%;box-shadow:0 0 10px rgba(255,215,0,0.5),inset 0 0 4px rgba(255,215,0,0.25);background:linear-gradient(135deg,rgba(255,235,100,0.25) 0%,transparent 50%);cursor:pointer;flex-shrink:0;margin-left:8px"></div></div></div></div>'+
   '<div class="b-level"><div class="b-lvl-row"><div class="b-lvl-badge" id="bLvlBadge">1</div><div><div class="b-lvl-name" id="bLvlName">Noob</div><div class="b-lvl-xp" id="bLvlXP">0 rings</div></div><span id="bMasteryRank" style="display:none;font-size:10px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,0.1);padding:2px 8px;border-radius:10px;letter-spacing:0.5px"></span><div class="b-lvl-next" id="bLvlNext"></div></div><div class="b-bar-track"><div class="b-bar-fill" id="bLvlBar" style="width:0%"></div></div><div id="bStreakDisplay" style="display:none;text-align:center;font-size:12px;font-weight:700;color:#f59e0b;padding:4px 0;letter-spacing:0.3px"></div></div>'+
   '<div class="edu-nav b-edu-nav"><span style="font-size:10px;color:#4a6080;font-weight:800;letter-spacing:0.5px;font-family:\'Press Start 2P\',monospace">HOMEWORK:</span><a onclick="eduGo(\'homework\')">MATH/SCI</a><a onclick="eduGo(\'wolfkid\')">WOLFKID</a><a onclick="eduGo(\'reading\')">READING</a><a onclick="eduGo(\'writing\')">WRITING</a><a onclick="eduGo(\'facts\')">DRILL</a><a onclick="eduGo(\'comic-studio\')">COMICS</a><a onclick="eduGo(\'daily-missions\')">MISSIONS</a></div>'+
-  '<div class="b-tabs"><button class="b-tab active" id="btab-quests" onclick="bTab(\'quests\')">⚔ QUESTS</button><button class="b-tab" id="btab-rewards" onclick="bTab(\'rewards\')">🏆 REWARDS</button><button class="b-tab" id="btab-events" onclick="bTab(\'events\')">✋ ASK</button><button class="b-tab" id="btab-parent" onclick="bTab(\'parent\')" style="display:none">👑 PARENT</button></div>'+
+  '<div class="b-tabs"><button class="b-tab active" id="btab-quests" onclick="bTab(\'quests\')">⚔ QUESTS</button><button class="b-tab" id="btab-rewards" onclick="bTab(\'rewards\')">🏆 REWARDS</button><button class="b-tab" id="btab-ask" onclick="bTab(\'events\')">✋ ASK</button><button class="b-tab" id="btab-parent" onclick="bTab(\'parent\')" style="display:none">👑 PARENT</button></div>'+
   '<div id="bView-quests"><div class="b-sec"><span class="b-sec-title" id="bQLabel">QUESTS</span><span class="b-sec-badge" id="bQBadge">—</span></div><div class="b-two-col"><div class="b-col-main"><div class="b-sec"><span class="b-sec-title" style="color:#4ade80">⚔ CHALLENGES</span></div><div class="b-list" id="bQuestList"></div></div><div class="b-col-pending"><div class="b-sec"><span class="b-sec-title" style="color:#fbbf24">📦 PENDING</span><span class="b-sec-badge" id="bPendBadge">0</span></div><div class="b-list" id="bPendList"></div></div></div></div>'+
   '<div id="bView-rewards" style="display:none"><div class="b-sec"><span class="b-sec-title">REWARD VAULT</span><span class="b-sec-badge" id="bRBadge">0 RINGS</span></div><div class="b-rewards-grid" id="bRewardGrid"></div></div>'+
-  '<div id="bView-events" style="display:none"><div class="b-sec"><span class="b-sec-title">✋ ASK YOUR PARENTS</span></div><div class="b-list"><div class="ask-bank-display" id="bAskBank">BANK: $0.00</div><div class="ev-form"><div class="ev-field"><label class="ev-label">TYPE</label><div class="ask-types" id="bAskTypes"><div class="ask-type-btn active" data-type="Money" onclick="pickAskType(\'b\',\'Money\',this)">💰 MONEY</div><div class="ask-type-btn" data-type="Purchase" onclick="pickAskType(\'b\',\'Purchase\',this)">🛒 BUY</div><div class="ask-type-btn" data-type="Activity" onclick="pickAskType(\'b\',\'Activity\',this)">🎯 DO</div><div class="ask-type-btn" data-type="Other" onclick="pickAskType(\'b\',\'Other\',this)">💬 OTHER</div></div></div><div class="ev-field"><label class="ev-label">WHAT DO YOU WANT?</label><input class="ev-input" type="text" id="bAskTitle" placeholder="What do you want to ask?"></div><div class="ev-field" id="bAskAmountWrap"><label class="ev-label">HOW MUCH?</label><input class="ev-input" type="number" id="bAskAmount" placeholder="$0.00" min="0" step="0.01"></div><div class="ev-field"><label class="ev-label">TELL YOUR PARENTS WHY</label><textarea class="ev-input" id="bAskNotes" rows="2" placeholder="Tell your parents why!" style="resize:none"></textarea></div><button class="b-claim" style="width:100%;padding:12px;font-size:9px;margin-top:6px" onclick="submitAsk(\'buggsy\')">✋ ASK!</button><div class="ev-status" id="bAskStatus" style="display:none"></div></div><div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title">📋 RECENT ASKS</span></div><div id="bRecentAsks"></div><div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title">🎁 I WANT THIS!</span></div><div id="bAskRewards"></div></div></div>'+
+  '<div id="bView-ask" style="display:none"><div class="b-sec"><span class="b-sec-title">✋ ASK YOUR PARENTS</span></div><div class="b-list"><div class="ask-bank-display" id="bAskBank">BANK: $0.00</div><div class="ev-form"><div class="ev-field"><label class="ev-label">TYPE</label><div class="ask-types" id="bAskTypes"><div class="ask-type-btn active" data-type="Money" onclick="pickAskType(\'b\',\'Money\',this)">💰 MONEY</div><div class="ask-type-btn" data-type="Purchase" onclick="pickAskType(\'b\',\'Purchase\',this)">🛒 BUY</div><div class="ask-type-btn" data-type="Activity" onclick="pickAskType(\'b\',\'Activity\',this)">🎯 DO</div><div class="ask-type-btn" data-type="Other" onclick="pickAskType(\'b\',\'Other\',this)">💬 OTHER</div></div></div><div class="ev-field"><label class="ev-label">WHAT DO YOU WANT?</label><input class="ev-input" type="text" id="bAskTitle" placeholder="What do you want to ask?"></div><div class="ev-field" id="bAskAmountWrap"><label class="ev-label">HOW MUCH?</label><input class="ev-input" type="number" id="bAskAmount" placeholder="$0.00" min="0" step="0.01"></div><div class="ev-field"><label class="ev-label">TELL YOUR PARENTS WHY</label><textarea class="ev-input" id="bAskNotes" rows="2" placeholder="Tell your parents why!" style="resize:none"></textarea></div><button class="b-claim" style="width:100%;padding:12px;font-size:9px;margin-top:6px" onclick="submitAsk(\'buggsy\')">✋ ASK!</button><div class="ev-status" id="bAskStatus" style="display:none"></div></div><div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title">📋 RECENT ASKS</span></div><div id="bRecentAsks"></div><div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title">🎁 I WANT THIS!</span></div><div id="bAskRewards"></div></div></div>'+
 '<div id="bView-parent" style="display:none;padding-top:8px"><div class="b-sec"><span class="b-sec-title">PARENT CONTROLS</span></div><div class="b-parent-panel"><div class="b-pp-inner"><div class="b-pp-title">⚙ MANAGE QUESTS — BUGGSY</div><div class="b-pp-actions"><button class="b-pp-btn blue" onclick="bReset(\'daily\',\'buggsy\')">🔄 RESET DAILY QUESTS</button><button class="b-pp-btn purple" onclick="bReset(\'weekly\',\'buggsy\')">📅 RESET WEEKLY QUESTS</button><button class="b-pp-btn red" onclick="bReset(\'all\',\'buggsy\')">⚠ RESET ALL — BUGGSY</button></div><div style="margin-top:12px;text-align:center"><a onclick="window.switchView(\'parent\')" style="color:#a5b4fc;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline">Open Full Parent Dashboard</a></div></div></div></div>'+
   '';
 }
@@ -1749,10 +1750,10 @@ function buildBCardHTML(task, i) {
 // v1 TBM: All write operations use kh* prefixed functions
 function bClaim(taskID, e) {
   e.stopPropagation();
-  if (_fetching) return;
+  if (_actionInFlight) return;
   var t = _findByKey(tasks, 'taskID', taskID);
   if (!t || t.completed) return;
-  _fetching = true;
+  _actionInFlight = true;
   var btn = e.target; if (btn) { btn.disabled = true; btn.textContent = '...'; }
   var card = btn ? btn.closest('.b-card') : null;
   if (card) { card.classList.add('claiming'); setTimeout(function(){ card.classList.remove('claiming'); }, 420); }
@@ -1765,56 +1766,56 @@ function bClaim(taskID, e) {
   showBXP(e, '\uD83D\uDCE6 PENDING!');
   setSyncState('saving', 'Claiming...');
   google.script.run
-    .withSuccessHandler(function(){ _fetching = false; setSyncState('synced', 'Claimed!'); if (card) { card.classList.add('claim-success'); setTimeout(function(){ card.classList.remove('claim-success'); }, 600); } })
-    .withFailureHandler(function(err){ _fetching = false; setSyncState('failed', 'Try again'); if (card) { card.classList.add('claim-error'); setTimeout(function(){ card.classList.remove('claim-error'); }, 900); } showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '\u274C OOPS!'); t.completed=false; updateBuggsy(); })
+    .withSuccessHandler(function(){ _actionInFlight = false; setSyncState('synced', 'Claimed!'); if (card) { card.classList.add('claim-success'); setTimeout(function(){ card.classList.remove('claim-success'); }, 600); } })
+    .withFailureHandler(function(err){ _actionInFlight = false; setSyncState('failed', 'Try again'); if (card) { card.classList.add('claim-error'); setTimeout(function(){ card.classList.remove('claim-error'); }, 900); } showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '\u274C OOPS!'); t.completed=false; updateBuggsy(); })
     .khCompleteTaskSafe(t.rowIndex, t.taskID);
 }
 // ── v10 FIX 4: bApprove — added return value check for duplicate guard ──
 function bApprove(taskID, e) {
   e.stopPropagation();
-  if (_fetching) return;
+  if (_actionInFlight) return;
   var t = _findByKey(tasks, 'taskID', taskID);
   if (!t || t.parentApproved) return;
-  _fetching = true;
+  _actionInFlight = true;
   t.parentApproved = true; updateBuggsy();
   google.script.run
-    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){t.parentApproved=false; updateBuggsy(); return;} showBXP(e, '✓ APPROVED!'); charReact('glow'); })
-    .withFailureHandler(function(err){ _fetching = false; showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.parentApproved=false; updateBuggsy(); })
+    .withSuccessHandler(function(r){ _actionInFlight = false; if(r && r.status==='duplicate'){t.parentApproved=false; updateBuggsy(); return;} showBXP(e, '✓ APPROVED!'); charReact('glow'); })
+    .withFailureHandler(function(err){ _actionInFlight = false; showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.parentApproved=false; updateBuggsy(); })
     .khApproveTaskSafe(t.rowIndex, t.taskID);
 }
 // ── v10 FIX 1: bGrantBonus — changed khCompleteTaskWithBonusSafe → khApproveWithBonusSafe ──
 function bGrantBonus(taskID, multiplier, e) {
   e.stopPropagation();
-  if (_fetching) return;
+  if (_actionInFlight) return;
   var t = _findByKey(tasks, 'taskID', taskID);
   if (!t || !t.completed || t.parentApproved) return;
-  _fetching = true;
+  _actionInFlight = true;
   var snap = { parentApproved: t.parentApproved, multiplier: t.multiplier, points: t.points };
   t.parentApproved = true; t.multiplier = multiplier; t.points = Math.round(t.basePoints * multiplier);
   updateBuggsy();
   showBXP(e, '⚡ BONUS!');
   google.script.run
-    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '↩ ALREADY DONE'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateBuggsy(); return;} })
-    .withFailureHandler(function(err){ _fetching = false; showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateBuggsy(); })
+    .withSuccessHandler(function(r){ _actionInFlight = false; if(r && r.status==='duplicate'){showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '↩ ALREADY DONE'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateBuggsy(); return;} })
+    .withFailureHandler(function(err){ _actionInFlight = false; showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateBuggsy(); })
     .khApproveWithBonusSafe(t.rowIndex, multiplier, t.taskID);
 }
 function bOverride(taskID, e) {
   e.stopPropagation();
-  if (_fetching) return;
+  if (_actionInFlight) return;
   var t = _findByKey(tasks, 'taskID', taskID);
   if (!t || t.completed || !t.required) return;
-  _fetching = true;
+  _actionInFlight = true;
   t.completed = true; t.parentApproved = true;
   updateBuggsy();
   showBXP(e, '↪ CLEARED');
   google.script.run
-    .withSuccessHandler(function(){ _fetching = false; loadKidData(); })
-    .withFailureHandler(function(err){ _fetching = false; showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.completed = false; t.parentApproved = false; updateBuggsy(); })
+    .withSuccessHandler(function(){ _actionInFlight = false; loadKidData(); })
+    .withFailureHandler(function(err){ _actionInFlight = false; showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); t.completed = false; t.parentApproved = false; updateBuggsy(); })
     .khOverrideTaskSafe(t.rowIndex, t.taskID);
 }
 function bReset(mode, child) {
   if (!confirm('Reset ' + mode + ' quests for ' + child + '?')) return;
-  google.script.run.withSuccessHandler(function(){loadKidData();}).withFailureHandler(function(){}).khResetTasksSafe(mode, child);
+  google.script.run.withSuccessHandler(function(){loadKidData();}).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).khResetTasksSafe(mode, child);
 }
 function showBXP(e, text) {
   var p = document.createElement('div'); p.className = 'xp-pop'; p.textContent = text;
@@ -1877,7 +1878,7 @@ var _qtyState = { rewardId:null, qty:1, cost:0, max:1, child:'' };
 
 function bRedeem(rewardId, e) {
   if (e) e.stopPropagation();
-  if (_fetching) return;
+  if (_actionInFlight) return;
   var r = _findByKey(rewards, 'id', rewardId);
   if (!r || balances.balance < r.cost) return;
   var maxQty = Math.min(10, Math.floor(balances.balance / r.cost));
@@ -1922,14 +1923,14 @@ function qtyConfirm() {
   var s = _qtyState;
   closeQtyPicker();
   if (!s.rewardId || s.qty < 1) return;
-  _fetching = true;
+  _actionInFlight = true;
   var totalCost = s.cost * s.qty;
   var oldBal = balances.balance;
   balances.balance -= totalCost;
   if (s.child === 'jj') { updateJJ(); } else { updateBuggsy(); }
   google.script.run
     .withSuccessHandler(function(res){
-      _fetching = false;
+      _actionInFlight = false;
       if (res && res.status === 'insufficient') {
         balances.balance = oldBal;
         if (s.child === 'jj') { updateJJ(); jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Not enough! 😢'); } else { updateBuggsy(); showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ NOT ENOUGH!'); }
@@ -1939,7 +1940,7 @@ function qtyConfirm() {
       loadKidData();
     })
     .withFailureHandler(function(err){
-      _fetching = false;
+      _actionInFlight = false;
       if (s.child === 'jj') { jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); } else { showBXP({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, '❌ OOPS!'); }
       balances.balance = oldBal;
       if (s.child === 'jj') { updateJJ(); } else { updateBuggsy(); }
@@ -1947,7 +1948,7 @@ function qtyConfirm() {
     .khRedeemRewardSafe(s.child, s.rewardId, s.qty);
 }
 function bRefresh() {
-  _fetching = false; // v23: Force-clear in case stuck from prior action
+  if (_actionInFlight) return; _dataLoading = false;
   var coin = document.getElementById('bRefreshCoin');
   if (coin) { coin.classList.add('spinning'); setTimeout(function(){ coin.classList.remove('spinning'); }, 950); }
   var coinEl = document.getElementById('bRefreshCoin');
@@ -1985,7 +1986,7 @@ function bRefresh() {
 }
 function bTab(tab) {
   currentTab = tab;
-  ['quests','rewards','events','parent'].forEach(function(t){
+  ['quests','rewards','ask','parent'].forEach(function(t){
     var btn = document.getElementById('btab-'+t); var view = document.getElementById('bView-'+t);
     if(btn) btn.classList.toggle('active',t===tab); if(view) view.style.display=t===tab?'block':'none';
   });
@@ -2026,10 +2027,10 @@ function buildJJUI() {
   '<div style="margin:0 14px 12px;text-align:center"><div id="jjLevelChip" style="display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.22);font-size:13px;font-weight:800;color:#fde68a;letter-spacing:1px;text-transform:uppercase">LEVEL 1 \u00B7 SPROUT</div><div id="jjMasteryRank" style="display:none;margin-top:4px;font-size:11px;font-weight:800;color:#f9a8d4;letter-spacing:0.5px"></div><div id="jjStreakDisplay" style="display:none;margin-top:4px;font-size:18px;text-align:center"></div></div>'+
   '<div class="jj-progress-wrap"><div class="jj-prog-label">Next reward unlocks at <span id="jjNextCost">10</span> ⭐<span id="jjProgNums">0 / 10</span></div><div class="jj-prog-track"><div class="jj-prog-fill" id="jjProgBar" style="width:0%"></div></div></div>'+
   '<div class="edu-nav jj-edu-nav"><span style="font-size:13px;font-weight:800;color:#f9a8d4;font-family:\'Fredoka One\',cursive">Learning:</span><a onclick="eduGo(\'sparkle\')">Sparkle Games</a><a onclick="eduGo(\'story-library\')">Stories</a><a onclick="eduGoChild(\'daily-missions\',\'jj\')">Missions</a></div>'+
-  '<div class="jj-tabs"><button class="jj-tab active" id="jjtab-quests" onclick="jjTab(\'quests\')">🌸 Jobs</button><button class="jj-tab" id="jjtab-rewards" onclick="jjTab(\'rewards\')">🎀 Prizes</button><button class="jj-tab" id="jjtab-events" onclick="jjTab(\'events\')">✨ Ask</button><button class="jj-tab" id="jjtab-parent" onclick="jjTab(\'parent\')" style="display:none">⚙ Parent</button></div>'+
+  '<div class="jj-tabs"><button class="jj-tab active" id="jjtab-quests" onclick="jjTab(\'quests\')">🌸 Jobs</button><button class="jj-tab" id="jjtab-rewards" onclick="jjTab(\'rewards\')">🎀 Prizes</button><button class="jj-tab" id="jjtab-ask" onclick="jjTab(\'events\')">✨ Ask</button><button class="jj-tab" id="jjtab-parent" onclick="jjTab(\'parent\')" style="display:none">⚙ Parent</button></div>'+
   '<div id="jjView-quests" style="margin-top:12px"><div class="jj-sec-title">Your Sparkle Jobs! 💕</div><div class="jj-two-col"><div class="jj-col-main"><div class="jj-sec-title" style="color:#c084fc">🌸 Sparkle Jobs</div><div class="jj-list" id="jjTaskList"></div></div><div class="jj-col-pending"><div class="jj-sec-title" style="color:#f9a8d4">✨ Pending</div><div class="jj-list" id="jjPendList"></div></div></div></div>'+
   '<div id="jjView-rewards" style="display:none;margin-top:12px"><div class="jj-sec-title">Princess Prizes! 👑</div><div class="jj-rewards" id="jjRewards"></div></div>'+
-  '<div id="jjView-events" style="display:none;margin-top:12px"><div class="jj-sec-title">Ask Your Parents! ✨</div><div class="jj-list" style="padding:0 14px"><div class="ask-bank-display" id="jjAskBank">Bank: $0.00</div><div class="ev-form"><div class="ev-field"><label class="ev-label">What kind of ask?</label><div class="ask-types" id="jjAskTypes"><div class="ask-type-btn active" data-type="Money" onclick="pickAskType(\'jj\',\'Money\',this)">💰 Money</div><div class="ask-type-btn" data-type="Purchase" onclick="pickAskType(\'jj\',\'Purchase\',this)">🛒 Buy</div><div class="ask-type-btn" data-type="Activity" onclick="pickAskType(\'jj\',\'Activity\',this)">🎯 Do</div><div class="ask-type-btn" data-type="Other" onclick="pickAskType(\'jj\',\'Other\',this)">💬 Other</div></div></div><div class="ev-field"><label class="ev-label">What do you want?</label><input class="ev-input" type="text" id="jjAskTitle" placeholder="What do you want to ask?"></div><div class="ev-field" id="jjAskAmountWrap"><label class="ev-label">How much?</label><input class="ev-input" type="number" id="jjAskAmount" placeholder="$0.00" min="0" step="0.01"></div><div class="ev-field"><label class="ev-label">Tell your parents why!</label><textarea class="ev-input" id="jjAskNotes" rows="2" placeholder="Tell your parents why!" style="resize:none"></textarea></div><button class="jj-do-it-btn" style="width:100%;padding:14px;font-size:15px;margin-top:6px" onclick="submitAsk(\'jj\')">✨ Ask!</button><div class="ev-status" id="jjAskStatus" style="display:none"></div></div><div class="jj-sec-title" style="padding-top:8px">Recent Asks 📋</div><div id="jjRecentAsks"></div><div class="jj-sec-title" style="padding-top:8px">I Want This! 🎁</div><div id="jjAskRewards"></div></div></div>'+
+  '<div id="jjView-ask" style="display:none;margin-top:12px"><div class="jj-sec-title">Ask Your Parents! ✨</div><div class="jj-list" style="padding:0 14px"><div class="ask-bank-display" id="jjAskBank">Bank: $0.00</div><div class="ev-form"><div class="ev-field"><label class="ev-label">What kind of ask?</label><div class="ask-types" id="jjAskTypes"><div class="ask-type-btn active" data-type="Money" onclick="pickAskType(\'jj\',\'Money\',this)">💰 Money</div><div class="ask-type-btn" data-type="Purchase" onclick="pickAskType(\'jj\',\'Purchase\',this)">🛒 Buy</div><div class="ask-type-btn" data-type="Activity" onclick="pickAskType(\'jj\',\'Activity\',this)">🎯 Do</div><div class="ask-type-btn" data-type="Other" onclick="pickAskType(\'jj\',\'Other\',this)">💬 Other</div></div></div><div class="ev-field"><label class="ev-label">What do you want?</label><input class="ev-input" type="text" id="jjAskTitle" placeholder="What do you want to ask?"></div><div class="ev-field" id="jjAskAmountWrap"><label class="ev-label">How much?</label><input class="ev-input" type="number" id="jjAskAmount" placeholder="$0.00" min="0" step="0.01"></div><div class="ev-field"><label class="ev-label">Tell your parents why!</label><textarea class="ev-input" id="jjAskNotes" rows="2" placeholder="Tell your parents why!" style="resize:none"></textarea></div><button class="jj-do-it-btn" style="width:100%;padding:14px;font-size:15px;margin-top:6px" onclick="submitAsk(\'jj\')">✨ Ask!</button><div class="ev-status" id="jjAskStatus" style="display:none"></div></div><div class="jj-sec-title" style="padding-top:8px">Recent Asks 📋</div><div id="jjRecentAsks"></div><div class="jj-sec-title" style="padding-top:8px">I Want This! 🎁</div><div id="jjAskRewards"></div></div></div>'+
 '<div id="jjView-parent" style="display:none;margin-top:12px"><div class="jj-sec-title">Parent Controls 🔐</div><div class="jj-parent-wrap"><div class="jj-parent-inner"><div class="jj-parent-title">⚙ JJ\'s Chore Settings</div><div class="jj-parent-actions"><button class="jj-pab pink" onclick="jjReset(\'daily\',\'jj\')">🌸 Reset Today\'s Jobs</button><button class="jj-pab purple" onclick="jjReset(\'weekly\',\'jj\')">💜 Reset Weekly Jobs</button><button class="jj-pab red" onclick="jjReset(\'all\',\'jj\')">🗑️ Reset All of JJ\'s Jobs</button></div><div style="margin-top:12px;text-align:center"><a onclick="window.switchView(\'parent\')" style="color:#c084fc;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline">Open Full Parent Dashboard</a></div></div></div></div></div>'+
   '';
 }
@@ -2251,10 +2252,10 @@ function buildJJCardHTML(task, i) {
 }
 
 function jjClaim(taskID, e) {
-  e.stopPropagation(); if (_fetching) return;
+  e.stopPropagation(); if (_actionInFlight) return;
   var t = _findByKey(tasks, 'taskID', taskID);
   if (!t||t.completed) return;
-  _fetching = true;
+  _actionInFlight = true;
   var btn = e.target; if (btn) { btn.disabled = true; btn.innerHTML = '\u2B50'; btn.classList.add('spinning'); }
   var card = btn ? btn.closest('.jj-card') : null;
   if (card) { card.classList.add('claiming'); setTimeout(function(){ card.classList.remove('claiming'); }, 420); }
@@ -2265,21 +2266,21 @@ function jjClaim(taskID, e) {
   t.completed=true; updateJJ(); jjConfetti(8); jjStarPop(e,'\u2728 I did it!');
   setSyncState('saving', 'Claiming...');
   google.script.run
-    .withSuccessHandler(function(){ _fetching = false; setSyncState('synced', 'Done!'); if (card) { card.classList.add('claim-success'); setTimeout(function(){ card.classList.remove('claim-success'); }, 600); } })
-    .withFailureHandler(function(err){ _fetching = false; setSyncState('failed'); if (card) { card.classList.add('claim-error'); setTimeout(function(){ card.classList.remove('claim-error'); }, 900); } jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again \u{1F495}'); t.completed=false; updateJJ(); })
+    .withSuccessHandler(function(){ _actionInFlight = false; setSyncState('synced', 'Done!'); if (card) { card.classList.add('claim-success'); setTimeout(function(){ card.classList.remove('claim-success'); }, 600); } })
+    .withFailureHandler(function(err){ _actionInFlight = false; setSyncState('failed'); if (card) { card.classList.add('claim-error'); setTimeout(function(){ card.classList.remove('claim-error'); }, 900); } jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again \u{1F495}'); t.completed=false; updateJJ(); })
     .khCompleteTaskSafe(t.rowIndex, t.taskID);
 }
 // ── v10 FIX 3: jjApprove — added return value check for duplicate guard ──
 function jjApprove(taskID, e) {
-  e.stopPropagation(); if (_fetching) return;
+  e.stopPropagation(); if (_actionInFlight) return;
   var t = _findByKey(tasks, 'taskID', taskID);
   if(!t||t.parentApproved)return;
-  _fetching = true;
+  _actionInFlight = true;
   var pts = t.points;
   t.parentApproved=true; updateJJ();
   google.script.run
-    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){t.parentApproved=false; updateJJ(); return;} jjStarPop(e,'Parent said yes! ✨'); jjConfetti(22); jjPointsBanner('+'+pts+' ⭐'); charReact('glow'); })
-    .withFailureHandler(function(err){ _fetching = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.parentApproved=false; updateJJ(); })
+    .withSuccessHandler(function(r){ _actionInFlight = false; if(r && r.status==='duplicate'){t.parentApproved=false; updateJJ(); return;} jjStarPop(e,'Parent said yes! ✨'); jjConfetti(22); jjPointsBanner('+'+pts+' ⭐'); charReact('glow'); })
+    .withFailureHandler(function(err){ _actionInFlight = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.parentApproved=false; updateJJ(); })
     .khApproveTaskSafe(t.rowIndex, t.taskID);
 }
 function jjPointsBanner(text) {
@@ -2289,32 +2290,32 @@ function jjPointsBanner(text) {
 }
 // ── v10 FIX 2: jjGrantBonus — changed khCompleteTaskWithBonusSafe → khApproveWithBonusSafe ──
 function jjGrantBonus(taskID, multiplier, e) {
-  e.stopPropagation(); if (_fetching) return;
+  e.stopPropagation(); if (_actionInFlight) return;
   var t = _findByKey(tasks, 'taskID', taskID);
   if(!t||!t.completed||t.parentApproved)return;
-  _fetching = true;
+  _actionInFlight = true;
   var snap = {parentApproved:t.parentApproved, multiplier:t.multiplier, points:t.points};
   t.parentApproved=true; t.multiplier=multiplier; t.points=Math.round(t.basePoints*multiplier);
   updateJJ();
   google.script.run
-    .withSuccessHandler(function(r){ _fetching = false; if(r && r.status==='duplicate'){jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Already done! ✨'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateJJ(); return;} jjStarPop(e,'Bonus stars! ✨'); jjConfetti(22); jjPointsBanner('+'+t.points+' ⭐'); })
-    .withFailureHandler(function(err){ _fetching = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateJJ(); })
+    .withSuccessHandler(function(r){ _actionInFlight = false; if(r && r.status==='duplicate'){jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Already done! ✨'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateJJ(); return;} jjStarPop(e,'Bonus stars! ✨'); jjConfetti(22); jjPointsBanner('+'+t.points+' ⭐'); })
+    .withFailureHandler(function(err){ _actionInFlight = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.parentApproved=snap.parentApproved; t.multiplier=snap.multiplier; t.points=snap.points; updateJJ(); })
     .khApproveWithBonusSafe(t.rowIndex, multiplier, t.taskID);
 }
 function jjOverride(taskID, e) {
-  e.stopPropagation(); if (_fetching) return;
+  e.stopPropagation(); if (_actionInFlight) return;
   var t = _findByKey(tasks, 'taskID', taskID);
   if(!t||t.completed||!t.required)return;
-  _fetching = true;
+  _actionInFlight = true;
   t.completed = true; t.parentApproved = true;
   updateJJ();
   jjStarPop(e,'Cleared ✨');
   google.script.run
-    .withSuccessHandler(function(){ _fetching = false; loadKidData(); })
-    .withFailureHandler(function(err){ _fetching = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.completed = false; t.parentApproved = false; updateJJ(); })
+    .withSuccessHandler(function(){ _actionInFlight = false; loadKidData(); })
+    .withFailureHandler(function(err){ _actionInFlight = false; jjStarPop({clientX:window.innerWidth/2,clientY:window.innerHeight/2}, 'Oops! Try again 💕'); t.completed = false; t.parentApproved = false; updateJJ(); })
     .khOverrideTaskSafe(t.rowIndex, t.taskID);
 }
-function jjReset(mode, child) { if(!confirm('Reset '+mode+' for JJ?'))return; google.script.run.withSuccessHandler(function(){loadKidData();}).withFailureHandler(function(){}).khResetTasksSafe(mode, child); }
+function jjReset(mode, child) { if(!confirm('Reset '+mode+' for JJ?'))return; google.script.run.withSuccessHandler(function(){loadKidData();}).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).khResetTasksSafe(mode, child); }
 function jjConfetti(n) {
   var emojis=['💖','✨','🌸','⭐','💫','🎀','💕'];
   for(var i=0;i<n;i++){var p=document.createElement('div');p.className='jj-confetti';p.textContent=emojis[Math.floor(Math.random()*emojis.length)];
@@ -2376,7 +2377,7 @@ function jjSendStarsToPending(e, count) {
 }
 function jjRedeem(rewardId, e) {
   if (e) e.stopPropagation();
-  if (_fetching) return;
+  if (_actionInFlight) return;
   var r = _findByKey(rewards, 'id', rewardId);
   if (!r || balances.balance < r.cost) return;
   var maxQty = Math.min(10, Math.floor(balances.balance / r.cost));
@@ -2384,7 +2385,7 @@ function jjRedeem(rewardId, e) {
   showQtyPicker('jj');
 }
 function jjRefresh() {
-  _fetching = false; // v23: Force-clear in case stuck from prior action
+  if (_actionInFlight) return; _dataLoading = false;
   var star = document.getElementById('jjRefreshStar');
   if (star) { star.classList.add('spinning'); setTimeout(function(){ star.classList.remove('spinning'); }, 950); }
   var starEl = document.getElementById('jjRefreshStar');
@@ -2411,7 +2412,7 @@ function jjRefresh() {
   jjConfetti(20);
   loadKidData();
 }
-function jjTab(tab){currentTab=tab;['quests','rewards','events','parent'].forEach(function(t){var btn=document.getElementById('jjtab-'+t);var view=document.getElementById('jjView-'+t);if(btn)btn.classList.toggle('active',t===tab);if(view)view.style.display=t===tab?'block':'none';});}
+function jjTab(tab){currentTab=tab;['quests','rewards','ask','parent'].forEach(function(t){var btn=document.getElementById('jjtab-'+t);var view=document.getElementById('jjView-'+t);if(btn)btn.classList.toggle('active',t===tab);if(view)view.style.display=t===tab?'block':'none';});}
 function jjToggleParent() {
   if(parentMode){parentMode=false;document.getElementById('jjParentBtn').classList.remove('active');document.getElementById('jjtab-parent').style.display='none';jjTab('quests');updateJJ();
   }else{document.getElementById('jjPinOverlay').style.display='flex';setTimeout(function(){document.getElementById('jjPinInput').focus();},80);}
@@ -2434,7 +2435,7 @@ function jjCancelPin(){document.getElementById('jjPinOverlay').style.display='no
 var _askType = { buggsy: 'Money', jj: 'Money' };
 
 function escHtml(s) {
-  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function pickAskType(prefix, type, el) {
@@ -2493,7 +2494,7 @@ function submitAsk(child) {
 
 function askFromReward(child, rewardName, rewardCost) {
   var prefix = child === 'buggsy' ? 'b' : child;
-  if (child === 'buggsy') bTab('events'); else jjTab('events');
+  if (child === 'buggsy') bTab('ask'); else jjTab('ask');
   _askType[child] = 'Purchase';
   var row = document.getElementById(prefix + 'AskTypes');
   if (row) {
@@ -2549,7 +2550,7 @@ function renderAskRewards(child, containerId) {
   }
   var h = '';
   childRewards.forEach(function(r) {
-    h += '<div class="ask-reward-row" onclick="askFromReward(\'' + child + '\',\'' + escHtml(r.name).replace(/'/g,'\\\'') + '\',' + r.cost + ')">';
+    h += '<div class="ask-reward-row" onclick="askFromReward(\'' + child + '\',\'' + escHtml(r.name) + '\',' + r.cost + ')">';
     h += '<div class="ask-reward-icon">' + r.icon + '</div>';
     h += '<div class="ask-reward-info"><div class="ask-reward-name">' + escHtml(r.name) + '</div>';
     h += '<div class="ask-reward-cost">' + r.cost + ' ' + (child === 'jj' ? '⭐' : GOLD_RING) + '</div></div>';
@@ -2649,10 +2650,6 @@ function setupPinEvents() {
 // ══════════════════════════════════════════
 //  PARENT DASHBOARD
 // ══════════════════════════════════════════
-function renderParent() {
-  document.getElementById('app').innerHTML = buildParentUI();
-  loadParentData();
-}
 function buildParentUI() {
   return '<div class="p-nav" id="pNav"><a onclick="pNavGo(\'pulse\')">The Pulse</a><a class="pnav-active">Kids Dashboard</a></div>'+
   '<div class="p-hdr"><div class="p-hdr-top"><div class="p-hdr-title"><span style="display:inline-flex;gap:4px;vertical-align:middle;margin-right:6px;"><img class="kid-avatar" src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" alt="Buggsy" style="width:20px;height:20px;border-radius:50%;object-fit:cover;border:1px solid #f5d58a"><img class="kid-avatar" src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" alt="JJ" style="width:20px;height:20px;border-radius:50%;object-fit:cover;border:1px solid #f5b8cc"></span>KIDS HUB <span>/ PARENT</span></div><div class="p-links" id="pLinks"><span style="font-size:11px;color:#64748b;font-weight:700;align-self:center">OPEN:</span></div></div></div>'+
@@ -2700,111 +2697,6 @@ function buildParentUI() {
   '<div class="p-sheet-row"><div class="p-sheet-dot"></div>Change <b>Child</b> column to move tasks between Buggsy and JJ.</div>'+
   '</div></div></div></div>';
 }
-var parentAllData = { buggsy:[], jj:[], bBal:{}, jBal:{} };
-function loadParentData() {
-  google.script.run
-    .withSuccessHandler(function(raw){
-      try {
-        var data = safeParse(raw);
-        if (data && data.error) { var t=document.getElementById('p-toast');if(t){t.textContent=data.error;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);} return; }
-        var allTasks = (data.tasks || []).map(mapTask);
-        parentAllData.buggsy = allTasks.filter(function(t){return t.child==='buggsy';});
-        parentAllData.jj     = allTasks.filter(function(t){return t.child==='jj';});
-        var bDone = parentAllData.buggsy.filter(function(t){return t.completed;});
-        var jDone = parentAllData.jj.filter(function(t){return t.completed;});
-        parentAllData.bBal = data.balances || {};
-        parentAllData.jBal = data.balances || {};
-        buildParentContent(parentAllData.buggsy, parentAllData.jj, bDone, jDone);
-      } catch(e) { alert('Error loading parent data: ' + e.message); }
-    })
-    .withFailureHandler(function(e){ alert('Error: ' + e.message); })
-    .getKidsHubDataSafe('all');
-  google.script.run
-    .withSuccessHandler(function(raw){
-      try {
-        var urls = safeParse(raw);
-        var links = document.getElementById('pLinks');
-        if (links) {
-          links.innerHTML = '<span style="font-size:11px;color:#64748b;font-weight:700;align-self:center">OPEN:</span>'+
-            '<a class="p-link-btn buggsy" href="'+urls.buggsy+'" target="_blank">⭕ Buggsy</a>'+
-            '<a class="p-link-btn jj" href="'+urls.jj+'" target="_blank">⭐ JJ</a>';
-        }
-      } catch(e){}
-    })
-    .withFailureHandler(function(){})
-    .getKHAppUrlsSafe();
-}
-function buildParentContent(buggsyTasks, jjTasks, bDone, jDone) {
-  document.getElementById('pSpinner').style.display = 'none';
-  document.getElementById('pContent').style.display = 'block';
-  var bRings = bDone.reduce(function(s,t){return s+t.points;},0);
-  var jStars = jDone.reduce(function(s,t){return s+t.points;},0);
-  var bPend  = buggsyTasks.filter(function(t){return t.completed && !t.parentApproved;});
-  var jPend  = jjTasks.filter(function(t){return t.completed && !t.parentApproved;});
-  var totalPend = bPend.length + jPend.length;
-  document.getElementById('pSummary').innerHTML =
-    '<div class="p-sum-card"><div class="p-sum-icon">' + GOLD_RING + '</div><div class="p-sum-val" style="color:#f59e0b">'+bRings+'</div><div class="p-sum-lbl">Buggsy Rings</div></div>'+
-    '<div class="p-sum-card"><div class="p-sum-icon">⭐</div><div class="p-sum-val" style="color:#ec4899">'+jStars+'</div><div class="p-sum-lbl">JJ Stars</div></div>'+
-    '<div class="p-sum-card"><div class="p-sum-icon">⏳</div><div class="p-sum-val" style="color:'+(totalPend>0?'#f59e0b':'#22c55e')+'">'+totalPend+'</div><div class="p-sum-lbl">Need Approval</div></div>'+
-    '<div class="p-sum-card"><div class="p-sum-icon">✅</div><div class="p-sum-val" style="color:#22c55e">'+(bDone.length+jDone.length)+'</div><div class="p-sum-lbl">Total Done Today</div></div>';
-  document.getElementById('pKids').innerHTML =
-    buildKidColumn('Buggsy', buggsyTasks, bRings, 'buggsy', GOLD_RING, '#f59e0b') +
-    buildKidColumn('JJ', jjTasks, jStars, 'jj', '⭐', '#ec4899');
-}
-function buildKidColumn(name, kidTasks, score, cls, icon, color) {
-  var pending = kidTasks.filter(function(t){return t.completed && !t.parentApproved;});
-  var done    = kidTasks.filter(function(t){return t.completed && t.parentApproved;});
-  var total   = kidTasks.length;
-  var doneCount = kidTasks.filter(function(t){return t.completed;}).length;
-  var pendHTML = '';
-  if (pending.length === 0) {
-    pendHTML = '<div class="p-empty-state">All clear! \u2713<br>No approvals needed.</div>';
-  } else {
-    pendHTML += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:0 4px">' +
-      '<label style="font-size:12px;color:#94a3b8;cursor:pointer;display:flex;align-items:center;gap:4px">' +
-      '<input type="checkbox" class="batch-select-all" data-child="' + cls + '" onchange="pToggleSelectAll(this,\'' + cls + '\')" style="width:16px;height:16px;cursor:pointer"> Select All</label>' +
-      '<button id="batchBtn_' + cls + '" disabled onclick="pBatchApprove(\'' + cls + '\')" style="margin-left:auto;padding:6px 14px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;opacity:0.5">Approve Selected</button></div>';
-    pending.forEach(function(t){
-      pendHTML += '<div class="p-task-item">'+
-        '<input type="checkbox" class="task-select task-select-' + cls + '" data-row="' + t.rowIndex + '" onchange="pUpdateBatchBtn(\'' + cls + '\')" style="width:16px;height:16px;cursor:pointer;margin-right:4px">'+
-        '<div class="p-task-icon">'+t.icon+'</div>'+
-        '<div class="p-task-info"><div class="p-task-name">'+t.task+'</div><div class="p-task-meta">'+t.points+' pts \u2022 '+t.frequency+'</div></div>'+
-        '<div class="p-task-btns">'+
-        '<button class="p-appr-btn yes" onclick="pApprove(\''+t.taskID+'\',\''+cls+'\')" >\u2713</button>'+
-        '<button class="p-appr-btn no" onclick="pUncomplete(\''+t.taskID+'\',\''+cls+'\')" >\u2715</button>'+
-        '</div></div>';
-    });
-  }
-  var doneHTML = '';
-  done.slice(0,5).forEach(function(t){
-    doneHTML += '<div class="p-done-item"><div class="p-done-icon">'+t.icon+'</div><div class="p-done-name">'+t.task+'</div><div class="p-done-pts">+'+t.points+'</div><div class="p-done-ck">✓</div></div>';
-  });
-  if (done.length === 0) doneHTML = '<div class="p-empty-state">Nothing approved yet today.</div>';
-  return '<div class="p-kid-col">'+
-    '<div class="p-kid-hdr '+cls+'">'+
-    '<div><div class="p-kid-name">'+icon+' '+name.toUpperCase()+'</div>'+
-    '<div style="font-size:11px;color:rgba(255,255,255,0.4);font-weight:700;margin-top:2px">'+doneCount+' / '+total+' done today</div></div>'+
-    '<div><div class="p-kid-score '+cls+'">'+score+'</div><div class="p-kid-score-lbl">'+(cls==='jj'?'stars':'rings')+'</div></div>'+
-    '</div>'+
-    '<div class="p-kid-body">'+
-    '<div class="p-kid-section-title">⏳ Needs Approval ('+pending.length+')</div>'+
-    pendHTML+
-    (done.length > 0 ? '<div class="p-kid-section-title" style="margin-top:14px">✅ Approved Today</div>'+doneHTML : '')+
-    '</div></div>';
-}
-function pApprove(taskID, child) {
-  var allTasks = child === 'jj' ? parentAllData.jj : parentAllData.buggsy;
-  var t = _findByKey(allTasks, 'taskID', taskID);
-  if (!t) return;
-  google.script.run.withSuccessHandler(function(){ loadParentData(); }).withFailureHandler(function(){}).khApproveTaskSafe(t.rowIndex, t.taskID);
-}
-function pUncomplete(taskID, child) {
-  if (!confirm('Mark this task as not done?')) return;
-  var allTasks = child === 'jj' ? parentAllData.jj : parentAllData.buggsy;
-  var t = _findByKey(allTasks, 'taskID', taskID);
-  if (!t) return;
-  google.script.run.withSuccessHandler(function(){ loadParentData(); }).withFailureHandler(function(){}).khUncompleteTaskSafe(t.rowIndex, t.taskID);
-}
 function pToggleSection(id) {
   var el = document.getElementById(id);
   if (!el) return;
@@ -2834,7 +2726,7 @@ function pUpdateBatchBtn(child) {
 function pBatchApprove(child) {
   var boxes = document.querySelectorAll('.task-select-' + child + ':checked');
   var rowIds = [];
-  for (var i = 0; i < boxes.length; i++) { rowIds.push(boxes[i].getAttribute('data-row')); }
+  for (var i = 0; i < boxes.length; i++) { rowIds.push(parseInt(boxes[i].getAttribute('data-row'), 10)); }
   if (rowIds.length === 0) return;
   var btn = document.getElementById('batchBtn_' + child);
   if (btn) { btn.disabled = true; btn.textContent = 'Approving...'; }
@@ -2851,10 +2743,6 @@ function pBatchApprove(child) {
       if (btn) { btn.textContent = 'Error \u2014 try again'; btn.disabled = false; btn.style.opacity = '1'; }
     })
     .khBatchApproveSafe({ rowIndices: rowIds, approver: 'JT' });
-}
-function pReset(mode, child) {
-  if (!confirm('Reset ' + mode + ' tasks for ' + child + '?')) return;
-  google.script.run.withSuccessHandler(function(){ loadParentData(); }).withFailureHandler(function(){}).khResetTasksSafe(mode, child);
 }
 </script>
 <!-- Family crest watermark (parent only) -->
@@ -2889,7 +2777,6 @@ function pReset(mode, child) {
   if (typeof INIT_VIEW === 'undefined' || INIT_VIEW !== 'parent') return;
   var currentTab = 'pending', currentWeeklyKid = 'all', parentData = null;
   window._storyInProgress = false;
-  var origRP = window.renderParent;
   window.renderParent = function() {
     if (window._storyInProgress) return;
     parentData = null;
@@ -3543,6 +3430,7 @@ function pReset(mode, child) {
     var tone = document.getElementById('sfTone').value;
     if (!topic) { toast('Enter a story topic!'); return; }
     window._storyInProgress = true;
+    window._storyTimeout = setTimeout(function() { window._storyInProgress = false; }, 360000);
     // Show loading, hide form
     document.getElementById('sfForm').style.display = 'none';
     document.getElementById('sfLoading').style.display = 'block';
@@ -3558,6 +3446,7 @@ function pReset(mode, child) {
     toast('📖 Creating story...');
     google.script.run
       .withSuccessHandler(function(result) {
+        clearTimeout(window._storyTimeout);
         window._storyInProgress = false;
         clearInterval(_sfMsgTimer);
         document.getElementById('sfLoading').style.display = 'none';
@@ -3578,6 +3467,7 @@ function pReset(mode, child) {
         }
       })
       .withFailureHandler(function(err) {
+        clearTimeout(window._storyTimeout);
         window._storyInProgress = false;
         clearInterval(_sfMsgTimer);
         document.getElementById('sfLoading').style.display = 'none';

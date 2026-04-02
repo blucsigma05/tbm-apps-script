@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="tbm-version" content="v61">
-<title>The Vein v61 — Household Command Center</title>
-<!-- TheVein v61 — Version history tracked in Notion deploy page. No changelogs in this file. -->
+<meta name="tbm-version" content="v62">
+<title>The Vein v62 — Household Command Center</title>
+<!-- TheVein v62 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -587,8 +587,8 @@ h1{font-size:22px;} .cval{font-size:22px;}
 // v59: ES5-safe URL param reader (replaces URLSearchParams)
 function getParam_(name){var r=new RegExp('[?&]'+name+'=([^&#]*)');var m=r.exec(window.location.search);return m?decodeURIComponent(m[1]):null;}
 var _tbmBaseUrl=''; var _isPartnerMode=getParam_('jt')==='1';
-try{google.script.run.withSuccessHandler(function(url){_tbmBaseUrl=url;}).withFailureHandler(function(){}).getScriptUrlSafe();}catch(e){}
-function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.location.href=_tbmBaseUrl+'?page='+p+s;}else{try{google.script.run.withSuccessHandler(function(url){window.top.location.href=url+'?page='+p+s;}).withFailureHandler(function(){}).getScriptUrlSafe();}catch(e){}}}
+try{google.script.run.withSuccessHandler(function(url){_tbmBaseUrl=url;}).withFailureHandler(function(e){console.warn('getScriptUrl failed:',e);}).getScriptUrlSafe();}catch(e){}
+function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.location.href=_tbmBaseUrl+'?page='+p+s;}else{try{google.script.run.withSuccessHandler(function(url){window.top.location.href=url+'?page='+p+s;}).withFailureHandler(function(e){console.warn('tbmNav getScriptUrl failed:',e);}).getScriptUrlSafe();}catch(e){}}}
 (function(){var c=getParam_('page')||'vein';var e=document.getElementById('nav-'+c);if(e){e.classList.add('on');}if(_isPartnerMode){var v=document.getElementById('nav-vein');if(v){v.textContent='Kids Dashboard';v.setAttribute('onclick',"tbmNav('kidshub&view=parent')");v.style.color='rgba(255,255,255,0.6)';v.style.display='';}}})();
 </script>
 
@@ -845,25 +845,7 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
 </div>
 </div>
 
-<!-- ═══ MER Gates — DISABLED v30 (moved to top) ═══ -->
-<div class="gates-section" style="display:none;">
-<div class="gates-bar">
-<div class="gates-toggle" onclick="toggleGates()">
-<div class="gates-toggle-left">
-<div class="gates-ey">MER Status Gates</div>
-<div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--text-muted);letter-spacing:.1em;margin-top:2px;">✅ ON TRACK · ⚠️ REVIEW NEEDED · 🔴 ACTION REQUIRED</div>
-<div class="gates-summary" id="gatePips"></div>
-</div>
-<div style="display:flex;align-items:center;gap:12px;">
-<div class="gates-score" id="gateScore">—</div>
-<div class="gates-arrow" id="gatesArrow">▼</div>
-</div>
-</div>
-<div class="gates-body" id="gatesBody">
-<div class="gate-grid" id="gateGrid"></div>
-</div>
-</div>
-</div>
+<!-- v62: Dead MER Gates DOM removed (was display:none since v30) -->
 
 <!-- ═══ Income + Promo Cliff ═══ -->
 <div class="sec a4">Risk</div>
@@ -922,79 +904,7 @@ id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition
 </div>
 </div>
 
-<!-- v29 #17: Budget vs Actual section removed — accordion in Monthly Pulse replaces it -->
-<!-- v29 #17: old waterfall + burn card removed (burn card relocated to Income & Risk) -->
-<div style="display:none;">
-<div class="card" style="padding:22px 24px;">
-<div class="clbl">Where the money went</div>
-<div style="height:8px;"></div>
-<div class="wf-row">
-<div class="wf-label"><span class="wf-name">Fixed Expenses</span><span class="wf-vals" id="fixedBudg">—</span></div>
-<div class="wf-track"><div class="wf-bar" id="fixedFill" style="background:linear-gradient(90deg,var(--royal),var(--blue));"></div></div>
-<div class="wf-delta ok" id="fixedDelta">—</div>
-</div>
-<div class="wf-row">
-<div class="wf-label"><span class="wf-name">Necessary Living</span><span class="wf-vals" id="necBudg">—</span></div>
-<div class="wf-track"><div class="wf-bar" id="necFill" style="background:linear-gradient(90deg,var(--blue-mid),var(--blue-light));"></div></div>
-<div class="wf-delta warn" id="necDelta">—</div>
-</div>
-<div class="wf-row">
-<div class="wf-label"><span class="wf-name">Discretionary</span><span class="wf-vals" id="discBudg">—</span></div>
-<div class="wf-track"><div class="wf-bar" id="discFill" style="background:var(--negative);opacity:.7;"></div></div>
-<div class="wf-delta over" id="discDelta">—</div>
-<div class="disc-detail">
-<div class="dd-item"><span class="dd-name">General Shopping</span><span class="dd-over" id="ddShopping">—</span></div>
-<div class="dd-item"><span class="dd-name">Fast Food</span><span class="dd-over" id="ddFood">—</span></div>
-<div class="dd-item"><span class="dd-name">Kids Activities</span><span class="dd-over" id="ddKids">—</span></div>
-<div class="dd-item"><span class="dd-name">Personal Care</span><span class="dd-over" id="ddCare">—</span></div>
-<div class="dd-item"><span class="dd-name">Subscriptions</span><span class="dd-over" id="ddSubs">—</span></div>
-<div class="dd-item"><span class="dd-name">Travel</span><span class="dd-over" id="ddTravel">—</span></div>
-<div class="dd-item"><span class="dd-name">ATM / Cash</span><span class="dd-over" id="ddCash">—</span></div>
-<div class="dd-item"><span class="dd-name">Miscellaneous</span><span class="dd-over" id="ddMisc">—</span></div>
-<div class="dd-item"><span class="dd-name">Vices</span><span class="dd-over" id="ddVices">—</span></div>
-<div class="dd-item" id="ddOtherRow" style="display:none"><span class="dd-name" style="color:var(--text-muted)">Other disc.</span><span class="dd-over" id="ddOther" style="color:var(--text-muted)">—</span></div>
-</div>
-</div>
-<div class="wf-row" style="margin-bottom:0;">
-<div class="wf-label"><span class="wf-name">Debt Cost</span><span class="wf-vals" id="dcBudg">—</span></div>
-<div class="wf-track"><div class="wf-bar" id="dcFill" style="background:linear-gradient(90deg,var(--gold),var(--gold-light));"></div></div>
-<div class="wf-delta warn" id="dcDelta">—</div>
-</div>
-<div class="wf-row" id="otherRow" style="margin-bottom:0;display:none;">
-<div class="wf-label"><span class="wf-name" style="color:var(--text-muted)">Unmapped</span><span class="wf-vals" id="otherBudg" style="color:var(--text-muted)">—</span></div>
-<div class="wf-track"><div class="wf-bar" id="otherFill" style="background:var(--text-muted);opacity:.4;"></div></div>
-<div class="wf-delta warn" id="otherDelta" style="color:var(--text-muted)">—</div>
-</div>
-</div>
-<div class="card burn-card" style="padding:22px 24px;">
-<div class="clbl">Monthly Interest Burn</div>
-<div style="height:8px;"></div>
-<div class="burn-ring-wrap">
-<div class="burn-ring-outer">
-<svg width="110" height="110" viewBox="0 0 110 110">
-<circle cx="55" cy="55" r="45" fill="none" stroke="#E3EBFB" stroke-width="10"/>
-<circle cx="55" cy="55" r="45" fill="none" stroke-width="10" stroke-linecap="round"
-stroke="var(--negative)" stroke-dasharray="283" stroke-dashoffset="283"
-id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1.4s cubic-bezier(0.4,0,0.2,1);"/>
-</svg>
-<div class="burn-ring-center">
-<div class="burn-ring-val" id="burnMonthly">—</div>
-<div class="burn-ring-lbl">Per Month</div>
-</div>
-</div>
-<div class="burn-stats">
-<div class="burn-stat-row"><span class="burn-k">Daily Burn</span><span class="burn-v hot" id="burnDaily">—</span></div>
-<div class="burn-stat-row"><span class="burn-k">Annual Projected</span><span class="burn-v hot" id="burnAnnual">—</span></div>
-<div class="burn-stat-row"><span class="burn-k">% of Income</span><span class="burn-v warm" id="burnPctIncome">—</span></div>
-<div class="burn-stat-row"><span class="burn-k">Int vs Mins</span><span class="burn-v dim" id="burnVsMins">—</span></div>
-<!-- v24 Wave 5: DSCR row -->
-<div class="burn-stat-row"><span class="burn-k">DSCR</span><span class="burn-v" id="burnDSCR" style="color:var(--text-dim)">—</span></div>
-<div class="burn-stat-row" style="border-top:1px dashed var(--border);padding-top:6px;"><span class="burn-k">After 18%+ Gone</span><span class="burn-v" style="color:var(--positive);" id="burnAfterPayoff">—</span></div>
-</div>
-</div>
-<div style="margin-top:16px;" id="burnTiers"></div>
-</div>
-</div>
+<!-- v62: Dead waterfall + burn card DOM removed (was display:none since v29) -->
 
 <!-- ═══ Debt Waterfall ═══ -->
 <div class="sec">Debt Waterfall — Priority Order</div>
@@ -1052,7 +962,7 @@ id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition
 <div class="footer">
 <span id="footerSrc">Source: Tiller BudgetMaster</span>
 <span id="veinReconcileBadge" style="font-size:10px;font-weight:600;letter-spacing:.05em;opacity:0.85;"></span>
-<span id="veinVersionTag">The Vein v61</span>
+<span id="veinVersionTag">The Vein v62</span>
 </div>
 
 </div>
@@ -1076,8 +986,9 @@ REFRESH_MINS: 0,
 };
 
 var IS_EMBEDDED=(function(){try{var g=google;return!!g.script.run;}catch(e){return false;}})();
-// v61: Confidence Rail + Graceful Degradation
-var TBM_VERSION = 'v61';
+function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
+// v62: Confidence Rail + Graceful Degradation
+var TBM_VERSION = 'v62';
 var _veinLastFetch = null;
 var _veinLastGoodEngine = null;
 function markVeinFresh() {
@@ -1294,42 +1205,7 @@ $('incReading').innerHTML =
   ' \u00b7 ' + fmt(d.incomeBudget) + ' budget';
 $('incReading').style.color = 'inherit';
 
-// v29 #17 Phase 3: old mini-bar IIFE dead-code wrapped
-if(0){ (function(){
-var rows = [
-{ label:'Fixed Bills',     act: d.fixed_actual||0, budg: d.fixed_budget||0, color:'#6B7280' },
-{ label:'Living',          act: d.nec_actual||0,   budg: d.nec_budget||0,   color:'var(--blue,#3B82F6)' },
-{ label:'Discretionary',   act: d.disc_actual||0,  budg: d.disc_budget||0,  color:'var(--gold,#C9A84C)' },
-{ label:'Interest & Fees', act: d.dc_actual||0,    budg: d.dc_budget||0,    color:'#DC2626' }
-];
-var html = '';
-rows.forEach(function(r){
-var over = r.act > r.budg;
-var pctUsed = r.budg > 0 ? (r.act / r.budg) * 100 : 0;
-var deltaAmt = Math.abs(r.act - r.budg);
-var deltaStr = r.budg === 0 ? '' : (over ? '+'+fmt(deltaAmt) : '−'+fmt(deltaAmt));
-var deltaColor = over ? '#DC2626' : 'var(--positive,#059669)';
-var baseW = over ? 75 : Math.min(pctUsed * 0.75, 75);
-var overflowW = over ? Math.min((pctUsed - 100) / 200 * 25, 25) : 0;
-html += '<div style="margin-bottom:9px;">';
-html += '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;">';
-html += '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;color:var(--text-dim);">'+r.label+'</span>';
-html += '<span style="font-family:\'JetBrains Mono\',monospace;font-size:9px;font-weight:600;">'+fmt(r.act)+'<span style="color:var(--text-muted);font-weight:400;"> / '+fmt(r.budg)+'</span></span>';
-html += '</div>';
-html += '<div style="position:relative;height:5px;background:var(--surface-3);border-radius:3px;overflow:hidden;display:flex;">';
-html += '<div style="height:100%;width:'+baseW+'%;background:'+r.color+';border-radius:3px 0 0 3px;transition:width 1s ease;flex-shrink:0;"></div>';
-if (over && overflowW > 0) {
-html += '<div style="height:100%;width:'+overflowW+'%;background:#DC2626;transition:width 1s ease;flex-shrink:0;"></div>';
-}
-html += '</div>';
-html += '<div style="position:relative;height:0;">';
-html += '<div style="position:absolute;top:-5px;left:75%;width:1px;height:5px;background:var(--text-muted);opacity:.4;"></div>';
-html += '</div>';
-if (deltaStr) html += '<div style="font-family:\'JetBrains Mono\',monospace;font-size:8px;color:'+deltaColor+';text-align:right;margin-top:1px;">'+deltaStr+'</div>';
-html += '</div>';
-});
-/* v29 #17: old bars disabled — accordion IIFE above */
-})(); }// end Phase 3 if(0)
+// v62: Dead mini-bar IIFE removed (was if(0) since v29)
 
 // 2. Expense vs Budget — clickable accordion with subcategory drill-down
 (function(){
@@ -1543,8 +1419,8 @@ var _now36=new Date();var _isCur36=(d.year===_now36.getFullYear()&&d.monthNum===
 var _dpAvail=_isCur36||(d.debtPaymentsMTD!=null&&d.debtPaymentsMTD>0);
 // 3. Net Cash Flow face-off bar
 var opex = d.operatingExpenses || 0;
-// v36 FIX: True net cash — only subtract debt pmts if data available
-var netFlow = _dpAvail ? ((d.earnedIncome||0) - opex - (d.debtPaymentsMTD||0)) : ((d.earnedIncome||0) - opex);
+// v62: Prefer server-canonical netCashFlow when available; fall back to client derivation
+var netFlow = (d.netCashFlow != null && d.netCashFlow !== 0) ? Math.round(d.netCashFlow) : (_dpAvail ? ((d.earnedIncome||0) - opex - (d.debtPaymentsMTD||0)) : ((d.earnedIncome||0) - opex));
 var netColor = netFlow >= 0 ? 'var(--positive,#059669)' : '#DC2626';
 var _totalOut = opex + (d.debtPaymentsMTD||0);
 var faceTotal = d.earnedIncome + _totalOut;
@@ -1714,29 +1590,7 @@ $('totBar').style.width=(d.earnedIncome/totMax*100)+'%';
 // v20: Promo cliff now live — rendered by renderPromoCliff(debts)
 renderPromoCliff(debts);
 
-// v29 #17 Phase 3: waterfall fills dead-code wrapped (hidden DOM)
-if(0){ setBucket('fixedAct','fixedBudg','fixedFill','fixedDelta',d.fixed_actual,d.fixed_budget,'ok');
-setBucket('necAct','necBudg','necFill','necDelta',d.nec_actual,d.nec_budget,'warn');
-setBucket('discAct','discBudg','discFill','discDelta',d.disc_actual,d.disc_budget,'over');
-setBucket('dcAct','dcBudg','dcFill','dcDelta',d.dc_actual||d.debtcost_actual||0,d.dc_budget||d.debtcost_budget||0,'warn');
-// v22: Show unmapped spending gap
-var _mappedTotal=(d.fixed_actual||0)+(d.nec_actual||0)+(d.disc_actual||0)+(d.dc_actual||d.debtcost_actual||0);
-var _otherAmt=Math.round((d.operatingExpenses||0)-_mappedTotal);
-if(_otherAmt>5){var oRow=$('otherRow');if(oRow){oRow.style.display='';$('otherBudg').textContent=fmt(_otherAmt);$('otherFill').style.width=Math.min(100,_otherAmt/Math.max(d.operatingExpenses,1)*100)+'%';$('otherDelta').textContent='unmapped';}}
-$('ddShopping').textContent=fmt(d.disc_shopping_a||0)+' vs '+fmt(d.disc_shopping_b||0);
-$('ddFood').textContent=fmt(d.disc_food_a||0)+' vs '+fmt(d.disc_food_b||0);
-$('ddKids').textContent=fmt(d.disc_kids_a||0)+' vs '+fmt(d.disc_kids_b||0);
-$('ddCare').textContent=fmt(d.disc_care_a||0)+' vs '+fmt(d.disc_care_b||0);
-$('ddSubs').textContent=fmt(d.disc_subs_a||0)+' vs '+fmt(d.disc_subs_b||0);
-$('ddTravel').textContent=fmt(d.disc_travel_a||0)+' vs '+fmt(d.disc_travel_b||0);
-$('ddCash').textContent=fmt(d.disc_cash_a||0)+' vs '+fmt(d.disc_cash_b||0);
-$('ddMisc').textContent=fmt(d.disc_misc_a||0)+' vs '+fmt(d.disc_misc_b||0);
-$('ddVices').textContent=fmt(d.disc_vices_a||0)+' vs '+fmt(d.disc_vices_b||0);
-var _discMapped=(d.disc_shopping_a||0)+(d.disc_food_a||0)+(d.disc_kids_a||0)+(d.disc_care_a||0)+(d.disc_subs_a||0)+(d.disc_travel_a||0)+(d.disc_cash_a||0)+(d.disc_misc_a||0)+(d.disc_vices_a||0);
-var _discGap=Math.round((d.disc_actual||0)-_discMapped);
-if(_discGap>5){var dor=$('ddOtherRow');if(dor){dor.style.display='';$('ddOther').textContent=fmt(_discGap);}}
-
-}// end Phase 3 if(0) waterfall
+// v62: Dead waterfall fills JS removed (was if(0) since v29)
 buildDebt(debts);
 buildBurn(debts, d);
 buildGates(d, debts);
@@ -1817,7 +1671,7 @@ function handleVerify(d, debts) {
   var overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.85);overflow:auto;padding:40px;';
   overlay.innerHTML='<div style="max-width:800px;margin:0 auto;background:var(--surface);border-radius:16px;padding:28px;box-shadow:0 8px 40px rgba(0,0,0,.5);">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h2 style="font-family:Playfair Display,serif;font-size:24px;color:var(--navy);">🔍 TheVein v56 — Verify</h2><button onclick="this.closest(div[style]).remove()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;font-size:12px;">Close</button></div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><h2 style="font-family:Playfair Display,serif;font-size:24px;color:var(--navy);">🔍 TheVein v56 — Verify</h2><button onclick="var _ov=closest_(this,\x27div[style]\x27);if(_ov&&_ov.parentNode)_ov.parentNode.removeChild(_ov)" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);cursor:pointer;font-size:12px;">Close</button></div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;"><div style="padding:12px;background:var(--positive-bg);border-radius:8px;text-align:center;"><div style="font-size:28px;font-weight:700;color:var(--positive);">'+ok+'</div><div style="font-size:10px;color:var(--text-muted);">FIELDS OK</div></div><div style="padding:12px;background:'+(miss>0?'var(--negative-bg)':'var(--positive-bg)')+';border-radius:8px;text-align:center;"><div style="font-size:28px;font-weight:700;color:'+(miss>0?'var(--negative)':'var(--positive)')+';">'+miss+'</div><div style="font-size:10px;color:var(--text-muted);">MISSING</div></div></div>' +
     '<div style="font-family:JetBrains Mono,monospace;font-size:9px;letter-spacing:.2em;color:var(--text-muted);margin-bottom:6px;">DASHBOARD DATA FIELDS</div>' +
     '<table style="width:100%;border-collapse:collapse;font-family:JetBrains Mono,monospace;"><tr style="background:var(--surface-2);"><th style="padding:4px 8px;text-align:left;font-size:9px;">Field</th><th style="padding:4px 8px;text-align:left;font-size:9px;">Value</th></tr>'+rows+'</table>' +
@@ -2073,7 +1927,7 @@ function renderSysOps(raw){
     var now = new Date();
     for (var mi = 0; mi < 3; mi++) {
       var dt = new Date(now.getFullYear(), now.getMonth() - mi, 1);
-      var val = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0');
+      var val = dt.getFullYear() + '-' + ((dt.getMonth()+1 < 10 ? '0' : '') + (dt.getMonth()+1));
       var label = dt.toLocaleString('en-US',{month:'long',year:'numeric'});
       var opt = document.createElement('option');
       opt.value = val; opt.textContent = label;
@@ -2302,7 +2156,7 @@ function parseCSV(txt){return txt.trim().split('\n').map(function(l){return l.sp
 
 function parseDash(txt){
 var rows=parseCSV(txt);var m={};
-for(var ri=0;ri<rows.length;ri++){var r=rows[ri];if(r.length<2||!r[0]||r[0].startsWith('---')||r[0]==='Key')continue;var v=parseFloat(r[1]);m[r[0].trim()]=isNaN(v)?r[1].trim():v;}
+for(var ri=0;ri<rows.length;ri++){var r=rows[ri];if(r.length<2||!r[0]||r[0].indexOf('---')===0||r[0]==='Key')continue;var v=parseFloat(r[1]);m[r[0].trim()]=isNaN(v)?r[1].trim():v;}
 return {
 month:m['month']||'—',year:m['year']||2026,monthNum:m['monthNum']||1,
 earnedIncome:m['earnedIncome']||0,loanProceeds:m['loanProceeds']||0,totalMoneyIn:m['totalMoneyIn']||0,incomeBudget:m['income.monthlyBudget']||0,
@@ -2332,7 +2186,7 @@ function parseDebt(txt){
 var rows=parseCSV(txt);if(rows.length<2)return[];
 var hdrs=rows[0].map(function(h){return h.toLowerCase().replace(/\s+/g,'');});var out=[];
 for(var i=1;i<rows.length;i++){
-var r=rows[i];if(!r[0]||r[0].startsWith('EXCLUDED')||r[0]==='name')continue;
+var r=rows[i];if(!r[0]||r[0].indexOf('EXCLUDED')===0||r[0]==='name')continue;
 var o={};hdrs.forEach(function(h,j){o[h]=r[j]||'';});
 if(!o['name']||!o['balance'])continue;
 // v24 Wave 6: added promoAction field
@@ -2386,10 +2240,10 @@ populate(parsed, debts, true);
 if(engineData.integrityErrors && engineData.integrityErrors.length > 0){
 var iw=$('dataError');if(iw){iw.innerHTML='⚠ Integrity check: '+engineData.integrityErrors.length+' identity mismatch(es). <a onclick="initDashboard()">Retry</a> <span style="font-size:9px;color:var(--text-muted);display:block;margin-top:4px;">'+engineData.integrityErrors.join(' · ')+'</span>';iw.style.display='block';}
 }
-google.script.run.withSuccessHandler(function(months){if(months && months.length) buildDropdownFromEngine(months);}).withFailureHandler(function(){}).getMonthsSafe();
+google.script.run.withSuccessHandler(function(months){if(months && months.length) buildDropdownFromEngine(months);}).withFailureHandler(function(e){console.warn('getMonths failed:',e);}).getMonthsSafe();
 google.script.run.withSuccessHandler(function(historyData){if(historyData && historyData.length){ HISTORY_DATA = historyData; renderTrends(); }}).withFailureHandler(function(e){ console.warn('Close History unavailable:', e); }).getCloseHistoryDataSafe();
 try{ google.script.run.withSuccessHandler(renderCFF).withFailureHandler(function(e){console.warn('CFF unavailable:',e);}).getCashFlowForecastSafe(); }catch(e){}
-google.script.run.withSuccessHandler(function(bd){if(bd)initFamilyNote(bd.familyNote);}).withFailureHandler(function(){}).getBoardDataSafe();
+google.script.run.withSuccessHandler(function(bd){if(bd)initFamilyNote(bd.familyNote);}).withFailureHandler(function(e){console.warn('getBoardData failed:',e);}).getBoardDataSafe();
 setTimeout(function(){loader.classList.add('hidden');},500);
 return;
 }
@@ -2677,7 +2531,7 @@ else{bd.style.display='none';ar.textContent='▶';}
 // ═══ Kids Hub Widget ═══
 var _kidsWidgetUrls = { buggsyUrl: '#', jjUrl: '#' };
 function initKidsWidget(urls) {
-  if (urls) _kidsWidgetUrls = Object.assign(_kidsWidgetUrls, urls);
+  if (urls) { for (var k in urls) { if (urls.hasOwnProperty(k)) _kidsWidgetUrls[k] = urls[k]; } }
   google.script.run
     .withSuccessHandler(_renderKidsWidget)
     .withFailureHandler(function(e) {
@@ -2728,12 +2582,12 @@ function _showKidsToast(msg) {
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(function(){ t.style.opacity = '1'; }, 10);
-  setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ t.remove(); }, 300); }, 2500);
+  setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ if(t.parentNode)t.parentNode.removeChild(t); }, 300); }, 2500);
 }
 
 // v60: Shared helper — disable buttons + decrement badge before server call
 function _kidsOptimistic(el) {
-  var card = el ? el.closest('.kids-pending-item') : null;
+  var card = el ? closest_(el, '.kids-pending-item') : null;
   if (card) {
     var btns = card.querySelectorAll('button');
     for (var i = 0; i < btns.length; i++) { btns[i].disabled = true; btns[i].style.opacity = '0.4'; }
@@ -2745,7 +2599,7 @@ function _kidsOptimistic(el) {
     if (count > 1) { badge.textContent = (count - 1) + ' pending'; }
     else { badge.style.display = 'none'; }
   }
-  setTimeout(function() { if (card) card.remove(); }, 350);
+  setTimeout(function() { if (card && card.parentNode) card.parentNode.removeChild(card); }, 350);
   return card;
 }
 function _kidsApprove(rowIndex, el, taskID) {
@@ -2986,7 +2840,7 @@ function _kidsOverride(rowIndex, el, taskID) {
     }, 4000);
     return;
   }
-  var card = el ? el.closest('.kids-required-item') : null;
+  var card = el ? closest_(el, '.kids-required-item') : null;
   var btn = el || null;
   if (btn) btn.disabled = true;
   if (card) card.style.opacity = '0.55';
@@ -3083,10 +2937,10 @@ function _renderKidsWidget(data) {
 
   var allPending = [];
   (data.buggsy.stats.pendingApprovals || []).forEach(function(t) {
-    allPending.push(Object.assign({ childKey: 'buggsy', childLabel: '⭕ Buggsy' }, t));
+    var _bt = { childKey: 'buggsy', childLabel: '⭕ Buggsy' }; for (var _bk in t) { if (t.hasOwnProperty(_bk)) _bt[_bk] = t[_bk]; } allPending.push(_bt);
   });
   (data.jj.stats.pendingApprovals || []).forEach(function(t) {
-    allPending.push(Object.assign({ childKey: 'jj', childLabel: '⭐ JJ' }, t));
+    var _jt = { childKey: 'jj', childLabel: '⭐ JJ' }; for (var _jk in t) { if (t.hasOwnProperty(_jk)) _jt[_jk] = t[_jk]; } allPending.push(_jt);
   });
 
   var pendingHTML = '';
@@ -3330,7 +3184,7 @@ rows+='<tr><td style="padding:5px 10px;font-size:11px;border-bottom:1px solid rg
 var allPass=fail===0;
 var p=document.createElement('div');p.id='diagPanel';
 p.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;max-height:45vh;overflow:auto;background:#1a1a2e;color:#e0e0e0;font-family:JetBrains Mono,monospace;font-size:11px;border-top:4px solid '+(allPass?'#4ade80':'#f87171')+';box-shadow:0 -4px 20px rgba(0,0,0,.5);';
-p.innerHTML='<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;background:#12122a;"><span style="font-weight:700;letter-spacing:1px;font-size:12px;">🔍 DOM Self-Check · TheVein v54</span><span style="display:flex;gap:8px;align-items:center;"><span style="font-size:10px;color:#9ca3af;">'+pass+'/'+T1.length+' fields</span><span style="padding:3px 10px;border-radius:4px;font-weight:700;font-size:10px;letter-spacing:.5px;background:'+(allPass?'#166534':'#7f1d1d')+';color:'+(allPass?'#4ade80':'#fca5a5')+'">'+(allPass?'ALL PASS':'FAIL')+'</span><button onclick="document.getElementById(\x27diagPanel\x27).remove()" style="padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#9ca3af;cursor:pointer;font-size:10px;">Close</button></span></div><table style="width:100%;border-collapse:collapse;"><tr style="background:#12122a;"><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">TIER 1 FIELD</th><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">PAYLOAD VALUE</th></tr>'+rows+'</table>';
+p.innerHTML='<div style="padding:10px 16px;display:flex;justify-content:space-between;align-items:center;background:#12122a;"><span style="font-weight:700;letter-spacing:1px;font-size:12px;">🔍 DOM Self-Check · TheVein v54</span><span style="display:flex;gap:8px;align-items:center;"><span style="font-size:10px;color:#9ca3af;">'+pass+'/'+T1.length+' fields</span><span style="padding:3px 10px;border-radius:4px;font-weight:700;font-size:10px;letter-spacing:.5px;background:'+(allPass?'#166534':'#7f1d1d')+';color:'+(allPass?'#4ade80':'#fca5a5')+'">'+(allPass?'ALL PASS':'FAIL')+'</span><button onclick="var _dp=document.getElementById(\x27diagPanel\x27);if(_dp&&_dp.parentNode)_dp.parentNode.removeChild(_dp)" style="padding:3px 10px;border-radius:4px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#9ca3af;cursor:pointer;font-size:10px;">Close</button></span></div><table style="width:100%;border-collapse:collapse;"><tr style="background:#12122a;"><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">TIER 1 FIELD</th><th style="padding:5px 10px;text-align:left;font-size:9px;letter-spacing:1px;color:#6b7280;">PAYLOAD VALUE</th></tr>'+rows+'</table>';
 document.body.appendChild(p);
 document.body.style.border=allPass?'3px solid #4ade80':'3px solid #f87171';
 });
