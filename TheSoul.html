@@ -1,10 +1,10 @@
-<!-- TheSoul v44 — bg gradient, balance fix, gate language, finance text -->
+<!-- TheSoul v45 — grid 4-row fix for soulMoment ticker -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<title>TheSoul v44 — Thompson Family Display</title>
+<title>TheSoul v45 — Thompson Family Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
@@ -141,7 +141,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
   height:var(--real-h);
   padding:10px 16px 4px 16px;
   display:grid;
-  grid-template-rows:minmax(140px,.82fr) auto 1.18fr;
+  grid-template-rows:minmax(140px,.82fr) auto 20px 1.18fr;
   gap:3px;
   overflow:hidden;
 }
@@ -566,6 +566,21 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 .util-chip.next .util-main{color:#fbcfe8}
 .util-chip.refresh .util-main{color:#d8b4fe}
 
+/* v45: soulMoment ticker — contained in its 20px grid row */
+#soulMoment{
+  max-height:20px;
+  overflow:hidden;
+  line-height:20px;
+  padding:0 20px;
+  font-size:12px;
+  font-weight:700;
+  color:#fde68a;
+  letter-spacing:0.3px;
+  opacity:0.85;
+  text-shadow:0 1px 4px rgba(0,0,0,0.3);
+  text-align:center;
+}
+
 .kids-zone{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -910,7 +925,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 
 @media (max-width:980px){
   .page{
-    grid-template-rows:minmax(130px,.76fr) auto 1.24fr;
+    grid-template-rows:minmax(130px,.76fr) auto 20px 1.24fr;
   }
   .identity-greeting{font-size:clamp(18px,2.2vw,26px)}
   .sched-title{font-size:18px}
@@ -1030,7 +1045,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     </div>
   </section>
 
-  <div id="soulMoment" style="display:none;text-align:center;padding:6px 20px;font-size:14px;font-weight:700;color:#fde68a;letter-spacing:0.3px;opacity:0.85;text-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>
+  <div id="soulMoment"></div>
 
   <section class="kids-zone">
     <div class="kid-panel" id="jjHost"></div>
@@ -1054,7 +1069,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 (function(){
   'use strict';
 
-  var SOUL_VERSION = 44;
+  var SOUL_VERSION = 45;
   var REFRESH_MS = 120000;
   // v40: Confidence Rail + Graceful Degradation
   var _soulLastFetch = null;
@@ -1777,10 +1792,10 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 
     var el = $('soulMoment');
     if (!el) return;
-    if (moments.length === 0) { el.style.display = 'none'; return; }
-    var idx = Math.floor(new Date().getMinutes() / 5) % moments.length;
+    if (moments.length === 0) { el.textContent = ''; return; }
+    var idx = _momentIdx % moments.length;
+    _momentIdx++;
     el.textContent = moments[idx];
-    el.style.display = 'block';
   }
 
   function loadBoard(){
