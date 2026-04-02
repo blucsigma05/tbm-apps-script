@@ -1191,7 +1191,22 @@ function finishSprint() {
   // Award rings via GAS if available
   if (TBM_TEST_MODE) {
     console.log('[TEST MODE] awardRingsSafe skipped, rings=' + rings);
+    console.log('[TEST MODE] submitHomeworkSafe skipped');
   } else if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        console.log('Submitted: ' + (result && result.status ? result.status : 'unknown'));
+      })
+      .withFailureHandler(function(err) { console.error('Submit failed:', err); })
+      .submitHomeworkSafe({
+        child: CHILD,
+        module: 'facts',
+        subject: 'Math Facts',
+        score: accuracy,
+        responseText: '',
+        rings: rings
+      });
+
     google.script.run
       .withSuccessHandler(function() {})
       .withFailureHandler(function(err) { console.error('Ring award failed:', err); })

@@ -1252,8 +1252,23 @@ function renderResults() {
       var ringsEarned = totalMC > 0 ? Math.round(8 * (totalMCCorrect / totalMC)) : 0;
       if (TBM_TEST_MODE) {
         console.log('[TEST MODE] awardRingsSafe skipped, rings=' + ringsEarned);
+        console.log('[TEST MODE] submitHomeworkSafe skipped');
         console.log('[TEST MODE] logHomeworkCompletionSafe skipped');
       } else {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            console.log('Submitted: ' + (result && result.status ? result.status : 'unknown'));
+          })
+          .withFailureHandler(function(err) { console.error('Submit failed:', err); })
+          .submitHomeworkSafe({
+            child: 'buggsy',
+            module: 'homework',
+            subject: MODULE.science ? 'Science' : 'Math',
+            score: totalMCCorrect,
+            responseText: '',
+            rings: ringsEarned
+          });
+
         google.script.run
           .withSuccessHandler(function() { console.log('Rings awarded: ' + ringsEarned); })
           .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })

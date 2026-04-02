@@ -1095,6 +1095,29 @@ function handleSubmit() {
 
   showScreen('completion');
 
+  // Submit homework via GAS backend (if available)
+  if (!TBM_TEST_MODE) {
+    try {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            console.log('Submitted: ' + (result && result.status ? result.status : 'unknown'));
+          })
+          .withFailureHandler(function(err) { console.error('Submit failed:', err); })
+          .submitHomeworkSafe({
+            child: CHILD,
+            module: 'writing',
+            subject: 'RLA-Writing-' + fmt.id,
+            score: 0,
+            responseText: textData.combined,
+            rings: 3
+          });
+      }
+    } catch (e) {
+      // Standalone mode
+    }
+  }
+
   // Award rings via GAS backend (if available)
   if (TBM_TEST_MODE) {
     console.log('[TEST MODE] awardRingsSafe skipped, rings=3');

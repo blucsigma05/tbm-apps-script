@@ -1126,6 +1126,29 @@ function handleSubmit() {
   document.getElementById("completionWordCount").textContent = totalWords + " words written";
   document.getElementById("completionSessionTime").textContent = "Session time: " + getSessionTimeString();
 
+  // Submit homework for review
+  if (!TBM_TEST_MODE) {
+    try {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(result) {
+            console.log('Submitted: ' + (result && result.status ? result.status : 'unknown'));
+          })
+          .withFailureHandler(function(err) { console.error('Submit failed:', err); })
+          .submitHomeworkSafe({
+            child: 'buggsy',
+            module: 'wolfkid',
+            subject: 'RLA-Creative',
+            score: 0,
+            responseText: claimVal + '\n\n' + evidenceVal + '\n\n' + reasoningVal,
+            rings: 0
+          });
+      }
+    } catch (e) {
+      // Standalone mode
+    }
+  }
+
   switchView("completion");
 }
 

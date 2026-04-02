@@ -1441,6 +1441,33 @@ function submitForReview() {
     version: MODULE_VERSION
   };
 
+  // Submit homework for review
+  if (!TBM_TEST_MODE) {
+    try {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        var responseText = (sectionData.hypothesis || '') + '\n\n' +
+          (sectionData.procedure || '') + '\n\n' +
+          (sectionData.prediction || '') + '\n\n' +
+          (sectionData.conclusion || '');
+        google.script.run
+          .withSuccessHandler(function(result) {
+            console.log('Submitted: ' + (result && result.status ? result.status : 'unknown'));
+          })
+          .withFailureHandler(function(err) { console.error('Submit failed:', err); })
+          .submitHomeworkSafe({
+            child: 'buggsy',
+            module: 'investigation',
+            subject: 'Science',
+            score: 0,
+            responseText: responseText,
+            rings: RINGS_BASE
+          });
+      }
+    } catch (e) {
+      // Standalone mode
+    }
+  }
+
   // Award rings
   if (TBM_TEST_MODE) {
     console.log('[TEST MODE] awardRingsSafe skipped, rings=' + RINGS_BASE);

@@ -1327,8 +1327,23 @@ function renderResults() {
     completionLogged = true;
     if (TBM_TEST_MODE) {
       console.log('[TEST MODE] awardRingsSafe skipped, rings=' + earnedRings);
+      console.log('[TEST MODE] submitHomeworkSafe skipped');
       console.log('[TEST MODE] logHomeworkCompletionSafe skipped');
     } else {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          console.log('Submitted: ' + (result && result.status ? result.status : 'unknown'));
+        })
+        .withFailureHandler(function(err) { console.error('Submit failed:', err); })
+        .submitHomeworkSafe({
+          child: 'buggsy',
+          module: 'reading',
+          subject: 'RLA',
+          score: mcCorrect,
+          responseText: '',
+          rings: earnedRings
+        });
+
       google.script.run
         .withSuccessHandler(function() { console.log('Rings awarded: ' + earnedRings); })
         .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })

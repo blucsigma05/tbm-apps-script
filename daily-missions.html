@@ -681,6 +681,7 @@ var todayKey = '';
 var dayOfWeek = 0;
 var _serverStateLoaded = false;
 var _cachedMissionState = {};
+var dynamicSchedule = null;
 
 // ============================================================
 // INIT
@@ -696,7 +697,18 @@ function init() {
   }
 
   loadMissionStateFromServer(function() {
-    render();
+    loadSchedule(function(dynamicBlocks) {
+      if (dynamicBlocks) {
+        var day = new Date().getDay();
+        if (day > 0 && day < 6) {
+          var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
+          if (schedule[day]) {
+            schedule[day].blocks = dynamicBlocks;
+          }
+        }
+      }
+      render();
+    });
   });
 
 }
@@ -838,6 +850,26 @@ function loadMissionStateFromServer(callback) {
       if (callback) callback();
     })
     .getMissionStateSafe(currentChild, todayKey);
+}
+
+function loadSchedule(callback) {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    callback(null);
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.blocks && result.blocks.length > 0) {
+        dynamicSchedule = result;
+        callback(result.blocks);
+      } else {
+        callback(null);
+      }
+    })
+    .withFailureHandler(function() {
+      callback(null);
+    })
+    .getDailyScheduleSafe(currentChild);
 }
 
 function isMissionDone(missionId) {
