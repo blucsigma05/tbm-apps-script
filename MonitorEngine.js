@@ -1,14 +1,20 @@
 // ═══════════════════════════════════════════════════
-// MonitorEngine.gs v7
+// MonitorEngine.gs v8
 // WRITES TO: 💻🧮 Close History, 💻🧮 Month-End Review
 // READS FROM: 💻🧮 DebtModel, 💻🧮 Helpers, 🔒 Transactions, 🔒 Balance History
 // ═══════════════════════════════════════════════════
 
-function getMonitorEngineVersion() { return 7; }
+function getMonitorEngineVersion() { return 8; }
 
-var MONITOR_EMAIL = 'lthompson@memoveindesigns.com';
-// v6: openById migration — trigger-safe (was getActiveSpreadsheet, fails from CLOCK triggers)
-var TBM = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+// v8: Lazy accessors — avoid parse-time openById for trigger safety
+var _meSS = null;
+function me_getSS_() {
+  if (!_meSS) _meSS = SpreadsheetApp.openById(SSID);
+  return _meSS;
+}
+function me_getEmail_() {
+  return Session.getEffectiveUser().getEmail();
+}
 
 var ME_TRANSFER_CATS = [
   'Transfer: Internal', 'Transfer: External', 'Transfer: LOC Draw',
@@ -39,16 +45,27 @@ function parseMonthRange_(monthLabel) {
 }
 
 function loadMonthTransactions_(startDate, endDate) {
-  var txSheet = TBM.getSheetByName('Transactions');
+  var txSheet = me_getSS_().getSheetByName('Transactions');
   if (!txSheet) throw new Error('MonitorEngine: Transactions sheet not found');
   var txData = txSheet.getDataRange().getValues();
+  // v8: Header map instead of hardcoded column indices
+  var h = txData[0];
+  var colMap = {};
+  for (var c = 0; c < h.length; c++) {
+    var hdr = String(h[c]).toLowerCase().trim();
+    if (hdr === 'date') colMap.date = c;
+    if (hdr === 'description') colMap.desc = c;
+    if (hdr === 'category') colMap.cat = c;
+    if (hdr === 'amount') colMap.amt = c;
+    if (hdr === 'account') colMap.acct = c;
+  }
   var txns = [];
   for (var i = 1; i < txData.length; i++) {
-    var d = txData[i][1];
+    var d = txData[i][colMap.date];
     if (d instanceof Date && d >= startDate && d <= endDate) {
-      txns.push({ date: d, desc: (txData[i][2]||'').toString(),
-        cat: (txData[i][3]||'').toString(), amt: me_parseAmount_(txData[i][4]),
-        acct: (txData[i][5]||'').toString() });
+      txns.push({ date: d, desc: (txData[i][colMap.desc]||'').toString(),
+        cat: (txData[i][colMap.cat]||'').toString(), amt: me_parseAmount_(txData[i][colMap.amt]),
+        acct: (txData[i][colMap.acct]||'').toString() });
     }
   }
   return { txns: txns, sheet: txSheet };
@@ -69,7 +86,7 @@ function stampCloseMonth(monthLabel) {
   var displayMonth = MN[mi] + ' ' + yr;
   Logger.log('Target: "' + displayMonth + '"');
 
-  var dmSheet = TBM.getSheetByName('💻🧮 DebtModel');
+  var dmSheet = me_getSS_().getSheetByName('💻🧮 DebtModel');
   if (!dmSheet) throw new Error('stampCloseMonth: 💻🧮 DebtModel not found');
   var dmNames = dmSheet.getRange('O8:O30').getValues();
   var debtAccounts = [];
@@ -80,7 +97,7 @@ function stampCloseMonth(monthLabel) {
   Logger.log('Debt accounts: ' + debtAccounts.length);
 
   // BH: Col B(1)=Date, Col D(3)=Account, Col I(8)=Balance
-  var bhSheet = TBM.getSheetByName('Balance History');
+  var bhSheet = me_getSS_().getSheetByName('Balance History');
   if (!bhSheet) throw new Error('stampCloseMonth: Balance History not found');
   var bhData = bhSheet.getDataRange().getValues();
   var latest = {};
@@ -103,7 +120,7 @@ function stampCloseMonth(monthLabel) {
   });
   Logger.log('debtCurrent: $' + debtCurrent.toFixed(2) + ' (' + matched + '/' + debtAccounts.length + ')');
 
-  var chSheet = TBM.getSheetByName('💻🧮 Close History');
+  var chSheet = me_getSS_().getSheetByName('💻🧮 Close History');
   if (!chSheet) throw new Error('stampCloseMonth: 💻🧮 Close History not found');
   var chData = chSheet.getDataRange().getValues();
   var targetRow = -1;
@@ -160,11 +177,11 @@ function listLargeTransactions(monthLabel) {
 // ══════════════════════════════════════════════════════
 function checkRefiGhosts() {
   Logger.log('═══ checkRefiGhosts() ═══');
-  var dmSheet = TBM.getSheetByName('💻🧮 DebtModel');
+  var dmSheet = me_getSS_().getSheetByName('💻🧮 DebtModel');
   if (!dmSheet) throw new Error('checkRefiGhosts: 💻🧮 DebtModel not found');
   var dmData = dmSheet.getRange('A8:P30').getValues();
 
-  var bhSheet = TBM.getSheetByName('Balance History');
+  var bhSheet = me_getSS_().getSheetByName('Balance History');
   if (!bhSheet) throw new Error('checkRefiGhosts: Balance History not found');
   var bhData = bhSheet.getDataRange().getValues();
   var latestBH = {};
@@ -200,7 +217,7 @@ function checkRefiGhosts() {
 function runMERGates(monthLabel) {
   monthLabel = me_defaultPriorMonth_(monthLabel);
   var range = parseMonthRange_(monthLabel);
-  Logger.log('═══ MonitorEngine v6 — runMERGates(' + monthLabel + ') ═══');
+  Logger.log('═══ MonitorEngine v' + getMonitorEngineVersion() + ' — runMERGates(' + monthLabel + ') ═══');
 
   var loaded = loadMonthTransactions_(range.start, range.end);
   var monthTxns = loaded.txns, txSheet = loaded.sheet;
@@ -327,7 +344,7 @@ function runMERGates(monthLabel) {
   });
   Logger.log('SUMMARY: ' + summary);
   return { month: monthLabel, timestamp: new Date().toISOString(),
-    version: 'MonitorEngine v6', summary: summary,
+    version: 'MonitorEngine v' + getMonitorEngineVersion(), summary: summary,
     allAutoPass: f === 0 && w === 0, gates: results };
 }
 
@@ -335,7 +352,7 @@ function runMERGates(monthLabel) {
 //  PROMO CLIFF SCANNER — multi-row header detection
 // ══════════════════════════════════════════════════════
 function checkPromoCliffs_() {
-  var deSheet = TBM.getSheetByName('💻🧮 Debt_Export');
+  var deSheet = me_getSS_().getSheetByName('💻🧮 Debt_Export');
   if (!deSheet) return { unreadable: true, reason: 'Sheet not found', alerts: [] };
   var data = deSheet.getDataRange().getValues();
   if (data.length < 2) return { unreadable: true, reason: 'Sheet has < 2 rows', alerts: [] };
@@ -391,7 +408,7 @@ function checkPromoCliffs_() {
 //  KNOWN ACCOUNTS — BH-based orphan detection
 // ══════════════════════════════════════════════════════
 function getKnownAccounts_() {
-  var sh = TBM.getSheetByName('Balance History');
+  var sh = me_getSS_().getSheetByName('Balance History');
   if (!sh) return [];
   var data = sh.getDataRange().getValues();
   if (data.length < 2) return [];
@@ -442,7 +459,7 @@ function runMonthlyMERReport_() {
   var lgResult = listLargeTransactions(monthLabel);
 
   var subject = 'TBM MER Gates — ' + monthLabel + ' — ' + result.summary;
-  var body = 'MonitorEngine v6 — Monthly Close Pre-Check\n' +
+  var body = 'MonitorEngine v' + getMonitorEngineVersion() + ' — Monthly Close Pre-Check\n' +
     'Month: ' + monthLabel + '\nRun at: ' + result.timestamp + '\n\n' +
     '═══════════════════════════════════════\n';
   result.gates.forEach(function(g) {
@@ -463,8 +480,8 @@ function runMonthlyMERReport_() {
   }
   body += 'Next: Complete manual gates (4, 5, 6, 11) in the MER Close Checklist.';
 
-  MailApp.sendEmail(MONITOR_EMAIL, subject, body);
-  Logger.log('MER report emailed to ' + MONITOR_EMAIL);
+  MailApp.sendEmail(me_getEmail_(), subject, body);
+  Logger.log('MER report emailed to ' + me_getEmail_());
 
   if (result.allAutoPass) {
     Logger.log('All auto gates PASS — stamping ' + monthLabel);
@@ -477,4 +494,4 @@ function runMonthlyMERReport_() {
   }
 }
 
-// EOF — MonitorEngine.gs v7
+// EOF — MonitorEngine.gs v8

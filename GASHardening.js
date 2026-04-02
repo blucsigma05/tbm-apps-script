@@ -1,11 +1,18 @@
 // ════════════════════════════════════════════════════════════════════
-// GAS HARDENING v4 — Centralized Monitoring, Logging & Maintenance
+// GAS HARDENING v6 — Centralized Monitoring, Logging & Maintenance
 // WRITES TO: ErrorLog, PerfLog
 // READS FROM: (all files for version reporting)
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 5; }
+function getGASHardeningVersion() { return 6; }
+
+// v6: openById migration — trigger-safe spreadsheet accessor
+var _ghSS = null;
+function gh_getSS_() {
+  if (!_ghSS) _ghSS = SpreadsheetApp.openById(SSID);
+  return _ghSS;
+}
 
 //
 // WHAT THIS DOES:
@@ -34,7 +41,7 @@ function getGASHardeningVersion() { return 5; }
  * Run once from the editor.
  */
 function setupErrorLogSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = gh_getSS_();
   var sheet = ss.getSheetByName('💻 ErrorLog');
   if (!sheet) {
     sheet = ss.insertSheet('💻 ErrorLog');
@@ -60,7 +67,7 @@ function setupErrorLogSheet() {
  */
 function logError_(functionName, error, durationSec) {
   try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = gh_getSS_();
     var sheet = ss.getSheetByName('💻 ErrorLog');
     if (!sheet) return; // fail silently if sheet doesn't exist yet
     
@@ -97,7 +104,7 @@ function logError_(functionName, error, durationSec) {
  * Run once to create.
  */
 function setupPerfLogSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = gh_getSS_();
   var sheet = ss.getSheetByName('💻 PerfLog');
   if (!sheet) {
     sheet = ss.insertSheet('💻 PerfLog');
@@ -126,7 +133,7 @@ function logPerf_(functionName, durationSec, status, note) {
     
     // Only write to sheet if slow (>3s) or errored
     if (durationSec > 3 || status === 'ERROR') {
-      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      var ss = gh_getSS_();
       var sheet = ss.getSheetByName('💻 PerfLog');
       if (!sheet) return;
       
@@ -293,7 +300,7 @@ function listTriggers() {
  * Designed to run daily via time-driven trigger.
  */
 function checkTillerSyncHealth() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = gh_getSS_();
   var txnSheet = ss.getSheetByName('Transactions');
   if (!txnSheet) {
     Logger.log('ERROR: Transactions sheet not found');
@@ -412,7 +419,7 @@ function monthClosePreflight() {
   
   Logger.log('═══ MONTH CLOSE PREFLIGHT: ' + priorLabel + ' ═══');
   
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = gh_getSS_();
   var txnSheet = ss.getSheetByName('Transactions');
   if (!txnSheet) { Logger.log('ERROR: No Transactions sheet'); return; }
   
@@ -610,7 +617,7 @@ function showConfig() {
  * Over time, this becomes your trend data.
  */
 function writeWeeklySnapshot() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = gh_getSS_();
   
   // Create sheet if needed
   var sheet = ss.getSheetByName('💻 Snapshots');
@@ -787,7 +794,7 @@ function fullSystemDiagnostic() {
  * versions, triggers, snapshots, reconciliation, MER gates.
  */
 function getSystemHealth() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = gh_getSS_();
   var now = new Date();
   var result = {};
 
@@ -1071,7 +1078,7 @@ function getSystemHealthSafe() {
  */
 function getSpineHeartbeatSafe() {
   return withMonitor_('getSpineHeartbeatSafe', function() {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = gh_getSS_();
     var now = new Date();
     var heartbeat = {
       timestamp: now.toISOString(),
@@ -1875,5 +1882,5 @@ function diagPreQA() {
 }
 
 
-// END OF FILE — GAS HARDENING v5
+// END OF FILE — GAS HARDENING v6
 // ═══════════════════════════════════════════════════════════════

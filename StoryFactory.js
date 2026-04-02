@@ -3,11 +3,11 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 9.0
+// Version: 10.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 9; }
+function getStoryFactoryVersion() { return 10; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -19,8 +19,16 @@ function getStoryApiStats() {
 }
 
 var CONFIG = {
-GEMINI_API_KEY:  PropertiesService.getScriptProperties().getProperty('JJ Stories'),
-NOTION_TOKEN:    PropertiesService.getScriptProperties().getProperty('NOTION_TOKEN'),
+_geminiKey: null,
+_notionToken: null,
+get GEMINI_API_KEY() {
+  if (!this._geminiKey) this._geminiKey = PropertiesService.getScriptProperties().getProperty('JJ Stories');
+  return this._geminiKey;
+},
+get NOTION_TOKEN() {
+  if (!this._notionToken) this._notionToken = PropertiesService.getScriptProperties().getProperty('NOTION_TOKEN');
+  return this._notionToken;
+},
 STORY_DB_ID:     'a899ee9786024ece8d09ae8432642b2a',
 CHARACTERS_DB_ID: '1225d281b4d44a8094d3c817202f3288',
 CANON_LOG_DB_ID:  'd29ae2d2ee614ae0b27f8ccf9ac4dd81',
@@ -38,6 +46,12 @@ STORY_MODEL: 'gemini-2.5-flash',
 MEMORY_STORY_COUNT: 5,
 MEMORY_CANON_COUNT: 20,
 };
+
+function sf_logError_(context, error) {
+  if (typeof logError_ === 'function') {
+    logError_('StoryFactory.' + context, error);
+  }
+}
 
 var IMAGE_STYLE = 'Comic book style illustration of a loving Black family. ' +
 'Bold clean comic lines, high contrast, vibrant colors, white background. ' +
@@ -1188,6 +1202,7 @@ return { success: true, title: storyData.title, pdfUrl: pdf.url, notionUrl: noti
 } catch(e) {
 Logger.log('FAILED: ' + e.message);
 Logger.log('Stack: ' + e.stack);
+sf_logError_('runStoryFactory', e);
 return { success: false, error: e.message };
 }
 }
@@ -1510,7 +1525,7 @@ function generateStoryImages(storyKey) {
       return { error: 'Story not loaded in props' };
     }
     var storyData = JSON.parse(raw);
-    var characters = fetchCharacterFromNotion(storyData.character);
+    var characters = sf_getCharacterFromNotion_(storyData.character);
 
     Logger.log('generateStoryImages: Generating images for "' + storyData.title + '"');
     var imageBlobs = generateSceneImages(storyData.scenes, characters);
@@ -1574,3 +1589,7 @@ function authorizeDrive() {
 var folder = DriveApp.getFolderById(CONFIG.STORY_FOLDER_ID);
 Logger.log('Drive authorized! Folder: ' + folder.getName());
 }
+
+// ════════════════════════════════════════════════════════════════════
+// END OF FILE — StoryFactory v10
+// ════════════════════════════════════════════════════════════════════

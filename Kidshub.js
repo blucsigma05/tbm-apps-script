@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v36 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v37 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 36; }
+function getKidsHubVersion() { return 37; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -715,7 +715,7 @@ function getKidsHubData(child, _cacheBust) {
       metaProgression:    metaProgression,
       sortOrder:          'canonical',
       _meta: {
-        version:   'KidsHub.gs v30',
+        version:   'KidsHub.gs v' + getKidsHubVersion(),
         timestamp: getNowISO_(),
         child:     childLower
       }
@@ -978,22 +978,43 @@ function computeScreenTimeBalances_(child, isAll) {
 }
 
 
-// Parents Bank — earnedMoney from ALL approved tasks with money > 0
+// v37: Parents Bank — earnedMoney from KH_History approval events + KH_Chores money map
 function earnedMoney_(child) {
-  var data = readSheet_('KH_Chores');
-  if (!data || data.length < 2) return 0;
-  var h = data[0].map(String);
+  // 1. Build money lookup from KH_Chores: taskID → money value
+  var choreData = readSheet_('KH_Chores');
+  var moneyMap = {};
+  if (choreData && choreData.length >= 2) {
+    var ch = choreData[0].map(String);
+    var tidCol = khCol_(ch, 'Task_ID');
+    var monCol = khCol_(ch, 'Money');
+    if (tidCol >= 0 && monCol >= 0) {
+      for (var c = 1; c < choreData.length; c++) {
+        var tid = String(choreData[c][tidCol] || '');
+        var money = Number(choreData[c][monCol]) || 0;
+        if (tid && money > 0) moneyMap[tid] = money;
+      }
+    }
+  }
+
+  // 2. Read KH_History for all 'approval' events for this child
+  var histData = readSheet_('KH_History');
+  if (!histData || histData.length < 2) return 0;
+  var hh = histData[0].map(String);
+  var hChildCol = khCol_(hh, 'Child');
+  var hTaskIDCol = khCol_(hh, 'Task_ID');
+  var hEventCol = khCol_(hh, 'Event_Type');
+  if (hChildCol < 0 || hTaskIDCol < 0 || hEventCol < 0) return 0;
+
   var total = 0;
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    var rowChild = String(row[khCol_(h, 'Child')] || '').toLowerCase();
-    var isShared = rowChild === 'both';
-    if (!isShared && rowChild !== child) continue;
-    var done = row[khCol_(h, 'Completed')] === true || String(row[khCol_(h, 'Completed')]).toUpperCase() === 'TRUE';
-    var appr = row[khCol_(h, 'Parent_Approved')] === true || String(row[khCol_(h, 'Parent_Approved')]).toUpperCase() === 'TRUE';
-    if (!done || !appr) continue;
-    var money = Number(row[khCol_(h, 'Money')]) || 0;
-    if (money > 0) total += money;
+  for (var i = 1; i < histData.length; i++) {
+    var row = histData[i];
+    var rowChild = String(row[hChildCol] || '').toLowerCase();
+    if (rowChild !== child && rowChild !== 'both') continue;
+    var evtType = String(row[hEventCol] || '').toLowerCase();
+    if (evtType !== 'approval') continue;
+    var taskID = String(row[hTaskIDCol] || '');
+    var taskMoney = moneyMap[taskID] || 0;
+    if (taskMoney > 0) total += taskMoney;
   }
   return Math.round(total * 100) / 100;
 }
@@ -1717,13 +1738,7 @@ function khSubmitGrade(params) {
       appendHistory_(histUID, 'GRADE', kid, subject + ' Grade: ' + grade, reward.rings, reward.rings, 1, 'bonus', today, now);
     }
 
-    // 3. If cash > 0, log to KH_Allowance (simple append — balance computed at read time)
-    if (reward.cash > 0) {
-      var allowSheet = getKHSheet_('KH_Allowance');
-      if (allowSheet) {
-        allowSheet.appendRow([kid, reward.cash, today, 'Grade Bonus: ' + subject + ' ' + grade]);
-      }
-    }
+    // v37: Grade cash bonuses removed from KH_Allowance (F14 — wrong schema)
 
     stampKHHeartbeat_();
     console.log('KH_WRITE', JSON.stringify({ fn: 'khSubmitGrade', kid: kid, subject: subject, grade: grade, rings: reward.rings, cash: reward.cash }));
@@ -2217,6 +2232,10 @@ function historyUIDExists_(uid) {
   if (uidCol < 0) return false;
   // v24: Limit scan to last 200 rows (BUG-004 — unbounded scan was O(n) time bomb)
   var scanStart = Math.max(1, data.length - 200);
+  // ASSUMPTION: Daily history entries won't exceed 200 per day.
+  if (data.length - scanStart >= 190) {
+    console.log('KH_WARN: historyUIDExists_ scan window near cap (' + (data.length - scanStart) + '/200). Risk of dedup miss.');
+  }
   for (var i = data.length - 1; i >= scanStart; i--) {
     if (String(data[i][uidCol]) === uid) return true;
   }
@@ -2375,7 +2394,7 @@ function khHealthCheck() {
   var ss = getKHSS_();
   var results = {
     status: 'ok',
-    version: 'KidsHub.gs v26',
+    version: 'KidsHub.gs v' + getKidsHubVersion(),
     timestamp: getNowISO_(),
     tabs: {},
     issues: []
@@ -2489,49 +2508,40 @@ function ensureCurriculumTab_() {
 
 
 // Reads today's curriculum content for a child.
-// Returns parsed JSON for today's day-of-week content, or null if no data.
+// Returns { content, fullWeek, day, week, child } or null if no data.
 function getTodayContent_(child) {
   var sheet = ensureCurriculumTab_();
   if (sheet.getLastRow() < 2) return null;
-
   var data = sheet.getDataRange().getValues();
   var headers = data[0].map(String);
   var childCol = headers.indexOf('Child');
   var startCol = headers.indexOf('StartDate');
   var jsonCol = headers.indexOf('ContentJSON');
+  var weekCol = headers.indexOf('WeekNumber');
   if (childCol === -1 || startCol === -1 || jsonCol === -1) return null;
-
   var today = new Date();
-  var todayStr = Utilities.formatDate(today, 'America/Chicago', 'yyyy-MM-dd');
-  var dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ... 5=Fri, 6=Sat
+  today.setHours(0, 0, 0, 0);
+  var dayOfWeek = today.getDay();
   var dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   var todayName = dayNames[dayOfWeek];
-
-  // Find the most recent week row for this child where StartDate <= today
+  var childLower = String(child).toLowerCase();
   var bestRow = null;
   for (var i = 1; i < data.length; i++) {
-    var rowChild = String(data[i][childCol]).toLowerCase();
-    if (rowChild !== child.toLowerCase()) continue;
-
-    var rowStart = data[i][startCol];
-    var startStr = '';
-    if (rowStart instanceof Date) {
-      startStr = Utilities.formatDate(rowStart, 'America/Chicago', 'yyyy-MM-dd');
-    } else {
-      startStr = String(rowStart);
-    }
-
-    if (startStr <= todayStr) {
-      bestRow = data[i];
-    }
+    var rowChild = String(data[i][childCol] || '').toLowerCase();
+    if (rowChild !== childLower) continue;
+    var startDate = data[i][startCol];
+    if (startDate instanceof Date) { startDate = new Date(startDate); } else { startDate = new Date(String(startDate)); }
+    startDate.setHours(0, 0, 0, 0);
+    if (isNaN(startDate.getTime())) continue;
+    var endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 7);
+    if (today >= startDate && today < endDate) { bestRow = data[i]; break; }
   }
-
   if (!bestRow) return null;
-
   try {
     var weekContent = JSON.parse(bestRow[jsonCol]);
-    // Return today's content slice
-    return weekContent[todayName] || weekContent[todayName.charAt(0).toUpperCase() + todayName.slice(1)] || null;
+    var todayContent = weekContent[todayName] || weekContent[todayName.charAt(0).toUpperCase() + todayName.slice(1)] || null;
+    return { content: todayContent, fullWeek: weekContent, day: todayName, week: bestRow[weekCol] || 0, child: childLower };
   } catch (e) {
     Logger.log('getTodayContent_: JSON parse error for ' + child + ': ' + e.message);
     return null;
@@ -2723,7 +2733,7 @@ function kh_awardEducationPoints_(kid, amount, source) {
       return JSON.stringify({ status: 'ok', duplicate: true, message: 'Already awarded today for ' + source });
     }
     // appendHistory_(uid, taskID, child, task, points, basePoints, mult, eventType, date, timestamp)
-    appendHistory_(uid, 'EDU_' + source, kid, 'Education: ' + source, 0, amount, 1, 'education', today, now);
+    appendHistory_(uid, 'EDU_' + source, kid, 'Education: ' + source, amount, amount, 1, 'education', today, now);
     stampKHHeartbeat_();
     return JSON.stringify({ status: 'ok', awarded: amount, kid: kid, source: source });
   } finally {
@@ -2961,123 +2971,11 @@ function getWeeklyProgressSafe() {
 }
 
 
-// ════════════════════════════════════════════════════════════════════
-// v29: CURRICULUM ENGINE — Daily content serving
-// ════════════════════════════════════════════════════════════════════
-
-var CURRICULUM_HEADERS = ['WeekNumber', 'Child', 'StartDate', 'ContentJSON'];
-var DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-
-/**
- * v29: Auto-create the Curriculum tab if it doesn't exist.
- * Safe to run multiple times — skips if tab already exists.
- */
-function ensureCurriculumTab_() {
-  var ss = SpreadsheetApp.openById(SSID);
-  var tabName = TAB_MAP['Curriculum'] || 'Curriculum';
-  var sheet = null;
-  try { sheet = ss.getSheetByName(tabName); } catch(e) {}
-  if (sheet) return sheet;
-
-  sheet = ss.insertSheet(tabName);
-  var headerRange = sheet.getRange(1, 1, 1, CURRICULUM_HEADERS.length);
-  headerRange.setValues([CURRICULUM_HEADERS]);
-  headerRange.setBackground('#0f1923').setFontColor('#fbbf24')
-    .setFontWeight('bold').setFontFamily('Courier New').setFontSize(10);
-  sheet.setColumnWidth(1, 100);  // WeekNumber
-  sheet.setColumnWidth(2, 80);   // Child
-  sheet.setColumnWidth(3, 120);  // StartDate
-  sheet.setColumnWidth(4, 600);  // ContentJSON
-  sheet.setFrozenRows(1);
-  Logger.log('ensureCurriculumTab_: Created ' + tabName);
-  return sheet;
-}
-
-/**
- * v29: Get today's content for a child from the Curriculum tab.
- * Reads rows, finds the current week by comparing today to StartDate,
- * parses ContentJSON, and returns today's entry based on day of week.
- * Returns { content: {...}, day: 'monday', week: 1 } or { error: '...' }.
- */
+// v37: getTodayContentSafe — thin wrapper around getTodayContent_
 function getTodayContentSafe(child) {
   return withMonitor_('getTodayContentSafe', function() {
-    var ss = SpreadsheetApp.openById(SSID);
-    var tabName = TAB_MAP['Curriculum'] || 'Curriculum';
-    var sheet;
-    try { sheet = ss.getSheetByName(tabName); } catch(e) {}
-    if (!sheet || sheet.getLastRow() < 2) {
-      return { error: 'No curriculum data found. Ask Dad to load this week\'s missions.' };
-    }
-
-    var data = sheet.getDataRange().getValues();
-    var h = data[0].map(String);
-    var cWeek  = h.indexOf('WeekNumber');
-    var cChild = h.indexOf('Child');
-    var cStart = h.indexOf('StartDate');
-    var cJSON  = h.indexOf('ContentJSON');
-
-    if (cChild === -1 || cStart === -1 || cJSON === -1) {
-      return { error: 'Curriculum tab missing required columns.' };
-    }
-
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-    var dayOfWeek = today.getDay();
-    var dayKey = DAY_KEYS[dayOfWeek];
-    var childLower = String(child).toLowerCase();
-
-    // Find the current week's row: StartDate <= today < StartDate + 7
-    var bestRow = null;
-    for (var i = 1; i < data.length; i++) {
-      var rowChild = String(data[i][cChild] || '').toLowerCase();
-      if (rowChild !== childLower) continue;
-
-      var startDate = data[i][cStart];
-      if (startDate instanceof Date) {
-        startDate.setHours(0, 0, 0, 0);
-      } else {
-        startDate = new Date(startDate);
-        startDate.setHours(0, 0, 0, 0);
-      }
-      if (isNaN(startDate.getTime())) continue;
-
-      var endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + 7);
-
-      if (today >= startDate && today < endDate) {
-        bestRow = data[i];
-        break;
-      }
-    }
-
-    if (!bestRow) {
-      return { error: 'No curriculum loaded for this week. Ask Dad to load this week\'s missions.' };
-    }
-
-    var jsonStr = String(bestRow[cJSON] || '');
-    if (!jsonStr) {
-      return { error: 'Curriculum row found but ContentJSON is empty.' };
-    }
-
-    var weekContent;
-    try {
-      weekContent = JSON.parse(jsonStr);
-    } catch (e) {
-      return { error: 'Curriculum JSON parse error: ' + e.message };
-    }
-
-    // Look for today's content by day key
-    var todayContent = weekContent[dayKey] || weekContent[dayKey.charAt(0).toUpperCase() + dayKey.slice(1)] || null;
-
-    return JSON.parse(JSON.stringify({
-      content: todayContent,
-      fullWeek: weekContent,
-      day: dayKey,
-      week: bestRow[cWeek] || 0,
-      child: childLower
-    }));
+    return getTodayContent_(child);
   });
-
 }
 
 // ╔══════════════════════════════════════════════════════════════════╗
@@ -3190,52 +3088,7 @@ function kh_computeMasteryRank_(totalPoints, child) {
 }
 
 
-// v32: Seed STAAR RLA Sprint into Curriculum tab.
-// Reads staar-rla-sprint-final.json content (passed as argument or hardcoded).
-// Adds Week 2 rows for buggsy + jj with StartDate = 2026-04-01.
-function seedStaarRlaSprint(jsonStr) {
-  var sheet = ensureCurriculumTab_();
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0].map(String);
-  var weekCol = headers.indexOf('Week');
-  var childCol = headers.indexOf('Child');
-  var startCol = headers.indexOf('StartDate');
-
-  // Check for existing STAAR sprint rows (idempotent)
-  for (var i = 1; i < data.length; i++) {
-    var startVal = data[i][startCol];
-    var startStr = startVal instanceof Date ? Utilities.formatDate(startVal, 'America/Chicago', 'yyyy-MM-dd') : String(startVal);
-    if (startStr === '2026-04-01') {
-      Logger.log('STAAR RLA sprint already seeded (StartDate 2026-04-01 found). Skipping.');
-      return { status: 'skipped', reason: 'already seeded' };
-    }
-  }
-
-  var parsed;
-  if (jsonStr) {
-    parsed = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
-  } else {
-    // Fallback: read from Drive file named staar-rla-sprint-final.json
-    var files = DriveApp.getFilesByName('staar-rla-sprint-final.json');
-    if (!files.hasNext()) return { status: 'error', message: 'staar-rla-sprint-final.json not found in Drive' };
-    parsed = JSON.parse(files.next().getBlob().getDataAsString());
-  }
-
-  var bugsyContent = parsed.buggsy || {};
-  var jjContent = parsed.jj || {};
-  var nextWeek = sheet.getLastRow(); // 1-indexed, header = row 1
-
-  var bugsyJSON = JSON.stringify(bugsyContent);
-  var jjJSON = JSON.stringify(jjContent);
-
-  sheet.getRange(nextWeek + 1, 1, 2, 4).setValues([
-    [2, 'buggsy', '2026-04-01', bugsyJSON],
-    [2, 'jj',     '2026-04-01', jjJSON]
-  ]);
-
-  Logger.log('STAAR RLA sprint seeded: buggsy=' + bugsyJSON.length + ' bytes, jj=' + jjJSON.length + ' bytes');
-  return { status: 'seeded', bugsySize: bugsyJSON.length, jjSize: jjJSON.length };
-}
+// v37: seedStaarRlaSprint deleted (F03 — duplicate of seedSTAARSprint)
 
 // ════════════════════════════════════════════════════════════════════
 // v36: QuestionLog — per-question result tracking for education modules
@@ -3366,3 +3219,7 @@ function savePowerScanResultsSafe(child, ratings, openResponses) {
     return JSON.parse(JSON.stringify(JSON.parse(savePowerScanResults(child, ratings, openResponses))));
   });
 }
+
+// ════════════════════════════════════════════════════════════════════
+// END OF FILE — KidsHub.gs v37
+// ════════════════════════════════════════════════════════════════════
