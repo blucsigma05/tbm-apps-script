@@ -3,1093 +3,2096 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Sparkle Learn - JJ's Learning World</title>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <meta name="tbm-module" content="sparkle-learn">
+  <meta name="tbm-version" content="v2">
+  <title>SparkleLearn v2 — JJ's Learning Games</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
+    /* ═══════════════════════════════════════════════════
+       SparkleLearn v2 — CSS
+       ═══════════════════════════════════════════════════ */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
     body {
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      background: linear-gradient(170deg, #FFF5F9 0%, #FFF0F9 40%, #F5F0FF 100%);
-      font-family: 'Fredoka', 'Nunito', sans-serif;
-      position: relative;
+      margin: 0; padding: 0; min-height: 100vh;
+      background: linear-gradient(170deg, #1f0e35 0%, #2d1452 50%, #1f0e35 100%);
+      font-family: 'Nunito', 'Arial', sans-serif;
+      color: #fde68a;
       overflow-x: hidden;
+      -webkit-user-select: none; user-select: none;
     }
-    button:active {
-      -webkit-transform: scale(0.97);
-      transform: scale(0.97);
+
+    h1, h2, h3, .heading-text {
+      font-family: 'Fredoka One', 'Arial Rounded MT Bold', sans-serif;
     }
-    button {
+
+    /* ─── Star Counter ─── */
+    .star-counter {
+      position: fixed; top: 12px; right: 16px; z-index: 100;
+      background: linear-gradient(135deg, #a855f7, #ec4899);
+      color: #fff; border-radius: 30px;
+      padding: 8px 18px; font-size: 22px; font-weight: 800;
+      display: -webkit-flex; display: flex;
+      -webkit-align-items: center; align-items: center;
+      gap: 6px; box-shadow: 0 4px 16px rgba(168,85,247,0.5);
+    }
+    .star-counter .star-icon { font-size: 26px; }
+
+    /* ─── Progress Bar ─── */
+    .progress-bar-wrap {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 90;
+      height: 8px; background: rgba(255,255,255,0.1);
+    }
+    .progress-bar-fill {
+      height: 100%; background: linear-gradient(90deg, #ec4899, #a855f7, #fde68a);
+      -webkit-transition: width 0.5s ease; transition: width 0.5s ease;
+      border-radius: 0 4px 4px 0; width: 0%;
+    }
+
+    /* ─── Main Container ─── */
+    .main-container {
+      max-width: 600px; margin: 0 auto;
+      padding: 60px 16px 40px 16px;
+      min-height: 100vh;
+    }
+
+    /* ─── Buttons ─── */
+    .btn-big {
+      display: inline-block;
+      min-width: 64px; min-height: 64px;
+      padding: 16px 28px; margin: 8px;
+      border: none; border-radius: 24px;
+      font-family: 'Fredoka One', sans-serif;
+      font-size: 28px; color: #fff; cursor: pointer;
+      -webkit-transition: transform 0.15s, box-shadow 0.15s;
+      transition: transform 0.15s, box-shadow 0.15s;
       -webkit-appearance: none;
-      outline: none;
+    }
+    .btn-big:active {
+      -webkit-transform: scale(0.93); transform: scale(0.93);
+    }
+    .btn-pink {
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      box-shadow: 0 6px 20px rgba(236,72,153,0.5);
+    }
+    .btn-purple {
+      background: linear-gradient(135deg, #a855f7, #7c3aed);
+      box-shadow: 0 6px 20px rgba(168,85,247,0.5);
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      box-shadow: 0 6px 20px rgba(245,158,11,0.5);
+      color: #1f0e35;
+    }
+    .btn-green {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 6px 20px rgba(16,185,129,0.5);
     }
 
-    /* ─── Header ─── */
-    .sl-header {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      background: rgba(255,245,249,0.92);
-      border-bottom: 2px solid #FFD6E8;
-      padding: 10px 16px;
-    }
-    .sl-header-inner {
-      display: -webkit-flex;
-      display: flex;
-      -webkit-justify-content: space-between;
-      justify-content: space-between;
-      -webkit-align-items: center;
-      align-items: center;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    .sl-header-left {
-      display: -webkit-flex;
-      display: flex;
-      -webkit-align-items: center;
-      align-items: center;
-      gap: 8px;
-    }
-    .sl-header-emoji { font-size: 28px; }
-    .sl-header-title { font-size: 18px; font-weight: 700; color: #FF69B4; }
-    .sl-header-sub { font-size: 10px; color: #C490B8; font-weight: 600; letter-spacing: 1px; }
-    .sl-stars-badge {
-      display: -webkit-flex;
-      display: flex;
-      -webkit-align-items: center;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255,215,0,0.15);
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1px solid rgba(255,215,0,0.3);
-    }
-    .sl-stars-badge .star-icon { font-size: 18px; }
-    .sl-stars-badge .star-count { font-weight: 700; font-size: 16px; color: #4A1942; }
-
-    /* ─── Main ─── */
-    .sl-main {
-      max-width: 500px;
-      margin: 0 auto;
-      padding: 16px 16px 100px;
-      position: relative;
-      z-index: 10;
+    /* ─── Activity Cards ─── */
+    .activity-card {
+      background: rgba(255,255,255,0.08);
+      border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 28px; padding: 28px 20px;
+      margin-bottom: 20px; text-align: center;
     }
 
-    /* ─── Floating BG Sparkles ─── */
-    .sl-bg-sparkles {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      pointer-events: none;
-      z-index: 0;
+    /* ─── Option Grid ─── */
+    .option-grid {
+      display: -webkit-flex; display: flex;
+      -webkit-flex-wrap: wrap; flex-wrap: wrap;
+      -webkit-justify-content: center; justify-content: center;
+      gap: 16px; margin: 20px 0;
     }
-    .sl-bg-dot {
-      position: absolute;
-      border-radius: 50%;
-      opacity: 0.15;
+    .option-btn {
+      min-width: 120px; min-height: 80px;
+      padding: 16px 20px; border: 3px solid rgba(255,255,255,0.2);
+      border-radius: 20px; background: rgba(255,255,255,0.1);
+      color: #fde68a; font-family: 'Fredoka One', sans-serif;
+      font-size: 36px; cursor: pointer;
+      -webkit-transition: all 0.2s; transition: all 0.2s;
+      -webkit-appearance: none;
     }
-
-    /* ─── Footer Nav ─── */
-    .sl-footer {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      background: rgba(255,245,249,0.95);
-      border-top: 2px solid #FFD6E8;
-      padding: 8px 16px;
-      display: -webkit-flex;
-      display: flex;
-      -webkit-justify-content: center;
-      justify-content: center;
-      gap: 20px;
-      z-index: 20;
+    .option-btn:active {
+      -webkit-transform: scale(0.93); transform: scale(0.93);
     }
-    .sl-footer button {
-      background: transparent;
-      border: none;
-      color: #C490B8;
-      font-size: 11px;
-      font-family: 'Fredoka', sans-serif;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 6px 12px;
+    .option-btn.correct {
+      background: rgba(16,185,129,0.4); border-color: #10b981;
+      -webkit-animation: popCorrect 0.4s ease; animation: popCorrect 0.4s ease;
     }
-    .sl-footer .active-tab {
-      background: rgba(255,105,180,0.08);
-      border: 1px solid #FF69B4;
-      color: #FF69B4;
-      font-weight: 700;
-      padding: 6px 14px;
-      border-radius: 6px;
+    .option-btn.wrong {
+      background: rgba(239,68,68,0.3); border-color: #ef4444;
+      -webkit-animation: shake 0.4s ease; animation: shake 0.4s ease;
+    }
+    .option-btn.selected {
+      border-color: #fde68a; background: rgba(253,230,138,0.2);
+      box-shadow: 0 0 20px rgba(253,230,138,0.3);
     }
 
-    /* ─── Home Screen ─── */
-    .sl-greeting { text-align: center; padding: 24px 16px; margin-bottom: 16px; }
-    .sl-greeting-emoji { font-size: 36px; margin-bottom: 8px; }
-    .sl-greeting-title { font-size: 22px; font-weight: 700; color: #4A1942; margin-bottom: 4px; }
-    .sl-greeting-sub { font-size: 14px; color: #8B5E83; }
-
-    .sl-letter-card {
-      background: #FFFFFF;
-      border: 2px solid #FFD6E8;
-      border-radius: 20px;
-      padding: 20px;
-      text-align: center;
-      margin-bottom: 12px;
-      box-shadow: 0 4px 20px rgba(255,105,180,0.1);
+    /* ─── 2x2 Grid ─── */
+    .grid-2x2 {
+      display: -webkit-flex; display: flex;
+      -webkit-flex-wrap: wrap; flex-wrap: wrap;
+      -webkit-justify-content: center; justify-content: center;
+      gap: 16px; margin: 20px auto; max-width: 340px;
     }
-    .sl-letter-label { font-size: 12px; color: #8B5E83; font-weight: 600; margin-bottom: 8px; letter-spacing: 1px; }
-    .sl-letter-big {
-      font-size: 80px;
-      font-weight: 700;
-      color: #FF69B4;
-      line-height: 1;
-      text-shadow: 0 4px 12px rgba(255,105,180,0.3);
-    }
-
-    .sl-actions {
-      display: -webkit-flex;
-      display: flex;
-      -webkit-flex-direction: column;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .sl-btn-trace, .sl-btn-find {
-      padding: 18px 20px;
-      border: none;
-      border-radius: 16px;
-      color: #fff;
-      font-size: 17px;
-      font-weight: 700;
-      cursor: pointer;
-      display: -webkit-flex;
-      display: flex;
-      -webkit-align-items: center;
-      align-items: center;
-      -webkit-justify-content: center;
-      justify-content: center;
-      gap: 10px;
-      font-family: 'Fredoka', sans-serif;
-      -webkit-transition: transform 0.2s;
-      transition: transform 0.2s;
-      min-height: 64px;
-    }
-    .sl-btn-trace {
-      background: linear-gradient(135deg, #FF69B4, #DA70D6);
-      box-shadow: 0 4px 16px rgba(255,105,180,0.3);
-    }
-    .sl-btn-find {
-      background: linear-gradient(135deg, #87CEEB, #DA70D6);
-      box-shadow: 0 4px 16px rgba(135,206,235,0.3);
-    }
-
-    .sl-completed-box, .sl-picker-box {
-      background: #FFFFFF;
-      border: 2px solid #FFD6E8;
-      border-radius: 16px;
-      padding: 14px;
-    }
-    .sl-completed-box { margin-top: 20px; }
-    .sl-picker-box { margin-top: 16px; }
-    .sl-section-label { font-size: 12px; color: #8B5E83; font-weight: 600; margin-bottom: 8px; }
-
-    .sl-completed-grid, .sl-picker-grid {
-      display: -webkit-flex;
-      display: flex;
-      -webkit-flex-wrap: wrap;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .sl-picker-grid {
-      gap: 5px;
-      -webkit-justify-content: center;
-      justify-content: center;
-    }
-    .sl-completed-tile {
-      width: 36px; height: 36px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, rgba(255,105,180,0.13), rgba(255,215,0,0.13));
-      border: 1px solid #FFD6E8;
-      display: -webkit-flex;
-      display: flex;
-      -webkit-align-items: center;
-      align-items: center;
-      -webkit-justify-content: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 16px;
-      color: #FF69B4;
-    }
-    .sl-picker-btn {
-      width: 34px; height: 34px;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-      font-family: 'Fredoka', sans-serif;
-      -webkit-transition: all 0.2s;
-      transition: all 0.2s;
-      min-height: 34px;
-    }
-
-    /* ─── Trace Mode ─── */
-    .sl-trace-title { text-align: center; margin-bottom: 12px; }
-    .sl-trace-title-text { font-size: 16px; font-weight: 700; color: #4A1942; }
-    .sl-trace-letter-hl { color: #FF69B4; font-size: 22px; }
-    .sl-trace-sub { font-size: 12px; color: #8B5E83; margin-top: 4px; }
-
-    .sl-canvas-wrap {
-      background: #FFFFFF;
-      border: 3px solid #FFD6E8;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 8px 32px rgba(255,105,180,0.12);
-      touch-action: none;
-      -ms-touch-action: none;
-    }
-    .sl-canvas-wrap canvas {
-      width: 100%;
-      height: auto;
-      cursor: crosshair;
-      display: block;
-    }
-
-    .sl-trace-btns {
-      display: -webkit-flex;
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
-    .sl-trace-btns button {
-      -webkit-flex: 1;
-      flex: 1;
-      padding: 12px;
-      background: #FFFFFF;
-      border: 2px solid #FFD6E8;
-      border-radius: 12px;
-      color: #8B5E83;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: 'Fredoka', sans-serif;
-      min-height: 64px;
-    }
-
-    /* ─── Identify Mode ─── */
-    .sl-identify-prompt { text-align: center; margin-bottom: 20px; padding: 20px 0; }
-    .sl-identify-label { font-size: 14px; color: #8B5E83; font-weight: 600; margin-bottom: 8px; }
-    .sl-identify-target {
-      font-size: 72px;
-      font-weight: 700;
-      color: #FF69B4;
-      text-shadow: 0 4px 16px rgba(255,105,180,0.3);
-      line-height: 1;
-    }
-    .sl-identify-grid {
-      display: -ms-grid;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-    .sl-identify-btn {
-      padding: 28px 16px;
-      background: #FFFFFF;
-      border: 2px solid #FFD6E8;
-      border-radius: 20px;
-      font-size: 48px;
-      font-weight: 700;
-      color: #4A1942;
-      cursor: pointer;
-      font-family: 'Fredoka', sans-serif;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-      -webkit-transition: all 0.2s;
-      transition: all 0.2s;
-      min-height: 100px;
-    }
-    .sl-identify-btn.correct {
-      background: linear-gradient(135deg, #4ADE80, #22C55E);
-      border: 3px solid #22C55E;
-      color: #fff;
-      -webkit-animation: pop 0.3s ease;
-      animation: pop 0.3s ease;
-    }
-    .sl-identify-btn.shake {
-      -webkit-animation: shake 0.4s ease;
-      animation: shake 0.4s ease;
-    }
-    .sl-identify-home {
-      width: 100%;
-      margin-top: 16px;
-      padding: 12px;
-      background: #FFFFFF;
-      border: 2px solid #FFD6E8;
-      border-radius: 12px;
-      color: #8B5E83;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: 'Fredoka', sans-serif;
-      min-height: 64px;
-    }
-
-    /* ─── Celebrate Mode ─── */
-    .sl-celebrate { text-align: center; padding-top: 40px; }
-    .sl-celebrate-star {
+    .grid-2x2 .option-btn {
+      width: 140px; height: 140px;
+      display: -webkit-flex; display: flex;
+      -webkit-align-items: center; align-items: center;
+      -webkit-justify-content: center; justify-content: center;
       font-size: 64px;
-      margin-bottom: 12px;
-      -webkit-animation: pop 0.5s ease;
-      animation: pop 0.5s ease;
-    }
-    .sl-celebrate-title {
-      font-size: 28px;
-      font-weight: 700;
-      color: #FF69B4;
-      margin-bottom: 8px;
-      -webkit-animation: pop 0.5s ease 0.1s both;
-      animation: pop 0.5s ease 0.1s both;
-    }
-    .sl-celebrate-sub { font-size: 16px; color: #8B5E83; margin-bottom: 4px; }
-    .sl-celebrate-award { font-size: 14px; color: #FFD700; font-weight: 600; margin-bottom: 24px; }
-
-    .sl-burst-wrap { position: relative; height: 100px; }
-    .sl-burst-dot {
-      position: absolute;
-      left: 50%; top: 50%;
-      border-radius: 50%;
     }
 
-    .sl-celebrate-btns {
-      display: -webkit-flex;
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
+    /* ─── Big Letter Display ─── */
+    .big-letter {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: 200px; line-height: 1;
+      color: #ec4899; text-shadow: 0 0 40px rgba(236,72,153,0.5);
+      margin: 10px 0;
     }
-    .sl-btn-next {
-      -webkit-flex: 1;
-      flex: 1;
-      padding: 16px;
-      background: linear-gradient(135deg, #FF69B4, #DA70D6);
-      border: none;
-      border-radius: 14px;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: 'Fredoka', sans-serif;
-      box-shadow: 0 4px 16px rgba(255,105,180,0.3);
-      min-height: 64px;
+
+    /* ─── Scatter Area ─── */
+    .scatter-area {
+      position: relative; width: 100%; height: 320px;
+      background: rgba(255,255,255,0.05); border-radius: 24px;
+      margin: 16px 0; overflow: hidden;
     }
-    .sl-btn-home-small {
-      padding: 16px 20px;
-      background: #FFFFFF;
-      border: 2px solid #FFD6E8;
-      border-radius: 14px;
-      color: #8B5E83;
-      font-size: 16px;
-      font-weight: 700;
+    .scatter-obj {
+      position: absolute; cursor: pointer;
+      -webkit-transition: transform 0.2s, opacity 0.2s;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+    .scatter-obj.tapped {
+      -webkit-transform: scale(1.3); transform: scale(1.3);
+    }
+    .scatter-obj.counted {
+      opacity: 0.5;
+    }
+
+    /* ─── Count Badge ─── */
+    .count-badge {
+      position: fixed; top: 50%; left: 50%;
+      -webkit-transform: translate(-50%,-50%); transform: translate(-50%,-50%);
+      font-family: 'Fredoka One', sans-serif; font-size: 120px;
+      color: #fde68a; text-shadow: 0 0 40px rgba(253,230,138,0.7);
+      pointer-events: none; z-index: 200;
+      -webkit-animation: countPop 0.6s ease forwards;
+      animation: countPop 0.6s ease forwards;
+    }
+
+    /* ─── Trace Canvas ─── */
+    .trace-canvas-wrap {
+      position: relative; width: 300px; height: 350px;
+      margin: 16px auto; border-radius: 24px;
+      background: rgba(255,255,255,0.08); overflow: hidden;
+    }
+    .trace-canvas-wrap canvas {
+      display: block; width: 100%; height: 100%;
+    }
+
+    /* ─── Bin Row ─── */
+    .bin-row {
+      display: -webkit-flex; display: flex;
+      -webkit-justify-content: center; justify-content: center;
+      gap: 12px; margin-top: 16px;
+    }
+    .color-bin {
+      width: 80px; height: 80px; border-radius: 16px;
+      border: 3px solid rgba(255,255,255,0.3);
+      cursor: pointer; -webkit-transition: all 0.2s; transition: all 0.2s;
+      display: -webkit-flex; display: flex;
+      -webkit-align-items: center; align-items: center;
+      -webkit-justify-content: center; justify-content: center;
+      font-size: 12px; color: #fff; font-weight: 700;
+    }
+    .color-bin.selected-bin {
+      border-color: #fde68a; box-shadow: 0 0 20px rgba(253,230,138,0.4);
+      -webkit-transform: scale(1.1); transform: scale(1.1);
+    }
+
+    /* ─── Name Builder ─── */
+    .name-slots {
+      display: -webkit-flex; display: flex;
+      -webkit-justify-content: center; justify-content: center;
+      gap: 8px; margin: 16px 0;
+    }
+    .name-slot {
+      width: 56px; height: 64px; border-radius: 12px;
+      border: 3px dashed rgba(255,255,255,0.3);
+      display: -webkit-flex; display: flex;
+      -webkit-align-items: center; align-items: center;
+      -webkit-justify-content: center; justify-content: center;
+      font-family: 'Fredoka One', sans-serif; font-size: 32px;
+      color: #ec4899;
+    }
+    .name-slot.filled {
+      border-style: solid; border-color: #ec4899;
+      background: rgba(236,72,153,0.15);
+    }
+    .letter-bank {
+      display: -webkit-flex; display: flex;
+      -webkit-flex-wrap: wrap; flex-wrap: wrap;
+      -webkit-justify-content: center; justify-content: center;
+      gap: 10px; margin: 16px 0;
+    }
+    .letter-bank-btn {
+      width: 64px; height: 64px; border-radius: 16px;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: rgba(168,85,247,0.2);
+      color: #fde68a; font-family: 'Fredoka One', sans-serif;
+      font-size: 28px; cursor: pointer;
+      -webkit-appearance: none;
+      -webkit-transition: all 0.15s; transition: all 0.15s;
+    }
+    .letter-bank-btn:active { -webkit-transform: scale(0.9); transform: scale(0.9); }
+    .letter-bank-btn.used {
+      opacity: 0.3; pointer-events: none;
+    }
+
+    /* ─── Story Panel ─── */
+    .story-panel {
+      background: rgba(255,255,255,0.06); border-radius: 24px;
+      padding: 24px 20px; margin: 16px 0;
+      font-size: 20px; line-height: 1.6; color: #e0d4f5;
+      text-align: left;
+    }
+
+    /* ─── Pattern Row ─── */
+    .pattern-row {
+      display: -webkit-flex; display: flex;
+      -webkit-align-items: center; align-items: center;
+      -webkit-justify-content: center; justify-content: center;
+      gap: 10px; margin: 20px 0;
+      -webkit-flex-wrap: wrap; flex-wrap: wrap;
+    }
+    .pattern-item {
+      width: 64px; height: 64px;
+      display: -webkit-flex; display: flex;
+      -webkit-align-items: center; align-items: center;
+      -webkit-justify-content: center; justify-content: center;
+      border-radius: 14px; background: rgba(255,255,255,0.08);
+    }
+    .pattern-mystery {
+      width: 64px; height: 64px; border-radius: 14px;
+      border: 3px dashed #fde68a; background: rgba(253,230,138,0.1);
+      display: -webkit-flex; display: flex;
+      -webkit-align-items: center; align-items: center;
+      -webkit-justify-content: center; justify-content: center;
+      font-family: 'Fredoka One', sans-serif; font-size: 36px;
+      color: #fde68a;
+    }
+
+    /* ─── Word Card ─── */
+    .word-cards {
+      display: -webkit-flex; display: flex;
+      -webkit-justify-content: center; justify-content: center;
+      gap: 12px; margin: 16px 0;
+      -webkit-flex-wrap: wrap; flex-wrap: wrap;
+    }
+    .word-card {
+      background: rgba(236,72,153,0.15); border: 2px solid rgba(236,72,153,0.3);
+      border-radius: 16px; padding: 14px 20px;
+      font-size: 22px; font-weight: 700; color: #fde68a;
       cursor: pointer;
-      font-family: 'Fredoka', sans-serif;
-      min-height: 64px;
+    }
+    .word-card:active { -webkit-transform: scale(0.95); transform: scale(0.95); }
+
+    /* ─── Feedback Overlay ─── */
+    .feedback-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 300; display: -webkit-flex; display: flex;
+      -webkit-align-items: center; align-items: center;
+      -webkit-justify-content: center; justify-content: center;
+      pointer-events: none;
+    }
+    .feedback-text {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: 60px; color: #10b981;
+      text-shadow: 0 0 30px rgba(16,185,129,0.6);
+      -webkit-animation: feedbackPop 1s ease forwards;
+      animation: feedbackPop 1s ease forwards;
+    }
+    .feedback-text.wrong-fb {
+      color: #f59e0b; font-size: 40px;
+      text-shadow: 0 0 30px rgba(245,158,11,0.6);
+    }
+
+    /* ─── Celebration ─── */
+    .celebration-wrap {
+      text-align: center; padding-top: 40px;
+    }
+    .celebration-stars {
+      font-size: 80px; margin: 20px 0;
+      -webkit-animation: celebSpin 2s ease infinite;
+      animation: celebSpin 2s ease infinite;
+    }
+
+    /* ─── Sparkle Particles ─── */
+    .sparkle-particle {
+      position: fixed; width: 8px; height: 8px;
+      border-radius: 50%; pointer-events: none; z-index: 500;
+      -webkit-animation: sparkleFloat 1.5s ease forwards;
+      animation: sparkleFloat 1.5s ease forwards;
+    }
+
+    /* ─── Confetti ─── */
+    .confetti-piece {
+      position: fixed; width: 10px; height: 16px;
+      z-index: 400; pointer-events: none;
+      -webkit-animation: confettiFall 3s ease forwards;
+      animation: confettiFall 3s ease forwards;
+    }
+
+    /* ─── Ready Screen ─── */
+    .ready-screen { text-align: center; padding-top: 30px; }
+    .ready-title {
+      font-family: 'Fredoka One', sans-serif;
+      font-size: 42px; color: #ec4899;
+      text-shadow: 0 0 30px rgba(236,72,153,0.4);
+      margin-bottom: 10px;
+    }
+    .ready-subtitle {
+      font-size: 22px; color: #e0d4f5; margin-bottom: 30px;
+    }
+    .activity-preview {
+      display: -webkit-flex; display: flex;
+      -webkit-flex-wrap: wrap; flex-wrap: wrap;
+      -webkit-justify-content: center; justify-content: center;
+      gap: 12px; margin: 20px 0;
+    }
+    .preview-dot {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.2);
+    }
+    .preview-dot.done { background: #10b981; border-color: #10b981; }
+    .preview-dot.current { background: #ec4899; border-color: #ec4899;
+      -webkit-animation: pulse 1.5s ease infinite; animation: pulse 1.5s ease infinite; }
+
+    /* ─── Fallback ─── */
+    .fallback-wrap { text-align: center; padding-top: 60px; }
+
+    /* ─── Instruction Text ─── */
+    .instruction {
+      font-size: 24px; color: #e0d4f5;
+      margin: 12px 0 20px 0; line-height: 1.4;
     }
 
     /* ─── Animations ─── */
-    @-webkit-keyframes fadeUp {
-      from { opacity: 0; -webkit-transform: translateY(16px); transform: translateY(16px); }
-      to { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); }
+    @-webkit-keyframes popCorrect {
+      0% { -webkit-transform: scale(1); } 50% { -webkit-transform: scale(1.15); } 100% { -webkit-transform: scale(1); }
     }
-    @keyframes fadeUp {
-      from { opacity: 0; -webkit-transform: translateY(16px); transform: translateY(16px); }
-      to { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); }
-    }
-    @-webkit-keyframes pop {
-      0% { -webkit-transform: scale(0.5); transform: scale(0.5); opacity: 0; }
-      70% { -webkit-transform: scale(1.15); transform: scale(1.15); }
-      100% { -webkit-transform: scale(1); transform: scale(1); opacity: 1; }
-    }
-    @keyframes pop {
-      0% { -webkit-transform: scale(0.5); transform: scale(0.5); opacity: 0; }
-      70% { -webkit-transform: scale(1.15); transform: scale(1.15); }
-      100% { -webkit-transform: scale(1); transform: scale(1); opacity: 1; }
+    @keyframes popCorrect {
+      0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); }
     }
     @-webkit-keyframes shake {
-      0%, 100% { -webkit-transform: translateX(0); transform: translateX(0); }
-      20%, 60% { -webkit-transform: translateX(-8px); transform: translateX(-8px); }
-      40%, 80% { -webkit-transform: translateX(8px); transform: translateX(8px); }
+      0%,100% { -webkit-transform: translateX(0); }
+      25% { -webkit-transform: translateX(-8px); }
+      75% { -webkit-transform: translateX(8px); }
     }
     @keyframes shake {
-      0%, 100% { -webkit-transform: translateX(0); transform: translateX(0); }
-      20%, 60% { -webkit-transform: translateX(-8px); transform: translateX(-8px); }
-      40%, 80% { -webkit-transform: translateX(8px); transform: translateX(8px); }
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
     }
-    @-webkit-keyframes floatSparkle {
-      0%, 100% { -webkit-transform: translateY(0) scale(1); transform: translateY(0) scale(1); opacity: 0.15; }
-      50% { -webkit-transform: translateY(-12px) scale(1.3); transform: translateY(-12px) scale(1.3); opacity: 0.35; }
+    @-webkit-keyframes countPop {
+      0% { opacity: 0; -webkit-transform: translate(-50%,-50%) scale(0.3); }
+      40% { opacity: 1; -webkit-transform: translate(-50%,-50%) scale(1.2); }
+      100% { opacity: 0; -webkit-transform: translate(-50%,-50%) scale(1.5); }
     }
-    @keyframes floatSparkle {
-      0%, 100% { -webkit-transform: translateY(0) scale(1); transform: translateY(0) scale(1); opacity: 0.15; }
-      50% { -webkit-transform: translateY(-12px) scale(1.3); transform: translateY(-12px) scale(1.3); opacity: 0.35; }
+    @keyframes countPop {
+      0% { opacity: 0; transform: translate(-50%,-50%) scale(0.3); }
+      40% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5); }
     }
-    @-webkit-keyframes burstOut {
-      0% { -webkit-transform: translate(-50%, -50%) scale(1); transform: translate(-50%, -50%) scale(1); opacity: 1; }
-      100% { -webkit-transform: translate(-50%, -50%) scale(0); transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    @-webkit-keyframes feedbackPop {
+      0% { opacity: 0; -webkit-transform: scale(0.5); }
+      30% { opacity: 1; -webkit-transform: scale(1.1); }
+      70% { opacity: 1; -webkit-transform: scale(1); }
+      100% { opacity: 0; -webkit-transform: scale(0.8); }
     }
-    @keyframes burstOut {
-      0% { -webkit-transform: translate(-50%, -50%) scale(1); transform: translate(-50%, -50%) scale(1); opacity: 1; }
-      100% { -webkit-transform: translate(-50%, -50%) scale(0); transform: translate(-50%, -50%) scale(0); opacity: 0; }
+    @keyframes feedbackPop {
+      0% { opacity: 0; transform: scale(0.5); }
+      30% { opacity: 1; transform: scale(1.1); }
+      70% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.8); }
+    }
+    @-webkit-keyframes pulse {
+      0%,100% { -webkit-transform: scale(1); opacity: 1; }
+      50% { -webkit-transform: scale(1.3); opacity: 0.7; }
+    }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
+    }
+    @-webkit-keyframes celebSpin {
+      0%,100% { -webkit-transform: rotate(0deg) scale(1); }
+      50% { -webkit-transform: rotate(10deg) scale(1.1); }
+    }
+    @keyframes celebSpin {
+      0%,100% { transform: rotate(0deg) scale(1); }
+      50% { transform: rotate(10deg) scale(1.1); }
+    }
+    @-webkit-keyframes sparkleFloat {
+      0% { opacity: 1; -webkit-transform: translateY(0) scale(1); }
+      100% { opacity: 0; -webkit-transform: translateY(-60px) scale(0); }
+    }
+    @keyframes sparkleFloat {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-60px) scale(0); }
+    }
+    @-webkit-keyframes confettiFall {
+      0% { opacity: 1; -webkit-transform: translateY(0) rotate(0deg); }
+      100% { opacity: 0; -webkit-transform: translateY(100vh) rotate(720deg); }
+    }
+    @keyframes confettiFall {
+      0% { opacity: 1; transform: translateY(0) rotate(0deg); }
+      100% { opacity: 0; transform: translateY(100vh) rotate(720deg); }
+    }
+    @-webkit-keyframes bgSparkle {
+      0%,100% { opacity: 0.3; } 50% { opacity: 0.8; }
+    }
+    @keyframes bgSparkle {
+      0%,100% { opacity: 0.3; } 50% { opacity: 0.8; }
     }
 
-    .fadeUp {
-      -webkit-animation: fadeUp 0.4s ease;
-      animation: fadeUp 0.4s ease;
+    /* ─── Background Stars ─── */
+    .bg-star {
+      position: fixed; pointer-events: none; z-index: 0;
+      width: 4px; height: 4px; border-radius: 50%;
+      background: #fde68a;
+      -webkit-animation: bgSparkle 3s ease infinite;
+      animation: bgSparkle 3s ease infinite;
     }
   </style>
 </head>
 <body>
 
-  <!-- ─── Floating BG Sparkles ─── -->
-  <div class="sl-bg-sparkles" id="bgSparkles"></div>
-
-  <!-- ─── Header ─── -->
-  <header class="sl-header">
-    <div class="sl-header-inner">
-      <div class="sl-header-left">
-        <span class="sl-header-emoji">&#10024;</span>
-        <div>
-          <div class="sl-header-title">Sparkle Learn</div>
-          <div class="sl-header-sub">JJ'S LEARNING WORLD</div>
-        </div>
-      </div>
-      <div class="sl-stars-badge">
-        <span class="star-icon">&#11088;</span>
-        <span class="star-count" id="starsCount">0</span>
-      </div>
-    </div>
-  </header>
-
-  <!-- ─── Main Content ─── -->
-  <main class="sl-main" id="mainContent"></main>
-
-  <!-- ─── Footer Nav ─── -->
-  <div class="sl-footer">
-    <button>&#11088; Chores</button>
-    <button class="active-tab">&#10024; Learn</button>
-    <button>&#128290; Math</button>
+  <!-- Star Counter -->
+  <div class="star-counter" id="starCounter">
+    <span class="star-icon">&#11088;</span>
+    <span id="starCount">0</span>
   </div>
 
+  <!-- Progress Bar -->
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-container" id="mainContent">
+    <div style="text-align:center;padding-top:80px;">
+      <div class="big-letter" style="font-size:60px;">&#10024;</div>
+      <p class="instruction">Loading sparkle games...</p>
+    </div>
+  </div>
+
+  <!-- Background Stars -->
+  <div id="bgStars"></div>
+
 <script>
-/* ======================================================================
-   SparkleLearn — ES5 Vanilla JS
-   JJ's Letter Learning Module
-   ====================================================================== */
+/* ═══════════════════════════════════════════════════════════
+   SparkleLearn v2 — JJ's Learning Games
+   ES5 ONLY — No let/const, arrow functions, template literals
+   ═══════════════════════════════════════════════════════════ */
 
-(function() {
-  'use strict';
+/* ─── Global State ─── */
+var todayContent = null;
+var currentActivityIndex = 0;
+var completedActivities = [];
+var totalStars = 0;
+var lettersCompleted = [];
+var audioCache = {};
+var activityLocked = false;
+var countState = {};
+var traceState = {};
+var sortState = {};
+var nameState = {};
 
-  // ─── Constants ───
-  var ALL_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+/* ─── Color Map ─── */
+var COLOR_MAP = {
+  red: '#ef4444', blue: '#3b82f6', green: '#10b981',
+  yellow: '#fbbf24', purple: '#a855f7', pink: '#ec4899',
+  orange: '#f97316', cyan: '#06b6d4', white: '#ffffff',
+  brown: '#92400e', black: '#1f2937', gold: '#fde68a'
+};
 
-  var COLORS = {
-    bg: '#FFF5F9',
-    surface: '#FFFFFF',
-    card: '#FFF0F5',
-    border: '#FFD6E8',
-    sparkle: '#FF69B4',
-    sparkleAlt: '#DA70D6',
-    sparkleGold: '#FFD700',
-    sparkleBlue: '#87CEEB',
-    text: '#4A1942',
-    textMuted: '#8B5E83',
-    textLight: '#C490B8',
-    success: '#4ADE80',
-    successBg: '#F0FFF4',
-    star: '#FFD700',
-    trailColors: ['#FF69B4', '#DA70D6', '#FFD700', '#87CEEB', '#FF6EB4', '#DDA0DD']
-  };
+/* ═══════════════════════════════════════════════════════════
+   AUDIO SYSTEM
+   ═══════════════════════════════════════════════════════════ */
+function speak(text, onEnd) {
+  if (!text) { if (onEnd) { onEnd(); } return; }
+  var u = new SpeechSynthesisUtterance(String(text));
+  u.rate = 0.85;
+  u.pitch = 1.1;
+  if (onEnd) { u.onend = onEnd; }
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
 
-  // ─── State ───
-  var mode = 'home';
-  var currentLetter = 'J';
-  var trailPoints = [];
-  var sparkleParticles = [];
-  var completedLetters = [];
-  var stars = 0;
-  var identifyOptions = [];
-  var identifyTarget = '';
-  var identifyResult = null;
-  var celebrateText = '';
-  var isTracing = false;
-  var animFrameId = null;
-  var canvasEl = null;
+function speakOptions(options, index, callback) {
+  if (index >= options.length) { if (callback) { callback(); } return; }
+  speak(String(options[index]), function() {
+    setTimeout(function() { speakOptions(options, index + 1, callback); }, 300);
+  });
+}
 
-  // ─── Audio System (Batch Preload) ───
-  var audioCache = {};
-  var audioLoading = false;
-  var CELEBRATE_CLIPS = ['celebrate1.mp3', 'celebrate2.mp3', 'celebrate3.mp3'];
+function playAudioCached(name) {
+  if (audioCache[name]) {
+    try {
+      audioCache[name].currentTime = 0;
+      audioCache[name].play();
+    } catch (e) { /* silent */ }
+  }
+}
 
-  function buildAudioFilenames() {
-    var files = [];
-    for (var i = 0; i < ALL_LETTERS.length; i++) {
-      files.push(ALL_LETTERS[i] + '.mp3');
+/* ═══════════════════════════════════════════════════════════
+   SVG SHAPE RENDERER
+   ═══════════════════════════════════════════════════════════ */
+function renderShape(shape, color, size) {
+  var c = COLOR_MAP[color] || color || '#ec4899';
+  var s = size || 48;
+  var half = s / 2;
+
+  switch (shape) {
+    case 'circle':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<circle cx="50" cy="50" r="45" fill="' + c + '"/></svg>';
+
+    case 'square':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<rect x="10" y="10" width="80" height="80" rx="8" fill="' + c + '"/></svg>';
+
+    case 'triangle':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<polygon points="50,8 95,92 5,92" fill="' + c + '"/></svg>';
+
+    case 'star':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<polygon points="50,5 63,35 95,35 69,57 79,90 50,70 21,90 31,57 5,35 37,35" fill="' + c + '"/></svg>';
+
+    case 'heart':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<path d="M50 88 C25 65 5 50 5 30 C5 15 18 5 32 5 C40 5 47 9 50 15 C53 9 60 5 68 5 C82 5 95 15 95 30 C95 50 75 65 50 88Z" fill="' + c + '"/></svg>';
+
+    case 'rectangle':
+      return '<svg width="' + s + '" height="' + Math.round(s * 0.6) + '" viewBox="0 0 100 60">' +
+        '<rect x="5" y="5" width="90" height="50" rx="6" fill="' + c + '"/></svg>';
+
+    case 'diamond':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<polygon points="50,5 95,50 50,95 5,50" fill="' + c + '"/></svg>';
+
+    case 'moon':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<path d="M60 10 C35 15 20 38 20 55 C20 78 40 95 60 95 C45 85 38 70 38 55 C38 35 48 18 60 10Z" fill="' + c + '"/></svg>';
+
+    case 'sun':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<circle cx="50" cy="50" r="25" fill="' + c + '"/>' +
+        '<g stroke="' + c + '" stroke-width="4" stroke-linecap="round">' +
+        '<line x1="50" y1="5" x2="50" y2="18"/>' +
+        '<line x1="50" y1="82" x2="50" y2="95"/>' +
+        '<line x1="5" y1="50" x2="18" y2="50"/>' +
+        '<line x1="82" y1="50" x2="95" y2="50"/>' +
+        '<line x1="18" y1="18" x2="27" y2="27"/>' +
+        '<line x1="73" y1="73" x2="82" y2="82"/>' +
+        '<line x1="82" y1="18" x2="73" y2="27"/>' +
+        '<line x1="27" y1="73" x2="18" y2="82"/>' +
+        '</g></svg>';
+
+    case 'butterfly':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<ellipse cx="30" cy="40" rx="25" ry="20" fill="' + c + '" opacity="0.8"/>' +
+        '<ellipse cx="70" cy="40" rx="25" ry="20" fill="' + c + '" opacity="0.8"/>' +
+        '<ellipse cx="35" cy="65" rx="18" ry="15" fill="' + c + '" opacity="0.6"/>' +
+        '<ellipse cx="65" cy="65" rx="18" ry="15" fill="' + c + '" opacity="0.6"/>' +
+        '<line x1="50" y1="30" x2="50" y2="80" stroke="#1f0e35" stroke-width="3"/></svg>';
+
+    case 'flower':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<circle cx="50" cy="30" r="18" fill="' + c + '" opacity="0.8"/>' +
+        '<circle cx="30" cy="48" r="18" fill="' + c + '" opacity="0.8"/>' +
+        '<circle cx="70" cy="48" r="18" fill="' + c + '" opacity="0.8"/>' +
+        '<circle cx="35" cy="70" r="18" fill="' + c + '" opacity="0.8"/>' +
+        '<circle cx="65" cy="70" r="18" fill="' + c + '" opacity="0.8"/>' +
+        '<circle cx="50" cy="52" r="12" fill="#fbbf24"/></svg>';
+
+    case 'gem':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<polygon points="50,5 85,35 50,95 15,35" fill="' + c + '"/>' +
+        '<polygon points="50,5 85,35 50,35" fill="rgba(255,255,255,0.25)"/></svg>';
+
+    case 'rainbow':
+      return '<svg width="' + s + '" height="' + Math.round(s * 0.6) + '" viewBox="0 0 100 60">' +
+        '<path d="M10 55 A40 40 0 0 1 90 55" fill="none" stroke="#ef4444" stroke-width="6"/>' +
+        '<path d="M16 55 A34 34 0 0 1 84 55" fill="none" stroke="#f97316" stroke-width="6"/>' +
+        '<path d="M22 55 A28 28 0 0 1 78 55" fill="none" stroke="#fbbf24" stroke-width="6"/>' +
+        '<path d="M28 55 A22 22 0 0 1 72 55" fill="none" stroke="#10b981" stroke-width="6"/>' +
+        '<path d="M34 55 A16 16 0 0 1 66 55" fill="none" stroke="#3b82f6" stroke-width="6"/>' +
+        '<path d="M40 55 A10 10 0 0 1 60 55" fill="none" stroke="#a855f7" stroke-width="6"/></svg>';
+
+    default:
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+        '<circle cx="50" cy="50" r="45" fill="' + c + '"/></svg>';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   OBJECT SCATTER
+   ═══════════════════════════════════════════════════════════ */
+function scatterObjects(count, areaWidth, areaHeight, minSpacing) {
+  var positions = [];
+  var objSize = 56;
+  var maxAttempts = 100;
+
+  for (var i = 0; i < count; i++) {
+    var placed = false;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      var x = Math.floor(Math.random() * (areaWidth - objSize - 20)) + 10;
+      var y = Math.floor(Math.random() * (areaHeight - objSize - 20)) + 10;
+      var collision = false;
+
+      for (var j = 0; j < positions.length; j++) {
+        var dx = x - positions[j].x;
+        var dy = y - positions[j].y;
+        if (Math.sqrt(dx * dx + dy * dy) < minSpacing) {
+          collision = true;
+          break;
+        }
+      }
+
+      if (!collision) {
+        positions.push({ x: x, y: y });
+        placed = true;
+        break;
+      }
     }
-    for (var c = 0; c < CELEBRATE_CLIPS.length; c++) {
-      files.push(CELEBRATE_CLIPS[c]);
+
+    /* Fallback to grid */
+    if (!placed) {
+      var cols = Math.ceil(Math.sqrt(count));
+      var cellW = Math.floor(areaWidth / cols);
+      var cellH = Math.floor(areaHeight / Math.ceil(count / cols));
+      var row = Math.floor(i / cols);
+      var col = i % cols;
+      positions.push({
+        x: col * cellW + Math.floor(cellW / 2) - Math.floor(objSize / 2),
+        y: row * cellH + Math.floor(cellH / 2) - Math.floor(objSize / 2)
+      });
     }
-    return files;
   }
 
-  function preloadAudio() {
-    if (audioLoading) return;
-    if (typeof google === 'undefined' || !google.script || !google.script.run) return;
-    audioLoading = true;
-    var filenames = buildAudioFilenames();
-    google.script.run
-      .withSuccessHandler(function(result) {
-        audioLoading = false;
-        if (result && !result.error) {
-          var keys = Object.keys(result);
-          for (var i = 0; i < keys.length; i++) {
-            audioCache[keys[i]] = result[keys[i]];
+  return positions;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VISUAL EFFECTS
+   ═══════════════════════════════════════════════════════════ */
+function showFeedback(text, isCorrect) {
+  var overlay = document.createElement('div');
+  overlay.className = 'feedback-overlay';
+  var span = document.createElement('div');
+  span.className = 'feedback-text' + (isCorrect ? '' : ' wrong-fb');
+  span.textContent = text;
+  overlay.appendChild(span);
+  document.body.appendChild(overlay);
+  setTimeout(function() {
+    if (overlay.parentNode) { overlay.parentNode.removeChild(overlay); }
+  }, 1200);
+}
+
+function showCountBadge(num) {
+  var badge = document.createElement('div');
+  badge.className = 'count-badge';
+  badge.textContent = String(num);
+  document.body.appendChild(badge);
+  setTimeout(function() {
+    if (badge.parentNode) { badge.parentNode.removeChild(badge); }
+  }, 700);
+}
+
+function spawnSparkles(x, y, count) {
+  var colors = ['#ec4899', '#a855f7', '#fde68a', '#10b981', '#3b82f6'];
+  for (var i = 0; i < (count || 8); i++) {
+    var p = document.createElement('div');
+    p.className = 'sparkle-particle';
+    p.style.left = (x + (Math.random() * 40 - 20)) + 'px';
+    p.style.top = (y + (Math.random() * 40 - 20)) + 'px';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.animationDelay = (Math.random() * 0.3) + 's';
+    document.body.appendChild(p);
+    (function(el) {
+      setTimeout(function() { if (el.parentNode) { el.parentNode.removeChild(el); } }, 2000);
+    })(p);
+  }
+}
+
+function launchConfetti() {
+  var colors = ['#ec4899', '#a855f7', '#fde68a', '#10b981', '#3b82f6', '#f97316', '#ef4444'];
+  for (var i = 0; i < 40; i++) {
+    var c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.left = (Math.random() * 100) + 'vw';
+    c.style.top = '-20px';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    c.style.animationDelay = (Math.random() * 1.5) + 's';
+    c.style.animationDuration = (2 + Math.random() * 2) + 's';
+    document.body.appendChild(c);
+    (function(el) {
+      setTimeout(function() { if (el.parentNode) { el.parentNode.removeChild(el); } }, 5000);
+    })(c);
+  }
+}
+
+function initBgStars() {
+  var container = document.getElementById('bgStars');
+  if (!container) { return; }
+  for (var i = 0; i < 30; i++) {
+    var star = document.createElement('div');
+    star.className = 'bg-star';
+    star.style.left = (Math.random() * 100) + '%';
+    star.style.top = (Math.random() * 100) + '%';
+    star.style.animationDelay = (Math.random() * 5) + 's';
+    star.style.animationDuration = (2 + Math.random() * 4) + 's';
+    container.appendChild(star);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UI HELPERS
+   ═══════════════════════════════════════════════════════════ */
+function updateStarCounter() {
+  var el = document.getElementById('starCount');
+  if (el) { el.textContent = String(totalStars); }
+}
+
+function updateProgressBar() {
+  var bar = document.getElementById('progressBar');
+  if (!bar || !todayContent || !todayContent.activities) { return; }
+  var pct = Math.round((currentActivityIndex / todayContent.activities.length) * 100);
+  bar.style.width = pct + '%';
+}
+
+function getMainContent() {
+  return document.getElementById('mainContent');
+}
+
+function shuffleArray(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = a[i];
+    a[i] = a[j];
+    a[j] = temp;
+  }
+  return a;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONTENT LOADING + INIT
+   ═══════════════════════════════════════════════════════════ */
+function init() {
+  initBgStars();
+
+  google.script.run
+    .withSuccessHandler(function(progress) {
+      if (progress) {
+        totalStars = progress.stars || 0;
+        updateStarCounter();
+      }
+      loadContent();
+    })
+    .withFailureHandler(function() {
+      loadContent();
+    })
+    .loadProgressSafe('jj');
+
+  /* Preload audio clips */
+  var audioFiles = [];
+  for (var i = 0; i < 26; i++) {
+    audioFiles.push(String.fromCharCode(65 + i) + '.mp3');
+  }
+  audioFiles.push('correct.mp3', 'celebration.mp3', 'try-again.mp3');
+  google.script.run
+    .withSuccessHandler(function(batch) {
+      if (batch) {
+        for (var k in batch) {
+          if (batch.hasOwnProperty(k)) {
+            audioCache[k] = new Audio('data:audio/mp3;base64,' + batch[k]);
           }
         }
-      })
-      .withFailureHandler(function() {
-        audioLoading = false;
-      })
-      .getAudioBatchSafe(filenames);
+      }
+    })
+    .withFailureHandler(function() { /* continue without cached audio */ })
+    .getAudioBatchSafe(audioFiles);
+}
+
+function loadContent() {
+  google.script.run
+    .withSuccessHandler(function(content) {
+      if (content && content.content && content.content.activities) {
+        todayContent = content.content;
+        showReadyScreen(todayContent);
+      } else {
+        showFallback();
+      }
+    })
+    .withFailureHandler(function() {
+      showFallback();
+    })
+    .getTodayContentSafe('jj');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   READY SCREEN
+   ═══════════════════════════════════════════════════════════ */
+function showReadyScreen(content) {
+  var mc = getMainContent();
+  var actCount = content.activities ? content.activities.length : 0;
+  var html = '<div class="ready-screen">';
+  html += '<div class="ready-title">&#10024; SparkleLearn &#10024;</div>';
+  html += '<p class="ready-subtitle">Hi JJ! You have ' + actCount + ' sparkle games today!</p>';
+  html += '<div class="activity-preview">';
+  for (var i = 0; i < actCount; i++) {
+    html += '<div class="preview-dot"></div>';
+  }
+  html += '</div>';
+  html += '<button class="btn-big btn-pink" onclick="startSession()" style="font-size:36px;padding:20px 48px;margin-top:20px;">';
+  html += "Let's Play! &#127775;</button>";
+  html += '</div>';
+  mc.innerHTML = html;
+
+  speak("Hi JJ! You have " + actCount + " sparkle games today! Tap Let's Play to start!");
+}
+
+function startSession() {
+  currentActivityIndex = 0;
+  completedActivities = [];
+  updateProgressBar();
+  renderActivity(currentActivityIndex);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY ROUTER
+   ═══════════════════════════════════════════════════════════ */
+function renderActivity(index) {
+  if (!todayContent || !todayContent.activities) { return; }
+  if (index >= todayContent.activities.length) {
+    showSessionComplete();
+    return;
   }
 
-  function playAudio(filename, fallbackText) {
-    if (audioCache[filename]) {
-      try {
-        var audio = new Audio('data:audio/mp3;base64,' + audioCache[filename]);
-        audio.play();
-        return;
-      } catch (e) { /* fall through to TTS */ }
+  currentActivityIndex = index;
+  activityLocked = false;
+  updateProgressBar();
+
+  var activity = todayContent.activities[index];
+  var type = activity.type;
+
+  switch (type) {
+    case 'letter_intro':       renderLetterIntro(activity); break;
+    case 'find_letter':        renderFindLetter(activity); break;
+    case 'find_number':        renderFindNumber(activity); break;
+    case 'count_with_me':      renderCountWithMe(activity); break;
+    case 'quantity_match':     renderQuantityMatch(activity); break;
+    case 'color_hunt':         renderColorHunt(activity); break;
+    case 'shape_match':        renderShapeMatch(activity); break;
+    case 'pattern_next':       renderPatternNext(activity); break;
+    case 'letter_sound':       renderLetterSound(activity); break;
+    case 'beginning_sound':    renderBeginningSound(activity); break;
+    case 'letter_trace':       renderLetterTrace(activity); break;
+    case 'number_trace':       renderNumberTrace(activity); break;
+    case 'audio_story':        renderAudioStory(activity); break;
+    case 'color_sort':         renderColorSort(activity); break;
+    case 'more_or_less':       renderMoreOrLess(activity); break;
+    case 'name_builder':       renderNameBuilder(activity); break;
+    case 'celebration':        renderCelebration(activity); break;
+    default:
+      /* Skip unknown types */
+      advanceActivity(activity.stars || 0);
+  }
+}
+
+function advanceActivity(starsEarned) {
+  completedActivities.push({
+    index: currentActivityIndex,
+    starsEarned: starsEarned || 0
+  });
+  totalStars += (starsEarned || 0);
+  updateStarCounter();
+
+  setTimeout(function() {
+    renderActivity(currentActivityIndex + 1);
+  }, 600);
+}
+
+function handleCorrectAnswer(activity, el) {
+  if (activityLocked) { return; }
+  activityLocked = true;
+
+  if (el) {
+    el.className += ' correct';
+    var rect = el.getBoundingClientRect();
+    spawnSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2, 12);
+  }
+
+  playAudioCached('correct.mp3');
+  showFeedback('Great job!', true);
+  speak("Great job!", function() {
+    advanceActivity(activity.stars || 1);
+  });
+}
+
+function handleWrongAnswer(el) {
+  if (activityLocked) { return; }
+  if (el) { el.className += ' wrong'; }
+  playAudioCached('try-again.mp3');
+  speak("Try again!");
+  setTimeout(function() {
+    if (el) {
+      el.className = el.className.replace(' wrong', '');
     }
-    // Fallback to Web Speech API
-    if (fallbackText && window.speechSynthesis) {
-      var u = new SpeechSynthesisUtterance(fallbackText);
-      u.rate = 0.85;
-      u.pitch = 1.2;
-      window.speechSynthesis.speak(u);
+  }, 600);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 1: LETTER INTRO
+   ═══════════════════════════════════════════════════════════ */
+function renderLetterIntro(activity) {
+  var mc = getMainContent();
+  var letter = activity.letter || 'A';
+  var words = activity.words || ['Apple', 'Ant', 'Alligator'];
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Meet the letter:</p>';
+  html += '<div class="big-letter">' + letter.toUpperCase() + '</div>';
+  html += '<p class="instruction" style="font-size:20px;">and lowercase: <span style="font-size:80px;color:#a855f7;">' + letter.toLowerCase() + '</span></p>';
+  html += '<div class="word-cards">';
+  for (var i = 0; i < words.length; i++) {
+    html += '<div class="word-card" onclick="speak(\'' + words[i].replace(/'/g, "\\'") + '\')">' + words[i] + '</div>';
+  }
+  html += '</div>';
+  html += '<button class="btn-big btn-green" onclick="handleLetterIntroDone()" style="margin-top:20px;">I got it! &#128077;</button>';
+  html += '</div>';
+  mc.innerHTML = html;
+
+  /* Track letter */
+  if (lettersCompleted.indexOf(letter.toUpperCase()) === -1) {
+    lettersCompleted.push(letter.toUpperCase());
+  }
+
+  speak("This is the letter " + letter.toUpperCase() + "!", function() {
+    speak(letter.toUpperCase() + " is for " + words.join(", and "));
+  });
+}
+
+function handleLetterIntroDone() {
+  if (activityLocked) { return; }
+  activityLocked = true;
+  var act = todayContent.activities[currentActivityIndex];
+  showFeedback('Awesome!', true);
+  speak("Awesome!", function() {
+    advanceActivity(act.stars || 1);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 2: FIND LETTER
+   ═══════════════════════════════════════════════════════════ */
+function renderFindLetter(activity) {
+  var mc = getMainContent();
+  var target = activity.target || 'A';
+  var options = activity.options || ['A', 'B', 'C', 'D'];
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Find the letter:</p>';
+  html += '<div class="big-letter" style="font-size:100px;">' + target.toUpperCase() + '</div>';
+  html += '<div class="grid-2x2">';
+  for (var i = 0; i < options.length; i++) {
+    html += '<button class="option-btn" onclick="checkFindLetter(this, \'' + options[i] + '\', \'' + target + '\')">' + options[i].toUpperCase() + '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Find the letter " + target.toUpperCase() + "!", function() {
+    speakOptions(options, 0);
+  });
+}
+
+function checkFindLetter(el, chosen, target) {
+  if (chosen.toUpperCase() === target.toUpperCase()) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 3: FIND NUMBER
+   ═══════════════════════════════════════════════════════════ */
+function renderFindNumber(activity) {
+  var mc = getMainContent();
+  var target = activity.target || '3';
+  var options = activity.options || ['1', '2', '3', '4'];
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Find the number:</p>';
+  html += '<div class="big-letter" style="font-size:100px;">' + String(target) + '</div>';
+  html += '<div class="grid-2x2">';
+  for (var i = 0; i < options.length; i++) {
+    html += '<button class="option-btn" onclick="checkFindNumber(this, \'' + options[i] + '\', \'' + target + '\')">' + String(options[i]) + '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Find the number " + target + "!", function() {
+    var labels = [];
+    for (var j = 0; j < options.length; j++) { labels.push(String(options[j])); }
+    speakOptions(labels, 0);
+  });
+}
+
+function checkFindNumber(el, chosen, target) {
+  if (String(chosen) === String(target)) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 4: COUNT WITH ME
+   ═══════════════════════════════════════════════════════════ */
+function renderCountWithMe(activity) {
+  var mc = getMainContent();
+  var count = activity.count || 5;
+  var shape = activity.shape || 'star';
+  var color = activity.color || 'pink';
+
+  countState = { total: count, tapped: 0, done: false };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Tap each ' + shape + ' to count!</p>';
+  html += '<div class="scatter-area" id="scatterArea">';
+
+  var positions = scatterObjects(count, 320, 280, 80);
+  for (var i = 0; i < count; i++) {
+    html += '<div class="scatter-obj" id="countObj' + i + '" ';
+    html += 'style="left:' + positions[i].x + 'px;top:' + positions[i].y + 'px;" ';
+    html += 'onclick="tapCountObject(' + i + ')">';
+    html += renderShape(shape, color, 56);
+    html += '</div>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Tap each " + shape + " to count them! There are " + count + "!");
+}
+
+function tapCountObject(idx) {
+  if (countState.done) { return; }
+  var el = document.getElementById('countObj' + idx);
+  if (!el || el.className.indexOf('counted') !== -1) { return; }
+
+  countState.tapped++;
+  el.className += ' tapped counted';
+  showCountBadge(countState.tapped);
+  speak(String(countState.tapped));
+
+  var rect = el.getBoundingClientRect();
+  spawnSparkles(rect.left + 28, rect.top + 28, 5);
+
+  if (countState.tapped >= countState.total) {
+    countState.done = true;
+    setTimeout(function() {
+      handleCorrectAnswer(todayContent.activities[currentActivityIndex], null);
+    }, 800);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 5: QUANTITY MATCH (tap-tap)
+   ═══════════════════════════════════════════════════════════ */
+function renderQuantityMatch(activity) {
+  var mc = getMainContent();
+  var groups = activity.groups || [
+    { dots: 3, numeral: '3' },
+    { dots: 5, numeral: '5' },
+    { dots: 2, numeral: '2' }
+  ];
+
+  var qmState = { phase: 'dots', selectedDots: null, pairsLeft: groups.length, groups: groups };
+  window._qmState = qmState;
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Tap the dots, then tap the matching number!</p>';
+  html += '<div style="display:-webkit-flex;display:flex;-webkit-justify-content:space-around;justify-content:space-around;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:16px;">';
+
+  /* Dot groups */
+  html += '<div>';
+  html += '<p style="font-size:18px;color:#e0d4f5;margin-bottom:8px;">Dots</p>';
+  var shuffledG = shuffleArray(groups);
+  for (var i = 0; i < shuffledG.length; i++) {
+    html += '<button class="option-btn" id="qmDots' + i + '" style="display:block;margin:8px auto;min-width:100px;font-size:18px;" ';
+    html += 'onclick="tapQmDots(' + i + ',' + shuffledG[i].dots + ')">';
+    for (var d = 0; d < shuffledG[i].dots; d++) {
+      html += '&#9679; ';
     }
+    html += '</button>';
+  }
+  html += '</div>';
+
+  /* Numeral buttons */
+  html += '<div>';
+  html += '<p style="font-size:18px;color:#e0d4f5;margin-bottom:8px;">Numbers</p>';
+  var shuffledN = shuffleArray(groups);
+  for (var j = 0; j < shuffledN.length; j++) {
+    html += '<button class="option-btn" id="qmNum' + j + '" style="display:block;margin:8px auto;min-width:100px;" ';
+    html += 'onclick="tapQmNum(' + j + ',' + shuffledN[j].dots + ')">' + shuffledN[j].numeral + '</button>';
+  }
+  html += '</div>';
+
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  window._qmShuffledG = shuffledG;
+  window._qmShuffledN = shuffledN;
+
+  speak("Tap the dots, then tap the matching number!");
+}
+
+function tapQmDots(idx, dotCount) {
+  var st = window._qmState;
+  if (!st || st.phase !== 'dots') { return; }
+  var el = document.getElementById('qmDots' + idx);
+  if (!el || el.className.indexOf('correct') !== -1) { return; }
+
+  /* Deselect previous */
+  var all = document.querySelectorAll('[id^=qmDots]');
+  for (var i = 0; i < all.length; i++) {
+    all[i].className = all[i].className.replace(' selected', '');
   }
 
-  function playLetterAudio(letter) {
-    playAudio(letter + '.mp3', letter);
-  }
+  el.className += ' selected';
+  st.selectedDots = dotCount;
+  st.selectedDotsIdx = idx;
+  st.phase = 'num';
+  speak(dotCount + " dots. Now find the number " + dotCount + "!");
+}
 
-  function playCelebration() {
-    var clip = CELEBRATE_CLIPS[Math.floor(Math.random() * CELEBRATE_CLIPS.length)];
-    playAudio(clip, 'Great job!');
-  }
+function tapQmNum(idx, dotCount) {
+  var st = window._qmState;
+  if (!st || st.phase !== 'num') { return; }
+  var el = document.getElementById('qmNum' + idx);
+  if (!el || el.className.indexOf('correct') !== -1) { return; }
 
-  // ─── Sparkle Particle (ES5 constructor) ───
-  function Sparkle(x, y) {
-    this.x = x;
-    this.y = y;
-    this.size = Math.random() * 6 + 2;
-    this.color = COLORS.trailColors[Math.floor(Math.random() * COLORS.trailColors.length)];
-    this.vx = (Math.random() - 0.5) * 3;
-    this.vy = (Math.random() - 0.5) * 3 - 1;
-    this.life = 1;
-    this.decay = Math.random() * 0.02 + 0.015;
-    this.shape = Math.random() > 0.5 ? 'star' : 'circle';
-  }
+  if (dotCount === st.selectedDots) {
+    el.className += ' correct';
+    var dotsEl = document.getElementById('qmDots' + st.selectedDotsIdx);
+    if (dotsEl) { dotsEl.className += ' correct'; }
+    st.pairsLeft--;
+    st.phase = 'dots';
+    st.selectedDots = null;
 
-  Sparkle.prototype.update = function() {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.vy += 0.05;
-    this.life -= this.decay;
-    this.size *= 0.99;
-  };
-
-  Sparkle.prototype.draw = function(ctx) {
-    if (this.life <= 0) return;
-    ctx.save();
-    ctx.globalAlpha = this.life;
-    ctx.fillStyle = this.color;
-    if (this.shape === 'star') {
-      drawStar(ctx, this.x, this.y, 5, this.size, this.size / 2);
+    if (st.pairsLeft <= 0) {
+      handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
     } else {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-      ctx.fill();
+      speak("Yes! " + dotCount + "! Find the next match!");
+      spawnSparkles(el.getBoundingClientRect().left + 50, el.getBoundingClientRect().top + 40, 8);
     }
-    ctx.restore();
-  };
+  } else {
+    handleWrongAnswer(el);
+    st.phase = 'dots';
+    st.selectedDots = null;
+    var prevDots = document.getElementById('qmDots' + st.selectedDotsIdx);
+    if (prevDots) { prevDots.className = prevDots.className.replace(' selected', ''); }
+  }
+}
 
-  function drawStar(ctx, cx, cy, spikes, outerR, innerR) {
-    var rot = (Math.PI / 2) * 3;
-    var step = Math.PI / spikes;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - outerR);
-    for (var i = 0; i < spikes; i++) {
-      ctx.lineTo(cx + Math.cos(rot) * outerR, cy + Math.sin(rot) * outerR);
-      rot += step;
-      ctx.lineTo(cx + Math.cos(rot) * innerR, cy + Math.sin(rot) * innerR);
-      rot += step;
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 6: COLOR HUNT
+   ═══════════════════════════════════════════════════════════ */
+function renderColorHunt(activity) {
+  var mc = getMainContent();
+  var targetColor = activity.targetColor || 'red';
+  var shapes = activity.shapes || [];
+  /* shapes: [{shape:'circle', color:'red'}, {shape:'square', color:'blue'}, ...] */
+
+  if (shapes.length === 0) {
+    /* Generate default */
+    var allColors = ['red', 'blue', 'green', 'yellow', 'purple'];
+    for (var g = 0; g < 8; g++) {
+      shapes.push({
+        shape: ['circle', 'star', 'heart', 'square'][Math.floor(Math.random() * 4)],
+        color: g < 3 ? targetColor : allColors[Math.floor(Math.random() * allColors.length)]
+      });
     }
-    ctx.closePath();
-    ctx.fill();
   }
 
-  // ─── Floating BG Sparkles ───
-  function initBgSparkles() {
-    var container = document.getElementById('bgSparkles');
-    var html = '';
-    for (var i = 0; i < 20; i++) {
-      var x = Math.random() * 100;
-      var y = Math.random() * 100;
-      var size = Math.random() * 8 + 4;
-      var delay = Math.random() * 5;
-      var duration = Math.random() * 3 + 3;
-      var color = COLORS.trailColors[i % COLORS.trailColors.length];
-      html += '<div class="sl-bg-dot" style="'
-        + 'left:' + x + '%;'
-        + 'top:' + y + '%;'
-        + 'width:' + size + 'px;'
-        + 'height:' + size + 'px;'
-        + 'background:' + color + ';'
-        + '-webkit-animation:floatSparkle ' + duration + 's ease-in-out ' + delay + 's infinite;'
-        + 'animation:floatSparkle ' + duration + 's ease-in-out ' + delay + 's infinite;'
-        + '"></div>';
+  var targetCount = 0;
+  for (var t = 0; t < shapes.length; t++) {
+    if (shapes[t].color === targetColor) { targetCount++; }
+  }
+
+  window._chState = { targetColor: targetColor, found: 0, total: targetCount };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Tap all the <span style="color:' + (COLOR_MAP[targetColor] || targetColor) + ';font-weight:800;">' + targetColor + '</span> shapes!</p>';
+  html += '<div class="scatter-area" id="colorHuntArea">';
+
+  var positions = scatterObjects(shapes.length, 320, 280, 80);
+  for (var i = 0; i < shapes.length; i++) {
+    html += '<div class="scatter-obj" id="chObj' + i + '" ';
+    html += 'style="left:' + positions[i].x + 'px;top:' + positions[i].y + 'px;" ';
+    html += 'onclick="tapColorHunt(' + i + ',\'' + shapes[i].color + '\')">';
+    html += renderShape(shapes[i].shape, shapes[i].color, 56);
+    html += '</div>';
+  }
+
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Find all the " + targetColor + " shapes! Tap them!");
+}
+
+function tapColorHunt(idx, color) {
+  var st = window._chState;
+  if (!st) { return; }
+  var el = document.getElementById('chObj' + idx);
+  if (!el || el.className.indexOf('tapped') !== -1) { return; }
+
+  if (color === st.targetColor) {
+    el.className += ' tapped';
+    st.found++;
+    var rect = el.getBoundingClientRect();
+    spawnSparkles(rect.left + 28, rect.top + 28, 6);
+    speak("Yes!");
+
+    if (st.found >= st.total) {
+      setTimeout(function() {
+        handleCorrectAnswer(todayContent.activities[currentActivityIndex], null);
+      }, 500);
     }
-    container.innerHTML = html;
+  } else {
+    speak("That one is not " + st.targetColor + ". Try again!");
   }
+}
 
-  // ─── Update Stars Display ───
-  function updateStarsDisplay() {
-    var el = document.getElementById('starsCount');
-    if (el) el.textContent = stars;
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 7: SHAPE MATCH
+   ═══════════════════════════════════════════════════════════ */
+function renderShapeMatch(activity) {
+  var mc = getMainContent();
+  var target = activity.target || 'star';
+  var options = activity.options || ['circle', 'star', 'triangle', 'square'];
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Find the shape:</p>';
+  html += '<div style="margin:16px 0;">' + renderShape(target, 'gold', 120) + '</div>';
+  html += '<p class="instruction" style="font-size:20px;">Which one is the ' + target + '?</p>';
+  html += '<div class="grid-2x2">';
+  for (var i = 0; i < options.length; i++) {
+    html += '<button class="option-btn" style="padding:12px;" onclick="checkShapeMatch(this,\'' + options[i] + '\',\'' + target + '\')">';
+    html += renderShape(options[i], 'pink', 80);
+    html += '</button>';
   }
+  html += '</div></div>';
+  mc.innerHTML = html;
 
-  // ─── Canvas Animation Loop ───
-  function animate() {
-    if (!canvasEl) return;
-    var ctx = canvasEl.getContext('2d');
-    var W = canvasEl.width;
-    var H = canvasEl.height;
+  speak("Find the " + target + "! Which shape is the " + target + "?");
+}
 
-    ctx.clearRect(0, 0, W, H);
+function checkShapeMatch(el, chosen, target) {
+  if (chosen === target) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
 
-    // Draw guide letter (dotted)
-    ctx.save();
-    var fontSize = Math.min(W, H) * 0.6;
-    ctx.font = 'bold ' + fontSize + 'px Fredoka, sans-serif';
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 8: PATTERN NEXT
+   ═══════════════════════════════════════════════════════════ */
+function renderPatternNext(activity) {
+  var mc = getMainContent();
+  var pattern = activity.pattern || [
+    { shape: 'circle', color: 'red' },
+    { shape: 'square', color: 'blue' },
+    { shape: 'circle', color: 'red' },
+    { shape: 'square', color: 'blue' }
+  ];
+  var answer = activity.answer || { shape: 'circle', color: 'red' };
+  var options = activity.options || [
+    { shape: 'circle', color: 'red' },
+    { shape: 'triangle', color: 'green' },
+    { shape: 'square', color: 'yellow' }
+  ];
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">What comes next in the pattern?</p>';
+  html += '<div class="pattern-row">';
+  for (var i = 0; i < pattern.length; i++) {
+    html += '<div class="pattern-item">' + renderShape(pattern[i].shape, pattern[i].color, 50) + '</div>';
+  }
+  html += '<div class="pattern-mystery">?</div>';
+  html += '</div>';
+  html += '<div class="option-grid">';
+  for (var j = 0; j < options.length; j++) {
+    var isCorrect = (options[j].shape === answer.shape && options[j].color === answer.color);
+    html += '<button class="option-btn" style="padding:12px;min-width:90px;" ';
+    html += 'onclick="checkPatternNext(this,' + (isCorrect ? 'true' : 'false') + ')">';
+    html += renderShape(options[j].shape, options[j].color, 60);
+    html += '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Look at the pattern! What comes next? Tap the right shape!");
+}
+
+function checkPatternNext(el, isCorrect) {
+  if (isCorrect) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 9: LETTER SOUND
+   ═══════════════════════════════════════════════════════════ */
+function renderLetterSound(activity) {
+  var mc = getMainContent();
+  var letter = activity.letter || 'B';
+  var sound = activity.sound || 'buh';
+  var words = activity.words || ['Ball', 'Bear', 'Banana'];
+
+  var html = '<div class="activity-card">';
+  html += '<div class="big-letter">' + letter.toUpperCase() + '</div>';
+  html += '<p class="instruction">' + letter.toUpperCase() + ' says "' + sound + '"!</p>';
+  html += '<button class="btn-big btn-purple" onclick="speak(\'' + letter.toUpperCase() + ' says ' + sound + '\')" style="margin:10px;">&#128266; Hear it again</button>';
+  html += '<div class="word-cards">';
+  for (var i = 0; i < words.length; i++) {
+    html += '<div class="word-card" onclick="speak(\'' + words[i].replace(/'/g, "\\'") + ' starts with ' + sound + '\')">';
+    html += '<span style="color:#ec4899;font-size:28px;">' + words[i].charAt(0).toUpperCase() + '</span>' + words[i].substring(1);
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<button class="btn-big btn-green" onclick="handleLetterSoundDone()" style="margin-top:16px;">I got it! &#128077;</button>';
+  html += '</div>';
+  mc.innerHTML = html;
+
+  speak(letter.toUpperCase() + " says " + sound + "!", function() {
+    speak(words[0] + " starts with " + sound);
+  });
+}
+
+function handleLetterSoundDone() {
+  if (activityLocked) { return; }
+  activityLocked = true;
+  var act = todayContent.activities[currentActivityIndex];
+  showFeedback('Super!', true);
+  speak("Super!", function() {
+    advanceActivity(act.stars || 1);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 10: BEGINNING SOUND
+   ═══════════════════════════════════════════════════════════ */
+function renderBeginningSound(activity) {
+  var mc = getMainContent();
+  var word = activity.word || 'Cat';
+  var answer = activity.answer || 'C';
+  var options = activity.options || ['C', 'D', 'B', 'F'];
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">What letter does this word start with?</p>';
+  html += '<button class="btn-big btn-purple" onclick="speak(\'' + word.replace(/'/g, "\\'") + '\')" style="font-size:32px;margin:16px;">&#128266; ' + word + '</button>';
+  html += '<div class="grid-2x2">';
+  for (var i = 0; i < options.length; i++) {
+    html += '<button class="option-btn" onclick="checkBeginningSound(this,\'' + options[i] + '\',\'' + answer + '\')">' + options[i].toUpperCase() + '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak(word + "! What letter does " + word + " start with?", function() {
+    speakOptions(options, 0);
+  });
+}
+
+function checkBeginningSound(el, chosen, answer) {
+  if (chosen.toUpperCase() === answer.toUpperCase()) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 11: LETTER TRACE
+   ═══════════════════════════════════════════════════════════ */
+function renderLetterTrace(activity) {
+  var mc = getMainContent();
+  var letter = activity.letter || 'A';
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Trace the letter with your finger!</p>';
+  html += '<div class="trace-canvas-wrap" id="traceWrap">';
+  html += '<canvas id="traceCanvas" width="300" height="350"></canvas>';
+  html += '</div>';
+  html += '<div style="display:-webkit-flex;display:flex;-webkit-justify-content:center;justify-content:center;gap:12px;margin-top:12px;">';
+  html += '<button class="btn-big btn-purple" onclick="clearTraceCanvas()">Try Again</button>';
+  html += '<button class="btn-big btn-green" onclick="handleTraceDone()">Done! &#128077;</button>';
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  traceState = { drawing: false, letter: letter };
+
+  setTimeout(function() {
+    var canvas = document.getElementById('traceCanvas');
+    if (!canvas) { return; }
+    var ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    /* Draw guide letter */
+    ctx.fillStyle = 'rgba(168,85,247,0.15)';
+    ctx.font = 'bold ' + Math.floor(canvas.height * 0.75) + 'px Fredoka One, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.strokeStyle = COLORS.border;
-    ctx.lineWidth = 3;
-    ctx.setLineDash([8, 6]);
-    ctx.strokeText(currentLetter, W / 2, H / 2);
-    ctx.setLineDash([]);
-    ctx.restore();
+    ctx.fillText(letter.toUpperCase(), canvas.width / 2, canvas.height / 2);
 
-    // Draw trail
-    if (trailPoints.length > 1) {
-      ctx.save();
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      for (var i = 1; i < trailPoints.length; i++) {
-        var t = i / trailPoints.length;
-        ctx.beginPath();
-        ctx.moveTo(trailPoints[i - 1].x, trailPoints[i - 1].y);
-        ctx.lineTo(trailPoints[i].x, trailPoints[i].y);
-        var colorIdx = Math.floor(i / 3) % COLORS.trailColors.length;
-        ctx.strokeStyle = COLORS.trailColors[colorIdx];
-        ctx.lineWidth = 8 + Math.sin(i * 0.3) * 3;
-        ctx.globalAlpha = 0.5 + t * 0.5;
-        ctx.stroke();
-      }
-      // Glow on top
-      for (var j = 1; j < trailPoints.length; j++) {
-        var t2 = j / trailPoints.length;
-        ctx.beginPath();
-        ctx.moveTo(trailPoints[j - 1].x, trailPoints[j - 1].y);
-        ctx.lineTo(trailPoints[j].x, trailPoints[j].y);
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 3;
-        ctx.globalAlpha = t2 * 0.4;
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
+    /* Touch drawing */
+    ctx.strokeStyle = '#ec4899';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-    // Draw sparkle particles
-    var alive = [];
-    for (var k = 0; k < sparkleParticles.length; k++) {
-      sparkleParticles[k].update();
-      sparkleParticles[k].draw(ctx);
-      if (sparkleParticles[k].life > 0) {
-        alive.push(sparkleParticles[k]);
-      }
-    }
-    sparkleParticles = alive;
-
-    animFrameId = requestAnimationFrame(animate);
-  }
-
-  function startAnimation() {
-    if (animFrameId) cancelAnimationFrame(animFrameId);
-    animFrameId = requestAnimationFrame(animate);
-  }
-
-  function stopAnimation() {
-    if (animFrameId) {
-      cancelAnimationFrame(animFrameId);
-      animFrameId = null;
-    }
-  }
-
-  // ─── Touch/Mouse Handlers ───
-  function getPos(e) {
-    var canvas = canvasEl;
-    var rect = canvas.getBoundingClientRect();
-    var touch = e.touches ? e.touches[0] : e;
-    return {
-      x: (touch.clientX - rect.left) * (canvas.width / rect.width),
-      y: (touch.clientY - rect.top) * (canvas.height / rect.height)
+    var getPos = function(e) {
+      var rect = canvas.getBoundingClientRect();
+      var touch = e.touches ? e.touches[0] : e;
+      return {
+        x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+        y: (touch.clientY - rect.top) * (canvas.height / rect.height)
+      };
     };
+
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      traceState.drawing = true;
+      var pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    });
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (!traceState.drawing) { return; }
+      var pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    });
+    canvas.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      traceState.drawing = false;
+    });
+
+    /* Mouse fallback */
+    canvas.addEventListener('mousedown', function(e) {
+      traceState.drawing = true;
+      var pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    });
+    canvas.addEventListener('mousemove', function(e) {
+      if (!traceState.drawing) { return; }
+      var pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    });
+    canvas.addEventListener('mouseup', function() { traceState.drawing = false; });
+  }, 100);
+
+  speak("Trace the letter " + letter.toUpperCase() + " with your finger! Follow the purple shape!");
+}
+
+function clearTraceCanvas() {
+  var canvas = document.getElementById('traceCanvas');
+  if (!canvas) { return; }
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  /* Redraw guide */
+  ctx.fillStyle = 'rgba(168,85,247,0.15)';
+  ctx.font = 'bold ' + Math.floor(canvas.height * 0.75) + 'px Fredoka One, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(traceState.letter.toUpperCase(), canvas.width / 2, canvas.height / 2);
+
+  ctx.strokeStyle = '#ec4899';
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  speak("Try again! Trace the letter " + traceState.letter.toUpperCase());
+}
+
+function handleTraceDone() {
+  if (activityLocked) { return; }
+  activityLocked = true;
+  var act = todayContent.activities[currentActivityIndex];
+  showFeedback('Beautiful!', true);
+  speak("Beautiful tracing!", function() {
+    advanceActivity(act.stars || 1);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 12: NUMBER TRACE
+   ═══════════════════════════════════════════════════════════ */
+function renderNumberTrace(activity) {
+  var mc = getMainContent();
+  var numeral = activity.numeral || '1';
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Trace the number with your finger!</p>';
+  html += '<div class="trace-canvas-wrap" id="traceWrap">';
+  html += '<canvas id="traceCanvas" width="300" height="350"></canvas>';
+  html += '</div>';
+  html += '<div style="display:-webkit-flex;display:flex;-webkit-justify-content:center;justify-content:center;gap:12px;margin-top:12px;">';
+  html += '<button class="btn-big btn-purple" onclick="clearNumTraceCanvas()">Try Again</button>';
+  html += '<button class="btn-big btn-green" onclick="handleNumTraceDone()">Done! &#128077;</button>';
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  traceState = { drawing: false, numeral: numeral };
+
+  setTimeout(function() {
+    var canvas = document.getElementById('traceCanvas');
+    if (!canvas) { return; }
+    var ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    ctx.fillStyle = 'rgba(168,85,247,0.15)';
+    ctx.font = 'bold ' + Math.floor(canvas.height * 0.75) + 'px Fredoka One, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(numeral), canvas.width / 2, canvas.height / 2);
+
+    ctx.strokeStyle = '#fde68a';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    var getPos = function(e) {
+      var rect = canvas.getBoundingClientRect();
+      var touch = e.touches ? e.touches[0] : e;
+      return {
+        x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+        y: (touch.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    };
+
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault(); traceState.drawing = true;
+      var pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+    });
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault(); if (!traceState.drawing) { return; }
+      var pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+    });
+    canvas.addEventListener('touchend', function(e) { e.preventDefault(); traceState.drawing = false; });
+    canvas.addEventListener('mousedown', function(e) {
+      traceState.drawing = true; var pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+    });
+    canvas.addEventListener('mousemove', function(e) {
+      if (!traceState.drawing) { return; }
+      var pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+    });
+    canvas.addEventListener('mouseup', function() { traceState.drawing = false; });
+  }, 100);
+
+  speak("Trace the number " + numeral + " with your finger!");
+}
+
+function clearNumTraceCanvas() {
+  var canvas = document.getElementById('traceCanvas');
+  if (!canvas) { return; }
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'rgba(168,85,247,0.15)';
+  ctx.font = 'bold ' + Math.floor(canvas.height * 0.75) + 'px Fredoka One, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(traceState.numeral), canvas.width / 2, canvas.height / 2);
+  ctx.strokeStyle = '#fde68a';
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  speak("Try again! Trace the number " + traceState.numeral);
+}
+
+function handleNumTraceDone() {
+  if (activityLocked) { return; }
+  activityLocked = true;
+  var act = todayContent.activities[currentActivityIndex];
+  showFeedback('Great number!', true);
+  speak("Great number tracing!", function() {
+    advanceActivity(act.stars || 1);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 13: AUDIO STORY
+   ═══════════════════════════════════════════════════════════ */
+function renderAudioStory(activity) {
+  var mc = getMainContent();
+  var story = activity.story || 'Once upon a time, a little bunny hopped through the garden.';
+  var question = activity.question || 'What animal was in the story?';
+  var answer = activity.answer || 'Bunny';
+  var options = activity.options || ['Bunny', 'Cat', 'Dog'];
+
+  window._storyState = { phase: 'listening', answer: answer };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Listen to the story!</p>';
+  html += '<div class="story-panel" id="storyText">' + story + '</div>';
+  html += '<button class="btn-big btn-purple" id="storyPlayBtn" onclick="playStoryAudio()">&#128266; Listen Again</button>';
+  html += '<div id="storyQuestion" style="display:none;">';
+  html += '<p class="instruction" style="margin-top:20px;">' + question + '</p>';
+  html += '<div class="option-grid">';
+  for (var i = 0; i < options.length; i++) {
+    html += '<button class="option-btn" style="font-size:24px;min-width:100px;" ';
+    html += 'onclick="checkStoryAnswer(this,\'' + options[i].replace(/'/g, "\\'") + '\')">' + options[i] + '</button>';
   }
+  html += '</div></div></div>';
+  mc.innerHTML = html;
 
-  function handleStart(e) {
-    e.preventDefault();
-    isTracing = true;
-    var pos = getPos(e);
-    trailPoints = [pos];
-  }
+  speak(story, function() {
+    setTimeout(function() {
+      var qEl = document.getElementById('storyQuestion');
+      if (qEl) { qEl.style.display = 'block'; }
+      speak(question, function() {
+        speakOptions(options, 0);
+      });
+    }, 500);
+  });
+}
 
-  function handleMove(e) {
-    e.preventDefault();
-    if (!isTracing) return;
-    var pos = getPos(e);
-    trailPoints.push(pos);
-    if (Math.random() > 0.5) {
-      sparkleParticles.push(new Sparkle(pos.x, pos.y));
-    }
-  }
+function playStoryAudio() {
+  var act = todayContent.activities[currentActivityIndex];
+  speak(act.story || 'Once upon a time...');
+}
 
-  function handleEnd(e) {
-    e.preventDefault();
-    isTracing = false;
-    if (trailPoints.length > 30) {
-      // Burst of sparkles
-      var cx = canvasEl.width / 2;
-      var cy = canvasEl.height / 2;
-      for (var i = 0; i < 30; i++) {
-        sparkleParticles.push(new Sparkle(
-          cx + (Math.random() - 0.5) * 100,
-          cy + (Math.random() - 0.5) * 100
-        ));
-      }
-      setTimeout(function() {
-        if (completedLetters.indexOf(currentLetter) === -1) {
-          completedLetters.push(currentLetter);
-        }
-        stars += 1;
-        updateStarsDisplay();
-        playLetterAudio(currentLetter);
-        playCelebration();
-        celebrateText = 'You traced ' + currentLetter + '!';
-        stopAnimation();
-        mode = 'celebrate';
-        render();
-      }, 800);
-    }
-  }
-
-  function bindCanvasEvents() {
-    canvasEl = document.getElementById('traceCanvas');
-    if (!canvasEl) return;
-    canvasEl.addEventListener('touchstart', handleStart, false);
-    canvasEl.addEventListener('touchmove', handleMove, false);
-    canvasEl.addEventListener('touchend', handleEnd, false);
-    canvasEl.addEventListener('mousedown', handleStart, false);
-    canvasEl.addEventListener('mousemove', handleMove, false);
-    canvasEl.addEventListener('mouseup', handleEnd, false);
-    startAnimation();
-  }
-
-  // ─── Identify Game ───
-  function startIdentify() {
-    var target = ALL_LETTERS[Math.floor(Math.random() * 10)];
-    var opts = [target];
-    while (opts.length < 4) {
-      var r = ALL_LETTERS[Math.floor(Math.random() * 10)];
-      if (opts.indexOf(r) === -1) opts.push(r);
-    }
-    opts.sort(function() { return Math.random() - 0.5; });
-    identifyTarget = target;
-    identifyOptions = opts;
-    identifyResult = null;
-    mode = 'identify';
-    render();
-  }
-
-  function handleIdentifyTap(letter) {
-    if (identifyResult !== null) return;
-    playLetterAudio(letter);
-    if (letter === identifyTarget) {
-      identifyResult = 'correct';
-      stars += 1;
-      updateStarsDisplay();
-      render();
-      setTimeout(function() {
-        playCelebration();
-        celebrateText = 'You found ' + identifyTarget + '!';
-        mode = 'celebrate';
-        render();
-      }, 1000);
-    } else {
-      identifyResult = 'wrong';
-      render();
-      setTimeout(function() {
-        identifyResult = null;
-        render();
-      }, 600);
-    }
-  }
-  // expose for onclick
-  window.handleIdentifyTap = handleIdentifyTap;
-
-  // ─── Navigation ───
-  function goHome() {
-    stopAnimation();
-    mode = 'home';
-    render();
-  }
-  window.goHome = goHome;
-
-  function goTrace() {
-    trailPoints = [];
-    sparkleParticles = [];
-    mode = 'trace';
-    render();
-    setTimeout(bindCanvasEvents, 50);
-  }
-  window.goTrace = goTrace;
-
-  function clearTrace() {
-    trailPoints = [];
-    sparkleParticles = [];
-  }
-  window.clearTrace = clearTrace;
-
-  window.startIdentify = startIdentify;
-
-  function nextLetter() {
-    var idx = ALL_LETTERS.indexOf(currentLetter);
-    currentLetter = ALL_LETTERS[(idx + 1) % 26];
-    trailPoints = [];
-    sparkleParticles = [];
-    mode = 'home';
-    render();
-  }
-  window.nextLetter = nextLetter;
-
-  function pickLetter(l) {
-    currentLetter = l;
-    playLetterAudio(l);
-    render();
-  }
-  window.pickLetter = pickLetter;
-
-  // ─── Render ───
-  function render() {
-    var main = document.getElementById('mainContent');
-    var html = '';
-
-    if (mode === 'home') {
-      html = renderHome();
-    } else if (mode === 'trace') {
-      html = renderTrace();
-    } else if (mode === 'identify') {
-      html = renderIdentify();
-    } else if (mode === 'celebrate') {
-      html = renderCelebrate();
-    }
-
-    main.innerHTML = html;
-
-    if (mode === 'trace') {
-      setTimeout(bindCanvasEvents, 50);
-    }
-  }
-
-  function renderHome() {
-    var h = '';
-    h += '<div class="fadeUp">';
-
-    // Greeting
-    h += '<div class="sl-greeting">';
-    h += '<div class="sl-greeting-emoji">&#128075;&#10024;</div>';
-    h += '<div class="sl-greeting-title">Hi JJ!</div>';
-    h += '<div class="sl-greeting-sub">What do you want to learn today?</div>';
-    h += '</div>';
-
-    // Current letter card
-    h += '<div class="sl-letter-card">';
-    h += '<div class="sl-letter-label">TODAY\'S LETTER</div>';
-    h += '<div class="sl-letter-big">' + currentLetter + '</div>';
-    h += '</div>';
-
-    // Action buttons
-    h += '<div class="sl-actions">';
-    h += '<button class="sl-btn-trace" onclick="goTrace()">&#9999;&#65039; Trace the Letter!</button>';
-    h += '<button class="sl-btn-find" onclick="startIdentify()">&#128269; Find the Letter!</button>';
-    h += '</div>';
-
-    // Completed letters
-    if (completedLetters.length > 0) {
-      h += '<div class="sl-completed-box">';
-      h += '<div class="sl-section-label">&#11088; LETTERS I KNOW</div>';
-      h += '<div class="sl-completed-grid">';
-      for (var i = 0; i < completedLetters.length; i++) {
-        h += '<div class="sl-completed-tile">' + completedLetters[i] + '</div>';
-      }
-      h += '</div>';
-      h += '</div>';
-    }
-
-    // Letter picker
-    h += '<div class="sl-picker-box">';
-    h += '<div class="sl-section-label">PICK A LETTER</div>';
-    h += '<div class="sl-picker-grid">';
-    for (var j = 0; j < ALL_LETTERS.length; j++) {
-      var l = ALL_LETTERS[j];
-      var isCurrent = l === currentLetter;
-      var isCompleted = completedLetters.indexOf(l) !== -1;
-      var borderStyle = isCurrent ? '2px solid ' + COLORS.sparkle : '1px solid ' + COLORS.border;
-      var bgStyle = isCurrent ? 'rgba(255,105,180,0.08)' : COLORS.surface;
-      var colorStyle = isCompleted ? COLORS.success : (isCurrent ? COLORS.sparkle : COLORS.textMuted);
-      h += '<button class="sl-picker-btn" onclick="pickLetter(\'' + l + '\')" style="'
-        + 'border:' + borderStyle + ';'
-        + 'background:' + bgStyle + ';'
-        + 'color:' + colorStyle + ';'
-        + '">' + l + '</button>';
-    }
-    h += '</div>';
-    h += '</div>';
-
-    h += '</div>';
-    return h;
-  }
-
-  function renderTrace() {
-    var h = '';
-    h += '<div class="fadeUp">';
-
-    h += '<div class="sl-trace-title">';
-    h += '<div class="sl-trace-title-text">Trace the letter <span class="sl-trace-letter-hl">' + currentLetter + '</span> with your finger!</div>';
-    h += '<div class="sl-trace-sub">Follow the dotted lines &#10024;</div>';
-    h += '</div>';
-
-    h += '<div class="sl-canvas-wrap">';
-    h += '<canvas id="traceCanvas" width="500" height="500"></canvas>';
-    h += '</div>';
-
-    h += '<div class="sl-trace-btns">';
-    h += '<button onclick="clearTrace()">&#128260; Try Again</button>';
-    h += '<button onclick="goHome()">&#127968; Home</button>';
-    h += '</div>';
-
-    h += '</div>';
-    return h;
-  }
-
-  function renderIdentify() {
-    var h = '';
-    h += '<div class="fadeUp">';
-
-    h += '<div class="sl-identify-prompt">';
-    h += '<div class="sl-identify-label">Can you find the letter...</div>';
-    h += '<div class="sl-identify-target">' + identifyTarget + '</div>';
-    h += '</div>';
-
-    h += '<div class="sl-identify-grid">';
-    for (var i = 0; i < identifyOptions.length; i++) {
-      var letter = identifyOptions[i];
-      var cls = 'sl-identify-btn';
-      var extraStyle = '';
-      if (identifyResult === 'correct' && letter === identifyTarget) {
-        cls += ' correct';
-      } else if (identifyResult === 'wrong') {
-        cls += ' shake';
-      }
-      h += '<button class="' + cls + '" onclick="handleIdentifyTap(\'' + letter + '\')"'
-        + extraStyle + '>' + letter + '</button>';
-    }
-    h += '</div>';
-
-    h += '<button class="sl-identify-home" onclick="goHome()">&#127968; Home</button>';
-
-    h += '</div>';
-    return h;
-  }
-
-  function renderCelebrate() {
-    var h = '';
-    h += '<div class="fadeUp sl-celebrate">';
-
-    h += '<div class="sl-celebrate-star">&#127775;</div>';
-    h += '<div class="sl-celebrate-title">Amazing Job!</div>';
-    h += '<div class="sl-celebrate-sub">' + celebrateText + '</div>';
-    h += '<div class="sl-celebrate-award">&#11088; +1 Star!</div>';
-
-    // Burst dots
-    h += '<div class="sl-burst-wrap">';
-    for (var i = 0; i < 12; i++) {
-      var angle = (i / 12) * 360;
-      var dist = 40 + Math.random() * 40;
-      var dotSize = 8 + Math.random() * 8;
-      var color = COLORS.trailColors[i % COLORS.trailColors.length];
-      var delay = i * 0.05;
-      // Calculate burst position using trig since we can't use CSS custom properties
-      var rad = angle * Math.PI / 180;
-      var dx = Math.cos(rad) * dist;
-      var dy = Math.sin(rad) * dist;
-      h += '<div class="sl-burst-dot" style="'
-        + 'width:' + dotSize + 'px;'
-        + 'height:' + dotSize + 'px;'
-        + 'background:' + color + ';'
-        + '-webkit-animation:burstOut 1s ease ' + delay + 's infinite;'
-        + 'animation:burstOut 1s ease ' + delay + 's infinite;'
-        + 'margin-left:' + dx + 'px;'
-        + 'margin-top:' + dy + 'px;'
-        + '"></div>';
-    }
-    h += '</div>';
-
-    h += '<div class="sl-celebrate-btns">';
-    h += '<button class="sl-btn-next" onclick="nextLetter()">Next Letter &#8594;</button>';
-    h += '<button class="sl-btn-home-small" onclick="goHome()">&#127968;</button>';
-    h += '</div>';
-
-    h += '</div>';
-    return h;
-  }
-
-  // ─── Init ───
-  function init() {
-    preloadAudio();
-    initBgSparkles();
-    updateStarsDisplay();
-    render();
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+function checkStoryAnswer(el, chosen) {
+  var st = window._storyState;
+  if (!st) { return; }
+  if (chosen === st.answer) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
   } else {
-    init();
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 14: COLOR SORT (tap shape, tap bin)
+   ═══════════════════════════════════════════════════════════ */
+function renderColorSort(activity) {
+  var mc = getMainContent();
+  var items = activity.items || [
+    { shape: 'circle', color: 'red' },
+    { shape: 'square', color: 'blue' },
+    { shape: 'star', color: 'red' },
+    { shape: 'heart', color: 'blue' },
+    { shape: 'triangle', color: 'red' },
+    { shape: 'diamond', color: 'blue' }
+  ];
+  var bins = activity.bins || ['red', 'blue'];
+
+  sortState = { selectedItem: null, remaining: items.length, items: items };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Tap a shape, then tap the matching color bin!</p>';
+
+  /* Items */
+  html += '<div class="option-grid" id="sortItems">';
+  for (var i = 0; i < items.length; i++) {
+    html += '<div class="option-btn" id="sortItem' + i + '" style="padding:10px;min-width:70px;min-height:70px;" ';
+    html += 'onclick="tapSortItem(' + i + ',\'' + items[i].color + '\')">';
+    html += renderShape(items[i].shape, items[i].color, 56);
+    html += '</div>';
+  }
+  html += '</div>';
+
+  /* Bins */
+  html += '<div class="bin-row" id="sortBins">';
+  for (var b = 0; b < bins.length; b++) {
+    html += '<div class="color-bin" id="sortBin' + b + '" ';
+    html += 'style="background:' + (COLOR_MAP[bins[b]] || bins[b]) + ';" ';
+    html += 'onclick="tapSortBin(' + b + ',\'' + bins[b] + '\')">';
+    html += bins[b];
+    html += '</div>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Tap a shape, then tap the bin with the same color!");
+}
+
+function tapSortItem(idx, color) {
+  if (sortState.selectedItem !== null) { return; }
+  var el = document.getElementById('sortItem' + idx);
+  if (!el || el.className.indexOf('correct') !== -1) { return; }
+
+  /* Deselect others */
+  var all = document.querySelectorAll('[id^=sortItem]');
+  for (var i = 0; i < all.length; i++) {
+    all[i].className = all[i].className.replace(' selected', '');
   }
 
-})();
-</script>
+  el.className += ' selected';
+  sortState.selectedItem = { idx: idx, color: color };
+  speak("Now tap the " + color + " bin!");
+}
 
+function tapSortBin(binIdx, binColor) {
+  if (!sortState.selectedItem) {
+    speak("First tap a shape!");
+    return;
+  }
+
+  var binEl = document.getElementById('sortBin' + binIdx);
+  var itemEl = document.getElementById('sortItem' + sortState.selectedItem.idx);
+
+  if (sortState.selectedItem.color === binColor) {
+    if (itemEl) { itemEl.className += ' correct'; itemEl.style.opacity = '0.3'; }
+    if (binEl) { binEl.className += ' selected-bin'; }
+    sortState.remaining--;
+    sortState.selectedItem = null;
+
+    if (sortState.remaining <= 0) {
+      handleCorrectAnswer(todayContent.activities[currentActivityIndex], binEl);
+    } else {
+      spawnSparkles(binEl.getBoundingClientRect().left + 40, binEl.getBoundingClientRect().top + 40, 6);
+      speak("Yes! Pick another shape!");
+    }
+  } else {
+    speak("That bin is " + binColor + ". Try the " + sortState.selectedItem.color + " bin!");
+    if (itemEl) { itemEl.className = itemEl.className.replace(' selected', ''); }
+    sortState.selectedItem = null;
+  }
+
+  /* Reset bin highlight */
+  setTimeout(function() {
+    var allBins = document.querySelectorAll('.color-bin');
+    for (var i = 0; i < allBins.length; i++) {
+      allBins[i].className = allBins[i].className.replace(' selected-bin', '');
+    }
+  }, 600);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 15: MORE OR LESS
+   ═══════════════════════════════════════════════════════════ */
+function renderMoreOrLess(activity) {
+  var mc = getMainContent();
+  var mode = activity.mode || 'more'; /* 'more' or 'less' */
+  var groupA = activity.groupA || { count: 3, shape: 'star', color: 'pink' };
+  var groupB = activity.groupB || { count: 6, shape: 'heart', color: 'purple' };
+  var answerSide = groupA.count > groupB.count ? (mode === 'more' ? 'A' : 'B') : (mode === 'more' ? 'B' : 'A');
+  if (groupA.count === groupB.count) { answerSide = 'A'; } /* tie = either works */
+
+  window._molState = { answer: answerSide };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Which group has <span style="color:#ec4899;font-weight:800;">' + mode + '</span>?</p>';
+
+  html += '<div style="display:-webkit-flex;display:flex;-webkit-justify-content:space-around;justify-content:space-around;gap:16px;">';
+
+  /* Group A */
+  html += '<button class="option-btn" id="molA" style="min-width:140px;min-height:140px;padding:16px;-webkit-flex-direction:column;flex-direction:column;" ';
+  html += 'onclick="checkMoreOrLess(this,\'A\')">';
+  for (var a = 0; a < groupA.count; a++) {
+    html += renderShape(groupA.shape, groupA.color, 36) + ' ';
+  }
+  html += '</button>';
+
+  /* Group B */
+  html += '<button class="option-btn" id="molB" style="min-width:140px;min-height:140px;padding:16px;-webkit-flex-direction:column;flex-direction:column;" ';
+  html += 'onclick="checkMoreOrLess(this,\'B\')">';
+  for (var b = 0; b < groupB.count; b++) {
+    html += renderShape(groupB.shape, groupB.color, 36) + ' ';
+  }
+  html += '</button>';
+
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Which group has " + mode + "? " + groupA.count + " " + groupA.shape + "s or " + groupB.count + " " + groupB.shape + "s? Tap the group with " + mode + "!");
+}
+
+function checkMoreOrLess(el, side) {
+  var st = window._molState;
+  if (!st) { return; }
+  if (side === st.answer) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 16: NAME BUILDER
+   ═══════════════════════════════════════════════════════════ */
+function renderNameBuilder(activity) {
+  var mc = getMainContent();
+  var target = (activity.target || 'JJ').toUpperCase();
+  var letters = activity.letters || null;
+
+  if (!letters) {
+    /* Build shuffled letter bank from target + random extras */
+    var pool = target.split('');
+    var extras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    while (pool.length < target.length + 3) {
+      var randChar = extras.charAt(Math.floor(Math.random() * extras.length));
+      if (pool.indexOf(randChar) === -1 || pool.length < target.length + 2) {
+        pool.push(randChar);
+      }
+    }
+    letters = shuffleArray(pool);
+  }
+
+  nameState = {
+    target: target,
+    progress: '',
+    bankUsed: []
+  };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Build the name: <span style="color:#ec4899;font-size:32px;">' + target + '</span></p>';
+
+  /* Slots */
+  html += '<div class="name-slots" id="nameSlots">';
+  for (var s = 0; s < target.length; s++) {
+    html += '<div class="name-slot" id="nameSlot' + s + '"></div>';
+  }
+  html += '</div>';
+
+  /* Letter bank */
+  html += '<div class="letter-bank" id="nameBank">';
+  for (var i = 0; i < letters.length; i++) {
+    html += '<button class="letter-bank-btn" id="bankBtn' + i + '" ';
+    html += 'onclick="tapNameLetter(' + i + ',\'' + letters[i] + '\')">' + letters[i] + '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Build the name " + target + "! Tap the letters in order. First, find " + target.charAt(0) + "!");
+}
+
+function tapNameLetter(bankIdx, letter) {
+  var nextIdx = nameState.progress.length;
+  if (nextIdx >= nameState.target.length) { return; }
+
+  var expected = nameState.target.charAt(nextIdx);
+  if (letter === expected) {
+    nameState.progress += letter;
+    nameState.bankUsed.push(bankIdx);
+
+    /* Fill slot */
+    var slot = document.getElementById('nameSlot' + nextIdx);
+    if (slot) {
+      slot.textContent = letter;
+      slot.className += ' filled';
+    }
+
+    /* Disable bank button */
+    var btn = document.getElementById('bankBtn' + bankIdx);
+    if (btn) { btn.className += ' used'; }
+
+    spawnSparkles(slot.getBoundingClientRect().left + 28, slot.getBoundingClientRect().top + 32, 5);
+    speak(letter + "!");
+
+    /* Check complete */
+    if (nameState.progress.length >= nameState.target.length) {
+      setTimeout(function() {
+        handleCorrectAnswer(todayContent.activities[currentActivityIndex], null);
+      }, 500);
+    } else {
+      var nextExpected = nameState.target.charAt(nameState.progress.length);
+      setTimeout(function() {
+        speak("Now find " + nextExpected + "!");
+      }, 400);
+    }
+  } else {
+    var btn2 = document.getElementById('bankBtn' + bankIdx);
+    handleWrongAnswer(btn2);
+    speak("That is " + letter + ". Find " + expected + "!");
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 17: CELEBRATION
+   ═══════════════════════════════════════════════════════════ */
+function renderCelebration(activity) {
+  var mc = getMainContent();
+  var message = activity.message || 'You are a superstar!';
+  var starsAwarded = activity.stars || 3;
+
+  var html = '<div class="celebration-wrap">';
+  html += '<div class="celebration-stars">&#11088;&#11088;&#11088;</div>';
+  html += '<div class="ready-title" style="font-size:48px;">' + message + '</div>';
+  html += '<p class="instruction">You earned ' + starsAwarded + ' bonus stars!</p>';
+  html += '<button class="btn-big btn-gold" onclick="handleCelebrationDone()" style="font-size:32px;margin-top:24px;">';
+  html += 'Yay! &#127881;</button>';
+  html += '</div>';
+  mc.innerHTML = html;
+
+  launchConfetti();
+  playAudioCached('celebration.mp3');
+  speak(message + " You earned " + starsAwarded + " bonus stars!");
+}
+
+function handleCelebrationDone() {
+  if (activityLocked) { return; }
+  activityLocked = true;
+  var act = todayContent.activities[currentActivityIndex];
+  advanceActivity(act.stars || 3);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SESSION COMPLETE
+   ═══════════════════════════════════════════════════════════ */
+function showSessionComplete() {
+  var sessionStars = 0;
+  for (var i = 0; i < completedActivities.length; i++) {
+    sessionStars += (completedActivities[i].starsEarned || 0);
+  }
+
+  /* Save progress */
+  google.script.run
+    .withSuccessHandler(function() {})
+    .withFailureHandler(function(e) { console.error('Save:', e); })
+    .saveProgressSafe({
+      child: 'jj',
+      stars: totalStars,
+      lettersCompleted: lettersCompleted
+    });
+
+  /* Award rings */
+  google.script.run
+    .withSuccessHandler(function() {})
+    .withFailureHandler(function(e) { console.error('Award:', e); })
+    .awardRingsSafe('jj', sessionStars, 'sparkle-learn');
+
+  showCelebrationScreen(sessionStars);
+}
+
+function showCelebrationScreen(sessionStars) {
+  var mc = getMainContent();
+  var bar = document.getElementById('progressBar');
+  if (bar) { bar.style.width = '100%'; }
+
+  launchConfetti();
+
+  var html = '<div class="celebration-wrap">';
+  html += '<div class="celebration-stars" style="font-size:100px;">&#127775;&#11088;&#127775;</div>';
+  html += '<div class="ready-title" style="font-size:44px;">All Done!</div>';
+  html += '<p class="instruction" style="font-size:28px;">You earned <span style="color:#fde68a;font-size:36px;">' + sessionStars + '</span> stars today!</p>';
+  html += '<p class="instruction" style="font-size:22px;">Total stars: <span style="color:#fde68a;">' + totalStars + '</span></p>';
+
+  /* Star explosion */
+  html += '<div style="margin:24px 0;">';
+  for (var i = 0; i < Math.min(sessionStars, 10); i++) {
+    html += '<span style="font-size:48px;display:inline-block;margin:4px;-webkit-animation:celebSpin 2s ease infinite;animation:celebSpin 2s ease infinite;animation-delay:' + (i * 0.2) + 's;">&#11088;</span>';
+  }
+  html += '</div>';
+
+  html += '<button class="btn-big btn-pink" onclick="replaySession()" style="font-size:28px;margin-top:16px;">Play Again! &#127881;</button>';
+  html += '</div>';
+  mc.innerHTML = html;
+
+  playAudioCached('celebration.mp3');
+  speak("Amazing job JJ! You earned " + sessionStars + " stars today! You are a superstar!", function() {
+    speak("Tap Play Again to do more, or you are all done for today!");
+  });
+}
+
+function replaySession() {
+  currentActivityIndex = 0;
+  completedActivities = [];
+  if (todayContent) {
+    showReadyScreen(todayContent);
+  } else {
+    loadContent();
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FALLBACK SCREEN
+   ═══════════════════════════════════════════════════════════ */
+function showFallback() {
+  var mc = getMainContent();
+  var html = '<div class="fallback-wrap">';
+  html += '<div style="font-size:80px;margin-bottom:16px;">&#10024;</div>';
+  html += '<div class="ready-title">No sparkle games today!</div>';
+  html += '<p class="instruction">But we can still practice letters!</p>';
+  html += '<div class="option-grid" id="fallbackLetters">';
+
+  var letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  for (var i = 0; i < letters.length; i++) {
+    html += '<button class="option-btn" style="font-size:48px;width:80px;height:80px;" ';
+    html += 'onclick="fallbackLetterTap(\'' + letters[i] + '\',this)">' + letters[i] + '</button>';
+  }
+
+  html += '</div>';
+  html += '<button class="btn-big btn-purple" onclick="showMoreFallbackLetters()" style="margin-top:16px;">More Letters</button>';
+  html += '</div>';
+  mc.innerHTML = html;
+
+  speak("No sparkle games loaded today, but lets practice letters! Tap a letter to hear it!");
+}
+
+function fallbackLetterTap(letter, el) {
+  speak(letter + "! " + letter + " is for " + getFallbackWord(letter));
+  var rect = el.getBoundingClientRect();
+  spawnSparkles(rect.left + 40, rect.top + 40, 8);
+}
+
+function getFallbackWord(letter) {
+  var words = {
+    A: 'Apple', B: 'Ball', C: 'Cat', D: 'Dog', E: 'Elephant', F: 'Fish',
+    G: 'Giraffe', H: 'Hat', I: 'Ice cream', J: 'Jellyfish', K: 'Kite',
+    L: 'Lion', M: 'Moon', N: 'Nest', O: 'Octopus', P: 'Penguin',
+    Q: 'Queen', R: 'Rainbow', S: 'Star', T: 'Tiger', U: 'Umbrella',
+    V: 'Violin', W: 'Whale', X: 'Xylophone', Y: 'Yarn', Z: 'Zebra'
+  };
+  return words[letter] || letter;
+}
+
+function showMoreFallbackLetters() {
+  var container = document.getElementById('fallbackLetters');
+  if (!container) { return; }
+  var allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  var html = '';
+  for (var i = 0; i < allLetters.length; i++) {
+    var l = allLetters.charAt(i);
+    html += '<button class="option-btn" style="font-size:36px;width:68px;height:68px;" ';
+    html += 'onclick="fallbackLetterTap(\'' + l + '\',this)">' + l + '</button>';
+  }
+  container.innerHTML = html;
+  speak("Here are all the letters! Tap any letter to hear it!");
+}
+
+/* ═══════════════════════════════════════════════════════════
+   INIT ON LOAD
+   ═══════════════════════════════════════════════════════════ */
+window.onload = function() {
+  init();
+};
+</script>
 </body>
 </html>

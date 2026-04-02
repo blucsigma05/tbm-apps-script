@@ -719,6 +719,7 @@ var C = {
 // ─── STATE ───
 var currentView = 'passage';
 var answers = {};
+var completionLogged = false;
 var sessionStartTime = null;
 var timerInterval = null;
 var moduleStarted = false;
@@ -1282,6 +1283,26 @@ function renderResults() {
   html += '<button style="display:block;width:100%;margin-top:16px;padding:14px;background:' + C.card + ';border:1px solid ' + C.border + ';border-radius:10px;color:' + C.emerald + ';font-family:Orbitron,sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;" onclick="backToQuestions()">REVIEW ANSWERS</button>';
 
   container.innerHTML = html;
+
+  // Ring award + completion log (once only)
+  if (!completionLogged) {
+    completionLogged = true;
+    google.script.run
+      .withSuccessHandler(function() { console.log('Rings awarded: ' + earnedRings); })
+      .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })
+      .awardRingsSafe('buggsy', earnedRings, 'reading-module');
+
+    google.script.run
+      .withSuccessHandler(function() { console.log('Reading completion logged'); })
+      .withFailureHandler(function(err) { console.error('Log failed:', err.message); })
+      .logHomeworkCompletionSafe({
+        child: 'buggsy',
+        title: 'Reading: ' + PASSAGE.title,
+        subject: 'RLA',
+        score: mcCorrect,
+        total: totalMC
+      });
+  }
 }
 
 function backToQuestions() {

@@ -390,6 +390,10 @@ function serveData(e) {
         'awardRingsSafe': awardRingsSafe,
         'logQuestionResultSafe': logQuestionResultSafe,
         'savePowerScanResultsSafe': savePowerScanResultsSafe,
+        'saveProgressSafe': saveProgressSafe,
+        'loadProgressSafe': loadProgressSafe,
+        'logScaffoldEventSafe': logScaffoldEventSafe,
+        'getWeekProgressSafe': getWeekProgressSafe,
         'runTestsSafe': runTestsSafe
       };
 

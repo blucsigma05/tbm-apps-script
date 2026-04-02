@@ -561,6 +561,13 @@ var startTime = null;
 var timerInterval = null;
 var isAnswering = false;
 
+// Scaffold timer mode state
+var _timerMode = 'countdown'; // default = test conditions
+var _showTimer = true;
+var _trackTime = true;
+var _startTime = 0;
+var _countdownFrom = 120;
+
 // localStorage keys
 var LS_BEST_TIME = 'factSprint_bestTime';
 var LS_BEST_SCORE = 'factSprint_bestScore';
@@ -809,11 +816,51 @@ function generateSprint() {
 // ============================================================
 // TIMER
 // ============================================================
+function initTimerMode(config) {
+  if (!config || !config.timerMode) {
+    _timerMode = 'countdown';
+    _showTimer = true;
+    _trackTime = true;
+    return;
+  }
+  _timerMode = config.timerMode;
+  _trackTime = true; // always track elapsed time
+
+  if (_timerMode === 'hidden') {
+    _showTimer = false;
+    document.getElementById('timer-display').style.display = 'none';
+  } else if (_timerMode === 'count_up') {
+    _showTimer = true;
+    document.getElementById('timer-display').style.display = '';
+  } else {
+    // countdown (default)
+    _showTimer = true;
+    _countdownFrom = (config.timeLimit && config.timeLimit > 0) ? config.timeLimit : 120;
+    document.getElementById('timer-display').style.display = '';
+  }
+}
+
 function startTimer() {
   startTime = Date.now();
+  _startTime = startTime;
   timerInterval = setInterval(function() {
     var elapsed = Math.floor((Date.now() - startTime) / 1000);
-    document.getElementById('timer-display').textContent = formatTime(elapsed);
+
+    if (_showTimer) {
+      if (_timerMode === 'countdown') {
+        var remaining = _countdownFrom - elapsed;
+        if (remaining <= 0) {
+          remaining = 0;
+          document.getElementById('timer-display').textContent = formatTime(0);
+          logScaffold('timer_expired', { elapsed: elapsed });
+          finishSprint();
+          return;
+        }
+        document.getElementById('timer-display').textContent = formatTime(remaining);
+      } else {
+        document.getElementById('timer-display').textContent = formatTime(elapsed);
+      }
+    }
   }, 100);
 }
 
@@ -833,6 +880,22 @@ function formatTime(totalSeconds) {
   var m = Math.floor(totalSeconds / 60);
   var s = totalSeconds % 60;
   return m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+// ============================================================
+// SCAFFOLD LOGGING
+// ============================================================
+function logScaffold(eventType, data) {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withFailureHandler(function(err) { console.error('Scaffold log failed:', err); })
+      .logScaffoldEventSafe({
+        child: 'buggsy',
+        module: 'fact-sprint',
+        event: eventType,
+        data: data || {}
+      });
+  }
 }
 
 // ============================================================
@@ -1009,6 +1072,12 @@ function finishSprint() {
   document.getElementById('final-score').textContent = score + '/' + TOTAL_QUESTIONS;
   document.getElementById('final-accuracy').textContent = accuracy + '%';
   document.getElementById('final-streak').textContent = longestStreak;
+
+  // Accuracy always renders larger than time
+  var accuracyEl = document.getElementById('final-accuracy');
+  var timeEl = document.getElementById('final-time');
+  if (accuracyEl) { accuracyEl.style.fontSize = '48px'; }
+  if (timeEl) { timeEl.style.fontSize = '16px'; timeEl.style.color = '#94a3b8'; }
 
   // Ring award
   document.getElementById('ring-count').textContent = '+' + rings;

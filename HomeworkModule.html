@@ -698,6 +698,7 @@ var answers = {};
 var sessionStartTime = null;
 var timerInterval = null;
 var moduleStarted = false;
+var completionLogged = false;
 
 var scienceQs = MODULE.science.questions;
 var mathQs = MODULE.math.questions;
@@ -1213,6 +1214,28 @@ function renderResults() {
     html += '<div style="margin-top:12px;padding:10px 14px;background:' + C.orange + '10;border-radius:8px;font-size:13px;color:' + C.textMuted + ';line-height:1.6;">';
     html += '\u23F3 <strong style="color:' + C.orange + ';">Pending parent review</strong> for ' + openEndedCount + ' open-ended questions. Rings will be awarded after review.';
     html += '</div></div>';
+
+    // Ring award + completion log (once only)
+    if (!completionLogged) {
+      completionLogged = true;
+      var ringsEarned = totalMC > 0 ? Math.round(8 * (totalMCCorrect / totalMC)) : 0;
+      google.script.run
+        .withSuccessHandler(function() { console.log('Rings awarded: ' + ringsEarned); })
+        .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })
+        .awardRingsSafe('buggsy', ringsEarned, 'homework-module');
+
+      var moduleTitle = 'Homework: ' + (MODULE.science ? MODULE.science.title : 'Module');
+      google.script.run
+        .withSuccessHandler(function() { console.log('Homework completion logged'); })
+        .withFailureHandler(function(err) { console.error('Log failed:', err.message); })
+        .logHomeworkCompletionSafe({
+          child: 'buggsy',
+          title: moduleTitle,
+          subject: 'Math/Science',
+          score: totalMCCorrect,
+          total: totalMC
+        });
+    }
 
   } else {
     // Not done yet

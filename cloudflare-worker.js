@@ -297,7 +297,8 @@ function getShimScript() {
 '    "getTodayContentSafe","getAudioBatchSafe",\n' +
 '    "logHomeworkCompletionSafe","logSparkleProgressSafe",\n' +
 '    "awardRingsSafe","seedWeek1CurriculumSafe","seedStaarRlaSprintSafe","submitFeedbackSafe",\n' +
-'    "logQuestionResultSafe","savePowerScanResultsSafe","getWeeklyProgressSafe"\n' +
+'    "logQuestionResultSafe","savePowerScanResultsSafe","getWeeklyProgressSafe",\n' +
+'    "saveProgressSafe","loadProgressSafe","logScaffoldEventSafe","getWeekProgressSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +
