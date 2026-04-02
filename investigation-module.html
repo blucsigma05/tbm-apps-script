@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="investigation-module">
-<meta name="tbm-version" content="v1">
+<meta name="tbm-version" content="v2">
 <title>Wolfkid Investigation Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1122,7 +1122,7 @@ var ExecSkills = (function() {
    TEKS-Aligned. STAAR-Ready. Executive Skills-Driven.
    ============================================================ */
 
-var MODULE_VERSION = 'v1';
+var MODULE_VERSION = 'v2';
 var CHILD = 'buggsy';
 var RINGS_BASE = 8;
 var MAX_STEPS = 8;
@@ -1325,9 +1325,8 @@ function lockSection(num) {
 
 // ─── ESCAPE HTML ───
 function escapeHtml(str) {
-  var div = document.createElement('div');
-  div.appendChild(document.createTextNode(str));
-  return div.innerHTML;
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 // ─── COMPLETION SCREEN ───
@@ -1443,7 +1442,7 @@ function submitForReview() {
           status.style.color = '#EF4444';
           status.textContent = 'Ring award failed: ' + (err.message || err);
         })
-        .awardRings('buggsy', RINGS_BASE, 'investigation');
+        .awardRingsSafe('buggsy', RINGS_BASE, 'investigation');
     }
   } catch (e) {
     // Standalone mode
@@ -1465,7 +1464,7 @@ function submitForReview() {
           status.style.color = '#EF4444';
           status.textContent = 'Error: ' + (err.message || err);
         })
-        .logHomeworkCompletion(data);
+        .logHomeworkCompletionSafe(data);
     } else {
       // Standalone mode — simulate success
       btn.textContent = 'SUBMITTED';

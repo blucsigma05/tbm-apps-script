@@ -3,11 +3,11 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 11.0
+// Version: 12.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 11; }
+function getStoryFactoryVersion() { return 12; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -1129,7 +1129,7 @@ return 7;
 // ── MAIN PIPELINE ────────────────────────────────────────────
 
 function runStoryFactory(topic, character, tone) {
-Logger.log('=== Story Factory v' + getStoryFactoryVersion() + ' ===');
+Logger.log('=== Story Factory v12 ===');
 Logger.log('Topic: ' + topic + ' | Character: ' + character + ' | Tone: ' + (tone || 'Funny'));
 
 try {
@@ -1592,6 +1592,19 @@ var folder = DriveApp.getFolderById(CONFIG.STORY_FOLDER_ID);
 Logger.log('Drive authorized! Folder: ' + folder.getName());
 }
 
+// ── Safe wrappers for StoryReader ──
+function getStoryForReaderSafe(storyKey) {
+  return withMonitor_('getStoryForReaderSafe', function() {
+    return JSON.parse(JSON.stringify(getStoryForReader(storyKey)));
+  });
+}
+
+function getStoryImagesSafe(storyKey) {
+  return withMonitor_('getStoryImagesSafe', function() {
+    return JSON.parse(JSON.stringify(getStoryImages(storyKey)));
+  });
+}
+
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — StoryFactory v11
+// END OF FILE — StoryFactory v12
 // ════════════════════════════════════════════════════════════════════
