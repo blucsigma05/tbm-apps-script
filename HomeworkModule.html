@@ -1316,6 +1316,11 @@ function renderInhibitionReminder(dayConfig) {
 
 // ─── CURRICULUM LOADING ───
 function loadCurriculumContent() {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    MODULE = FALLBACK_MODULE;
+    init();
+    return;
+  }
   google.script.run
     .withSuccessHandler(function(response) {
       if (response && response.content) {

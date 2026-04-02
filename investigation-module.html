@@ -1483,6 +1483,11 @@ function submitForReview() {
 
 // ─── CURRICULUM LOADING ───
 function loadCurriculumContent() {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    INVESTIGATION = FALLBACK_INVESTIGATION;
+    init();
+    return;
+  }
   google.script.run
     .withSuccessHandler(function(response) {
       if (response && response.content && response.content.investigation) {
