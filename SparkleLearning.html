@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v3">
+  <meta name="tbm-version" content="v4">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -545,8 +545,29 @@ var COLOR_MAP = {
 /* ═══════════════════════════════════════════════════════════
    AUDIO SYSTEM
    ═══════════════════════════════════════════════════════════ */
-function speak(text, onEnd) {
-  if (!text) { if (onEnd) { onEnd(); } return; }
+function speak(text, onEndOrKey, maybeOnEnd) {
+  if (!text) { if (typeof onEndOrKey === 'function') { onEndOrKey(); } else if (maybeOnEnd) { maybeOnEnd(); } return; }
+  // speak(text, onEnd) or speak(text, audioKey, onEnd)
+  var audioKey = null;
+  var onEnd = null;
+  if (typeof onEndOrKey === 'function') {
+    onEnd = onEndOrKey;
+  } else if (typeof onEndOrKey === 'string') {
+    audioKey = onEndOrKey;
+    onEnd = maybeOnEnd || null;
+  }
+  // Try ElevenLabs cache first
+  if (audioKey && audioCache[audioKey]) {
+    try {
+      var clip = audioCache[audioKey];
+      clip.currentTime = 0;
+      if (onEnd) { clip.onended = onEnd; } else { clip.onended = null; }
+      clip.play();
+      return;
+    } catch (e) { /* fall through to Web Speech */ }
+  }
+  // Fallback: Web Speech API
+  if (!window.speechSynthesis) { if (onEnd) { onEnd(); } return; }
   var u = new SpeechSynthesisUtterance(String(text));
   u.rate = 0.85;
   u.pitch = 1.1;
@@ -842,20 +863,33 @@ function init() {
     loadContent();
   }
 
-  /* Preload audio clips */
+  /* Preload audio clips — filenames must match Drive index (getName()) */
   var audioFiles = [];
-  for (var i = 0; i < 26; i++) { audioFiles.push(String.fromCharCode(65 + i) + '.mp3'); }
-  audioFiles.push('correct.mp3', 'celebration.mp3', 'try-again.mp3');
+  // Letter clips: name, phrase, find, sound, trace (26 each = 130 files)
+  for (var i = 0; i < 26; i++) {
+    var L = String.fromCharCode(65 + i);
+    audioFiles.push('jj_letter_name_' + L + '.mp3');
+    audioFiles.push('jj_letter_phrase_' + L + '.mp3');
+    audioFiles.push('jj_find_' + L + '.mp3');
+    audioFiles.push('jj_sound_' + L + '.mp3');
+    audioFiles.push('jj_trace_' + L + '.mp3');
+  }
+  // Feedback clips
   var jjExtra = [
     'jj_feedback_correct1.mp3','jj_feedback_correct2.mp3','jj_feedback_correct3.mp3','jj_feedback_correct4.mp3',
     'jj_feedback_correct5.mp3','jj_feedback_correct6.mp3','jj_feedback_correct7.mp3','jj_feedback_correct8.mp3',
     'jj_feedback_tryagain1.mp3','jj_feedback_tryagain2.mp3','jj_feedback_tryagain3.mp3','jj_feedback_tryagain4.mp3',
     'jj_feedback_complete1.mp3','jj_feedback_complete2.mp3','jj_feedback_complete3.mp3','jj_feedback_star_earned.mp3',
+    // Instruction clips
     'jj_instruction_welcome.mp3','jj_instruction_pick_game.mp3','jj_instruction_find_game.mp3',
     'jj_instruction_trace_game.mp3','jj_instruction_sound_game.mp3','jj_instruction_name_game.mp3',
     'jj_instruction_hear_it.mp3','jj_instruction_what_color.mp3','jj_instruction_count.mp3',
-    'jj_instruction_what_next.mp3','jj_instruction_great_session.mp3','jj_instruction_bye.mp3'
+    'jj_instruction_what_next.mp3','jj_instruction_great_session.mp3','jj_instruction_bye.mp3',
+    // Spell/name builder clips
+    'jj_spell_jj.mp3','jj_spell_kindle.mp3','jj_spell_great_jj.mp3',
+    'jj_spell_great_kindle.mp3','jj_spell_next_letter.mp3','jj_spell_tap_letter.mp3'
   ];
+  // Number clips
   for (var n = 1; n <= 10; n++) { jjExtra.push('jj_number_' + n + '.mp3'); }
   for (var x = 0; x < jjExtra.length; x++) { audioFiles.push(jjExtra[x]); }
   if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -1011,7 +1045,7 @@ function handleCorrectAnswer(activity, el) {
     spawnSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2, 12);
   }
 
-  playAudioCached('correct.mp3');
+  playAudioCached('jj_feedback_correct1.mp3', 'Correct!');
   showFeedback('Great job!', true);
   var celebClips = ['jj_feedback_correct1.mp3','jj_feedback_correct2.mp3','jj_feedback_correct3.mp3','jj_feedback_correct4.mp3','jj_feedback_correct5.mp3','jj_feedback_correct6.mp3','jj_feedback_correct7.mp3','jj_feedback_correct8.mp3'];
   setTimeout(function() {
@@ -1060,9 +1094,9 @@ function renderLetterIntro(activity) {
     lettersCompleted.push(letter.toUpperCase());
   }
 
-  playAudioCached(letter.toUpperCase() + '.mp3', activity.audioPhrase || ('This is the letter ' + letter.toUpperCase()));
+  playAudioCached('jj_letter_name_' + letter.toUpperCase() + '.mp3', activity.audioPhrase || ('This is the letter ' + letter.toUpperCase()));
   setTimeout(function() {
-    speak(letter.toUpperCase() + " is for " + words.join(", and "));
+    speak(letter.toUpperCase() + " is for " + words.join(", and "), 'jj_letter_phrase_' + letter.toUpperCase() + '.mp3');
   }, 1500);
 }
 
@@ -1094,7 +1128,7 @@ function renderFindLetter(activity) {
   html += '</div></div>';
   mc.innerHTML = html;
 
-  speak("Find the letter " + target.toUpperCase() + "!", function() {
+  speak("Find the letter " + target.toUpperCase() + "!", 'jj_find_' + target.toUpperCase() + '.mp3', function() {
     speakOptions(options, 0);
   });
 }
@@ -1125,7 +1159,8 @@ function renderFindNumber(activity) {
   html += '</div></div>';
   mc.innerHTML = html;
 
-  speak("Find the number " + target + "!", function() {
+  var numKey = (parseInt(target, 10) >= 1 && parseInt(target, 10) <= 10) ? 'jj_number_' + target + '.mp3' : null;
+  speak("Find the number " + target + "!", numKey, function() {
     var labels = [];
     for (var j = 0; j < options.length; j++) { labels.push(String(options[j])); }
     speakOptions(labels, 0);
@@ -1466,7 +1501,7 @@ function renderLetterSound(activity) {
   html += '</div>';
   mc.innerHTML = html;
 
-  playAudioCached(letter.toUpperCase() + '.mp3', letter.toUpperCase() + ' says ' + sound);
+  playAudioCached('jj_sound_' + letter.toUpperCase() + '.mp3', letter.toUpperCase() + ' says ' + sound);
   setTimeout(function() {
     speak(words[0] + " starts with " + sound);
   }, 1500);
@@ -1598,7 +1633,7 @@ function renderLetterTrace(activity) {
     canvas.addEventListener('mouseup', function() { traceState.drawing = false; });
   }, 100);
 
-  speak("Trace the letter " + letter.toUpperCase() + " with your finger! Follow the purple shape!");
+  speak("Trace the letter " + letter.toUpperCase() + " with your finger! Follow the purple shape!", 'jj_trace_' + letter.toUpperCase() + '.mp3');
 }
 
 function clearTraceCanvas() {
@@ -1973,7 +2008,8 @@ function renderNameBuilder(activity) {
   html += '</div></div>';
   mc.innerHTML = html;
 
-  speak("Build the name " + target + "! Tap the letters in order. First, find " + target.charAt(0) + "!");
+  var spellKey = target === 'JJ' ? 'jj_spell_jj.mp3' : (target === 'KINDLE' ? 'jj_spell_kindle.mp3' : null);
+  speak("Build the name " + target + "! Tap the letters in order. First, find " + target.charAt(0) + "!", spellKey);
 }
 
 function tapNameLetter(bankIdx, letter) {
@@ -2174,7 +2210,7 @@ function showFallback() {
   html += '<p class="instruction">But we can still practice letters!</p>';
   html += '<div class="option-grid" id="fallbackLetters">';
 
-  var letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  var letters = ['K', 'I', 'N', 'D', 'L', 'E', 'J', 'B'];
   for (var i = 0; i < letters.length; i++) {
     html += '<button class="option-btn" style="font-size:48px;width:80px;height:80px;" ';
     html += 'onclick="fallbackLetterTap(\'' + letters[i] + '\',this)">' + letters[i] + '</button>';
@@ -2189,7 +2225,7 @@ function showFallback() {
 }
 
 function fallbackLetterTap(letter, el) {
-  speak(letter + "! " + letter + " is for " + getFallbackWord(letter));
+  speak(letter + "! " + letter + " is for " + getFallbackWord(letter), 'jj_letter_phrase_' + letter + '.mp3');
   var rect = el.getBoundingClientRect();
   spawnSparkles(rect.left + 40, rect.top + 40, 8);
 }
