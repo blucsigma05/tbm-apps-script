@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v1">
+<meta name="tbm-version" content="v2">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -685,23 +685,6 @@ function init() {
 
   render();
 
-  // Zero-decision start: auto-launch first incomplete mission after brief display
-  setTimeout(function() {
-    var day = new Date().getDay();
-    if (day === 0 || day === 6) return;
-    var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
-    var dayData = schedule[day];
-    if (!dayData) return;
-    var blocks = dayData.blocks;
-    var mState = getMissionState();
-    for (var a = 0; a < blocks.length; a++) {
-      var mId = blocks[a].page + '_' + a;
-      if (!mState[mId]) {
-        window.location.href = buildLaunchUrl(blocks[a]);
-        return;
-      }
-    }
-  }, 1500);
 }
 
 // ============================================================
@@ -845,12 +828,16 @@ function getGreeting() {
 // BUILD LAUNCH URL
 // ============================================================
 function buildLaunchUrl(block) {
-  var url = '?page=' + block.page;
+  var url = '/' + block.page;
+  var params = [];
   if (block.activity) {
-    url += '&activity=' + block.activity;
+    params.push('activity=' + block.activity);
   }
   if (currentChild === 'jj') {
-    url += '&child=jj';
+    params.push('child=jj');
+  }
+  if (params.length > 0) {
+    url += '?' + params.join('&');
   }
   return url;
 }
@@ -1008,13 +995,13 @@ function renderWeekend(container) {
     html += '<div class="bonus-title">\u2728 SPARKLE BONUS \u2728</div>';
     html += '<div class="bonus-desc">Want to play a learning game for extra stars?</div>';
     html += '<div style="margin-top:12px">';
-    html += '<button class="launch-btn" onclick="window.location.href=\'?page=sparkle&activity=challenge&child=jj\'">Play!</button>';
+    html += '<button class="launch-btn" onclick="window.location.href=\'/sparkle?activity=challenge&child=jj\'">Play!</button>';
     html += '</div>';
   } else {
     html += '<div class="bonus-title">\uD83D\uDE80 BONUS CHALLENGE</div>';
     html += '<div class="bonus-desc">Want extra credit? Try a bonus practice round for +5 Rings.</div>';
     html += '<div style="margin-top:12px">';
-    html += '<button class="launch-btn" onclick="window.location.href=\'?page=homework\'">LAUNCH BONUS</button>';
+    html += '<button class="launch-btn" onclick="window.location.href=\'/homework\'">LAUNCH BONUS</button>';
     html += '</div>';
   }
   html += '</div>';

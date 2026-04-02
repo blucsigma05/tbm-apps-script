@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="story-reader">
-<meta name="tbm-version" content="v1">
+<meta name="tbm-version" content="v2">
 <title>Story Reader</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -486,7 +486,7 @@ main {
 
 <script>
 var MODULE_NAME = 'story-reader';
-var MODULE_VERSION = 'v1';
+var MODULE_VERSION = 'v2';
 
 // State
 var storyData = null;
@@ -802,13 +802,13 @@ function loadStory() {
               renderScene(); // re-render to show images
             }
           })
-          .withFailureHandler(function() { /* images optional */ })
-          .getStoryImages(storyKey);
+          .withFailureHandler(function(err) { if (typeof console !== 'undefined') console.log('Image load skipped: ' + (err && err.message ? err.message : 'unavailable')); })
+          .getStoryImagesSafe(storyKey);
       })
       .withFailureHandler(function(err) {
         showError('Failed to load story: ' + (err && err.message ? err.message : 'Unknown error'));
       })
-      .getStoryForReader(storyKey);
+      .getStoryForReaderSafe(storyKey);
   } else {
     useFallbackData();
   }

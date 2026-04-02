@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v3.0 — thompsonfams.com — Front Door + PIN Gate
+// TBM Smart Proxy v3.1 — thompsonfams.com — Front Door + PIN Gate
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -298,7 +298,8 @@ function getShimScript() {
 '    "logHomeworkCompletionSafe","logSparkleProgressSafe",\n' +
 '    "awardRingsSafe","seedWeek1CurriculumSafe","seedStaarRlaSprintSafe","submitFeedbackSafe",\n' +
 '    "logQuestionResultSafe","savePowerScanResultsSafe","getWeeklyProgressSafe",\n' +
-'    "saveProgressSafe","loadProgressSafe","logScaffoldEventSafe","getWeekProgressSafe"\n' +
+'    "saveProgressSafe","loadProgressSafe","logScaffoldEventSafe","getWeekProgressSafe",\n' +
+'    "listStoredStoriesSafe","getStoryForReaderSafe","getStoryImagesSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +
@@ -351,7 +352,7 @@ function getShimScript() {
 '  });\n' +
 '  window.google = g;\n' +
 '\n' +
-'  console.log("[TBM] Smart Proxy v3 — " + FNS.length + " functions via /api");\n' +
+'  console.log("[TBM] Smart Proxy v3.1 — " + FNS.length + " functions via /api");\n' +
 '})();\n' +
 '</script>';
 }
