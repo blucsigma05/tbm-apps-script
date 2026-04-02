@@ -1,10 +1,10 @@
-<!-- TheSoul v43 — bg gradient, balance fix, gate language, finance text -->
+<!-- TheSoul v44 — bg gradient, balance fix, gate language, finance text -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<title>TheSoul v40 — Thompson Family Display</title>
+<title>TheSoul v44 — Thompson Family Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
@@ -1054,6 +1054,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 (function(){
   'use strict';
 
+  var SOUL_VERSION = 44;
   var REFRESH_MS = 120000;
   // v40: Confidence Rail + Graceful Degradation
   var _soulLastFetch = null;
@@ -1499,24 +1500,37 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
       ' <span class="sw-sep">|</span> JJ ' + jIcon + ' <span class="sw-val">' + esc(jDone + '/' + jTotal) + '</span>';
   }
 
-  // v39: Family countdown widget — days until next family event
-  function updateCountdown() {
+  // v44: Family countdown widget — accepts board events, falls back to hardcoded
+  function updateCountdown(boardEvents) {
     var el = $('countdownText');
     if (!el) return;
     var now = new Date();
     now.setHours(0, 0, 0, 0);
-    var events = [
-      {name: 'Easter', date: new Date(2026, 3, 5)},
-      {name: 'Summer Break', date: new Date(2026, 5, 4)},
-      {name: 'July 4th', date: new Date(2026, 6, 4)}
-    ];
+    var events = [];
+    if (boardEvents && boardEvents.length) {
+      for (var i = 0; i < boardEvents.length; i++) {
+        var be = boardEvents[i];
+        if (be.name && be.date) {
+          events.push({name: be.name, date: new Date(be.date)});
+        }
+      }
+    }
+    if (!events.length) {
+      events = [
+        {name: 'Easter', date: new Date(2026, 3, 5)},
+        {name: 'Summer Break', date: new Date(2026, 5, 4)},
+        {name: 'July 4th', date: new Date(2026, 6, 4)}
+      ];
+    }
     var next = null;
     var minDays = Infinity;
-    for (var i = 0; i < events.length; i++) {
-      var diff = Math.ceil((events[i].date.getTime() - now.getTime()) / 86400000);
+    for (var j = 0; j < events.length; j++) {
+      var d = events[j].date;
+      if (isNaN(d.getTime())) continue;
+      var diff = Math.ceil((d.getTime() - now.getTime()) / 86400000);
       if (diff > 0 && diff < minDays) {
         minDays = diff;
-        next = events[i];
+        next = events[j];
       }
     }
     if (next) {
@@ -1730,7 +1744,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 
     // v39: Update streaks + countdown widgets
     updateStreaks(state.kids);
-    updateCountdown();
+    updateCountdown((state.board && state.board.countdownEvents) || []);
 
     state.firstKids = true;
     $('kidsStamp').textContent = stampTime();
@@ -1812,7 +1826,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
   $('noteText').textContent = dayNote();
   $('refreshSub').textContent = 'Board + Kids';
 
-  updateCountdown();
+  updateCountdown([]);
   loadBoard();
   loadKids();
 

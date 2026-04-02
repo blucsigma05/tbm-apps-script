@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<title>TheSpine v42 — Office Ambient Display</title>
+<title>TheSpine v43 — Office Ambient Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -90,7 +90,6 @@ body.evening{
 .event-row span:last-child{color:var(--ice);flex-shrink:0}
 .finance{display:grid;grid-template-columns:1.15fr .85fr;gap:4px;min-height:0}
 .right-stack{position:relative;min-height:0}
-.top-pair{display:none}
 .right-merged{height:100%;display:flex;flex-direction:column;padding:7px 10px;overflow:hidden}
 .right-merged > *{position:relative;z-index:1}
 .rm-equation{display:flex;align-items:baseline;gap:6px;flex-wrap:nowrap;margin-bottom:3px}
@@ -320,7 +319,7 @@ body.evening{
           </div>
           <div class="rm-runway">
             <div class="rm-runway-label">Runway</div>
-            <div class="rm-runway-val" id="tlRunway">13 wks</div>
+            <div class="rm-runway-val" id="rmRunway">13 wks</div>
             <div class="rm-runway-pinch" id="pinchLine">Pinch May '26</div>
           </div>
         </div>
@@ -373,7 +372,7 @@ body.evening{
 
 <script>
 // Version history tracked in Notion deploy page.
-var SPINE_VERSION = 41;
+var SPINE_VERSION = 43;
 var FINANCE_MS = 300000;
 var KIDS_MS = 180000;
 var BOARD_MS = 600000;
@@ -547,18 +546,6 @@ function renderFinance(d){
       wf.appendChild(row);
     });
   }
-  var pulseEl = document.getElementById('householdPulse');
-  if(pulseEl){
-    var onTrack = Number(pick(d, ['onTrackDays'])) || 0;
-    var lastWin = pick(d, ['lastWin.name']) || '';
-    var pulseState = pick(d, ['pulseState']) || 'fallback';
-    var pulseBits = [];
-    if(onTrack > 0) pulseBits.push(onTrack + ' on-track day' + (onTrack === 1 ? '' : 's'));
-    if(lastWin) pulseBits.push('Last win: ' + lastWin);
-    if(!pulseBits.length) pulseBits.push('Household pulse warming up');
-    pulseEl.className = 'pulse-line ' + pulseState;
-    pulseEl.textContent = pulseBits.join(' \u00B7 ');
-  }
   document.getElementById('tlPromo').textContent = pickPromoDate(d) || "Apr '26";
   document.getElementById('tlCf').textContent = fmtDateToken(pick(d, ['cashFlowPositiveDate'])) || '\u2014';
   document.getElementById('tlFree').textContent = fmtDateToken(pick(d, ['debtTarget','debtFreeTarget'])) || '\u2014';
@@ -600,8 +587,12 @@ function renderFinance(d){
   // Runway
   var tlRunway = document.getElementById('tlRunway');
   if(tlRunway) tlRunway.textContent = runway != null ? runway + ' wks' : '\u2014';
+  var rmRunway = document.getElementById('rmRunway');
+  if(rmRunway) rmRunway.textContent = runway != null ? runway + ' wks' : '\u2014';
   var pinchEl = document.getElementById('pinchLine');
   if(pinchEl) pinchEl.textContent = pinchDate ? ('Pinch ' + fmtDateToken(pinchDate)) : '';
+  var tlPinchEl = document.getElementById('tlPinch');
+  if(tlPinchEl) tlPinchEl.textContent = fmtDateToken(pinchDate) || '\u2014';
 
   // Cash Ready Now
   document.getElementById('lcVal').textContent = fmtMoney(pick(d, ['liquidCash','cashOnHand','cashAvailable','bridgeCash']));
