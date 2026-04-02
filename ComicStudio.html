@@ -926,6 +926,7 @@ function finishComic() {
   if (checkVocabInCaptions()) html += ' &bull; Vocab word "' + todayVocab.word + '" used!';
   html += '</p>';
   html += '<p style="margin-top:12px;color:#64748B;font-size:12px;">Total words written: ' + totalWords + '</p>';
+  html += '<button style="margin-top:20px;padding:12px 28px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=\'/daily-missions\'">Back to Missions</button>';
   html += '</div>';
   comp.innerHTML = html;
 
