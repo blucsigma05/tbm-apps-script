@@ -776,6 +776,16 @@ textarea:-ms-input-placeholder { color: #64748B; }
 </div>
 
 <script>
+// ── Test Mode Detection ──
+var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+if (TBM_TEST_MODE) {
+  var _tbanner = document.createElement('div');
+  _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _tbanner.textContent = 'TEST MODE — Nothing saves';
+  document.body.appendChild(_tbanner);
+  document.body.style.paddingTop = '28px';
+}
+
 // ============================================================
 // BASELINE DIAGNOSTIC ENGINE - ES5 ONLY
 // Thompson Education Platform
@@ -1586,26 +1596,33 @@ var Diag = (function() {
       date: new Date().toISOString()
     };
 
-    try {
-      google.script.run
-        .withSuccessHandler(function() {
-          btn.textContent = '&#9989; Results Sent!';
-          status.textContent = 'Saved successfully.';
-          status.style.color = '#22c55e';
-        })
-        .withFailureHandler(function(err) {
-          btn.disabled = false;
-          btn.textContent = 'Retry Send';
-          status.textContent = 'Error: ' + (err && err.message ? err.message : 'Unknown error');
-          status.style.color = '#ef4444';
-        })
-        .logHomeworkCompletion(payload);
-    } catch (e) {
-      // Not running inside GAS — show debug info
-      btn.disabled = false;
-      btn.textContent = 'Retry Send';
-      status.textContent = 'Not connected to server (standalone mode)';
+    if (TBM_TEST_MODE) {
+      console.log('[TEST MODE] logHomeworkCompletion skipped');
+      btn.textContent = '\u2705 Results Sent! (test mode)';
+      status.textContent = 'Test mode — nothing saved.';
       status.style.color = '#fbbf24';
+    } else {
+      try {
+        google.script.run
+          .withSuccessHandler(function() {
+            btn.textContent = '&#9989; Results Sent!';
+            status.textContent = 'Saved successfully.';
+            status.style.color = '#22c55e';
+          })
+          .withFailureHandler(function(err) {
+            btn.disabled = false;
+            btn.textContent = 'Retry Send';
+            status.textContent = 'Error: ' + (err && err.message ? err.message : 'Unknown error');
+            status.style.color = '#ef4444';
+          })
+          .logHomeworkCompletion(payload);
+      } catch (e) {
+        // Not running inside GAS — show debug info
+        btn.disabled = false;
+        btn.textContent = 'Retry Send';
+        status.textContent = 'Not connected to server (standalone mode)';
+        status.style.color = '#fbbf24';
+      }
     }
   }
 

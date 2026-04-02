@@ -566,6 +566,16 @@ main {
 </main>
 
 <script>
+// ── Test Mode Detection ──
+var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+if (TBM_TEST_MODE) {
+  var _tbanner = document.createElement('div');
+  _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _tbanner.textContent = 'TEST MODE — Nothing saves';
+  document.body.appendChild(_tbanner);
+  document.body.style.paddingTop = '28px';
+}
+
 var MODULE_NAME = 'comic-studio';
 var MODULE_VERSION = 'v1';
 var CHILD = 'buggsy';
@@ -918,7 +928,9 @@ function finishComic() {
   document.getElementById('ring-badge').textContent = rings + ' Rings';
 
   // Award rings via backend
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
+  if (TBM_TEST_MODE) {
+    console.log('[TEST MODE] awardRings skipped, rings=' + rings);
+  } else if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function() { })
       .withFailureHandler(function(err) { })

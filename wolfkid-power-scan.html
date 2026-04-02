@@ -461,6 +461,16 @@
 </div>
 
 <script>
+  // ── Test Mode Detection ──
+  var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+  if (TBM_TEST_MODE) {
+    var _tbanner = document.createElement('div');
+    _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+    _tbanner.textContent = 'TEST MODE — Nothing saves';
+    document.body.appendChild(_tbanner);
+    document.body.style.paddingTop = '28px';
+  }
+
   // === ES5 COMPATIBLE ===
   var powers = [
     {
@@ -657,7 +667,13 @@
     var childMatch = urlParams.match(/[?&]child=([^&]*)/);
     var childName = childMatch ? decodeURIComponent(childMatch[1]) : 'buggsy';
 
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
+    if (TBM_TEST_MODE) {
+      console.log('[TEST MODE] savePowerScanResultsSafe skipped');
+      var saved = document.createElement('div');
+      saved.style.cssText = 'text-align:center;color:#fbbf24;font-size:13px;margin-top:8px;';
+      saved.textContent = 'Test mode — nothing saved';
+      document.getElementById('copy-confirm').parentNode.appendChild(saved);
+    } else if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(function() {
           var saved = document.createElement('div');

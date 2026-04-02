@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Bash(mkdir -p \"C:\\\\Dev\\\\thompson-lib\")",
+      "Bash(clasp create:*)",
+      "Bash(clasp push:*)",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "Bash(ipconfig //flushdns)",
+      "Bash(nslookup staging.thompsonfams.com)",
+      "Bash(nslookup thompsonfams.com)",
+      "Bash(ls \"C:\\\\Dev\\\\tbm-apps-script/\"*.md)",
+      "Bash(mkdir -p ~/.claude/commands/references)",
+      "Bash(cp \"C:\\\\Dev\\\\tbm-apps-script\\\\teks-science-grade4.md\" ~/.claude/commands/references/)",
+      "Bash(cp \"C:\\\\Dev\\\\tbm-apps-script\\\\teks-math-grade4.md\" ~/.claude/commands/references/)",
+      "Bash(cp \"C:\\\\Dev\\\\tbm-apps-script\\\\prek-milestones.md\" ~/.claude/commands/references/)",
+      "Bash(cp \"C:\\\\Dev\\\\tbm-apps-script\\\\nance-school-data.md\" ~/.claude/commands/references/)",
+      "Bash(mkdir -p \"C:\\\\Dev\\\\tbm-apps-script\\\\.claude\\\\commands\\\\references\")",
+      "Bash(cp ~/.claude/commands/thompson-education.md \"C:\\\\Dev\\\\tbm-apps-script\\\\.claude\\\\commands/\")",
+      "Bash(cp ~/.claude/commands/references/*.md \"C:\\\\Dev\\\\tbm-apps-script\\\\.claude\\\\commands\\\\references/\")",
+      "mcp__claude_ai_Notion__notion-query-database-view",
+      "mcp__claude_ai_Notion__notion-search",
+      "mcp__claude_ai_Notion__notion-update-page",
+      "mcp__claude_ai_Notion__notion-create-pages"
+    ]
+  }
+}

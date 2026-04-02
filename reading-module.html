@@ -603,6 +603,16 @@ main {
    Tuesday RLA: Cold passage + comprehension questions
    ============================================================ */
 
+// ── Test Mode Detection ──
+var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+if (TBM_TEST_MODE) {
+  var _tbanner = document.createElement('div');
+  _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _tbanner.textContent = 'TEST MODE — Nothing saves';
+  document.body.appendChild(_tbanner);
+  document.body.style.paddingTop = '28px';
+}
+
 var MODULE_VERSION = 'v1';
 var CHILD = 'buggsy';
 
@@ -730,6 +740,10 @@ var passageReadTime = 0;
 var missedQuestions = [];
 
 function logScaffold(eventType, data) {
+  if (TBM_TEST_MODE) {
+    console.log('[TEST MODE] logScaffoldEventSafe skipped:', eventType);
+    return;
+  }
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withFailureHandler(function(err) { console.error('Scaffold log failed:', err); })
@@ -1311,21 +1325,26 @@ function renderResults() {
   // Ring award + completion log (once only)
   if (!completionLogged) {
     completionLogged = true;
-    google.script.run
-      .withSuccessHandler(function() { console.log('Rings awarded: ' + earnedRings); })
-      .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })
-      .awardRingsSafe('buggsy', earnedRings, 'reading-module');
+    if (TBM_TEST_MODE) {
+      console.log('[TEST MODE] awardRingsSafe skipped, rings=' + earnedRings);
+      console.log('[TEST MODE] logHomeworkCompletionSafe skipped');
+    } else {
+      google.script.run
+        .withSuccessHandler(function() { console.log('Rings awarded: ' + earnedRings); })
+        .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })
+        .awardRingsSafe('buggsy', earnedRings, 'reading-module');
 
-    google.script.run
-      .withSuccessHandler(function() { console.log('Reading completion logged'); })
-      .withFailureHandler(function(err) { console.error('Log failed:', err.message); })
-      .logHomeworkCompletionSafe({
-        child: 'buggsy',
-        title: 'Reading: ' + PASSAGE.title,
-        subject: 'RLA',
-        score: mcCorrect,
-        total: totalMC
-      });
+      google.script.run
+        .withSuccessHandler(function() { console.log('Reading completion logged'); })
+        .withFailureHandler(function(err) { console.error('Log failed:', err.message); })
+        .logHomeworkCompletionSafe({
+          child: 'buggsy',
+          title: 'Reading: ' + PASSAGE.title,
+          subject: 'RLA',
+          score: mcCorrect,
+          total: totalMC
+        });
+    }
   }
 }
 

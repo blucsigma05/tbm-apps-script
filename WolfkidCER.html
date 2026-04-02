@@ -771,6 +771,16 @@
 <script>
 // ─── ES5 ONLY ───
 
+// ── Test Mode Detection ──
+var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+if (TBM_TEST_MODE) {
+  var _tbanner = document.createElement('div');
+  _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _tbanner.textContent = 'TEST MODE — Nothing saves';
+  document.body.appendChild(_tbanner);
+  document.body.style.paddingTop = '28px';
+}
+
 // ─── Episode Data ───
 var EPISODE = null;
 var FALLBACK_EPISODE = {

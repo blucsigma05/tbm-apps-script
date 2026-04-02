@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v40 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v41 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 💻 Curriculum
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 40; }
+function getKidsHubVersion() { return 41; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3450,5 +3450,168 @@ function getMissionStateSafe(child, dateKey) {
   });
 }
 
-// END OF FILE — KidsHub.gs v40
+// ════════════════════════════════════════════════════════════════════
+// v41: Education submission + parent approval pipeline
+// ════════════════════════════════════════════════════════════════════
+
+var KH_EDU_HEADERS = ['Timestamp','Child','Module','Subject','Score','AutoGraded','ResponseText','Status','ParentNotes','RingsAwarded','ReviewTimestamp','GeminiFeedback'];
+
+function ensureKHEducationTab_() {
+  var ss = getKHSS_();
+  var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_Education']) || 'KH_Education';
+  var sheet = ss.getSheetByName(tabName);
+  if (sheet) return sheet;
+  sheet = ss.insertSheet(tabName);
+  sheet.appendRow(KH_EDU_HEADERS);
+  sheet.setFrozenRows(1);
+  sheet.getRange('1:1').setFontWeight('bold');
+  return sheet;
+}
+
+function submitHomework_(data) {
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var sheet = ensureKHEducationTab_();
+    var isAutoGrade = !data.responseText || String(data.responseText).trim().length === 0;
+    var status = isAutoGrade ? 'auto_approved' : 'pending_review';
+    var rings = 0;
+
+    if (isAutoGrade) {
+      rings = Number(data.rings) || 5;
+      try {
+        if (typeof kh_awardEducationPoints_ === 'function') {
+          kh_awardEducationPoints_(String(data.child || 'buggsy').toLowerCase(), rings, data.module + ' — ' + data.subject);
+        }
+      } catch(e) { if (typeof logError_ === 'function') logError_('submitHomework_:awardRings', e); }
+    }
+
+    sheet.appendRow([
+      new Date(),
+      String(data.child || 'buggsy').toLowerCase(),
+      String(data.module || 'homework'),
+      String(data.subject || 'General'),
+      Number(data.score) || 0,
+      isAutoGrade,
+      String(data.responseText || ''),
+      status,
+      '',
+      rings,
+      '',
+      ''
+    ]);
+
+    stampKHHeartbeat_();
+
+    if (status === 'pending_review') {
+      try {
+        if (typeof sendPush_ === 'function') {
+          var childDisplay = String(data.child || 'buggsy').charAt(0).toUpperCase() + String(data.child || 'buggsy').slice(1);
+          sendPush_(childDisplay + ' submitted ' + (data.subject || 'homework'), 'Needs your review on Parent Dashboard', 'BOTH', 0);
+        }
+      } catch(e) { /* non-blocking */ }
+    }
+
+    return JSON.stringify({ status: 'ok', autoApproved: isAutoGrade, ringsAwarded: rings });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function submitHomeworkSafe(data) {
+  return withMonitor_('submitHomeworkSafe', function() {
+    return JSON.parse(JSON.stringify(JSON.parse(submitHomework_(data))));
+  });
+}
+
+function getEducationQueue_() {
+  var sheet = ensureKHEducationTab_();
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return { pending: [], today: [] };
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var pending = [];
+  var todayItems = [];
+
+  for (var i = 1; i < data.length; i++) {
+    var row = {
+      rowIndex: i + 1,
+      timestamp: data[i][0],
+      child: String(data[i][1] || ''),
+      module: String(data[i][2] || ''),
+      subject: String(data[i][3] || ''),
+      score: Number(data[i][4]) || 0,
+      autoGraded: data[i][5] === true || String(data[i][5]).toUpperCase() === 'TRUE',
+      responseText: String(data[i][6] || ''),
+      status: String(data[i][7] || ''),
+      parentNotes: String(data[i][8] || ''),
+      ringsAwarded: Number(data[i][9]) || 0,
+      geminiFeedback: String(data[i][11] || '')
+    };
+
+    if (row.status === 'pending_review') pending.push(row);
+
+    var rowDate = new Date(data[i][0]);
+    rowDate.setHours(0, 0, 0, 0);
+    if (rowDate.getTime() === today.getTime()) todayItems.push(row);
+  }
+
+  return { pending: pending, today: todayItems };
+}
+
+function getEducationQueueSafe() {
+  return withMonitor_('getEducationQueueSafe', function() {
+    return JSON.parse(JSON.stringify(getEducationQueue_()));
+  });
+}
+
+function approveHomework_(rowIndex, action, notes) {
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var sheet = ensureKHEducationTab_();
+    var row = sheet.getRange(rowIndex, 1, 1, 12).getValues()[0];
+    var child = String(row[1]);
+    var module = String(row[2]);
+    var subject = String(row[3]);
+
+    if (action === 'approve') {
+      var rings = 10;
+      sheet.getRange(rowIndex, 8).setValue('approved');
+      sheet.getRange(rowIndex, 9).setValue(String(notes || ''));
+      sheet.getRange(rowIndex, 10).setValue(rings);
+      sheet.getRange(rowIndex, 11).setValue(new Date());
+
+      try {
+        if (typeof kh_awardEducationPoints_ === 'function') {
+          kh_awardEducationPoints_(child, rings, module + ' — ' + subject + ' (Parent Approved)');
+        }
+      } catch(e) { if (typeof logError_ === 'function') logError_('approveHomework_:awardRings', e); }
+
+      try {
+        if (typeof sendPush_ === 'function') {
+          var childDisplay = child.charAt(0).toUpperCase() + child.slice(1);
+          sendPush_(childDisplay + ': Writing approved! +' + rings + ' rings', String(notes || 'Great work!'), 'BOTH', 0);
+        }
+      } catch(e) { /* non-blocking */ }
+    } else if (action === 'return') {
+      sheet.getRange(rowIndex, 8).setValue('returned');
+      sheet.getRange(rowIndex, 9).setValue(String(notes || 'Please try again'));
+      sheet.getRange(rowIndex, 11).setValue(new Date());
+    }
+
+    stampKHHeartbeat_();
+    return JSON.stringify({ status: 'ok', action: action });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function approveHomeworkSafe(rowIndex, action, notes) {
+  return withMonitor_('approveHomeworkSafe', function() {
+    return JSON.parse(JSON.stringify(JSON.parse(approveHomework_(rowIndex, action, notes))));
+  });
+}
+
+// END OF FILE — KidsHub.gs v41
 // ════════════════════════════════════════════════════════════════════

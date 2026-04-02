@@ -398,7 +398,10 @@ function serveData(e) {
         'getStoryImagesSafe': getStoryImagesSafe,
         'runTestsSafe': runTestsSafe,
         'saveMissionStateSafe': saveMissionStateSafe,
-        'getMissionStateSafe': getMissionStateSafe
+        'getMissionStateSafe': getMissionStateSafe,
+        'submitHomeworkSafe': submitHomeworkSafe,
+        'getEducationQueueSafe': getEducationQueueSafe,
+        'approveHomeworkSafe': approveHomeworkSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {

@@ -416,6 +416,16 @@
 <div id="dd-app"></div>
 
 <script>
+// ── Test Mode Detection ──
+var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+if (TBM_TEST_MODE) {
+  var _tbanner = document.createElement('div');
+  _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _tbanner.textContent = 'TEST MODE — Nothing saves';
+  document.body.appendChild(_tbanner);
+  document.body.style.paddingTop = '28px';
+}
+
 /* ===== DATA ===== */
 var THEMES = [
   { id: "wolfkid", name: "Wolfkid Universe", emoji: "\uD83D\uDC3A", colors: ["#0B0F1A","#3B82F6","#60A5FA","#EF4444"], desc: "Dark & electric. Your original universe.", preview: "linear-gradient(135deg, #0B0F1A 0%, #1E293B 50%, #3B82F6 100%)" },

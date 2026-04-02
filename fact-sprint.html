@@ -547,6 +547,17 @@ main {
 
 <script>
 // === ES5 ONLY ===
+
+// ── Test Mode Detection ──
+var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+if (TBM_TEST_MODE) {
+  var _tbanner = document.createElement('div');
+  _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _tbanner.textContent = 'TEST MODE — Nothing saves';
+  document.body.appendChild(_tbanner);
+  document.body.style.paddingTop = '28px';
+}
+
 var MODULE_VERSION = 'v1';
 var CHILD = 'buggsy';
 var TOTAL_QUESTIONS = 20;
@@ -886,6 +897,10 @@ function formatTime(totalSeconds) {
 // SCAFFOLD LOGGING
 // ============================================================
 function logScaffold(eventType, data) {
+  if (TBM_TEST_MODE) {
+    console.log('[TEST MODE] logScaffoldEventSafe skipped:', eventType);
+    return;
+  }
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withFailureHandler(function(err) { console.error('Scaffold log failed:', err); })
@@ -1174,7 +1189,9 @@ function finishSprint() {
   }
 
   // Award rings via GAS if available
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
+  if (TBM_TEST_MODE) {
+    console.log('[TEST MODE] awardRingsSafe skipped, rings=' + rings);
+  } else if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function() {})
       .withFailureHandler(function(err) { console.error('Ring award failed:', err); })
@@ -1240,6 +1257,10 @@ function loadPersonalBests() {
 }
 
 function savePersonalBests() {
+  if (TBM_TEST_MODE) {
+    console.log('[TEST MODE] saveProgressSafe skipped (PBs)');
+    return;
+  }
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function() { console.log('PBs saved to server'); })

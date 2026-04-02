@@ -591,6 +591,17 @@
 
 <script>
 // ─── ES5 ONLY ───
+
+// ── Test Mode Detection ──
+var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+if (TBM_TEST_MODE) {
+  var _tbanner = document.createElement('div');
+  _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _tbanner.textContent = 'TEST MODE — Nothing saves';
+  document.body.appendChild(_tbanner);
+  document.body.style.paddingTop = '28px';
+}
+
 var MODULE_VERSION = 'v1';
 var CHILD = 'buggsy';
 var TARGET_MINUTES = 12;
@@ -1085,37 +1096,44 @@ function handleSubmit() {
   showScreen('completion');
 
   // Award rings via GAS backend (if available)
-  try {
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run
-        .withSuccessHandler(function() { })
-        .withFailureHandler(function(err) { })
-        .awardRingsSafe(CHILD, 3, 'writing-module-' + fmt.id);
+  if (TBM_TEST_MODE) {
+    console.log('[TEST MODE] awardRingsSafe skipped, rings=3');
+  } else {
+    try {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function() { })
+          .withFailureHandler(function(err) { })
+          .awardRingsSafe(CHILD, 3, 'writing-module-' + fmt.id);
+      }
+    } catch (e) {
+      // Standalone mode — no GAS backend
     }
-  } catch (e) {
-    // Standalone mode — no GAS backend
   }
 
   // Log to Notion via GAS backend (if available)
-  try {
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run
-        .withSuccessHandler(function() { })
-        .withFailureHandler(function(err) { })
-        .logHomeworkCompletionSafe({
-          child: CHILD,
-          subject: 'RLA',
-          assignment: 'Writing - ' + fmt.name,
-          score: null,
-          teksCode: 'ELA 4.12',
-          difficulty: 'Medium',
-          date: new Date().toISOString().split('T')[0]
-        });
+  if (!TBM_TEST_MODE) {
+    try {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function() { })
+          .withFailureHandler(function(err) { })
+          .logHomeworkCompletionSafe({
+            child: CHILD,
+            subject: 'RLA',
+            assignment: 'Writing - ' + fmt.name,
+            score: null,
+            teksCode: 'ELA 4.12',
+            difficulty: 'Medium',
+            date: new Date().toISOString().split('T')[0]
+          });
+      }
+    } catch (e) {
+      // Standalone mode
     }
-  } catch (e) {
-    // Standalone mode
+  } else {
+    console.log('[TEST MODE] logHomeworkCompletionSafe skipped');
   }
-}
 
 // ─── Start ───
 init();

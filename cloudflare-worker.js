@@ -300,7 +300,8 @@ function getShimScript() {
 '    "logQuestionResultSafe","savePowerScanResultsSafe","getWeeklyProgressSafe",\n' +
 '    "saveProgressSafe","loadProgressSafe","logScaffoldEventSafe","getWeekProgressSafe",\n' +
 '    "listStoredStoriesSafe","getStoryForReaderSafe","getStoryImagesSafe",\n' +
-'    "saveMissionStateSafe","getMissionStateSafe"\n' +
+'    "saveMissionStateSafe","getMissionStateSafe",\n' +
+'    "submitHomeworkSafe","getEducationQueueSafe","approveHomeworkSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +
