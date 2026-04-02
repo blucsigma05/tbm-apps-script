@@ -916,10 +916,19 @@ function showReadyScreen(content) {
   playAudioCached('jj_instruction_welcome.mp3', content.audioIntro || 'Time for sparkle learning!');
 }
 
+function validateActivities(activities) {
+  for (var i = 0; i < activities.length; i++) {
+    if (KNOWN_ACTIVITY_TYPES.indexOf(activities[i].type) === -1) {
+      console.warn('Unknown activity type: ' + activities[i].type + ' at index ' + i);
+    }
+  }
+}
+
 function startSession() {
   currentActivityIndex = 0;
   completedActivities = [];
   updateProgressBar();
+  validateActivities(todayContent.activities);
   renderActivity(currentActivityIndex);
 }
 
@@ -966,7 +975,13 @@ function renderActivity(index) {
     case 'celebration':
     case 'star_celebration':   renderCelebration(activity); break;
     case 'sparkle_challenge':  renderSparkleChallenge(activity); break;
-    case 'free_draw':          advanceActivity(activity.starsEarned || 1); break;
+    case 'free_draw':
+      var fdMc = getMainContent();
+      fdMc.innerHTML = '<div class="activity-card"><p class="instruction">' + escapeHtml(activity.prompt || 'Free draw time!') + '</p>' +
+        '<div style="background:#1a1040;border:2px solid rgba(255,255,255,0.2);border-radius:16px;height:200px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:18px">Draw on paper, then tap Done!</div>' +
+        '<button class="btn-big btn-green" onclick="advanceActivity(' + (activity.stars || 1) + ')" style="margin-top:16px">Done!</button></div>';
+      speak(activity.prompt || 'Free draw time! Draw on paper, then tap done!');
+      break;
     default:
       /* Skip unknown types */
       advanceActivity(activity.stars || 0);

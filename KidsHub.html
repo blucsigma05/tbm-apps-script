@@ -13,7 +13,7 @@
 html { -webkit-tap-highlight-color: transparent; }
 body { min-height: 100vh; }
 #loading {
-  position: fixed; inset: 0; z-index: 9999;
+  position: fixed; top:0;left:0;right:0;bottom:0; z-index: 9999;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
 }
 .load-ring { width: 52px; height: 52px; border-radius: 50%; border: 4px solid transparent; animation: spin 0.9s linear infinite; }
@@ -43,8 +43,8 @@ body { min-height: 100vh; }
   background-size: 100%, 100%, 100%, 24px 24px, 24px 24px, 100%;
   color: #e2e8f0; font-family: 'Barlow Condensed', sans-serif; padding-bottom: 80px;
 }
-.buggsy-body::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9998; background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.055) 3px, rgba(0,0,0,0.055) 4px); }
-.b-float-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.buggsy-body::after { content: ''; position: fixed; top:0;left:0;right:0;bottom:0; pointer-events: none; z-index: 9998; background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.055) 3px, rgba(0,0,0,0.055) 4px); }
+.b-float-bg { position: fixed; top:0;left:0;right:0;bottom:0; pointer-events: none; z-index: 0; overflow: hidden; }
 .b-float-bg span { position: absolute; font-size: 16px; opacity: 0; animation: b-float-drift var(--d, 10s) var(--delay, 0s) infinite linear; filter: drop-shadow(0 0 4px rgba(34,197,94,0.3)); }
 @keyframes b-float-drift { 0%{opacity:0;transform:translateY(100vh) rotate(0deg) scale(0.4)} 15%{opacity:0.45} 50%{opacity:0.3} 85%{opacity:0.2} 100%{opacity:0;transform:translateY(-15vh) rotate(540deg) scale(0.9)} }
 .buggsy-body #loading { background: #061208; }
@@ -67,7 +67,7 @@ body { min-height: 100vh; }
 .b-lvl-next { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #4a6080; margin-left: auto; }
 .b-bar-track { height: 11px; background: #050a10; border: 1px solid #1e3347; border-radius: 6px; overflow: hidden; }
 .b-bar-fill { height: 100%; border-radius: 6px; transition: width 0.7s cubic-bezier(0.34,1.56,0.64,1); position: relative; }
-.b-bar-fill::after { content: ''; position: absolute; inset: 0; border-radius: 6px; background: linear-gradient(90deg,transparent,rgba(255,255,255,0.18) 50%,transparent); background-size: 200% 100%; animation: shimb 2.5s linear infinite; }
+.b-bar-fill::after { content: ''; position: absolute; top:0;left:0;right:0;bottom:0; border-radius: 6px; background: linear-gradient(90deg,transparent,rgba(255,255,255,0.18) 50%,transparent); background-size: 200% 100%; animation: shimb 2.5s linear infinite; }
 @keyframes shimb { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
 .b-tabs { display: flex; gap: 10px; padding: 13px 14px 0; max-width: 980px; margin: 0 auto; }
 .b-tab { flex: 1; font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 10px 4px; border: 1px solid #1e3347; border-radius: 6px; background: #0d1520; color: #4a6080; cursor: pointer; text-align: center; transition: all 0.15s; min-height: 44px; }
@@ -127,7 +127,7 @@ body { min-height: 100vh; }
 .b-pp-btn:hover { filter: brightness(1.3); }
 .xp-pop { position: fixed; font-family: 'Press Start 2P', monospace; font-size: 11px; color: #f59e0b; text-shadow: 1px 1px 0 #000; pointer-events: none; z-index: 500; animation: xp-float 1.2s ease forwards; }
 @keyframes xp-float { 0%{opacity:1;transform:translateY(0) scale(1)}50%{opacity:1;transform:translateY(-38px) scale(1.15)}100%{opacity:0;transform:translateY(-65px) scale(0.8)} }
-.pin-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 300; }
+.pin-overlay { position: fixed; top:0;left:0;right:0;bottom:0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 300; }
 .pin-box { background: #0d1520; border: 2px solid #f59e0b; box-shadow: 0 0 40px rgba(245,158,11,0.2); border-radius: 10px; padding: 28px; text-align: center; width: 275px; }
 .pin-title { font-family: 'Press Start 2P', monospace; font-size: 9.5px; color: #f59e0b; margin-bottom: 14px; }
 .pin-input { font-family: 'Press Start 2P', monospace; font-size: 22px; letter-spacing: 7px; width: 100%; background: #080c10; border: 1px solid #1e3347; color: #e2e8f0; text-align: center; padding: 11px; border-radius: 6px; margin-bottom: 11px; outline: none; }
@@ -150,8 +150,8 @@ body { min-height: 100vh; }
    ════════════════════════════════════════ */
 .jj-body { font-family: 'Nunito', sans-serif; min-height: 100vh; background: #1f0e35; background-image: radial-gradient(ellipse 80% 50% at 25% 15%, rgba(255,182,225,0.25) 0%, transparent 55%), radial-gradient(ellipse 60% 45% at 75% 65%, rgba(167,139,250,0.2) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 50% 40%, rgba(253,224,71,0.06) 0%, transparent 60%), radial-gradient(ellipse 90% 30% at 50% 90%, rgba(236,72,153,0.15) 0%, transparent 50%), linear-gradient(180deg, #1f0e35 0%, #251240 50%, #1f0e35 100%); color: #fff; padding-bottom: 80px; overflow-x: hidden; }
 @keyframes jj-rainbow-shimmer { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-.jj-body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:0; background:linear-gradient(135deg, rgba(253,224,71,0.03), rgba(236,72,153,0.04), rgba(167,139,250,0.03), rgba(34,211,238,0.02), rgba(253,224,71,0.03)); background-size:400% 400%; animation:jj-rainbow-shimmer 20s ease infinite; }
-.jj-sparkle-bg { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.jj-body::before { content:''; position:fixed; top:0;left:0;right:0;bottom:0; pointer-events:none; z-index:0; background:linear-gradient(135deg, rgba(253,224,71,0.03), rgba(236,72,153,0.04), rgba(167,139,250,0.03), rgba(34,211,238,0.02), rgba(253,224,71,0.03)); background-size:400% 400%; animation:jj-rainbow-shimmer 20s ease infinite; }
+.jj-sparkle-bg { position: fixed; top:0;left:0;right:0;bottom:0; pointer-events: none; z-index: 0; overflow: hidden; }
 .jj-sparkle-bg span { position: absolute; font-size: 14px; opacity: 0; animation: sparkle-drift var(--d, 8s) var(--delay, 0s) infinite ease-in-out; }
 @keyframes sparkle-drift { 0%{opacity:0;transform:translateY(100vh) rotate(0deg) scale(0.5)} 20%{opacity:0.7} 80%{opacity:0.5} 100%{opacity:0;transform:translateY(-20vh) rotate(360deg) scale(1.2)} }
 .jj-body #loading { background: #1f0e35; }
@@ -238,7 +238,7 @@ body { min-height: 100vh; }
 .jj-tab { flex: 1; font-family: 'Fredoka One', cursive; font-size: 15px; padding: 10px; border: 2px solid rgba(255,255,255,0.15); border-radius: 14px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); cursor: pointer; text-align: center; transition: all 0.15s; }
 .jj-tab:hover { border-color: rgba(236,72,153,0.5); color: #f9a8d4; }
 .jj-tab.active { background: linear-gradient(135deg,rgba(236,72,153,0.25),rgba(168,85,247,0.25)); border-color: rgba(236,72,153,0.6); color: #fff; box-shadow: 0 0 14px rgba(236,72,153,0.2); }
-.jj-pin-overlay { position: fixed; inset: 0; background: rgba(26,0,40,0.9); display: flex; align-items: center; justify-content: center; z-index: 300; }
+.jj-pin-overlay { position: fixed; top:0;left:0;right:0;bottom:0; background: rgba(26,0,40,0.9); display: flex; align-items: center; justify-content: center; z-index: 300; }
 .jj-pin-box { background: rgba(255,255,255,0.12); border: 3px solid rgba(253,230,138,0.5); border-radius: 24px; padding: 28px; text-align: center; width: 285px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
 .jj-pin-title { font-family: 'Fredoka One', cursive; font-size: 22px; color: #fde68a; margin-bottom: 12px; }
 .jj-pin-input { font-family: 'Press Start 2P', monospace; font-size: 22px; letter-spacing: 7px; width: 100%; background: rgba(0,0,0,0.3); border: 2px solid rgba(255,255,255,0.2); color: #fff; text-align: center; padding: 12px; border-radius: 12px; margin-bottom: 12px; outline: none; }
@@ -491,7 +491,7 @@ body { min-height: 100vh; }
 .sf-error { font-size: 12px; color: #fca5a5; background: rgba(220,38,38,0.15); padding: 8px 12px; border-radius: 8px; margin-top: 10px; text-align: center; }
 .p-spinner { display: flex; align-items: center; justify-content: center; padding: 40px; }
 .p-spin-ring { width: 36px; height: 36px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.1); border-top-color: #d4a843; animation: spin 0.8s linear infinite; }
-#p-emboss { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; display: none; }
+#p-emboss { position: fixed; top:0;left:0;right:0;bottom:0; z-index: 0; pointer-events: none; overflow: hidden; display: none; }
 .parent-body #p-emboss { display: block; }
 @media (max-width: 480px) { .p-summary { grid-template-columns: 1fr 1fr; } .p-kids { grid-template-columns: 1fr; } .p-reset-grid { grid-template-columns: 1fr 1fr; } }
 .gold-ring { display:inline-block;width:1em;height:1em;border:3px solid #fbbf24;border-radius:50%;vertical-align:middle;box-sizing:border-box; }
@@ -550,7 +550,7 @@ body { min-height: 100vh; }
 .jj-redeem-btn { font-family: 'Fredoka One', cursive; font-size: 13px; background: linear-gradient(135deg,#ec4899,#a855f7); border: none; color: #fff; padding: 8px 12px; cursor: pointer; border-radius: 12px; transition: all 0.15s; box-shadow: 0 4px 12px rgba(168,85,247,0.3); }
 .jj-redeem-btn:hover { transform: scale(1.05); }
 /* v22: Qty picker overlay */
-.qty-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;animation:qty-fade-in 0.2s ease }
+.qty-overlay { position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:500;display:flex;align-items:center;justify-content:center;animation:qty-fade-in 0.2s ease }
 @keyframes qty-fade-in { from{opacity:0} to{opacity:1} }
 .qty-box { background:#0d1520;border:2px solid #f59e0b;border-radius:12px;padding:20px;min-width:260px;max-width:320px;text-align:center;box-shadow:0 0 30px rgba(245,158,11,0.3) }
 .qty-box.jj-qty { background:linear-gradient(135deg,#312e81,#1e1b4b);border-color:#a855f7 }
@@ -2759,7 +2759,7 @@ function pBatchApprove(child) {
 <!-- ═══ V2 TOAST ═══ -->
 <div id="syncStrip" class="sync-strip" style="display:none"><span class="sync-dot green"></span><span class="sync-text">Synced</span></div>
 <div id="p-toast" class="p-toast"></div>
-<div id="clearModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);align-items:center;justify-content:center">
+<div id="clearModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:rgba(0,0,0,0.6);align-items:center;justify-content:center">
   <div style="background:#1e293b;border-radius:12px;padding:24px;max-width:320px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.5)">
     <div style="font-size:16px;font-weight:700;color:#e2e8f0;margin-bottom:16px;text-align:center" id="clearModalTitle">Clear task?</div>
     <div style="display:flex;flex-direction:column;gap:10px">

@@ -136,7 +136,6 @@ main {
   z-index: 10;
 }
 
-/* TODO: Build 17C — PYA timing refactor: render PYA overlay relative to content loading, not static */
 /* Plan Your Attack overlay */
 #plan-overlay {
   position: fixed;
@@ -1400,10 +1399,19 @@ function loadCurriculumContent() {
 }
 
 // ─── INIT ───
+function validateQuestionTypes(questions) {
+  for (var i = 0; i < questions.length; i++) {
+    if (!TYPE_LABELS[questions[i].type]) {
+      console.warn('Unknown question type: ' + questions[i].type + ' at index ' + i);
+    }
+  }
+}
+
 function init() {
   scienceQs = MODULE.science ? MODULE.science.questions || [] : [];
   mathQs = MODULE.math ? MODULE.math.questions || [] : [];
   allQs = scienceQs.concat(mathQs);
+  validateQuestionTypes(allQs);
   buildStarField();
   renderOverview();
   renderScience();

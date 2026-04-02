@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v41 — Kids Hub Server Backend (TBM Consolidated)
-// WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog
+// KidsHub.gs v42 — Kids Hub Server Backend (TBM Consolidated)
+// WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 41; }
+function getKidsHubVersion() { return 42; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -532,7 +532,7 @@ function backfillCompletedDatesToISO_() {
 var _cachedSS = null;
 
 function getKHSS_() {
-  if (!_cachedSS) _cachedSS = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  if (!_cachedSS) _cachedSS = SpreadsheetApp.openById(SSID);
   return _cachedSS;
 }
 
@@ -621,7 +621,7 @@ function getNowISO_() {
 function acquireLock_() {
   var lock = LockService.getScriptLock();
   var hasLock = false;
-  try { hasLock = lock.waitLock(30000); hasLock = true; } catch (e) { hasLock = false; }
+  try { lock.waitLock(30000); hasLock = true; } catch (e) { hasLock = false; }
   return { lock: lock, acquired: hasLock };
 }
 
@@ -3765,5 +3765,5 @@ function getDailyScheduleSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v41
+// END OF FILE — KidsHub.gs v42
 // ════════════════════════════════════════════════════════════════════
