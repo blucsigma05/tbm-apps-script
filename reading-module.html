@@ -717,6 +717,7 @@ var C = {
 };
 
 // ─── STATE ───
+var MODULE_NAME = 'reading-module';
 var currentView = 'passage';
 var answers = {};
 var completionLogged = false;
@@ -725,6 +726,19 @@ var timerInterval = null;
 var moduleStarted = false;
 var passageReadTime = 0;
 var missedQuestions = [];
+
+function logScaffold(eventType, data) {
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withFailureHandler(function(err) { console.error('Scaffold log failed:', err); })
+      .logScaffoldEventSafe({
+        child: 'buggsy',
+        module: MODULE_NAME || 'unknown',
+        event: eventType,
+        data: data || {}
+      });
+  }
+}
 
 // ─── HELPERS ───
 function escapeHtml(str) {
@@ -875,13 +889,21 @@ function doneReading() {
   currentView = 'questions';
   var passageEl = document.getElementById('section-passage');
   var questionsEl = document.getElementById('section-questions');
-  // Keep passage visible above questions — collapse to scrollable summary
-  passageEl.style.maxHeight = '35vh';
-  passageEl.style.overflowY = 'auto';
+
+  // Apply scaffold passageVisibility if content provides it
+  var visibility = (PASSAGE && PASSAGE.passageVisibility) ? PASSAGE.passageVisibility : null;
+  if (visibility) {
+    applyPassageVisibility(visibility);
+  } else {
+    // Default behavior — collapse to scrollable summary
+    passageEl.style.maxHeight = '35vh';
+    passageEl.style.overflowY = 'auto';
+    passageEl.style.display = 'block';
+    questionsEl.style.display = 'block';
+  }
   passageEl.style.borderBottom = '2px solid rgba(255,255,255,0.1)';
   passageEl.style.marginBottom = '12px';
   passageEl.style.paddingBottom = '8px';
-  questionsEl.style.display = 'block';
   renderQuestions();
   questionsEl.scrollIntoView({ behavior: 'smooth' });
 }
@@ -1313,6 +1335,68 @@ function backToQuestions() {
   passageEl.style.display = 'none';
   questionsEl.style.display = 'block';
   resultsEl.style.display = 'none';
+}
+
+// ─── SCAFFOLD FEEDBACK ───
+function showScaffoldFeedback(question, selectedIndex, isCorrect) {
+  var level = (question && question.feedbackLevel) || 'on_tap';
+  if (isCorrect) return '';
+
+  var correctAnswer = question.options ? question.options[question.answer || question.correctIndex || 0] : '';
+
+  if (level === 'full') {
+    return '<div class="feedback-wrong">' +
+      '<div class="feedback-correct">The answer is: ' + escapeHtml(correctAnswer) + '</div>' +
+      (question.explanation ? '<div class="feedback-explain">' + escapeHtml(question.explanation) + '</div>' : '') +
+      (question.common_mistake ? '<div class="feedback-mistake">' + escapeHtml(question.common_mistake) + '</div>' : '') +
+      '</div>';
+  } else if (level === 'medium') {
+    return '<div class="feedback-wrong">' +
+      '<div class="feedback-correct">The answer is: ' + escapeHtml(correctAnswer) + '</div>' +
+      (question.explanation ? '<div class="feedback-explain">' + escapeHtml(question.explanation) + '</div>' : '') +
+      '</div>';
+  } else if (level === 'minimal') {
+    return '<div class="feedback-wrong">' +
+      '<div class="feedback-correct">The answer is: ' + escapeHtml(correctAnswer) + '</div>' +
+      '</div>';
+  } else {
+    return '<div class="feedback-wrong">' +
+      '<div class="feedback-correct">The answer is: ' + escapeHtml(correctAnswer) + '</div>' +
+      '<button class="why-btn" onclick="toggleExplanation(\'' + (question.id || '') + '\')">Want to see why?</button>' +
+      '<div id="explain-' + (question.id || '') + '" style="display:none">' + escapeHtml(question.explanation || '') + '</div>' +
+      '</div>';
+  }
+}
+
+function toggleExplanation(questionId) {
+  var el = document.getElementById('explain-' + questionId);
+  if (el) {
+    el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+    if (el.style.display === 'block') {
+      logScaffold('why_tapped', { questionId: questionId });
+    }
+  }
+}
+
+function applyPassageVisibility(visibility) {
+  var passageEl = document.getElementById('section-passage');
+  var questionsEl = document.getElementById('section-questions');
+  if (!passageEl || !questionsEl) return;
+
+  if (visibility === 'always') {
+    passageEl.style.maxHeight = '40vh';
+    passageEl.style.overflowY = 'auto';
+    passageEl.style.display = 'block';
+    questionsEl.style.display = 'block';
+  } else if (visibility === 'collapse_after_first') {
+    passageEl.style.maxHeight = '35vh';
+    passageEl.style.overflowY = 'auto';
+    passageEl.style.display = 'block';
+    questionsEl.style.display = 'block';
+  } else {
+    passageEl.style.display = 'none';
+    questionsEl.style.display = 'block';
+  }
 }
 
 // ─── INIT ───
