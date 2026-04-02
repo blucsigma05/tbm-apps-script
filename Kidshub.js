@@ -2554,8 +2554,18 @@ function getTodayContent_(child) {
   if (!bestRow) return null;
   try {
     var weekContent = JSON.parse(bestRow[jsonCol]);
-    var todayContent = weekContent[todayName] || weekContent[todayName.charAt(0).toUpperCase() + todayName.slice(1)] || null;
-    return { content: todayContent, fullWeek: weekContent, day: todayName, week: bestRow[weekCol] || 0, child: childLower };
+    // Handle both flat and nested (.days) formats
+    var daySource = weekContent.days || weekContent;
+    var capName = todayName.charAt(0).toUpperCase() + todayName.slice(1);
+    var dayContent = daySource[todayName] || daySource[capName] || null;
+    // Attach week-level config to day content
+    if (dayContent) {
+      if (weekContent.scaffoldConfig) dayContent.scaffoldConfig = weekContent.scaffoldConfig;
+      if (weekContent.vocabulary) dayContent.vocabulary = weekContent.vocabulary;
+      if (weekContent.focusLetters) dayContent.focusLetters = weekContent.focusLetters;
+      if (weekContent.focusNumbers) dayContent.focusNumbers = weekContent.focusNumbers;
+    }
+    return { content: dayContent, fullWeek: weekContent, day: todayName, week: bestRow[weekCol] || 0, child: childLower };
   } catch (e) {
     Logger.log('getTodayContent_: JSON parse error for ' + child + ': ' + e.message);
     return null;

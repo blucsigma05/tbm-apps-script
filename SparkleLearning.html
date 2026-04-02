@@ -924,7 +924,8 @@ function renderActivity(index) {
     case 'beginning_sound':    renderBeginningSound(activity); break;
     case 'letter_trace':       renderLetterTrace(activity); break;
     case 'number_trace':       renderNumberTrace(activity); break;
-    case 'audio_story':        renderAudioStory(activity); break;
+    case 'audio_story':
+    case 'story_listen':       renderAudioStory(activity); break;
     case 'color_sort':         renderColorSort(activity); break;
     case 'more_or_less':       renderMoreOrLess(activity); break;
     case 'name_builder':       renderNameBuilder(activity); break;
