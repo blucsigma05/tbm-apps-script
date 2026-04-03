@@ -1327,8 +1327,164 @@ document.addEventListener('visibilitychange', function() {
 
 function applyBodyClass() {
   if (IS_PARENT) { document.body.className = 'parent-body'; document.getElementById('loadText').textContent = 'Loading dashboard...'; }
-  else if (IS_JJ) { document.body.className = 'jj-body'; document.getElementById('loadText').textContent = "Loading JJ's Stars..."; }
-  else { document.body.className = 'buggsy-body'; document.getElementById('loadText').textContent = 'LOADING QUESTS...'; }
+  else if (IS_JJ) { document.body.className = 'jj-body'; buildJJLoadingScreen(); }
+  else { document.body.className = 'buggsy-body'; buildBuggsyLoadingScreen(); }
+}
+
+function buildJJLoadingScreen() {
+  var loading = document.getElementById('loading');
+  loading.innerHTML = '';
+  loading.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;overflow:hidden;background:linear-gradient(135deg,#1a0533 0%,#2d0a5e 40%,#4a0e8f 70%,#1a0533 100%);display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
+  var style = document.createElement('style');
+  style.textContent = '@keyframes jjTwinkle{0%,100%{opacity:0.2;transform:scale(1)}50%{opacity:1;transform:scale(1.6)}}@keyframes jjFloatUp{0%{opacity:0;transform:translateY(0) scale(0.5)}20%{opacity:1}80%{opacity:1}100%{opacity:0;transform:translateY(-320px) rotate(40deg) scale(1.2)}}@keyframes jjStarPulse{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.2) rotate(5deg)}}@keyframes jjBounce{from{transform:translateY(0) scale(1)}to{transform:translateY(-12px) scale(1.05)}}@keyframes jjShimmer{0%,100%{opacity:0.7;color:#ffaaee}50%{opacity:1;color:#ffe0ff}}@keyframes jjDotBounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-16px) scale(1.3)}}@keyframes jjSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes jjSpinRev{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}';
+  document.head.appendChild(style);
+  // Star field
+  var starsBg = document.createElement('div');
+  starsBg.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;';
+  for (var si = 0; si < 40; si++) {
+    var star = document.createElement('div');
+    var sz = (Math.random() * 3 + 2);
+    star.style.cssText = 'position:absolute;border-radius:50%;background:white;width:' + sz + 'px;height:' + sz + 'px;left:' + (Math.random()*100) + '%;top:' + (Math.random()*100) + '%;animation:jjTwinkle ' + (Math.random()*2.5+1.5) + 's ease-in-out ' + (Math.random()*3) + 's infinite;';
+    starsBg.appendChild(star);
+  }
+  loading.appendChild(starsBg);
+  // Floating emoji
+  var emojis = ['\uD83C\uDF1F','\uD83D\uDC9C','\uD83C\uDF38','\uD83E\uDD8B','\uD83C\uDF08','\uD83D\uDCAB','\uD83C\uDF80','\uD83C\uDF6C'];
+  for (var fi = 0; fi < 8; fi++) {
+    var floater = document.createElement('div');
+    var fsz = Math.floor(Math.random()*18+18);
+    floater.style.cssText = 'position:absolute;font-size:' + fsz + 'px;left:' + (Math.random()*90+5) + '%;bottom:-20px;opacity:0;pointer-events:none;animation:jjFloatUp ' + (Math.random()*4+3) + 's ease-in-out ' + (Math.random()*6) + 's infinite;';
+    floater.textContent = emojis[fi];
+    loading.appendChild(floater);
+  }
+  // Center content
+  var center = document.createElement('div');
+  center.style.cssText = 'position:relative;z-index:10;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;gap:0;';
+  // Sparkle with orbiting dots
+  var starWrap = document.createElement('div');
+  starWrap.style.cssText = 'position:relative;width:160px;height:160px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
+  var outerRing = document.createElement('div');
+  outerRing.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;animation:jjSpin 4s linear infinite;';
+  var orbColors = ['#ff66cc','#aa44ff','#ffdd44','#44ddff','#ff4499','#66ffaa'];
+  for (var oi = 0; oi < 6; oi++) {
+    var angle = (oi/6)*360; var rad = angle*Math.PI/180;
+    var ox = 50 + 46*Math.cos(rad); var oy = 50 + 46*Math.sin(rad);
+    var dot = document.createElement('div');
+    dot.style.cssText = 'position:absolute;width:12px;height:12px;border-radius:50%;left:calc(' + ox + '% - 6px);top:calc(' + oy + '% - 6px);background:' + orbColors[oi] + ';box-shadow:0 0 8px ' + orbColors[oi] + ';';
+    outerRing.appendChild(dot);
+  }
+  var mainStar = document.createElement('div');
+  mainStar.style.cssText = 'font-size:72px;animation:jjStarPulse 1.5s ease-in-out infinite;filter:drop-shadow(0 0 20px #ffdd00) drop-shadow(0 0 40px #ff88cc);z-index:2;line-height:1;';
+  mainStar.textContent = '\u2728';
+  starWrap.appendChild(outerRing);
+  starWrap.appendChild(mainStar);
+  var hiText = document.createElement('div');
+  hiText.style.cssText = 'font-family:"Fredoka One",cursive;font-size:42px;color:#fff;text-shadow:0 0 20px #cc44ff,0 0 40px #8800ff;animation:jjBounce 0.8s ease-in-out infinite alternate;margin-top:8px;letter-spacing:2px;';
+  hiText.textContent = 'Hi JJ! \uD83E\uDD84';
+  var subText = document.createElement('div');
+  subText.style.cssText = 'font-family:"Fredoka One",cursive;font-size:20px;color:#ffaaee;margin-top:8px;animation:jjShimmer 2s ease-in-out infinite;letter-spacing:1px;';
+  subText.textContent = 'Getting your sparkles ready...';
+  var dotsRow = document.createElement('div');
+  dotsRow.style.cssText = 'display:-webkit-flex;display:flex;gap:12px;margin-top:28px;';
+  var dotColors = ['#ff66cc','#aa44ff','#66aaff','#44ddaa','#ffdd44'];
+  for (var di = 0; di < 5; di++) {
+    var d = document.createElement('div');
+    d.style.cssText = 'width:18px;height:18px;border-radius:50%;background:' + dotColors[di] + ';animation:jjDotBounce 1s ease-in-out ' + (di*0.15) + 's infinite;';
+    dotsRow.appendChild(d);
+  }
+  center.appendChild(starWrap);
+  center.appendChild(hiText);
+  center.appendChild(subText);
+  center.appendChild(dotsRow);
+  loading.appendChild(center);
+}
+
+function buildBuggsyLoadingScreen() {
+  var loading = document.getElementById('loading');
+  loading.innerHTML = '';
+  loading.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;overflow:hidden;background:#030a10;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
+  var style = document.createElement('style');
+  style.textContent = '@keyframes bRush{0%{left:-100%;opacity:0}10%{opacity:0.8}90%{opacity:0.8}100%{left:120%;opacity:0}}@keyframes bGridScroll{from{background-position:0 0}to{background-position:40px 40px}}@keyframes bScan{0%{top:-5px}100%{top:105%}}@keyframes bMachDash{from{transform:translateX(-6px) scaleX(1.05)}to{transform:translateX(6px) scaleX(0.95)}}@keyframes bSpeedUp{0%{width:15%}70%{width:98%}85%{width:95%}100%{width:15%}}@keyframes bNeedleMove{0%{left:15%}70%{left:97%}85%{left:95%}100%{left:15%}}@keyframes bNamePulse{0%,100%{opacity:0.8}50%{opacity:1}}@keyframes bBlink{0%,100%{opacity:1}50%{opacity:0}}@keyframes bFlyRing{0%{left:110%;opacity:0;transform:rotate(0deg) scale(0.6)}10%{opacity:1}90%{opacity:1}100%{left:-10%;opacity:0;transform:rotate(-360deg) scale(1.2)}}';
+  document.head.appendChild(style);
+  // Grid background
+  var grid = document.createElement('div');
+  grid.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(0,255,100,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,100,0.04) 1px,transparent 1px);background-size:40px 40px;animation:bGridScroll 2s linear infinite;';
+  loading.appendChild(grid);
+  // Speed lines
+  var lineColors = ['#00ff88','#00ccff','#88ff00','#00ff44','#44ffcc'];
+  for (var li = 0; li < 15; li++) {
+    var sl = document.createElement('div');
+    var w = Math.floor(Math.random()*200+80);
+    sl.style.cssText = 'position:absolute;height:2px;background:linear-gradient(90deg,transparent,' + lineColors[li%lineColors.length] + ',transparent);animation:bRush ' + (Math.random()*1.5+0.6) + 's linear ' + (Math.random()*3) + 's infinite;opacity:0.6;top:' + (Math.random()*100) + '%;left:-100%;width:' + w + 'px;';
+    loading.appendChild(sl);
+  }
+  // Scanline
+  var scan = document.createElement('div');
+  scan.style.cssText = 'position:absolute;width:100%;height:3px;background:rgba(0,255,120,0.15);animation:bScan 3s linear infinite;';
+  loading.appendChild(scan);
+  // Flying rings
+  var ringEmojis = ['\uD83D\uDC8D','\u2B55','\uD83D\uDFE2'];
+  for (var ri = 0; ri < 6; ri++) {
+    var ring = document.createElement('div');
+    ring.style.cssText = 'position:absolute;font-size:' + (Math.floor(Math.random()*14+14)) + 'px;opacity:0;pointer-events:none;top:' + (Math.random()*85+5) + '%;animation:bFlyRing ' + (Math.random()*2+1.5) + 's linear ' + (Math.random()*4) + 's infinite;';
+    ring.textContent = ringEmojis[ri%ringEmojis.length];
+    loading.appendChild(ring);
+  }
+  // HUD corners
+  var corners = ['top:16px;left:16px;border-width:2px 0 0 2px;','top:16px;right:16px;border-width:2px 2px 0 0;','bottom:16px;left:16px;border-width:0 0 2px 2px;','bottom:16px;right:16px;border-width:0 2px 2px 0;'];
+  for (var ci = 0; ci < 4; ci++) {
+    var corner = document.createElement('div');
+    corner.style.cssText = 'position:absolute;width:20px;height:20px;border-color:#00ff88;border-style:solid;opacity:0.4;' + corners[ci];
+    loading.appendChild(corner);
+  }
+  // Center content
+  var center = document.createElement('div');
+  center.style.cssText = 'position:relative;z-index:10;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;gap:0;font-family:"Orbitron",monospace;';
+  // Wolf with motion trails
+  var charWrap = document.createElement('div');
+  charWrap.style.cssText = 'position:relative;width:200px;height:120px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
+  var trail1 = document.createElement('div');
+  trail1.style.cssText = 'position:absolute;left:20px;font-size:80px;opacity:0.12;filter:blur(4px);animation:bMachDash 0.4s ease-in-out infinite alternate;';
+  trail1.textContent = '\uD83D\uDC3A';
+  var mainChar = document.createElement('div');
+  mainChar.style.cssText = 'font-size:80px;animation:bMachDash 0.4s ease-in-out infinite alternate;filter:drop-shadow(0 0 12px #00ff88) drop-shadow(0 0 30px #00cc66);z-index:2;line-height:1;';
+  mainChar.textContent = '\uD83D\uDC3A';
+  charWrap.appendChild(trail1);
+  charWrap.appendChild(mainChar);
+  var machName = document.createElement('div');
+  machName.style.cssText = 'font-size:15px;color:#00ff88;letter-spacing:4px;text-shadow:0 0 10px #00ff88,0 0 30px #00cc55;animation:bNamePulse 1.2s ease-in-out infinite;margin-bottom:2px;';
+  machName.textContent = 'MACH TURBO LIGHT';
+  var mainTitle = document.createElement('div');
+  mainTitle.style.cssText = 'font-size:32px;font-weight:900;color:#fff;letter-spacing:3px;text-shadow:0 0 20px #00ff88,0 0 40px #00cc55;line-height:1.1;';
+  mainTitle.textContent = 'BUGGSY';
+  var subTitle = document.createElement('div');
+  subTitle.style.cssText = 'font-size:11px;color:#00aa55;letter-spacing:6px;margin-top:4px;animation:bNamePulse 2s ease-in-out infinite;';
+  subTitle.textContent = 'WOLFKID \u00B7 THE WOLFDOME';
+  // Speedometer
+  var speedoWrap = document.createElement('div');
+  speedoWrap.style.cssText = 'margin-top:28px;width:260px;';
+  var speedoTrack = document.createElement('div');
+  speedoTrack.style.cssText = 'width:100%;height:8px;background:#0a1a0f;border:1px solid #003311;border-radius:4px;overflow:hidden;position:relative;';
+  var speedoFill = document.createElement('div');
+  speedoFill.style.cssText = 'height:100%;background:linear-gradient(90deg,#00aa44,#00ff88,#88ffcc);border-radius:4px;animation:bSpeedUp 1.8s ease-in-out infinite;box-shadow:0 0 8px #00ff88;';
+  var speedoNeedle = document.createElement('div');
+  speedoNeedle.style.cssText = 'position:absolute;top:-2px;width:3px;height:12px;background:#00ff88;border-radius:2px;animation:bNeedleMove 1.8s ease-in-out infinite;box-shadow:0 0 6px #00ff88;';
+  speedoTrack.appendChild(speedoFill);
+  speedoTrack.appendChild(speedoNeedle);
+  speedoWrap.appendChild(speedoTrack);
+  var statusEl = document.createElement('div');
+  statusEl.style.cssText = 'margin-top:20px;font-size:10px;color:#00ff88;letter-spacing:3px;animation:bBlink 0.9s step-end infinite;';
+  statusEl.textContent = 'INITIALIZING MISSION SYSTEMS_';
+  var statusMsgs = ['INITIALIZING MISSION SYSTEMS_','LOADING WOLFKID PROTOCOL_','CALIBRATING SPEED DRIVE_','MACH TURBO LIGHT ONLINE_','MISSIONS LOCKED AND LOADED_'];
+  var msgIdx = 0;
+  setInterval(function() { msgIdx = (msgIdx + 1) % statusMsgs.length; statusEl.textContent = statusMsgs[msgIdx]; }, 900);
+  center.appendChild(charWrap);
+  center.appendChild(machName);
+  center.appendChild(mainTitle);
+  center.appendChild(subTitle);
+  center.appendChild(speedoWrap);
+  center.appendChild(statusEl);
+  loading.appendChild(center);
 }
 
 function addSparkles() {
@@ -1519,15 +1675,15 @@ function renderBuggsy() { document.getElementById('app').innerHTML = buildBuggsy
 
 function buildBuggsyUI() {
   return '<div class="pin-overlay" id="bPinOverlay" style="display:none"><div class="pin-box"><div class="pin-title">🔐 PARENT ACCESS</div><input class="pin-input" type="password" maxlength="6" id="bPinInput" placeholder="••••"><button class="pin-submit" onclick="bSubmitPin()">ENTER</button><button class="pin-cancel" onclick="bCancelPin()">cancel</button><div class="pin-error" id="bPinError" style="display:none">WRONG PIN</div></div></div>'+
-  '<div class="b-hdr"><div style="max-width:720px;margin:0 auto"><div class="b-hdr-top"><div class="b-title"><img src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" class="char-avatar" style="width:48px;height:48px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px"><span style="display:inline-block;width:16px;height:16px;border:3px solid #ffd700;border-radius:50%;box-shadow:0 0 6px rgba(255,215,0,0.4);vertical-align:middle;margin-right:6px"></span>RING<span> QUEST</span></div><button class="b-parent-btn" id="bParentBtn" onclick="bToggleParent()">⚙ PARENT</button></div>'+
+  '<div class="b-hdr"><div style="max-width:720px;margin:0 auto"><div class="b-hdr-top"><div class="b-title"><img src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" class="char-avatar" style="width:48px;height:48px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px"><span style="display:inline-block;width:16px;height:16px;border:3px solid #ffd700;border-radius:50%;box-shadow:0 0 6px rgba(255,215,0,0.4);vertical-align:middle;margin-right:6px"></span>THE<span> WOLFDOME</span></div><button class="b-parent-btn" id="bParentBtn" onclick="bToggleParent()">⚙ PARENT</button></div>'+
   '<div class="b-stats" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;align-items:stretch;width:100%"><div class="b-stat"><span class="b-stat-icon"><img src="https://i.ibb.co/d0KSS8zh/1773982478792.png" class="char-stat-img" style="width:48px;height:48px;border-radius:50%;object-fit:cover"></span><div><div class="b-stat-val" id="bRings">0</div><div class="b-stat-lbl">RINGS</div></div></div><div class="b-stat"><span class="b-stat-icon">📺</span><div><div class="b-stat-val" id="bTV" style="color:#38bdf8">0</div><div class="b-stat-lbl">TV</div></div></div><div class="b-stat"><span class="b-stat-icon">🎮</span><div><div class="b-stat-val" id="bGame" style="color:#a78bfa">0</div><div class="b-stat-lbl">GAME</div></div></div><div class="b-stat"><span class="b-stat-icon">💵</span><div><div class="b-stat-val" id="bMoney" style="color:#22c55e">$0</div><div class="b-stat-lbl">EARNED</div></div></div><div class="b-refresh-coin" id="bRefreshCoin" onclick="bRefresh()" style="position:static;width:36px;height:36px;border:5px solid #ffd700;border-radius:50%;box-shadow:0 0 10px rgba(255,215,0,0.5),inset 0 0 4px rgba(255,215,0,0.25);background:linear-gradient(135deg,rgba(255,235,100,0.25) 0%,transparent 50%);cursor:pointer;flex-shrink:0;margin-left:8px"></div></div></div></div>'+
   '<div class="b-level"><div class="b-lvl-row"><div class="b-lvl-badge" id="bLvlBadge">1</div><div><div class="b-lvl-name" id="bLvlName">Noob</div><div class="b-lvl-xp" id="bLvlXP">0 rings</div></div><span id="bMasteryRank" style="display:none;font-size:10px;font-weight:700;color:#fbbf24;background:rgba(251,191,36,0.1);padding:2px 8px;border-radius:10px;letter-spacing:0.5px"></span><div class="b-lvl-next" id="bLvlNext"></div></div><div class="b-bar-track"><div class="b-bar-fill" id="bLvlBar" style="width:0%"></div></div><div id="bStreakDisplay" style="display:none;text-align:center;font-size:12px;font-weight:700;color:#f59e0b;padding:4px 0;letter-spacing:0.3px"></div></div>'+
   '<div class="edu-nav b-edu-nav"><span style="font-size:10px;color:#4a6080;font-weight:800;letter-spacing:0.5px;font-family:\'Press Start 2P\',monospace">HOMEWORK:</span><a onclick="eduGo(\'homework\')">MATH/SCI</a><a onclick="eduGo(\'wolfkid\')">WOLFKID</a><a onclick="eduGo(\'reading\')">READING</a><a onclick="eduGo(\'writing\')">WRITING</a><a onclick="eduGo(\'facts\')">DRILL</a><a onclick="eduGo(\'comic-studio\')">COMICS</a><a onclick="eduGo(\'daily-missions\')">MISSIONS</a></div>'+
-  '<div class="b-tabs"><button class="b-tab active" id="btab-quests" onclick="bTab(\'quests\')">⚔ QUESTS</button><button class="b-tab" id="btab-rewards" onclick="bTab(\'rewards\')">🏆 REWARDS</button><button class="b-tab" id="btab-ask" onclick="bTab(\'ask\')">✋ ASK</button><button class="b-tab" id="btab-parent" onclick="bTab(\'parent\')" style="display:none">👑 PARENT</button></div>'+
+  '<div class="b-tabs"><button class="b-tab active" id="btab-quests" onclick="bTab(\'quests\')">⚔ DAILY QUESTS</button><button class="b-tab" id="btab-rewards" onclick="bTab(\'rewards\')">🏆 POWER-UP SHOP</button><button class="b-tab" id="btab-ask" onclick="bTab(\'ask\')">✋ ASK</button><button class="b-tab" id="btab-parent" onclick="bTab(\'parent\')" style="display:none">👑 PARENT</button></div>'+
   '<div id="bView-quests"><div class="b-sec"><span class="b-sec-title" id="bQLabel">QUESTS</span><span class="b-sec-badge" id="bQBadge">—</span></div><div class="b-two-col"><div class="b-col-main"><div class="b-sec"><span class="b-sec-title" style="color:#4ade80">⚔ CHALLENGES</span></div><div class="b-list" id="bQuestList"></div></div><div class="b-col-pending"><div class="b-sec"><span class="b-sec-title" style="color:#fbbf24">📦 PENDING</span><span class="b-sec-badge" id="bPendBadge">0</span></div><div class="b-list" id="bPendList"></div></div></div></div>'+
-  '<div id="bView-rewards" style="display:none"><div class="b-sec"><span class="b-sec-title">REWARD VAULT</span><span class="b-sec-badge" id="bRBadge">0 RINGS</span></div><div class="b-rewards-grid" id="bRewardGrid"></div></div>'+
+  '<div id="bView-rewards" style="display:none"><div class="b-sec"><span class="b-sec-title">POWER-UP SHOP</span><span class="b-sec-badge" id="bRBadge">0 RINGS</span></div><div class="b-rewards-grid" id="bRewardGrid"></div></div>'+
   '<div id="bView-ask" style="display:none"><div class="b-sec"><span class="b-sec-title">✋ ASK YOUR PARENTS</span></div><div class="b-list"><div class="ask-bank-display" id="bAskBank">BANK: $0.00</div><div class="ev-form"><div class="ev-field"><label class="ev-label">TYPE</label><div class="ask-types" id="bAskTypes"><div class="ask-type-btn active" data-type="Money" onclick="pickAskType(\'b\',\'Money\',this)">💰 MONEY</div><div class="ask-type-btn" data-type="Purchase" onclick="pickAskType(\'b\',\'Purchase\',this)">🛒 BUY</div><div class="ask-type-btn" data-type="Activity" onclick="pickAskType(\'b\',\'Activity\',this)">🎯 DO</div><div class="ask-type-btn" data-type="Other" onclick="pickAskType(\'b\',\'Other\',this)">💬 OTHER</div></div></div><div class="ev-field"><label class="ev-label">WHAT DO YOU WANT?</label><input class="ev-input" type="text" id="bAskTitle" placeholder="What do you want to ask?"></div><div class="ev-field" id="bAskAmountWrap"><label class="ev-label">HOW MUCH?</label><input class="ev-input" type="number" id="bAskAmount" placeholder="$0.00" min="0" step="0.01"></div><div class="ev-field"><label class="ev-label">TELL YOUR PARENTS WHY</label><textarea class="ev-input" id="bAskNotes" rows="2" placeholder="Tell your parents why!" style="resize:none"></textarea></div><button class="b-claim" style="width:100%;padding:12px;font-size:9px;margin-top:6px" onclick="submitAsk(\'buggsy\')">✋ ASK!</button><div class="ev-status" id="bAskStatus" style="display:none"></div></div><div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title">📋 RECENT ASKS</span></div><div id="bRecentAsks"></div><div class="b-sec" style="padding:14px 0 8px;max-width:none;margin:0"><span class="b-sec-title">🎁 I WANT THIS!</span></div><div id="bAskRewards"></div></div></div>'+
-'<div id="bView-parent" style="display:none;padding-top:8px"><div class="b-sec"><span class="b-sec-title">PARENT CONTROLS</span></div><div class="b-parent-panel"><div class="b-pp-inner"><div class="b-pp-title">⚙ MANAGE QUESTS — BUGGSY</div><div class="b-pp-actions"><button class="b-pp-btn blue" onclick="bReset(\'daily\',\'buggsy\')">🔄 RESET DAILY QUESTS</button><button class="b-pp-btn purple" onclick="bReset(\'weekly\',\'buggsy\')">📅 RESET WEEKLY QUESTS</button><button class="b-pp-btn red" onclick="bReset(\'all\',\'buggsy\')">⚠ RESET ALL — BUGGSY</button></div><div style="margin-top:12px;text-align:center"><a onclick="window.switchView(\'parent\')" style="color:#a5b4fc;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline">Open Full Parent Dashboard</a></div></div></div></div>'+
+'<div id="bView-parent" style="display:none;padding-top:8px"><div class="b-sec"><span class="b-sec-title">PARENT CONTROLS</span></div><div class="b-parent-panel"><div class="b-pp-inner"><div class="b-pp-title">⚙ MANAGE THE WOLFDOME</div><div class="b-pp-actions"><button class="b-pp-btn blue" onclick="bReset(\'daily\',\'buggsy\')">🔄 RESET DAILY QUESTS</button><button class="b-pp-btn purple" onclick="bReset(\'weekly\',\'buggsy\')">📅 RESET WEEKLY QUESTS</button><button class="b-pp-btn red" onclick="bReset(\'all\',\'buggsy\')">⚠ RESET ALL — BUGGSY</button></div><div style="margin-top:12px;text-align:center"><a onclick="window.switchView(\'parent\')" style="color:#a5b4fc;font-size:13px;font-weight:700;cursor:pointer;text-decoration:underline">Open Full Parent Dashboard</a></div></div></div></div>'+
   '';
 }
 
