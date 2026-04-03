@@ -626,7 +626,13 @@ function speak(text, onEndOrKey, maybeOnEnd) {
     audioKey = onEndOrKey;
     onEnd = maybeOnEnd || null;
   }
-  // Try ElevenLabs cache first
+
+  // Auto-match: if no explicit key, try to derive one from text
+  if (!audioKey) {
+    audioKey = autoMatchAudio(String(text));
+  }
+
+  // Try ElevenLabs cache
   if (audioKey && audioCache[audioKey]) {
     try {
       var clip = audioCache[audioKey];
@@ -644,6 +650,79 @@ function speak(text, onEndOrKey, maybeOnEnd) {
   if (onEnd) { u.onend = onEnd; }
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
+}
+
+function autoMatchAudio(text) {
+  var t = text.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+
+  // Positive feedback → random Nia correct clip
+  var positives = ['awesome', 'super', 'great job', 'yes', 'you found', 'beautiful', 'amazing', 'wonderful', 'perfect', 'nice'];
+  for (var p = 0; p < positives.length; p++) {
+    if (t.indexOf(positives[p]) !== -1) {
+      var idx = Math.floor(Math.random() * 8) + 1;
+      return 'jj_feedback_correct' + idx + '.mp3';
+    }
+  }
+
+  // Negative feedback → random try again clip
+  var negatives = ['not quite', 'try again', 'thats not', 'that is not', 'not the'];
+  for (var n = 0; n < negatives.length; n++) {
+    if (t.indexOf(negatives[n]) !== -1) {
+      var ti = Math.floor(Math.random() * 2) + 1;
+      return 'jj_feedback_tryagain' + ti + '.mp3';
+    }
+  }
+
+  // Completion
+  if (t.indexOf('you did it') !== -1 || t.indexOf('all done') !== -1 || t.indexOf('you got') !== -1 || t.indexOf('earned') !== -1) {
+    return 'jj_feedback_complete1.mp3';
+  }
+  if (t.indexOf('star') !== -1 && t.indexOf('bonus') !== -1) {
+    return 'jj_feedback_star_earned.mp3';
+  }
+
+  // Letter-specific: "find the letter X"
+  var findMatch = t.match(/find the letter ([a-z])/);
+  if (findMatch) { return 'jj_find_' + findMatch[1].toUpperCase() + '.mp3'; }
+
+  // "trace the letter X"
+  var traceMatch = t.match(/trace the letter ([a-z])/);
+  if (traceMatch) { return 'jj_trace_' + traceMatch[1].toUpperCase() + '.mp3'; }
+
+  // Single letter call: "K!" or just "K"
+  if (t.length <= 2 && t.match(/^[a-z]$/)) {
+    return 'jj_letter_name_' + t.toUpperCase() + '.mp3';
+  }
+
+  // "X is for Y" pattern
+  var isForMatch = t.match(/^([a-z]) is for/);
+  if (isForMatch) { return 'jj_letter_phrase_' + isForMatch[1].toUpperCase() + '.mp3'; }
+
+  // "X says Y" pattern (letter sounds)
+  var saysMatch = t.match(/^([a-z]) says/);
+  if (saysMatch) { return 'jj_sound_' + saysMatch[1].toUpperCase() + '.mp3'; }
+
+  // Number: "find the number X"
+  var numFindMatch = t.match(/find the number (\d+)/);
+  if (numFindMatch) {
+    var num = parseInt(numFindMatch[1], 10);
+    if (num >= 1 && num <= 10) { return 'jj_number_' + num + '.mp3'; }
+  }
+
+  // Bare number spoken: "1", "2", etc
+  var bareNum = parseInt(t, 10);
+  if (!isNaN(bareNum) && bareNum >= 1 && bareNum <= 10 && t === String(bareNum)) {
+    return 'jj_number_' + bareNum + '.mp3';
+  }
+
+  // Instruction patterns
+  if (t.indexOf('pick a game') !== -1) { return 'jj_instruction_pick_game.mp3'; }
+  if (t.indexOf('what comes next') !== -1 || t.indexOf('what color') !== -1) { return 'jj_instruction_what_next.mp3'; }
+  if (t.indexOf('tap each') !== -1 || t.indexOf('count') !== -1) { return 'jj_instruction_count.mp3'; }
+  if (t.indexOf('build the name') !== -1 || t.indexOf('spell') !== -1) { return 'jj_instruction_name_game.mp3'; }
+
+  // No match
+  return null;
 }
 
 function speakOptions(options, index, callback) {
