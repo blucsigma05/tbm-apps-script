@@ -524,6 +524,51 @@ if (TBM_TEST_MODE) {
   document.body.style.paddingTop = '28px';
 }
 
+// ── Audio System (Marco / ElevenLabs) ──
+var audioCache = {};
+var BUGGSY_AUDIO_FILES = [
+  'buggsy_feedback_correct1.mp3','buggsy_feedback_correct2.mp3','buggsy_feedback_correct3.mp3','buggsy_feedback_correct4.mp3',
+  'buggsy_feedback_correct5.mp3','buggsy_feedback_correct6.mp3','buggsy_feedback_correct7.mp3','buggsy_feedback_correct8.mp3',
+  'buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3',
+  'buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3',
+  'buggsy_feedback_rings.mp3','buggsy_feedback_submitted.mp3',
+  'buggsy_nav_welcome.mp3','buggsy_nav_math.mp3','buggsy_nav_science.mp3',
+  'hype_lets_go.mp3'
+];
+function preloadBugsyAudio() {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  google.script.run
+    .withSuccessHandler(function(batch) {
+      if (batch) {
+        for (var k in batch) {
+          if (batch.hasOwnProperty(k)) {
+            audioCache[k] = new Audio('data:audio/mp3;base64,' + batch[k]);
+          }
+        }
+      }
+    })
+    .withFailureHandler(function() { /* continue without audio */ })
+    .getAudioBatchSafe(BUGGSY_AUDIO_FILES);
+}
+function playBugsyAudio(name) {
+  if (audioCache[name]) {
+    try { audioCache[name].currentTime = 0; audioCache[name].play(); return true; } catch(e) {}
+  }
+  return false;
+}
+function playBugsyCorrect() {
+  var clips = ['buggsy_feedback_correct1.mp3','buggsy_feedback_correct2.mp3','buggsy_feedback_correct3.mp3','buggsy_feedback_correct4.mp3','buggsy_feedback_correct5.mp3','buggsy_feedback_correct6.mp3','buggsy_feedback_correct7.mp3','buggsy_feedback_correct8.mp3'];
+  playBugsyAudio(clips[Math.floor(Math.random() * clips.length)]);
+}
+function playBugsyWrong() {
+  var clips = ['buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3'];
+  playBugsyAudio(clips[Math.floor(Math.random() * clips.length)]);
+}
+function playBugsyComplete() {
+  var clips = ['buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3'];
+  playBugsyAudio(clips[Math.floor(Math.random() * clips.length)]);
+}
+
 // ─── KNOWN QUESTION TYPES (validation) ───
 var KNOWN_QUESTION_TYPES = [
   'multiple_choice', 'computation', 'word_problem', 'error_analysis', 'multi_step',
@@ -891,6 +936,7 @@ function showCompletion() {
 
   var overlay = document.getElementById("completion-overlay");
   overlay.style.display = "flex";
+  playBugsyComplete();
 }
 
 function closeCompletion() {
@@ -1002,6 +1048,10 @@ function submitAnswer(qId) {
   var correct = isMC ? (answers[key].selected === q.answer) : true;
   answers[key].submitted = true;
   answers[key].correct = correct;
+
+  if (isMC) {
+    if (correct) { playBugsyCorrect(); } else { playBugsyWrong(); }
+  }
 
   updateProgress();
 
@@ -1422,6 +1472,7 @@ function init() {
 }
 
 loadCurriculumContent();
+preloadBugsyAudio();
 </script>
 </body>
 </html>

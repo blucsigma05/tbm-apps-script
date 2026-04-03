@@ -613,6 +613,28 @@ if (TBM_TEST_MODE) {
   document.body.style.paddingTop = '28px';
 }
 
+// ── Audio System (Marco / ElevenLabs) ──
+var audioCache = {};
+function preloadBugsyAudio() {
+  var files = [
+    'buggsy_feedback_correct1.mp3','buggsy_feedback_correct2.mp3','buggsy_feedback_correct3.mp3','buggsy_feedback_correct4.mp3',
+    'buggsy_feedback_correct5.mp3','buggsy_feedback_correct6.mp3','buggsy_feedback_correct7.mp3','buggsy_feedback_correct8.mp3',
+    'buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3',
+    'buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3','buggsy_feedback_rings.mp3','buggsy_feedback_submitted.mp3','hype_lets_go.mp3'
+  ];
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  google.script.run
+    .withSuccessHandler(function(batch) {
+      if (batch) { for (var k in batch) { if (batch.hasOwnProperty(k)) { audioCache[k] = new Audio('data:audio/mp3;base64,' + batch[k]); } } }
+    })
+    .withFailureHandler(function() {})
+    .getAudioBatchSafe(files);
+}
+function playBugsyAudio(name) { if (audioCache[name]) { try { audioCache[name].currentTime = 0; audioCache[name].play(); return true; } catch(e) {} } return false; }
+function playBugsyCorrect() { var c = ['buggsy_feedback_correct1.mp3','buggsy_feedback_correct2.mp3','buggsy_feedback_correct3.mp3','buggsy_feedback_correct4.mp3','buggsy_feedback_correct5.mp3','buggsy_feedback_correct6.mp3','buggsy_feedback_correct7.mp3','buggsy_feedback_correct8.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
+function playBugsyWrong() { var c = ['buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
+function playBugsyComplete() { var c = ['buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
+
 var MODULE_VERSION = 'v1';
 var CHILD = 'buggsy';
 var _usingFallback = false;
@@ -1327,6 +1349,7 @@ function renderResults() {
   // Ring award + completion log (once only)
   if (!completionLogged) {
     completionLogged = true;
+    playBugsyComplete();
     if (TBM_TEST_MODE) {
       console.log('[TEST MODE] awardRingsSafe skipped, rings=' + earnedRings);
       console.log('[TEST MODE] submitHomeworkSafe skipped');
@@ -1480,6 +1503,7 @@ function init() {
 }
 
 loadCurriculumContent();
+preloadBugsyAudio();
 </script>
 </body>
 </html>
