@@ -406,6 +406,8 @@ function serveData(e) {
         'getDailyScheduleSafe': getDailyScheduleSafe,
         'checkDay1Safe': checkDay1Safe,
         'saveDesignChoicesSafe': saveDesignChoicesSafe,
+        'getDesignChoicesSafe': getDesignChoicesSafe,
+        'getDesignUnlockedSafe': getDesignUnlockedSafe,
         'seedAllCurriculumSafe': seedAllCurriculumSafe
       };
 

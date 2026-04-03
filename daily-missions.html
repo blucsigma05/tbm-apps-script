@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v4">
+<meta name="tbm-version" content="v5">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -585,9 +585,9 @@ var BUGGSY_SCHEDULE = {
     focus: 'Day 1 Setup',
     tag: 'review',
     blocks: [
-      { name: 'Design Your Dashboard', time: 10, page: 'dashboard' },
+      { name: 'Power Scan', time: 10, page: 'power-scan' },
       { name: 'Baseline Diagnostic', time: 15, page: 'baseline' },
-      { name: 'Power Scan', time: 10, page: 'power-scan' }
+      { name: 'THE WOLFDOME BUILDER', time: 0, page: 'dashboard', unlockAfterHomework: true, noTimer: true }
     ]
   },
   1: { // Monday
@@ -697,6 +697,26 @@ var dayOfWeek = 0;
 var _serverStateLoaded = false;
 var _cachedMissionState = {};
 var dynamicSchedule = null;
+var _designUnlocked = false;
+
+// ============================================================
+// HOMEWORK GATE — Design unlocked after any education submission today
+// ============================================================
+function checkDesignUnlock(callback) {
+  _designUnlocked = false;
+  if (currentChild !== 'buggsy') { if (callback) { callback(); } return; }
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    if (callback) { callback(); }
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(result) {
+      _designUnlocked = (result === true);
+      if (callback) { callback(); }
+    })
+    .withFailureHandler(function() { if (callback) { callback(); } })
+    .getDesignUnlockedSafe(currentChild);
+}
 
 // ============================================================
 // DAY 1 DETECTION
@@ -743,14 +763,16 @@ function init() {
       dayOfWeek = 0;
     }
     loadMissionStateFromServer(function() {
-      loadSchedule(function(dynamicBlocks) {
-        if (dayOfWeek !== 0 && dynamicBlocks) {
-          var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
-          if (schedule[dayOfWeek]) {
-            schedule[dayOfWeek].blocks = dynamicBlocks;
+      checkDesignUnlock(function() {
+        loadSchedule(function(dynamicBlocks) {
+          if (dayOfWeek !== 0 && dynamicBlocks) {
+            var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
+            if (schedule[dayOfWeek]) {
+              schedule[dayOfWeek].blocks = dynamicBlocks;
+            }
           }
-        }
-        render();
+          render();
+        });
       });
     });
   });
@@ -1029,54 +1051,71 @@ function render() {
     var done = state[missionId] === true;
     var cardClass = 'mission-card' + (done ? ' completed' : '');
 
-    html += '<div class="' + cardClass + '" style="animation-delay:' + (j * 0.08) + 's">';
-
-    // Number
-    if (done) {
-      html += '<div class="mission-number">\u2713</div>';
+    // Homework gate: locked card for unlockAfterHomework blocks
+    if (block.unlockAfterHomework && !done && !_designUnlocked) {
+      html += '<div class="mission-card" style="opacity:0.35;pointer-events:none;animation-delay:' + (j * 0.08) + 's">';
+      html += '<div class="mission-number">\uD83D\uDD12</div>';
+      html += '<div class="mission-info"><div class="mission-name">' + block.name + '</div>';
+      html += '<div class="mission-meta"><span class="mission-time">Unlocks after today\'s homework</span></div></div>';
+      html += '</div>';
+    } else if (block.unlockAfterHomework && !done && _designUnlocked) {
+      html += '<div class="mission-card" style="border-color:rgba(0,255,136,0.4);box-shadow:0 0 16px rgba(0,255,136,0.15);animation-delay:' + (j * 0.08) + 's">';
+      html += '<div class="mission-number" style="background:linear-gradient(135deg,#003311,#001a0a);border-color:#00ff88;color:#00ff88;">\uD83C\uDF89</div>';
+      html += '<div class="mission-info"><div class="mission-name">' + block.name + '</div>';
+      html += '<div class="mission-meta"><span class="mission-time">Take as long as you want. No timer.</span></div></div>';
+      html += '<div class="mission-actions"><button class="launch-btn" onclick="window.location.href=\'/dashboard\'" style="border-color:#00ff88;color:#00ff88;box-shadow:0 0 10px rgba(0,255,136,0.3);">ENTER \u2192</button></div>';
+      html += '</div>';
     } else {
-      html += '<div class="mission-number">' + (j + 1) + '</div>';
-    }
+      // Normal card
+      html += '<div class="' + cardClass + '" style="animation-delay:' + (j * 0.08) + 's">';
 
-    // Info
-    html += '<div class="mission-info">';
-    html += '<div class="mission-name">' + block.name + '</div>';
-
-    // Star reward for JJ
-    if (currentChild === 'jj' && block.stars) {
-      var starStr = '';
-      for (var s = 0; s < block.stars; s++) {
-        starStr += '\u2B50';
-      }
-      html += '<div class="star-reward">' + starStr + '</div>';
-    }
-
-    // Meta (Buggsy only — hidden for JJ via CSS)
-    html += '<div class="mission-meta">';
-    if (block.time) {
-      html += '<span class="mission-time">~' + block.time + ' min</span>';
-    }
-    if (dayData.tag) {
-      html += '<span class="mission-tag tag-' + dayData.tag + '">' + dayData.focus + '</span>';
-    }
-    html += '</div>';
-    html += '</div>';
-
-    // Actions
-    html += '<div class="mission-actions">';
-    if (!done) {
-      var launchUrl = buildLaunchUrl(block);
-      if (currentChild === 'jj') {
-        html += '<button class="launch-btn" onclick="window.location.href=\'' + launchUrl + '\'">Let\'s Go!</button>';
+      // Number
+      if (done) {
+        html += '<div class="mission-number">\u2713</div>';
       } else {
-        html += '<button class="launch-btn" onclick="window.location.href=\'' + launchUrl + '\'">LAUNCH</button>';
+        html += '<div class="mission-number">' + (j + 1) + '</div>';
       }
-    }
-    html += '<button class="check-btn' + (done ? ' checked' : '') + '" onclick="toggleMission(\'' + missionId + '\')" title="' + (done ? 'Mark incomplete' : 'Mark complete') + '">' +
-      (done ? '\u2713' : '') + '</button>';
-    html += '</div>';
 
-    html += '</div>';
+      // Info
+      html += '<div class="mission-info">';
+      html += '<div class="mission-name">' + block.name + '</div>';
+
+      // Star reward for JJ
+      if (currentChild === 'jj' && block.stars) {
+        var starStr = '';
+        for (var s = 0; s < block.stars; s++) {
+          starStr += '\u2B50';
+        }
+        html += '<div class="star-reward">' + starStr + '</div>';
+      }
+
+      // Meta (Buggsy only — hidden for JJ via CSS)
+      html += '<div class="mission-meta">';
+      if (block.time) {
+        html += '<span class="mission-time">~' + block.time + ' min</span>';
+      }
+      if (dayData.tag) {
+        html += '<span class="mission-tag tag-' + dayData.tag + '">' + dayData.focus + '</span>';
+      }
+      html += '</div>';
+      html += '</div>';
+
+      // Actions
+      html += '<div class="mission-actions">';
+      if (!done) {
+        var launchUrl = buildLaunchUrl(block);
+        if (currentChild === 'jj') {
+          html += '<button class="launch-btn" onclick="window.location.href=\'' + launchUrl + '\'">Let\'s Go!</button>';
+        } else {
+          html += '<button class="launch-btn" onclick="window.location.href=\'' + launchUrl + '\'">LAUNCH</button>';
+        }
+      }
+      html += '<button class="check-btn' + (done ? ' checked' : '') + '" onclick="toggleMission(\'' + missionId + '\')" title="' + (done ? 'Mark incomplete' : 'Mark complete') + '">' +
+        (done ? '\u2713' : '') + '</button>';
+      html += '</div>';
+
+      html += '</div>';
+    }
   }
 
   // Footer summary

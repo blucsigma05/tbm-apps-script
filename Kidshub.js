@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v45 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v46 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 45; }
+function getKidsHubVersion() { return 46; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3838,5 +3838,46 @@ function saveDesignChoicesSafe(payload) {
   });
 }
 
-// END OF FILE — KidsHub.gs v45
+function getDesignChoicesSafe(child) {
+  return withMonitor_('getDesignChoicesSafe', function() {
+    var c = String(child || '').toLowerCase();
+    var raw = PropertiesService.getScriptProperties().getProperty('DESIGN_CHOICES_' + c);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  });
+}
+
+// ── HOMEWORK GATE — Design unlocked after any education submission today ──
+function getDesignUnlocked_(child) {
+  var childLower = String(child || '').toLowerCase();
+  if (childLower !== 'buggsy' && childLower !== 'jj') return false;
+  var sheet = ensureKHEducationTab_();
+  if (sheet.getLastRow() < 2) return false;
+  var data = sheet.getDataRange().getValues();
+  var today = getTodayISO_();
+  for (var i = 1; i < data.length; i++) {
+    var rowChild = String(data[i][1] || '').toLowerCase();
+    var rowDate = data[i][0];
+    var rowDateStr = '';
+    if (rowDate instanceof Date) {
+      var y = rowDate.getFullYear();
+      var m = String(rowDate.getMonth() + 1); if (m.length < 2) m = '0' + m;
+      var d = String(rowDate.getDate()); if (d.length < 2) d = '0' + d;
+      rowDateStr = y + '-' + m + '-' + d;
+    }
+    var rowStatus = String(data[i][7] || '');
+    if (rowChild === childLower && rowDateStr === today && rowStatus !== '') {
+      return true;
+    }
+  }
+  return false;
+}
+
+function getDesignUnlockedSafe(child) {
+  return withMonitor_('getDesignUnlockedSafe', function() {
+    return getDesignUnlocked_(child);
+  });
+}
+
+// END OF FILE — KidsHub.gs v46
 // ════════════════════════════════════════════════════════════════════

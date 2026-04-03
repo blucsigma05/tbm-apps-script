@@ -3,11 +3,11 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 13.0
+// Version: 14.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 13; }
+function getStoryFactoryVersion() { return 14; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -476,7 +476,7 @@ method: 'POST',
 contentType: 'application/json',
 payload: JSON.stringify({
 contents: [{ parts: [{ text: prompt }] }],
-generationConfig: { temperature: 0.8, maxOutputTokens: 4000 }
+generationConfig: { temperature: 0.8, maxOutputTokens: 4000, responseMimeType: 'application/json' }
 }),
 muteHttpExceptions: true
 });
@@ -1131,7 +1131,7 @@ return 7;
 // ── MAIN PIPELINE ────────────────────────────────────────────
 
 function runStoryFactory(topic, character, tone) {
-Logger.log('=== Story Factory v12 ===');
+Logger.log('=== Story Factory v14 ===');
 Logger.log('Topic: ' + topic + ' | Character: ' + character + ' | Tone: ' + (tone || 'Funny'));
 
 try {
@@ -1173,6 +1173,24 @@ var canonFacts = sf_getCanonFacts_(character);
 Logger.log('Step 1: Generating story with memory injection...');
 var storyData = generateStory(topic, character, tone || 'Funny', characters, recentStories, canonFacts);
 storyData.topic = topic;
+
+// Validate scene count — retry once if too few
+if (!storyData.scenes || storyData.scenes.length < 6) {
+  Logger.log('WARN: Only ' + (storyData.scenes ? storyData.scenes.length : 0) + ' scenes returned. Retrying...');
+  storyData = generateStory(topic, character, tone || 'Funny', characters, recentStories, canonFacts);
+  storyData.topic = topic;
+  if (!storyData.scenes || storyData.scenes.length < 6) {
+    throw new Error('Story generation failed: only ' + (storyData.scenes ? storyData.scenes.length : 0) + ' scenes after retry (need 6).');
+  }
+}
+
+// Validate scene text content
+for (var v = 0; v < storyData.scenes.length; v++) {
+  if (!storyData.scenes[v].text || storyData.scenes[v].text.trim().length < 20) {
+    Logger.log('WARN: Scene ' + (v + 1) + ' has empty/short text: "' + (storyData.scenes[v].text || '').substring(0, 50) + '"');
+  }
+}
+
 Logger.log('Story: "' + storyData.title + '" (' + storyData.scenes.length + ' scenes)');
 
 // v6: Post-generation audit
@@ -1618,5 +1636,5 @@ function listStoredStoriesSafe() {
   });
 }
 
-// END OF FILE — StoryFactory v13
+// END OF FILE — StoryFactory v14
 // ════════════════════════════════════════════════════════════════════
