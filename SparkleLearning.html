@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v5">
+  <meta name="tbm-version" content="v6">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -513,9 +513,30 @@
         font-size: 28px;
       }
     }
+    /* ─── Sparkle Kingdom Background ─── */
+    @keyframes skSignPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.8; } }
+    @keyframes jjAurora { from { transform: scaleX(1) translateY(0); opacity: 0.6; } to { transform: scaleX(1.1) translateY(20px); opacity: 1; } }
+    @keyframes jjBgTwinkle { 0%,100% { opacity: var(--min, 0.05); transform: scale(1); } 50% { opacity: var(--max, 0.9); transform: scale(var(--sc, 1.3)); } }
+    @keyframes jjOrbitCW { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
+    @keyframes jjOrbitCCW { from { transform: translate(-50%,-50%) rotate(360deg); } to { transform: translate(-50%,-50%) rotate(0deg); } }
+    @keyframes jjMascotBob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-14px) rotate(3deg); } }
+    @keyframes jjSparkleFloat { 0%,100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.7; } 33% { transform: translateY(-20px) rotate(45deg) scale(1.2); opacity: 1; } 66% { transform: translateY(-10px) rotate(90deg) scale(0.9); opacity: 0.8; } }
+    @keyframes jjShoot { 0% { opacity: 0; transform: translate(0,0) rotate(-35deg); } 5% { opacity: 1; } 40% { opacity: 0; transform: translate(200px,120px) rotate(-35deg); } 100% { opacity: 0; } }
+    @keyframes jjBurstPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.4); } }
+    @keyframes jjDotScroll { from { background-position: 0 0; } to { background-position: 20px 0; } }
+    @keyframes skLoadSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes skLoadSpinRev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+    @keyframes skLoadPulse { 0%,100% { transform: scale(1) rotate(-5deg); } 50% { transform: scale(1.2) rotate(5deg); } }
+    @keyframes skLoadBounce { from { transform: translateY(0) scale(1); } to { transform: translateY(-12px) scale(1.05); } }
+    @keyframes skLoadShimmer { 0%,100% { opacity: 0.7; color: #ffaaee; } 50% { opacity: 1; color: #ffe0ff; } }
+    @keyframes skLoadDot { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-16px) scale(1.3); } }
+    @keyframes skLoadFloat { 0% { opacity: 0; transform: translateY(0) scale(0.5); } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-320px) rotate(40deg) scale(1.2); } }
   </style>
 </head>
-<body>
+<body style="background:#1a0533;">
+
+  <!-- Loading Screen -->
+  <div id="sparkle-loading" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:linear-gradient(135deg,#1a0533 0%,#2d0a5e 40%,#4a0e8f 70%,#1a0533 100%);display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;overflow:hidden;"></div>
 
   <!-- Star Counter -->
   <div class="star-counter" id="starCounter">
@@ -892,6 +913,186 @@ function shuffleArray(arr) {
 /* ═══════════════════════════════════════════════════════════
    CONTENT LOADING + INIT
    ═══════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   SPARKLE KINGDOM LOADING SCREEN + BACKGROUND
+   ═══════════════════════════════════════════════════════════ */
+function buildSparkleLoadingScreen() {
+  var loading = document.getElementById('sparkle-loading');
+  if (!loading) return;
+  // Stars
+  for (var si = 0; si < 40; si++) {
+    var star = document.createElement('div');
+    var sz = (Math.random() * 3 + 2);
+    star.style.cssText = 'position:absolute;border-radius:50%;background:white;width:' + sz + 'px;height:' + sz + 'px;left:' + (Math.random()*100) + '%;top:' + (Math.random()*100) + '%;animation:jjBgTwinkle ' + (Math.random()*2.5+1.5) + 's ease-in-out ' + (Math.random()*3) + 's infinite;--min:0.1;--max:0.9;--sc:1;';
+    loading.appendChild(star);
+  }
+  // Floating emoji
+  var emojis = ['\uD83C\uDF1F','\uD83D\uDC9C','\uD83C\uDF38','\uD83E\uDD8B','\uD83C\uDF08','\uD83D\uDCAB','\uD83C\uDF80','\uD83C\uDF6C'];
+  for (var fi = 0; fi < 8; fi++) {
+    var floater = document.createElement('div');
+    floater.style.cssText = 'position:absolute;font-size:' + (Math.floor(Math.random()*18+18)) + 'px;left:' + (Math.random()*90+5) + '%;bottom:-20px;opacity:0;pointer-events:none;animation:skLoadFloat ' + (Math.random()*4+3) + 's ease-in-out ' + (Math.random()*6) + 's infinite;';
+    floater.textContent = emojis[fi];
+    loading.appendChild(floater);
+  }
+  // Center content
+  var center = document.createElement('div');
+  center.style.cssText = 'position:relative;z-index:10;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;';
+  // Orbiting sparkle
+  var starWrap = document.createElement('div');
+  starWrap.style.cssText = 'position:relative;width:160px;height:160px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
+  var outerRing = document.createElement('div');
+  outerRing.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;animation:skLoadSpin 4s linear infinite;';
+  var orbColors = ['#ff66cc','#aa44ff','#ffdd44','#44ddff','#ff4499','#66ffaa'];
+  for (var oi = 0; oi < 6; oi++) {
+    var angle = (oi/6)*360; var rad = angle*Math.PI/180;
+    var ox = 50 + 46*Math.cos(rad); var oy = 50 + 46*Math.sin(rad);
+    var dot = document.createElement('div');
+    dot.style.cssText = 'position:absolute;width:12px;height:12px;border-radius:50%;left:calc(' + ox + '% - 6px);top:calc(' + oy + '% - 6px);background:' + orbColors[oi] + ';box-shadow:0 0 8px ' + orbColors[oi] + ';';
+    outerRing.appendChild(dot);
+  }
+  var mainStar = document.createElement('div');
+  mainStar.style.cssText = 'font-size:72px;animation:skLoadPulse 1.5s ease-in-out infinite;filter:drop-shadow(0 0 20px #ffdd00) drop-shadow(0 0 40px #ff88cc);z-index:2;line-height:1;';
+  mainStar.textContent = '\u2728';
+  starWrap.appendChild(outerRing);
+  starWrap.appendChild(mainStar);
+  var hiText = document.createElement('div');
+  hiText.style.cssText = 'font-family:"Fredoka One",cursive;font-size:42px;color:#fff;text-shadow:0 0 20px #cc44ff,0 0 40px #8800ff;animation:skLoadBounce 0.8s ease-in-out infinite alternate;margin-top:8px;letter-spacing:2px;';
+  hiText.textContent = 'Hi JJ! \uD83E\uDD84';
+  var subText = document.createElement('div');
+  subText.style.cssText = 'font-family:"Fredoka One",cursive;font-size:20px;color:#ffaaee;margin-top:8px;animation:skLoadShimmer 2s ease-in-out infinite;letter-spacing:1px;';
+  subText.textContent = 'Getting your sparkles ready...';
+  var dotsRow = document.createElement('div');
+  dotsRow.style.cssText = 'display:-webkit-flex;display:flex;gap:12px;margin-top:28px;';
+  var dotColors = ['#ff66cc','#aa44ff','#66aaff','#44ddaa','#ffdd44'];
+  for (var di = 0; di < 5; di++) {
+    var d = document.createElement('div');
+    d.style.cssText = 'width:18px;height:18px;border-radius:50%;background:' + dotColors[di] + ';animation:skLoadDot 1s ease-in-out ' + (di*0.15) + 's infinite;';
+    dotsRow.appendChild(d);
+  }
+  center.appendChild(starWrap);
+  center.appendChild(hiText);
+  center.appendChild(subText);
+  center.appendChild(dotsRow);
+  loading.appendChild(center);
+}
+
+function hideSparkleLoading() {
+  var el = document.getElementById('sparkle-loading');
+  if (el) { el.style.display = 'none'; }
+}
+
+function buildSparkleKingdomBg() {
+  var bg = document.createElement('div');
+  bg.id = 'sparkle-bg';
+  bg.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:-1;overflow:hidden;background:#1a0533;';
+  document.body.insertBefore(bg, document.body.firstChild);
+  // Sky gradient
+  var sky = document.createElement('div');
+  sky.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 90% 70% at 50% 25%,#3d0d7a 0%,#1a0533 45%,#0d001f 100%);';
+  bg.appendChild(sky);
+  // Aurora
+  var aurora = document.createElement('div');
+  aurora.style.cssText = 'position:absolute;top:10%;left:10%;width:80%;height:30%;background:linear-gradient(90deg,rgba(236,72,153,0.15),rgba(168,85,247,0.2),rgba(96,165,250,0.15),rgba(52,211,153,0.1));filter:blur(8px);animation:jjAurora 6s ease-in-out infinite alternate;border-radius:50%;';
+  bg.appendChild(aurora);
+  // 100 Stars
+  var starColors = ['#ffffff','#ffccff','#ccaaff','#aaddff','#ffffcc','#ffaacc'];
+  for (var i = 0; i < 100; i++) {
+    var s = document.createElement('div');
+    var sz = (Math.random() * 3 + 0.5).toFixed(1);
+    var col = starColors[Math.floor(Math.random() * starColors.length)];
+    s.style.cssText = 'position:absolute;border-radius:50%;width:' + sz + 'px;height:' + sz + 'px;background:' + col + ';left:' + (Math.random()*100).toFixed(1) + '%;top:' + (Math.random()*80).toFixed(1) + '%;animation:jjBgTwinkle ' + (Math.random()*3+1.5).toFixed(1) + 's ease-in-out ' + (Math.random()*4).toFixed(1) + 's infinite;--min:' + (Math.random()*0.1+0.02).toFixed(2) + ';--max:' + (Math.random()*0.6+0.3).toFixed(2) + ';--sc:' + (Math.random()*0.5+1).toFixed(2) + ';';
+    bg.appendChild(s);
+  }
+  // Rainbow arc SVG
+  var svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','0 0 800 400');
+  svg.style.cssText = 'position:absolute;bottom:60px;left:0;width:100%;height:50%;opacity:0.13;';
+  var rainbowColors = ['#ff4444','#ff8844','#ffdd44','#44dd44','#4488ff','#8844ff'];
+  var arcs = '';
+  for (var r = 0; r < 6; r++) {
+    var radius = 300 - r * 20;
+    arcs += '<path d="M ' + (400 - radius) + ' 380 Q 400 ' + (380 - radius) + ' ' + (400 + radius) + ' 380" fill="none" stroke="' + rainbowColors[r] + '" stroke-width="4" opacity="0.6"/>';
+  }
+  svg.innerHTML = arcs;
+  bg.appendChild(svg);
+  // Orbit rings
+  var innerOrbit = document.createElement('div');
+  innerOrbit.style.cssText = 'position:absolute;top:50%;left:50%;width:160px;height:80px;border:1px solid rgba(255,170,238,0.25);border-radius:50%;animation:jjOrbitCW 6s linear infinite;';
+  var innerDotColors = ['#ff66cc','#ffdd44'];
+  for (var id = 0; id < 2; id++) {
+    var iDot = document.createElement('div');
+    var ia = (id/2)*360; var ir = ia*Math.PI/180;
+    iDot.style.cssText = 'position:absolute;width:8px;height:8px;border-radius:50%;background:' + innerDotColors[id] + ';box-shadow:0 0 6px ' + innerDotColors[id] + ';left:calc(' + (50+50*Math.cos(ir)) + '% - 4px);top:calc(' + (50+50*Math.sin(ir)) + '% - 4px);';
+    innerOrbit.appendChild(iDot);
+  }
+  bg.appendChild(innerOrbit);
+  var outerOrbit = document.createElement('div');
+  outerOrbit.style.cssText = 'position:absolute;top:50%;left:50%;width:220px;height:110px;border:1px solid rgba(192,128,255,0.2);border-radius:50%;animation:jjOrbitCCW 9s linear infinite;';
+  var outerDotColors = ['#aa44ff','#44ddff','#ff4499'];
+  for (var od = 0; od < 3; od++) {
+    var oDot = document.createElement('div');
+    var oa = (od/3)*360; var or2 = oa*Math.PI/180;
+    oDot.style.cssText = 'position:absolute;width:6px;height:6px;border-radius:50%;background:' + outerDotColors[od] + ';box-shadow:0 0 5px ' + outerDotColors[od] + ';left:calc(' + (50+50*Math.cos(or2)) + '% - 3px);top:calc(' + (50+50*Math.sin(or2)) + '% - 3px);';
+    outerOrbit.appendChild(oDot);
+  }
+  bg.appendChild(outerOrbit);
+  // Mascot
+  var mascot = document.createElement('img');
+  mascot.src = 'https://i.ibb.co/DBgRLCw/1773982672701.png';
+  mascot.alt = 'Sparkle Sprinkles';
+  mascot.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;height:auto;animation:jjMascotBob 3s ease-in-out infinite;z-index:2;pointer-events:none;';
+  mascot.onerror = function() { this.style.display = 'none'; };
+  bg.appendChild(mascot);
+  // 22 sparkle crosses
+  for (var sc = 0; sc < 22; sc++) {
+    var cross = document.createElement('div');
+    var csz = Math.floor(Math.random() * 10 + 6);
+    cross.style.cssText = 'position:absolute;width:' + csz + 'px;height:' + csz + 'px;left:' + (Math.random()*95+2) + '%;top:' + (Math.random()*85+5) + '%;animation:jjSparkleFloat ' + (Math.random()*6+4) + 's ease-in-out ' + (Math.random()*8) + 's infinite;pointer-events:none;';
+    var h = document.createElement('div');
+    h.style.cssText = 'position:absolute;top:50%;left:0;width:100%;height:2px;background:rgba(255,170,238,0.5);transform:translateY(-50%);border-radius:1px;';
+    var v = document.createElement('div');
+    v.style.cssText = 'position:absolute;left:50%;top:0;height:100%;width:2px;background:rgba(255,170,238,0.5);transform:translateX(-50%);border-radius:1px;';
+    cross.appendChild(h);
+    cross.appendChild(v);
+    bg.appendChild(cross);
+  }
+  // 3 shooting stars
+  for (var sh = 0; sh < 3; sh++) {
+    var shoot = document.createElement('div');
+    shoot.style.cssText = 'position:absolute;width:40px;height:2px;background:linear-gradient(90deg,#fff,transparent);border-radius:1px;left:' + (Math.random()*40+10) + '%;top:' + (Math.random()*30+5) + '%;animation:jjShoot ' + (6+sh*3) + 's linear ' + (sh*4) + 's infinite;opacity:0;';
+    bg.appendChild(shoot);
+  }
+  // 6 burst dots
+  var burstColors = ['#ff66cc','#aa44ff','#ffdd44','#44ddff','#ff4499','#66ffaa'];
+  for (var bd = 0; bd < 6; bd++) {
+    var burst = document.createElement('div');
+    burst.style.cssText = 'position:absolute;width:6px;height:6px;border-radius:50%;background:' + burstColors[bd] + ';box-shadow:0 0 10px ' + burstColors[bd] + ';left:' + (Math.random()*90+5) + '%;top:' + (Math.random()*80+5) + '%;animation:jjBurstPulse ' + (Math.random()*2+2) + 's ease-in-out ' + (Math.random()*3) + 's infinite;';
+    bg.appendChild(burst);
+  }
+  // Ground
+  var ground = document.createElement('div');
+  ground.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:70px;background:linear-gradient(to top,#0d001f,#1a0533);overflow:hidden;';
+  var dotStrip = document.createElement('div');
+  dotStrip.style.cssText = 'position:absolute;bottom:10px;left:0;right:0;height:4px;background:repeating-linear-gradient(90deg,rgba(255,170,238,0.3) 0,rgba(255,170,238,0.3) 3px,transparent 3px,transparent 20px);animation:jjDotScroll 2s linear infinite;';
+  ground.appendChild(dotStrip);
+  var glowLine = document.createElement('div');
+  glowLine.style.cssText = 'position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:80%;height:2px;background:linear-gradient(90deg,transparent,#c080ff,#c080ff,transparent);box-shadow:0 0 12px rgba(192,128,255,0.4);';
+  ground.appendChild(glowLine);
+  bg.appendChild(ground);
+  // HUD corners
+  var corners = ['top:12px;left:12px;border-width:2px 0 0 2px;','top:12px;right:12px;border-width:2px 2px 0 0;','bottom:12px;left:12px;border-width:0 0 2px 2px;','bottom:12px;right:12px;border-width:0 2px 2px 0;'];
+  for (var c = 0; c < 4; c++) {
+    var corner = document.createElement('div');
+    corner.style.cssText = 'position:fixed;width:20px;height:20px;border-color:rgba(200,80,255,0.5);border-style:solid;z-index:10;' + corners[c];
+    bg.appendChild(corner);
+  }
+  // Sign
+  var sign = document.createElement('div');
+  sign.style.cssText = 'position:fixed;top:26px;left:50%;transform:translateX(-50%);text-align:center;z-index:30;white-space:nowrap;';
+  sign.innerHTML = '<div style="font-family:Fredoka One,Comic Sans MS,cursive;font-size:30px;font-weight:900;color:#ff80ff;letter-spacing:4px;text-shadow:0 0 10px #ff40ff,0 0 30px rgba(255,80,255,0.5),2px 2px 0 rgba(0,0,0,0.6);animation:skSignPulse 3s ease-in-out infinite;">THE SPARKLE KINGDOM</div><div style="font-family:Fredoka One,cursive;font-size:10px;color:#c080ff;letter-spacing:6px;text-shadow:0 0 8px #a040ff;margin-top:2px;">KINDLEKID MAGIC ZONE</div>';
+  bg.appendChild(sign);
+}
+
 function getParam(name) {
   var qs = window.location.search;
   if (!qs || qs.length < 2) return null;
@@ -904,11 +1105,13 @@ function getParam(name) {
 }
 
 function init() {
-  initBgStars();
+  buildSparkleLoadingScreen();
+  buildSparkleKingdomBg();
 
   // Free play mode — skip curriculum, show game picker (no bulk preload)
   var isFreePlay = getParam('mode') === 'freeplay' || window.location.pathname.indexOf('sparkle-free') !== -1;
   if (isFreePlay) {
+    hideSparkleLoading();
     renderFreePlayMenu();
     return;
   }
@@ -1211,6 +1414,7 @@ function loadContent() {
    READY SCREEN
    ═══════════════════════════════════════════════════════════ */
 function showReadyScreen(content) {
+  hideSparkleLoading();
   var mc = getMainContent();
   var actCount = content.activities ? content.activities.length : 0;
   var html = '<div class="ready-screen">';
@@ -2492,6 +2696,7 @@ function replaySession() {
    FALLBACK SCREEN
    ═══════════════════════════════════════════════════════════ */
 function showFallback() {
+  hideSparkleLoading();
   var mc = getMainContent();
   var html = '<div class="fallback-wrap">';
   html += '<div style="font-size:80px;margin-bottom:16px;">&#10024;</div>';
