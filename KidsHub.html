@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Kids Hub v36</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
    SHARED BASE
@@ -822,6 +822,89 @@ body { min-height: 100vh; }
   70%  { opacity: 1; }
   100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.35) rotate(540deg); }
 }
+
+/* ════════════════════════════════════════
+   WOLFDOME BACKGROUND KEYFRAMES
+   ════════════════════════════════════════ */
+.wolfdome-body { background: #020508; }
+@keyframes wdTwinkle {
+  0%,100% { opacity: var(--min, 0.1); }
+  50% { opacity: var(--max, 0.9); }
+}
+@keyframes wdBoltFlash {
+  0%   { opacity: 1; filter: brightness(1); }
+  15%  { opacity: 0.3; filter: brightness(0.5); }
+  30%  { opacity: 1; filter: brightness(1.6); }
+  45%  { opacity: 0.5; filter: brightness(0.8); }
+  60%  { opacity: 1; filter: brightness(1); }
+  75%  { opacity: 0.2; filter: brightness(0.4); }
+  90%  { opacity: 1; filter: brightness(1.8); }
+  100% { opacity: 1; }
+}
+@keyframes wdPulse {
+  0% { width: 40px; height: 20px; opacity: 0.8; }
+  100% { width: 620px; height: 310px; opacity: 0; }
+}
+@keyframes wdSpot {
+  from { transform: rotate(var(--from, -14deg)); opacity: 0.55; }
+  to { transform: rotate(var(--to, 6deg)); opacity: 0.25; }
+}
+@keyframes wdFloorScroll {
+  from { background-position: 0 0; }
+  to { background-position: 40px 40px; }
+}
+@keyframes wdSparkFloat {
+  0% { opacity: 0; transform: translate(0,0); }
+  20% { opacity: 1; }
+  80% { opacity: 0.5; }
+  100% { opacity: 0; transform: translate(var(--dx, 20px), -130px); }
+}
+@keyframes wdSignPulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* ════════════════════════════════════════
+   SPARKLE KINGDOM BACKGROUND KEYFRAMES
+   ════════════════════════════════════════ */
+.sparkle-body { background: #1a0533; }
+@keyframes skSignPulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+@keyframes jjAurora {
+  from { transform: scaleX(1) translateY(0); opacity: 0.6; }
+  to { transform: scaleX(1.1) translateY(20px); opacity: 1; }
+}
+@keyframes jjBgTwinkle {
+  0%,100% { opacity: var(--min, 0.05); transform: scale(1); }
+  50% { opacity: var(--max, 0.9); transform: scale(var(--sc, 1.3)); }
+}
+@keyframes jjOrbitCW { from { transform: translate(-50%,-50%) rotate(0deg); } to { transform: translate(-50%,-50%) rotate(360deg); } }
+@keyframes jjOrbitCCW { from { transform: translate(-50%,-50%) rotate(360deg); } to { transform: translate(-50%,-50%) rotate(0deg); } }
+@keyframes jjMascotBob {
+  0%,100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-14px) rotate(3deg); }
+}
+@keyframes jjSparkleFloat {
+  0%,100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.7; }
+  33% { transform: translateY(-20px) rotate(45deg) scale(1.2); opacity: 1; }
+  66% { transform: translateY(-10px) rotate(90deg) scale(0.9); opacity: 0.8; }
+}
+@keyframes jjShoot {
+  0% { opacity: 0; transform: translate(0,0) rotate(-35deg); }
+  5% { opacity: 1; }
+  40% { opacity: 0; transform: translate(200px,120px) rotate(-35deg); }
+  100% { opacity: 0; transform: translate(200px,120px) rotate(-35deg); }
+}
+@keyframes jjBurstPulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+}
+@keyframes jjDotScroll {
+  from { background-position: 0 0; }
+  to { background-position: 20px 0; }
+}
 </style>
 </head>
 <!-- ════════════════════════════════════════════════════════════════════ -->
@@ -1327,8 +1410,8 @@ document.addEventListener('visibilitychange', function() {
 
 function applyBodyClass() {
   if (IS_PARENT) { document.body.className = 'parent-body'; document.getElementById('loadText').textContent = 'Loading dashboard...'; }
-  else if (IS_JJ) { document.body.className = 'jj-body'; buildJJLoadingScreen(); }
-  else { document.body.className = 'buggsy-body'; buildBuggsyLoadingScreen(); }
+  else if (IS_JJ) { document.body.className = 'jj-body sparkle-body'; buildJJLoadingScreen(); buildSparkleKingdomBackground(); }
+  else { document.body.className = 'buggsy-body wolfdome-body'; buildBuggsyLoadingScreen(); buildWolfdomeBackground(); }
 }
 
 function buildJJLoadingScreen() {
@@ -1397,6 +1480,355 @@ function buildJJLoadingScreen() {
   center.appendChild(subText);
   center.appendChild(dotsRow);
   loading.appendChild(center);
+}
+
+function buildWolfdomeBackground() {
+  var bg = document.createElement('div');
+  bg.id = 'wolfdome-bg';
+  bg.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:-1;overflow:hidden;background:#020508;';
+  document.body.insertBefore(bg, document.body.firstChild);
+
+  // LAYER 1: Deep space radial gradient overlay
+  var space = document.createElement('div');
+  space.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 60% at 50% 30%, #0a1628 0%, #040810 55%, #020508 100%);';
+  bg.appendChild(space);
+
+  // LAYER 2: Stars (90 dots)
+  var starColors = ['#ffffff','#cce8ff','#aad4ff'];
+  for (var i = 0; i < 90; i++) {
+    var s = document.createElement('div');
+    var sz = (Math.random() * 2.5 + 0.5).toFixed(1);
+    var col = starColors[Math.floor(Math.random() * starColors.length)];
+    var dur = (Math.random() * 3 + 1.5).toFixed(1);
+    var delay = (Math.random() * 4).toFixed(1);
+    var minO = (Math.random() * 0.15 + 0.05).toFixed(2);
+    var maxO = (Math.random() * 0.5 + 0.4).toFixed(2);
+    s.style.cssText = 'position:absolute;border-radius:50%;width:' + sz + 'px;height:' + sz + 'px;background:' + col + ';left:' + (Math.random()*100).toFixed(1) + '%;top:' + (Math.random()*75).toFixed(1) + '%;animation:wdTwinkle ' + dur + 's ease-in-out ' + delay + 's infinite;--min:' + minO + ';--max:' + maxO + ';';
+    bg.appendChild(s);
+  }
+
+  // LAYER 3: Dome SVG (arcs + crest watermark + wolf mascot + lightning bolts)
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 800 560');
+  svg.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;';
+  svg.innerHTML = [
+    '<g transform="translate(400,295)" opacity="0.13">',
+      '<path d="M-90,-110 L90,-110 L90,40 Q90,110 0,140 Q-90,110 -90,40 Z" fill="#1e78ff" stroke="#4aa8ff" stroke-width="2"/>',
+      '<path d="M-76,-97 L76,-97 L76,38 Q76,100 0,128 Q-76,100 -76,38 Z" fill="none" stroke="#4aa8ff" stroke-width="1.5" opacity="0.6"/>',
+      '<polygon points="-35,-130 -60,-165 -10,-130" fill="#1e78ff" stroke="#4aa8ff" stroke-width="1.5"/>',
+      '<polygon points="35,-130 60,-165 10,-130" fill="#1e78ff" stroke="#4aa8ff" stroke-width="1.5"/>',
+      '<ellipse cx="0" cy="-30" rx="50" ry="52" fill="#0a3a8a"/>',
+      '<ellipse cx="0" cy="20" rx="26" ry="20" fill="#0a3a8a"/>',
+      '<ellipse cx="-20" cy="-38" rx="10" ry="10" fill="#1e78ff"/><ellipse cx="20" cy="-38" rx="10" ry="10" fill="#1e78ff"/>',
+      '<ellipse cx="-20" cy="-38" rx="5" ry="5" fill="#60c0ff"/><ellipse cx="20" cy="-38" rx="5" ry="5" fill="#60c0ff"/>',
+      '<ellipse cx="0" cy="10" rx="8" ry="6" fill="#1e78ff"/>',
+      '<line x1="-90" y1="10" x2="90" y2="10" stroke="#4aa8ff" stroke-width="1" opacity="0.5"/>',
+      '<circle cx="-30" cy="70" r="7" fill="#FFD700"/><circle cx="0" cy="70" r="7" fill="#FFD700"/><circle cx="30" cy="70" r="7" fill="#FFD700"/>',
+      '<path d="M-70,105 L70,105 L60,125 L-60,125 Z" fill="#0a3a8a" stroke="#4aa8ff" stroke-width="1"/>',
+      '<text x="0" y="121" text-anchor="middle" font-family="Orbitron,monospace" font-size="10" fill="#4aa8ff" font-weight="700">WOLFDOME</text>',
+    '</g>',
+    '<path d="M 60 480 Q 400 60 740 480" fill="none" stroke="rgba(30,120,255,0.22)" stroke-width="2"/>',
+    '<path d="M 120 480 Q 400 130 680 480" fill="none" stroke="rgba(30,120,255,0.17)" stroke-width="1.2"/>',
+    '<path d="M 175 480 Q 400 195 625 480" fill="none" stroke="rgba(30,120,255,0.14)" stroke-width="1"/>',
+    '<path d="M 225 480 Q 400 255 575 480" fill="none" stroke="rgba(30,120,255,0.11)" stroke-width="1"/>',
+    '<path d="M 270 480 Q 400 305 530 480" fill="none" stroke="rgba(30,120,255,0.09)" stroke-width="1"/>',
+    '<path d="M 310 480 Q 400 345 490 480" fill="none" stroke="rgba(30,120,255,0.07)" stroke-width="1"/>',
+    '<path d="M 400 62 Q 310 260 245 480" fill="none" stroke="rgba(30,120,255,0.13)" stroke-width="1"/>',
+    '<path d="M 400 62 Q 490 260 555 480" fill="none" stroke="rgba(30,120,255,0.13)" stroke-width="1"/>',
+    '<path d="M 400 62 Q 250 200 165 480" fill="none" stroke="rgba(30,120,255,0.09)" stroke-width="1"/>',
+    '<path d="M 400 62 Q 550 200 635 480" fill="none" stroke="rgba(30,120,255,0.09)" stroke-width="1"/>',
+    '<circle cx="400" cy="62" r="6" fill="#1e78ff" opacity="0.85"/>',
+    '<circle cx="400" cy="62" r="14" fill="none" stroke="#1e78ff" stroke-width="1" opacity="0.4"/>',
+    '<g transform="translate(350,220)" opacity="0.9">',
+      '<polygon points="15,0 0,40 32,40" fill="#1a3a6a"/>',
+      '<polygon points="85,0 70,40 100,40" fill="#1a3a6a"/>',
+      '<polygon points="18,8 8,36 28,36" fill="#0d2244"/>',
+      '<polygon points="82,8 72,36 92,36" fill="#0d2244"/>',
+      '<rect x="5" y="35" width="90" height="65" rx="8" fill="#1a3a6a"/>',
+      '<rect x="25" y="80" width="50" height="30" rx="7" fill="#152d58"/>',
+      '<ellipse cx="33" cy="58" rx="11" ry="11" fill="#0a1a3a"/>',
+      '<ellipse cx="67" cy="58" rx="11" ry="11" fill="#0a1a3a"/>',
+      '<ellipse cx="33" cy="58" rx="7" ry="7" fill="#1e78ff"/>',
+      '<ellipse cx="67" cy="58" rx="7" ry="7" fill="#1e78ff"/>',
+      '<ellipse cx="33" cy="58" rx="3.5" ry="3.5" fill="#90d0ff"/>',
+      '<ellipse cx="67" cy="58" rx="3.5" ry="3.5" fill="#90d0ff"/>',
+      '<ellipse cx="50" cy="88" rx="9" ry="7" fill="#0d1e3a"/>',
+      '<path d="M 38 98 Q 50 108 62 98" fill="none" stroke="#1e78ff" stroke-width="1.5" stroke-linecap="round"/>',
+      '<path d="M 5 100 Q 50 115 95 100 L 95 108 Q 50 122 5 108 Z" fill="#1e4a8a" opacity="0.8"/>',
+    '</g>',
+    '<g class="wd-bolt" style="animation:wdBoltFlash 1.8s steps(1) 0s infinite">',
+      '<path d="M 295 200 L 280 245 L 292 245 L 275 295 L 300 235 L 288 235 Z" fill="#ffffff" stroke="#60d8ff" stroke-width="1.5" opacity="0.95"/>',
+      '<path d="M 295 200 L 280 245 L 292 245 L 275 295 L 300 235 L 288 235 Z" fill="#1e78ff" opacity="0.25"/>',
+    '</g>',
+    '<g class="wd-bolt" style="animation:wdBoltFlash 2.1s steps(1) 0.4s infinite">',
+      '<path d="M 525 200 L 540 245 L 528 245 L 545 295 L 520 235 L 532 235 Z" fill="#ffffff" stroke="#60d8ff" stroke-width="1.5" opacity="0.95"/>',
+      '<path d="M 525 200 L 540 245 L 528 245 L 545 295 L 520 235 L 532 235 Z" fill="#1e78ff" opacity="0.25"/>',
+    '</g>',
+    '<g style="animation:wdBoltFlash 1.4s steps(1) 0.7s infinite">',
+      '<path d="M 268 30 L 261 50 L 267 50 L 260 70 L 272 48 L 266 48 Z" fill="#FFD700" stroke="#FFE066" stroke-width="1" opacity="0.9"/>',
+    '</g>',
+    '<g style="animation:wdBoltFlash 1.6s steps(1) 0.2s infinite">',
+      '<path d="M 547 30 L 554 50 L 548 50 L 555 70 L 543 48 L 549 48 Z" fill="#FFD700" stroke="#FFE066" stroke-width="1" opacity="0.9"/>',
+    '</g>',
+    '<path d="M 60 480 Q 400 465 740 480" fill="none" stroke="rgba(30,120,255,0.3)" stroke-width="2"/>'
+  ].join('');
+  bg.appendChild(svg);
+
+  // LAYER 4: Pulse rings (3)
+  for (var p = 0; p < 3; p++) {
+    var pr = document.createElement('div');
+    pr.style.cssText = 'position:absolute;bottom:80px;left:50%;transform:translateX(-50%);border-radius:50%;border:1px solid rgba(30,120,255,0.4);animation:wdPulse 3s ease-out ' + p + 's infinite;';
+    bg.appendChild(pr);
+  }
+
+  // LAYER 5: Spotlights (4)
+  var spots = [
+    {left:'18%', dur:'4s', delay:'0s', from:'-14deg', to:'6deg'},
+    {left:'30%', dur:'5.5s', delay:'1s', from:'-6deg', to:'14deg'},
+    {right:'18%', dur:'4.2s', delay:'0.5s', from:'6deg', to:'-14deg'},
+    {right:'30%', dur:'3.8s', delay:'1.5s', from:'14deg', to:'-6deg'}
+  ];
+  for (var sp = 0; sp < spots.length; sp++) {
+    var sl = document.createElement('div');
+    var spotStyle = 'position:absolute;bottom:80px;width:2px;height:280px;transform-origin:bottom center;background:linear-gradient(to top, rgba(30,120,255,0.45), transparent);filter:blur(1px);animation:wdSpot ' + spots[sp].dur + ' ease-in-out ' + spots[sp].delay + ' infinite alternate;';
+    if (spots[sp].left) { spotStyle += 'left:' + spots[sp].left + ';'; }
+    if (spots[sp].right) { spotStyle += 'right:' + spots[sp].right + ';'; }
+    sl.style.cssText = spotStyle;
+    bg.appendChild(sl);
+  }
+
+  // LAYER 6: Floor
+  var floor = document.createElement('div');
+  floor.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:90px;overflow:hidden;background:#010408;';
+  var floorGrid = document.createElement('div');
+  floorGrid.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;animation:wdFloorScroll 3s linear infinite;background-image:repeating-linear-gradient(90deg,rgba(30,120,255,0.13) 0,rgba(30,120,255,0.13) 1px,transparent 1px,transparent 40px),repeating-linear-gradient(0deg,rgba(30,120,255,0.08) 0,rgba(30,120,255,0.08) 1px,transparent 1px,transparent 40px);background-size:40px 40px;';
+  floor.appendChild(floorGrid);
+  var floorLine = document.createElement('div');
+  floorLine.style.cssText = 'position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:80%;height:2px;background:linear-gradient(90deg,transparent,#1e78ff,#1e78ff,transparent);box-shadow:0 0 18px 4px rgba(30,120,255,0.4);';
+  floor.appendChild(floorLine);
+  bg.appendChild(floor);
+
+  // LAYER 7: Blue + gold sparks (30)
+  for (var k = 0; k < 30; k++) {
+    var spark = document.createElement('div');
+    var isGold = Math.random() > 0.55;
+    var dx = (Math.random() * 70 - 35).toFixed(0);
+    spark.style.cssText = 'position:absolute;width:2px;height:2px;border-radius:50%;background:' + (isGold ? '#FFD700' : '#1e78ff') + ';box-shadow:0 0 4px ' + (isGold ? '#FFD700' : '#1e78ff') + ';left:' + (Math.random()*80+10).toFixed(1) + '%;bottom:' + (Math.random()*130+88).toFixed(0) + 'px;animation:wdSparkFloat ' + (Math.random()*4+3).toFixed(1) + 's ease-in-out ' + (Math.random()*5).toFixed(1) + 's infinite;--dx:' + dx + 'px;';
+    bg.appendChild(spark);
+  }
+
+  // HUD corners
+  var corners = [
+    'top:12px;left:12px;border-width:2px 0 0 2px;',
+    'top:12px;right:12px;border-width:2px 2px 0 0;',
+    'bottom:12px;left:12px;border-width:0 0 2px 2px;',
+    'bottom:12px;right:12px;border-width:0 2px 2px 0;'
+  ];
+  for (var c = 0; c < 4; c++) {
+    var corner = document.createElement('div');
+    corner.style.cssText = 'position:fixed;width:20px;height:20px;border-color:rgba(30,120,255,0.55);border-style:solid;z-index:10;' + corners[c];
+    bg.appendChild(corner);
+  }
+
+  // THE WOLFDOME sign
+  var sign = document.createElement('div');
+  sign.id = 'wd-sign';
+  sign.style.cssText = 'position:fixed;top:28px;left:50%;transform:translateX(-50%);text-align:center;z-index:20;white-space:nowrap;';
+  var signTitle = document.createElement('div');
+  signTitle.style.cssText = "font-family:'Orbitron','Courier New',monospace;font-size:26px;font-weight:900;color:#FFD700;letter-spacing:6px;text-shadow:0 0 10px #FFD700,0 0 30px #FFD700,0 0 60px rgba(255,215,0,0.35),2px 2px 0 rgba(0,0,0,0.8);animation:wdSignPulse 3s ease-in-out infinite;";
+  signTitle.textContent = 'THE WOLFDOME';
+  var signSub = document.createElement('div');
+  signSub.style.cssText = "font-family:'Orbitron',monospace;font-size:8px;color:#1e78ff;letter-spacing:9px;text-shadow:0 0 8px #1e78ff;margin-top:4px;animation:wdSignPulse 3s ease-in-out 0.5s infinite;";
+  signSub.textContent = 'WOLFKID COMMAND CENTER';
+  sign.appendChild(signTitle);
+  sign.appendChild(signSub);
+  bg.appendChild(sign);
+}
+
+function buildSparkleKingdomBackground() {
+  var bg = document.createElement('div');
+  bg.id = 'sparkle-bg';
+  bg.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:-1;overflow:hidden;background:#1a0533;';
+  document.body.insertBefore(bg, document.body.firstChild);
+
+  // LAYER 1: Deep purple sky gradient
+  var sky = document.createElement('div');
+  sky.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 90% 70% at 50% 25%, #3d0d7a 0%, #1a0533 45%, #0d001f 100%);';
+  bg.appendChild(sky);
+
+  // LAYER 2: Aurora bands
+  var aurora = document.createElement('div');
+  aurora.style.cssText = 'position:absolute;top:8%;left:-10%;width:120%;height:35%;background:linear-gradient(180deg, transparent 0%, rgba(120,40,200,0.25) 20%, rgba(200,80,255,0.15) 40%, rgba(80,180,255,0.1) 60%, transparent 100%);filter:blur(8px);animation:jjAurora 6s ease-in-out infinite alternate;';
+  bg.appendChild(aurora);
+
+  // LAYER 3: Stars (100 dots)
+  var skStarColors = ['#ffffff','#ffccff','#ccaaff','#aaddff','#ffffcc','#ffaacc'];
+  for (var i = 0; i < 100; i++) {
+    var st = document.createElement('div');
+    var sz = (Math.random() * 3 + 0.5).toFixed(1);
+    var col = skStarColors[Math.floor(Math.random() * skStarColors.length)];
+    var dur = (Math.random() * 3 + 2).toFixed(1);
+    var delay = (Math.random() * 5).toFixed(1);
+    var minO = (Math.random() * 0.1 + 0.05).toFixed(2);
+    var maxO = (Math.random() * 0.5 + 0.4).toFixed(2);
+    var sc = (Math.random() * 0.5 + 1.1).toFixed(2);
+    st.style.cssText = 'position:absolute;border-radius:50%;width:' + sz + 'px;height:' + sz + 'px;background:' + col + ';left:' + (Math.random()*100).toFixed(1) + '%;top:' + (Math.random()*70).toFixed(1) + '%;animation:jjBgTwinkle ' + dur + 's ease-in-out ' + delay + 's infinite;--min:' + minO + ';--max:' + maxO + ';--sc:' + sc + ';';
+    bg.appendChild(st);
+  }
+
+  // LAYER 4: Rainbow arc SVG
+  var arcSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  arcSvg.setAttribute('viewBox', '0 0 800 600');
+  arcSvg.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;opacity:0.13;';
+  var arcColors = ['#ff4444','#ff8844','#ffdd44','#44dd44','#4488ff','#8844ff'];
+  var arcInner = '';
+  for (var a = 0; a < 6; a++) {
+    var r = 320 - a * 25;
+    arcInner += '<path d="M ' + (400 - r) + ' 580 Q 400 ' + (580 - r) + ' ' + (400 + r) + ' 580" fill="none" stroke="' + arcColors[a] + '" stroke-width="8"/>';
+  }
+  arcSvg.innerHTML = arcInner;
+  bg.appendChild(arcSvg);
+
+  // LAYER 5: Orbit rings
+  // Inner ring (160x80, clockwise, 2 dots)
+  var innerOrbit = document.createElement('div');
+  innerOrbit.style.cssText = 'position:absolute;top:50%;left:50%;width:160px;height:80px;border:1px solid rgba(200,80,255,0.2);border-radius:50%;animation:jjOrbitCW 6s linear infinite;';
+  var innerDotColors = ['#ff66cc','#aa44ff'];
+  for (var id = 0; id < 2; id++) {
+    var iDot = document.createElement('div');
+    var iAngle = (id / 2) * 360;
+    var iRad = iAngle * Math.PI / 180;
+    var ix = 50 + 50 * Math.cos(iRad);
+    var iy = 50 + 50 * Math.sin(iRad);
+    iDot.style.cssText = 'position:absolute;width:8px;height:8px;border-radius:50%;background:' + innerDotColors[id] + ';box-shadow:0 0 6px ' + innerDotColors[id] + ';left:calc(' + ix.toFixed(1) + '% - 4px);top:calc(' + iy.toFixed(1) + '% - 4px);';
+    innerOrbit.appendChild(iDot);
+  }
+  bg.appendChild(innerOrbit);
+
+  // Outer ring (220x110, counter-clockwise, 3 dots)
+  var outerOrbit = document.createElement('div');
+  outerOrbit.style.cssText = 'position:absolute;top:50%;left:50%;width:220px;height:110px;border:1px solid rgba(200,80,255,0.12);border-radius:50%;animation:jjOrbitCCW 9s linear infinite;';
+  var outerDotColors = ['#ffdd44','#44ddff','#ff4499'];
+  for (var od = 0; od < 3; od++) {
+    var oDot = document.createElement('div');
+    var oAngle = (od / 3) * 360;
+    var oRad = oAngle * Math.PI / 180;
+    var ox = 50 + 50 * Math.cos(oRad);
+    var oy = 50 + 50 * Math.sin(oRad);
+    oDot.style.cssText = 'position:absolute;width:6px;height:6px;border-radius:50%;background:' + outerDotColors[od] + ';box-shadow:0 0 5px ' + outerDotColors[od] + ';left:calc(' + ox.toFixed(1) + '% - 3px);top:calc(' + oy.toFixed(1) + '% - 3px);';
+    outerOrbit.appendChild(oDot);
+  }
+  bg.appendChild(outerOrbit);
+
+  // LAYER 6: Sparkle Sprinkles mascot
+  var mascotWrap = document.createElement('div');
+  mascotWrap.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;text-align:center;';
+  var mascotImg = document.createElement('img');
+  mascotImg.src = 'https://i.ibb.co/DBgRLCw/1773982672701.png';
+  mascotImg.alt = 'Sparkle Sprinkles';
+  mascotImg.style.cssText = 'width:220px;height:auto;animation:jjMascotBob 3s ease-in-out infinite;position:relative;z-index:10;';
+  mascotWrap.appendChild(mascotImg);
+  bg.appendChild(mascotWrap);
+
+  // LAYER 7: Sparkle cross icons (22)
+  for (var sc = 0; sc < 22; sc++) {
+    var sparkle = document.createElement('div');
+    var sSz = (Math.random() * 12 + 6).toFixed(0);
+    var sColor = skStarColors[Math.floor(Math.random() * skStarColors.length)];
+    var sDur = (Math.random() * 4 + 3).toFixed(1);
+    var sDelay = (Math.random() * 6).toFixed(1);
+    sparkle.style.cssText = 'position:absolute;width:' + sSz + 'px;height:' + sSz + 'px;left:' + (Math.random()*90+5).toFixed(1) + '%;top:' + (Math.random()*80+5).toFixed(1) + '%;animation:jjSparkleFloat ' + sDur + 's ease-in-out ' + sDelay + 's infinite;opacity:0.7;';
+    // Horizontal bar of cross
+    var hBar = document.createElement('div');
+    hBar.style.cssText = 'position:absolute;top:50%;left:0;width:100%;height:2px;background:' + sColor + ';transform:translateY(-50%);';
+    sparkle.appendChild(hBar);
+    // Vertical bar of cross
+    var vBar = document.createElement('div');
+    vBar.style.cssText = 'position:absolute;left:50%;top:0;height:100%;width:2px;background:' + sColor + ';transform:translateX(-50%);';
+    sparkle.appendChild(vBar);
+    bg.appendChild(sparkle);
+  }
+
+  // LAYER 8: Shooting stars (3)
+  var shootStarts = [
+    {left:'10%', top:'8%', delay:'0s'},
+    {left:'60%', top:'5%', delay:'2.5s'},
+    {left:'35%', top:'15%', delay:'5s'}
+  ];
+  for (var sh = 0; sh < 3; sh++) {
+    var shoot = document.createElement('div');
+    shoot.style.cssText = 'position:absolute;left:' + shootStarts[sh].left + ';top:' + shootStarts[sh].top + ';width:40px;height:2px;background:linear-gradient(90deg,#ffffff,transparent);border-radius:1px;opacity:0;animation:jjShoot 4s linear ' + shootStarts[sh].delay + ' infinite;';
+    bg.appendChild(shoot);
+  }
+
+  // LAYER 9: Burst glow dots (6)
+  var burstPositions = [
+    {left:'5%', top:'20%'}, {right:'5%', top:'30%'},
+    {left:'8%', top:'60%'}, {right:'8%', top:'70%'},
+    {left:'3%', top:'45%'}, {right:'3%', top:'50%'}
+  ];
+  for (var b = 0; b < 6; b++) {
+    var burst = document.createElement('div');
+    var bStyle = 'position:absolute;width:6px;height:6px;border-radius:50%;background:#ff80ff;box-shadow:0 0 12px #ff40ff;animation:jjBurstPulse ' + (Math.random()*2+2).toFixed(1) + 's ease-in-out ' + (Math.random()*3).toFixed(1) + 's infinite;';
+    if (burstPositions[b].left) { bStyle += 'left:' + burstPositions[b].left + ';'; }
+    if (burstPositions[b].right) { bStyle += 'right:' + burstPositions[b].right + ';'; }
+    bStyle += 'top:' + burstPositions[b].top + ';';
+    burst.style.cssText = bStyle;
+    bg.appendChild(burst);
+  }
+
+  // LAYER 10: Ground
+  var ground = document.createElement('div');
+  ground.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:80px;overflow:hidden;background:linear-gradient(180deg, transparent 0%, #1a0533 30%, #0d001f 100%);';
+  var dotStrip = document.createElement('div');
+  dotStrip.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:20px;animation:jjDotScroll 2s linear infinite;background-image:radial-gradient(circle 2px, rgba(200,80,255,0.4) 100%, transparent 100%);background-size:20px 20px;';
+  ground.appendChild(dotStrip);
+  var horizonLine = document.createElement('div');
+  horizonLine.style.cssText = 'position:absolute;top:0;left:50%;transform:translateX(-50%);width:90%;height:1px;background:linear-gradient(90deg,transparent,rgba(200,80,255,0.5),rgba(200,80,255,0.5),transparent);box-shadow:0 0 12px 2px rgba(200,80,255,0.3);';
+  ground.appendChild(horizonLine);
+  bg.appendChild(ground);
+
+  // LAYER 11: HUD corners
+  var skCorners = [
+    'top:12px;left:12px;border-width:2px 0 0 2px;',
+    'top:12px;right:12px;border-width:2px 2px 0 0;',
+    'bottom:12px;left:12px;border-width:0 0 2px 2px;',
+    'bottom:12px;right:12px;border-width:0 2px 2px 0;'
+  ];
+  for (var hc = 0; hc < 4; hc++) {
+    var hCorner = document.createElement('div');
+    hCorner.style.cssText = 'position:fixed;width:20px;height:20px;border-color:rgba(200,80,255,0.5);border-style:solid;z-index:10;' + skCorners[hc];
+    bg.appendChild(hCorner);
+  }
+
+  // LAYER 12: THE SPARKLE KINGDOM sign
+  var skSign = document.createElement('div');
+  skSign.id = 'sk-sign';
+  skSign.style.cssText = 'position:fixed;top:26px;left:50%;transform:translateX(-50%);text-align:center;z-index:30;white-space:nowrap;';
+  var skTitle = document.createElement('div');
+  skTitle.style.cssText = "font-family:'Fredoka One','Comic Sans MS',cursive;font-size:30px;font-weight:900;color:#ff80ff;letter-spacing:4px;text-shadow:0 0 10px #ff40ff,0 0 30px rgba(255,80,255,0.5),2px 2px 0 rgba(0,0,0,0.6);animation:skSignPulse 3s ease-in-out infinite;";
+  skTitle.textContent = 'THE SPARKLE KINGDOM';
+  var skSub = document.createElement('div');
+  skSub.style.cssText = "font-family:'Fredoka One',cursive;font-size:10px;color:#c080ff;letter-spacing:6px;text-shadow:0 0 8px #a040ff;margin-top:2px;";
+  skSub.textContent = 'KINDLEKID MAGIC ZONE';
+  skSign.appendChild(skTitle);
+  skSign.appendChild(skSub);
+  bg.appendChild(skSign);
+
+  // LAYER 13: Star count placeholder (top right pill)
+  var starCount = document.createElement('div');
+  starCount.id = 'sk-star-count';
+  starCount.style.cssText = 'position:fixed;top:14px;right:14px;z-index:30;background:rgba(30,0,60,0.7);border:1px solid rgba(200,80,255,0.4);border-radius:20px;padding:6px 14px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:6px;';
+  var starIcon = document.createElement('span');
+  starIcon.style.cssText = 'font-size:18px;';
+  starIcon.textContent = '\u2B50';
+  var starVal = document.createElement('span');
+  starVal.id = 'sk-star-value';
+  starVal.style.cssText = "font-family:'Fredoka One',cursive;font-size:16px;color:#FFD700;";
+  starVal.textContent = '--';
+  starCount.appendChild(starIcon);
+  starCount.appendChild(starVal);
+  bg.appendChild(starCount);
 }
 
 function buildBuggsyLoadingScreen() {
