@@ -2811,7 +2811,8 @@ function installDailyReset() {
 // v29: AUDIO BATCH LOADER + PROGRESS REPORT
 // ════════════════════════════════════════════════════════════════════
 
-var AUDIO_FOLDER_ID = '1rXWVBD9QMruWOj6AlNB4mY2E9wzWGctm';
+var AUDIO_FOLDER_ID = '1BnwRW4zT5y2rAqU2S9vbMWvUl6GxESX_';
+var AUDIO_FOLDER_BUGGSY = '1gaC6zWoAf8kVmrPVpA59ODaOXNzY_DFD';
 
 /**
  * v29: Batch audio preload — returns { filename: base64 } map.
@@ -2827,6 +2828,12 @@ function getAudioBatchSafe(filenames) {
     var folder = DriveApp.getFolderById(AUDIO_FOLDER_ID);
     var result = {};
     var fileIndex = buildFileIndex_(folder);
+    // Also index Buggsy folder if it exists
+    try {
+      var bFolder = DriveApp.getFolderById(AUDIO_FOLDER_BUGGSY);
+      var bIndex = buildFileIndex_(bFolder);
+      for (var bk in bIndex) { if (bIndex.hasOwnProperty(bk) && !fileIndex[bk]) { fileIndex[bk] = bIndex[bk]; } }
+    } catch(e) { /* Buggsy folder not accessible */ }
     for (var i = 0; i < toFetch.length; i++) {
       var fname = toFetch[i];
       if (fileIndex[fname]) {
