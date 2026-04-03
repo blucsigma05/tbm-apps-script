@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v4">
+  <meta name="tbm-version" content="v5">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -464,6 +464,55 @@
       -webkit-animation: bgSparkle 3s ease infinite;
       animation: bgSparkle 3s ease infinite;
     }
+    /* ─── Tab S10 FE Portrait (~960px CSS) ─── */
+    @media (max-width: 1024px) {
+      .grid-2x2 .option-btn {
+        width: 150px; height: 150px;
+        font-size: 68px;
+      }
+      .grid-2x2 {
+        gap: 18px; max-width: 380px;
+      }
+      .option-btn {
+        min-width: 130px; min-height: 90px;
+        font-size: 40px; padding: 18px 22px;
+      }
+      .option-grid {
+        gap: 18px;
+      }
+      .btn-big {
+        min-width: 72px; min-height: 72px;
+        font-size: 30px; padding: 18px 32px;
+      }
+      .scatter-obj {
+        min-width: 70px; min-height: 70px;
+      }
+      .pattern-item svg, .pattern-mystery {
+        min-width: 56px; min-height: 56px;
+      }
+    }
+
+    /* ─── Tab S10 FE Landscape (~1280px wide, ~800px tall) ─── */
+    @media (min-width: 1025px) and (max-width: 1366px) and (max-height: 900px) {
+      .grid-2x2 {
+        max-width: 500px; gap: 20px;
+      }
+      .grid-2x2 .option-btn {
+        width: 140px; height: 140px;
+        font-size: 64px;
+      }
+      .option-btn {
+        min-width: 120px; min-height: 85px;
+        font-size: 38px;
+      }
+      .option-grid {
+        gap: 20px;
+      }
+      .btn-big {
+        min-width: 68px; min-height: 68px;
+        font-size: 28px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -857,10 +906,9 @@ function getParam(name) {
 function init() {
   initBgStars();
 
-  // Free play mode — skip curriculum, show game picker
+  // Free play mode — skip curriculum, show game picker (no bulk preload)
   var isFreePlay = getParam('mode') === 'freeplay' || window.location.pathname.indexOf('sparkle-free') !== -1;
   if (isFreePlay) {
-    preloadAudioClips();
     renderFreePlayMenu();
     return;
   }
@@ -882,56 +930,126 @@ function init() {
     loadContent();
   }
 
-  preloadAudioClips();
 }
 
-function preloadAudioClips() {
-  var audioFiles = [];
-  for (var i = 0; i < 26; i++) {
-    var L = String.fromCharCode(65 + i);
-    audioFiles.push('jj_letter_name_' + L + '.mp3');
-    audioFiles.push('jj_letter_phrase_' + L + '.mp3');
-    audioFiles.push('jj_find_' + L + '.mp3');
-    audioFiles.push('jj_sound_' + L + '.mp3');
-    audioFiles.push('jj_trace_' + L + '.mp3');
+// ── Lazy Audio Loader — fetch only what's needed per game ──
+var _audioLoaded = {}; // track which game types already loaded
+
+function loadAudioForGame(gameType, onReady) {
+  // Skip if already loaded for this game type
+  if (_audioLoaded[gameType]) { if (onReady) { onReady(); } return; }
+
+  var files = getClipsForGame(gameType);
+  // Filter out already-cached clips
+  var needed = [];
+  for (var i = 0; i < files.length; i++) {
+    if (!audioCache[files[i]]) { needed.push(files[i]); }
   }
-  var jjExtra = [
-    'jj_feedback_correct1.mp3','jj_feedback_correct2.mp3','jj_feedback_correct3.mp3','jj_feedback_correct4.mp3',
-    'jj_feedback_correct5.mp3','jj_feedback_correct6.mp3','jj_feedback_correct7.mp3','jj_feedback_correct8.mp3',
-    'jj_feedback_tryagain1.mp3','jj_feedback_tryagain2.mp3','jj_feedback_tryagain3.mp3','jj_feedback_tryagain4.mp3',
-    'jj_feedback_complete1.mp3','jj_feedback_complete2.mp3','jj_feedback_complete3.mp3','jj_feedback_star_earned.mp3',
-    'jj_instruction_welcome.mp3','jj_instruction_pick_game.mp3','jj_instruction_find_game.mp3',
-    'jj_instruction_trace_game.mp3','jj_instruction_sound_game.mp3','jj_instruction_name_game.mp3',
-    'jj_instruction_hear_it.mp3','jj_instruction_what_color.mp3','jj_instruction_count.mp3',
-    'jj_instruction_what_next.mp3','jj_instruction_great_session.mp3','jj_instruction_bye.mp3',
-    'jj_spell_jj.mp3','jj_spell_kindle.mp3','jj_spell_great_jj.mp3',
-    'jj_spell_great_kindle.mp3','jj_spell_next_letter.mp3','jj_spell_tap_letter.mp3'
-  ];
-  for (var n = 1; n <= 10; n++) { jjExtra.push('jj_number_' + n + '.mp3'); }
-  for (var x = 0; x < jjExtra.length; x++) { audioFiles.push(jjExtra[x]); }
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    google.script.run
-      .withSuccessHandler(function(batch) {
-        if (batch) {
-          for (var k in batch) {
-            if (batch.hasOwnProperty(k)) {
-              audioCache[k] = new Audio('data:audio/mp3;base64,' + batch[k]);
-            }
+  if (needed.length === 0) {
+    _audioLoaded[gameType] = true;
+    if (onReady) { onReady(); }
+    return;
+  }
+
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    if (onReady) { onReady(); }
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(batch) {
+      if (batch) {
+        for (var k in batch) {
+          if (batch.hasOwnProperty(k)) {
+            audioCache[k] = new Audio('data:audio/mp3;base64,' + batch[k]);
           }
         }
-      })
-      .withFailureHandler(function() {})
-      .getAudioBatchSafe(audioFiles);
+      }
+      _audioLoaded[gameType] = true;
+      if (onReady) { onReady(); }
+    })
+    .withFailureHandler(function() {
+      _audioLoaded[gameType] = true;
+      if (onReady) { onReady(); }
+    })
+    .getAudioBatchSafe(needed);
+}
+
+function getClipsForGame(gameType) {
+  var base = [
+    'jj_feedback_correct1.mp3','jj_feedback_correct2.mp3','jj_feedback_correct3.mp3','jj_feedback_correct4.mp3',
+    'jj_feedback_tryagain1.mp3','jj_feedback_tryagain2.mp3',
+    'jj_feedback_complete1.mp3','jj_feedback_star_earned.mp3'
+  ];
+  var seq = ['K','I','N','D','L','E','J','B'];
+  var gameClips = [];
+
+  if (gameType === 'find_the_letter') {
+    for (var i = 0; i < seq.length; i++) { gameClips.push('jj_find_' + seq[i] + '.mp3'); }
+    gameClips.push('jj_instruction_find_game.mp3');
+  } else if (gameType === 'letter_trace') {
+    for (var i = 0; i < seq.length; i++) { gameClips.push('jj_trace_' + seq[i] + '.mp3'); }
+    gameClips.push('jj_instruction_trace_game.mp3');
+  } else if (gameType === 'letter_sound') {
+    for (var i = 0; i < seq.length; i++) { gameClips.push('jj_sound_' + seq[i] + '.mp3'); }
+    gameClips.push('jj_instruction_sound_game.mp3');
+  } else if (gameType === 'letter_intro') {
+    for (var i = 0; i < seq.length; i++) {
+      gameClips.push('jj_letter_name_' + seq[i] + '.mp3');
+      gameClips.push('jj_letter_phrase_' + seq[i] + '.mp3');
+    }
+  } else if (gameType === 'name_builder') {
+    gameClips.push('jj_spell_jj.mp3', 'jj_spell_kindle.mp3', 'jj_spell_next_letter.mp3', 'jj_spell_tap_letter.mp3');
+    gameClips.push('jj_instruction_name_game.mp3');
+  } else if (gameType === 'count_with_me') {
+    for (var n = 1; n <= 10; n++) { gameClips.push('jj_number_' + n + '.mp3'); }
+    gameClips.push('jj_instruction_count.mp3');
+  } else if (gameType === 'color_hunt') {
+    gameClips.push('jj_instruction_what_color.mp3');
+  } else if (gameType === 'shape_match' || gameType === 'pattern_next' || gameType === 'more_or_less') {
+    gameClips.push('jj_instruction_what_next.mp3');
   }
+
+  return base.concat(gameClips);
+}
+
+// Curriculum mode: load clips for today's activities
+function preloadCurriculumAudio(activities) {
+  if (!activities || activities.length === 0) return;
+  var allClips = [];
+  var seen = {};
+  for (var a = 0; a < activities.length; a++) {
+    var clips = getClipsForGame(activities[a].type);
+    for (var c = 0; c < clips.length; c++) {
+      if (!seen[clips[c]]) { seen[clips[c]] = true; allClips.push(clips[c]); }
+    }
+  }
+  if (allClips.length === 0) return;
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  google.script.run
+    .withSuccessHandler(function(batch) {
+      if (batch) {
+        for (var k in batch) {
+          if (batch.hasOwnProperty(k)) {
+            audioCache[k] = new Audio('data:audio/mp3;base64,' + batch[k]);
+          }
+        }
+      }
+    })
+    .withFailureHandler(function() {})
+    .getAudioBatchSafe(allClips);
 }
 
 /* ═══════════════════════════════════════════════════════════
    FREE PLAY MODE
    ═══════════════════════════════════════════════════════════ */
 var _freePlayMode = false;
+var _freePlayGame = null;
+var _freePlayIdx = 0;
+var FREE_PLAY_LETTERS = ['K','I','N','D','L','E','J','B','A','C','F','G','H'];
 
 function renderFreePlayMenu() {
   _freePlayMode = true;
+  _freePlayGame = null;
   var mc = getMainContent();
   var games = [
     { type: 'find_the_letter', label: 'Find the Letter', emoji: '&#128260;' },
@@ -968,50 +1086,92 @@ function renderFreePlayMenu() {
 }
 
 function startFreePlayGame(type) {
-  var KINDLE = ['K', 'I', 'N', 'D', 'L', 'E'];
-  var randomLetter = KINDLE[Math.floor(Math.random() * KINDLE.length)];
-  var randomNumber = Math.floor(Math.random() * 5) + 1;
+  _freePlayGame = type;
+  _freePlayIdx = 0;
+  // Show loading while audio fetches for this game
+  var mc = getMainContent();
+  mc.innerHTML = '<div style="text-align:center;padding:60px 20px;"><div style="font-size:64px;margin-bottom:16px;">&#10024;</div><div style="font-size:22px;font-weight:700;color:#f9a8d4;">Loading...</div></div>';
+  loadAudioForGame(type, function() {
+    runFreePlayRound();
+  });
+}
+
+function runFreePlayRound() {
+  var letter = FREE_PLAY_LETTERS[_freePlayIdx % FREE_PLAY_LETTERS.length];
   var colors = ['red', 'blue', 'green', 'yellow', 'pink', 'purple'];
   var shapes = ['circle', 'square', 'triangle', 'star', 'heart'];
-  var randomColor = colors[Math.floor(Math.random() * colors.length)];
-  var randomShape = shapes[Math.floor(Math.random() * shapes.length)];
+  var color = colors[_freePlayIdx % colors.length];
+  var shape = shapes[_freePlayIdx % shapes.length];
+  var number = (_freePlayIdx % 5) + 1;
+  var type = _freePlayGame;
+
+  // Predictive preload: at letter 4, silently fetch next batch
+  if (_freePlayIdx === 4 && type.indexOf('letter') !== -1) {
+    var nextBatch = FREE_PLAY_LETTERS.slice(8, 16);
+    var silentClips = [];
+    var prefix = type === 'find_the_letter' ? 'jj_find_' : type === 'letter_trace' ? 'jj_trace_' : type === 'letter_sound' ? 'jj_sound_' : 'jj_letter_phrase_';
+    for (var b = 0; b < nextBatch.length; b++) {
+      if (!audioCache[prefix + nextBatch[b] + '.mp3']) {
+        silentClips.push(prefix + nextBatch[b] + '.mp3');
+      }
+    }
+    if (silentClips.length > 0 && typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(batch) {
+          if (batch) { for (var k in batch) { if (batch.hasOwnProperty(k) && !audioCache[k]) { audioCache[k] = new Audio('data:audio/mp3;base64,' + batch[k]); } } }
+        })
+        .withFailureHandler(function() {})
+        .getAudioBatchSafe(silentClips);
+    }
+  }
 
   var activity = { type: type, stars: 1 };
 
   if (type === 'find_the_letter') {
-    var opts = shuffleArray([randomLetter, 'B', 'M', 'S']).slice(0, 4);
-    if (opts.indexOf(randomLetter) === -1) { opts[0] = randomLetter; opts = shuffleArray(opts); }
-    activity.target = randomLetter;
-    activity.options = opts;
+    var distractors = shuffleArray(['B', 'M', 'S', 'T', 'P', 'R']).slice(0, 3);
+    distractors.push(letter);
+    activity.target = letter;
+    activity.options = shuffleArray(distractors);
   } else if (type === 'letter_trace') {
-    activity.letter = randomLetter;
+    activity.letter = letter;
   } else if (type === 'letter_sound') {
-    var sounds = { K: 'kuh', I: 'ih', N: 'nnn', D: 'duh', L: 'lll', E: 'eh' };
-    activity.letter = randomLetter;
-    activity.sound = sounds[randomLetter] || 'ah';
-    activity.words = [randomLetter === 'K' ? 'Kindle' : randomLetter === 'I' ? 'Ice cream' : randomLetter === 'N' ? 'Nest' : randomLetter === 'D' ? 'Dog' : randomLetter === 'L' ? 'Lion' : 'Egg'];
+    var sounds = { K:'kuh', I:'ih', N:'nnn', D:'duh', L:'lll', E:'eh', J:'juh', B:'buh', A:'ah', C:'kuh', F:'fff', G:'guh', H:'huh' };
+    var wordMap = { K:'Kindle', I:'Ice cream', N:'Nest', D:'Dog', L:'Lion', E:'Egg', J:'Jump', B:'Ball', A:'Apple', C:'Cat', F:'Fish', G:'Goat', H:'Hat' };
+    activity.letter = letter;
+    activity.sound = sounds[letter] || 'ah';
+    activity.words = [wordMap[letter] || 'Apple'];
   } else if (type === 'name_builder') {
-    activity.target = Math.random() > 0.5 ? 'JJ' : 'KINDLE';
+    activity.target = _freePlayIdx % 2 === 0 ? 'JJ' : 'KINDLE';
   } else if (type === 'count_with_me') {
-    activity.count = randomNumber;
-    activity.shape = randomShape;
-    activity.color = randomColor;
+    activity.count = number;
+    activity.shape = shape;
+    activity.color = color;
   } else if (type === 'color_hunt') {
-    activity.targetColor = randomColor;
+    activity.targetColor = color;
     activity.count = 4;
   } else if (type === 'shape_match') {
-    activity.target = randomShape;
-    activity.options = shuffleArray(shapes).slice(0, 4);
-    if (activity.options.indexOf(randomShape) === -1) { activity.options[0] = randomShape; activity.options = shuffleArray(activity.options); }
+    activity.target = shape;
+    var shapeOpts = shuffleArray(shapes).slice(0, 4);
+    if (shapeOpts.indexOf(shape) === -1) { shapeOpts[0] = shape; shapeOpts = shuffleArray(shapeOpts); }
+    activity.options = shapeOpts;
   } else if (type === 'pattern_next') {
-    activity.pattern = [randomShape, randomShape === 'circle' ? 'star' : 'circle'];
-    activity.answer = randomShape;
+    var patternSets = [
+      { pattern: [{shape:'circle',color:'red'},{shape:'square',color:'blue'},{shape:'circle',color:'red'},{shape:'square',color:'blue'}], answer: {shape:'circle',color:'red'}, options: [{shape:'circle',color:'red'},{shape:'triangle',color:'green'},{shape:'square',color:'yellow'}] },
+      { pattern: [{shape:'triangle',color:'green'},{shape:'circle',color:'pink'},{shape:'triangle',color:'green'},{shape:'circle',color:'pink'}], answer: {shape:'triangle',color:'green'}, options: [{shape:'triangle',color:'green'},{shape:'star',color:'blue'},{shape:'heart',color:'red'}] },
+      { pattern: [{shape:'star',color:'yellow'},{shape:'star',color:'yellow'},{shape:'heart',color:'red'},{shape:'star',color:'yellow'},{shape:'star',color:'yellow'}], answer: {shape:'heart',color:'red'}, options: [{shape:'heart',color:'red'},{shape:'circle',color:'blue'},{shape:'star',color:'yellow'}] },
+      { pattern: [{shape:'square',color:'blue'},{shape:'circle',color:'red'},{shape:'square',color:'blue'},{shape:'circle',color:'red'}], answer: {shape:'square',color:'blue'}, options: [{shape:'square',color:'blue'},{shape:'heart',color:'pink'},{shape:'triangle',color:'green'}] },
+      { pattern: [{shape:'heart',color:'pink'},{shape:'star',color:'yellow'},{shape:'heart',color:'pink'},{shape:'star',color:'yellow'}], answer: {shape:'heart',color:'pink'}, options: [{shape:'heart',color:'pink'},{shape:'circle',color:'red'},{shape:'square',color:'blue'}] }
+    ];
+    var ps = patternSets[_freePlayIdx % patternSets.length];
+    activity.pattern = ps.pattern;
+    activity.answer = ps.answer;
+    activity.options = ps.options;
   } else if (type === 'more_or_less') {
-    var a = Math.floor(Math.random() * 5) + 1;
-    var b = a + Math.floor(Math.random() * 3) + 1;
+    var a = (_freePlayIdx % 4) + 1;
+    var b = a + (_freePlayIdx % 3) + 1;
     activity.groupA = { count: a, shape: 'star' };
     activity.groupB = { count: b, shape: 'heart' };
-    activity.mode = 'more';
+    activity.mode = _freePlayIdx % 2 === 0 ? 'more' : 'less';
   }
 
   currentActivityIndex = 0;
@@ -1022,7 +1182,7 @@ function startFreePlayGame(type) {
   var mc = getMainContent();
   var backBtn = document.createElement('div');
   backBtn.style.cssText = 'text-align:center;margin-top:16px;';
-  backBtn.innerHTML = '<button onclick="renderFreePlayMenu()" style="padding:10px 24px;border-radius:999px;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#f9a8d4;font-size:14px;font-weight:600;cursor:pointer;font-family:Nunito,sans-serif;">&#8592; Back to Games</button>';
+  backBtn.innerHTML = '<button onclick="_freePlayGame=null;_freePlayIdx=0;renderFreePlayMenu()" style="padding:10px 24px;border-radius:999px;border:2px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#f9a8d4;font-size:14px;font-weight:600;cursor:pointer;font-family:Nunito,sans-serif;">&#8592; Pick Different Game</button>';
   mc.appendChild(backBtn);
 }
 
@@ -1032,6 +1192,7 @@ function loadContent() {
       .withSuccessHandler(function(content) {
         if (content && content.content && content.content.activities) {
           todayContent = content.content;
+          preloadCurriculumAudio(todayContent.activities);
           showReadyScreen(todayContent);
         } else {
           showFallback();
@@ -1148,6 +1309,11 @@ function advanceActivity(starsEarned) {
   totalStars += (starsEarned || 0);
   updateStarCounter();
 
+  if (_freePlayMode && _freePlayGame) {
+    _freePlayIdx++;
+    setTimeout(function() { runFreePlayRound(); }, 800);
+    return;
+  }
   if (_freePlayMode) {
     setTimeout(function() { renderFreePlayMenu(); }, 800);
     return;
