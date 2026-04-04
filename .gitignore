@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.*
+.env.local
+credentials.json
+credentials/
+*.pem
+*.key
+service-account*.json
+
+# Local IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Clasp local overrides (the committed .clasp.json is safe — contains only public script ID)
+.clasp.json.local
+
+# Temp / build artifacts
+*.tmp
+*.log
+dist/
+build/
+
+# Playwright output (screenshots are generated, not tracked)
+test-results/
+playwright-report/
+
+# Claude Code local settings (per-machine, not shared)
+.claude/settings.local.json
