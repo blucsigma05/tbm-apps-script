@@ -16,7 +16,7 @@
  * you can't accidentally deploy past a broken gate.
  */
 function khDeployGate() {
-  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  var ss = SpreadsheetApp.openById(SSID);
   var results = {
     status: 'PASS',
     timestamp: new Date().toISOString(),

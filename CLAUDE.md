@@ -139,6 +139,7 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 | ProgressReport.html | Weekly progress report (parent) | `progress` |
 | StoryLibrary.html | Family story library | `story-library` |
 | StoryReader.html | Bedtime story reader | `story` |
+| Vault.html | LT watch collection vault | `vault` |
 | executive-skills-components.html | Shared exec skills component (inlined) | — (not routed) |
 
 ### Utility files (NOT pushed to GAS)
@@ -187,7 +188,7 @@ thompsonfams.com/progress         → ?page=progress
 thompsonfams.com/comic-studio     → ?page=comic-studio
 thompsonfams.com/story-library    → ?page=story-library
 thompsonfams.com/story            → ?page=story
-thompsonfams.com/vault            → ?page=vault  (planned, not yet built)
+thompsonfams.com/vault            → ?page=vault
 ```
 
 #### API Endpoints
