@@ -13,13 +13,15 @@ Re-anchor note: pass 1 at `5bfc60b`, pass 2 at `3f33771`, pass 3 refreshed after
 - `lost`: previously specified or claimed built, but absent from current runtime truth
 - `specified but never shipped`: documented intention without current runtime evidence
 - `live but undocumented`: current code has it, but the main architecture docs do not describe it well
+- `sunset`: intentionally retired — was prototype, superseded, or consolidated elsewhere
+- `consolidated`: functionality absorbed into another surface or system
 
 ## Ledger
 
 | Area | Feature / Visual | First source | Landed evidence | Current evidence | Status | Notes |
 |---|---|---|---|---|---|---|
 | Platform | GitHub + `clasp` as real deployment path | QA Round 1A | QA Round 1A root-cause note | Current `main` commit stream continues past old Notion deploy versions | still live | Runtime truth has already shifted here. |
-| Platform | Notion deploy page titles as live version truth | Older deploy-page workflow | Older Notion page titles | QA Round 1A says versions 23-30 never made it back to Notion deploy pages | lost | Keep historical value, not runtime value. |
+| Platform | Notion deploy page titles as live version truth | Older deploy-page workflow | Older Notion page titles | Replaced by getDeployedVersions() in GASHardening.gs (programmatic) + Active Versions DB (collection://158238c5-9a78-4fa5-9ef8-203f8e0e00a9, audit trail) | sunset | Intentionally replaced by dual truth system. Notion page titles retain historical value only. |
 | Platform | Default finance landing = `pulse` | Dashboard System Architecture | Older route table says pulse default | `Code.js` line 204 uses `servePage(p.page \|\| 'pulse')` — restored to pulse default | still live | Was regressed to `vein`, now restored. Verify on next deploy. |
 | Platform | Cloudflare clean-path routing | Education Platform, PM, proxy build pages | `cloudflare-worker.js` introduced public path routing | Current worker routes include 35 paths: `/pulse`, `/vein`, `/daily-missions`, `/daily-adventures`, `/sparkle-free`, `/baseline`, `/power-scan`, `/api`, `/api/verify-pin` | still live | Cloudflare is a first-class runtime layer. 13 routes undocumented in CLAUDE.md. |
 | Platform | Front door / foyer | PM child pages (The Foyer) | Worker front door added | Current `cloudflare-worker.js` contains full front-door HTML with family / education / finance sections | still live | Older dashboard architecture page does not capture this. |
@@ -48,8 +50,8 @@ Re-anchor note: pass 1 at `5bfc60b`, pass 2 at `3f33771`, pass 3 refreshed after
 | Visual | Inline SVG kid avatars with no external dependency | Session 75 manifest | Desired final direction documented | Current surfaces still use external hosted `<img>` assets | partially live | Functionally present, final implementation direction did not stick. |
 | Education | Single `daily-missions` hub | Education Platform | Final entry-point plan | Current route + `daily-missions.html` file present | still live | Education front door. |
 | Education | Buggsy Day 1 setup flow | Education page + April 2 plan | Design Dashboard + Baseline + Power Scan | Current `daily-missions.html` shows `Power Scan`, `Baseline Diagnostic`, and gated `THE WOLFDOME BUILDER` | shipped | Evolved after first Monday push. |
-| Education | Separate `KindleThemePicker.html` surface | Education page claims built | Notion says existed as prototype | No file in repo | lost | Dropped before GitHub consolidation. |
-| Education | Separate `SparkleIntro.html` surface | Education page claims built | Notion says existed as prototype | No file in repo | lost | File gone from runtime truth. |
+| Education | Separate `KindleThemePicker.html` surface | Education page claims built | Notion says existed as prototype | No file in repo. DesignDashboard theme picker is unrelated (Ring Quest, not Sparkle/Kindle). | sunset | Intentionally dropped before GitHub consolidation. No replacement needed — was a prototype that never reached production. |
+| Education | Separate `SparkleIntro.html` surface | Education page claims built | Notion says existed as prototype | JJ_SCHEDULE[0] in daily-missions.html routes to sparkle with intro mode. SparkleLearning.html contains letter_intro activity + welcome audio. | consolidated | Functionality absorbed into daily-missions.html + SparkleLearning.html via route consolidation. |
 | Education | JJ Day 1 experience | Education page Day 1 plan | Day 1 setup explicitly planned | Current `JJ_SCHEDULE[0]` routes JJ into `page: 'sparkle'` | still live | Route consolidation, not separate file. |
 | Education | Monday curriculum alignment | Education page April 2 notes | Commit `6a4cde5` shifted starts to Monday | Current repo and education notes agree on April 6 Monday start | still live | |
 | Education | "Back to Missions" completion recovery path | Education page + April 2 audit commit | Commit `6a4cde5` added across modules | Confirmed in current modules | still live | Audit-driven recovery. |

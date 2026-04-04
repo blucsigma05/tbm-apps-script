@@ -21,8 +21,8 @@ Answer in under 60 seconds:
 
 ## Overall Status
 
-- System health: `WATCH`
-- Reason: TBM is operational and materially mature. Biggest current issues are failure handler coverage gap, workflow truthfulness drift, and documentation lag — not total system instability.
+- System health: `GREEN`
+- Reason: TBM is operational, used daily by the family, and no active outages or blockers. All surfaces load, kids complete tasks, parents manage dashboards. Remaining issues are backend contract consistency and documentation lag — not performance or availability. Specific surfaces with known contract/semantics issues are marked WATCH individually below.
 
 ### Current Confidence
 

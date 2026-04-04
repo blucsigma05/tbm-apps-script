@@ -3,6 +3,7 @@
 Date: April 3, 2026
 Purpose: Lightweight operating rhythm for TBM.
 Audience: Founder/operator, not full-time developer.
+Time commitment: ~70 min/week + monthly deep dive. This is management review time, not build time. Build sessions are separate.
 
 ## Goal
 

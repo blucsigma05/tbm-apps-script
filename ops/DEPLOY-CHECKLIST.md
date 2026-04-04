@@ -74,6 +74,8 @@ Every deploy should answer:
 - Would a kid know if this was fallback or real work?
 - Would a parent know whether this actually counted?
 - Did the backend record what the UI implied?
+- Was this tested on the actual target device, not just a desktop browser?
+- Did any existing working feature break or change behavior?
 - Is this behavior now reflected in docs and scorecard?
 
 ---
