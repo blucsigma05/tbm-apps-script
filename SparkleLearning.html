@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v6">
+  <meta name="tbm-version" content="v7">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -2125,7 +2125,13 @@ function checkBeginningSound(el, chosen, answer) {
 /* ═══════════════════════════════════════════════════════════
    ACTIVITY 11: LETTER TRACE
    ═══════════════════════════════════════════════════════════ */
+function setMascotVisible(visible) {
+  var img = document.querySelector('#sparkle-bg img');
+  if (img) { img.style.opacity = visible ? '1' : '0'; }
+}
+
 function renderLetterTrace(activity) {
+  setMascotVisible(false);
   var mc = getMainContent();
   var letter = activity.letter || 'A';
 
@@ -2210,6 +2216,7 @@ function renderLetterTrace(activity) {
 }
 
 function clearTraceCanvas() {
+  setMascotVisible(true);
   var canvas = document.getElementById('traceCanvas');
   if (!canvas) { return; }
   var ctx = canvas.getContext('2d');
@@ -2231,6 +2238,7 @@ function clearTraceCanvas() {
 }
 
 function handleTraceDone() {
+  setMascotVisible(true);
   if (activityLocked) { return; }
   activityLocked = true;
   var act = todayContent.activities[currentActivityIndex];
@@ -2244,6 +2252,7 @@ function handleTraceDone() {
    ACTIVITY 12: NUMBER TRACE
    ═══════════════════════════════════════════════════════════ */
 function renderNumberTrace(activity) {
+  setMascotVisible(false);
   var mc = getMainContent();
   var numeral = activity.numeral || '1';
 
@@ -2310,6 +2319,7 @@ function renderNumberTrace(activity) {
 }
 
 function clearNumTraceCanvas() {
+  setMascotVisible(true);
   var canvas = document.getElementById('traceCanvas');
   if (!canvas) { return; }
   var ctx = canvas.getContext('2d');
@@ -2327,6 +2337,7 @@ function clearNumTraceCanvas() {
 }
 
 function handleNumTraceDone() {
+  setMascotVisible(true);
   if (activityLocked) { return; }
   activityLocked = true;
   var act = todayContent.activities[currentActivityIndex];
@@ -2752,6 +2763,7 @@ function showCelebrationScreen(sessionStars) {
   html += '</div>';
 
   html += '<button class="btn-big btn-pink" onclick="replaySession()" style="font-size:28px;margin-top:16px;">Play Again! &#127881;</button>';
+  html += '<button class="btn-big btn-green" onclick="window.location.href=\'/daily-missions?child=jj\'" style="font-size:24px;margin-top:12px;">All Done! &#127752;</button>';
   html += '</div>';
   mc.innerHTML = html;
 
