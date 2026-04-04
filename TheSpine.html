@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<title>TheSpine v43 — Office Ambient Display</title>
+<title>TheSpine v44 — Office Ambient Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -69,7 +69,7 @@ body.evening{
 .loader-ring{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.22);border-top-color:var(--ice);animation:spin .9s linear infinite}
 .loader-txt{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.page{position:relative;z-index:1;width:100vw;height:100vh;padding:var(--safe) 18px 46px var(--safe);display:grid;grid-template-rows:auto 11% 43% 42% auto;gap:4px}
+.page{position:relative;z-index:1;width:100vw;height:100vh;padding:28px 18px 46px var(--safe);display:grid;grid-template-rows:auto 11% 43% 42% auto;gap:4px}
 .glass{position:relative;border:1px solid rgba(212,168,67,.28);border-radius:var(--r);background:var(--card);box-shadow:0 4px 20px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden}
 .glass.warm{background:var(--card-warm)}
 .glass::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,67,.22),transparent)}
@@ -175,7 +175,7 @@ body.evening{
 .account-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}.account-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--text-mid)}
 .bridge{font-size:11px;color:var(--text-mid);margin-top:4px}
 .kids{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:0}
-.kid-card{padding:4px 8px;display:grid;grid-template-rows:auto auto auto auto 1fr;gap:1px;min-height:0;position:relative;overflow:hidden}
+.kid-card{padding:4px 8px;display:grid;grid-template-rows:auto auto auto auto auto 1fr;gap:1px;min-height:0;position:relative;overflow:hidden}
 .kid-card::after{content:'';position:absolute;right:-12px;bottom:-14px;width:90px;height:90px;border-radius:50%;pointer-events:none;opacity:.22;filter:blur(26px)}
 .kid-card.buggsy{background:rgba(60,58,48,.78)}.kid-card.buggsy::after{background:radial-gradient(circle,rgba(212,168,67,.38),transparent 68%)}
 .kid-card.jj{background:rgba(72,56,58,.72)}.kid-card.jj::after{background:radial-gradient(circle,rgba(232,152,184,.30),transparent 68%)}
@@ -220,12 +220,84 @@ body.evening{
 .hb-dot{display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:3px;vertical-align:middle}.hb-dot.green{background:var(--positive)}.hb-dot.yellow{background:var(--warning)}.hb-dot.red{background:var(--rose-soft)}.hb-dot.dim{background:var(--text-muted)}
 .error-note{font-size:10px;color:var(--rose-soft)}
 .hidden{display:none!important}
+#spineDeclaration.lit {
+  color: rgba(212,168,67,.9);
+  text-shadow: 0 0 12px rgba(212,168,67,.3);
+}
+.kid-char-wm {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  font-size: 64px;
+  line-height: 1;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.6s ease, filter 0.6s ease;
+}
+.kid-card.buggsy.wm-active .kid-char-wm {
+  opacity: 0.22;
+  filter: drop-shadow(0 0 8px rgba(212,168,67,.5));
+}
+.kid-card.jj.wm-active .kid-char-wm {
+  opacity: 0.22;
+  filter: drop-shadow(0 0 8px rgba(249,168,212,.5));
+}
+.kid-card > * { position: relative; z-index: 1; }
+.kid-earned-today {
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--gold);
+  background: rgba(212,168,67,.05);
+  position: relative;
+  z-index: 1;
+  transition: color .3s;
+}
+.kid-earned-today.jj {
+  color: var(--rose);
+  background: rgba(232,152,184,.05);
+}
+.kid-earned-today.active {
+  animation: glowPulse 3s ease-in-out 1;
+}
+@keyframes glowPulse {
+  0%, 100% { transform: scale(1); opacity: .92; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+.wf-bar.next-win {
+  box-shadow: 0 0 8px rgba(110,231,183,.45), 0 0 3px rgba(110,231,183,.6);
+}
+@keyframes interestBreathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+.interest-pulse {
+  animation: interestBreathe 5s ease-in-out infinite;
+}
 </style>
 </head>
 <body>
 <div class="atmo"><div class="bloom"></div><div class="coolwash"></div><div class="river"></div><div class="goldaccent"></div><div class="kidorb left"></div><div class="kidorb right"></div></div>
 <div id="loader"><div class="loader-ring"></div><div class="loader-txt">Loading The Backbone</div></div>
 <div class="stale-banner" id="staleBanner">&#x26A0; Backbone data may be stale — check connection</div>
+<div id="spineDeclaration" style="
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:50;
+  text-align:center;
+  padding:5px 0 4px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:.20em;
+  text-transform:uppercase;
+  color:rgba(212,168,67,.55);
+  border-bottom:0.5px solid rgba(255,255,255,.08);
+  background:rgba(0,0,0,.12);
+  transition:color .4s, text-shadow .4s;"></div>
 <div class="page">
   <header class="header">
     <div>
@@ -336,6 +408,7 @@ body.evening{
 
   <section class="kids">
     <article class="glass kid-card buggsy">
+      <div class="kid-char-wm" id="bugWatermark">&#x1F43A;</div>
       <div class="kid-head"><div class="kid-head-main"><img class="kid-avatar gold" src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" alt="Buggsy avatar"><div><div class="kid-name gold">Buggsy</div><div class="kid-sub" id="buggsySub">Loading…</div></div></div><div class="mini-label" id="buggsyReward">Loading…</div></div>
       <div class="kid-pills">
         <div class="kid-pill"><div class="v gold" id="bCur">—</div><div class="t">Rings</div></div>
@@ -345,9 +418,11 @@ body.evening{
       </div>
       <div class="kid-bar"><span id="bBar"></span></div>
       <div class="kid-gate" id="bGate"></div>
+      <div class="kid-earned-today" id="bugEarnedToday">Earned today: $0.00</div>
       <div class="kid-task-zone" id="bTasks"><div class="kid-empty">Loading tasks…</div></div>
     </article>
     <article class="glass kid-card jj">
+      <div class="kid-char-wm" id="jjWatermark">&#x1F984;</div>
       <div class="kid-head"><div class="kid-head-main"><img class="kid-avatar rose" src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" alt="JJ avatar"><div><div class="kid-name rose">JJ</div><div class="kid-sub" id="jjSub">Loading…</div></div></div><div class="mini-label" id="jjReward">Loading…</div></div>
       <div class="kid-pills">
         <div class="kid-pill"><div class="v rose" id="jCur">—</div><div class="t">Stars</div></div>
@@ -357,6 +432,7 @@ body.evening{
       </div>
       <div class="kid-bar"><span id="jBar"></span></div>
       <div class="kid-gate" id="jGate"></div>
+      <div class="kid-earned-today jj" id="jjEarnedToday">Stars today: 0 &#11088;</div>
       <div class="kid-task-zone" id="jTasks"><div class="kid-empty">Loading tasks…</div></div>
     </article>
   </section>
@@ -372,7 +448,7 @@ body.evening{
 
 <script>
 // Version history tracked in Notion deploy page.
-var SPINE_VERSION = 43;
+var SPINE_VERSION = 44;
 var FINANCE_MS = 300000;
 var KIDS_MS = 180000;
 var BOARD_MS = 600000;
@@ -546,10 +622,24 @@ function renderFinance(d){
       wf.appendChild(row);
     });
   }
+  var rows = document.querySelectorAll('.wf-bar');
+  var minTotal = Infinity;
+  var minIdx = -1;
+  debtByType.forEach(function(r, i) {
+    var t = Number(r.total) || 0;
+    if (t > 0 && t < minTotal) { minTotal = t; minIdx = i; }
+  });
+  if (minIdx >= 0 && rows[minIdx]) {
+    rows[minIdx].classList.add('next-win');
+  }
   document.getElementById('tlPromo').textContent = pickPromoDate(d) || "Apr '26";
   document.getElementById('tlCf').textContent = fmtDateToken(pick(d, ['cashFlowPositiveDate'])) || '\u2014';
   document.getElementById('tlFree').textContent = fmtDateToken(pick(d, ['debtTarget','debtFreeTarget'])) || '\u2014';
   animateNum(document.getElementById('burnMo'), n(pick(d, ['interestBurn.monthly','canonicalInterestBurnMonthly','monthlyInterestBurn'])) || 0, fmtMoney);
+  var burnPulseEl = document.getElementById('burnMo');
+  if (burnPulseEl) {
+    burnPulseEl.classList.add('interest-pulse');
+  }
   document.getElementById('paidOffVal').textContent = fmtMoney(pick(d, ['debtPaidOff','paidOffSinceStart','paidOffAmount']));
   document.getElementById('nextPayoffVal').textContent = pick(d, ['nextWin.label','nextPayoff','promoAction']) || '\u2014';
   var netWorth = pick(d, ['netWorth']);
@@ -597,6 +687,7 @@ function renderFinance(d){
   // Cash Ready Now
   document.getElementById('lcVal').textContent = fmtMoney(pick(d, ['liquidCash','cashOnHand','cashAvailable','bridgeCash']));
   renderCashAccounts(d);
+  updateDeclaration();
 }
 function renderCashAccounts(d){
   var rows = [];
@@ -723,7 +814,7 @@ function renderGate(elId, req, icon, askCount){
   }
   if(!req || !req.total){
     el.className = 'kid-gate clear pulse';
-    el.innerHTML = '<span style="font-size:9px;font-weight:800;color:#6ed8b0">\u2705 All clear</span><span style="display:flex;align-items:center;gap:4px">' + askHtml + '<span style="font-size:8px;font-weight:800;color:var(--text-muted)">No active must-dos</span></span>';
+    el.innerHTML = '<span style="font-size:9px;font-weight:800;color:#6ed8b0">\u2705 Nothing waiting \u2014 good work.</span><span style="display:flex;align-items:center;gap:4px">' + askHtml + '<span style="font-size:8px;font-weight:800;color:var(--text-muted)">No active must-dos</span></span>';
     return;
   }
   var done = Number(req.done || 0);
@@ -732,7 +823,7 @@ function renderGate(elId, req, icon, askCount){
   var left = Math.max(total - done, 0);
   if(allClear){
     el.className = 'kid-gate clear pulse';
-    el.innerHTML = '<span style="font-size:9px;font-weight:800;color:#6ed8b0">\u2705 All clear</span><span style="display:flex;align-items:center;gap:4px">' + askHtml + '<span style="font-size:8px;font-weight:800;color:var(--text-muted)">' + done + '/' + total + ' done</span></span>';
+    el.innerHTML = '<span style="font-size:9px;font-weight:800;color:#6ed8b0">\u2705 Nothing waiting \u2014 good work.</span><span style="display:flex;align-items:center;gap:4px">' + askHtml + '<span style="font-size:8px;font-weight:800;color:var(--text-muted)">' + done + '/' + total + ' done</span></span>';
   } else {
     el.className = 'kid-gate locked';
     el.innerHTML = '<span style="font-size:9px;font-weight:800;color:#e8a838">\uD83D\uDD12 ' + left + ' must-do' + (left === 1 ? '' : 's') + ' left</span><span style="display:flex;align-items:center;gap:4px">' + askHtml + '<span style="font-size:8px;font-weight:800;color:var(--text-muted)">' + done + '/' + total + '</span></span>';
