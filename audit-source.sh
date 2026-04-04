@@ -183,6 +183,38 @@ fi
 
 echo ""
 
+# ── withFailureHandler() WIRING ──────────────────────────────
+echo "--- google.script.run Failure Handler Wiring ---"
+
+# NOTE: google.script.run appears multiple times per chain (comments, multi-line)
+# so raw grep count is unreliable. withSuccessHandler count = actual call chains.
+# Compare withFailureHandler to withSuccessHandler for accurate wiring check.
+
+FH_FAIL=0
+for htmlfile in *.html; do
+  SUCCESS_COUNT=$(grep -c "withSuccessHandler" "$htmlfile" 2>/dev/null || true)
+  HANDLER_COUNT=$(grep -c "withFailureHandler" "$htmlfile" 2>/dev/null || true)
+
+  SUCCESS_COUNT=${SUCCESS_COUNT:-0}
+  HANDLER_COUNT=${HANDLER_COUNT:-0}
+
+  if [ "$SUCCESS_COUNT" -gt 0 ] && [ "$HANDLER_COUNT" -lt "$SUCCESS_COUNT" ]; then
+    GAP=$((SUCCESS_COUNT - HANDLER_COUNT))
+    echo "  X $htmlfile: $SUCCESS_COUNT chains, $HANDLER_COUNT failure handlers ($GAP missing)"
+    FH_FAIL=1
+  fi
+done
+
+if [ $FH_FAIL -eq 1 ]; then
+  echo "  FAIL -- withFailureHandler() wiring FAILED"
+  echo "  (Every google.script.run call MUST have withFailureHandler — CLAUDE.md Tier 1, #10)"
+  FAIL=1
+else
+  echo "  OK -- withFailureHandler() wiring PASSED"
+fi
+
+echo ""
+
 # ── SUMMARY ───────────────────────────────────────────────────
 echo "=== SUMMARY ==="
 echo "Failures:  $FAIL"
