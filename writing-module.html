@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="tbm-module" content="writing-module">
-<meta name="tbm-version" content="v1">
+<meta name="tbm-version" content="v3">
 <title>Writing Module - Buggsy</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -25,8 +25,26 @@
   }
 
   @keyframes pulseGlow {
-    0%, 100% { box-shadow: 0 0 8px rgba(236,72,153,0.2); }
-    50% { box-shadow: 0 0 20px rgba(236,72,153,0.4); }
+    0%, 100% { box-shadow: 0 0 8px rgba(245,158,11,0.2); }
+    50% { box-shadow: 0 0 20px rgba(245,158,11,0.4); }
+  }
+  @keyframes navBlockFade {
+    0%{opacity:0;transform:translateX(-50%) translateY(6px)}
+    15%{opacity:1;transform:translateX(-50%) translateY(0)}
+    75%{opacity:1}
+    100%{opacity:0;transform:translateX(-50%) translateY(-4px)}
+  }
+  .b-ring-particle {
+    position:fixed;width:16px;height:16px;border-radius:50%;
+    border:3px solid #ffd700;
+    box-shadow:0 0 8px rgba(255,215,0,0.7),inset 0 0 4px rgba(255,215,0,0.2);
+    background:transparent;pointer-events:none;z-index:500;
+    animation:ringBurst 0.8s cubic-bezier(0.15,0,0.55,1) forwards;
+  }
+  @keyframes ringBurst {
+    0%{opacity:1;transform:translate(0,0) scale(1.3)}
+    60%{opacity:1}
+    100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.2)}
   }
 
   body {
@@ -50,7 +68,7 @@
   .star {
     position: absolute;
     border-radius: 50%;
-    background: #F9A8D4;
+    background: #fbbf24;
     opacity: 0.3;
   }
 
@@ -80,7 +98,7 @@
     font-family: 'Orbitron', sans-serif;
     font-size: 15px;
     font-weight: 900;
-    background: linear-gradient(90deg, #EC4899, #F9A8D4);
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: 1px;
@@ -121,9 +139,9 @@
     transition: all 0.2s;
   }
   .format-tab-active {
-    background: rgba(236,72,153,0.12);
-    border-color: #EC4899;
-    color: #EC4899;
+    background: rgba(245,158,11,0.12);
+    border-color: #f59e0b;
+    color: #f59e0b;
   }
 
   /* ─── Main Content ─── */
@@ -137,8 +155,8 @@
 
   /* ─── Plan Your Attack ─── */
   .plan-attack {
-    background: rgba(236,72,153,0.06);
-    border: 1px solid rgba(236,72,153,0.2);
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.2);
     border-radius: 10px;
     padding: 14px;
     margin-bottom: 16px;
@@ -147,7 +165,7 @@
   }
   .plan-attack-label {
     font-size: 11px;
-    color: #EC4899;
+    color: #f59e0b;
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 1.5px;
     margin-bottom: 6px;
@@ -159,21 +177,21 @@
   }
   .plan-attack-format {
     display: inline-block;
-    background: rgba(236,72,153,0.15);
-    border: 1px solid rgba(236,72,153,0.3);
+    background: rgba(245,158,11,0.15);
+    border: 1px solid rgba(245,158,11,0.3);
     border-radius: 6px;
     padding: 2px 10px;
     font-family: 'Orbitron', sans-serif;
     font-size: 11px;
     font-weight: 700;
-    color: #EC4899;
+    color: #f59e0b;
     margin: 4px 0;
   }
   .btn-ready {
     width: 100%;
     margin-top: 14px;
     padding: 14px 20px;
-    background: linear-gradient(135deg, #EC4899, #DB2777);
+    background: linear-gradient(135deg, #f59e0b, #d97706);
     border: none;
     border-radius: 10px;
     color: #fff;
@@ -182,14 +200,14 @@
     font-size: 14px;
     letter-spacing: 1px;
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(236,72,153,0.3);
+    box-shadow: 0 4px 20px rgba(245,158,11,0.3);
     transition: all 0.2s;
   }
 
   /* ─── Prompt Card ─── */
   .prompt-card {
-    background: rgba(236,72,153,0.06);
-    border: 1px solid rgba(236,72,153,0.2);
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.2);
     border-radius: 10px;
     padding: 14px;
     margin-bottom: 16px;
@@ -197,7 +215,7 @@
   }
   .prompt-label {
     font-size: 11px;
-    color: #EC4899;
+    color: #f59e0b;
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 1.5px;
     margin-bottom: 6px;
@@ -213,7 +231,7 @@
     color: #94A3B8;
     line-height: 1.6;
     padding-left: 12px;
-    border-left: 2px solid rgba(236,72,153,0.3);
+    border-left: 2px solid rgba(245,158,11,0.3);
   }
 
   /* ─── Timer Row ─── */
@@ -331,7 +349,7 @@
     font-size: 13px;
     font-weight: 700;
     letter-spacing: 1.5px;
-    color: #EC4899;
+    color: #f59e0b;
   }
 
   /* ─── Sentence Starters ─── */
@@ -342,9 +360,9 @@
     margin-bottom: 10px;
   }
   .starter-pill {
-    background: rgba(236,72,153,0.08);
-    border: 1px solid rgba(236,72,153,0.25);
-    color: #F9A8D4;
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+    color: #fbbf24;
     border-radius: 20px;
     padding: 5px 12px;
     font-size: 12px;
@@ -354,8 +372,8 @@
     white-space: nowrap;
   }
   .starter-pill:hover {
-    background: rgba(236,72,153,0.18);
-    border-color: #EC4899;
+    background: rgba(245,158,11,0.18);
+    border-color: #f59e0b;
   }
 
   /* ─── Textarea ─── */
@@ -375,10 +393,20 @@
     transition: border-color 0.2s;
   }
   .write-textarea:focus {
-    border-color: #EC4899;
+    border-color: #f59e0b;
   }
   .write-textarea-cer {
     min-height: 100px;
+  }
+  .write-textarea,
+  .write-textarea-cer {
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      rgba(245,158,11,0.06) 27px,
+      rgba(245,158,11,0.06) 28px
+    );
+    background-attachment: local;
   }
 
   /* ─── Stats Row ─── */
@@ -421,10 +449,10 @@
     transition: all 0.3s;
   }
   .btn-submit-active {
-    background: linear-gradient(135deg, #EC4899, #DB2777);
+    background: linear-gradient(135deg, #ef4444, #1e78ff);
     color: #fff;
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(236,72,153,0.3);
+    box-shadow: 0 4px 20px rgba(239,68,68,0.3);
   }
   .btn-submit-disabled {
     background: #1E2A4A;
@@ -454,15 +482,15 @@
   }
   .completion-rings {
     display: inline-block;
-    background: rgba(236,72,153,0.1);
-    border: 1px solid rgba(236,72,153,0.3);
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.3);
     border-radius: 10px;
     padding: 8px 20px;
     margin: 16px 0;
     font-family: 'Orbitron', sans-serif;
     font-size: 16px;
     font-weight: 700;
-    color: #EC4899;
+    color: #f59e0b;
     animation: pulseGlow 2s ease-in-out infinite;
   }
   .completion-message {
@@ -476,7 +504,7 @@
     display: inline-block;
     margin-top: 12px;
     padding: 12px 28px;
-    background: linear-gradient(135deg, #EC4899, #DB2777);
+    background: linear-gradient(135deg, #f59e0b, #d97706);
     border: none;
     border-radius: 10px;
     color: #fff;
@@ -485,7 +513,7 @@
     font-size: 13px;
     letter-spacing: 1px;
     cursor: pointer;
-    box-shadow: 0 4px 20px rgba(236,72,153,0.3);
+    box-shadow: 0 4px 20px rgba(245,158,11,0.3);
     transition: all 0.2s;
   }
 
@@ -530,7 +558,7 @@
         <div id="planFormatBadge" class="plan-attack-format"></div>
         <div id="planDescription" style="margin-top:8px;"></div>
         <div style="margin-top:6px;font-size:12px;color:#94A3B8;">
-          &#x23F1; Time target: <strong style="color:#EC4899;">~12 minutes</strong>
+          &#x23F1; Time target: <strong style="color:#f59e0b;">~12 minutes</strong>
         </div>
       </div>
       <button class="btn-ready" onclick="startWriting()">&#x270D;&#xFE0F; I'M READY TO WRITE</button>
@@ -579,7 +607,7 @@
       <div id="completionWords" class="completion-stats"></div>
       <div id="completionSentences" class="completion-stats"></div>
       <div id="completionTime" class="completion-stats"></div>
-      <div class="completion-rings">+3 Rings &#x1F48D;</div>
+      <div class="completion-rings">+3 Rings &#x2B55;</div>
       <div class="completion-message">
         Submitted for review.<br>
         Great effort on today's writing!
@@ -592,6 +620,50 @@
 
 <script>
 // ─── ES5 ONLY ───
+
+// ── Ring Burst ──
+function fireRingBurst(cx, cy) {
+  for (var i = 0; i < 8; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var r = document.createElement('div');
+        r.className = 'b-ring-particle';
+        var angle = (idx / 8) * Math.PI * 2;
+        var dist = 50 + Math.random() * 35;
+        r.style.left = cx + 'px';
+        r.style.top = cy + 'px';
+        r.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(0) + 'px');
+        r.style.setProperty('--ty', (Math.sin(angle) * dist).toFixed(0) + 'px');
+        document.body.appendChild(r);
+        setTimeout(function() { if (r.parentNode) { r.parentNode.removeChild(r); } }, 900);
+      }, idx * 35);
+    })(i);
+  }
+}
+
+// ── Footer Nav Block ──
+var WOLFKID_NAV_BLOCKS = [
+  '\uD83D\uDC3A Finish the mission first.',
+  '\u26A1 No escaping. Eyes on the mission.',
+  '\uD83D\uDC3A Almost there. Lock in.'
+];
+var _navBlockIdx = 0;
+function showNavBlock() {
+  var msg = WOLFKID_NAV_BLOCKS[_navBlockIdx % WOLFKID_NAV_BLOCKS.length];
+  _navBlockIdx++;
+  var el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);' +
+    'background:rgba(15,24,36,0.97);border:1px solid rgba(245,158,11,0.4);' +
+    'color:#f59e0b;font-family:Orbitron,monospace;font-size:9px;' +
+    'padding:10px 18px;border-radius:8px;z-index:9999;pointer-events:none;' +
+    'box-shadow:0 0 16px rgba(245,158,11,0.2);letter-spacing:0.5px;' +
+    'animation:navBlockFade 1.8s ease forwards;white-space:nowrap;';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() {
+    if (el.parentNode) { el.parentNode.removeChild(el); }
+  }, 1900);
+}
 
 // ── Test Mode Detection ──
 var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
@@ -625,7 +697,7 @@ function playBugsyCorrect() { var c = ['buggsy_feedback_correct1.mp3','buggsy_fe
 function playBugsyWrong() { var c = ['buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
 function playBugsyComplete() { var c = ['buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
 
-var MODULE_VERSION = 'v1';
+var MODULE_VERSION = 'v3';
 var CHILD = 'buggsy';
 var TARGET_MINUTES = 12;
 var _usingFallback = false;
@@ -1118,6 +1190,10 @@ function handleSubmit() {
   document.getElementById('completionTime').textContent = 'Writing time: ' + padTwo(Math.floor(writingSeconds / 60)) + ':' + padTwo(writingSeconds % 60) + ' | Session: ' + getSessionTimeString();
 
   showScreen('completion');
+  var cx = window.innerWidth / 2;
+  var cy = window.innerHeight / 3;
+  fireRingBurst(cx, cy);
+  setTimeout(function() { fireRingBurst(cx - 60, cy + 30); }, 350);
   playBugsyComplete();
 
   // Submit homework via GAS backend (if available)
@@ -1230,5 +1306,12 @@ function loadWritingContent() {
 loadWritingContent();
 preloadBugsyAudio();
 </script>
+
+<!-- footer-nav: no 3-button nav in this surface; sticky nav bar added -->
+<div style="position:fixed;bottom:0;left:0;right:0;background:rgba(11,15,26,0.97);border-top:1px solid #1e3347;padding:8px 16px;display:flex;justify-content:center;gap:20px;z-index:20;">
+  <button style="background:transparent;border:none;color:#4a6080;font-size:11px;cursor:pointer;padding:6px 12px;font-family:'Nunito',sans-serif;" onclick="showNavBlock()">&#x1F3E0; Chores</button>
+  <button style="background:rgba(245,158,11,0.1);border:1px solid #f59e0b;color:#f59e0b;font-family:'Orbitron',sans-serif;font-weight:700;border-radius:5px;font-size:8px;cursor:default;padding:6px 12px;">&#x270D;&#xFE0F; Writing</button>
+  <button style="background:transparent;border:none;color:#4a6080;font-size:11px;cursor:pointer;padding:6px 12px;font-family:'Nunito',sans-serif;" onclick="showNavBlock()">&#x1F4DA; Math/Sci</button>
+</div>
 </body>
 </html>

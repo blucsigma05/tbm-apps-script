@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="reading-module">
-<meta name="tbm-version" content="v1">
+<meta name="tbm-version" content="v3">
 <title>Wolfkid Reading Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -29,9 +29,27 @@ body {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
 }
-@keyframes emeraldGlow {
-  0%, 100% { box-shadow: 0 0 8px rgba(16,185,129,0.2); }
-  50% { box-shadow: 0 0 20px rgba(16,185,129,0.4); }
+@keyframes navBlockFade {
+  0%{opacity:0;transform:translateX(-50%) translateY(6px)}
+  15%{opacity:1;transform:translateX(-50%) translateY(0)}
+  75%{opacity:1}
+  100%{opacity:0;transform:translateX(-50%) translateY(-4px)}
+}
+@keyframes goldGlow {
+  0%, 100% { box-shadow: 0 0 8px rgba(245,158,11,0.2); }
+  50% { box-shadow: 0 0 20px rgba(245,158,11,0.4); }
+}
+.b-ring-particle {
+  position:fixed;width:16px;height:16px;border-radius:50%;
+  border:3px solid #ffd700;
+  box-shadow:0 0 8px rgba(255,215,0,0.7),inset 0 0 4px rgba(255,215,0,0.2);
+  background:transparent;pointer-events:none;z-index:500;
+  animation:ringBurst 0.8s cubic-bezier(0.15,0,0.55,1) forwards;
+}
+@keyframes ringBurst {
+  0%{opacity:1;transform:translate(0,0) scale(1.3)}
+  60%{opacity:1}
+  100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.2)}
 }
 textarea::-webkit-input-placeholder { color: #64748B; }
 textarea:-moz-placeholder { color: #64748B; }
@@ -51,7 +69,7 @@ textarea:-ms-input-placeholder { color: #64748B; }
 .star {
   position: absolute;
   border-radius: 50%;
-  background: #6EE7B7;
+  background: #fbbf24;
   opacity: 0.3;
 }
 
@@ -81,7 +99,7 @@ textarea:-ms-input-placeholder { color: #64748B; }
   font-family: 'Orbitron', sans-serif;
   font-size: 13px;
   font-weight: 900;
-  background: linear-gradient(90deg, #10B981, #6EE7B7);
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: 1px;
@@ -94,7 +112,7 @@ textarea:-ms-input-placeholder { color: #64748B; }
 }
 .header-focus {
   font-size: 9px;
-  color: #10B981;
+  color: #f59e0b;
   font-family: 'JetBrains Mono', monospace;
   margin-top: 1px;
 }
@@ -140,7 +158,7 @@ textarea:-ms-input-placeholder { color: #64748B; }
   font-family: 'Orbitron', sans-serif;
   font-size: 18px;
   font-weight: 900;
-  color: #10B981;
+  color: #f59e0b;
   margin-bottom: 12px;
 }
 .plan-card p {
@@ -162,9 +180,9 @@ textarea:-ms-input-placeholder { color: #64748B; }
   color: #E2E8F0;
   line-height: 1.5;
 }
-.plan-item .check { color: #10B981; font-weight: 700; }
+.plan-item .check { color: #f59e0b; font-weight: 700; }
 .start-btn {
-  background: #10B981;
+  background: #f59e0b;
   border: none;
   border-radius: 10px;
   padding: 12px 32px;
@@ -176,7 +194,7 @@ textarea:-ms-input-placeholder { color: #64748B; }
   letter-spacing: 1px;
   transition: all 0.2s;
 }
-.start-btn:hover { background: #34D399; }
+.start-btn:hover { background: #fbbf24; }
 
 /* Completion overlay */
 #completion-overlay {
@@ -228,7 +246,7 @@ main {
   font-family: 'Orbitron', sans-serif;
   font-size: 16px;
   font-weight: 700;
-  color: #10B981;
+  color: #f59e0b;
   margin-bottom: 16px;
   text-align: center;
 }
@@ -252,23 +270,23 @@ main {
   top: 2px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  color: #10B981;
-  background: rgba(16,185,129,0.1);
+  color: #f59e0b;
+  background: rgba(245,158,11,0.1);
   border-radius: 4px;
   padding: 1px 6px;
   font-weight: 700;
 }
 .vocab-word {
-  color: #34D399;
+  color: #fbbf24;
   font-weight: 700;
-  border-bottom: 1px dashed #10B981;
+  border-bottom: 1px dashed #f59e0b;
 }
 .done-reading-btn {
   display: block;
   width: 100%;
   margin-top: 20px;
   padding: 14px;
-  background: #10B981;
+  background: #f59e0b;
   border: none;
   border-radius: 10px;
   color: #fff;
@@ -279,7 +297,7 @@ main {
   letter-spacing: 1px;
   transition: all 0.2s;
 }
-.done-reading-btn:hover { background: #34D399; }
+.done-reading-btn:hover { background: #fbbf24; }
 
 /* Re-read toggle */
 .reread-toggle {
@@ -295,7 +313,7 @@ main {
   justify-content: space-between;
   padding: 12px 16px;
   cursor: pointer;
-  color: #10B981;
+  color: #f59e0b;
   font-size: 13px;
   font-weight: 700;
   font-family: 'Nunito', sans-serif;
@@ -305,7 +323,7 @@ main {
   text-align: left;
   outline: none;
 }
-.reread-header:hover { background: rgba(16,185,129,0.05); }
+.reread-header:hover { background: rgba(245,158,11,0.05); }
 .reread-arrow {
   font-size: 12px;
   transition: transform 0.2s;
@@ -343,7 +361,7 @@ main {
 .q-type-label {
   font-size: 11px;
   font-family: 'JetBrains Mono', monospace;
-  color: #10B981;
+  color: #f59e0b;
 }
 .q-meta {
   display: flex;
@@ -369,7 +387,7 @@ main {
 }
 .q-number {
   font-weight: 700;
-  color: #10B981;
+  color: #f59e0b;
   margin-right: 6px;
 }
 .q-options {
@@ -391,10 +409,10 @@ main {
   transition: all 0.2s;
   outline: none;
 }
-.q-option:hover { border-color: #10B981; }
+.q-option:hover { border-color: #f59e0b; }
 .q-option.selected {
-  border-color: #10B981;
-  background: rgba(16,185,129,0.08);
+  border-color: #f59e0b;
+  background: rgba(245,158,11,0.08);
 }
 .q-option.correct-answer {
   background: rgba(34,197,94,0.12);
@@ -419,7 +437,7 @@ main {
   outline: none;
   margin-bottom: 10px;
 }
-.q-textarea:focus { border-color: #10B981; }
+.q-textarea:focus { border-color: #f59e0b; }
 .q-textarea:disabled { opacity: 0.7; }
 .lock-btn {
   padding: 8px 20px;
@@ -434,10 +452,10 @@ main {
   outline: none;
 }
 .lock-btn.ready {
-  background: #10B981;
+  background: #f59e0b;
   color: #fff;
 }
-.lock-btn.ready:hover { background: #34D399; }
+.lock-btn.ready:hover { background: #fbbf24; }
 .lock-btn.disabled {
   background: #1E2A4A;
   color: #64748B;
@@ -459,16 +477,16 @@ main {
   border: 1px solid rgba(239,68,68,0.3);
 }
 .feedback-review {
-  background: rgba(16,185,129,0.08);
-  border: 1px solid rgba(16,185,129,0.3);
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.3);
 }
 .feedback-label {
   font-weight: 700;
   margin-bottom: 4px;
 }
 .hint-box {
-  background: rgba(16,185,129,0.06);
-  border: 1px solid rgba(16,185,129,0.2);
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.2);
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 12px;
@@ -482,10 +500,10 @@ main {
   font-family: 'Orbitron', sans-serif;
   font-size: 14px;
   font-weight: 700;
-  color: #10B981;
+  color: #f59e0b;
   margin-bottom: 16px;
   padding-bottom: 8px;
-  border-bottom: 1px solid rgba(16,185,129,0.2);
+  border-bottom: 1px solid rgba(245,158,11,0.2);
 }
 
 /* Results section */
@@ -501,7 +519,7 @@ main {
   font-family: 'Orbitron', sans-serif;
   font-size: 36px;
   font-weight: 900;
-  color: #10B981;
+  color: #f59e0b;
   margin-bottom: 4px;
 }
 .results-label {
@@ -553,7 +571,7 @@ main {
         <span>&#x1F4DA; Reading Focus: <strong>Informational Text</strong> (Week 6 rotation)</span>
       </div>
     </div>
-    <p style="font-size:12px;color:#10B981;">&#x1F48D; <strong>8 Rings</strong> available. Read like a wolf &mdash; sharp and focused.</p>
+    <p style="font-size:12px;color:#f59e0b;">&#x2B55; <strong>8 Rings</strong> available. Read like a wolf &mdash; sharp and focused.</p>
     <button class="start-btn" onclick="startModule()">START READING</button>
   </div>
 </div>
@@ -561,13 +579,13 @@ main {
 <!-- Completion Overlay -->
 <div id="completion-overlay">
   <div class="comp-card">
-    <div class="ring-award">&#x1F48D;</div>
-    <div id="comp-title" style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#10B981;margin-bottom:8px;">READING COMPLETE</div>
+    <div class="ring-award">&#x2B55;</div>
+    <div id="comp-title" style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#f59e0b;margin-bottom:8px;">READING COMPLETE</div>
     <div id="comp-subtitle" style="font-size:14px;color:#94A3B8;line-height:1.7;margin-bottom:16px;"></div>
     <div id="comp-rings" style="font-size:32px;font-weight:900;color:#F59E0B;font-family:'Orbitron',sans-serif;margin-bottom:8px;"></div>
     <div style="font-size:11px;color:#64748B;margin-bottom:16px;">Short answer pending parent review</div>
-    <div id="comp-feedback" style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:14px;font-size:13px;color:#94A3B8;line-height:1.6;margin-bottom:16px;text-align:left;"></div>
-    <button style="background:#10B981;border:none;border-radius:10px;padding:12px 32px;color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;" onclick="closeCompletion()">VIEW RESULTS</button>
+    <div id="comp-feedback" style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:14px;font-size:13px;color:#94A3B8;line-height:1.6;margin-bottom:16px;text-align:left;"></div>
+    <button style="background:#f59e0b;border:none;border-radius:10px;padding:12px 32px;color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;" onclick="closeCompletion()">VIEW RESULTS</button>
   </div>
 </div>
 
@@ -591,7 +609,7 @@ main {
 </header>
 
 <!-- Main Content -->
-<main>
+<main style="padding-bottom:60px;">
   <div id="section-passage"></div>
   <div id="section-questions" style="display:none;"></div>
   <div id="section-results" style="display:none;"></div>
@@ -602,6 +620,50 @@ main {
    ReadingModule v1 — ES5 vanilla, single-file
    Tuesday RLA: Cold passage + comprehension questions
    ============================================================ */
+
+// ── Ring Burst ──
+function fireRingBurst(cx, cy) {
+  for (var i = 0; i < 8; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var r = document.createElement('div');
+        r.className = 'b-ring-particle';
+        var angle = (idx / 8) * Math.PI * 2;
+        var dist = 50 + Math.random() * 35;
+        r.style.left = cx + 'px';
+        r.style.top = cy + 'px';
+        r.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(0) + 'px');
+        r.style.setProperty('--ty', (Math.sin(angle) * dist).toFixed(0) + 'px');
+        document.body.appendChild(r);
+        setTimeout(function() { if (r.parentNode) { r.parentNode.removeChild(r); } }, 900);
+      }, idx * 35);
+    })(i);
+  }
+}
+
+// ── Footer Nav Block ──
+var WOLFKID_NAV_BLOCKS = [
+  '\uD83D\uDC3A Finish the mission first.',
+  '\u26A1 No escaping. Eyes on the mission.',
+  '\uD83D\uDC3A Almost there. Lock in.'
+];
+var _navBlockIdx = 0;
+function showNavBlock() {
+  var msg = WOLFKID_NAV_BLOCKS[_navBlockIdx % WOLFKID_NAV_BLOCKS.length];
+  _navBlockIdx++;
+  var el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);' +
+    'background:rgba(15,24,36,0.97);border:1px solid rgba(245,158,11,0.4);' +
+    'color:#f59e0b;font-family:Orbitron,monospace;font-size:9px;' +
+    'padding:10px 18px;border-radius:8px;z-index:9999;pointer-events:none;' +
+    'box-shadow:0 0 16px rgba(245,158,11,0.2);letter-spacing:0.5px;' +
+    'animation:navBlockFade 1.8s ease forwards;white-space:nowrap;';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() {
+    if (el.parentNode) { el.parentNode.removeChild(el); }
+  }, 1900);
+}
 
 // ── Test Mode Detection ──
 var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
@@ -635,7 +697,7 @@ function playBugsyCorrect() { var c = ['buggsy_feedback_correct1.mp3','buggsy_fe
 function playBugsyWrong() { var c = ['buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
 function playBugsyComplete() { var c = ['buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
 
-var MODULE_VERSION = 'v1';
+var MODULE_VERSION = 'v3';
 var CHILD = 'buggsy';
 var _usingFallback = false;
 
@@ -738,9 +800,9 @@ var C = {
   surface: '#131829',
   card: '#171D30',
   border: '#1E2A4A',
-  emerald: '#10B981',
-  emeraldLight: '#34D399',
-  emeraldPale: '#6EE7B7',
+  emerald: '#f59e0b',
+  emeraldLight: '#fbbf24',
+  emeraldPale: '#fbbf24',
   green: '#22C55E',
   red: '#EF4444',
   yellow: '#EAB308',
@@ -1089,12 +1151,12 @@ function buildShortAnswer(q, ans, isSubmitted) {
 
   if (isSubmitted) {
     html += '<div class="feedback-box feedback-review">';
-    html += '<div class="feedback-label" style="color:#10B981;">&#x2705; Submitted for Review</div>';
+    html += '<div class="feedback-label" style="color:#f59e0b;">&#x2705; Submitted for Review</div>';
     html += '<div style="color:#94A3B8;">Your answer has been submitted. A parent will review it.</div>';
     html += '</div>';
     if (q.hint) {
       html += '<div class="hint-box">';
-      html += '<strong style="color:#10B981;">Hint:</strong> ' + escapeHtml(q.hint);
+      html += '<strong style="color:#f59e0b;">Hint:</strong> ' + escapeHtml(q.hint);
       html += '</div>';
     }
   }
@@ -1233,7 +1295,7 @@ function showCompletion() {
   var baseRings = 8;
   var earnedRings = Math.round(baseRings * (pct / 100));
   var ringsEl = document.getElementById('comp-rings');
-  ringsEl.innerHTML = '&#x1F48D; ' + earnedRings + ' RINGS earned';
+  ringsEl.innerHTML = '&#x2B55; ' + earnedRings + ' RINGS earned';
 
   var feedback = document.getElementById('comp-feedback');
   var fbHtml = '';
@@ -1241,7 +1303,7 @@ function showCompletion() {
     fbHtml = '<div style="color:#22C55E;font-weight:700;margin-bottom:6px;">Perfect reading comprehension!</div>';
     fbHtml += '<div>You understood every part of the passage. Your attention to detail and careful reading paid off. Short answer is pending parent review for those final Rings.</div>';
   } else if (pct >= 75) {
-    fbHtml = '<div style="color:#10B981;font-weight:700;margin-bottom:6px;">Strong reading!</div>';
+    fbHtml = '<div style="color:#f59e0b;font-weight:700;margin-bottom:6px;">Strong reading!</div>';
     fbHtml += '<div>You understood most of the passage well. Check the explanations on any you missed \u2014 they will help sharpen your comprehension skills.</div>';
   } else if (pct >= 50) {
     fbHtml = '<div style="color:#EAB308;font-weight:700;margin-bottom:6px;">Good effort, keep building.</div>';
@@ -1263,6 +1325,13 @@ function showCompletion() {
 
   var overlay = document.getElementById('completion-overlay');
   overlay.style.display = 'flex';
+  var cx = window.innerWidth / 2;
+  var cy = window.innerHeight / 3;
+  fireRingBurst(cx, cy);
+  if (pct === 100) {
+    setTimeout(function() { fireRingBurst(cx - 80, cy + 30); }, 300);
+    setTimeout(function() { fireRingBurst(cx + 80, cy + 30); }, 600);
+  }
 }
 
 function closeCompletion() {
@@ -1304,7 +1373,7 @@ function renderResults() {
     html += ' &bull; Reading: ' + formatTime(passageReadTime);
   }
   html += '</div>';
-  html += '<div class="results-rings">&#x1F48D; ' + earnedRings + ' Rings</div>';
+  html += '<div class="results-rings">&#x2B55; ' + earnedRings + ' Rings</div>';
   html += '<div style="font-size:11px;color:#64748B;margin-top:4px;">+ short answer pending review</div>';
   html += '</div>';
 
@@ -1505,5 +1574,12 @@ function init() {
 loadCurriculumContent();
 preloadBugsyAudio();
 </script>
+
+<!-- footer-nav: no 3-button nav in this surface; sticky nav bar added -->
+<div style="position:fixed;bottom:0;left:0;right:0;background:rgba(11,15,26,0.97);border-top:1px solid #1e3347;padding:8px 16px;display:flex;justify-content:center;gap:20px;z-index:20;">
+  <button style="background:transparent;border:none;color:#4a6080;font-size:11px;cursor:pointer;padding:6px 12px;font-family:'Nunito',sans-serif;" onclick="showNavBlock()">&#x1F3E0; Chores</button>
+  <button style="background:rgba(245,158,11,0.1);border:1px solid #f59e0b;color:#f59e0b;font-family:'Orbitron',sans-serif;font-weight:700;border-radius:5px;font-size:8px;cursor:default;padding:6px 12px;">&#x1F4D6; Reading</button>
+  <button style="background:transparent;border:none;color:#4a6080;font-size:11px;cursor:pointer;padding:6px 12px;font-family:'Nunito',sans-serif;" onclick="showNavBlock()">&#x1F4DA; Math/Sci</button>
+</div>
 </body>
 </html>
