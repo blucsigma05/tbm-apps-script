@@ -510,6 +510,8 @@ function nextLevel(pts, child) {
 window.addEventListener('load', boot);
 function boot(){
   applyTimeTheme();
+  var declEl = document.getElementById('spineDeclaration');
+  if (declEl) declEl.textContent = 'STRONGER AS A PACK';
   loadFinance(); loadKids(); loadBoard(); loadHeartbeat();
   setInterval(loadFinance, FINANCE_MS);
   setInterval(loadKids, KIDS_MS);
@@ -758,6 +760,10 @@ function renderKids(data){
   renderGate('jGate', reqStatus.jj, '\u2B50', pendingCounts.jj || 0);
   renderTaskZone('bTasks', bTasks, 'buggsy');
   renderTaskZone('jTasks', jTasks, 'jj');
+  applyKidWatermark('buggsy', data);
+  applyKidWatermark('jj', data);
+  updateEarnedToday('buggsy', data);
+  updateEarnedToday('jj', data);
 }
 
 function filterChild(tasks, key){
@@ -972,6 +978,54 @@ function loadHeartbeat(){
     }).getSpineHeartbeatSafe();
   } catch(e) {
     /* GASHardening not deployed yet — fail silently */
+  }
+}
+
+function updateDeclaration() {
+  var el = document.getElementById('spineDeclaration');
+  if (!el) return;
+  var debt = (state.finance && state.finance.debtCurrent) || (state.finance && state.finance.allNonMortgageDebt) || 0;
+  var runway = (state.finance && state.finance.weeksOfRunway) || null;
+  var debtFmt = debt ? ('$' + Math.round(debt/1000) + 'K') : '$\u2014';
+  var runwayFmt = runway ? (runway + ' WKS RUNWAY') : 'RUNWAY \u2014';
+  el.textContent = 'STRONGER AS A PACK\u00a0\u00b7\u00a0 ' + debtFmt + ' \u2192 $0 \u00a0\u00b7\u00a0 ' + runwayFmt;
+}
+
+function applyKidWatermark(childKey, data) {
+  var elId = childKey === 'jj' ? 'jjWatermark' : 'bugWatermark';
+  var cardId = childKey === 'jj' ? 'jj' : 'buggsy';
+  var wm = document.getElementById(elId);
+  var card = document.querySelector('.kid-card.' + cardId);
+  if (!wm || !card) return;
+  var tasks = data.tasks || [];
+  var pendingCount = tasks.filter(function(t) {
+    return (t.child || '').toLowerCase() === childKey && t.completed && !t.parentApproved;
+  }).length;
+  if (pendingCount === 0) {
+    card.classList.add('wm-active');
+  } else {
+    card.classList.remove('wm-active');
+  }
+}
+
+function updateEarnedToday(childKey, data) {
+  var tasks = data.tasks || [];
+  if (childKey === 'buggsy') {
+    var el = document.getElementById('bugEarnedToday');
+    if (!el) return;
+    var money = tasks
+      .filter(function(t) { return (t.child||'').toLowerCase()==='buggsy' && t.completed && t.parentApproved; })
+      .reduce(function(s,t){ return s + (Number(t.money)||0); }, 0);
+    el.textContent = 'Earned today: $' + money.toFixed(2);
+    if (money > 0) { el.classList.add('active'); setTimeout(function(){ el.classList.remove('active'); }, 3200); }
+  } else {
+    var jjEl = document.getElementById('jjEarnedToday');
+    if (!jjEl) return;
+    var stars = tasks
+      .filter(function(t) { return (t.child||'').toLowerCase()==='jj' && t.completed && t.parentApproved; })
+      .reduce(function(s,t){ return s + (Number(t.points)||0); }, 0);
+    jjEl.textContent = 'Stars today: ' + stars + ' \u2B50';
+    if (stars > 0) { jjEl.classList.add('active'); setTimeout(function(){ jjEl.classList.remove('active'); }, 3200); }
   }
 }
 </script>
