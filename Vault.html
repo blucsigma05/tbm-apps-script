@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LT Watch Vault · The Collection</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@200;300;400;500;600;700&display=swap');
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --gold:#C9A84C;--gold-dim:rgba(201,168,76,0.12);--gold-glow:rgba(201,168,76,0.06);
+    --navy:#002366;--velvet:#0A1628;--velvet-deep:#060E1A;
+    --bg:#0A0A0A;--surface:#0E0E0E;--card:#111114;--border:#1A1A1A;
+    --cream:#E5D5B8;--white:#FFFFFF;--gray:#777;--dim:#444;
+    --cognac:#8D5524;--cognac-dim:rgba(141,85,36,0.15);
+    --green:#4ADE80;--amber:#F59E0B;--red:#DC2626;--purple:#9333EA;
+    --blue-accent:#60A5FA;
+  }
+
+  body{
+    font-family:'Outfit',sans-serif;
+    background:var(--bg);
+    color:var(--cream);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  body::after{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  }
+
+  .serif{font-family:'Cormorant Garamond',Georgia,serif}
+
+  /* ===== AMBIENT GLOW ===== */
+  .glow-orb{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(80px)}
+  .glow-1{width:500px;height:500px;top:-150px;left:-100px;background:var(--gold-glow)}
+  .glow-2{width:400px;height:400px;bottom:-100px;right:-80px;background:rgba(0,35,102,0.06)}
+
+  .container{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 24px 60px}
+
+  /* ===== HEADER ===== */
+  .vault-header{
+    background:linear-gradient(180deg, var(--navy) 0%, var(--velvet-deep) 100%);
+    border-bottom:2px solid var(--gold);
+    padding:32px 0;
+    position:relative;
+    overflow:hidden;
+  }
+  .vault-header::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+  .vault-header::after{
+    content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+    width:80px;height:2px;background:var(--gold);border-radius:1px;
+  }
+  .header-inner{
+    max-width:1200px;margin:0 auto;padding:0 24px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .header-left{display:flex;align-items:center;gap:16px}
+  .header-bezel{
+    width:56px;height:56px;border-radius:50%;
+    border:3px solid var(--gold);padding:3px;
+    background:var(--bg);display:flex;align-items:center;justify-content:center;
+    font-size:24px;
+  }
+  .header-title{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;color:var(--white);letter-spacing:2px}
+  .header-title em{color:var(--gold);font-style:italic}
+  .header-sub{font-size:10px;letter-spacing:5px;color:var(--gold);text-transform:uppercase;margin-top:2px;font-weight:500}
+  .header-right{display:flex;align-items:center;gap:10px}
+  .header-pill{
+    padding:8px 18px;font-size:10px;font-weight:600;letter-spacing:2px;
+    text-transform:uppercase;border-radius:20px;cursor:pointer;
+    transition:all 0.25s;border:1px solid var(--border);color:var(--gray);
+    background:transparent;font-family:'Outfit',sans-serif;
+  }
+  .header-pill:hover{border-color:var(--gold);color:var(--cream)}
+  .header-pill.active{background:var(--gold);color:var(--bg);border-color:var(--gold)}
+  .bezel-btn{
+    background:rgba(201,168,76,0.1);border:1px solid var(--gold);
+    color:var(--gold);padding:8px 16px;border-radius:20px;
+    font-size:10px;font-weight:700;letter-spacing:2px;cursor:pointer;
+    transition:all 0.25s;font-family:'Outfit',sans-serif;text-transform:uppercase;
+    display:flex;align-items:center;gap:6px;
+  }
+  .bezel-btn:hover{background:var(--gold);color:var(--bg)}
+
+  /* ===== KPI BAR ===== */
+  .kpi-bar{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:10px;
+    padding:24px 0;margin-bottom:12px;
+  }
+  .kpi{
+    text-align:center;padding:16px 8px;
+    background:var(--card);border:1px solid var(--border);border-radius:10px;
+  }
+  .kpi-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);font-weight:600;margin-bottom:6px}
+  .kpi-val{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:600;color:var(--white)}
+  .kpi-val.gold{color:var(--gold)}
+  .kpi-val.green{color:var(--green)}
+  .kpi-sub{font-size:10px;color:var(--dim);margin-top:2px}
+
+  /* ===== CROWN JEWEL HERO ===== */
+  .crown-section{
+    background:linear-gradient(135deg, var(--velvet-deep) 0%, var(--velvet) 50%, rgba(201,168,76,0.04) 100%);
+    border:1px solid rgba(201,168,76,0.15);border-radius:16px;
+    padding:40px;margin-bottom:36px;position:relative;overflow:hidden;
+  }
+  .crown-section::before{
+    content:'';position:absolute;top:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  }
+  .crown-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:9px;letter-spacing:4px;text-transform:uppercase;
+    color:var(--gold);background:rgba(201,168,76,0.1);
+    border:1px solid rgba(201,168,76,0.2);border-radius:4px;
+    padding:4px 14px;font-weight:700;margin-bottom:20px;
+  }
+  .crown-layout{display:grid;grid-template-columns:200px 1fr;gap:40px;align-items:center}
+  .crown-image{
+    width:200px;height:200px;border-radius:50%;
+    border:2px solid rgba(201,168,76,0.2);padding:6px;
+    background:radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+    display:flex;align-items:center;justify-content:center;
+    position:relative;
+  }
+  .crown-image::after{
+    content:'';position:absolute;inset:12px;border-radius:50%;
+    border:1px dashed rgba(201,168,76,0.08);
+  }
+  .crown-image img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .crown-placeholder{font-size:64px;opacity:0.3}
+  .crown-name{font-family:'Cormorant Garamond',serif;font-size:36px;color:var(--white);font-weight:500;margin-bottom:4px}
+  .crown-role{font-size:12px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;font-weight:500;margin-bottom:16px}
+  .crown-specs{display:flex;gap:24px;margin-bottom:16px}
+  .crown-spec{text-align:center}
+  .crown-spec-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+  .crown-spec-val{font-size:16px;font-weight:600;color:var(--cream)}
+  .crown-spec-val.gold{color:var(--gold)}
+  .crown-story{font-size:12px;color:var(--gray);font-style:italic;line-height:1.6;margin-top:12px;max-width:500px}
+
+  /* ===== TIER SECTIONS ===== */
+  .tier-section{margin-bottom:36px}
+  .tier-bar{
+    display:flex;align-items:center;gap:12px;
+    padding-bottom:10px;margin-bottom:16px;
+    border-bottom:1px solid var(--border);
+  }
+  .tier-chip{
+    font-size:9px;font-weight:800;letter-spacing:2px;text-transform:uppercase;
+    padding:4px 14px;border-radius:4px;
+  }
+  .chip-mid{background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.25)}
+  .chip-entry{background:rgba(96,165,250,0.1);color:var(--blue-accent);border:1px solid rgba(96,165,250,0.2)}
+  .chip-budget{background:rgba(107,114,128,0.1);color:#9CA3AF;border:1px solid rgba(107,114,128,0.2)}
+  .tier-line{height:1px;flex:1;background:linear-gradient(90deg,var(--border),transparent)}
+  .tier-meta{font-size:11px;color:var(--dim)}
+
+  /* ===== WATCH CUSHION CARDS ===== */
+  .cushion-grid{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;
+  }
+  .cushion{
+    border-radius:12px;overflow:hidden;cursor:pointer;
+    transition:all 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+    border:1px solid transparent;position:relative;
+  }
+  .cushion:hover{
+    transform:translateY(-4px);
+    border-color:rgba(201,168,76,0.25);
+    box-shadow:0 16px 48px rgba(201,168,76,0.08),0 4px 16px rgba(0,0,0,0.4);
+  }
+  .cushion-pad{
+    height:160px;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at center, var(--velvet) 0%, var(--velvet-deep) 100%);
+    position:relative;overflow:hidden;
+  }
+  .cushion-pad::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(ellipse,rgba(201,168,76,0.03) 0%,transparent 70%);
+  }
+  .cushion-pad::after{
+    content:'';position:absolute;inset:8px;
+    border:1px dashed rgba(201,168,76,0.04);border-radius:8px;
+  }
+  .cushion-img-wrap{
+    width:100px;height:100px;border-radius:50%;
+    border:1px solid rgba(201,168,76,0.1);
+    background:rgba(201,168,76,0.03);
+    display:flex;align-items:center;justify-content:center;
+    z-index:1;overflow:hidden;
+  }
+  .cushion-img-wrap img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .cushion-emoji{font-size:36px;opacity:0.25;filter:grayscale(1)}
+  .cushion-info{
+    padding:14px 16px;background:var(--card);
+    border-top:1px solid rgba(201,168,76,0.06);
+  }
+  .cushion-name{
+    font-family:'Cormorant Garamond',serif;font-size:15px;
+    color:var(--white);font-weight:600;margin-bottom:6px;line-height:1.2;
+  }
+  .cushion-row{display:flex;justify-content:space-between;align-items:center}
+  .cushion-movement{font-size:10px;color:var(--gray);letter-spacing:1px;text-transform:uppercase}
+  .cushion-price{font-size:13px;color:var(--gold);font-weight:700}
+  .cushion-role{font-size:10px;color:var(--dim);font-style:italic;margin-top:4px}
+
+  /* ===== MODAL ===== */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.85);
+    display:none;align-items:center;justify-content:center;
+    z-index:100;
+  }
+  .modal-overlay.open{display:flex}
+  .modal-box{
+    background:var(--bg);max-width:640px;width:calc(100% - 40px);
+    border-radius:16px;border:1px solid rgba(201,168,76,0.2);
+    overflow:hidden;
+    max-height:90vh;overflow-y:auto;
+  }
+  .modal-hero{
+    height:200px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,var(--velvet-deep),var(--velvet));
+    position:relative;
+  }
+  .modal-hero::after{
+    content:'';position:absolute;bottom:0;left:0;right:0;height:60px;
+    background:linear-gradient(transparent,var(--bg));
+  }
+  .modal-hero-img{
+    width:140px;height:140px;border-radius:50%;
+    border:2px solid rgba(201,168,76,0.15);
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(201,168,76,0.04);overflow:hidden;z-index:1;
+  }
+  .modal-hero-img img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .modal-hero-emoji{font-size:56px;opacity:0.3}
+  .modal-body{padding:28px 32px}
+  .modal-tier{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:4px}
+  .modal-name{font-family:'Cormorant Garamond',serif;font-size:32px;color:var(--white);font-weight:500;margin-bottom:4px}
+  .modal-role{font-size:11px;color:var(--gray);font-style:italic;margin-bottom:20px}
+  .modal-specs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  .modal-spec{
+    padding:12px;background:var(--card);border-radius:8px;
+    border:1px solid var(--border);
+  }
+  .modal-spec-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+  .modal-spec-val{font-size:15px;font-weight:600;color:var(--cream)}
+  .modal-spec-val.gold{color:var(--gold)}
+  .modal-spec-val.green{color:var(--green)}
+  .modal-story{font-size:12px;color:var(--gray);line-height:1.7;padding-top:16px;border-top:1px solid var(--border)}
+  .modal-footer{
+    padding:16px 32px;background:var(--card);
+    border-top:1px solid var(--border);
+    display:flex;justify-content:flex-end;
+  }
+  .modal-close{
+    padding:8px 24px;font-size:10px;letter-spacing:3px;text-transform:uppercase;
+    border:1px solid var(--gold);color:var(--gold);background:transparent;
+    border-radius:6px;cursor:pointer;transition:all 0.2s;font-weight:600;
+    font-family:'Outfit',sans-serif;
+  }
+  .modal-close:hover{background:var(--gold);color:var(--bg)}
+
+  /* ===== FAMILY SECTION ===== */
+  .family-box{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:14px;padding:28px;
+  }
+  .family-title{
+    font-family:'Cormorant Garamond',serif;font-size:22px;
+    color:var(--white);margin-bottom:16px;
+    display:flex;align-items:center;gap:10px;
+  }
+
+  /* ===== WISH CARDS ===== */
+  .hunt-card{
+    background:var(--card);border-radius:12px;padding:20px;
+    border:1px solid var(--border);transition:all 0.3s;cursor:pointer;
+  }
+  .hunt-card:hover{border-color:rgba(245,158,11,0.3);transform:translateY(-2px)}
+  .hunt-card.grail:hover{border-color:rgba(147,51,234,0.3)}
+  .hunt-name{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--white);font-weight:500;margin-bottom:4px}
+  .hunt-meta{font-size:10px;color:var(--dim);letter-spacing:1px;text-transform:uppercase}
+  .hunt-price{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600}
+  .hunt-badge{
+    font-size:8px;letter-spacing:2px;text-transform:uppercase;font-weight:700;
+    padding:3px 10px;border-radius:4px;
+  }
+  .badge-primary{background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.2)}
+  .badge-high{background:rgba(96,165,250,0.1);color:var(--blue-accent);border:1px solid rgba(96,165,250,0.15)}
+  .badge-medium{background:rgba(107,114,128,0.1);color:#9CA3AF;border:1px solid rgba(107,114,128,0.15)}
+  .badge-dream{background:rgba(147,51,234,0.1);color:var(--purple);border:1px solid rgba(147,51,234,0.2)}
+
+  /* ===== STYLE REF ===== */
+  .ref-card{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:12px;padding:24px;
+  }
+  .ref-title{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:16px}
+  .ref-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(26,26,26,0.8)}
+  .ref-label{font-size:11px;color:var(--dim);font-weight:500}
+  .ref-val{font-size:13px;color:var(--cream);font-weight:500}
+  .color-swatch{
+    display:inline-block;width:14px;height:14px;border-radius:3px;
+    vertical-align:middle;margin-right:6px;border:1px solid rgba(255,255,255,0.1);
+  }
+
+  /* ===== DAILY BEZEL MODAL ===== */
+  .bezel-result{
+    text-align:center;padding:40px;
+  }
+  .bezel-result .bezel-icon{font-size:48px;margin-bottom:16px}
+  .bezel-result .bezel-pick-name{
+    font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--white);margin-bottom:6px;
+  }
+  .bezel-result .bezel-pick-role{font-size:12px;color:var(--gold);letter-spacing:2px;text-transform:uppercase}
+  .bezel-result .bezel-pick-note{font-size:12px;color:var(--gray);margin-top:16px;font-style:italic}
+
+  /* ===== PORTFOLIO BAR ===== */
+  .portfolio-strip{
+    display:flex;justify-content:center;gap:48px;
+    padding:32px 0;margin-top:40px;
+    border-top:1px solid var(--border);
+  }
+  .p-stat{text-align:center}
+  .p-stat-val{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;color:var(--white)}
+  .p-stat-val.gold{color:var(--gold)}
+  .p-stat-label{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--dim);margin-top:4px}
+
+  .footer{text-align:center;margin-top:32px;font-size:10px;color:#1A1A1A;letter-spacing:3px}
+
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+
+  @media(max-width:768px){
+    .header-inner{flex-direction:column;gap:16px;text-align:center}
+    .header-right{flex-wrap:wrap;justify-content:center}
+    .kpi-bar{grid-template-columns:repeat(3,1fr)}
+    .crown-layout{grid-template-columns:1fr;text-align:center}
+    .crown-image{margin:0 auto}
+    .crown-specs{justify-content:center}
+    .cushion-grid{grid-template-columns:repeat(2,1fr)}
+    .modal-specs{grid-template-columns:1fr}
+    .portfolio-strip{flex-wrap:wrap;gap:24px}
+  }
+  @media(max-width:480px){
+    .cushion-grid{grid-template-columns:1fr}
+    .header-title{font-size:24px}
+  }
+</style>
+</head>
+<body>
+
+<div class="glow-orb glow-1"></div>
+<div class="glow-orb glow-2"></div>
+
+<!-- ===== HEADER ===== -->
+<header class="vault-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-bezel">&#x231A;</div>
+      <div>
+        <div class="header-title serif">THE <em>VAULT</em></div>
+        <div class="header-sub">Thompson Collection &middot; Est. 2026</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-pill active" onclick="switchTab('lt')">LT</div>
+      <div class="header-pill" onclick="switchTab('jt')">JT + Kids</div>
+      <div class="header-pill" onclick="switchTab('wish')">Hunt List</div>
+      <div class="header-pill" onclick="switchTab('style')">Style Ref</div>
+      <button class="bezel-btn" onclick="dailyBezel()">
+        <i class="fas fa-dice"></i> Daily Bezel
+      </button>
+      <a id="vein-link" href="#" target="_blank" class="bezel-btn" style="display:none;text-decoration:none">
+        <i class="fas fa-chart-line"></i> The Vein
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ===== LT TAB ===== -->
+  <div id="tab-lt" class="tab-content active">
+    <div class="kpi-bar" id="kpi-bar"></div>
+    <div class="crown-section" id="crown-section"></div>
+    <div id="tier-sections"></div>
+    <div class="portfolio-strip" id="portfolio-strip"></div>
+  </div>
+
+  <!-- ===== JT + KIDS TAB ===== -->
+  <div id="tab-jt" class="tab-content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;padding-top:32px" id="family-grids"></div>
+  </div>
+
+  <!-- ===== WISH LIST TAB ===== -->
+  <div id="tab-wish" class="tab-content">
+    <div style="padding-top:32px">
+      <div style="margin-bottom:32px">
+        <div class="serif" style="font-size:36px;color:var(--white)">Hunting Grounds</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:4px">Three Role Framework locked. Bezel is the visual event. Gold in jewelry only.</div>
+      </div>
+      <div id="wish-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px"></div>
+    </div>
+  </div>
+
+  <!-- ===== STYLE REF TAB ===== -->
+  <div id="tab-style" class="tab-content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;padding-top:32px" id="style-content"></div>
+  </div>
+
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+  <div class="modal-box" id="modal-box"></div>
+</div>
+
+<div class="footer">LT Watch Vault &middot; Gold Hardware Only &middot; &Phi;&Beta;&Sigma; &middot; March 2026</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   Vault.html v1 — ES5 ONLY (Fire Stick / Fully Kiosk compatible)
+   ════════════════════════════════════════════════════════════════════ */
+function getVaultVersion() { return 1; }
+
+// ==================== SHEET DATA INJECTION ====================
+var SHEET_DATA = <?!= sheetData ?>;
+
+// ==================== COLLECTION DATA (fallback) ====================
+var ltWatches = [
+  {name:"Henry Archer Tidevand",brand:"Henry Archer",movement:"Japanese Auto (Miyota 8215)",tier:"Mid",zone:"Crown Jewel",role:"Statement / MOP",paid:691,retail:691,resale:600,dial:"Iridescent MOP",metal:"Rose Gold",size:"40mm",strap:"RG Bracelet",img:"",story:"Direct from Henry Archer. Ultraviolet RG. Mother of pearl dial shifts violet to teal. Current crown jewel — the piece that proved jubilee-style steel/RG construction works for LT."},
+  {name:"Hamilton Khaki Aviation",brand:"Hamilton",movement:"Swiss Auto (H-40, 80hr)",tier:"Mid",zone:"Winder",role:"Daily Driver / Tool",paid:656,retail:1100,resale:450,dial:"Black",metal:"PVD Black + Rose Gold",size:"42mm",strap:"Leather 22mm",img:"",story:"Ashford. Rose gold indices on murdered-out PVD black. The daily king. 80-hour power reserve means it runs all weekend."},
+  {name:"Movado Bold Verso",brand:"Movado",movement:"Quartz Chrono",tier:"Mid",zone:"Main Shelf",role:"Flagship / Statement",paid:995,retail:1295,resale:350,dial:"Navy Blue",metal:"Navy IP",size:"42mm",strap:"Bracelet 22mm",img:"",story:"Gift from JT. Navy IP case, 22mm lugs shared with Hamilton strap wardrobe. The statement piece that started the collection journey."},
+  {name:"Orient Sun & Moon",brand:"Orient",movement:"Japanese Auto",tier:"Entry",zone:"Winder",role:"Dressy / Open Heart",paid:338,retail:450,resale:180,dial:"Champagne",metal:"Rose Gold",size:"42mm",strap:"Leather 21mm",img:"",story:"Jomashop. Rose gold case, champagne dial, sun/moon complication. The dress role anchor."},
+  {name:"Seiko Presage Cocktail",brand:"Seiko",movement:"Japanese Auto",tier:"Entry",zone:"Winder",role:"Dressy / Guilloche",paid:365,retail:525,resale:225,dial:"Green",metal:"Gold",size:"40.5mm",strap:"Leather 20mm",img:"",story:"Jomashop. Green guilloche dial + navy pebbled strap. The combo that proved blue and green DO work together."},
+  {name:"Citizen Blue Angels",brand:"Citizen",movement:"Eco-Drive Atomic",tier:"Entry",zone:"Main Shelf",role:"Chrono / Aviation",paid:387,retail:650,resale:250,dial:"Blue",metal:"Steel + Gold",size:"43mm",strap:"Bracelet 23mm",img:"",story:"Jomashop. Atomic sync pilot chrono. Lives on its bracelet — no strap swap, grab-and-go tool watch."},
+  {name:"Movado Bold",brand:"Movado",movement:"Quartz",tier:"Entry",zone:"Drawer",role:"Minimal / Gift",paid:400,retail:595,resale:120,dial:"Black",metal:"Black",size:"42mm",strap:"Bracelet",img:"",story:"Gift from JT. Black minimalist. Now passed to JT sentimental collection."},
+  {name:"Tissot PRX",brand:"Tissot",movement:"Swiss Quartz",tier:"Entry",zone:"Main Shelf",role:"Everyday / Sporty",paid:304,retail:425,resale:175,dial:"White",metal:"Steel",size:"40mm",strap:"Integrated + Rubber",img:"",story:"Jomashop. White rubber + navy FKM butterfly clasp. Integrated bracelet design."},
+  {name:"Bulova Computron",brand:"Bulova",movement:"LED Quartz",tier:"Entry",zone:"Main Shelf",role:"Retro / Statement",paid:332,retail:450,resale:180,dial:"Gold LED",metal:"Gold",size:"31x47mm",strap:"Bracelet",img:"",story:"JCPenney. Hamilton LED tribute. The 'what IS that?' piece."},
+  {name:"Bulova Robie House",brand:"Bulova",movement:"Quartz",tier:"Entry",zone:"Drawer",role:"Sentimental / FLW",paid:255,retail:395,resale:120,dial:"Blue/Green",metal:"Steel",size:"33mm",strap:"Leather",img:"",story:"Gift from JT. Frank Lloyd Wright stained glass dial. Art that tells time."},
+  {name:"Orient Multi-Year Calendar",brand:"Orient",movement:"Japanese Auto",tier:"Entry",zone:"Winder",role:"Complication / Calendar",paid:193,retail:300,resale:100,dial:"Gold",metal:"Full Gold",size:"43mm",strap:"Bracelet",img:"",story:"Jomashop. All gold case. Conference Day 4 finale piece — the closer. Visual weight says $800."},
+  {name:"Citizen Open Heart",brand:"Citizen",movement:"Japanese Auto",tier:"Entry",zone:"Winder",role:"Open Heart / Casual",paid:199,retail:350,resale:90,dial:"White/Skeleton",metal:"Rose Gold",size:"41mm",strap:"Leather 20mm",img:"",story:"Amazon. Skeleton dial shows the movement. Conference Day 1 candidate."},
+  {name:"Invicta Chiefs",brand:"Invicta",movement:"Quartz",tier:"Budget",zone:"Drawer",role:"Game Day",paid:150,retail:250,resale:40,dial:"Red/Gold",metal:"Gold",size:"48mm",strap:"Bracelet",img:"",story:"Model 45089. Chiefs game day only. Red and gold. Worn with pride, not pretension."},
+  {name:"Fossil Gold Tonneau",brand:"Fossil",movement:"Quartz",tier:"Budget",zone:"Drawer",role:"Casual / Gold",paid:100,retail:150,resale:20,dial:"Black",metal:"Gold",size:"~36mm",strap:"Bracelet",img:"",story:"Rectangular gold case. Casual rotation piece."},
+  {name:"Fossil Black Ceramic",brand:"Fossil",movement:"Quartz",tier:"Budget",zone:"Drawer",role:"Needs Battery",paid:100,retail:165,resale:20,dial:"Black",metal:"Black Ceramic",size:"~36mm",strap:"Bracelet",img:"",story:"ES-4159. Needs battery (SR621SW). DIY with Jorest kit."},
+  {name:"Relic Chrono",brand:"Relic",movement:"Quartz",tier:"Budget",zone:"Drawer",role:"Sentimental / 15yr",paid:80,retail:100,resale:10,dial:"Black",metal:"Two-Tone",size:"~40mm",strap:"Bracelet",img:"",story:"Gift from JT. 15 years ago. Pure sentimental value."},
+  {name:"Pulsar Two-Tone",brand:"Pulsar",movement:"Quartz",tier:"Budget",zone:"Drawer",role:"Small Face",paid:75,retail:100,resale:10,dial:"Gold/Silver",metal:"Two-Tone",size:"~36mm",strap:"Bracelet",img:"",story:"Older piece. Small for current 40mm+ preference."},
+  {name:"Fossil Blue",brand:"Fossil",movement:"Quartz",tier:"Budget",zone:"Heirloom",role:"Heirloom > Son",paid:100,retail:140,resale:null,dial:"Blue",metal:"Steel",size:"~42mm",strap:"Bracelet",img:"",story:"Passed down to son (age 10). His first real watch. The beginning of a tradition."}
+];
+
+var jtWatches = [
+  {name:"Citizen Weekender FE6138-05B",movement:"Eco-Drive",paid:260,retail:350,role:"Everyday / Strap Swap",notes:"Kohl's. Rose gold, pink strap, 4 bands, 100m WR",cat:"Purchased"},
+  {name:"Citizen L Classic EM1143-81Z",movement:"Eco-Drive",paid:266,retail:350,role:"Professional / Dress",notes:"Jomashop. Rose gold bracelet, brown sunburst dial",cat:"Purchased"},
+  {name:"Bulova Marine Star 98P222",movement:"Quartz",paid:239,retail:795,role:"Sporty Luxury / White",notes:"PurchaseDirect. White ceramic, diamonds, 70% off",cat:"Purchased"},
+  {name:"Fossil Blue Dive",movement:"Quartz",paid:null,retail:140,role:"Bold Everyday",notes:"Gold tone boyfriend watch, white dial",cat:"Existing"},
+  {name:"Bulova Robie House",movement:"Quartz",paid:255,retail:395,role:"Art / FLW",notes:"Frank Lloyd Wright. From LT",cat:"Sentimental"},
+  {name:"Movado Bold",movement:"Quartz",paid:400,retail:595,role:"Minimal / Black",notes:"Black dial. From LT",cat:"Sentimental"},
+  {name:"Relic Chrono",movement:"Quartz",paid:80,retail:100,role:"15yr Anniversary",notes:"From LT. 15 years ago",cat:"Sentimental"}
+];
+
+var kidsWatches = [
+  {name:"Flik Flak Cuddly Unicorn",owner:"Kindle (Daughter)",paid:53,retail:55,notes:"Personalized with name. First watch"},
+  {name:"Fossil Blue",owner:"Son (Age 10)",paid:null,retail:140,notes:"Heirloom from Dad. First real watch"}
+];
+
+var wishList = [
+  {name:"Zodiac Super Sea Wolf Compression",brand:"Zodiac",movement:"Swiss Auto (STP 1-21)",tier:"Mid",status:"HUNTING",priority:"PRIMARY",framework:"Daily (Dive)",price:1050,notes:"ZO9286 Blue/Orange most versatile. Sapphire, 200m. Bezel IS the event"},
+  {name:"Seiko Speedtimer Black/Gold",brand:"Seiko",movement:"Solar Quartz",tier:"Mid",status:"HUNTING",priority:"HIGH",framework:"Daily (Chrono)",price:595,notes:"Gold indices match jewelry system. Daytona DNA. Tachymeter gap filler"},
+  {name:"Seiko 5 Sports Checkered Bezel",brand:"Seiko",movement:"Japanese Auto (4R36)",tier:"Entry",status:"HUNTING",priority:"MEDIUM",framework:"Daily (Casual)",price:275,notes:"Hacking+winding. Budget colorful bezel fill. Buy now candidate"},
+  {name:"Swiss Auto Dress (TBD)",brand:"Longines/Mido/Tissot",movement:"Swiss Auto",tier:"Mid-Premium",status:"GAP",priority:"FUTURE",framework:"Dress",price:800,notes:"Hamilton is tool not dress. Thin case formal piece needed"},
+  {name:"Henry Archer Enceladus Mirage",brand:"Henry Archer",movement:"Japanese Auto",tier:"Entry",status:"FUTURE",priority:"MEDIUM",framework:"Social",price:350,notes:"Jubilee bracelet makes steel OK. Blue or white dial. Return to HA"},
+  {name:"Rolex Submariner / GMT",brand:"Rolex",movement:"Swiss Auto",tier:"Luxury",status:"GRAIL",priority:"DREAM",framework:"Daily (Ultimate)",price:10000,notes:"The icon. Ultimate daily. Heritage piece."},
+  {name:"Audemars Piguet Royal Oak",brand:"AP",movement:"Swiss Auto",tier:"Ultra-Luxury",status:"GRAIL",priority:"DREAM",framework:"Social (Ultimate)",price:25000,notes:"Tapisserie dial. Integrated bracelet icon. Started it all."},
+  {name:"Patek Philippe Calatrava",brand:"Patek",movement:"Swiss Auto",tier:"Ultra-Luxury",status:"GRAIL",priority:"DREAM",framework:"Dress (Ultimate)",price:30000,notes:"The grail of grails. Dress perfection."},
+  {name:"TAG Heuer Monaco",brand:"TAG Heuer",movement:"Swiss Auto",tier:"Luxury",status:"GRAIL",priority:"DREAM",framework:"Statement",price:7500,notes:"Gulf racing heritage. Square case icon."}
+];
+
+// ==================== RENDER ENGINE ====================
+var tierOrder = ["Mid","Entry","Budget"];
+
+function fmt(n) {
+  return n ? '$' + n.toLocaleString() : '\u2014';
+}
+
+function esc(s) {
+  if (!s) return '';
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(s));
+  return div.innerHTML;
+}
+
+function init() {
+  renderKPIs();
+  renderCrown();
+  renderTiers();
+  renderPortfolio();
+  renderFamily();
+  renderWishList();
+  renderStyleRef();
+  switchTab('lt');
+}
+
+function renderKPIs() {
+  var owned = ltWatches.filter(function(w) { return w.role.indexOf('>') === -1 && w.role.indexOf('\u2192') === -1; });
+  var paid = 0, retail = 0, resale = 0;
+  for (var i = 0; i < owned.length; i++) {
+    paid += owned[i].paid || 0;
+    retail += owned[i].retail || 0;
+    resale += owned[i].resale || 0;
+  }
+  var savings = retail - paid;
+  var pct = retail > 0 ? Math.round((savings / retail) * 100) : 0;
+
+  document.getElementById('kpi-bar').innerHTML =
+    '<div class="kpi"><div class="kpi-label">Pieces</div><div class="kpi-val">' + owned.length + '</div></div>' +
+    '<div class="kpi"><div class="kpi-label">Invested</div><div class="kpi-val gold">' + fmt(paid) + '</div></div>' +
+    '<div class="kpi"><div class="kpi-label">Retail Value</div><div class="kpi-val">' + fmt(retail) + '</div></div>' +
+    '<div class="kpi"><div class="kpi-label">Resale Est.</div><div class="kpi-val" style="color:var(--blue-accent)">' + fmt(resale) + '</div></div>' +
+    '<div class="kpi"><div class="kpi-label">Saved</div><div class="kpi-val green">' + fmt(savings) + '</div><div class="kpi-sub">' + pct + '% below retail</div></div>';
+}
+
+function renderCrown() {
+  var crown = null;
+  for (var i = 0; i < ltWatches.length; i++) {
+    if (ltWatches[i].zone === "Crown Jewel") { crown = ltWatches[i]; break; }
+  }
+  if (!crown) return;
+  var imgHtml = crown.img ? '<img src="' + esc(crown.img) + '">' : '<span class="crown-placeholder">&#x231A;</span>';
+  document.getElementById('crown-section').innerHTML =
+    '<div class="crown-badge"><i class="fas fa-crown" style="font-size:10px"></i> Crown Jewel</div>' +
+    '<div class="crown-layout">' +
+      '<div class="crown-image">' + imgHtml + '</div>' +
+      '<div>' +
+        '<div class="crown-name serif">' + esc(crown.name) + '</div>' +
+        '<div class="crown-role">' + esc(crown.role) + ' &middot; ' + esc(crown.movement) + '</div>' +
+        '<div class="crown-specs">' +
+          '<div class="crown-spec"><div class="crown-spec-label">Paid</div><div class="crown-spec-val gold">' + fmt(crown.paid) + '</div></div>' +
+          '<div class="crown-spec"><div class="crown-spec-label">Retail</div><div class="crown-spec-val">' + fmt(crown.retail) + '</div></div>' +
+          '<div class="crown-spec"><div class="crown-spec-label">Resale</div><div class="crown-spec-val">' + fmt(crown.resale) + '</div></div>' +
+          '<div class="crown-spec"><div class="crown-spec-label">Dial</div><div class="crown-spec-val">' + esc(crown.dial) + '</div></div>' +
+          '<div class="crown-spec"><div class="crown-spec-label">Size</div><div class="crown-spec-val">' + esc(crown.size) + '</div></div>' +
+        '</div>' +
+        '<div class="crown-story">"' + esc(crown.story) + '"</div>' +
+      '</div>' +
+    '</div>';
+}
+
+function renderTiers() {
+  var container = document.getElementById('tier-sections');
+  container.innerHTML = '';
+  for (var t = 0; t < tierOrder.length; t++) {
+    var tier = tierOrder[t];
+    var items = [];
+    for (var i = 0; i < ltWatches.length; i++) {
+      if (ltWatches[i].tier === tier && ltWatches[i].zone !== "Crown Jewel") {
+        items.push(ltWatches[i]);
+      }
+    }
+    if (!items.length) continue;
+    var chipClass = tier === "Mid" ? "chip-mid" : tier === "Entry" ? "chip-entry" : "chip-budget";
+    var html = '<div class="tier-section">' +
+      '<div class="tier-bar">' +
+        '<span class="tier-chip ' + chipClass + '">' + tier + ' Tier</span>' +
+        '<div class="tier-line"></div>' +
+        '<span class="tier-meta">' + items.length + ' piece' + (items.length > 1 ? 's' : '') + '</span>' +
+      '</div>' +
+      '<div class="cushion-grid">';
+    for (var j = 0; j < items.length; j++) {
+      var w = items[j];
+      var idx = ltWatches.indexOf(w);
+      var imgHtml = w.img ? '<img src="' + esc(w.img) + '">' : '<span class="cushion-emoji">&#x231A;</span>';
+      var movShort = w.movement.split('(')[0].replace(/^\s+|\s+$/g, '');
+      html += '<div class="cushion" onclick="openModal(' + idx + ')">' +
+        '<div class="cushion-pad">' +
+          '<div class="cushion-img-wrap">' + imgHtml + '</div>' +
+        '</div>' +
+        '<div class="cushion-info">' +
+          '<div class="cushion-name">' + esc(w.name) + '</div>' +
+          '<div class="cushion-row">' +
+            '<span class="cushion-movement">' + esc(movShort) + '</span>' +
+            '<span class="cushion-price">' + fmt(w.paid) + '</span>' +
+          '</div>' +
+          '<div class="cushion-role">' + esc(w.role) + '</div>' +
+        '</div>' +
+      '</div>';
+    }
+    html += '</div></div>';
+    container.innerHTML += html;
+  }
+}
+
+function renderPortfolio() {
+  var owned = ltWatches.filter(function(w) { return w.role.indexOf('>') === -1 && w.role.indexOf('\u2192') === -1; });
+  var paid = 0, retail = 0;
+  for (var i = 0; i < owned.length; i++) {
+    paid += owned[i].paid || 0;
+    retail += owned[i].retail || 0;
+  }
+  var household = paid + 765 + 53;
+  var pct = retail > 0 ? Math.round(((retail - paid) / retail) * 100) : 0;
+  var avg = owned.length > 0 ? Math.round(paid / owned.length) : 0;
+  document.getElementById('portfolio-strip').innerHTML =
+    '<div class="p-stat"><div class="p-stat-val">' + (owned.length + 9) + '</div><div class="p-stat-label">Household Pieces</div></div>' +
+    '<div class="p-stat"><div class="p-stat-val gold">' + fmt(household) + '</div><div class="p-stat-label">Total Invested</div></div>' +
+    '<div class="p-stat"><div class="p-stat-val">' + fmt(retail) + '</div><div class="p-stat-label">LT Retail</div></div>' +
+    '<div class="p-stat"><div class="p-stat-val green">' + pct + '%</div><div class="p-stat-label">Below Retail</div></div>' +
+    '<div class="p-stat"><div class="p-stat-val gold">' + fmt(avg) + '</div><div class="p-stat-label">Avg / Piece</div></div>';
+}
+
+function openModal(idx) {
+  var w = ltWatches[idx];
+  var savings = (w.retail || 0) - w.paid;
+  var pct = w.retail ? Math.round((savings / w.retail) * 100) : 0;
+  var imgHtml = w.img ? '<img src="' + esc(w.img) + '">' : '<span class="modal-hero-emoji">&#x231A;</span>';
+  var resaleStr = w.resale ? fmt(w.resale) : 'N/A';
+  var savingsStr = savings > 0 ? fmt(savings) + ' (' + pct + '%)' : '\u2014';
+
+  document.getElementById('modal-box').innerHTML =
+    '<div class="modal-hero"><div class="modal-hero-img">' + imgHtml + '</div></div>' +
+    '<div class="modal-body">' +
+      '<div class="modal-tier">' + esc(w.tier) + ' Tier &middot; ' + esc(w.zone) + ' &middot; ' + esc(w.brand) + '</div>' +
+      '<div class="modal-name serif">' + esc(w.name) + '</div>' +
+      '<div class="modal-role">' + esc(w.role) + '</div>' +
+      '<div class="modal-specs">' +
+        '<div class="modal-spec"><div class="modal-spec-label">Paid</div><div class="modal-spec-val gold">' + fmt(w.paid) + '</div></div>' +
+        '<div class="modal-spec"><div class="modal-spec-label">Retail</div><div class="modal-spec-val">' + fmt(w.retail) + '</div></div>' +
+        '<div class="modal-spec"><div class="modal-spec-label">Resale</div><div class="modal-spec-val">' + resaleStr + '</div></div>' +
+        '<div class="modal-spec"><div class="modal-spec-label">Savings</div><div class="modal-spec-val green">' + savingsStr + '</div></div>' +
+        '<div class="modal-spec"><div class="modal-spec-label">Movement</div><div class="modal-spec-val">' + esc(w.movement) + '</div></div>' +
+        '<div class="modal-spec"><div class="modal-spec-label">Case</div><div class="modal-spec-val">' + esc(w.size) + '</div></div>' +
+        '<div class="modal-spec"><div class="modal-spec-label">Dial</div><div class="modal-spec-val">' + esc(w.dial) + '</div></div>' +
+        '<div class="modal-spec"><div class="modal-spec-label">Metal</div><div class="modal-spec-val">' + esc(w.metal) + '</div></div>' +
+        '<div class="modal-spec"><div class="modal-spec-label">Strap</div><div class="modal-spec-val">' + esc(w.strap) + '</div></div>' +
+        '<div class="modal-spec"><div class="modal-spec-label">Zone</div><div class="modal-spec-val">' + esc(w.zone) + '</div></div>' +
+      '</div>' +
+      '<div class="modal-story">' + esc(w.story) + '</div>' +
+    '</div>' +
+    '<div class="modal-footer"><button class="modal-close" onclick="closeModal()">Close Vault</button></div>';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+function handleOverlayClick(event) {
+  if (event.target === document.getElementById('modal')) {
+    closeModal();
+  }
+}
+
+function renderFamily() {
+  var container = document.getElementById('family-grids');
+  // JT
+  var jtHtml = '<div class="family-box">' +
+    '<div class="family-title serif"><span style="color:var(--gold)">&hearts;</span> JT Collection &middot; ' + jtWatches.length + ' Pieces</div>';
+  for (var i = 0; i < jtWatches.length; i++) {
+    var w = jtWatches[i];
+    var catColor = w.cat === 'Sentimental' ? 'var(--dim)' : 'var(--cream)';
+    jtHtml += '<div style="padding:12px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">' +
+      '<div>' +
+        '<div style="font-weight:600;color:' + catColor + ';font-size:14px">' + esc(w.name) + '</div>' +
+        '<div style="font-size:10px;color:var(--dim);margin-top:2px">' + esc(w.movement) + ' &middot; ' + esc(w.role) + '</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="color:var(--gold);font-weight:600;font-size:14px">' + (w.paid ? fmt(w.paid) : '\u2014') + '</div>' +
+        '<div style="font-size:10px;color:var(--dim)">Retail ' + fmt(w.retail) + '</div>' +
+      '</div>' +
+    '</div>';
+  }
+  jtHtml += '</div>';
+
+  // Kids
+  var kidsHtml = '<div class="family-box">' +
+    '<div class="family-title serif"><span style="color:var(--blue-accent)">&starf;</span> Kids Collection &middot; Building the Tradition</div>';
+  for (var j = 0; j < kidsWatches.length; j++) {
+    var k = kidsWatches[j];
+    kidsHtml += '<div style="padding:16px 0;border-bottom:1px solid var(--border)">' +
+      '<div style="font-weight:600;color:var(--white);font-size:14px">' + esc(k.name) + '</div>' +
+      '<div style="font-size:11px;color:var(--blue-accent);margin-top:2px">' + esc(k.owner) + '</div>' +
+      '<div style="font-size:11px;color:var(--dim);margin-top:4px">' + esc(k.notes) + '</div>' +
+      '<div style="font-size:12px;color:var(--gold);margin-top:6px">' + (k.paid ? fmt(k.paid) : 'Heirloom') + ' &middot; Retail ' + fmt(k.retail) + '</div>' +
+    '</div>';
+  }
+  kidsHtml += '</div>';
+  container.innerHTML = jtHtml + kidsHtml;
+}
+
+function renderWishList() {
+  var container = document.getElementById('wish-grid');
+  var html = '';
+  var curStatus = '';
+  var labels = {HUNTING:"Actively Hunting",GAP:"Collection Gap",FUTURE:"Future Target",GRAIL:"Grail Tier"};
+  var colors = {HUNTING:"var(--amber)",GAP:"var(--red)",FUTURE:"var(--blue-accent)",GRAIL:"var(--purple)"};
+  var badgeMap = {PRIMARY:'badge-primary',HIGH:'badge-high',MEDIUM:'badge-medium',DREAM:'badge-dream',FUTURE:'badge-medium'};
+
+  for (var i = 0; i < wishList.length; i++) {
+    var w = wishList[i];
+    if (w.status !== curStatus) {
+      var mt = curStatus ? '16px' : '0';
+      html += '<div style="grid-column:1/-1;padding:8px 0;margin-top:' + mt + '">' +
+        '<span style="font-size:10px;letter-spacing:4px;text-transform:uppercase;color:' + (colors[w.status] || 'var(--dim)') + ';font-weight:700">' + (labels[w.status] || w.status) + '</span>' +
+      '</div>';
+      curStatus = w.status;
+    }
+    var isGrail = w.status === 'GRAIL';
+    var badgeClass = badgeMap[w.priority] || 'badge-medium';
+    var priceColor = isGrail ? 'var(--purple)' : 'var(--amber)';
+    html += '<div class="hunt-card ' + (isGrail ? 'grail' : '') + '">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+        '<span class="hunt-badge ' + badgeClass + '">' + esc(w.priority) + '</span>' +
+        '<span style="font-size:10px;color:var(--dim)">' + esc(w.framework) + '</span>' +
+      '</div>' +
+      '<div class="hunt-name">' + esc(w.name) + '</div>' +
+      '<div class="hunt-meta">' + esc(w.brand) + ' &middot; ' + esc(w.movement) + ' &middot; ' + esc(w.tier) + '</div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:12px">' +
+        '<div class="hunt-price" style="color:' + priceColor + '">~' + fmt(w.price) + '</div>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--dim);margin-top:8px;line-height:1.5">' + esc(w.notes) + '</div>' +
+    '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function renderStyleRef() {
+  document.getElementById('style-content').innerHTML =
+    '<div class="ref-card">' +
+      '<div class="ref-title">Color System</div>' +
+      '<div class="ref-row"><span class="ref-label">Foundation</span><span class="ref-val"><span class="color-swatch" style="background:#1a1a1a"></span>Black &middot; Deep Charcoal</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Metal</span><span class="ref-val"><span class="color-swatch" style="background:#C9A84C"></span>Yellow Gold &middot; Warm Brass</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Accent</span><span class="ref-val"><span class="color-swatch" style="background:#002366"></span>Royal Blue &middot; Deep Navy</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Leather</span><span class="ref-val"><span class="color-swatch" style="background:#8D5524"></span>Cognac &middot; Tan &middot; Camel</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Seasonal</span><span class="ref-val"><span class="color-swatch" style="background:#2D5A27"></span>Forest Green &middot; Burgundy &middot; Mustard</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Contrast</span><span class="ref-val"><span class="color-swatch" style="background:#F5F0E8;border-color:#ccc"></span>Cream &middot; White</span></div>' +
+      '<div style="font-size:10px;color:var(--dim);margin-top:12px;font-style:italic">Restriction: No purple + gold together at D9 events (Que conflict)</div>' +
+    '</div>' +
+    '<div class="ref-card">' +
+      '<div class="ref-title">Three Role Framework</div>' +
+      '<div class="ref-row"><span class="ref-label" style="color:var(--gold)">Daily</span><span class="ref-val">Dive / rotating bezel<br><span style="font-size:11px;color:var(--dim)">Current: Hamilton + Blue Angels. Hunting: Zodiac</span></span></div>' +
+      '<div class="ref-row"><span class="ref-label" style="color:var(--gold)">Social</span><span class="ref-val">Integrated bracelet sports<br><span style="font-size:11px;color:var(--dim)">Current: Verso + Tidevand. Grail: Royal Oak</span></span></div>' +
+      '<div class="ref-row"><span class="ref-label" style="color:var(--gold)">Dress</span><span class="ref-val">Moonphase / ultra-thin<br><span style="font-size:11px;color:var(--dim)">Current: Sun &amp; Moon. Grail: Calatrava</span></span></div>' +
+    '</div>' +
+    '<div class="ref-card">' +
+      '<div class="ref-title">Watch Philosophy</div>' +
+      '<div class="ref-row"><span class="ref-label">Visual rule</span><span class="ref-val">The bezel must be the visual event</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Value rule</span><span class="ref-val">Punches above price point or don\'t buy</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Lexus test</span><span class="ref-val">Paying for name without visible diff = no</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Steel exception</span><span class="ref-val">Jubilee 5-row makes steel acceptable</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Strap strategy</span><span class="ref-val">New personalities &gt; new pieces</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Recognition</span><span class="ref-val">Enthusiast respect + layman attention = both</span></div>' +
+    '</div>' +
+    '<div class="ref-card">' +
+      '<div class="ref-title">Conference Rotation &middot; Apr 24&ndash;28</div>' +
+      '<div class="ref-row"><span class="ref-label">Travel Day</span><span class="ref-val">Hamilton Khaki Aviation (tan strap)</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Day 1</span><span class="ref-val">Citizen Open Heart</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Day 2&ndash;3</span><span class="ref-val">Presage / Sun &amp; Moon (swap per outfit)</span></div>' +
+      '<div class="ref-row"><span class="ref-label">Day 4 Finale</span><span class="ref-val">Orient Multi-Year Calendar (all gold closer)</span></div>' +
+      '<div style="margin-top:12px;padding:8px 12px;background:var(--velvet);border-radius:6px;font-size:10px;color:var(--gold)">' +
+        '<i class="fas fa-suitcase" style="margin-right:6px"></i> 4-watch travel case &middot; Cut timing: 3&ndash;4 days before Apr 24' +
+      '</div>' +
+    '</div>';
+}
+
+// ==================== DAILY BEZEL ====================
+function dailyBezel() {
+  var owned = [];
+  for (var i = 0; i < ltWatches.length; i++) {
+    var w = ltWatches[i];
+    if (w.zone !== "Heirloom" && w.role.indexOf('Battery') === -1) {
+      owned.push(w);
+    }
+  }
+  var pick = owned[Math.floor(Math.random() * owned.length)];
+  var storyParts = pick.story.split('.');
+  var lastNote = storyParts[storyParts.length - 1].replace(/^\s+|\s+$/g, '') || pick.story;
+
+  document.getElementById('modal-box').innerHTML =
+    '<div class="bezel-result">' +
+      '<div class="bezel-icon">&#x1F3B2;</div>' +
+      '<div style="font-size:9px;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:12px">Today\'s Bezel Pick</div>' +
+      '<div class="bezel-pick-name serif">' + esc(pick.name) + '</div>' +
+      '<div class="bezel-pick-role">' + esc(pick.role) + '</div>' +
+      '<div style="display:flex;justify-content:center;gap:24px;margin-top:20px">' +
+        '<div style="text-align:center"><div style="font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Paid</div><div style="font-size:18px;color:var(--gold);font-weight:600">' + fmt(pick.paid) + '</div></div>' +
+        '<div style="text-align:center"><div style="font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Dial</div><div style="font-size:18px;color:var(--cream);font-weight:600">' + esc(pick.dial) + '</div></div>' +
+        '<div style="text-align:center"><div style="font-size:9px;color:var(--dim);letter-spacing:1px;text-transform:uppercase">Metal</div><div style="font-size:18px;color:var(--cream);font-weight:600">' + esc(pick.metal) + '</div></div>' +
+      '</div>' +
+      '<div class="bezel-pick-note">"' + esc(lastNote) + '"</div>' +
+    '</div>' +
+    '<div class="modal-footer"><button class="modal-close" onclick="closeModal()">Lock It In</button></div>';
+  document.getElementById('modal').classList.add('open');
+}
+
+// ==================== LOAD SHEET DATA ====================
+function mapLT(row) {
+  return {
+    name: row.watch || '', brand: row.brand || '', movement: row.movement || '',
+    tier: row.tier || 'Entry', zone: row.displayZone || 'Drawer', role: row.role || '',
+    paid: Number(row.pricePaid) || 0, retail: Number(row.retail) || 0,
+    resale: row.estResale ? Number(row.estResale) : null,
+    dial: row.dialColor || '', metal: row.metalTone || '', size: row.caseSize || '',
+    strap: row.strapType || '', img: row.imageUrl || '', story: row.storyNote || '',
+    status: row.status || 'Own'
+  };
+}
+function mapJT(row) {
+  return {
+    name: row.watch || '', movement: row.movement || '',
+    paid: row.pricePaid ? Number(row.pricePaid) : null,
+    retail: Number(row.retail) || 0, role: row.role || '',
+    notes: row.notes || '', cat: row.category || 'Purchased'
+  };
+}
+function mapKids(row) {
+  return {
+    name: row.watch || '', owner: row.owner || '',
+    paid: row.pricePaid ? Number(row.pricePaid) : null,
+    retail: Number(row.retail) || 0, notes: row.notes || ''
+  };
+}
+function mapWish(row) {
+  return {
+    name: row.watch || '', brand: row.brand || '', movement: row.movement || '',
+    tier: row.tier || '', status: row.status || '', priority: row.priority || '',
+    framework: row.frameworkRole || '', price: Number(row.targetPrice) || 0,
+    notes: row.notes || ''
+  };
+}
+
+function loadSheetData() {
+  try {
+    var data = JSON.parse(SHEET_DATA);
+    if (data.LT_Collection && data.LT_Collection.length) ltWatches = data.LT_Collection.map(mapLT);
+    if (data.JT_Collection && data.JT_Collection.length) jtWatches = data.JT_Collection.map(mapJT);
+    if (data.Kids_Collection && data.Kids_Collection.length) kidsWatches = data.Kids_Collection.map(mapKids);
+    if (data.Wishlist && data.Wishlist.length) wishList = data.Wishlist.map(mapWish);
+    console.log('%c[Vault] Loaded from Google Sheets', 'color:#4ADE80;font-weight:bold');
+  } catch(e) {
+    console.log('%c[Vault] Using hardcoded fallback data', 'color:#F59E0B');
+  }
+  // Vein crosslink
+  try {
+    google.script.run
+      .withSuccessHandler(function(url) {
+        if (url) {
+          var veinLink = document.getElementById('vein-link');
+          veinLink.href = url + '?page=vein';
+          veinLink.style.display = 'flex';
+        }
+      })
+      .withFailureHandler(function(err) {
+        console.log('[Vault] Vein crosslink unavailable: ' + err.message);
+      })
+      .getScriptUrlSafe();
+  } catch(e) { /* standalone mode */ }
+  init();
+}
+
+// ==================== TAB SWITCHING ====================
+function switchTab(id) {
+  var tabs = document.querySelectorAll('.tab-content');
+  for (var i = 0; i < tabs.length; i++) { tabs[i].classList.remove('active'); }
+  document.getElementById('tab-' + id).classList.add('active');
+  var pills = document.querySelectorAll('.header-pill');
+  for (var j = 0; j < pills.length; j++) {
+    pills[j].classList.remove('active');
+    var oc = pills[j].getAttribute('onclick');
+    if (oc && oc.indexOf("'" + id + "'") !== -1) {
+      pills[j].classList.add('active');
+    }
+  }
+}
+
+// ==================== KEYBOARD ====================
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ==================== INIT ====================
+window.onload = loadSheetData;
+</script>
+</body>
+</html>
