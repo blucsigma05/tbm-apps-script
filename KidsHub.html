@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Kids Hub v36</title>
+<title>Kids Hub v37</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -901,6 +901,24 @@ body { min-height: 100vh; }
   0%,100% { transform: scale(1); }
   50% { transform: scale(1.4); }
 }
+@keyframes jjCartwheelArc {
+  0%   { transform: translateX(-140px) translateY(20px) rotate(0deg); opacity: 0; }
+  8%   { opacity: 1; }
+  50%  { transform: translateX(0px) translateY(-40px) rotate(180deg); opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateX(140px) translateY(20px) rotate(360deg); opacity: 0; }
+}
+@keyframes jjCartwheelReturn {
+  0%   { transform: translateX(140px) translateY(20px) rotate(360deg); opacity: 0; }
+  8%   { opacity: 1; }
+  50%  { transform: translateX(0px) translateY(-40px) rotate(180deg); opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateX(-140px) translateY(20px) rotate(0deg); opacity: 0; }
+}
+@keyframes jjRainbowPulse {
+  0%,100% { opacity: 0.09; }
+  50% { opacity: 0.16; }
+}
 @keyframes jjDotScroll {
   from { background-position: 0 0; }
   to { background-position: 20px 0; }
@@ -1130,6 +1148,8 @@ var INIT_VIEW  = "<?= INIT_VIEW ?>";
 }
 </style>
 <script>
+// KidsHub.html v37
+var KIDSHUB_VERSION = 'v37';
 // ── Config ────────────────────────────────────────────────────
 var IS_JJ     = INIT_CHILD === 'jj';
 var IS_PARENT = INIT_VIEW  === 'parent';
@@ -1443,9 +1463,9 @@ function buildJJLoadingScreen() {
   // Center content
   var center = document.createElement('div');
   center.style.cssText = 'position:relative;z-index:10;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;gap:0;';
-  // Sparkle with orbiting dots
-  var starWrap = document.createElement('div');
-  starWrap.style.cssText = 'position:relative;width:160px;height:160px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
+  // Two counter-rotating orbit rings (kept from original)
+  var orbitWrap = document.createElement('div');
+  orbitWrap.style.cssText = 'position:relative;width:200px;height:200px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
   var outerRing = document.createElement('div');
   outerRing.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;animation:jjSpin 4s linear infinite;';
   var orbColors = ['#ff66cc','#aa44ff','#ffdd44','#44ddff','#ff4499','#66ffaa'];
@@ -1456,11 +1476,28 @@ function buildJJLoadingScreen() {
     dot.style.cssText = 'position:absolute;width:12px;height:12px;border-radius:50%;left:calc(' + ox + '% - 6px);top:calc(' + oy + '% - 6px);background:' + orbColors[oi] + ';box-shadow:0 0 8px ' + orbColors[oi] + ';';
     outerRing.appendChild(dot);
   }
-  var mainStar = document.createElement('div');
-  mainStar.style.cssText = 'font-size:72px;animation:jjStarPulse 1.5s ease-in-out infinite;filter:drop-shadow(0 0 20px #ffdd00) drop-shadow(0 0 40px #ff88cc);z-index:2;line-height:1;';
-  mainStar.textContent = '\u2728';
-  starWrap.appendChild(outerRing);
-  starWrap.appendChild(mainStar);
+  orbitWrap.appendChild(outerRing);
+  // Cartwheel JJ — arcs left to right, then right to left, loops
+  var cartwheelWrap = document.createElement('div');
+  cartwheelWrap.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:0;height:0;z-index:15;';
+  var cartwheelImg = document.createElement('img');
+  cartwheelImg.src = 'https://i.ibb.co/k2sWCnvH/Gemini-Generated-Image-8uhoc98uhoc98uho.png';
+  cartwheelImg.alt = 'JJ cartwheel';
+  cartwheelImg.style.cssText = 'width:130px;height:auto;display:block;position:absolute;left:-65px;top:-65px;filter:drop-shadow(0 0 12px #ff80ff) drop-shadow(0 0 24px rgba(255,128,255,0.4));animation:jjCartwheelArc 2.4s ease-in-out 0s infinite;';
+  var cartwheelDir = 0;
+  cartwheelImg.addEventListener('animationiteration', function() {
+    cartwheelDir = 1 - cartwheelDir;
+    cartwheelImg.style.animationName = cartwheelDir === 0 ? 'jjCartwheelArc' : 'jjCartwheelReturn';
+  });
+  cartwheelImg.onerror = function() {
+    cartwheelImg.style.display = 'none';
+    var fallback = document.createElement('div');
+    fallback.style.cssText = 'font-size:60px;position:absolute;left:-30px;top:-30px;animation:jjCartwheelArc 2.4s ease-in-out infinite;';
+    fallback.textContent = '\u2728';
+    cartwheelWrap.appendChild(fallback);
+  };
+  cartwheelWrap.appendChild(cartwheelImg);
+  orbitWrap.appendChild(cartwheelWrap);
   var hiText = document.createElement('div');
   hiText.style.cssText = 'font-family:"Fredoka One",cursive;font-size:42px;color:#fff;text-shadow:0 0 20px #cc44ff,0 0 40px #8800ff;animation:jjBounce 0.8s ease-in-out infinite alternate;margin-top:8px;letter-spacing:2px;';
   hiText.textContent = 'Hi JJ! \uD83E\uDD84';
@@ -1475,7 +1512,7 @@ function buildJJLoadingScreen() {
     d.style.cssText = 'width:18px;height:18px;border-radius:50%;background:' + dotColors[di] + ';animation:jjDotBounce 1s ease-in-out ' + (di*0.15) + 's infinite;';
     dotsRow.appendChild(d);
   }
-  center.appendChild(starWrap);
+  center.appendChild(orbitWrap);
   center.appendChild(hiText);
   center.appendChild(subText);
   center.appendChild(dotsRow);
@@ -1539,23 +1576,7 @@ function buildWolfdomeBackground() {
     '<path d="M 400 62 Q 550 200 635 480" fill="none" stroke="rgba(30,120,255,0.09)" stroke-width="1"/>',
     '<circle cx="400" cy="62" r="6" fill="#1e78ff" opacity="0.85"/>',
     '<circle cx="400" cy="62" r="14" fill="none" stroke="#1e78ff" stroke-width="1" opacity="0.4"/>',
-    '<g transform="translate(350,220)" opacity="0.9">',
-      '<polygon points="15,0 0,40 32,40" fill="#1a3a6a"/>',
-      '<polygon points="85,0 70,40 100,40" fill="#1a3a6a"/>',
-      '<polygon points="18,8 8,36 28,36" fill="#0d2244"/>',
-      '<polygon points="82,8 72,36 92,36" fill="#0d2244"/>',
-      '<rect x="5" y="35" width="90" height="65" rx="8" fill="#1a3a6a"/>',
-      '<rect x="25" y="80" width="50" height="30" rx="7" fill="#152d58"/>',
-      '<ellipse cx="33" cy="58" rx="11" ry="11" fill="#0a1a3a"/>',
-      '<ellipse cx="67" cy="58" rx="11" ry="11" fill="#0a1a3a"/>',
-      '<ellipse cx="33" cy="58" rx="7" ry="7" fill="#1e78ff"/>',
-      '<ellipse cx="67" cy="58" rx="7" ry="7" fill="#1e78ff"/>',
-      '<ellipse cx="33" cy="58" rx="3.5" ry="3.5" fill="#90d0ff"/>',
-      '<ellipse cx="67" cy="58" rx="3.5" ry="3.5" fill="#90d0ff"/>',
-      '<ellipse cx="50" cy="88" rx="9" ry="7" fill="#0d1e3a"/>',
-      '<path d="M 38 98 Q 50 108 62 98" fill="none" stroke="#1e78ff" stroke-width="1.5" stroke-linecap="round"/>',
-      '<path d="M 5 100 Q 50 115 95 100 L 95 108 Q 50 122 5 108 Z" fill="#1e4a8a" opacity="0.8"/>',
-    '</g>',
+    // SVG Wolfkid mascot replaced by real image (see wolfImg div below)
     '<g class="wd-bolt" style="animation:wdBoltFlash 1.8s steps(1) 0s infinite">',
       '<path d="M 295 200 L 280 245 L 292 245 L 275 295 L 300 235 L 288 235 Z" fill="#ffffff" stroke="#60d8ff" stroke-width="1.5" opacity="0.95"/>',
       '<path d="M 295 200 L 280 245 L 292 245 L 275 295 L 300 235 L 288 235 Z" fill="#1e78ff" opacity="0.25"/>',
@@ -1573,6 +1594,17 @@ function buildWolfdomeBackground() {
     '<path d="M 60 480 Q 400 465 740 480" fill="none" stroke="rgba(30,120,255,0.3)" stroke-width="2"/>'
   ].join('');
   bg.appendChild(svg);
+
+  // Wolfkid canon image watermark (replaces SVG placeholder)
+  var wolfImg = document.createElement('div');
+  wolfImg.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);z-index:2;opacity:0.18;pointer-events:none;';
+  var wolfImgTag = document.createElement('img');
+  wolfImgTag.src = 'https://i.ibb.co/bMSWhSCY/344db695-da5d-4d8f-bdef-f979348df5b7.jpg';
+  wolfImgTag.alt = 'Wolfkid';
+  wolfImgTag.style.cssText = 'width:260px;height:auto;display:block;';
+  wolfImgTag.onerror = function() { wolfImg.style.display = 'none'; };
+  wolfImg.appendChild(wolfImgTag);
+  bg.appendChild(wolfImg);
 
   // LAYER 4: Pulse rings (3)
   for (var p = 0; p < 3; p++) {
@@ -1840,10 +1872,10 @@ function buildBuggsyLoadingScreen() {
   document.head.appendChild(style);
   // Grid background
   var grid = document.createElement('div');
-  grid.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(0,255,100,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,100,0.04) 1px,transparent 1px);background-size:40px 40px;animation:bGridScroll 2s linear infinite;';
+  grid.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(255,80,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,120,255,0.04) 1px,transparent 1px);background-size:40px 40px;animation:bGridScroll 2s linear infinite;';
   loading.appendChild(grid);
   // Speed lines
-  var lineColors = ['#00ff88','#00ccff','#88ff00','#00ff44','#44ffcc'];
+  var lineColors = ['#ff2200','#ff6600','#1e78ff','#ff4400','#4aa8ff'];
   for (var li = 0; li < 15; li++) {
     var sl = document.createElement('div');
     var w = Math.floor(Math.random()*200+80);
@@ -1852,13 +1884,14 @@ function buildBuggsyLoadingScreen() {
   }
   // Scanline
   var scan = document.createElement('div');
-  scan.style.cssText = 'position:absolute;width:100%;height:3px;background:rgba(0,255,120,0.15);animation:bScan 3s linear infinite;';
+  scan.style.cssText = 'position:absolute;width:100%;height:3px;background:rgba(255,80,0,0.15);animation:bScan 3s linear infinite;';
   loading.appendChild(scan);
   // Flying rings
-  var ringEmojis = ['\uD83D\uDC8D','\u2B55','\uD83D\uDFE2'];
-  for (var ri = 0; ri < 6; ri++) {
+  // Gold + blue rings — 3 gold, 2 blue, 1 orange, 0 red
+  var ringEmojis = ['\uD83D\uDFE1','\uD83D\uDFE1','\uD83D\uDD35','\uD83D\uDFE0','\uD83D\uDFE1','\uD83D\uDD35'];
+  for (var ri = 0; ri < 9; ri++) {
     var ring = document.createElement('div');
-    ring.style.cssText = 'position:absolute;font-size:' + (Math.floor(Math.random()*14+14)) + 'px;opacity:0;pointer-events:none;top:' + (Math.random()*85+5) + '%;animation:bFlyRing ' + (Math.random()*2+1.5) + 's linear ' + (Math.random()*4) + 's infinite;';
+    ring.style.cssText = 'position:absolute;font-size:' + (Math.floor(Math.random()*16+12)) + 'px;opacity:0;pointer-events:none;top:' + (Math.random()*85+5) + '%;animation:bFlyRing ' + (Math.random()*2+1) + 's linear ' + (Math.random()*4) + 's infinite;';
     ring.textContent = ringEmojis[ri%ringEmojis.length];
     loading.appendChild(ring);
   }
@@ -1866,48 +1899,47 @@ function buildBuggsyLoadingScreen() {
   var corners = ['top:16px;left:16px;border-width:2px 0 0 2px;','top:16px;right:16px;border-width:2px 2px 0 0;','bottom:16px;left:16px;border-width:0 0 2px 2px;','bottom:16px;right:16px;border-width:0 2px 2px 0;'];
   for (var ci = 0; ci < 4; ci++) {
     var corner = document.createElement('div');
-    corner.style.cssText = 'position:absolute;width:20px;height:20px;border-color:#00ff88;border-style:solid;opacity:0.4;' + corners[ci];
+    corner.style.cssText = 'position:absolute;width:20px;height:20px;border-color:#ff6600;border-style:solid;opacity:0.5;' + corners[ci];
     loading.appendChild(corner);
   }
   // Center content
   var center = document.createElement('div');
   center.style.cssText = 'position:relative;z-index:10;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;gap:0;font-family:"Orbitron",monospace;';
   // Wolf with motion trails
+  // Turbo Light Mach Gen 6 image (replaces wolf emoji)
   var charWrap = document.createElement('div');
-  charWrap.style.cssText = 'position:relative;width:200px;height:120px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
-  var trail1 = document.createElement('div');
-  trail1.style.cssText = 'position:absolute;left:20px;font-size:80px;opacity:0.12;filter:blur(4px);animation:bMachDash 0.4s ease-in-out infinite alternate;';
-  trail1.textContent = '\uD83D\uDC3A';
-  var mainChar = document.createElement('div');
-  mainChar.style.cssText = 'font-size:80px;animation:bMachDash 0.4s ease-in-out infinite alternate;filter:drop-shadow(0 0 12px #00ff88) drop-shadow(0 0 30px #00cc66);z-index:2;line-height:1;';
-  mainChar.textContent = '\uD83D\uDC3A';
-  charWrap.appendChild(trail1);
-  charWrap.appendChild(mainChar);
+  charWrap.style.cssText = 'position:relative;z-index:10;margin-bottom:16px;';
+  var turboImg = document.createElement('img');
+  turboImg.src = 'https://i.ibb.co/93k6DNRc/1775230300543.png';
+  turboImg.alt = 'Mach Turbo Light';
+  turboImg.style.cssText = 'width:140px;height:auto;display:block;margin:0 auto;filter:drop-shadow(0 0 12px #ff2200) drop-shadow(0 0 24px #ff6600) drop-shadow(0 0 40px rgba(30,120,255,0.5));animation:bMachDash 0.4s ease-in-out infinite alternate;';
+  turboImg.onerror = function() { charWrap.innerHTML = '<div style="font-size:72px;text-align:center;">\uD83D\uDC3A</div>'; };
+  charWrap.appendChild(turboImg);
   var machName = document.createElement('div');
-  machName.style.cssText = 'font-size:15px;color:#00ff88;letter-spacing:4px;text-shadow:0 0 10px #00ff88,0 0 30px #00cc55;animation:bNamePulse 1.2s ease-in-out infinite;margin-bottom:2px;';
-  machName.textContent = 'MACH TURBO LIGHT';
+  machName.style.cssText = 'font-size:15px;color:#ff6600;letter-spacing:4px;text-shadow:0 0 10px #ff6600,0 0 30px #ff2200;animation:bNamePulse 1.2s ease-in-out infinite;margin-bottom:2px;';
+  machName.textContent = 'TURBO LIGHT MACH';
   var mainTitle = document.createElement('div');
-  mainTitle.style.cssText = 'font-size:32px;font-weight:900;color:#fff;letter-spacing:3px;text-shadow:0 0 20px #00ff88,0 0 40px #00cc55;line-height:1.1;';
+  mainTitle.style.cssText = 'font-size:32px;font-weight:900;color:#fff;letter-spacing:3px;text-shadow:0 0 20px #ff2200,0 0 40px #ff6600,0 0 60px rgba(30,120,255,0.5);line-height:1.1;';
   mainTitle.textContent = 'BUGGSY';
   var subTitle = document.createElement('div');
-  subTitle.style.cssText = 'font-size:11px;color:#00aa55;letter-spacing:6px;margin-top:4px;animation:bNamePulse 2s ease-in-out infinite;';
+  subTitle.style.cssText = 'font-size:11px;color:#60aaff;letter-spacing:6px;margin-top:4px;animation:bNamePulse 2s ease-in-out infinite;';
   subTitle.textContent = 'WOLFKID \u00B7 THE WOLFDOME';
   // Speedometer
   var speedoWrap = document.createElement('div');
   speedoWrap.style.cssText = 'margin-top:28px;width:260px;';
   var speedoTrack = document.createElement('div');
-  speedoTrack.style.cssText = 'width:100%;height:8px;background:#0a1a0f;border:1px solid #003311;border-radius:4px;overflow:hidden;position:relative;';
+  speedoTrack.style.cssText = 'width:100%;height:8px;background:#180a00;border:1px solid #3d1200;border-radius:4px;overflow:hidden;position:relative;';
   var speedoFill = document.createElement('div');
-  speedoFill.style.cssText = 'height:100%;background:linear-gradient(90deg,#00aa44,#00ff88,#88ffcc);border-radius:4px;animation:bSpeedUp 1.8s ease-in-out infinite;box-shadow:0 0 8px #00ff88;';
+  speedoFill.style.cssText = 'height:100%;background:linear-gradient(90deg,#ff2200,#1e78ff);border-radius:4px;animation:bSpeedUp 1.8s ease-in-out infinite;box-shadow:0 0 8px #ff2200,0 0 16px rgba(30,120,255,0.5);';
   var speedoNeedle = document.createElement('div');
-  speedoNeedle.style.cssText = 'position:absolute;top:-2px;width:3px;height:12px;background:#00ff88;border-radius:2px;animation:bNeedleMove 1.8s ease-in-out infinite;box-shadow:0 0 6px #00ff88;';
+  speedoNeedle.style.cssText = 'position:absolute;top:-2px;width:3px;height:12px;background:#ffffff;border-radius:2px;animation:bNeedleMove 1.8s ease-in-out infinite;box-shadow:0 0 6px #ff2200,0 0 12px #1e78ff;';
   speedoTrack.appendChild(speedoFill);
   speedoTrack.appendChild(speedoNeedle);
   speedoWrap.appendChild(speedoTrack);
   var statusEl = document.createElement('div');
-  statusEl.style.cssText = 'margin-top:20px;font-size:10px;color:#00ff88;letter-spacing:3px;animation:bBlink 0.9s step-end infinite;';
+  statusEl.style.cssText = 'margin-top:20px;font-size:10px;color:#ff6600;letter-spacing:3px;animation:bBlink 0.9s step-end infinite;';
   statusEl.textContent = 'INITIALIZING MISSION SYSTEMS_';
-  var statusMsgs = ['INITIALIZING MISSION SYSTEMS_','LOADING WOLFKID PROTOCOL_','CALIBRATING SPEED DRIVE_','MACH TURBO LIGHT ONLINE_','MISSIONS LOCKED AND LOADED_'];
+  var statusMsgs = ['INITIALIZING MISSION SYSTEMS_','LOADING WOLFKID PROTOCOL_','CALIBRATING SPEED DRIVE_','TURBO LIGHT MACH ONLINE_','MISSIONS LOCKED AND LOADED_'];
   var msgIdx = 0;
   setInterval(function() { msgIdx = (msgIdx + 1) % statusMsgs.length; statusEl.textContent = statusMsgs[msgIdx]; }, 900);
   center.appendChild(charWrap);
@@ -3479,7 +3511,7 @@ function pBatchApprove(child) {
       if (eduEl) eduEl.textContent = 'Education data unavailable';
     }
     // Load education queue
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
+    if (typeof google !== 'undefined' && google.script && google.script['run']) {
       google.script.run
         .withSuccessHandler(function(eduData) {
           _v2RenderEducation(eduData);
@@ -4158,4 +4190,4 @@ function pBatchApprove(child) {
 })();
 </script>
 </body>
-</html><!-- Paste Chunk 3 here -->
+</html><!-- END OF FILE: KidsHub.html v37 -->
