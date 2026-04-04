@@ -11,4 +11,12 @@ audit-source.sh
 audit-wiring.sh
 wiring-audit-results.txt
 executive-skills-components.html
+playwright.config.js
+package.json
+package-lock.json
+tests/**
+playwright-report/**
+ops/**
+.gitignore
+staar-rla-sprint-final.json
 !appsscript.json
