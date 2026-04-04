@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v3">
+<meta name="tbm-version" content="v4">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -34,6 +34,26 @@ body {
   15%{opacity:1;transform:translateX(-50%) translateY(0)}
   75%{opacity:1}
   100%{opacity:0;transform:translateX(-50%) translateY(-4px)}
+}
+@keyframes warpIn {
+  0%{opacity:0;transform:scale(0.85) translateY(12px)}
+  100%{opacity:1;transform:scale(1) translateY(0)}
+}
+@keyframes boltFlash {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.5;transform:scale(1.2)}
+}
+.b-ring-particle {
+  position:fixed;width:16px;height:16px;border-radius:50%;
+  border:3px solid #ffd700;
+  box-shadow:0 0 8px rgba(255,215,0,0.7),inset 0 0 4px rgba(255,215,0,0.2);
+  background:transparent;pointer-events:none;z-index:500;
+  animation:ringBurst 0.8s cubic-bezier(0.15,0,0.55,1) forwards;
+}
+@keyframes ringBurst {
+  0%{opacity:1;transform:translate(0,0) scale(1.3)}
+  60%{opacity:1}
+  100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.2)}
 }
 textarea::-webkit-input-placeholder { color: #64748B; }
 textarea:-moz-placeholder { color: #64748B; }
@@ -249,7 +269,7 @@ main {
   border-radius: 10px;
   padding: 16px;
   margin-bottom: 14px;
-  animation: fadeSlide 0.3s ease both;
+  animation: warpIn 0.3s ease both;
 }
 .q-header {
   display: flex;
@@ -463,7 +483,7 @@ main {
 <!-- Completion Overlay -->
 <div id="completion-overlay">
   <div class="comp-card">
-    <div class="ring-award">&#x1F48D;</div>
+    <div class="ring-award">&#x2B55;</div>
     <div id="comp-title" style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:#22C55E;margin-bottom:8px;">MODULE COMPLETE</div>
     <div id="comp-subtitle" style="font-size:14px;color:#94A3B8;line-height:1.7;margin-bottom:16px;"></div>
     <div id="comp-rings" style="font-size:32px;font-weight:900;color:#F59E0B;font-family:'Orbitron',sans-serif;margin-bottom:8px;"></div>
@@ -520,6 +540,26 @@ main {
 /* ============================================================
    HomeworkModule — ES5 vanilla conversion
    ============================================================ */
+
+// ── Ring Burst ──
+function fireRingBurst(cx, cy) {
+  for (var i = 0; i < 8; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var r = document.createElement('div');
+        r.className = 'b-ring-particle';
+        var angle = (idx / 8) * Math.PI * 2;
+        var dist = 50 + Math.random() * 35;
+        r.style.left = cx + 'px';
+        r.style.top = cy + 'px';
+        r.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(0) + 'px');
+        r.style.setProperty('--ty', (Math.sin(angle) * dist).toFixed(0) + 'px');
+        document.body.appendChild(r);
+        setTimeout(function() { if (r.parentNode) { r.parentNode.removeChild(r); } }, 900);
+      }, idx * 35);
+    })(i);
+  }
+}
 
 // ── Footer Nav Block ──
 var WOLFKID_NAV_BLOCKS = [
@@ -938,7 +978,7 @@ function showCompletion() {
   subtitle.textContent = "Auto-graded: " + mcCorrect + "/" + totalMC + " multiple choice correct (" + pct + "%). " + openEnded + " open-ended answers submitted for parent review.";
 
   var ringsEl = document.getElementById("comp-rings");
-  ringsEl.innerHTML = "&#x1F48D; Up to 16 RINGS";
+  ringsEl.innerHTML = "&#x2B55; Up to 16 RINGS";
 
   var feedback = document.getElementById("comp-feedback");
   var fbHtml = "";
@@ -967,6 +1007,13 @@ function showCompletion() {
 
   var overlay = document.getElementById("completion-overlay");
   overlay.style.display = "flex";
+  var cx = window.innerWidth / 2;
+  var cy = window.innerHeight / 3;
+  fireRingBurst(cx, cy);
+  if (mcCorrect === totalMC) {
+    setTimeout(function() { fireRingBurst(cx - 80, cy + 30); }, 300);
+    setTimeout(function() { fireRingBurst(cx + 80, cy + 30); }, 600);
+  }
   playBugsyComplete();
 }
 
@@ -1242,9 +1289,12 @@ function renderScience() {
 
   // Intel Briefing (passage)
   html += '<div style="background:' + C.card + ';border:1px solid ' + C.border + ';border-radius:12px;padding:16px;margin-bottom:16px;">';
-  html += '<div style="font-size:11px;color:' + C.scienceColor + ';font-family:\'Orbitron\',sans-serif;letter-spacing:1.5px;margin-bottom:8px;">\uD83D\uDCD6 INTEL BRIEFING</div>';
+  html += '<div style="font-size:11px;color:' + C.scienceColor + ';font-family:\'Orbitron\',sans-serif;letter-spacing:1.5px;margin-bottom:8px;display:flex;align-items:center;gap:8px;">' +
+    '<span style="animation:boltFlash 1.5s ease infinite;">\u26A1</span> INCOMING TRANSMISSION</div>';
   for (var i = 0; i < MODULE.science.passage.length; i++) {
-    html += '<p style="font-size:14px;line-height:1.8;color:' + C.text + ';margin:0 0 10px 0;">' + escapeHtml(MODULE.science.passage[i]) + '</p>';
+    html += '<p style="font-size:14px;line-height:1.8;color:' + C.text + ';margin:0 0 10px 0;' +
+      'animation:fadeSlide 0.4s ease both;animation-delay:' + (i * 0.15) + 's;">' +
+      escapeHtml(MODULE.science.passage[i]) + '</p>';
   }
   html += '</div>';
 
