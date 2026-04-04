@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v67 — Apps Script Router (TBM Consolidated)
+// Code.gs v68 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 67; }
+function getCodeVersion() { return 68; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -408,7 +408,8 @@ function serveData(e) {
         'saveDesignChoicesSafe': saveDesignChoicesSafe,
         'getDesignChoicesSafe': getDesignChoicesSafe,
         'getDesignUnlockedSafe': getDesignUnlockedSafe,
-        'seedAllCurriculumSafe': seedAllCurriculumSafe
+        'seedAllCurriculumSafe': seedAllCurriculumSafe,
+        'getOpsHealthSafe': getOpsHealthSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
@@ -473,6 +474,8 @@ function serveData(e) {
       result = { codeGs: 'v' + getCodeVersion(), dataEngine: 'v' + (function(){ try { return getDataEngineVersion(); } catch(e) { return 'unknown'; } })(), cascadeEngine: 'v' + (function(){ try { return getCascadeEngineVersion(); } catch(e) { return 'unknown'; } })(), updated: new Date().toISOString().slice(0,10) };
     } else if (action === 'loc') {
       result = getLOCCapacity();
+    } else if (action === 'opsHealth') {
+      result = getOpsHealth_();
     } else {
       var start, end;
       if (e.parameter.month) {
@@ -1611,4 +1614,126 @@ function removeReconciliationTrigger() {
     }
   }
 }
-// END OF FILE — Code.gs v67
+// ── OPS HEALTH ENDPOINT ─────────────────────────────────────────
+// Called via ?action=opsHealth — returns operator-facing system health summary
+// Designed for the ops/ framework: one call = "is the whole system healthy?"
+function getOpsHealth_() {
+  var now = new Date();
+  var health = {
+    timestamp: now.toISOString(),
+    overall: 'GREEN',
+    surfaces: {},
+    errors: {},
+    perf: {},
+    versions: {},
+    triggers: {},
+    education: {},
+    scorecard: { overall: 6.2, anchor: 'eabc5b9', lastUpdated: '2026-04-04' }
+  };
+
+  // ── 1. SYSTEM HEALTH (delegates to GASHardening) ────────────
+  try {
+    var sysHealth = getSystemHealth();
+    health.errors = sysHealth.errors || {};
+    health.perf = sysHealth.perf || {};
+    health.versions = sysHealth.versions || {};
+    health.triggers = sysHealth.triggers || {};
+
+    // Tiller sync status
+    if (sysHealth.tillerSync && sysHealth.tillerSync.status === 'stale') {
+      health.overall = 'WATCH';
+      health.tillerSync = sysHealth.tillerSync;
+    }
+
+    // Error escalation
+    if (health.errors.status === 'critical') health.overall = 'RED';
+    else if (health.errors.status === 'warning' && health.overall !== 'RED') health.overall = 'WATCH';
+
+    // Trigger health
+    if (health.triggers.orphans > 0 && health.overall !== 'RED') health.overall = 'WATCH';
+  } catch(e) {
+    health.systemHealthError = e.message;
+    health.overall = 'RED';
+  }
+
+  // ── 2. SURFACE HEALTH (route existence + backing files) ─────
+  var surfaceMap = {
+    pulse: 'ThePulse', vein: 'TheVein', kidshub: 'KidsHub',
+    soul: 'TheSoul', spine: 'TheSpine', sparkle: 'SparkleLearning',
+    homework: 'HomeworkModule', wolfkid: 'WolfkidCER',
+    'daily-missions': 'daily-missions', 'fact-sprint': 'fact-sprint',
+    reading: 'reading-module', writing: 'writing-module',
+    investigation: 'investigation-module', baseline: 'BaselineDiagnostic',
+    'comic-studio': 'ComicStudio', dashboard: 'DesignDashboard',
+    progress: 'ProgressReport', 'story-library': 'StoryLibrary',
+    story: 'StoryReader', 'wolfkid-power-scan': 'wolfkid-power-scan'
+  };
+  var surfaceResults = {};
+  var surfaceKeys = Object.keys(surfaceMap);
+  for (var s = 0; s < surfaceKeys.length; s++) {
+    var route = surfaceKeys[s];
+    var file = surfaceMap[route];
+    try {
+      HtmlService.createHtmlOutputFromFile(file);
+      surfaceResults[route] = 'GREEN';
+    } catch(e) {
+      surfaceResults[route] = 'RED';
+      if (health.overall !== 'RED') health.overall = 'RED';
+    }
+  }
+  health.surfaces = surfaceResults;
+  health.surfaceCount = { total: surfaceKeys.length, green: 0, red: 0 };
+  for (var s2 = 0; s2 < surfaceKeys.length; s2++) {
+    if (surfaceResults[surfaceKeys[s2]] === 'GREEN') health.surfaceCount.green++;
+    else health.surfaceCount.red++;
+  }
+
+  // ── 3. EDUCATION STATUS ─────────────────────────────────────
+  try {
+    var ss = SpreadsheetApp.openById(SSID);
+    var eduTab = TAB_MAP && TAB_MAP['KH_Education'] ? TAB_MAP['KH_Education'] : null;
+    if (eduTab) {
+      var eduSheet = ss.getSheetByName(eduTab);
+      health.education.tabExists = !!eduSheet;
+      if (eduSheet) {
+        health.education.rows = eduSheet.getLastRow() - 1;
+        health.education.status = 'active';
+      }
+    } else {
+      health.education.status = 'no_tab_mapping';
+    }
+
+    // KH heartbeat (cache age)
+    try {
+      var cache = CacheService.getScriptCache();
+      var heartbeat = cache.get('kh_heartbeat');
+      if (heartbeat) {
+        var hbAge = (now.getTime() - new Date(heartbeat).getTime()) / 1000;
+        health.education.heartbeatAgeSec = Math.round(hbAge);
+        health.education.heartbeatStatus = hbAge < 300 ? 'fresh' : 'stale';
+      } else {
+        health.education.heartbeatStatus = 'no_heartbeat';
+      }
+    } catch(e) {}
+  } catch(e) {
+    health.education = { status: 'error', error: e.message };
+  }
+
+  // ── 4. RISK SUMMARY ────────────────────────────────────────
+  var risks = [];
+  if (health.errors.count24h > 0) risks.push('P1: ' + health.errors.count24h + ' errors in last 24h');
+  if (health.surfaceCount.red > 0) risks.push('P0: ' + health.surfaceCount.red + ' surfaces failed to load');
+  if (health.triggers && health.triggers.orphans > 0) risks.push('P2: ' + health.triggers.orphans + ' orphan triggers');
+  health.risks = risks;
+  health.riskCount = risks.length;
+
+  return health;
+}
+
+function getOpsHealthSafe() {
+  return withMonitor_('getOpsHealthSafe', function() {
+    return getOpsHealth_();
+  });
+}
+
+// END OF FILE — Code.gs v68

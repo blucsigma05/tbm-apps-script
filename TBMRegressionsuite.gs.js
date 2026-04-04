@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmRegressionSuite.gs v4 — Phase A3: Post-Deploy Behavioral Assertions
+// tbmRegressionSuite.gs v5 — Phase A3: Post-Deploy Behavioral Assertions
 // WRITES TO: (none — read-only assertions)
 // READS FROM: All sheets (for regression assertions)
 // ════════════════════════════════════════════════════════════════════
@@ -20,7 +20,7 @@
 // USAGE: Run tbmRegressionSuite() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getRegressionSuiteVersion() { return 4; }
+function getRegressionSuiteVersion() { return 5; }
 
 /**
  * Main entry point. Run after every deploy.
@@ -575,21 +575,28 @@ function runEnvironmentAssertions_(results) {
     results.assertions.push(a);
   })();
 
-  // ── ENV-006B: Wiring — every google.script.run has withFailureHandler ──
+  // ── ENV-006B: Wiring — every google.script.run chain has withFailureHandler ──
+  // NOTE: Raw google.script.run count is unreliable (guard checks, comments, multi-line chains).
+  // Correct approach: withSuccessHandler count = actual call chains. Compare to withFailureHandler.
   (function() {
     var a = { id: 'ENV-006B', category: 'wiring', description: 'Every google.script.run call has withFailureHandler', status: 'PASS', details: '' };
-    var htmlFiles = ['KidsHub', 'ThePulse', 'TheVein', 'TheSoul', 'TheSpine'];
+    var htmlFiles = ['KidsHub', 'ThePulse', 'TheVein', 'TheSoul', 'TheSpine',
+      'SparkleLearning', 'HomeworkModule', 'WolfkidCER', 'StoryLibrary', 'StoryReader',
+      'ComicStudio', 'DesignDashboard', 'ProgressReport', 'BaselineDiagnostic',
+      'daily-missions', 'fact-sprint', 'investigation-module', 'reading-module',
+      'writing-module', 'wolfkid-power-scan'];
     var violations = [];
+    var totalChains = 0;
+    var totalHandlers = 0;
     for (var f = 0; f < htmlFiles.length; f++) {
       try {
         var content = HtmlService.createHtmlOutputFromFile(htmlFiles[f]).getContent();
-        var runCount = (content.match(/google\.script\.run/g) || []).length;
-        // Subtract false positives: !!google.script.run (existence checks, not calls)
-        var falsePos = (content.match(/!!google\.script\.run/g) || []).length;
-        runCount -= falsePos;
+        var successCount = (content.match(/withSuccessHandler/g) || []).length;
         var handlerCount = (content.match(/withFailureHandler/g) || []).length;
-        if (runCount !== handlerCount) {
-          violations.push(htmlFiles[f] + ': ' + runCount + ' run calls but ' + handlerCount + ' failure handlers');
+        totalChains += successCount;
+        totalHandlers += handlerCount;
+        if (successCount > 0 && handlerCount < successCount) {
+          violations.push(htmlFiles[f] + ': ' + successCount + ' chains but ' + handlerCount + ' failure handlers');
         }
       } catch(e) { /* file may not exist, skip */ }
     }
@@ -597,7 +604,7 @@ function runEnvironmentAssertions_(results) {
       a.status = 'FAIL';
       a.details = violations.join('; ');
     } else {
-      a.details = 'All HTML files have matching withFailureHandler counts.';
+      a.details = 'All ' + htmlFiles.length + ' HTML files pass. ' + totalChains + ' chains, ' + totalHandlers + ' failure handlers.';
     }
     results.assertions.push(a);
   })();
@@ -822,4 +829,4 @@ function regressionEnvOnly() {
 }
 
 
-// END OF FILE — tbmRegressionSuite.gs v4
+// END OF FILE — tbmRegressionSuite.gs v5

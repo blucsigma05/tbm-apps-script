@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v82 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v83 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 82; }
+function getDataEngineVersion() { return 83; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -3060,15 +3060,21 @@ function getBoardData() {
   }
 
   // ── 6. KidsHub chore status ───────────────────────────────────────
+  // v83: Use getKidsHubWidgetData_ which builds the .buggsy.stats shape.
+  // getKidsHubData() returns flat tasks array without per-child stats.
   var choreStatus = { buggsy: { completed: 0, total: 0 }, jj: { completed: 0, total: 0 }, pendingApprovals: 0 };
   try {
-    var khData = JSON.parse(getKidsHubData('all'));
-    if (khData && !khData.error) {
-      choreStatus.buggsy.completed = khData.buggsy.stats.completedCount || 0;
-      choreStatus.buggsy.total     = khData.buggsy.stats.totalTasks || 0;
-      choreStatus.jj.completed     = khData.jj.stats.completedCount || 0;
-      choreStatus.jj.total         = khData.jj.stats.totalTasks || 0;
-      choreStatus.pendingApprovals = (khData.buggsy.stats.pendingCount || 0) + (khData.jj.stats.pendingCount || 0);
+    var khWidget = getKidsHubWidgetDataSafe('summary');
+    if (khWidget && !khWidget.error) {
+      if (khWidget.buggsy && khWidget.buggsy.stats) {
+        choreStatus.buggsy.completed = khWidget.buggsy.stats.completedCount || 0;
+        choreStatus.buggsy.total     = khWidget.buggsy.stats.totalTasks || 0;
+      }
+      if (khWidget.jj && khWidget.jj.stats) {
+        choreStatus.jj.completed     = khWidget.jj.stats.completedCount || 0;
+        choreStatus.jj.total         = khWidget.jj.stats.totalTasks || 0;
+      }
+      choreStatus.pendingApprovals = (khWidget.household && khWidget.household.totalPendingApprovals) || 0;
     }
   } catch(e) {
     if (typeof logError_ === 'function') logError_('de_getBoardData_ChoreStatus', e);
@@ -3384,4 +3390,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v82
+// END OF FILE — DataEngine v83
