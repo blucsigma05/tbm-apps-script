@@ -659,7 +659,7 @@ function autoMatchAudio(text) {
   var positives = ['awesome', 'super', 'great job', 'yes', 'you found', 'beautiful', 'amazing', 'wonderful', 'perfect', 'nice'];
   for (var p = 0; p < positives.length; p++) {
     if (t.indexOf(positives[p]) !== -1) {
-      var idx = Math.floor(Math.random() * 8) + 1;
+      var idx = Math.floor(Math.random() * 4) + 1;
       return 'jj_feedback_correct' + idx + '.mp3';
     }
   }
@@ -717,7 +717,8 @@ function autoMatchAudio(text) {
 
   // Instruction patterns
   if (t.indexOf('pick a game') !== -1) { return 'jj_instruction_pick_game.mp3'; }
-  if (t.indexOf('what comes next') !== -1 || t.indexOf('what color') !== -1) { return 'jj_instruction_what_next.mp3'; }
+  if (t.indexOf('what color') !== -1) { return 'jj_instruction_what_color.mp3'; }
+  if (t.indexOf('what comes next') !== -1) { return 'jj_instruction_what_next.mp3'; }
   if (t.indexOf('tap each') !== -1 || t.indexOf('count') !== -1) { return 'jj_instruction_count.mp3'; }
   if (t.indexOf('build the name') !== -1 || t.indexOf('spell') !== -1) { return 'jj_instruction_name_game.mp3'; }
 
