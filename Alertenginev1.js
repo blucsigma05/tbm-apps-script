@@ -1,17 +1,17 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// AlertEngine.gs v7 — Push Notifications via Pushover API
+// AlertEngine.gs v8 — Push Notifications via Pushover API
 // WRITES TO: (Pushover API only — no sheet writes)
 // READS FROM: 💻🧮 Helpers (for config)
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
-function getAlertEngineVersion() { return 7; }
+function getAlertEngineVersion() { return 8; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor
 var _aeSS = null;
 function getAESS_() {
-  if (!_aeSS) _aeSS = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  if (!_aeSS) _aeSS = SpreadsheetApp.openById(SSID);
   return _aeSS;
 }
 
@@ -612,5 +612,5 @@ function dailyHealthCheck() {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — AlertEngine v7
+// END OF FILE — AlertEngine v8
 // ════════════════════════════════════════════════════════════════════

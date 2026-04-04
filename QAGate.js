@@ -359,7 +359,7 @@ function gate9_TabExistence() {
   // Tab names verified from DataEngine v72 TAB_MAP (lines 159-205)
   var gate = { gate: 9, name: 'Tab Existence', status: 'PASS', detail: '' };
   try {
-    var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+    var ss = SpreadsheetApp.openById(SSID);
     // Use ACTUAL prefixed names from TAB_MAP — not logical names
     var requiredTabs = [
       // 🔒 Tiller Core — no prefix on these 3

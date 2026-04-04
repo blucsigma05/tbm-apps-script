@@ -17,7 +17,7 @@
 function clearKHTestData() {
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
-  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  var ss = SpreadsheetApp.openById(SSID);
   
   function getSheet(key) {
     var name = typeof TAB_MAP !== 'undefined' ? (TAB_MAP[key] || key) : key;
