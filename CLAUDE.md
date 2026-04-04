@@ -152,28 +152,48 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 
 ### Cloudflare Worker Routes
 All routes proxy to GAS `?page=` equivalents. Verify all return 200 after deploy.
+
+#### Core Surfaces
 ```
-thompsonfams.com/pulse          → ?page=pulse
-thompsonfams.com/vein           → ?page=vein
-thompsonfams.com/parent         → ?page=kidshub&view=parent
-thompsonfams.com/buggsy         → ?page=kidshub&child=buggsy
-thompsonfams.com/jj             → ?page=kidshub&child=jj
-thompsonfams.com/soul           → ?page=soul
-thompsonfams.com/spine          → ?page=spine
-thompsonfams.com/homework       → ?page=homework
-thompsonfams.com/sparkle        → ?page=sparkle
-thompsonfams.com/wolfkid        → ?page=wolfkid
-thompsonfams.com/reading        → ?page=reading
-thompsonfams.com/writing        → ?page=writing
-thompsonfams.com/facts          → ?page=facts
-thompsonfams.com/dashboard      → ?page=dashboard
-thompsonfams.com/progress       → ?page=progress
-thompsonfams.com/comic-studio   → ?page=comic-studio
-thompsonfams.com/story-library  → ?page=story-library
-thompsonfams.com/story          → ?page=story
-thompsonfams.com/investigation  → ?page=investigation
-thompsonfams.com/daily-missions → ?page=daily-missions
-thompsonfams.com/baseline       → ?page=baseline
+thompsonfams.com/pulse            → ?page=pulse
+thompsonfams.com/vein             → ?page=vein
+thompsonfams.com/parent           → ?page=kidshub&view=parent
+thompsonfams.com/buggsy           → ?page=kidshub&child=buggsy
+thompsonfams.com/jj               → ?page=kidshub&child=jj
+thompsonfams.com/soul             → ?page=soul
+thompsonfams.com/spine            → ?page=spine
+```
+
+#### Education Surfaces
+```
+thompsonfams.com/daily-missions   → ?page=daily-missions
+thompsonfams.com/daily-adventures → ?page=daily-missions&child=jj  (JJ alias)
+thompsonfams.com/homework         → ?page=homework
+thompsonfams.com/sparkle          → ?page=sparkle
+thompsonfams.com/sparkle-free     → ?page=sparkle&mode=freeplay
+thompsonfams.com/wolfkid          → ?page=wolfkid
+thompsonfams.com/reading          → ?page=reading
+thompsonfams.com/writing          → ?page=writing
+thompsonfams.com/facts            → ?page=facts
+thompsonfams.com/investigation    → ?page=investigation
+thompsonfams.com/baseline         → ?page=baseline
+thompsonfams.com/power-scan       → ?page=power-scan
+```
+
+#### Tools & Dashboards
+```
+thompsonfams.com/dashboard        → ?page=dashboard
+thompsonfams.com/progress         → ?page=progress
+thompsonfams.com/comic-studio     → ?page=comic-studio
+thompsonfams.com/story-library    → ?page=story-library
+thompsonfams.com/story            → ?page=story
+thompsonfams.com/vault            → ?page=vault  (planned, not yet built)
+```
+
+#### API Endpoints
+```
+thompsonfams.com/api              → POST proxy to google.script.run
+thompsonfams.com/api/verify-pin   → PIN verification for finance surfaces
 ```
 
 ---

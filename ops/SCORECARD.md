@@ -106,7 +106,7 @@ Current head: `fadf8fd`
 | Category | Score | Why |
 |---|---:|---|
 | Architecture Fit | 8.0 | Real platform structure: shared backend, CF routing, multi-surface system. No `getActiveSpreadsheet()` violations in active code. |
-| Automation Maturity | 6.5 | Playwright, smoke habits, codex review. Gap: 23.7% of `google.script.run` calls missing `withFailureHandler()`. audit-source.sh doesn't check this. |
+| Automation Maturity | 7.0 | Playwright, smoke habits, codex review. All 145 google.script.run chains have withFailureHandler(). audit-source.sh now includes automated wiring gate. |
 | Monitoring / Observability | 6.5 | ErrorLog, PerfLog, `withMonitor_()`, version collectors. Gap: no single live ops scorecard. |
 | Data Integrity Controls | 6.0 | Strong wrapper discipline. Gap: some education save paths and reward/completion semantics still drift. |
 | Sustainability / Maintainability | 6.0 | Growing fast. Gap: 5 undocumented CF routes, CLAUDE.md route table out of date. |
@@ -116,7 +116,7 @@ Current head: `fadf8fd`
 
 ### Weighted Read
 
-- Overall maturity: `6.4 / 10`
+- Overall maturity: `6.5 / 10`
 - Operating verdict: `Strong real platform with meaningful process, approaching controlled system`
 
 ### 10/10 Definition
@@ -140,14 +140,15 @@ TBM reaches `10/10` when:
 | .html surface files | 21 | Dashboards, education, kids, utilities |
 | CF worker routes | 35 | Includes variants and API endpoints |
 | CLAUDE.md documented routes | 22 | Missing 13 (vault, power-scan, variants, APIs) |
-| google.script.run calls | 190 | Across all .html files |
-| withFailureHandler calls | 145 | 23.7% gap (45 missing) |
-| Files with handler gaps | 11 | Ranges 1-6 per file |
+| google.script.run chains | 145 | Verified by semantic analysis (grep overcounts) |
+| withFailureHandler calls | 145 | 100% coverage — zero gaps |
+| Files with handler gaps | 0 | All 20 HTML files compliant |
 | Code.gs version | 67 | Consistent across header/getter/EOF |
 | Smoke test categories | 9 | 6 runtime + 3 source-level |
 | Regression test assertions | 15+ | BUG, ENV, PERF categories |
 | audit-source.sh checks | 4 | ES5, versions, getActiveSpreadsheet, eval |
-| Missing audit checks | 2 | failure handler wiring, TAB_MAP hardcoding |
+| audit-source.sh checks | 5 | ES5, versions, getActiveSpreadsheet, eval, failure handler wiring |
+| Missing audit checks | 1 | TAB_MAP hardcoding |
 
 ---
 

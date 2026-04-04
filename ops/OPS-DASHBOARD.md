@@ -51,7 +51,7 @@ Answer in under 60 seconds:
 | Parent dashboard | WATCH | Medium | E2E harness + earlier audit | Core UI present. Clear-task scoring mismatch still open. |
 | Education platform | WATCH | Medium | Recent audits + build history | Fast-moving and usable. Save/fallback truthfulness needs standardization. |
 | Ambient displays | WATCH | Medium | Screenshot suite | Soul/Spine screenshots fire too early for trustworthy visual gate. |
-| Automation / testing | WATCH | High | Playwright + codex review | Strongly improved. 23.7% failure handler gap is the top automation debt. |
+| Automation / testing | GREEN | High | Playwright + codex review + audit-source.sh wiring gate | All 145 call chains have withFailureHandler(). Automated gate added. |
 | Docs / runtime alignment | WATCH | Medium-Low | Full-system audit + drift ledger | Better than before. CLAUDE.md route table 13 entries behind CF worker. |
 
 ---
@@ -82,7 +82,7 @@ Answer in under 60 seconds:
 
 ### P0
 
-1. **Failure handler coverage gap** — 45 of 190 google.script.run calls lack withFailureHandler(). Tier 1 CLAUDE.md violation. 11 files affected.
+1. ~~**Failure handler coverage gap**~~ — **RESOLVED.** Deep audit confirmed all 145 chains have handlers. Grep was overcounting. Automated gate added to audit-source.sh.
 
 2. **Parent clear-task scoring mismatch** — Modal offers multiple point outcomes, server does not honor the choice.
 
@@ -130,9 +130,9 @@ Answer in under 60 seconds:
 ## Action Queue
 
 ### Now
-1. Fix failure handler gap across 11 HTML files
-2. Extend audit-source.sh with failure handler check
-3. Update CLAUDE.md route table to match CF worker
+1. ~~Fix failure handler gap~~ — DONE. All files already compliant.
+2. ~~Extend audit-source.sh with failure handler check~~ — DONE. Wiring gate added.
+3. ~~Update CLAUDE.md route table to match CF worker~~ — DONE. 22 → 35 entries.
 4. Re-verify parent clear-task scoring path
 
 ### Next

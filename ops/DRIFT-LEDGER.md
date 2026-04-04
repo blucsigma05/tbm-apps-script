@@ -76,9 +76,9 @@ Re-anchor note: pass 1 at `5bfc60b`, pass 2 at `3f33771`, pass 3 refreshed after
 
 | Area | Feature / Concern | Source | Current evidence | Status | Notes |
 |---|---|---|---|---|---|
-| Automation | withFailureHandler() coverage gap | Codebase audit April 3, 2026 | 45 of 190 google.script.run calls missing handlers | live but undocumented | Tier 1 CLAUDE.md violation. 11 files affected. |
-| Documentation | CLAUDE.md route table incomplete | CF worker audit April 3, 2026 | 35 CF paths vs 22 documented | live but undocumented | Missing: /vault, /power-scan, /sparkle-free, /daily-adventures, /api, /api/verify-pin |
-| Automation | audit-source.sh missing failure handler check | Codebase audit April 3, 2026 | Script checks ES5, versions, eval but not wiring | live but undocumented | Enhancement needed to catch Tier 1 violations pre-push |
+| Automation | withFailureHandler() coverage | Codebase audit April 3, 2026 | Deep semantic audit: all 145 chains have handlers. Grep overcounted. | still live | RESOLVED. Automated wiring gate added to audit-source.sh. |
+| Documentation | CLAUDE.md route table | CF worker audit April 3, 2026 | CLAUDE.md updated: 22 → 35 paths, organized by category | still live | RESOLVED. Route table now matches CF worker exactly. |
+| Automation | audit-source.sh failure handler check | Codebase audit April 3, 2026 | Wiring gate added comparing withSuccessHandler to withFailureHandler counts | still live | RESOLVED. audit-source.sh now has 5 checks (ES5, versions, getActiveSpreadsheet, eval, wiring). |
 | Performance | Heavy animated backgrounds on kid tablets | PRs #37/#38 April 3, 2026 | 7-13 layer SVG backgrounds with 100+ animated elements on Galaxy A9 / Fire tablets | live but undocumented | No perf guardrails, no reduced-motion path, no device-tier detection |
 | Platform | Duplicate Sparkle Kingdom background implementations | PRs #37/#38 | KidsHub.html and SparkleLearning.html have independent copies | live but undocumented | Two separate 13-layer implementations. Changes must be synced manually. |
 
