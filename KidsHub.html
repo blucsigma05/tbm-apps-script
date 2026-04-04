@@ -1889,7 +1889,7 @@ function buildBuggsyLoadingScreen() {
   // Flying rings
   // Gold + blue rings — 3 gold, 2 blue, 1 orange, 0 red
   var ringEmojis = ['\uD83D\uDFE1','\uD83D\uDFE1','\uD83D\uDD35','\uD83D\uDFE0','\uD83D\uDFE1','\uD83D\uDD35'];
-  for (var ri = 0; ri < 9; ri++) {
+  for (var ri = 0; ri < 6; ri++) {
     var ring = document.createElement('div');
     ring.style.cssText = 'position:absolute;font-size:' + (Math.floor(Math.random()*16+12)) + 'px;opacity:0;pointer-events:none;top:' + (Math.random()*85+5) + '%;animation:bFlyRing ' + (Math.random()*2+1) + 's linear ' + (Math.random()*4) + 's infinite;';
     ring.textContent = ringEmojis[ri%ringEmojis.length];
@@ -3511,7 +3511,7 @@ function pBatchApprove(child) {
       if (eduEl) eduEl.textContent = 'Education data unavailable';
     }
     // Load education queue
-    if (typeof google !== 'undefined' && google.script && google.script['run']) {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(function(eduData) {
           _v2RenderEducation(eduData);
