@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v2">
+<meta name="tbm-version" content="v3">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -28,6 +28,12 @@ body {
 @keyframes ringPulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
+}
+@keyframes navBlockFade {
+  0%{opacity:0;transform:translateX(-50%) translateY(6px)}
+  15%{opacity:1;transform:translateX(-50%) translateY(0)}
+  75%{opacity:1}
+  100%{opacity:0;transform:translateX(-50%) translateY(-4px)}
 }
 textarea::-webkit-input-placeholder { color: #64748B; }
 textarea:-moz-placeholder { color: #64748B; }
@@ -504,8 +510,9 @@ main {
 
 <!-- Footer -->
 <div id="app-footer">
-  <button class="footer-btn">&#x1F3E0; Chores</button>
-  <button class="footer-btn">&#x1F43A; Wolfkid</button>
+  <!-- footer-nav: inactive tabs fire showNavBlock(), active tab has no onclick -->
+  <button class="footer-btn" onclick="showNavBlock()">&#x1F3E0; Chores</button>
+  <button class="footer-btn" onclick="showNavBlock()">&#x1F43A; Wolfkid</button>
   <button class="footer-btn active">&#x1F4DA; Math/Sci</button>
 </div>
 
@@ -513,6 +520,30 @@ main {
 /* ============================================================
    HomeworkModule — ES5 vanilla conversion
    ============================================================ */
+
+// ── Footer Nav Block ──
+var WOLFKID_NAV_BLOCKS = [
+  '\uD83D\uDC3A Finish the mission first.',
+  '\u26A1 No escaping. Eyes on the mission.',
+  '\uD83D\uDC3A Almost there. Lock in.'
+];
+var _navBlockIdx = 0;
+function showNavBlock() {
+  var msg = WOLFKID_NAV_BLOCKS[_navBlockIdx % WOLFKID_NAV_BLOCKS.length];
+  _navBlockIdx++;
+  var el = document.createElement('div');
+  el.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);' +
+    'background:rgba(15,24,36,0.97);border:1px solid rgba(245,158,11,0.4);' +
+    'color:#f59e0b;font-family:Orbitron,monospace;font-size:9px;' +
+    'padding:10px 18px;border-radius:8px;z-index:9999;pointer-events:none;' +
+    'box-shadow:0 0 16px rgba(245,158,11,0.2);letter-spacing:0.5px;' +
+    'animation:navBlockFade 1.8s ease forwards;white-space:nowrap;';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() {
+    if (el.parentNode) { el.parentNode.removeChild(el); }
+  }, 1900);
+}
 
 // ── Test Mode Detection ──
 var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
