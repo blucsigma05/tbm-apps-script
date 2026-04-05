@@ -1,0 +1,197 @@
+name: Pipeline Review Fixer
+
+on:
+  pull_request:
+    types: [labeled, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number to process
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: pipeline-review-fixer-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    name: Apply deterministic review fixes
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        !github.event.pull_request.draft &&
+        contains(join(github.event.pull_request.labels.*.name, ','), 'pipeline:fix-needed') &&
+        (
+          github.event.action == 'synchronize' ||
+          github.event.action == 'reopened' ||
+          github.event.action == 'ready_for_review' ||
+          (github.event.action == 'labeled' && github.event.label.name == 'pipeline:fix-needed')
+        )
+      )
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+          token: ${{ secrets.PIPELINE_BOT_TOKEN || github.token }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Configure git identity
+        run: |
+          git config user.name "pipeline-review-fixer[bot]"
+          git config user.email "pipeline-review-fixer[bot]@users.noreply.github.com"
+
+      - name: Prepare deterministic fixes
+        id: prepare
+        env:
+          GITHUB_TOKEN: ${{ secrets.PIPELINE_BOT_TOKEN || github.token }}
+          TARGET_PR: ${{ inputs.pr || github.event.pull_request.number }}
+        run: node .github/scripts/review-fixer.js
+
+      - name: Finalize stalled cycle
+        if: steps.prepare.outputs.status == 'stopped'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PIPELINE_BOT_TOKEN || github.token }}
+          PIPELINE_RELAY_URL: ${{ secrets.PIPELINE_RELAY_URL }}
+          PIPELINE_SECRET: ${{ secrets.PIPELINE_SECRET }}
+        run: node .github/scripts/review-fixer.js --finalize
+
+      - name: Exit when no deterministic fixes were applied
+        if: steps.prepare.outputs.status == 'noop'
+        run: echo "No supported mechanical review fixes were available."
+
+      - name: Finalize no-op fixer state
+        if: steps.prepare.outputs.status == 'noop'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PIPELINE_BOT_TOKEN || github.token }}
+        run: node .github/scripts/review-fixer.js --finalize
+
+      - name: Warn when bot push token is missing
+        if: steps.prepare.outputs.should_push == 'true'
+        env:
+          PIPELINE_BOT_TOKEN: ${{ secrets.PIPELINE_BOT_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$PIPELINE_BOT_TOKEN" ]; then
+            echo "::warning::PIPELINE_BOT_TOKEN is not configured. Bot pushes may not retrigger CI."
+          fi
+
+      - name: Run source audit
+        if: steps.prepare.outputs.should_push == 'true'
+        shell: bash
+        run: bash audit-source.sh
+
+      - name: Install clasp
+        if: steps.prepare.outputs.should_push == 'true' && steps.prepare.outputs.needs_deploy == 'true'
+        env:
+          CLASP_CREDENTIALS_JSON: ${{ secrets.CLASP_CREDENTIALS_JSON }}
+        shell: bash
+        run: |
+          if [ -z "$CLASP_CREDENTIALS_JSON" ]; then
+            echo "CLASP_CREDENTIALS_JSON is required for deploying review fixes." >&2
+            exit 1
+          fi
+          npm install -g @google/clasp
+          printf '%s' "$CLASP_CREDENTIALS_JSON" > "$HOME/.clasprc.json"
+
+      - name: Deploy GAS review fixes
+        if: steps.prepare.outputs.should_push == 'true' && steps.prepare.outputs.needs_deploy == 'true'
+        env:
+          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+          GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
+          REVIEW_FIX_CYCLE: ${{ steps.prepare.outputs.next_cycle }}
+        shell: bash
+        run: |
+          if [ -z "$GAS_DEPLOYMENT_ID" ] || [ -z "$GAS_DEPLOY_URL" ]; then
+            echo "GAS_DEPLOYMENT_ID and GAS_DEPLOY_URL are required for deploying review fixes." >&2
+            exit 1
+          fi
+          clasp push --force
+          clasp deploy -i "$GAS_DEPLOYMENT_ID" -d "review-fix-$REVIEW_FIX_CYCLE"
+          response="$(curl -sS -L --max-time 120 "${GAS_DEPLOY_URL}?action=runTests")"
+          printf '%s' "$response" > review_fix_test_response.json
+          overall="$(python3 - <<'PY'
+          import json
+          try:
+              with open('review_fix_test_response.json', 'r', encoding='utf-8') as fh:
+                  data = json.load(fh)
+              print(data.get('overall', 'UNKNOWN'))
+          except Exception:
+              print('ERROR')
+          PY
+          )"
+          if [ "$overall" != "PASS" ]; then
+            echo "Review-fix deploy tests failed: $overall" >&2
+            exit 1
+          fi
+
+      - name: Commit and push review fixes
+        if: steps.prepare.outputs.should_push == 'true'
+        env:
+          PUSH_TOKEN: ${{ secrets.PIPELINE_BOT_TOKEN }}
+          REVIEW_FIX_CYCLE: ${{ steps.prepare.outputs.next_cycle }}
+          HEAD_REF: ${{ steps.prepare.outputs.head_ref }}
+        shell: bash
+        run: |
+          rm -f review_fix_test_response.json review_fix_failure_payload.json relay_payload.json test_response.json test_summary.md
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No staged changes detected after fixer run."
+            exit 0
+          fi
+          git commit -m "fix: review comments [review-fix-$REVIEW_FIX_CYCLE]"
+          if [ -n "$PUSH_TOKEN" ]; then
+            git remote set-url origin "https://x-access-token:${PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          fi
+          git push origin "HEAD:${HEAD_REF}"
+
+      - name: Finalize review fixes
+        if: success() && steps.prepare.outputs.status == 'applied'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PIPELINE_BOT_TOKEN || github.token }}
+          PIPELINE_RELAY_URL: ${{ secrets.PIPELINE_RELAY_URL }}
+          PIPELINE_SECRET: ${{ secrets.PIPELINE_SECRET }}
+        run: node .github/scripts/review-fixer.js --finalize
+
+      - name: Notify fixer failure
+        if: failure() && steps.prepare.outputs.should_push == 'true'
+        env:
+          PIPELINE_RELAY_URL: ${{ secrets.PIPELINE_RELAY_URL }}
+          PIPELINE_SECRET: ${{ secrets.PIPELINE_SECRET }}
+        shell: bash
+        run: |
+          if [ -z "$PIPELINE_RELAY_URL" ] || [ -z "$PIPELINE_SECRET" ]; then
+            exit 0
+          fi
+          python3 - <<'PY' > review_fix_failure_payload.json
+          import json
+          import os
+          payload = {
+              "fn": "pipelineRelaySafe",
+              "args": [{
+                  "secret": os.environ["PIPELINE_SECRET"],
+                  "repo": os.environ["GITHUB_REPOSITORY"],
+                  "type": "tests_failed",
+                  "summary": "Review-fix workflow failed before completion.",
+                  "prNumber": None,
+                  "prUrl": "",
+                  "sha": os.environ.get("GITHUB_SHA"),
+                  "runUrl": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+                  "cycle": 0
+              }]
+          }
+          print(json.dumps(payload))
+          PY
+          curl -sS -X POST -H "Content-Type: application/json" --data @review_fix_failure_payload.json "$PIPELINE_RELAY_URL"

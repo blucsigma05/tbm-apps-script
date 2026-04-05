@@ -1,12 +1,12 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// AlertEngine.gs v7 — Push Notifications via Pushover API
+// AlertEngine.gs v8 — Push Notifications via Pushover API
 // WRITES TO: (Pushover API only — no sheet writes)
 // READS FROM: 💻🧮 Helpers (for config)
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
-function getAlertEngineVersion() { return 7; }
+function getAlertEngineVersion() { return 8; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor
 var _aeSS = null;
@@ -92,6 +92,33 @@ function sendPush_(title, message, recipient, priority, url) {
     }
   }
   return success;
+}
+
+function sendPipelineNotification_(type, payload) {
+  var meta = {
+    deploy_complete: { title: 'Deploy Complete', priority: 0 },
+    tests_failed: { title: 'Tests Failed', priority: 1 },
+    review_ready: { title: 'Review Ready', priority: 0 },
+    fix_needed: { title: 'Fix Needed', priority: 0 },
+    fix_pushed: { title: 'Fix Pushed', priority: -1 },
+    pipeline_stalled: { title: 'Pipeline Stalled', priority: 1 }
+  };
+  var cfg = meta[type];
+  if (!cfg) throw new Error('Unsupported pipeline notification type: ' + type);
+
+  var safePayload = payload || {};
+  var repo = safePayload.repo ? String(safePayload.repo) : 'pipeline';
+  var summary = safePayload.summary ? String(safePayload.summary) : 'No summary provided.';
+  var title = repo + ' — ' + cfg.title;
+  var url = safePayload.prUrl ? String(safePayload.prUrl) : (safePayload.runUrl ? String(safePayload.runUrl) : '');
+
+  return {
+    ok: sendPush_(title, summary, 'LT', cfg.priority, url),
+    type: type,
+    title: title,
+    priority: cfg.priority,
+    url: url
+  };
 }
 
 
@@ -612,5 +639,5 @@ function dailyHealthCheck() {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — AlertEngine v7
+// END OF FILE — AlertEngine v8
 // ════════════════════════════════════════════════════════════════════

@@ -215,6 +215,45 @@ fi
 
 echo ""
 
+# ── ROUTE INTEGRITY (Worker ↔ GAS Router ↔ HTML files) ───────
+echo "--- Route Integrity ---"
+
+ROUTE_FAIL=0
+
+# Extract worker clean routes — get the page= value for each worker route
+WORKER_PAGES=$(grep -o "page: *'[a-z-]*'" cloudflare-worker.js 2>/dev/null | sed "s/page: *'//;s/'//" | sort -u)
+
+# Extract GAS route keys from servePage() routes object
+GAS_ROUTES=$(grep -o "'[a-z-]*' *: *{" Code.js 2>/dev/null | sed "s/' *: *{//;s/'//" | sort -u)
+
+# Extract GAS route file mappings (route → file name)
+GAS_FILES=$(grep -o "file: *'[^']*'" Code.js 2>/dev/null | sed "s/file: *'//;s/'//" | sort -u)
+
+# Check 1: Every worker page= target has a GAS route entry
+for page in $WORKER_PAGES; do
+  if ! echo "$GAS_ROUTES" | grep -q "^${page}$"; then
+    echo "  X Worker targets page=${page} but no GAS route entry found"
+    ROUTE_FAIL=1
+  fi
+done
+
+# Check 2: Every GAS route file has a backing .html file
+for htmlname in $GAS_FILES; do
+  if [ ! -f "${htmlname}.html" ]; then
+    echo "  X GAS route references ${htmlname}.html but file does not exist"
+    ROUTE_FAIL=1
+  fi
+done
+
+if [ $ROUTE_FAIL -eq 1 ]; then
+  echo "  FAIL -- Route integrity FAILED"
+  FAIL=1
+else
+  echo "  OK -- Route integrity PASSED ($(echo "$WORKER_PAGES" | wc -w) worker pages, $(echo "$GAS_FILES" | wc -w) backing files)"
+fi
+
+echo ""
+
 # ── SUMMARY ───────────────────────────────────────────────────
 echo "=== SUMMARY ==="
 echo "Failures:  $FAIL"

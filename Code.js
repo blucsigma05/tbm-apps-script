@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v68 — Apps Script Router (TBM Consolidated)
+// Code.gs v70 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 68; }
+function getCodeVersion() { return 70; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -279,7 +279,10 @@ function doPost(e) {
     var body = JSON.parse(e.postData.contents);
     var fn = body.fn;
     var args = body.args || [];
-    var whitelist = { 'seedStaarRlaSprintSafe': seedStaarRlaSprintSafe };
+    var whitelist = {
+      'seedStaarRlaSprintSafe': seedStaarRlaSprintSafe,
+      'pipelineRelaySafe': pipelineRelaySafe
+    };
     if (!whitelist[fn]) {
       return ContentService.createTextOutput(JSON.stringify({ error: 'Function not in POST whitelist: ' + fn }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -1270,7 +1273,8 @@ function healthCheck() {
     'khRejectTaskSafe', 'khApproveWithBonusSafe', 'khOverrideTaskSafe',
     'getKHAppUrls', 'setupKHSheets', 'validateTaskIDs',
     'runDailyGateCheck', 'installDailyGateAlert', 'removeDailyGateAlert',
-    'notionApi_', 'pushQAResult', 'testNotionConnection',
+    'notionApi_', 'pushQAResult', 'pushPipelineEvent_', 'testNotionConnection',
+    'isPipelineUrl_', 'pipelineStatusForType_', 'normalizePipelinePayload_', 'pipelineRelaySafe',
     'reconcileVeinPulse', 'reconcileVeinPulseSafe', 'resolveNestedKey_',
     'getCodeVersion',
     'getBoardData', 'getBoardDataSafe',
@@ -1502,6 +1506,146 @@ function pushQAResult(result) {
   });
 }
 
+function isPipelineUrl_(value) {
+  if (!value) return false;
+  var str = String(value);
+  return str.indexOf('https://') === 0 || str.indexOf('http://') === 0;
+}
+
+function pipelineStatusForType_(type) {
+  var map = {
+    deploy_complete: 'PASS',
+    tests_failed: 'FAIL',
+    review_ready: 'READY',
+    fix_needed: 'ACTION_NEEDED',
+    fix_pushed: 'INFO',
+    pipeline_stalled: 'STOPPED'
+  };
+  return map[type] || 'INFO';
+}
+
+function normalizePipelinePayload_(payload) {
+  var props = PropertiesService.getScriptProperties();
+  var expectedSecret = props.getProperty('PIPELINE_SECRET');
+  var safePayload = payload || {};
+  var allowedTypes = {
+    deploy_complete: true,
+    tests_failed: true,
+    review_ready: true,
+    fix_needed: true,
+    fix_pushed: true,
+    pipeline_stalled: true
+  };
+  if (!expectedSecret) {
+    return { ok: false, error: 'PIPELINE_SECRET not configured' };
+  }
+  if (String(safePayload.secret || '') !== expectedSecret) {
+    return { ok: false, error: 'Invalid pipeline secret' };
+  }
+  var type = String(safePayload.type || '');
+  if (!allowedTypes[type]) {
+    return { ok: false, error: 'Unsupported pipeline type: ' + type };
+  }
+  var repo = String(safePayload.repo || '').trim();
+  if (!repo) {
+    return { ok: false, error: 'repo is required' };
+  }
+  var summary = String(safePayload.summary || '').trim();
+  if (!summary) {
+    return { ok: false, error: 'summary is required' };
+  }
+  var truncated = false;
+  if (summary.length > 500) {
+    summary = summary.substring(0, 500);
+    truncated = true;
+  }
+  var prNumber = safePayload.prNumber;
+  if (prNumber !== null && prNumber !== undefined && prNumber !== '') {
+    prNumber = parseInt(prNumber, 10);
+    if (isNaN(prNumber)) prNumber = null;
+  } else {
+    prNumber = null;
+  }
+  var cycle = safePayload.cycle;
+  if (cycle !== null && cycle !== undefined && cycle !== '') {
+    cycle = parseInt(cycle, 10);
+    if (isNaN(cycle)) cycle = null;
+  } else {
+    cycle = null;
+  }
+  return {
+    ok: true,
+    truncated: truncated,
+    payload: {
+      repo: repo,
+      type: type,
+      summary: summary,
+      prNumber: prNumber,
+      prUrl: isPipelineUrl_(safePayload.prUrl) ? String(safePayload.prUrl) : '',
+      sha: String(safePayload.sha || '').substring(0, 40),
+      runUrl: isPipelineUrl_(safePayload.runUrl) ? String(safePayload.runUrl) : '',
+      cycle: cycle
+    }
+  };
+}
+
+function pushPipelineEvent_(payload) {
+  var dbId = PropertiesService.getScriptProperties().getProperty('NOTION_PIPELINE_DB_ID');
+  if (!dbId) {
+    return { ok: false, skipped: true, error: 'NOTION_PIPELINE_DB_ID not found' };
+  }
+
+  var event = notionApi_('/v1/pages', 'post', {
+    parent: { database_id: dbId },
+    properties: {
+      'Event': { title: [{ text: { content: payload.repo + ' ' + payload.type + ' — ' + new Date().toISOString() } }] },
+      'Repo': { rich_text: [{ text: { content: payload.repo } }] },
+      'Type': { rich_text: [{ text: { content: payload.type } }] },
+      'Status': { rich_text: [{ text: { content: pipelineStatusForType_(payload.type) } }] },
+      'Summary': { rich_text: [{ text: { content: payload.summary } }] },
+      'PR Number': { number: payload.prNumber === null ? null : payload.prNumber },
+      'PR URL': payload.prUrl ? { url: payload.prUrl } : { url: null },
+      'SHA': { rich_text: [{ text: { content: payload.sha || '' } }] },
+      'Run URL': payload.runUrl ? { url: payload.runUrl } : { url: null },
+      'Cycle': { number: payload.cycle === null ? null : payload.cycle },
+      'Timestamp': { date: { start: new Date().toISOString() } }
+    }
+  });
+
+  return { ok: true, id: event.id, url: event.url };
+}
+
+function pipelineRelaySafe(payload) {
+  return withMonitor_('pipelineRelaySafe', function() {
+    var normalized = normalizePipelinePayload_(payload);
+    if (!normalized.ok) return normalized;
+
+    var safePayload = normalized.payload;
+    var notification;
+    var notion;
+
+    try {
+      notification = sendPipelineNotification_(safePayload.type, safePayload);
+    } catch (notifyErr) {
+      notification = { ok: false, error: notifyErr.message };
+    }
+
+    try {
+      notion = pushPipelineEvent_(safePayload);
+    } catch (notionErr) {
+      notion = { ok: false, error: notionErr.message };
+    }
+
+    return {
+      ok: !!(notification && notification.ok) || !!(notion && notion.ok),
+      truncated: normalized.truncated,
+      notification: notification,
+      notion: notion,
+      payload: safePayload
+    };
+  });
+}
+
 function testNotionConnection() {
   try {
     var token = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
@@ -1512,6 +1656,11 @@ function testNotionConnection() {
     if (dbId) {
       var db = notionApi_('/v1/databases/' + dbId, 'get');
       Logger.log('✅ QA Log accessible: ' + db.title[0].plain_text);
+    }
+    var pipelineDbId = PropertiesService.getScriptProperties().getProperty('NOTION_PIPELINE_DB_ID');
+    if (pipelineDbId) {
+      var pipelineDb = notionApi_('/v1/databases/' + pipelineDbId, 'get');
+      Logger.log('✅ Pipeline Log accessible: ' + pipelineDb.title[0].plain_text);
     }
   } catch (e) { Logger.log('❌ Connection failed: ' + e.message); }
 }
@@ -1736,4 +1885,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v68
+// END OF FILE — Code.gs v70

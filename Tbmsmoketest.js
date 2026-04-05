@@ -22,6 +22,19 @@
 //   8. Row Safety — Task_ID validation on write functions (MANUAL AUDIT ONLY)
 //
 // USAGE: Run tbmSmokeTest() from Apps Script editor → View → Logs
+//
+// WHAT THIS PROVES:
+//   - Code structure is intact (wiring, schemas, versions, triggers)
+//   - Known bugs haven't regressed (regression suite)
+//   - HTML files exist and are loadable (surface checks)
+//
+// WHAT THIS DOES NOT PROVE:
+//   - Workflows work end to end (that's Q7 persistence tests / Playwright)
+//   - Data is correct (that's QA walkthroughs)
+//   - UI renders properly (that's manual QA / screenshots)
+//   - Save paths persist data (that's education persistence tests)
+//
+// A PASS here means "safe to deploy" not "system works perfectly."
 // ════════════════════════════════════════════════════════════════════
 
 function getSmokeTestVersion() { return 6; }
@@ -682,7 +695,7 @@ function checkHTMLContracts_() {
     }
   }
 
-  if (result.violations.length === 0) {
+  if (result.violations.length === 0 && result.status === 'PASS') {
     result.details = ['All ' + htmlFiles.length + ' HTML files pass ES5 + standards checks'];
   }
 

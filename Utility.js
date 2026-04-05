@@ -12,7 +12,7 @@
 function fixParentPINColumn() {
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
-  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  var ss = SpreadsheetApp.openById(SSID);
   var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_Children'])
     ? TAB_MAP['KH_Children'] : 'KH_Children';
   var sheet = ss.getSheetByName(tabName);

@@ -32,7 +32,7 @@ function _getNotionDbId() {
 // ═══════════════════════════════════════════════════════════════
 
 function _collectHealthData() {
-  var ss = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  var ss = SpreadsheetApp.openById(SSID);
   var result = {};
   var log = [];
 

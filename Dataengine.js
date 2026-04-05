@@ -237,8 +237,8 @@ var TAB_MAP = {
 var _deCache = null;
 var _deSS = null; // cached SpreadsheetApp.openById(SSID)
 
-// v74: Workbook SSID — openById() is trigger-safe (getActiveSpreadsheet returns null in triggers)
-var SSID = '1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c';
+// v83: SSID now provided by TBMConfig.gs (environment-aware via TBM_ENV)
+// var SSID is declared globally in TBMConfig.gs — available here via shared scope
 
 function getDESS_() {
   if (!_deSS) _deSS = SpreadsheetApp.openById(SSID);

@@ -1,7 +1,7 @@
 name: Gemini Code Review
 on:
   pull_request:
-    types: [opened, ready_for_review, synchronize]
+    types: [opened, reopened, synchronize, ready_for_review]
   issue_comment:
     types: [created]
 
@@ -18,7 +18,32 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Run Gemini CLI Action
         uses: google-github-actions/run-gemini-cli@v0
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          prompt: |
+            Review this pull request as a code reviewer for a Google Apps Script + HtmlService project.
+
+            Key constraints for this codebase:
+            - All .html files MUST use ES5 only (no arrow functions, let/const, template literals, ??, ?., .includes(), backdrop-filter)
+            - All .gs files run in Google Apps Script V8 runtime
+            - Sheet references must use TAB_MAP from DataEngine.gs, never hardcoded sheet names
+            - Every google.script.run call must have a matching withFailureHandler()
+            - Use openById(SSID), never getActiveSpreadsheet()
+
+            Focus your review on:
+            1. ES5 violations in .html files (P0 — breaks Fire Stick WebView)
+            2. Missing error handlers on google.script.run calls (P1)
+            3. Logic bugs, off-by-one errors, race conditions (P1)
+            4. Security issues (XSS, injection) (P1)
+            5. Consistency between related visual states (e.g. gate badge vs panel glow) (P2)
+
+            Post your findings as a PR review with inline comments. Use severity badges: P0, P1, P2.
+            If you find no issues, approve the PR with a brief summary.
