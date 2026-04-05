@@ -4,6 +4,7 @@ const MARKER = '<!-- pipeline-review-summary -->';
 const ACTION_MARKER = '<!-- pipeline-action: ';
 const USER_AGENT = 'tbm-pipeline-review-watcher';
 const PIPELINE_LABEL_PREFIX = 'pipeline:';
+const MAX_FIX_CYCLES = 3;
 const PIPELINE_LABELS = {
   WAITING: {
     name: 'pipeline:waiting',
@@ -71,6 +72,59 @@ function isCodexSignal(login, body) {
   return actor.indexOf('codex') !== -1 ||
     actor.indexOf('openai') !== -1 ||
     text.indexOf('codex') !== -1;
+}
+
+function isGeminiSignal(login, body) {
+  const actor = String(login || '').toLowerCase();
+  const text = String(body || '').toLowerCase();
+  return actor.indexOf('gemini') !== -1 ||
+    text.indexOf('gemini') !== -1;
+}
+
+function matchesSha(expectedSha, candidateSha) {
+  const expected = String(expectedSha || '').toLowerCase();
+  const candidate = String(candidateSha || '').toLowerCase();
+  if (!expected || !candidate) return false;
+  return expected === candidate ||
+    expected.indexOf(candidate) === 0 ||
+    candidate.indexOf(expected) === 0;
+}
+
+function buildActorReviewState(reviews, matcher, headSha) {
+  const actorReviews = reviews
+    .filter((review) => matcher(review.user && review.user.login, review.body))
+    .sort((a, b) => Date.parse(b.submitted_at || 0) - Date.parse(a.submitted_at || 0));
+
+  if (!actorReviews.length) {
+    return { label: 'WAITING', pass: false, failed: false, url: '' };
+  }
+
+  const currentReview = actorReviews.find((review) => matchesSha(headSha, review.commit_id));
+  if (!currentReview) {
+    return {
+      label: 'STALE',
+      pass: false,
+      failed: false,
+      url: actorReviews[0].html_url || ''
+    };
+  }
+
+  const reviewState = String(currentReview.state || '').toUpperCase();
+  if (reviewState === 'APPROVED') {
+    return { label: 'PASS', pass: true, failed: false, url: currentReview.html_url || '' };
+  }
+  if (reviewState === 'CHANGES_REQUESTED') {
+    return { label: 'FAIL', pass: false, failed: true, url: currentReview.html_url || '' };
+  }
+  if (reviewState === 'COMMENTED') {
+    return { label: 'COMMENTED', pass: false, failed: false, url: currentReview.html_url || '' };
+  }
+  return {
+    label: reviewState || 'CURRENT',
+    pass: false,
+    failed: false,
+    url: currentReview.html_url || ''
+  };
 }
 
 function listLinkHeader(nextUrl) {
@@ -299,26 +353,9 @@ async function main() {
   const workflowRuns = workflowRunsPayload && workflowRunsPayload.workflow_runs ? workflowRunsPayload.workflow_runs : [];
 
   let unresolvedThreads = 0;
-  let codexObserved = false;
   for (const thread of threads) {
     if (!thread.isResolved && !thread.isOutdated) {
       unresolvedThreads += 1;
-    }
-    const comments = thread.comments && thread.comments.nodes ? thread.comments.nodes : [];
-    for (const comment of comments) {
-      if (isCodexSignal(comment.author && comment.author.login, comment.body)) {
-        codexObserved = true;
-      }
-    }
-  }
-  for (const comment of issueComments) {
-    if (isCodexSignal(comment.user && comment.user.login, comment.body)) {
-      codexObserved = true;
-    }
-  }
-  for (const review of reviews) {
-    if (isCodexSignal(review.user && review.user.login, review.body)) {
-      codexObserved = true;
     }
   }
 
@@ -340,17 +377,40 @@ async function main() {
   }
 
   const ciState = formatWorkflowState(latestRunByName(ciWorkflowName));
-  const geminiState = formatWorkflowState(latestRunByName(geminiWorkflowName));
+  const geminiWorkflowState = formatWorkflowState(latestRunByName(geminiWorkflowName));
+  let geminiReviewState = buildActorReviewState(reviews, isGeminiSignal, pr.headRefOid);
+  if (geminiWorkflowState.pass && geminiReviewState.label === 'WAITING') {
+    geminiReviewState = {
+      label: 'WORKFLOW_ONLY',
+      pass: false,
+      failed: false,
+      url: geminiWorkflowState.url
+    };
+  }
+  const codexState = buildActorReviewState(reviews, isCodexSignal, pr.headRefOid);
   const approvalState = pr.reviewDecision || 'REVIEW_REQUIRED';
+  const fixCapReached = fixCycle >= MAX_FIX_CYCLES;
+  const fixRequired = approvalState === 'CHANGES_REQUESTED' ||
+    ciState.failed ||
+    geminiWorkflowState.failed ||
+    geminiReviewState.failed ||
+    codexState.failed ||
+    unresolvedThreads > 0;
+  const readyToMerge = ciState.pass &&
+    geminiWorkflowState.pass &&
+    geminiReviewState.pass &&
+    codexState.pass &&
+    approvalState === 'APPROVED' &&
+    unresolvedThreads === 0;
 
   let action = 'WAITING';
-  if (fixCycle >= 4) {
-    action = 'STOPPED';
-  } else if (pr.isDraft) {
+  if (pr.isDraft) {
     action = 'WAITING';
-  } else if (approvalState === 'CHANGES_REQUESTED' || ciState.failed || geminiState.failed || unresolvedThreads > 0) {
+  } else if (fixCapReached && fixRequired) {
+    action = 'STOPPED';
+  } else if (fixRequired) {
     action = 'FIX_NEEDED';
-  } else if (ciState.pass && geminiState.pass && approvalState === 'APPROVED') {
+  } else if (readyToMerge) {
     action = 'READY_TO_MERGE';
   }
 
@@ -360,11 +420,12 @@ async function main() {
     '## Pipeline Review Summary',
     '',
     '- CI: ' + renderState(ciState),
-    '- Gemini: ' + renderState(geminiState),
-    '- Codex: ' + (codexObserved ? 'OBSERVED' : 'NOT_YET_OBSERVED'),
+    '- Gemini workflow: ' + renderState(geminiWorkflowState),
+    '- Gemini review: ' + renderState(geminiReviewState),
+    '- Codex review: ' + renderState(codexState),
     '- Unresolved actionable threads: ' + String(unresolvedThreads),
     '- Approval state: ' + approvalState,
-    '- Fix cycle: ' + String(fixCycle) + '/3',
+    '- Fix cycle: ' + String(fixCycle) + '/' + String(MAX_FIX_CYCLES),
     '- Action: ' + action,
     '',
     'Last updated: ' + new Date().toISOString()
@@ -404,11 +465,15 @@ async function main() {
       relaySummary = 'PR #' + prNumber + ' reviews complete. Ready to merge.';
     } else if (action === 'STOPPED') {
       relayType = 'pipeline_stalled';
-      relaySummary = 'PR #' + prNumber + ' stalled at review-fix-' + String(fixCycle) + '.';
+      relaySummary = 'PR #' + prNumber + ' stalled after review-fix-' + String(fixCycle) + ' hit the cycle cap.';
     } else if (ciState.failed) {
       relaySummary = 'PR #' + prNumber + ' needs fixes. CI is ' + ciState.label + '.';
-    } else if (geminiState.failed) {
-      relaySummary = 'PR #' + prNumber + ' needs fixes. Gemini is ' + geminiState.label + '.';
+    } else if (geminiWorkflowState.failed) {
+      relaySummary = 'PR #' + prNumber + ' needs fixes. Gemini workflow is ' + geminiWorkflowState.label + '.';
+    } else if (geminiReviewState.failed) {
+      relaySummary = 'PR #' + prNumber + ' needs fixes. Gemini review is ' + geminiReviewState.label + '.';
+    } else if (codexState.failed) {
+      relaySummary = 'PR #' + prNumber + ' needs fixes. Codex review is ' + codexState.label + '.';
     } else if (unresolvedThreads > 0) {
       relaySummary = 'PR #' + prNumber + ' needs fixes. ' + String(unresolvedThreads) + ' unresolved review thread(s).';
     }
