@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v68 — Apps Script Router (TBM Consolidated)
+// Code.gs v69 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 68; }
+function getCodeVersion() { return 69; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -1621,14 +1621,14 @@ function getOpsHealth_() {
   var now = new Date();
   var health = {
     timestamp: now.toISOString(),
+    env: typeof TBM_ENV !== 'undefined' ? TBM_ENV.ENV : 'unknown',
     overall: 'GREEN',
     surfaces: {},
     errors: {},
     perf: {},
     versions: {},
     triggers: {},
-    education: {},
-    scorecard: { overall: 6.2, anchor: 'eabc5b9', lastUpdated: '2026-04-04' }
+    education: {}
   };
 
   // ── 1. SYSTEM HEALTH (delegates to GASHardening) ────────────
@@ -1666,7 +1666,8 @@ function getOpsHealth_() {
     investigation: 'investigation-module', baseline: 'BaselineDiagnostic',
     'comic-studio': 'ComicStudio', dashboard: 'DesignDashboard',
     progress: 'ProgressReport', 'story-library': 'StoryLibrary',
-    story: 'StoryReader', 'wolfkid-power-scan': 'wolfkid-power-scan'
+    story: 'StoryReader', 'wolfkid-power-scan': 'wolfkid-power-scan',
+    vault: 'Vault'
   };
   var surfaceResults = {};
   var surfaceKeys = Object.keys(surfaceMap);
@@ -1719,13 +1720,54 @@ function getOpsHealth_() {
     health.education = { status: 'error', error: e.message };
   }
 
-  // ── 4. RISK SUMMARY ────────────────────────────────────────
+  // ── 4. ERROR RATE CHECK (configurable threshold) ────────────
+  try {
+    var errorThreshold = 10;
+    try {
+      var customET = PropertiesService.getScriptProperties().getProperty('ERROR_RATE_THRESHOLD');
+      if (customET) errorThreshold = parseInt(customET, 10);
+    } catch(e2) {}
+    var errorSheet = SpreadsheetApp.openById(SSID).getSheetByName(TAB_MAP['ErrorLog'] || 'ErrorLog');
+    if (errorSheet) {
+      var cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      var errorData = errorSheet.getDataRange().getValues();
+      var errorCount = 0;
+      for (var ei = 1; ei < errorData.length; ei++) {
+        if (errorData[ei][0] instanceof Date && errorData[ei][0] > cutoff) errorCount++;
+      }
+      health.errors.count24h = errorCount;
+      health.errors.threshold = errorThreshold;
+      health.errors.status = errorCount === 0 ? 'green' : errorCount <= errorThreshold ? 'warning' : 'critical';
+      if (errorCount > errorThreshold && health.overall !== 'RED') health.overall = 'RED';
+      else if (errorCount > 0 && health.overall === 'GREEN') health.overall = 'WATCH';
+    }
+  } catch(e3) {
+    health.errors.checkError = e3.message;
+  }
+
+  // ── 5. TILLER FRESHNESS (configurable threshold) ───────────
+  try {
+    var tillerThreshold = 72;
+    try {
+      var customTH = PropertiesService.getScriptProperties().getProperty('TILLER_STALE_HOURS');
+      if (customTH) tillerThreshold = parseInt(customTH, 10);
+    } catch(e4) {}
+    health.tillerFreshness = { thresholdHours: tillerThreshold };
+    if (health.tillerSync && health.tillerSync.staleAccounts) {
+      health.tillerFreshness.staleCount = health.tillerSync.staleAccounts.length;
+      health.tillerFreshness.status = health.tillerSync.staleAccounts.length === 0 ? 'green' : 'yellow';
+    }
+  } catch(e5) {}
+
+  // ── 6. RISK SUMMARY (computed, not hardcoded) ──────────────
   var risks = [];
-  if (health.errors.count24h > 0) risks.push('P1: ' + health.errors.count24h + ' errors in last 24h');
-  if (health.surfaceCount.red > 0) risks.push('P0: ' + health.surfaceCount.red + ' surfaces failed to load');
+  if (health.errors.count24h > 0) risks.push('P1: ' + health.errors.count24h + ' errors in last 24h (threshold: ' + (health.errors.threshold || 10) + ')');
+  if (health.surfaceCount && health.surfaceCount.red > 0) risks.push('P0: ' + health.surfaceCount.red + ' surfaces failed to load');
   if (health.triggers && health.triggers.orphans > 0) risks.push('P2: ' + health.triggers.orphans + ' orphan triggers');
+  if (health.tillerSync && health.tillerSync.status === 'stale') risks.push('P1: Tiller data stale');
   health.risks = risks;
   health.riskCount = risks.length;
+  health.note = 'All checks computed at runtime. No hardcoded scores.';
 
   return health;
 }
@@ -1736,4 +1778,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v68
+// END OF FILE — Code.gs v69
