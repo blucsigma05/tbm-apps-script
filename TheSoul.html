@@ -1,10 +1,10 @@
-<!-- TheSoul v47 — crest scale 1.55, origin 48% -->
+<!-- TheSoul v48 — crest scale 1.55, origin 48% -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<title>TheSoul v47 — Thompson Family Display</title>
+<title>TheSoul v48 — Thompson Family Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
@@ -172,7 +172,23 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 .streak-kid-val{font-size:22px;font-weight:800;color:var(--gold-soft);line-height:1}
 .streak-kid-sub{font-size:8px;color:var(--text-dim);margin-top:1px}
 
-#soulMoment{max-height:20px;overflow:hidden;line-height:20px;padding:0 20px;font-size:13px;font-weight:700;color:#fde68a;letter-spacing:0.3px;opacity:0.85;text-shadow:0 1px 4px rgba(0,0,0,0.3);text-align:center}
+#soulMoment { height:20px; overflow:hidden; position:relative; }
+#soulMomentInner {
+  position: absolute; width: 100%; height: 20px;
+  font-size: 12px; font-weight: 700;
+  text-align: center; line-height: 20px;
+  letter-spacing: 0.3px;
+}
+@keyframes tickerExitUp {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-100%); opacity: 0; }
+}
+@keyframes tickerEnterDown {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+#soulMomentInner.ticker-exit  { animation: tickerExitUp  0.22s ease-in  forwards; }
+#soulMomentInner.ticker-enter { animation: tickerEnterDown 0.22s ease-out forwards; }
 
 .kids-zone{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:0}
 .kid-panel{position:relative;border-radius:16px;overflow:hidden;box-shadow:var(--shadow);min-height:0}
@@ -241,6 +257,44 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 .footer-item{display:flex;align-items:center;gap:3px}
 .footer-label{font-size:7px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:rgba(220,200,180,.50)}
 .footer-val{font-size:7px;font-weight:700;color:var(--text-mid)}
+
+.feat-dinner.set {
+  background: radial-gradient(ellipse at center, rgba(212,168,67,.22), rgba(42,34,24,.94));
+  border-color: rgba(212,168,67,.55);
+  box-shadow: 0 0 16px rgba(212,168,67,.15);
+}
+.dinner-icon-set { font-size: 36px; line-height: 1; margin-bottom: 3px; }
+.dinner-name-set { font-size: 22px; font-weight: 800; color: #fde68a; line-height: 1.1; }
+.dinner-cook-set { font-size: 9px; color: rgba(253,230,138,.6); margin-top: 2px; }
+.feat-dinner.empty .dinner-mystery { font-size: 11px; font-weight: 700; color: rgba(212,168,67,.6); }
+@keyframes dinnerShimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.dinner-shimmer { background-image: linear-gradient(90deg, transparent 0%, rgba(253,230,138,.08) 50%, transparent 100%); background-size: 200% 100%; animation: dinnerShimmer 0.5s ease-out 1; }
+
+.kid-shell.jj.panel-all-clear {
+  border-color: rgba(249,168,212,.55);
+  box-shadow: 0 0 20px rgba(249,168,212,.14), inset 0 0 30px rgba(249,168,212,.07);
+  transition: border-color .5s, box-shadow .5s;
+}
+.kid-shell.buggsy.panel-all-clear {
+  border-color: rgba(212,168,67,.55);
+  box-shadow: 0 0 20px rgba(212,168,67,.12), inset 0 0 30px rgba(212,168,67,.06);
+  transition: border-color .5s, box-shadow .5s;
+}
+.char-all-clear-bug { filter: drop-shadow(0 0 12px rgba(212,168,67,.4)); }
+.char-all-clear-jj  { filter: drop-shadow(0 0 12px rgba(249,168,212,.4)); }
+
+.identity-photo-inner.weather-sunny {
+  background: radial-gradient(ellipse at center, rgba(72,58,36,.7), rgba(62,52,32,.95));
+  transition: background 2s ease;
+}
+.identity-photo-inner.weather-rain {
+  background: radial-gradient(ellipse at center, rgba(40,52,72,.7), rgba(32,42,62,.95));
+  transition: background 2s ease;
+}
+.identity-photo-inner.weather-storm {
+  background: radial-gradient(ellipse at center, rgba(30,34,52,.8), rgba(20,24,42,.98));
+  transition: background 2s ease;
+}
 
 @media (max-width:980px){
   .page{grid-template-rows:minmax(130px,.76fr) auto 20px 1.24fr}
@@ -341,7 +395,9 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     </div>
   </section>
 
-  <div id="soulMoment"></div>
+  <div id="soulMoment">
+    <div id="soulMomentInner"></div>
+  </div>
 
   <section class="kids-zone">
     <div class="kid-panel" id="jjHost"></div>
@@ -357,12 +413,15 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 <script>
 (function(){
   'use strict';
-  var SOUL_VERSION = 47;
+  var SOUL_VERSION = 48;
   var REFRESH_MS = 120000;
   var _soulLastFetch = null;
   var _soulLastBoard = null;
   var _soulLastKids = null;
-  var _momentIdx = 0;
+  var _tickerQueue = [];
+  var _tickerIdx = 0;
+  var _tickerTimer = null;
+  var _tickerSpecialUntil = 0;
   var MAX_EXTRA_EVENTS = 1;
   var MAX_CAL_EVENTS = 3;
   var DEBUG = /(?:\?|&)debug=1(?:&|$)/.test(window.location.search);
@@ -387,6 +446,14 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     soup:'\uD83C\uDF72',steak:'\uD83E\uDD69',fish:'\uD83C\uDF1F',sushi:'\uD83C\uDF63',
     rice:'\uD83C\uDF5A',sandwich:'\uD83E\uDD6A',hotdog:'\uD83C\uDF2D',bbq:'\uD83C\uDF56',
     ramen:'\uD83C\uDF5C',curry:'\uD83C\uDF5B',fries:'\uD83C\uDF5F',wings:'\uD83C\uDF57'
+  };
+
+  var TICKER_COLORS = {
+    gold:    '#fde68a',
+    rose:    '#f9a8d4',
+    mint:    '#6ee7b7',
+    streak:  '#f59e0b',
+    special: '#fde68a'
   };
 
   var state = {board:null,kids:null,firstBoard:false,firstKids:false};
@@ -438,6 +505,20 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     document.body.classList.remove('morning','evening');
     if(hour >= 5 && hour <= 11) document.body.classList.add('morning');
     else if(hour >= 17 || hour <= 4) document.body.classList.add('evening');
+  }
+
+  function applyWeatherClass(condition) {
+    var el = document.querySelector('.identity-photo-inner');
+    if (!el) return;
+    el.classList.remove('weather-rain', 'weather-storm', 'weather-sunny');
+    var c = (condition || '').toLowerCase();
+    if (c.indexOf('thunder') !== -1 || c.indexOf('storm') !== -1) {
+      el.classList.add('weather-storm');
+    } else if (c.indexOf('rain') !== -1 || c.indexOf('drizzle') !== -1 || c.indexOf('shower') !== -1) {
+      el.classList.add('weather-rain');
+    } else if (c.indexOf('clear') !== -1 || c.indexOf('sunny') !== -1) {
+      el.classList.add('weather-sunny');
+    }
   }
 
   function eyebrowDate(){
@@ -517,6 +598,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
       $('weatherTemp').textContent = '\u2014';
       $('weatherDetail').textContent = 'No weather data';
     }
+    applyWeatherClass(w.condition || w.description || w.iconLabel || '');
 
     var split = sortEventsToCalendars(state.board.events || []);
     var totalEvents = split.household.length + split.kids.length;
@@ -534,19 +616,37 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
   }
 
   function renderDinner(dinner){
-    if(dinner && dinner.meal){
+    var card = document.getElementById('dinnerCard');
+    var icon = document.getElementById('dinnerIcon');
+    var nameEl = document.getElementById('dinnerName');
+    var metaEl = document.getElementById('dinnerMeta');
+    var noteEl = document.getElementById('dinnerNote');
+    if (!card) return;
+    if (dinner && dinner.meal) {
       var mealLower = (dinner.meal || '').toLowerCase();
-      var icon = '\uD83C\uDF7D\uFE0F';
-      for(var key in DINNER_ICONS){ if(mealLower.indexOf(key) >= 0){ icon = DINNER_ICONS[key]; break; } }
-      $('dinnerIcon').textContent = icon;
-      $('dinnerName').textContent = dinner.meal;
-      $('dinnerMeta').textContent = (dinner.cook ? dinner.cook + ' cooking' : 'Takeout') + (dinner.notes ? ' \u00B7 ' + dinner.notes : '');
-      $('dinnerNote').textContent = dinner.source || '';
+      var emoji = '\uD83C\uDF7D\uFE0F';
+      for (var key in DINNER_ICONS) {
+        if (mealLower.indexOf(key) >= 0) { emoji = DINNER_ICONS[key]; break; }
+      }
+      card.className = card.className.replace('empty', '').replace('set', '').trim() + ' set';
+      icon.textContent = emoji;
+      icon.className = 'dinner-icon-set';
+      nameEl.textContent = dinner.meal;
+      nameEl.className = 'dinner-name-set';
+      metaEl.textContent = (dinner.cook ? dinner.cook + ' cooking' : 'Takeout') + (dinner.notes ? ' \u00B7 ' + dinner.notes : '');
+      metaEl.className = 'dinner-cook-set';
+      if (noteEl) noteEl.textContent = '';
+      card.classList.add('dinner-shimmer');
+      setTimeout(function() { card.classList.remove('dinner-shimmer'); }, 650);
     } else {
-      $('dinnerIcon').textContent = '\uD83C\uDF7D\uFE0F';
-      $('dinnerName').textContent = 'No dinner set';
-      $('dinnerMeta').textContent = 'Add dinner to the board';
-      $('dinnerNote').textContent = '';
+      card.className = card.className.replace('set', '').replace('empty', '').trim() + ' empty';
+      icon.textContent = '\uD83C\uDF7D\uFE0F';
+      icon.className = 'dinner-icon';
+      nameEl.textContent = "Tonight's a mystery";
+      nameEl.className = 'dinner-name dinner-mystery';
+      metaEl.textContent = 'Add dinner to the board';
+      metaEl.className = 'dinner-meta';
+      if (noteEl) noteEl.textContent = '';
     }
   }
 
@@ -643,9 +743,9 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     if(pendY > 0){ gateLabel='\u23F3 Yesterday\u0027s tasks need approval'; gateSub=pendY+' pending from yesterday'; gateClass='yesterday'; }
     else if(req.total){
       var pl = (req.currentPeriod||'day')==='morning'?'morning':(req.currentPeriod==='afternoon'?'morning + afternoon':'daily');
-      if(req.allClear){ gateLabel='\u2705 All clear'; gateSub=(Number(req.done||0))+'/'+Number(req.total||0)+' '+pl; gateClass='clear pulse'; }
+      if(req.allClear){ gateLabel='\u2705 Nothing waiting \uD83C\uDF89'; gateSub=(Number(req.done||0))+'/'+Number(req.total||0)+' '+pl; gateClass='clear pulse'; }
       else { gateLabel='\uD83D\uDD12 '+remaining+' must-do'+(remaining===1?'':'s')+' left'; gateSub=(Number(req.done||0))+'/'+Number(req.total||0)+' '+pl; gateClass='locked'; }
-    } else { gateLabel='\u2705 All clear'; gateSub='No active must-dos'; gateClass='clear pulse'; }
+    } else { gateLabel='\u2705 Nothing waiting \uD83C\uDF89'; gateSub='No active must-dos'; gateClass='clear pulse'; }
     var pc = all.pendingRequestCount || {};
     var askCount = Number(pc[key]||0);
     var askHtml = askCount > 0 ? '<span class="kid-ask-badge">\u270B '+askCount+' ask'+(askCount===1?'':'s')+' pending</span>' : '';
@@ -682,7 +782,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     } else {
       var celebImg = theme==='jj'?'https://i.ibb.co/9md3x6zp/1773982606233.png':'https://i.ibb.co/8L0ccf6p/1773982420674.png';
       var celebText = theme==='jj'?'All done! \u2728':'ALL CLEAR!';
-      if(done.length > 0){ rightH += '<div class="kid-empty" style="text-align:center;padding:8px 4px"><img src="'+celebImg+'" style="width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 4px" onerror="this.style.display=\'none\'"><div>'+celebText+'</div></div>'; }
+      if(done.length > 0){ rightH += '<div class="kid-empty" style="text-align:center;padding:8px 4px"><img src="'+celebImg+'" class="'+(theme==='jj'?'char-all-clear-jj':'char-all-clear-bug')+'" style="width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 4px" onerror="this.style.display=\'none\'"><div>'+celebText+'</div></div>'; }
       else { rightH += '<div class="kid-empty">None waiting</div>'; }
     }
     rightH += '</div></div>';
@@ -713,6 +813,21 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     '</div>';
   }
 
+  function applyKidAllClearState(theme, pendingCount) {
+    var hostId = theme === 'jj' ? 'jjHost' : 'bugHost';
+    var host = document.getElementById(hostId);
+    if (!host) return;
+    var shell = host.querySelector('.kid-shell');
+    if (!shell) return;
+    if (pendingCount === 0) {
+      shell.classList.add('panel-all-clear');
+      var img = shell.querySelector('.kid-empty img');
+      if (img) img.className = theme === 'jj' ? 'char-all-clear-jj' : 'char-all-clear-bug';
+    } else {
+      shell.classList.remove('panel-all-clear');
+    }
+  }
+
   function renderKids(raw){
     var data = safeParse(raw) || {};
     state.kids = {
@@ -725,7 +840,18 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     try{ $('bugHost').innerHTML = buildKidPanel('buggsy', state.kids); }
     catch(e2){ console.error(e2); $('bugHost').innerHTML = '<div class="kid-shell buggsy"><div class="kid-empty">Buggsy unavailable</div></div>'; }
     renderStreaks(state.kids);
-    updateSoulMoment();
+    // ALL CLEAR — use requiredStatus.allClear to match gate logic
+    var bReqAC = ((data.requiredStatus || {}).buggsy || {});
+    var jReqAC = ((data.requiredStatus || {}).jj || {});
+    var bClear = !!(bReqAC.allClear);
+    var jClear = !!(jReqAC.allClear);
+    applyKidAllClearState('buggsy', bClear ? 0 : 1);
+    applyKidAllClearState('jj', jClear ? 0 : 1);
+    _tickerQueue = buildTickerQueue();
+    if (!_tickerTimer) startTicker();
+    if (bClear && jClear) {
+      setTickerSpecial('\uD83D\uDD25 BOTH KIDS CLEARED! Strongest pack around', 8000);
+    }
     if(state.board) renderCountdown(state.board.countdownEvents || []);
     state.firstKids = true;
     $('kidsStamp').textContent = stampTime();
@@ -749,27 +875,63 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     $('streakTotal').textContent = 'Combined: ' + combined + '/' + combTotal + ' tasks done';
   }
 
-  function updateSoulMoment(){
-    var moments = [];
+  function buildTickerQueue() {
+    var queue = [];
     var fn = noteVal(state.board || {});
-    if(fn) moments.push('\u2728 ' + fn);
-    if(state.kids){
-      var mp = state.kids.metaProgression || {};
-      var kNames = {buggsy:'Buggsy',jj:'JJ'};
-      for(var k in kNames){
-        var km = mp[k];
-        if(km && km.streakDays && km.streakDays >= 2) moments.push(kNames[k] + ': \uD83D\uDD25 ' + km.streakDays + '-day streak!');
-      }
-      var bals = state.kids.balances || {};
-      if(bals.jj && bals.jj.balance > 0) moments.push('JJ has ' + bals.jj.balance + ' stars!');
-      if(bals.buggsy && bals.buggsy.balance > 0) moments.push('Buggsy has ' + bals.buggsy.balance + ' rings!');
+    if (fn) queue.push({ text: '\u2728 ' + fn, cls: 'mint' });
+    var dinner = (state.board && state.board.dinner);
+    if (dinner && dinner.meal) queue.push({ text: '\uD83C\uDF7D\uFE0F ' + dinner.meal + ' tonight!', cls: 'gold' });
+    var bals = (state.kids && state.kids.balances) || {};
+    var bugBal = Number((bals.buggsy || {}).balance || 0);
+    var jjBal = Number((bals.jj || {}).balance || 0);
+    if (bugBal > 0) queue.push({ text: '\uD83D\uDC3A Buggsy has ' + bugBal + ' rings!', cls: 'gold' });
+    if (jjBal > 0) queue.push({ text: '\uD83D\uDC51 JJ has ' + jjBal + ' stars!', cls: 'rose' });
+    var mp = (state.kids && state.kids.metaProgression) || {};
+    if (mp.buggsy && mp.buggsy.streakDays >= 2) queue.push({ text: '\uD83D\uDD25 Buggsy \u2014 ' + mp.buggsy.streakDays + '-day streak!', cls: 'streak' });
+    if (mp.jj && mp.jj.streakDays >= 2) queue.push({ text: '\uD83D\uDD25 JJ \u2014 ' + mp.jj.streakDays + '-day streak!', cls: 'streak' });
+    if (!queue.length) queue.push({ text: '\u2728 Thompson Family OS', cls: 'gold' });
+    return queue;
+  }
+
+  function setTickerSpecial(text, durationMs) {
+    _tickerSpecialUntil = Date.now() + (durationMs || 8000);
+    showTickerMessage(text, 'special');
+  }
+
+  function showTickerMessage(text, cls) {
+    var inner = document.getElementById('soulMomentInner');
+    if (!inner) return;
+    inner.className = 'ticker-exit';
+    setTimeout(function() {
+      inner.textContent = text;
+      inner.style.color       = TICKER_COLORS[cls] || '#fde68a';
+      inner.style.fontSize    = cls === 'special' ? '14px' : '12px';
+      inner.style.textShadow  = cls === 'streak'  ? '0 0 10px rgba(245,158,11,.5)' : 'none';
+      inner.className = 'ticker-enter';
+      setTimeout(function() { inner.className = ''; }, 230);
+    }, 230);
+  }
+
+  function advanceTicker() {
+    if (Date.now() < _tickerSpecialUntil) return;
+    _tickerQueue = buildTickerQueue();
+    if (!_tickerQueue.length) return;
+    _tickerIdx = _tickerIdx % _tickerQueue.length;
+    showTickerMessage(_tickerQueue[_tickerIdx].text, _tickerQueue[_tickerIdx].cls);
+    _tickerIdx++;
+  }
+
+  function startTicker() {
+    if (_tickerTimer) clearInterval(_tickerTimer);
+    _tickerQueue = buildTickerQueue();
+    _tickerIdx = 0;
+    if (Date.now() < _tickerSpecialUntil) {
+      /* Special message is active — don't overwrite it */
+    } else {
+      var first = _tickerQueue[0];
+      if (first) showTickerMessage(first.text, first.cls);
     }
-    var el = $('soulMoment');
-    if(!el) return;
-    if(moments.length === 0){ el.textContent = ''; return; }
-    var idx = _momentIdx % moments.length;
-    _momentIdx++;
-    el.textContent = moments[idx];
+    _tickerTimer = setInterval(advanceTicker, 4000);
   }
 
   function loadBoard(){
