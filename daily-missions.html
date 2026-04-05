@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v5">
+<meta name="tbm-version" content="v6">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -87,7 +87,7 @@ body {
   font-family: 'Orbitron', sans-serif;
   font-size: 13px;
   font-weight: 900;
-  background: linear-gradient(90deg, #60A5FA, #93C5FD);
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: 1px;
@@ -129,7 +129,7 @@ body {
   font-family: 'Orbitron', sans-serif;
   font-size: 11px;
   font-weight: 700;
-  color: #60A5FA;
+  color: #f59e0b;
   letter-spacing: 1px;
   margin-bottom: 20px;
   animation: fadeSlide 0.5s ease;
@@ -168,7 +168,7 @@ body {
   font-family: 'Orbitron', sans-serif;
   font-size: 14px;
   font-weight: 700;
-  color: #60A5FA;
+  color: #f59e0b;
   flex-shrink: 0;
 }
 .mission-card.completed .mission-number {
@@ -225,9 +225,9 @@ body {
   font-family: 'Orbitron', sans-serif;
   font-size: 9px;
   font-weight: 700;
-  background: linear-gradient(135deg, #1E3A5F, #1E2A4A);
-  border: 1px solid #60A5FA;
-  color: #60A5FA;
+  background: linear-gradient(135deg, #2a1a00, #1a1000);
+  border: 1px solid #f59e0b;
+  color: #f59e0b;
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
@@ -237,8 +237,8 @@ body {
   min-height: 36px;
 }
 .launch-btn:hover {
-  box-shadow: 0 0 12px rgba(96,165,250,0.3);
-  background: linear-gradient(135deg, #1E4A6F, #1E3A5F);
+  box-shadow: 0 0 12px rgba(245,158,11,0.4);
+  background: linear-gradient(135deg, #3d2500, #2a1a00);
 }
 .check-btn {
   width: 28px;
@@ -291,8 +291,8 @@ body {
 
 /* ─── Celebration Banner ─── */
 .celebration-banner {
-  background: linear-gradient(135deg, #14532D, #1A3A1A);
-  border: 2px solid #22C55E;
+  background: linear-gradient(135deg, #2a1a00, #1a1000);
+  border: 2px solid #f59e0b;
   border-radius: 12px;
   padding: 20px;
   text-align: center;
@@ -306,7 +306,7 @@ body {
   font-family: 'Orbitron', sans-serif;
   font-size: 14px;
   font-weight: 700;
-  color: #22C55E;
+  color: #f59e0b;
   letter-spacing: 1px;
 }
 .celebration-sub {
@@ -540,6 +540,48 @@ body.jj-theme .bonus-title {
   color: #FF69B4;
 }
 body.jj-theme .bonus-desc { color: #C490B8; }
+
+/* ─── Ring Burst ─── */
+.b-ring-particle {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  animation: ringBurst 0.7s ease-out forwards;
+}
+@keyframes ringBurst {
+  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.3); }
+}
+
+/* ─── XP Pop ─── */
+.xp-pop {
+  position: fixed;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 22px;
+  font-weight: 900;
+  color: #f59e0b;
+  text-shadow: 0 0 12px rgba(245,158,11,0.8);
+  pointer-events: none;
+  z-index: 9999;
+  animation: xpFloat 1.4s ease-out forwards;
+}
+@keyframes xpFloat {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  60%  { opacity: 1; transform: translateY(-60px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-100px) scale(0.9); }
+}
+
+/* ─── JJ Launch Btn Pulse ─── */
+@keyframes jjBtnPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,105,180,0.5); }
+  50%       { box-shadow: 0 0 0 8px rgba(255,105,180,0); }
+}
+body.jj-theme .launch-btn {
+  animation: jjBtnPulse 2s ease-in-out infinite;
+}
 </style>
 </head>
 <body>
@@ -1138,6 +1180,19 @@ function render() {
   html += '</div>';
 
   container.innerHTML = html;
+
+  // Ring burst + XP pop on completion (Buggsy only)
+  if (allDone && currentChild !== 'jj') {
+    var banner = container.querySelector('.celebration-banner');
+    if (banner) {
+      var rect = banner.getBoundingClientRect();
+      var cx = Math.round(rect.left + rect.width / 2);
+      var cy = Math.round(rect.top + rect.height / 2);
+      fireRingBurst(cx, cy);
+      setTimeout(function() { fireRingBurst(cx - 80, cy + 20); }, 200);
+      setTimeout(function() { showXPPop(cx, cy, '+10 RINGS'); }, 300);
+    }
+  }
 }
 
 // ============================================================
@@ -1162,16 +1217,58 @@ function renderWeekend(container) {
     html += '<button class="launch-btn" onclick="window.location.href=\'/sparkle?activity=challenge&child=jj\'">Play!</button>';
     html += '</div>';
   } else {
-    html += '<div class="bonus-title">\uD83D\uDE80 BONUS CHALLENGE</div>';
-    html += '<div class="bonus-desc">Want extra credit? Try a bonus practice round for +5 Rings.</div>';
+    html += '<div class="bonus-title">\u26A1 WOLFKID BONUS MISSION \u26A1</div>';
+    html += '<div class="bonus-desc">Wolfkid never stops training. Run a bonus homework round for +5 Rings.</div>';
     html += '<div style="margin-top:12px">';
-    html += '<button class="launch-btn" onclick="window.location.href=\'/homework\'">LAUNCH BONUS</button>';
+    html += '<button class="launch-btn" onclick="window.location.href=\'/homework\'">ACCEPT MISSION</button>';
     html += '</div>';
   }
   html += '</div>';
 
   html += '</div>';
   container.innerHTML = html;
+}
+
+// ============================================================
+// RING BURST + XP POP
+// ============================================================
+function fireRingBurst(cx, cy) {
+  var colors = ['#f59e0b', '#fbbf24', '#fde68a', '#fff', '#d97706'];
+  var count = 18;
+  for (var i = 0; i < count; i++) {
+    var p = document.createElement('div');
+    p.className = 'b-ring-particle';
+    var angle = (360 / count) * i;
+    var rad = angle * Math.PI / 180;
+    var dist = 60 + Math.random() * 60;
+    var tx = Math.round(Math.cos(rad) * dist);
+    var ty = Math.round(Math.sin(rad) * dist);
+    var c = colors[Math.floor(Math.random() * colors.length)];
+    p.style.cssText =
+      'left:' + (cx - 6) + 'px;' +
+      'top:' + (cy - 6) + 'px;' +
+      'background:' + c + ';' +
+      '--tx:' + tx + 'px;' +
+      '--ty:' + ty + 'px;';
+    document.body.appendChild(p);
+    (function(el) {
+      setTimeout(function() {
+        if (el.parentNode) { el.parentNode.removeChild(el); }
+      }, 800);
+    }(p));
+  }
+}
+
+function showXPPop(cx, cy, label) {
+  var el = document.createElement('div');
+  el.className = 'xp-pop';
+  el.textContent = label || '+10 RINGS';
+  el.style.left = (cx - 50) + 'px';
+  el.style.top = (cy - 30) + 'px';
+  document.body.appendChild(el);
+  setTimeout(function() {
+    if (el.parentNode) { el.parentNode.removeChild(el); }
+  }, 1500);
 }
 
 // ============================================================
