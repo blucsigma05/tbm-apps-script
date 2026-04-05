@@ -5,7 +5,9 @@ const cp = require('child_process');
 const STATUS_MARKER = '<!-- pipeline-review-fixer -->';
 const LABEL_FIX_NEEDED = 'pipeline:fix-needed';
 const USER_AGENT = 'tbm-pipeline-review-fixer';
-const RESULT_PATH = path.join(process.cwd(), '.github', 'review-fixer-result.json');
+const RESULT_PATH = process.env.RUNNER_TEMP
+  ? path.join(process.env.RUNNER_TEMP, 'review-fixer-result.json')
+  : path.join(process.cwd(), '.github', 'review-fixer-result.json');
 
 function env(name, fallback) {
   const value = process.env[name];
