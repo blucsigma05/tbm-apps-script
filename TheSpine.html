@@ -1026,11 +1026,8 @@ function applyKidWatermark(childKey, data) {
   var wm = document.getElementById(elId);
   var card = document.querySelector('.kid-card.' + cardId);
   if (!wm || !card) return;
-  var tasks = data.tasks || [];
-  var pendingCount = tasks.filter(function(t) {
-    return (t.child || '').toLowerCase() === childKey && t.completed && !t.parentApproved;
-  }).length;
-  if (pendingCount === 0) {
+  var req = (data.requiredStatus || {})[childKey] || {};
+  if (req.allClear) {
     card.classList.add('wm-active');
   } else {
     card.classList.remove('wm-active');
@@ -1039,11 +1036,16 @@ function applyKidWatermark(childKey, data) {
 
 function updateEarnedToday(childKey, data) {
   var tasks = data.tasks || [];
+  var today = new Date().toDateString();
+  function isToday(t) {
+    if (!t.completedDate) return false;
+    return new Date(t.completedDate).toDateString() === today;
+  }
   if (childKey === 'buggsy') {
     var el = document.getElementById('bugEarnedToday');
     if (!el) return;
     var money = tasks
-      .filter(function(t) { return (t.child||'').toLowerCase()==='buggsy' && t.completed && t.parentApproved; })
+      .filter(function(t) { return (t.child||'').toLowerCase()==='buggsy' && t.completed && t.parentApproved && isToday(t); })
       .reduce(function(s,t){ return s + (Number(t.money)||0); }, 0);
     el.textContent = 'Earned today: $' + money.toFixed(2);
     if (money > 0) { el.classList.add('earned-active'); setTimeout(function(){ el.classList.remove('earned-active'); }, 3200); }
@@ -1051,7 +1053,7 @@ function updateEarnedToday(childKey, data) {
     var jjEl = document.getElementById('jjEarnedToday');
     if (!jjEl) return;
     var stars = tasks
-      .filter(function(t) { return (t.child||'').toLowerCase()==='jj' && t.completed && t.parentApproved; })
+      .filter(function(t) { return (t.child||'').toLowerCase()==='jj' && t.completed && t.parentApproved && isToday(t); })
       .reduce(function(s,t){ return s + (Number(t.points)||0); }, 0);
     jjEl.textContent = 'Stars today: ' + stars + ' \u2B50';
     if (stars > 0) { jjEl.classList.add('earned-active'); setTimeout(function(){ jjEl.classList.remove('earned-active'); }, 3200); }

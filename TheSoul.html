@@ -840,18 +840,16 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     try{ $('bugHost').innerHTML = buildKidPanel('buggsy', state.kids); }
     catch(e2){ console.error(e2); $('bugHost').innerHTML = '<div class="kid-shell buggsy"><div class="kid-empty">Buggsy unavailable</div></div>'; }
     renderStreaks(state.kids);
-    // ALL CLEAR — task-level pending count
-    var bPend = (data.tasks || []).filter(function(t) {
-      return (t.child || '').toLowerCase() === 'buggsy' && t.completed && !t.parentApproved;
-    }).length;
-    var jPend = (data.tasks || []).filter(function(t) {
-      return (t.child || '').toLowerCase() === 'jj' && t.completed && !t.parentApproved;
-    }).length;
-    if (bPend === 0 && jPend === 0) {
+    // ALL CLEAR — use requiredStatus.allClear to match gate logic
+    var bReqAC = ((data.requiredStatus || {}).buggsy || {});
+    var jReqAC = ((data.requiredStatus || {}).jj || {});
+    var bClear = !!(bReqAC.allClear);
+    var jClear = !!(jReqAC.allClear);
+    if (bClear && jClear) {
       setTickerSpecial('\uD83D\uDD25 BOTH KIDS CLEARED! Strongest pack around', 8000);
     }
-    applyKidAllClearState('buggsy', bPend);
-    applyKidAllClearState('jj', jPend);
+    applyKidAllClearState('buggsy', bClear ? 0 : 1);
+    applyKidAllClearState('jj', jClear ? 0 : 1);
     _tickerQueue = buildTickerQueue();
     if (!_tickerTimer) startTicker();
     if(state.board) renderCountdown(state.board.countdownEvents || []);
