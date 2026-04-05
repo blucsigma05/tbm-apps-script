@@ -1,49 +1,180 @@
 name: Gemini Code Review
+
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
   issue_comment:
     types: [created]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  statuses: write
+
 jobs:
   gemini-review:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: >
       github.event_name == 'pull_request' ||
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli'))
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, '@gemini-cli /review'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Run Gemini CLI Action
+
+      - name: Gather PR context
+        id: pr
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER_FROM_EVENT: ${{ github.event.pull_request.number }}
+          ISSUE_NUMBER_FROM_EVENT: ${{ github.event.issue.number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          set -euo pipefail
+
+          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
+            PR_NUMBER="${PR_NUMBER_FROM_EVENT}"
+            ADDITIONAL_INSTRUCTIONS=""
+          else
+            PR_NUMBER="${ISSUE_NUMBER_FROM_EVENT}"
+            ADDITIONAL_INSTRUCTIONS="$(printf '%s' "${COMMENT_BODY}" | sed 's/^.*@gemini-cli \/review[[:space:]]*//')"
+          fi
+
+          if [[ -z "${PR_NUMBER}" ]]; then
+            echo "Unable to resolve PR number" >&2
+            exit 1
+          fi
+
+          gh pr view "${PR_NUMBER}" \
+            --repo "${REPOSITORY}" \
+            --json title,body,headRefName,baseRefName,author,mergeable,state,isDraft \
+            > pr-data.json
+
+          gh pr diff "${PR_NUMBER}" --repo "${REPOSITORY}" --name-only > changed-files.txt
+
+          {
+            echo "pr_number=${PR_NUMBER}"
+            echo "additional_instructions<<EOF"
+            printf '%s\n' "${ADDITIONAL_INSTRUCTIONS}"
+            echo "EOF"
+            echo "pr_data<<EOF"
+            cat pr-data.json
+            echo
+            echo "EOF"
+            echo "changed_files<<EOF"
+            cat changed-files.txt
+            echo
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Run Gemini PR review
+        id: gemini
         uses: google-github-actions/run-gemini-cli@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          PR_DATA: ${{ steps.pr.outputs.pr_data }}
+          CHANGED_FILES: ${{ steps.pr.outputs.changed_files }}
+          ADDITIONAL_INSTRUCTIONS: ${{ steps.pr.outputs.additional_instructions }}
         with:
           gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          settings: |
+            {
+              "mcpServers": {
+                "github": {
+                  "command": "docker",
+                  "args": [
+                    "run",
+                    "-i",
+                    "--rm",
+                    "-e",
+                    "GITHUB_PERSONAL_ACCESS_TOKEN",
+                    "ghcr.io/github/github-mcp-server"
+                  ],
+                  "env": {
+                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+                  },
+                  "includeTools": [
+                    "create_pending_pull_request_review",
+                    "add_comment_to_pending_review",
+                    "submit_pending_pull_request_review"
+                  ]
+                }
+              },
+              "coreTools": [
+                "echo",
+                "gh pr view",
+                "gh pr diff",
+                "cat",
+                "head",
+                "tail",
+                "grep"
+              ]
+            }
           prompt: |
-            Review this pull request as a code reviewer for a Google Apps Script + HtmlService project.
+            Review GitHub pull request #${PR_NUMBER} in ${REPOSITORY}.
 
-            Key constraints for this codebase:
-            - All .html files MUST use ES5 only (no arrow functions, let/const, template literals, ??, ?., .includes(), backdrop-filter)
-            - All .gs files run in Google Apps Script V8 runtime
-            - Sheet references must use TAB_MAP from DataEngine.gs, never hardcoded sheet names
-            - Every google.script.run call must have a matching withFailureHandler()
-            - Use openById(SSID), never getActiveSpreadsheet()
+            Pull request metadata:
+            ${PR_DATA}
 
-            Focus your review on:
-            1. ES5 violations in .html files (P0 — breaks Fire Stick WebView)
-            2. Missing error handlers on google.script.run calls (P1)
-            3. Logic bugs, off-by-one errors, race conditions (P1)
-            4. Security issues (XSS, injection) (P1)
-            5. Consistency between related visual states (e.g. gate badge vs panel glow) (P2)
+            Changed files:
+            ${CHANGED_FILES}
 
-            Post your findings as a PR review with inline comments. Use severity badges: P0, P1, P2.
-            If you find no issues, approve the PR with a brief summary.
+            Additional review instructions:
+            ${ADDITIONAL_INSTRUCTIONS}
+
+            Working rules:
+            - Use the GitHub MCP review tools to create and submit an actual PR review on this head.
+            - Treat the task as incomplete unless the review is successfully submitted to GitHub.
+            - Start the top-level review body with `## Gemini Review Summary` so the pipeline can detect it.
+            - Include the word `Gemini` in the top-level review body.
+            - Use inline comments only for real, actionable findings on changed lines.
+            - If you find one or more blocking issues, submit the review with `REQUEST_CHANGES`.
+            - If you find no blocking issues, submit the review with `APPROVE`.
+            - Do not leave the review pending.
+
+            Codebase constraints:
+            - All `.html` files must stay ES5-safe for HtmlService / Fire Stick WebView. No arrow functions, `let`, `const`, template literals, `??`, `?.`, `.includes()`, or `backdrop-filter`.
+            - All `.gs` files run in Google Apps Script V8 runtime.
+            - Sheet references must use `TAB_MAP` from `DataEngine.gs`, never hardcoded sheet names.
+            - Every `google.script.run` call must have a matching `withFailureHandler()`.
+            - Use `openById(SSID)`, never `getActiveSpreadsheet()`.
+
+            Review focus:
+            1. P0: ES5 violations in `.html` files that would break target clients.
+            2. P1: Missing error handlers on `google.script.run` calls.
+            3. P1: Logic bugs, off-by-one errors, stale-state issues, or race conditions.
+            4. P1: Security issues such as XSS or injection risk.
+            5. P2: Visual-state inconsistencies where related surfaces drift apart.
+
+            Before submitting the review:
+            - Read the diff with `gh pr diff ${PR_NUMBER} --repo ${REPOSITORY}`.
+            - If needed, inspect file context in the checked-out workspace.
+            - Keep the summary concise and high signal.
+
+      - name: Report Gemini workflow failure
+        if: failure() && steps.gemini.outcome == 'failure'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          gh pr comment "${PR_NUMBER}" \
+            --repo "${REPOSITORY}" \
+            --body "Gemini workflow failed before it could submit a review. Logs: ${RUN_URL}"
