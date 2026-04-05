@@ -256,11 +256,11 @@ body.evening{
   z-index: 1;
   transition: color .3s;
 }
-.kid-earned-today.jj {
+.kid-earned-today.jj-earned {
   color: var(--rose);
   background: rgba(232,152,184,.05);
 }
-.kid-earned-today.active {
+.kid-earned-today.earned-active {
   animation: glowPulse 3s ease-in-out 1;
 }
 @keyframes glowPulse {
@@ -277,27 +277,48 @@ body.evening{
 .interest-pulse {
   animation: interestBreathe 5s ease-in-out infinite;
 }
+#spineDeclaration {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  text-align: center;
+  padding: 5px 0 4px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .20em;
+  text-transform: uppercase;
+  color: rgba(212,168,67,.55);
+  border-bottom: 0.5px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.14);
+  transition: color .4s, text-shadow .4s;
+  pointer-events: none;
+}
+.kid-card.buggsy.wm-active {
+  border-color: rgba(212,168,67,.55);
+  box-shadow: 0 0 16px rgba(212,168,67,.1);
+  transition: border-color .5s, box-shadow .5s;
+}
+.kid-card.jj.wm-active {
+  border-color: rgba(249,168,212,.55);
+  box-shadow: 0 0 16px rgba(249,168,212,.1);
+  transition: border-color .5s, box-shadow .5s;
+}
+@keyframes deficitBreathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.02); }
+}
+.deficit-breathe {
+  animation: deficitBreathe 6s ease-in-out infinite;
+  display: inline-block;
+}
 </style>
 </head>
 <body>
 <div class="atmo"><div class="bloom"></div><div class="coolwash"></div><div class="river"></div><div class="goldaccent"></div><div class="kidorb left"></div><div class="kidorb right"></div></div>
 <div id="loader"><div class="loader-ring"></div><div class="loader-txt">Loading The Backbone</div></div>
 <div class="stale-banner" id="staleBanner">&#x26A0; Backbone data may be stale — check connection</div>
-<div id="spineDeclaration" style="
-  position:fixed;
-  top:0;left:0;right:0;
-  z-index:50;
-  text-align:center;
-  padding:5px 0 4px;
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:9px;
-  font-weight:500;
-  letter-spacing:.20em;
-  text-transform:uppercase;
-  color:rgba(212,168,67,.55);
-  border-bottom:0.5px solid rgba(255,255,255,.08);
-  background:rgba(0,0,0,.12);
-  transition:color .4s, text-shadow .4s;"></div>
+<div id="spineDeclaration">STRONGER AS A PACK &nbsp;&middot;&nbsp; loading&hellip;</div>
 <div class="page">
   <header class="header">
     <div>
@@ -432,7 +453,7 @@ body.evening{
       </div>
       <div class="kid-bar"><span id="jBar"></span></div>
       <div class="kid-gate" id="jGate"></div>
-      <div class="kid-earned-today jj" id="jjEarnedToday">Stars today: 0 &#11088;</div>
+      <div class="kid-earned-today jj-earned" id="jjEarnedToday">Stars today: 0 &#11088;</div>
       <div class="kid-task-zone" id="jTasks"><div class="kid-empty">Loading tasks…</div></div>
     </article>
   </section>
@@ -624,15 +645,18 @@ function renderFinance(d){
       wf.appendChild(row);
     });
   }
-  var rows = document.querySelectorAll('.wf-bar');
+  var wfBars = document.querySelectorAll('.wf-bar');
   var minTotal = Infinity;
-  var minIdx = -1;
-  debtByType.forEach(function(r, i) {
-    var t = Number(r.total) || 0;
-    if (t > 0 && t < minTotal) { minTotal = t; minIdx = i; }
-  });
-  if (minIdx >= 0 && rows[minIdx]) {
-    rows[minIdx].classList.add('next-win');
+  var minBarIdx = -1;
+  for (var nwi = 0; nwi < debtByType.length; nwi++) {
+    var nwt = Number(debtByType[nwi].total) || 0;
+    if (nwt > 0 && nwt < minTotal) { minTotal = nwt; minBarIdx = nwi; }
+  }
+  for (var nwj = 0; nwj < wfBars.length; nwj++) {
+    wfBars[nwj].classList.remove('next-win');
+  }
+  if (minBarIdx >= 0 && wfBars[minBarIdx]) {
+    wfBars[minBarIdx].classList.add('next-win');
   }
   document.getElementById('tlPromo').textContent = pickPromoDate(d) || "Apr '26";
   document.getElementById('tlCf').textContent = fmtDateToken(pick(d, ['cashFlowPositiveDate'])) || '\u2014';
@@ -665,6 +689,11 @@ function renderFinance(d){
   var cfEl = document.getElementById('cfVal');
   animateNum(cfEl, cfResult, fmtMoney);
   cfEl.style.color = cfResult >= 0 ? 'var(--mint)' : 'var(--rose)';
+  if (cfResult < 0) {
+    cfEl.classList.add('deficit-breathe');
+  } else {
+    cfEl.classList.remove('deficit-breathe');
+  }
 
   // Pills
   var opEl = document.getElementById('opPill');
@@ -1017,7 +1046,7 @@ function updateEarnedToday(childKey, data) {
       .filter(function(t) { return (t.child||'').toLowerCase()==='buggsy' && t.completed && t.parentApproved; })
       .reduce(function(s,t){ return s + (Number(t.money)||0); }, 0);
     el.textContent = 'Earned today: $' + money.toFixed(2);
-    if (money > 0) { el.classList.add('active'); setTimeout(function(){ el.classList.remove('active'); }, 3200); }
+    if (money > 0) { el.classList.add('earned-active'); setTimeout(function(){ el.classList.remove('earned-active'); }, 3200); }
   } else {
     var jjEl = document.getElementById('jjEarnedToday');
     if (!jjEl) return;
@@ -1025,7 +1054,7 @@ function updateEarnedToday(childKey, data) {
       .filter(function(t) { return (t.child||'').toLowerCase()==='jj' && t.completed && t.parentApproved; })
       .reduce(function(s,t){ return s + (Number(t.points)||0); }, 0);
     jjEl.textContent = 'Stars today: ' + stars + ' \u2B50';
-    if (stars > 0) { jjEl.classList.add('active'); setTimeout(function(){ jjEl.classList.remove('active'); }, 3200); }
+    if (stars > 0) { jjEl.classList.add('earned-active'); setTimeout(function(){ jjEl.classList.remove('earned-active'); }, 3200); }
   }
 }
 </script>

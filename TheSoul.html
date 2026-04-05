@@ -172,7 +172,13 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 .streak-kid-val{font-size:22px;font-weight:800;color:var(--gold-soft);line-height:1}
 .streak-kid-sub{font-size:8px;color:var(--text-dim);margin-top:1px}
 
-#soulMoment{height:22px;overflow:hidden;position:relative;padding:0 20px}
+#soulMoment { height:20px; overflow:hidden; position:relative; }
+#soulMomentInner {
+  position: absolute; width: 100%; height: 20px;
+  font-size: 12px; font-weight: 700;
+  text-align: center; line-height: 20px;
+  letter-spacing: 0.3px;
+}
 @keyframes tickerExitUp {
   from { transform: translateY(0); opacity: 1; }
   to { transform: translateY(-100%); opacity: 0; }
@@ -181,8 +187,8 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
   from { transform: translateY(100%); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
-.ticker-exit { animation: tickerExitUp 0.22s ease-in forwards; }
-.ticker-enter { animation: tickerEnterDown 0.22s ease-out forwards; }
+#soulMomentInner.ticker-exit  { animation: tickerExitUp  0.22s ease-in  forwards; }
+#soulMomentInner.ticker-enter { animation: tickerEnterDown 0.22s ease-out forwards; }
 
 .kids-zone{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:0}
 .kid-panel{position:relative;border-radius:16px;overflow:hidden;box-shadow:var(--shadow);min-height:0}
@@ -261,8 +267,8 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 .dinner-name-set { font-size: 22px; font-weight: 800; color: #fde68a; line-height: 1.1; }
 .dinner-cook-set { font-size: 9px; color: rgba(253,230,138,.6); margin-top: 2px; }
 .feat-dinner.empty .dinner-mystery { font-size: 11px; font-weight: 700; color: rgba(212,168,67,.6); }
-@keyframes dinnerReveal { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-.dinner-shimmer { background-image: linear-gradient(90deg, transparent 0%, rgba(253,230,138,.08) 50%, transparent 100%); background-size: 200% 100%; animation: dinnerReveal 0.5s ease-out 1; }
+@keyframes dinnerShimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+.dinner-shimmer { background-image: linear-gradient(90deg, transparent 0%, rgba(253,230,138,.08) 50%, transparent 100%); background-size: 200% 100%; animation: dinnerShimmer 0.5s ease-out 1; }
 
 .kid-shell.jj.panel-all-clear {
   border-color: rgba(249,168,212,.55);
@@ -274,7 +280,21 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
   box-shadow: 0 0 20px rgba(212,168,67,.12), inset 0 0 30px rgba(212,168,67,.06);
   transition: border-color .5s, box-shadow .5s;
 }
-.char-all-clear { opacity: 1 !important; }
+.char-all-clear-bug { filter: drop-shadow(0 0 12px rgba(212,168,67,.4)); }
+.char-all-clear-jj  { filter: drop-shadow(0 0 12px rgba(249,168,212,.4)); }
+
+.identity-photo-inner.weather-sunny {
+  background: radial-gradient(ellipse at center, rgba(72,58,36,.7), rgba(62,52,32,.95));
+  transition: background 2s ease;
+}
+.identity-photo-inner.weather-rain {
+  background: radial-gradient(ellipse at center, rgba(40,52,72,.7), rgba(32,42,62,.95));
+  transition: background 2s ease;
+}
+.identity-photo-inner.weather-storm {
+  background: radial-gradient(ellipse at center, rgba(30,34,52,.8), rgba(20,24,42,.98));
+  transition: background 2s ease;
+}
 
 @media (max-width:980px){
   .page{grid-template-rows:minmax(130px,.76fr) auto 20px 1.24fr}
@@ -375,8 +395,8 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     </div>
   </section>
 
-  <div id="soulMoment" style="height:22px;overflow:hidden;position:relative">
-    <div id="soulMomentInner" style="position:absolute;width:100%;height:22px"></div>
+  <div id="soulMoment">
+    <div id="soulMomentInner"></div>
   </div>
 
   <section class="kids-zone">
@@ -428,6 +448,14 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     ramen:'\uD83C\uDF5C',curry:'\uD83C\uDF5B',fries:'\uD83C\uDF5F',wings:'\uD83C\uDF57'
   };
 
+  var TICKER_COLORS = {
+    gold:    '#fde68a',
+    rose:    '#f9a8d4',
+    mint:    '#6ee7b7',
+    streak:  '#f59e0b',
+    special: '#fde68a'
+  };
+
   var state = {board:null,kids:null,firstBoard:false,firstKids:false};
 
   function $(id){ return document.getElementById(id); }
@@ -477,6 +505,20 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     document.body.classList.remove('morning','evening');
     if(hour >= 5 && hour <= 11) document.body.classList.add('morning');
     else if(hour >= 17 || hour <= 4) document.body.classList.add('evening');
+  }
+
+  function applyWeatherClass(condition) {
+    var el = document.querySelector('.identity-photo-inner');
+    if (!el) return;
+    el.classList.remove('weather-rain', 'weather-storm', 'weather-sunny');
+    var c = (condition || '').toLowerCase();
+    if (c.indexOf('thunder') !== -1 || c.indexOf('storm') !== -1) {
+      el.classList.add('weather-storm');
+    } else if (c.indexOf('rain') !== -1 || c.indexOf('drizzle') !== -1 || c.indexOf('shower') !== -1) {
+      el.classList.add('weather-rain');
+    } else if (c.indexOf('clear') !== -1 || c.indexOf('sunny') !== -1) {
+      el.classList.add('weather-sunny');
+    }
   }
 
   function eyebrowDate(){
@@ -556,6 +598,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
       $('weatherTemp').textContent = '\u2014';
       $('weatherDetail').textContent = 'No weather data';
     }
+    applyWeatherClass(w.condition || w.description || w.iconLabel || '');
 
     var split = sortEventsToCalendars(state.board.events || []);
     var totalEvents = split.household.length + split.kids.length;
@@ -739,7 +782,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     } else {
       var celebImg = theme==='jj'?'https://i.ibb.co/9md3x6zp/1773982606233.png':'https://i.ibb.co/8L0ccf6p/1773982420674.png';
       var celebText = theme==='jj'?'All done! \u2728':'ALL CLEAR!';
-      if(done.length > 0){ rightH += '<div class="kid-empty" style="text-align:center;padding:8px 4px"><img src="'+celebImg+'" class="char-all-clear" style="width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 4px;filter:drop-shadow(0 0 12px '+(theme==='jj'?'rgba(249,168,212,.4)':'rgba(212,168,67,.4)')+')" onerror="this.style.display=\'none\'"><div>'+celebText+'</div></div>'; }
+      if(done.length > 0){ rightH += '<div class="kid-empty" style="text-align:center;padding:8px 4px"><img src="'+celebImg+'" class="'+(theme==='jj'?'char-all-clear-jj':'char-all-clear-bug')+'" style="width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 4px" onerror="this.style.display=\'none\'"><div>'+celebText+'</div></div>'; }
       else { rightH += '<div class="kid-empty">None waiting</div>'; }
     }
     rightH += '</div></div>';
@@ -770,6 +813,21 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     '</div>';
   }
 
+  function applyKidAllClearState(theme, pendingCount) {
+    var hostId = theme === 'jj' ? 'jjHost' : 'bugHost';
+    var host = document.getElementById(hostId);
+    if (!host) return;
+    var shell = host.querySelector('.kid-shell');
+    if (!shell) return;
+    if (pendingCount === 0) {
+      shell.classList.add('panel-all-clear');
+      var img = shell.querySelector('.kid-empty img');
+      if (img) img.className = theme === 'jj' ? 'char-all-clear-jj' : 'char-all-clear-bug';
+    } else {
+      shell.classList.remove('panel-all-clear');
+    }
+  }
+
   function renderKids(raw){
     var data = safeParse(raw) || {};
     state.kids = {
@@ -782,23 +840,18 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     try{ $('bugHost').innerHTML = buildKidPanel('buggsy', state.kids); }
     catch(e2){ console.error(e2); $('bugHost').innerHTML = '<div class="kid-shell buggsy"><div class="kid-empty">Buggsy unavailable</div></div>'; }
     renderStreaks(state.kids);
-    // ALL CLEAR panel glow
-    var bReqAC = (state.kids.requiredStatus || {}).buggsy || {};
-    var jReqAC = (state.kids.requiredStatus || {}).jj || {};
-    var bShell = document.querySelector('#bugHost .kid-shell');
-    var jShell = document.querySelector('#jjHost .kid-shell');
-    if (bShell) {
-      if (bReqAC.allClear) { bShell.classList.add('panel-all-clear'); } else { bShell.classList.remove('panel-all-clear'); }
-    }
-    if (jShell) {
-      if (jReqAC.allClear) { jShell.classList.add('panel-all-clear'); } else { jShell.classList.remove('panel-all-clear'); }
-    }
-    // BOTH KIDS ALL CLEAR detection
-    var bReq = (state.kids.requiredStatus && state.kids.requiredStatus.buggsy) || {};
-    var jReq = (state.kids.requiredStatus && state.kids.requiredStatus.jj) || {};
-    if (bReq.allClear && jReq.allClear) {
+    // ALL CLEAR — task-level pending count
+    var bPend = (data.tasks || []).filter(function(t) {
+      return (t.child || '').toLowerCase() === 'buggsy' && t.completed && !t.parentApproved;
+    }).length;
+    var jPend = (data.tasks || []).filter(function(t) {
+      return (t.child || '').toLowerCase() === 'jj' && t.completed && !t.parentApproved;
+    }).length;
+    if (bPend === 0 && jPend === 0) {
       setTickerSpecial('\uD83D\uDD25 BOTH KIDS CLEARED! Strongest pack around', 8000);
     }
+    applyKidAllClearState('buggsy', bPend);
+    applyKidAllClearState('jj', jPend);
     _tickerQueue = buildTickerQueue();
     if (!_tickerTimer) startTicker();
     if(state.board) renderCountdown(state.board.countdownEvents || []);
@@ -828,6 +881,8 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     var queue = [];
     var fn = noteVal(state.board || {});
     if (fn) queue.push({ text: '\u2728 ' + fn, cls: 'mint' });
+    var dinner = (state.board && state.board.dinner);
+    if (dinner && dinner.meal) queue.push({ text: '\uD83C\uDF7D\uFE0F ' + dinner.meal + ' tonight!', cls: 'gold' });
     var bals = (state.kids && state.kids.balances) || {};
     var bugBal = Number((bals.buggsy || {}).balance || 0);
     var jjBal = Number((bals.jj || {}).balance || 0);
@@ -836,8 +891,6 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     var mp = (state.kids && state.kids.metaProgression) || {};
     if (mp.buggsy && mp.buggsy.streakDays >= 2) queue.push({ text: '\uD83D\uDD25 Buggsy \u2014 ' + mp.buggsy.streakDays + '-day streak!', cls: 'streak' });
     if (mp.jj && mp.jj.streakDays >= 2) queue.push({ text: '\uD83D\uDD25 JJ \u2014 ' + mp.jj.streakDays + '-day streak!', cls: 'streak' });
-    var dinner = (state.board && state.board.dinner);
-    if (dinner && dinner.meal) queue.push({ text: '\uD83C\uDF7D\uFE0F ' + dinner.meal + ' tonight!', cls: 'gold' });
     if (!queue.length) queue.push({ text: '\u2728 Thompson Family OS', cls: 'gold' });
     return queue;
   }
@@ -853,13 +906,9 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     inner.className = 'ticker-exit';
     setTimeout(function() {
       inner.textContent = text;
-      inner.style.fontSize = cls === 'special' ? '14px' : '12px';
-      var colorMap = { gold:'#fde68a', rose:'#f9a8d4', mint:'#6ee7b7', streak:'#f59e0b', special:'#fde68a' };
-      inner.style.color = colorMap[cls] || '#fde68a';
-      inner.style.textShadow = cls === 'streak' ? '0 0 10px rgba(245,158,11,.5)' : 'none';
-      inner.style.fontWeight = '700';
-      inner.style.textAlign = 'center';
-      inner.style.lineHeight = '22px';
+      inner.style.color       = TICKER_COLORS[cls] || '#fde68a';
+      inner.style.fontSize    = cls === 'special' ? '14px' : '12px';
+      inner.style.textShadow  = cls === 'streak'  ? '0 0 10px rgba(245,158,11,.5)' : 'none';
       inner.className = 'ticker-enter';
       setTimeout(function() { inner.className = ''; }, 230);
     }, 230);
@@ -869,9 +918,9 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     if (Date.now() < _tickerSpecialUntil) return;
     _tickerQueue = buildTickerQueue();
     if (!_tickerQueue.length) return;
-    var item = _tickerQueue[_tickerIdx % _tickerQueue.length];
+    _tickerIdx = _tickerIdx % _tickerQueue.length;
+    showTickerMessage(_tickerQueue[_tickerIdx].text, _tickerQueue[_tickerIdx].cls);
     _tickerIdx++;
-    showTickerMessage(item.text, item.cls);
   }
 
   function startTicker() {
