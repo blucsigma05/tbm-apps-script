@@ -9,6 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: read
   issues: write
   pull-requests: write
@@ -200,3 +201,18 @@ jobs:
             -H "Content-Type: application/json" \
             --data @relay_payload.json \
             "$RELAY_URL"
+
+      - name: Refresh pipeline review summary after CI completes
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'review-watcher.yml',
+              ref: context.payload.pull_request.base.ref,
+              inputs: {
+                pr: String(context.payload.pull_request.number),
+              },
+            });

@@ -388,7 +388,7 @@ body { min-height: 100vh; }
 .p-nav { position:sticky;top:0;z-index:1000;display:flex;align-items:center;justify-content:center;gap:2px;padding:6px 12px;background:rgba(58,72,112,0.95);border-bottom:1px solid rgba(255,255,255,0.15);font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:0.4px;flex-wrap:wrap; }
 .p-nav a { padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.5);transition:all 0.15s; }
 .p-nav a:hover { color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.1); }
-.p-nav a.pnav-active { color:#fff;background:rgba(255,255,255,0.12);font-weight:700; }
+.p-nav a.pnav-active { color:#fff;background:rgba(255,255,255,0.12);font-weight:700;border-radius:6px; }
 .parent-body #loading { background: #3a4870; }
 .parent-body .load-ring { border-top-color: #d4a843; border-right-color: #d4a843; }
 .parent-body .load-text { font-size: 15px; color: #e2e8f0; font-weight: 700; letter-spacing: 1px; }
@@ -424,7 +424,7 @@ body { min-height: 100vh; }
 .p-kid-hdr { padding: 14px 16px; display: flex; justify-content: space-between; align-items: center; }
 .p-kid-hdr.buggsy { background: linear-gradient(135deg,#0f1923,#1a2635); }
 .p-kid-hdr.jj { background: linear-gradient(135deg,#2d0042,#4a0072); }
-.p-kid-name { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #fff; }
+.p-kid-name { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 800; letter-spacing: 1px; color: #fff; }
 .p-kid-score { font-size: 24px; font-weight: 800; }
 .p-kid-score.buggsy { color: #f59e0b; }
 .p-kid-score.jj { color: #ec4899; }
@@ -452,10 +452,10 @@ body { min-height: 100vh; }
 .p-done-ck { color: #86efac; font-size: 14px; }
 .p-reset-panel {
   background: rgba(20,20,40,0.45);
-  border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+  border: 1px solid rgba(239,68,68,0.2); border-radius: 14px;
   padding: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); margin-bottom: 20px;
 }
-.p-reset-title { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #e2e8f0; margin-bottom: 14px; }
+.p-reset-title { font-family: 'Press Start 2P', monospace; font-size: 8px; color: #fca5a5; margin-bottom: 14px; }
 .p-reset-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
 .p-reset-btn { font-size: 13px; font-weight: 700; padding: 11px 8px; border-radius: 8px; border: 1px solid; cursor: pointer; background: transparent; transition: all 0.14s; text-align: center; line-height: 1.4; }
 .p-reset-btn.blue-b { color: #93c5fd; border-color: rgba(59,130,246,0.3); }
@@ -3271,7 +3271,7 @@ function setupPinEvents() {
 //  PARENT DASHBOARD
 // ══════════════════════════════════════════
 function buildParentUI() {
-  return '<div class="p-nav" id="pNav"><a onclick="pNavGo(\'pulse\')">The Pulse</a><a class="pnav-active">Kids Dashboard</a></div>'+
+  return '<div class="p-nav" id="pNav"><a onclick="pNavGo(\'pulse\')">&#128200; The Pulse</a><a class="pnav-active">&#128104;&#8205;&#128105;&#8205;&#128103;&#8205;&#128102; Kids</a></div>'+
   '<div class="p-hdr"><div class="p-hdr-top"><div class="p-hdr-title"><span style="display:inline-flex;gap:4px;vertical-align:middle;margin-right:6px;"><img class="kid-avatar" src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" alt="Buggsy" style="width:20px;height:20px;border-radius:50%;object-fit:cover;border:1px solid #f5d58a"><img class="kid-avatar" src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" alt="JJ" style="width:20px;height:20px;border-radius:50%;object-fit:cover;border:1px solid #f5b8cc"></span>KIDS HUB <span>/ PARENT</span></div><div class="p-links" id="pLinks"><span style="font-size:11px;color:#64748b;font-weight:700;align-self:center">OPEN:</span></div></div></div>'+
   '<div class="p-body"><div id="pSpinner" class="p-spinner"><div style="text-align:center"><div class="p-spin-ring" style="margin:0 auto 12px"></div><div style="font-size:13px;font-weight:600;color:#94a3b8">Loading dashboard...</div></div></div>'+
   '<div id="pContent" style="display:none">'+
