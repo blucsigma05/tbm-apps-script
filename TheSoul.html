@@ -845,13 +845,13 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     var jReqAC = ((data.requiredStatus || {}).jj || {});
     var bClear = !!(bReqAC.allClear);
     var jClear = !!(jReqAC.allClear);
-    if (bClear && jClear) {
-      setTickerSpecial('\uD83D\uDD25 BOTH KIDS CLEARED! Strongest pack around', 8000);
-    }
     applyKidAllClearState('buggsy', bClear ? 0 : 1);
     applyKidAllClearState('jj', jClear ? 0 : 1);
     _tickerQueue = buildTickerQueue();
     if (!_tickerTimer) startTicker();
+    if (bClear && jClear) {
+      setTickerSpecial('\uD83D\uDD25 BOTH KIDS CLEARED! Strongest pack around', 8000);
+    }
     if(state.board) renderCountdown(state.board.countdownEvents || []);
     state.firstKids = true;
     $('kidsStamp').textContent = stampTime();
@@ -925,8 +925,12 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     if (_tickerTimer) clearInterval(_tickerTimer);
     _tickerQueue = buildTickerQueue();
     _tickerIdx = 0;
-    var first = _tickerQueue[0];
-    if (first) showTickerMessage(first.text, first.cls);
+    if (Date.now() < _tickerSpecialUntil) {
+      /* Special message is active — don't overwrite it */
+    } else {
+      var first = _tickerQueue[0];
+      if (first) showTickerMessage(first.text, first.cls);
+    }
     _tickerTimer = setInterval(advanceTicker, 4000);
   }
 
