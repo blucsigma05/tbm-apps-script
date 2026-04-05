@@ -1041,9 +1041,13 @@ function updateDeclaration() {
 }
 
 // v46: Declaration strip rotation
+var _declRotationTimer = null;
 function startDeclarationRotation(fin) {
   var el = document.getElementById('spineDeclaration');
   if (!el) return;
+
+  // Clear prior interval to prevent buildup on finance refresh
+  if (_declRotationTimer) { clearInterval(_declRotationTimer); _declRotationTimer = null; }
 
   el.style.transition = 'opacity 0.3s ease';
 
@@ -1060,7 +1064,7 @@ function startDeclarationRotation(fin) {
 
   var idx = 0;
   el.textContent = messages[0];
-  setInterval(function() {
+  _declRotationTimer = setInterval(function() {
     el.style.opacity = '0';
     setTimeout(function() {
       idx = (idx + 1) % messages.length;
