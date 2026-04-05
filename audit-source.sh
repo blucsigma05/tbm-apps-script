@@ -227,7 +227,9 @@ WORKER_PAGES=$(grep -o "page: *'[a-z-]*'" cloudflare-worker.js 2>/dev/null | sed
 GAS_ROUTES=$(grep -o "'[a-z-]*' *: *{" Code.js 2>/dev/null | sed "s/' *: *{//;s/'//" | sort -u)
 
 # Extract GAS route file mappings from htmlSource handler in serveData (action=htmlSource path)
-GAS_HTMLSOURCE=$(grep -A2 "htmlSource" Code.js 2>/dev/null | grep -o "file: *'[^']*'" | sed "s/file: *'//;s/'//" | sort -u)
+# The htmlSource routes block uses 'page-key': 'FileName' pairs (not file: 'Name' like servePage)
+# Use awk to isolate the block, then extract quoted keys followed by a colon
+GAS_HTMLSOURCE=$(awk "/if .action === 'htmlSource'./,/^[[:space:]]*\};/" Code.js 2>/dev/null | grep -o "'[a-z-]*':" | tr -d "':" | sort -u)
 
 # Extract GAS route file mappings (route → file name)
 GAS_FILES=$(grep -o "file: *'[^']*'" Code.js 2>/dev/null | sed "s/file: *'//;s/'//" | sort -u)
@@ -245,6 +247,10 @@ if [ -z "$GAS_FILES" ]; then
   echo "  X Route extraction returned empty GAS_FILES — check Code.js file: mappings"
   ROUTE_FAIL=1
 fi
+if [ -z "$GAS_HTMLSOURCE" ]; then
+  echo "  X Route extraction returned empty GAS_HTMLSOURCE — check Code.js serveData htmlSource block format"
+  ROUTE_FAIL=1
+fi
 
 # Check 1: Every worker page= target has a GAS route entry
 for page in $WORKER_PAGES; do
@@ -255,13 +261,12 @@ for page in $WORKER_PAGES; do
 done
 
 # Check 1b: Every worker page= target also has an htmlSource mapping (serveData path)
-if [ -n "$GAS_HTMLSOURCE" ]; then
-  for page in $WORKER_PAGES; do
-    if ! echo "$GAS_HTMLSOURCE" | grep -q "^${page}$"; then
-      echo "  WARN -- Worker page=${page} missing from htmlSource handler in serveData()"
-    fi
-  done
-fi
+# Empty GAS_HTMLSOURCE is a hard FAIL (caught by guard above), not a skip
+for page in $WORKER_PAGES; do
+  if ! echo "$GAS_HTMLSOURCE" | grep -q "^${page}$"; then
+    echo "  WARN -- Worker page=${page} missing from htmlSource handler in serveData()"
+  fi
+done
 
 # Check 2: Every GAS route file has a backing .html file
 for htmlname in $GAS_FILES; do
