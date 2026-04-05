@@ -79,8 +79,14 @@ jobs:
         run: node .github/scripts/review-fixer.js --finalize
 
       - name: Warn when bot push token is missing
-        if: steps.prepare.outputs.should_push == 'true' && secrets.PIPELINE_BOT_TOKEN == ''
-        run: echo "::warning::PIPELINE_BOT_TOKEN is not configured. Bot pushes may not retrigger CI."
+        if: steps.prepare.outputs.should_push == 'true'
+        env:
+          PIPELINE_BOT_TOKEN: ${{ secrets.PIPELINE_BOT_TOKEN }}
+        shell: bash
+        run: |
+          if [ -z "$PIPELINE_BOT_TOKEN" ]; then
+            echo "::warning::PIPELINE_BOT_TOKEN is not configured. Bot pushes may not retrigger CI."
+          fi
 
       - name: Run source audit
         if: steps.prepare.outputs.should_push == 'true'
