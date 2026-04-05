@@ -63,13 +63,9 @@ These expand the relay behavior but do not block the core loop.
    - marks the cycle stalled after the configured cap
 9. Confirm the watcher shows explicit current-head states for:
    - `CI`
-   - `Gemini workflow`
-   - `Gemini review`
    - `Codex review`
 10. Approve the PR and confirm the watcher moves the PR to `pipeline:ready` only after:
    - CI is `PASS`
-   - Gemini workflow is `PASS`
-   - Gemini review is `PASS`
    - Codex review is `PASS`
    - GitHub approval state is `APPROVED`
    - unresolved actionable threads are `0`
@@ -81,9 +77,19 @@ Use the watcher summary comment as the authoritative gate view for open PRs.
 | Gate | What counts as current | What counts as pass | What still blocks |
 |---|---|---|---|
 | `CI` | Latest `TBM Smoke + Regression` run on the PR head SHA | Workflow conclusion `success` | `RUNNING`, `WAITING`, or any failing conclusion |
-| `Gemini workflow` | Latest `Gemini Code Review` run on the PR head SHA | Workflow conclusion `success` | Missing rerun on `synchronize`, in-progress, or failed workflow |
-| `Gemini review` | Latest Gemini-authored review on the PR head SHA | Review state `APPROVED` | `COMMENTED`, `WAITING`, `STALE`, or `FAIL` |
 | `Codex review` | Latest Codex-authored review on the PR head SHA | Review state `APPROVED` | `COMMENTED`, `WAITING`, `STALE`, or `FAIL` |
+
+## Gemini Status
+
+As of April 5, 2026, Gemini is removed from the hard merge gate. The required release contract is now:
+
+- Claude or human implementation work
+- GitHub review lane
+- Codex explicit `PASS` or `FAIL`
+- TBM CI / regression
+- GitHub approval state
+
+Gemini can return later as a manual or advisory lane once it reliably produces current-head review artifacts.
 
 ## Manual Backstops
 

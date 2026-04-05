@@ -74,13 +74,6 @@ function isCodexSignal(login, body) {
     text.indexOf('codex') !== -1;
 }
 
-function isGeminiSignal(login, body) {
-  const actor = String(login || '').toLowerCase();
-  const text = String(body || '').toLowerCase();
-  return actor.indexOf('gemini') !== -1 ||
-    text.indexOf('gemini') !== -1;
-}
-
 function matchesSha(expectedSha, candidateSha) {
   const expected = String(expectedSha || '').toLowerCase();
   const candidate = String(candidateSha || '').toLowerCase();
@@ -265,7 +258,6 @@ async function main() {
   const repo = repoParts[1];
   const eventName = getEnv('GITHUB_EVENT_NAME', '');
   const ciWorkflowName = getEnv('CI_WORKFLOW_NAME', '');
-  const geminiWorkflowName = getEnv('GEMINI_WORKFLOW_NAME', '');
   const headers = {
     Authorization: 'Bearer ' + token,
     Accept: 'application/vnd.github+json',
@@ -377,28 +369,14 @@ async function main() {
   }
 
   const ciState = formatWorkflowState(latestRunByName(ciWorkflowName));
-  const geminiWorkflowState = formatWorkflowState(latestRunByName(geminiWorkflowName));
-  let geminiReviewState = buildActorReviewState(reviews, isGeminiSignal, pr.headRefOid);
-  if (geminiWorkflowState.pass && geminiReviewState.label === 'WAITING') {
-    geminiReviewState = {
-      label: 'WORKFLOW_ONLY',
-      pass: false,
-      failed: false,
-      url: geminiWorkflowState.url
-    };
-  }
   const codexState = buildActorReviewState(reviews, isCodexSignal, pr.headRefOid);
   const approvalState = pr.reviewDecision || 'REVIEW_REQUIRED';
   const fixCapReached = fixCycle >= MAX_FIX_CYCLES;
   const fixRequired = approvalState === 'CHANGES_REQUESTED' ||
     ciState.failed ||
-    geminiWorkflowState.failed ||
-    geminiReviewState.failed ||
     codexState.failed ||
     unresolvedThreads > 0;
   const readyToMerge = ciState.pass &&
-    geminiWorkflowState.pass &&
-    geminiReviewState.pass &&
     codexState.pass &&
     approvalState === 'APPROVED' &&
     unresolvedThreads === 0;
@@ -420,8 +398,6 @@ async function main() {
     '## Pipeline Review Summary',
     '',
     '- CI: ' + renderState(ciState),
-    '- Gemini workflow: ' + renderState(geminiWorkflowState),
-    '- Gemini review: ' + renderState(geminiReviewState),
     '- Codex review: ' + renderState(codexState),
     '- Unresolved actionable threads: ' + String(unresolvedThreads),
     '- Approval state: ' + approvalState,
@@ -468,10 +444,6 @@ async function main() {
       relaySummary = 'PR #' + prNumber + ' stalled after review-fix-' + String(fixCycle) + ' hit the cycle cap.';
     } else if (ciState.failed) {
       relaySummary = 'PR #' + prNumber + ' needs fixes. CI is ' + ciState.label + '.';
-    } else if (geminiWorkflowState.failed) {
-      relaySummary = 'PR #' + prNumber + ' needs fixes. Gemini workflow is ' + geminiWorkflowState.label + '.';
-    } else if (geminiReviewState.failed) {
-      relaySummary = 'PR #' + prNumber + ' needs fixes. Gemini review is ' + geminiReviewState.label + '.';
     } else if (codexState.failed) {
       relaySummary = 'PR #' + prNumber + ' needs fixes. Codex review is ' + codexState.label + '.';
     } else if (unresolvedThreads > 0) {
