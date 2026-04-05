@@ -18,7 +18,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: process.env.TBM_BASE_URL || 'https://thompsonfams.com',
+    baseURL: process.env.TBM_BASE_URL, // required — no production default; set TBM_BASE_URL explicitly
     ignoreHTTPSErrors: true,
     trace: 'on-first-retry',
   },

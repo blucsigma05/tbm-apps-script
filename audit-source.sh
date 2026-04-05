@@ -226,16 +226,42 @@ WORKER_PAGES=$(grep -o "page: *'[a-z-]*'" cloudflare-worker.js 2>/dev/null | sed
 # Extract GAS route keys from servePage() routes object
 GAS_ROUTES=$(grep -o "'[a-z-]*' *: *{" Code.js 2>/dev/null | sed "s/' *: *{//;s/'//" | sort -u)
 
+# Extract GAS route file mappings from htmlSource handler in serveData (action=htmlSource path)
+GAS_HTMLSOURCE=$(grep -A2 "htmlSource" Code.js 2>/dev/null | grep -o "file: *'[^']*'" | sed "s/file: *'//;s/'//" | sort -u)
+
 # Extract GAS route file mappings (route → file name)
 GAS_FILES=$(grep -o "file: *'[^']*'" Code.js 2>/dev/null | sed "s/file: *'//;s/'//" | sort -u)
+
+# Guard: fail if extraction returned nothing (regex/formatting change would silently pass)
+if [ -z "$WORKER_PAGES" ]; then
+  echo "  X Route extraction returned empty WORKER_PAGES — check cloudflare-worker.js format"
+  ROUTE_FAIL=1
+fi
+if [ -z "$GAS_ROUTES" ]; then
+  echo "  X Route extraction returned empty GAS_ROUTES — check Code.js servePage format"
+  ROUTE_FAIL=1
+fi
+if [ -z "$GAS_FILES" ]; then
+  echo "  X Route extraction returned empty GAS_FILES — check Code.js file: mappings"
+  ROUTE_FAIL=1
+fi
 
 # Check 1: Every worker page= target has a GAS route entry
 for page in $WORKER_PAGES; do
   if ! echo "$GAS_ROUTES" | grep -q "^${page}$"; then
-    echo "  X Worker targets page=${page} but no GAS route entry found"
+    echo "  X Worker targets page=${page} but no GAS route entry found in servePage()"
     ROUTE_FAIL=1
   fi
 done
+
+# Check 1b: Every worker page= target also has an htmlSource mapping (serveData path)
+if [ -n "$GAS_HTMLSOURCE" ]; then
+  for page in $WORKER_PAGES; do
+    if ! echo "$GAS_HTMLSOURCE" | grep -q "^${page}$"; then
+      echo "  WARN -- Worker page=${page} missing from htmlSource handler in serveData()"
+    fi
+  done
+fi
 
 # Check 2: Every GAS route file has a backing .html file
 for htmlname in $GAS_FILES; do

@@ -210,7 +210,7 @@ function seedKHHistory_() {
   var colMap = {};
   for (var h = 0; h < headers.length; h++) { colMap[headers[h]] = h; }
 
-  var today = new Date();
+  var today = (typeof tbm_now_ === 'function') ? tbm_now_() : new Date();
   var yesterday = new Date(today.getTime() - 86400000);
 
   var entries = [

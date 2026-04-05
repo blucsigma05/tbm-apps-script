@@ -603,11 +603,14 @@ function renderPortfolio() {
     paid += owned[i].paid || 0;
     retail += owned[i].retail || 0;
   }
-  var household = paid + 765 + 53;
+  var jtPaid = 0, kidsPaid = 0;
+  for (var j = 0; j < jtWatches.length; j++) { jtPaid += jtWatches[j].paid || 0; }
+  for (var k2 = 0; k2 < kidsWatches.length; k2++) { kidsPaid += kidsWatches[k2].paid || 0; }
+  var household = paid + jtPaid + kidsPaid;
   var pct = retail > 0 ? Math.round(((retail - paid) / retail) * 100) : 0;
   var avg = owned.length > 0 ? Math.round(paid / owned.length) : 0;
   document.getElementById('portfolio-strip').innerHTML =
-    '<div class="p-stat"><div class="p-stat-val">' + (owned.length + 9) + '</div><div class="p-stat-label">Household Pieces</div></div>' +
+    '<div class="p-stat"><div class="p-stat-val">' + (owned.length + jtWatches.length + kidsWatches.length) + '</div><div class="p-stat-label">Household Pieces</div></div>' +
     '<div class="p-stat"><div class="p-stat-val gold">' + fmt(household) + '</div><div class="p-stat-label">Total Invested</div></div>' +
     '<div class="p-stat"><div class="p-stat-val">' + fmt(retail) + '</div><div class="p-stat-label">LT Retail</div></div>' +
     '<div class="p-stat"><div class="p-stat-val green">' + pct + '%</div><div class="p-stat-label">Below Retail</div></div>' +
@@ -836,7 +839,7 @@ function mapWish(row) {
 
 function loadSheetData() {
   try {
-    var data = JSON.parse(SHEET_DATA);
+    var data = SHEET_DATA;
     if (data.LT_Collection && data.LT_Collection.length) ltWatches = data.LT_Collection.map(mapLT);
     if (data.JT_Collection && data.JT_Collection.length) jtWatches = data.JT_Collection.map(mapJT);
     if (data.Kids_Collection && data.Kids_Collection.length) kidsWatches = data.Kids_Collection.map(mapKids);

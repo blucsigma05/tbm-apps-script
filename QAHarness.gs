@@ -269,7 +269,9 @@ function snapshotQAState(snapshotName) {
     PropertiesService.getScriptProperties().setProperty(propKey, json);
     Logger.log('Snapshot "' + snapshotName + '" saved to Script Properties (' + json.length + ' bytes)');
   } else {
-    // Fallback: write to a dedicated tab
+    // Fallback: write to a dedicated tab — also clear any stale property entry so
+    // restore always reads the latest sheet row, not an outdated property value
+    PropertiesService.getScriptProperties().deleteProperty(propKey);
     var snapSheet = ss.getSheetByName('QA_Snapshots');
     if (!snapSheet) snapSheet = ss.insertSheet('QA_Snapshots');
     var row = snapSheet.getLastRow() + 1;
@@ -291,13 +293,13 @@ function restoreQAState(snapshotName) {
   var propKey = 'QA_SNAP_' + snapshotName;
   var json = PropertiesService.getScriptProperties().getProperty(propKey);
 
-  // Check fallback tab if not in properties
+  // Check fallback tab if not in properties — scan from bottom to get the latest entry
   if (!json) {
     var ss = SpreadsheetApp.openById(SSID);
     var snapSheet = ss.getSheetByName('QA_Snapshots');
     if (snapSheet) {
       var data = snapSheet.getDataRange().getValues();
-      for (var r = 0; r < data.length; r++) {
+      for (var r = data.length - 1; r >= 0; r--) {
         if (data[r][0] === snapshotName) { json = data[r][1]; break; }
       }
     }
@@ -390,7 +392,7 @@ function testChoreCompletion_() {
     }
     if (targetRow === -1) { test.details = 'No uncompleted buggsy task found to test'; return test; }
 
-    var resultRaw = khCompleteTask(targetRow - 1, targetTaskID);
+    var resultRaw = khCompleteTask(targetRow, targetTaskID);
     var result = JSON.parse(resultRaw);
     if (result.status !== 'ok') { test.details = 'khCompleteTask returned: ' + resultRaw; return test; }
 
@@ -445,10 +447,10 @@ function testParentApproval_() {
     }
     if (targetRow === -1) { test.details = 'No uncompleted buggsy task found'; return test; }
 
-    var compResult = JSON.parse(khCompleteTask(targetRow - 1, targetTaskID));
+    var compResult = JSON.parse(khCompleteTask(targetRow, targetTaskID));
     if (compResult.status !== 'ok') { test.details = 'Setup: completion failed'; return test; }
 
-    var approveResult = JSON.parse(khApproveTask(targetRow - 1, targetTaskID));
+    var approveResult = JSON.parse(khApproveTask(targetRow, targetTaskID));
     if (approveResult.status !== 'ok') {
       test.details = 'khApproveTask returned: ' + JSON.stringify(approveResult);
       sheet.getRange(targetRow, headers.indexOf('Completed') + 1).setValue(false);
@@ -553,6 +555,9 @@ function testTaskReset_() {
     var sheet = ss.getSheetByName(tabName);
     if (!sheet) { test.details = 'KH_Chores sheet not found'; return test; }
 
+    // Snapshot before mutating so khResetTasks cannot corrupt shared QA baseline
+    snapshotQAState('_taskReset_pre');
+
     var data = sheet.getDataRange().getValues();
     var headers = data[0].map(String);
     var cCompleted = headers.indexOf('Completed');
@@ -565,12 +570,18 @@ function testTaskReset_() {
         marked++;
       }
     }
-    if (marked === 0) { test.details = 'No daily tasks found to test reset'; return test; }
+    if (marked === 0) {
+      restoreQAState('_taskReset_pre');
+      test.details = 'No daily tasks found to test reset'; return test;
+    }
     SpreadsheetApp.flush();
 
     var resetRaw = khResetTasks('daily', 'all');
     var resetResult = JSON.parse(resetRaw);
-    if (resetResult.status !== 'ok') { test.details = 'khResetTasks returned: ' + resetRaw; return test; }
+    if (resetResult.status !== 'ok') {
+      restoreQAState('_taskReset_pre');
+      test.details = 'khResetTasks returned: ' + resetRaw; return test;
+    }
 
     SpreadsheetApp.flush();
     var postData = sheet.getDataRange().getValues();
@@ -580,6 +591,9 @@ function testTaskReset_() {
         allReset = false; break;
       }
     }
+
+    // Restore original state before returning
+    restoreQAState('_taskReset_pre');
 
     if (allReset) {
       test.status = 'PASS';

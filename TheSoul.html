@@ -782,7 +782,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     } else {
       var celebImg = theme==='jj'?'https://i.ibb.co/9md3x6zp/1773982606233.png':'https://i.ibb.co/8L0ccf6p/1773982420674.png';
       var celebText = theme==='jj'?'All done! \u2728':'ALL CLEAR!';
-      if(done.length > 0){ rightH += '<div class="kid-empty" style="text-align:center;padding:8px 4px"><img src="'+celebImg+'" class="'+(theme==='jj'?'char-all-clear-jj':'char-all-clear-bug')+'" style="width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 4px" onerror="this.style.display=\'none\'"><div>'+celebText+'</div></div>'; }
+      if(active.length === 0 && done.length > 0){ rightH += '<div class="kid-empty" style="text-align:center;padding:8px 4px"><img src="'+celebImg+'" class="'+(theme==='jj'?'char-all-clear-jj':'char-all-clear-bug')+'" style="width:72px;height:72px;object-fit:contain;display:block;margin:0 auto 4px" onerror="this.style.display=\'none\'"><div>'+celebText+'</div></div>'; }
       else { rightH += '<div class="kid-empty">None waiting</div>'; }
     }
     rightH += '</div></div>';

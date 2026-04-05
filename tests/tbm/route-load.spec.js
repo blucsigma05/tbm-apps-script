@@ -51,6 +51,7 @@ for (const route of OPEN_ROUTES) {
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(msg.text());
     });
+    page.on('pageerror', (err) => errors.push('PAGE_ERROR: ' + err.message));
 
     const response = await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 25000 });
 
@@ -87,10 +88,10 @@ for (const route of PIN_ROUTES) {
     expect(status === 200 || status === 302, route.name + ' returned unexpected ' + status).toBeTruthy();
 
     if (status === 200) {
-      // Check for PIN-like input or gate UI
-      const hasPinInput = await page.locator('input[type="password"], input[inputmode="numeric"], .pin-input, #pin').count();
-      const hasGateText = await page.locator('text=/pin|access|verify/i').count();
-      expect(hasPinInput > 0 || hasGateText > 0, route.name + ' loaded but no PIN gate found').toBeTruthy();
+      // Check that a PIN gate element is actually visible (not just present in DOM)
+      const pinInputVisible = await page.locator('input[type="password"], input[inputmode="numeric"], .pin-input, #pin').first().isVisible().catch(function() { return false; });
+      const gateTextVisible = await page.locator('text=/pin|access|verify/i').first().isVisible().catch(function() { return false; });
+      expect(pinInputVisible || gateTextVisible, route.name + ' loaded but no visible PIN gate found').toBeTruthy();
     }
   });
 }
