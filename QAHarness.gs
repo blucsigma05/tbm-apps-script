@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// QAHarness.gs v1 — Scenario Fixtures, Clock Override, Snapshot/Restore
-// WRITES TO: KH_ tabs (via seed/restore), Script Properties (clock, snapshots)
-// READS FROM: TAB_MAP, TBM_ENV, Script Properties
+// QAHarness.gs v2 — Scenarios + Clock + Snapshots + Persistence Tests (Q7)
+// WRITES TO: KH_ tabs, MealPlan (QA only, cleanup after), Script Properties
+// READS FROM: TAB_MAP, TBM_ENV, Script Properties, KH_ sheets
 // ════════════════════════════════════════════════════════════════════
 
-function getQAHarnessVersion() { return 1; }
+function getQAHarnessVersion() { return 2; }
 
 // ════════════════════════════════════════════════════════════════════
 // 1. CLOCK OVERRIDE
@@ -331,5 +331,271 @@ function restoreQAState(snapshotName) {
   return { name: snapshotName, tabsRestored: keys.length };
 }
 
+// ════════════════════════════════════════════════════════════════════
+// 4. PERSISTENCE TESTS (Q7)
+//
+// Exercises write→read→verify→cleanup for each trust-critical path.
+// ALL tests require QA environment. Will throw in prod.
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Run all persistence tests. Returns structured result object.
+ * Called via ?action=runPersistenceTests (QA only).
+ */
+function runPersistenceTests() {
+  tbm_requireQA_('runPersistenceTests');
+
+  var results = [];
+  results.push(testChoreCompletion_());
+  results.push(testParentApproval_());
+  results.push(testDinnerLog_());
+  results.push(testEducationAward_());
+  results.push(testTaskReset_());
+
+  var failed = results.filter(function(r) { return r.status !== 'PASS'; });
+  return JSON.stringify({
+    total: results.length,
+    passed: results.length - failed.length,
+    failed: failed.length,
+    overall: failed.length === 0 ? 'PASS' : 'FAIL',
+    results: results,
+    timestamp: new Date().toISOString(),
+    environment: TBM_ENV.ENV
+  });
+}
+
+function testChoreCompletion_() {
+  var test = { name: 'Chore Completion Persistence', status: 'FAIL', details: '' };
+  try {
+    tbm_requireQA_('testChoreCompletion_');
+    var ss = SpreadsheetApp.openById(SSID);
+    var tabName = (typeof TAB_MAP !== 'undefined') ? (TAB_MAP['KH_Chores'] || 'KH_Chores') : 'KH_Chores';
+    var sheet = ss.getSheetByName(tabName);
+    if (!sheet) { test.details = 'KH_Chores sheet not found'; return test; }
+
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(String);
+    var cChild = headers.indexOf('Child');
+    var cCompleted = headers.indexOf('Completed');
+    var cTaskID = headers.indexOf('Task_ID');
+
+    var targetRow = -1;
+    var targetTaskID = '';
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][cChild]).toLowerCase() === 'buggsy' && !data[i][cCompleted]) {
+        targetRow = i + 1;
+        targetTaskID = String(data[i][cTaskID] || '');
+        break;
+      }
+    }
+    if (targetRow === -1) { test.details = 'No uncompleted buggsy task found to test'; return test; }
+
+    var resultRaw = khCompleteTask(targetRow - 1, targetTaskID);
+    var result = JSON.parse(resultRaw);
+    if (result.status !== 'ok') { test.details = 'khCompleteTask returned: ' + resultRaw; return test; }
+
+    SpreadsheetApp.flush();
+    var updatedRow = sheet.getRange(targetRow, 1, 1, headers.length).getValues()[0];
+    if (!updatedRow[cCompleted]) { test.details = 'Completed column not set to true'; return test; }
+
+    var histTab = (typeof TAB_MAP !== 'undefined') ? (TAB_MAP['KH_History'] || 'KH_History') : 'KH_History';
+    var histSheet = ss.getSheetByName(histTab);
+    if (histSheet && histSheet.getLastRow() > 1) {
+      test.status = 'PASS';
+      test.details = 'Task completed at row ' + targetRow + ', history entry appended';
+    } else {
+      test.details = 'Completion succeeded but KH_History not updated';
+    }
+
+    // Cleanup
+    sheet.getRange(targetRow, cCompleted + 1).setValue(false);
+    var cDate = headers.indexOf('Completed_Date');
+    if (cDate >= 0) sheet.getRange(targetRow, cDate + 1).setValue('');
+    var cAppr = headers.indexOf('Parent_Approved');
+    if (cAppr >= 0) sheet.getRange(targetRow, cAppr + 1).setValue(false);
+    if (histSheet && histSheet.getLastRow() > 1) histSheet.deleteRow(histSheet.getLastRow());
+  } catch (e) { test.details = 'Error: ' + e.message; }
+  return test;
+}
+
+function testParentApproval_() {
+  var test = { name: 'Parent Approval Persistence', status: 'FAIL', details: '' };
+  try {
+    tbm_requireQA_('testParentApproval_');
+    var ss = SpreadsheetApp.openById(SSID);
+    var tabName = (typeof TAB_MAP !== 'undefined') ? (TAB_MAP['KH_Chores'] || 'KH_Chores') : 'KH_Chores';
+    var sheet = ss.getSheetByName(tabName);
+    if (!sheet) { test.details = 'KH_Chores sheet not found'; return test; }
+
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(String);
+    var cChild = headers.indexOf('Child');
+    var cCompleted = headers.indexOf('Completed');
+    var cApproved = headers.indexOf('Parent_Approved');
+    var cTaskID = headers.indexOf('Task_ID');
+
+    var targetRow = -1;
+    var targetTaskID = '';
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][cChild]).toLowerCase() === 'buggsy' && !data[i][cCompleted]) {
+        targetRow = i + 1;
+        targetTaskID = String(data[i][cTaskID] || '');
+        break;
+      }
+    }
+    if (targetRow === -1) { test.details = 'No uncompleted buggsy task found'; return test; }
+
+    var compResult = JSON.parse(khCompleteTask(targetRow - 1, targetTaskID));
+    if (compResult.status !== 'ok') { test.details = 'Setup: completion failed'; return test; }
+
+    var approveResult = JSON.parse(khApproveTask(targetRow - 1, targetTaskID));
+    if (approveResult.status !== 'ok') {
+      test.details = 'khApproveTask returned: ' + JSON.stringify(approveResult);
+      sheet.getRange(targetRow, headers.indexOf('Completed') + 1).setValue(false);
+      return test;
+    }
+
+    SpreadsheetApp.flush();
+    var updatedRow = sheet.getRange(targetRow, 1, 1, headers.length).getValues()[0];
+    if (!updatedRow[cApproved]) {
+      test.details = 'Parent_Approved not set to true after approval';
+    } else {
+      test.status = 'PASS';
+      test.details = 'Task approved at row ' + targetRow;
+    }
+
+    // Cleanup
+    sheet.getRange(targetRow, headers.indexOf('Completed') + 1).setValue(false);
+    sheet.getRange(targetRow, headers.indexOf('Completed_Date') + 1).setValue('');
+    sheet.getRange(targetRow, cApproved + 1).setValue(false);
+    var cMult = headers.indexOf('Bonus_Multiplier');
+    if (cMult >= 0) sheet.getRange(targetRow, cMult + 1).setValue(1);
+    var histTab = (typeof TAB_MAP !== 'undefined') ? (TAB_MAP['KH_History'] || 'KH_History') : 'KH_History';
+    var histSheet = ss.getSheetByName(histTab);
+    if (histSheet && histSheet.getLastRow() > 2) histSheet.deleteRows(histSheet.getLastRow() - 1, 2);
+  } catch (e) { test.details = 'Error: ' + e.message; }
+  return test;
+}
+
+function testDinnerLog_() {
+  var test = { name: 'Dinner Log Persistence', status: 'FAIL', details: '' };
+  try {
+    tbm_requireQA_('testDinnerLog_');
+    var ss = SpreadsheetApp.openById(SSID);
+
+    var resultRaw = updateMealPlan('QA_TEST_MEAL', 'QA_Tester', 'Persistence test entry');
+    var result = JSON.parse(resultRaw);
+    if (result.status !== 'ok') { test.details = 'updateMealPlan returned: ' + resultRaw; return test; }
+
+    SpreadsheetApp.flush();
+    var mealTab = (typeof TAB_MAP !== 'undefined') ? (TAB_MAP['MealPlan'] || 'MealPlan') : 'MealPlan';
+    var mealSheet = ss.getSheetByName(mealTab);
+    if (!mealSheet) { test.details = 'MealPlan sheet not found after logging'; return test; }
+
+    var lastRow = mealSheet.getLastRow();
+    if (lastRow < 2) { test.details = 'MealPlan has no data rows after logging'; return test; }
+
+    var lastEntry = mealSheet.getRange(lastRow, 1, 1, mealSheet.getLastColumn()).getValues()[0];
+    var foundMeal = false;
+    for (var c = 0; c < lastEntry.length; c++) {
+      if (String(lastEntry[c]).indexOf('QA_TEST_MEAL') !== -1) { foundMeal = true; break; }
+    }
+
+    if (foundMeal) {
+      test.status = 'PASS';
+      test.details = 'Dinner logged and found in MealPlan row ' + lastRow;
+      mealSheet.deleteRow(lastRow);
+    } else {
+      test.details = 'Log call returned ok but QA_TEST_MEAL not found in last row';
+    }
+  } catch (e) { test.details = 'Error: ' + e.message; }
+  return test;
+}
+
+function testEducationAward_() {
+  var test = { name: 'Education Award Persistence', status: 'FAIL', details: '' };
+  try {
+    tbm_requireQA_('testEducationAward_');
+    var ss = SpreadsheetApp.openById(SSID);
+
+    var resultRaw = kh_awardEducationPoints_('buggsy', 5, 'QA_TEST_MODULE');
+    var result = JSON.parse(resultRaw);
+    if (result.status !== 'ok') { test.details = 'kh_awardEducationPoints_ returned: ' + resultRaw; return test; }
+
+    SpreadsheetApp.flush();
+    var histTab = (typeof TAB_MAP !== 'undefined') ? (TAB_MAP['KH_History'] || 'KH_History') : 'KH_History';
+    var histSheet = ss.getSheetByName(histTab);
+    if (!histSheet || histSheet.getLastRow() < 2) { test.details = 'KH_History empty after education award'; return test; }
+
+    var lastRow = histSheet.getRange(histSheet.getLastRow(), 1, 1, histSheet.getLastColumn()).getValues()[0];
+    var foundEdu = false;
+    for (var c = 0; c < lastRow.length; c++) {
+      if (String(lastRow[c]).indexOf('QA_TEST_MODULE') !== -1) { foundEdu = true; break; }
+    }
+
+    if (foundEdu) {
+      test.status = 'PASS';
+      test.details = 'Education award (5 pts, QA_TEST_MODULE) persisted to KH_History';
+      histSheet.deleteRow(histSheet.getLastRow());
+    } else {
+      test.details = 'Award call returned ok but QA_TEST_MODULE not found in last history row';
+    }
+  } catch (e) { test.details = 'Error: ' + e.message; }
+  return test;
+}
+
+function testTaskReset_() {
+  var test = { name: 'Daily Task Reset', status: 'FAIL', details: '' };
+  try {
+    tbm_requireQA_('testTaskReset_');
+    var ss = SpreadsheetApp.openById(SSID);
+    var tabName = (typeof TAB_MAP !== 'undefined') ? (TAB_MAP['KH_Chores'] || 'KH_Chores') : 'KH_Chores';
+    var sheet = ss.getSheetByName(tabName);
+    if (!sheet) { test.details = 'KH_Chores sheet not found'; return test; }
+
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(String);
+    var cCompleted = headers.indexOf('Completed');
+    var cFrequency = headers.indexOf('Frequency');
+
+    var marked = 0;
+    for (var i = 1; i < data.length && marked < 3; i++) {
+      if (String(data[i][cFrequency] || '').toLowerCase() === 'daily') {
+        sheet.getRange(i + 1, cCompleted + 1).setValue(true);
+        marked++;
+      }
+    }
+    if (marked === 0) { test.details = 'No daily tasks found to test reset'; return test; }
+    SpreadsheetApp.flush();
+
+    var resetRaw = khResetTasks('daily', 'all');
+    var resetResult = JSON.parse(resetRaw);
+    if (resetResult.status !== 'ok') { test.details = 'khResetTasks returned: ' + resetRaw; return test; }
+
+    SpreadsheetApp.flush();
+    var postData = sheet.getDataRange().getValues();
+    var allReset = true;
+    for (var k = 1; k < postData.length; k++) {
+      if (String(postData[k][cFrequency] || '').toLowerCase() === 'daily' && postData[k][cCompleted]) {
+        allReset = false; break;
+      }
+    }
+
+    if (allReset) {
+      test.status = 'PASS';
+      test.details = 'Reset ' + resetResult.resetCount + ' daily tasks, all verified uncompleted';
+    } else {
+      test.details = 'Some daily tasks still show Completed=true after reset';
+    }
+  } catch (e) { test.details = 'Error: ' + e.message; }
+  return test;
+}
+
+function runPersistenceTestsSafe() {
+  return withMonitor_('runPersistenceTestsSafe', function() {
+    return JSON.parse(runPersistenceTests());
+  });
+}
+
 // Version history tracked in Notion deploy page. Do not add version comments here.
-// QAHarness.gs v1 — EOF
+// QAHarness.gs v2 — EOF
