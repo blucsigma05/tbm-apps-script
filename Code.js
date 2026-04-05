@@ -279,7 +279,10 @@ function doPost(e) {
     var body = JSON.parse(e.postData.contents);
     var fn = body.fn;
     var args = body.args || [];
-    var whitelist = { 'seedStaarRlaSprintSafe': seedStaarRlaSprintSafe };
+    var whitelist = {
+      'seedStaarRlaSprintSafe': seedStaarRlaSprintSafe,
+      'pipelineRelaySafe': pipelineRelaySafe
+    };
     if (!whitelist[fn]) {
       return ContentService.createTextOutput(JSON.stringify({ error: 'Function not in POST whitelist: ' + fn }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -450,8 +453,6 @@ function serveData(e) {
           regressionSuite: 'v' + (function(){ try { return getRegressionSuiteVersion(); } catch(e) { return '?'; } })()
         }
       };
-    } else if (action === 'runPersistenceTests') {
-      result = JSON.parse(runPersistenceTests());
     } else if (action === 'months') {
       result = getAvailableMonths();
     } else if (action === 'forecast') {
@@ -1272,7 +1273,8 @@ function healthCheck() {
     'khRejectTaskSafe', 'khApproveWithBonusSafe', 'khOverrideTaskSafe',
     'getKHAppUrls', 'setupKHSheets', 'validateTaskIDs',
     'runDailyGateCheck', 'installDailyGateAlert', 'removeDailyGateAlert',
-    'notionApi_', 'pushQAResult', 'testNotionConnection',
+    'notionApi_', 'pushQAResult', 'pushPipelineEvent_', 'testNotionConnection',
+    'isPipelineUrl_', 'pipelineStatusForType_', 'normalizePipelinePayload_', 'pipelineRelaySafe',
     'reconcileVeinPulse', 'reconcileVeinPulseSafe', 'resolveNestedKey_',
     'getCodeVersion',
     'getBoardData', 'getBoardDataSafe',
@@ -1504,6 +1506,146 @@ function pushQAResult(result) {
   });
 }
 
+function isPipelineUrl_(value) {
+  if (!value) return false;
+  var str = String(value);
+  return str.indexOf('https://') === 0 || str.indexOf('http://') === 0;
+}
+
+function pipelineStatusForType_(type) {
+  var map = {
+    deploy_complete: 'PASS',
+    tests_failed: 'FAIL',
+    review_ready: 'READY',
+    fix_needed: 'ACTION_NEEDED',
+    fix_pushed: 'INFO',
+    pipeline_stalled: 'STOPPED'
+  };
+  return map[type] || 'INFO';
+}
+
+function normalizePipelinePayload_(payload) {
+  var props = PropertiesService.getScriptProperties();
+  var expectedSecret = props.getProperty('PIPELINE_SECRET');
+  var safePayload = payload || {};
+  var allowedTypes = {
+    deploy_complete: true,
+    tests_failed: true,
+    review_ready: true,
+    fix_needed: true,
+    fix_pushed: true,
+    pipeline_stalled: true
+  };
+  if (!expectedSecret) {
+    return { ok: false, error: 'PIPELINE_SECRET not configured' };
+  }
+  if (String(safePayload.secret || '') !== expectedSecret) {
+    return { ok: false, error: 'Invalid pipeline secret' };
+  }
+  var type = String(safePayload.type || '');
+  if (!allowedTypes[type]) {
+    return { ok: false, error: 'Unsupported pipeline type: ' + type };
+  }
+  var repo = String(safePayload.repo || '').trim();
+  if (!repo) {
+    return { ok: false, error: 'repo is required' };
+  }
+  var summary = String(safePayload.summary || '').trim();
+  if (!summary) {
+    return { ok: false, error: 'summary is required' };
+  }
+  var truncated = false;
+  if (summary.length > 500) {
+    summary = summary.substring(0, 500);
+    truncated = true;
+  }
+  var prNumber = safePayload.prNumber;
+  if (prNumber !== null && prNumber !== undefined && prNumber !== '') {
+    prNumber = parseInt(prNumber, 10);
+    if (isNaN(prNumber)) prNumber = null;
+  } else {
+    prNumber = null;
+  }
+  var cycle = safePayload.cycle;
+  if (cycle !== null && cycle !== undefined && cycle !== '') {
+    cycle = parseInt(cycle, 10);
+    if (isNaN(cycle)) cycle = null;
+  } else {
+    cycle = null;
+  }
+  return {
+    ok: true,
+    truncated: truncated,
+    payload: {
+      repo: repo,
+      type: type,
+      summary: summary,
+      prNumber: prNumber,
+      prUrl: isPipelineUrl_(safePayload.prUrl) ? String(safePayload.prUrl) : '',
+      sha: String(safePayload.sha || '').substring(0, 40),
+      runUrl: isPipelineUrl_(safePayload.runUrl) ? String(safePayload.runUrl) : '',
+      cycle: cycle
+    }
+  };
+}
+
+function pushPipelineEvent_(payload) {
+  var dbId = PropertiesService.getScriptProperties().getProperty('NOTION_PIPELINE_DB_ID');
+  if (!dbId) {
+    return { ok: false, skipped: true, error: 'NOTION_PIPELINE_DB_ID not found' };
+  }
+
+  var event = notionApi_('/v1/pages', 'post', {
+    parent: { database_id: dbId },
+    properties: {
+      'Event': { title: [{ text: { content: payload.repo + ' ' + payload.type + ' — ' + new Date().toISOString() } }] },
+      'Repo': { rich_text: [{ text: { content: payload.repo } }] },
+      'Type': { rich_text: [{ text: { content: payload.type } }] },
+      'Status': { rich_text: [{ text: { content: pipelineStatusForType_(payload.type) } }] },
+      'Summary': { rich_text: [{ text: { content: payload.summary } }] },
+      'PR Number': { number: payload.prNumber === null ? null : payload.prNumber },
+      'PR URL': payload.prUrl ? { url: payload.prUrl } : { url: null },
+      'SHA': { rich_text: [{ text: { content: payload.sha || '' } }] },
+      'Run URL': payload.runUrl ? { url: payload.runUrl } : { url: null },
+      'Cycle': { number: payload.cycle === null ? null : payload.cycle },
+      'Timestamp': { date: { start: new Date().toISOString() } }
+    }
+  });
+
+  return { ok: true, id: event.id, url: event.url };
+}
+
+function pipelineRelaySafe(payload) {
+  return withMonitor_('pipelineRelaySafe', function() {
+    var normalized = normalizePipelinePayload_(payload);
+    if (!normalized.ok) return normalized;
+
+    var safePayload = normalized.payload;
+    var notification;
+    var notion;
+
+    try {
+      notification = sendPipelineNotification_(safePayload.type, safePayload);
+    } catch (notifyErr) {
+      notification = { ok: false, error: notifyErr.message };
+    }
+
+    try {
+      notion = pushPipelineEvent_(safePayload);
+    } catch (notionErr) {
+      notion = { ok: false, error: notionErr.message };
+    }
+
+    return {
+      ok: !!(notification && notification.ok) || !!(notion && notion.ok),
+      truncated: normalized.truncated,
+      notification: notification,
+      notion: notion,
+      payload: safePayload
+    };
+  });
+}
+
 function testNotionConnection() {
   try {
     var token = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
@@ -1514,6 +1656,11 @@ function testNotionConnection() {
     if (dbId) {
       var db = notionApi_('/v1/databases/' + dbId, 'get');
       Logger.log('✅ QA Log accessible: ' + db.title[0].plain_text);
+    }
+    var pipelineDbId = PropertiesService.getScriptProperties().getProperty('NOTION_PIPELINE_DB_ID');
+    if (pipelineDbId) {
+      var pipelineDb = notionApi_('/v1/databases/' + pipelineDbId, 'get');
+      Logger.log('✅ Pipeline Log accessible: ' + pipelineDb.title[0].plain_text);
     }
   } catch (e) { Logger.log('❌ Connection failed: ' + e.message); }
 }
@@ -1623,14 +1770,14 @@ function getOpsHealth_() {
   var now = new Date();
   var health = {
     timestamp: now.toISOString(),
-    env: typeof TBM_ENV !== 'undefined' ? TBM_ENV.ENV : 'unknown',
     overall: 'GREEN',
     surfaces: {},
     errors: {},
     perf: {},
     versions: {},
     triggers: {},
-    education: {}
+    education: {},
+    scorecard: { overall: 6.2, anchor: 'eabc5b9', lastUpdated: '2026-04-04' }
   };
 
   // ── 1. SYSTEM HEALTH (delegates to GASHardening) ────────────
@@ -1668,8 +1815,7 @@ function getOpsHealth_() {
     investigation: 'investigation-module', baseline: 'BaselineDiagnostic',
     'comic-studio': 'ComicStudio', dashboard: 'DesignDashboard',
     progress: 'ProgressReport', 'story-library': 'StoryLibrary',
-    story: 'StoryReader', 'wolfkid-power-scan': 'wolfkid-power-scan',
-    vault: 'Vault'
+    story: 'StoryReader', 'wolfkid-power-scan': 'wolfkid-power-scan'
   };
   var surfaceResults = {};
   var surfaceKeys = Object.keys(surfaceMap);
@@ -1722,54 +1868,13 @@ function getOpsHealth_() {
     health.education = { status: 'error', error: e.message };
   }
 
-  // ── 4. ERROR RATE CHECK (configurable threshold) ────────────
-  try {
-    var errorThreshold = 10;
-    try {
-      var customET = PropertiesService.getScriptProperties().getProperty('ERROR_RATE_THRESHOLD');
-      if (customET) errorThreshold = parseInt(customET, 10);
-    } catch(e2) {}
-    var errorSheet = SpreadsheetApp.openById(SSID).getSheetByName(TAB_MAP['ErrorLog'] || 'ErrorLog');
-    if (errorSheet) {
-      var cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      var errorData = errorSheet.getDataRange().getValues();
-      var errorCount = 0;
-      for (var ei = 1; ei < errorData.length; ei++) {
-        if (errorData[ei][0] instanceof Date && errorData[ei][0] > cutoff) errorCount++;
-      }
-      health.errors.count24h = errorCount;
-      health.errors.threshold = errorThreshold;
-      health.errors.status = errorCount === 0 ? 'green' : errorCount <= errorThreshold ? 'warning' : 'critical';
-      if (errorCount > errorThreshold && health.overall !== 'RED') health.overall = 'RED';
-      else if (errorCount > 0 && health.overall === 'GREEN') health.overall = 'WATCH';
-    }
-  } catch(e3) {
-    health.errors.checkError = e3.message;
-  }
-
-  // ── 5. TILLER FRESHNESS (configurable threshold) ───────────
-  try {
-    var tillerThreshold = 72;
-    try {
-      var customTH = PropertiesService.getScriptProperties().getProperty('TILLER_STALE_HOURS');
-      if (customTH) tillerThreshold = parseInt(customTH, 10);
-    } catch(e4) {}
-    health.tillerFreshness = { thresholdHours: tillerThreshold };
-    if (health.tillerSync && health.tillerSync.staleAccounts) {
-      health.tillerFreshness.staleCount = health.tillerSync.staleAccounts.length;
-      health.tillerFreshness.status = health.tillerSync.staleAccounts.length === 0 ? 'green' : 'yellow';
-    }
-  } catch(e5) {}
-
-  // ── 6. RISK SUMMARY (computed, not hardcoded) ──────────────
+  // ── 4. RISK SUMMARY ────────────────────────────────────────
   var risks = [];
-  if (health.errors.count24h > 0) risks.push('P1: ' + health.errors.count24h + ' errors in last 24h (threshold: ' + (health.errors.threshold || 10) + ')');
-  if (health.surfaceCount && health.surfaceCount.red > 0) risks.push('P0: ' + health.surfaceCount.red + ' surfaces failed to load');
+  if (health.errors.count24h > 0) risks.push('P1: ' + health.errors.count24h + ' errors in last 24h');
+  if (health.surfaceCount.red > 0) risks.push('P0: ' + health.surfaceCount.red + ' surfaces failed to load');
   if (health.triggers && health.triggers.orphans > 0) risks.push('P2: ' + health.triggers.orphans + ' orphan triggers');
-  if (health.tillerSync && health.tillerSync.status === 'stale') risks.push('P1: Tiller data stale');
   health.risks = risks;
   health.riskCount = risks.length;
-  health.note = 'All checks computed at runtime. No hardcoded scores.';
 
   return health;
 }

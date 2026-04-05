@@ -10,7 +10,6 @@ phrases.json
 audit-source.sh
 audit-wiring.sh
 wiring-audit-results.txt
-executive-skills-components.html
 playwright.config.js
 package.json
 package-lock.json

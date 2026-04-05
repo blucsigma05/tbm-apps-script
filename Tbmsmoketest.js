@@ -695,7 +695,7 @@ function checkHTMLContracts_() {
     }
   }
 
-  if (result.violations.length === 0) {
+  if (result.violations.length === 0 && result.status === 'PASS') {
     result.details = ['All ' + htmlFiles.length + ' HTML files pass ES5 + standards checks'];
   }
 
