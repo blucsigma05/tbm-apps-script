@@ -292,6 +292,22 @@ async function main() {
     return;
   }
 
+  // Gate: only process PRs with the 'release-candidate' label.
+  // Other PRs still get CI / Codex reviews, but the watcher skips
+  // summary comments, label sync, and relay alerts for them.
+  const RELEASE_LABEL = 'release-candidate';
+  const prLabels = await pagedGetJson(
+    'https://api.github.com/repos/' + owner + '/' + repo + '/issues/' + prNumber + '/labels?per_page=100',
+    headers
+  );
+  const hasReleaseLabel = prLabels.some(function (label) {
+    return label.name === RELEASE_LABEL;
+  });
+  if (!hasReleaseLabel) {
+    console.log('PR #' + prNumber + ' does not have the "' + RELEASE_LABEL + '" label; skipping pipeline summary.');
+    return;
+  }
+
   const threadQuery = `
     query($owner: String!, $repo: String!, $number: Int!, $after: String) {
       repository(owner: $owner, name: $repo) {
