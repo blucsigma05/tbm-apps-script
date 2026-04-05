@@ -61,6 +61,6 @@ Minimum capture for each item:
 
 ## Process Notes
 
-- `Gemini` is advisory until it reruns on every push and leaves a recognizable current-head review outcome.
-- `Playwright` stays phase 2. Do not promote it into the required merge gate until CI, Codex, and Gemini are stable and trustworthy.
+- `Gemini` is removed from the hard gate as of April 5, 2026. Do not block release readiness on Gemini until it proves reliable enough to return as an advisory or later-phase lane.
+- `Playwright` stays phase 2. Do not promote it into the required merge gate until CI and Codex are stable and trustworthy.
 - `pipeline:ready` should mean "all required gates are current and green," not "the automation looked at this PR once."
