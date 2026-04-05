@@ -3511,7 +3511,7 @@ function pBatchApprove(child) {
       if (eduEl) eduEl.textContent = 'Education data unavailable';
     }
     // Load education queue
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
+    if (typeof google !== 'undefined' && google.script && google.script['run']) {
       google.script.run
         .withSuccessHandler(function(eduData) {
           _v2RenderEducation(eduData);
