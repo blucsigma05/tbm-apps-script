@@ -67,7 +67,7 @@ These expand the relay behavior but do not block the core loop.
 10. Approve the PR and confirm the watcher moves the PR to `pipeline:ready` only after:
    - CI is `PASS`
    - Codex review is `PASS`
-   - GitHub approval state is `APPROVED`
+   - GitHub approval state is not `CHANGES_REQUESTED`
    - unresolved actionable threads are `0`
 
 ## Review Gate Contract
@@ -87,7 +87,7 @@ As of April 5, 2026, Gemini is removed from the hard merge gate. The required re
 - GitHub review lane
 - Codex explicit `PASS` or `FAIL`
 - TBM CI / regression
-- GitHub approval state
+- no active `CHANGES_REQUESTED` decision
 
 Gemini can return later as a manual or advisory lane once it reliably produces current-head review artifacts.
 

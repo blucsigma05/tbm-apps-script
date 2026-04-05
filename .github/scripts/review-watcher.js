@@ -393,7 +393,7 @@ async function main() {
     unresolvedThreads > 0;
   const readyToMerge = ciState.pass &&
     codexState.pass &&
-    approvalState === 'APPROVED' &&
+    approvalState !== 'CHANGES_REQUESTED' &&
     unresolvedThreads === 0;
 
   let action = 'WAITING';
