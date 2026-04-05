@@ -23,7 +23,9 @@ jobs:
         with:
           node-version: '22'
       - name: Create Gemini config directory
-        run: mkdir -p /home/runner/.gemini && echo '{}' > /home/runner/.gemini/projects.json
+        run: |
+          mkdir -p /home/runner/.gemini
+          echo "{\"$GITHUB_WORKSPACE\": {\"shortId\": \"tbm\"}}" > /home/runner/.gemini/projects.json
       - name: Run Gemini CLI Action
         uses: google-github-actions/run-gemini-cli@v0
         with:
