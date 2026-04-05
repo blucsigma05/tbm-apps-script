@@ -1,10 +1,10 @@
-<!-- TheSoul v48 — crest scale 1.55, origin 48% -->
+<!-- TheSoul v50 — crest scale 1.55, origin 48% -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<title>TheSoul v48 — Thompson Family Display</title>
+<title>TheSoul v50 — Thompson Family Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
@@ -65,6 +65,9 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 @keyframes shimmerBar{0%{background-position:-200% 0}100%{background-position:200% 0}}
 @keyframes glowPulse{0%,100%{transform:scale(1);opacity:.92}50%{transform:scale(1.05);opacity:1}}
 @keyframes allClearPulse{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.6)}50%{box-shadow:0 0 12px 4px rgba(34,197,94,.3)}}
+
+.after-school .soul-stat-val{font-size:18px;animation:afterSchoolGlow 2s ease-in-out 3}
+@keyframes afterSchoolGlow{0%,100%{text-shadow:none}50%{text-shadow:0 0 12px rgba(245,158,11,0.4)}}
 
 #loading{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#4C333A}
 .load-ring{width:32px;height:32px;border-radius:50%;border:3px solid transparent;border-top-color:#d4a843;border-right-color:var(--pink);animation:spin .9s linear infinite}
@@ -413,7 +416,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 <script>
 (function(){
   'use strict';
-  var SOUL_VERSION = 48;
+  var SOUL_VERSION = 50;
   var REFRESH_MS = 120000;
   var _soulLastFetch = null;
   var _soulLastBoard = null;
@@ -500,6 +503,20 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 
   function stampTime(){ return new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
 
+  function applyTimeContext() {
+    var h = new Date().getHours();
+    var page = document.getElementById('soulPage');
+    if (page) {
+      if (h >= 14 && h < 18) {
+        if (page.className.indexOf('after-school') === -1) {
+          page.className = page.className + ' after-school';
+        }
+      } else {
+        page.className = page.className.replace(/\bafter-school\b/g, '').replace(/\s+/g, ' ').trim();
+      }
+    }
+  }
+
   function applyTimeTheme(){
     var hour = new Date().getHours();
     document.body.classList.remove('morning','evening');
@@ -526,11 +543,23 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     return DAYS[d.getDay()] + ' \u00B7 ' + MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
   }
 
-  function greeting(){
+  function buildGreeting() {
     var h = new Date().getHours();
-    if(h >= 5 && h <= 11) return 'Good morning, Thompson Fam! \u2600\uFE0F';
-    if(h >= 12 && h <= 16) return 'Good afternoon, Thompson Fam! \uD83C\uDF24\uFE0F';
-    return 'Good evening, Thompson Fam! \uD83C\uDF19';
+    var greet = '';
+    if (h >= 5 && h < 12) {
+      greet = 'Morning! \uD83D\uDC3A Buggsy \u00B7 \uD83D\uDC51 JJ \u2014 let\'s get it!';
+    } else if (h >= 14 && h < 18) {
+      greet = 'Welcome home! \uD83C\uDF1F';
+    } else if (h >= 18 && h < 21) {
+      greet = 'Evening, Thompsons \u2728';
+    } else {
+      greet = 'The Thompson Home \uD83C\uDFE0';
+    }
+    return greet;
+  }
+
+  function greeting(){
+    return buildGreeting();
   }
 
   function noteVal(b){ return b && (b.familyNote || b.note || b.boardNote || b.familyMessage || ''); }
@@ -612,6 +641,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     state.firstBoard = true;
     $('boardStamp').textContent = stampTime();
     var fs = $('featStamp'); if(fs) fs.textContent = 'Updated ' + stampTime();
+    applyTimeContext();
     reveal();
   }
 
@@ -864,9 +894,14 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     var jReq = req.jj || {};
     var bDone = Number(bReq.done||0), bTotal = Number(bReq.total||0);
     var jDone = Number(jReq.done||0), jTotal = Number(jReq.total||0);
-    $('jjStreakVal').textContent = jDone + '/' + jTotal;
+    var mp = kids.metaProgression || {};
+    var jStreakDays = (mp.jj && mp.jj.streakDays) || 0;
+    var bStreakDays = (mp.buggsy && mp.buggsy.streakDays) || 0;
+    var jChipText = jStreakDays >= 2 ? jStreakDays + '\uD83D\uDD25' : jDone + '/' + jTotal;
+    var bChipText = bStreakDays >= 2 ? bStreakDays + '\uD83D\uDD25' : bDone + '/' + bTotal;
+    $('jjStreakVal').textContent = jChipText;
     $('jjStreakSub').textContent = jReq.allClear ? '\u2705 clear' : ((jReq.currentPeriod||'day')==='morning'?'morning':'daily');
-    $('bugStreakVal').textContent = bDone + '/' + bTotal;
+    $('bugStreakVal').textContent = bChipText;
     $('bugStreakSub').textContent = bReq.allClear ? '\u2705 clear' : ((bReq.currentPeriod||'day')==='morning'?'morning':'daily');
     var combined = bDone + jDone;
     var combTotal = bTotal + jTotal;
@@ -889,6 +924,28 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
     var mp = (state.kids && state.kids.metaProgression) || {};
     if (mp.buggsy && mp.buggsy.streakDays >= 2) queue.push({ text: '\uD83D\uDD25 Buggsy \u2014 ' + mp.buggsy.streakDays + '-day streak!', cls: 'streak' });
     if (mp.jj && mp.jj.streakDays >= 2) queue.push({ text: '\uD83D\uDD25 JJ \u2014 ' + mp.jj.streakDays + '-day streak!', cls: 'streak' });
+    // After-school kid callouts (2-6pm)
+    var tickH = new Date().getHours();
+    if (tickH >= 14 && tickH < 18) {
+      if (bugBal > 0) queue.push({ text: '\uD83D\uDC3A Buggsy! You have ' + bugBal + ' rings right now!', cls: 'gold' });
+      if (jjBal > 0) queue.push({ text: '\uD83D\uDC51 JJ has ' + jjBal + ' stars!', cls: 'rose' });
+    }
+    // Morning quest callouts (5am-12pm)
+    if (tickH >= 5 && tickH < 12) {
+      var allTasks = (state.kids && state.kids.tasks) || [];
+      var bPend = 0;
+      var jPend = 0;
+      for (var ti = 0; ti < allTasks.length; ti++) {
+        var tk = allTasks[ti];
+        var who = String(tk.child || tk.assignedTo || tk.kid || '').toLowerCase();
+        if (!tk.completed) {
+          if (who === 'buggsy') bPend++;
+          else if (who === 'jj') jPend++;
+        }
+      }
+      if (bPend > 0) queue.push({ text: '\uD83D\uDC3A Buggsy has ' + bPend + ' quests waiting!', cls: 'gold' });
+      if (jPend > 0) queue.push({ text: '\uD83D\uDC51 JJ has ' + jPend + ' adventures waiting!', cls: 'rose' });
+    }
     if (!queue.length) queue.push({ text: '\u2728 Thompson Family OS', cls: 'gold' });
     return queue;
   }
@@ -992,3 +1049,4 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 </script>
 </body>
 </html>
+<!-- TheSoul v50 — EOF -->

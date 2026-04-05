@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<title>TheSpine v44 — Office Ambient Display</title>
+<title>TheSpine v46 — Office Ambient Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -224,6 +224,13 @@ body.evening{
   color: rgba(212,168,67,.9);
   text-shadow: 0 0 12px rgba(212,168,67,.3);
 }
+.lit {
+  animation: litPulse 2s ease-in-out 4;
+}
+@keyframes litPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
+}
 .kid-char-wm {
   position: absolute;
   right: -8px;
@@ -354,6 +361,7 @@ body.evening{
         <div class="hero-kicker">Road to Zero</div>
         <div class="hero-amount" id="debtHeroAmount">—</div>
         <div class="hero-meta"><span id="debtHeroMeta">7 categories · live grouped view</span><span class="grad" id="debtHeroSub">debtByType live</span></div>
+        <div id="spineDebtProgress" style="font-size:10px;font-weight:700;color:#6ee7b7;margin-top:4px;opacity:0;"></div>
       </div>
       <div class="wf" id="waterfallRows"></div>
       <div class="timeline">
@@ -469,7 +477,7 @@ body.evening{
 
 <script>
 // Version history tracked in Notion deploy page.
-var SPINE_VERSION = 44;
+var SPINE_VERSION = 46;
 var FINANCE_MS = 300000;
 var KIDS_MS = 180000;
 var BOARD_MS = 600000;
@@ -626,6 +634,17 @@ function renderFinance(d){
   document.getElementById('periodVal').textContent = period;
   var totalDebt = pick(d, ['debtCurrent','allNonMortgageDebt']);
   animateNum(document.getElementById('debtHeroAmount'), n(totalDebt) || 0, fmtMoney);
+  // v45: Debt progress stat
+  var progEl = document.getElementById('spineDebtProgress');
+  var debtPaidMTD = n(pick(d, ['debtPaymentsMTD'])) || 0;
+  if (progEl) {
+    if (debtPaidMTD > 0) {
+      progEl.style.opacity = '1';
+      progEl.textContent = '\u2193 Down $' + Math.round(debtPaidMTD).toLocaleString() + ' in ' + new Date().toLocaleString('en-US', {month: 'long'});
+    } else {
+      progEl.style.opacity = '0';
+    }
+  }
   var debtByType = Array.isArray(d.debtByType) ? d.debtByType.slice() : [];
   debtByType = debtByType.filter(function(r){ return (r.type || '').toLowerCase() !== 'mortgage'; });
   debtByType.sort(function(a,b){ return (n(b.total)||0) - (n(a.total)||0); });
@@ -718,7 +737,8 @@ function renderFinance(d){
   // Cash Ready Now
   document.getElementById('lcVal').textContent = fmtMoney(pick(d, ['liquidCash','cashOnHand','cashAvailable','bridgeCash']));
   renderCashAccounts(d);
-  updateDeclaration();
+  startDeclarationRotation(d);
+  pulseDeclarationLit();
 }
 function renderCashAccounts(d){
   var rows = [];
@@ -1020,6 +1040,52 @@ function updateDeclaration() {
   el.textContent = 'STRONGER AS A PACK\u00a0\u00b7\u00a0 ' + debtFmt + ' \u2192 $0 \u00a0\u00b7\u00a0 ' + runwayFmt;
 }
 
+// v46: Declaration strip rotation
+function startDeclarationRotation(fin) {
+  var el = document.getElementById('spineDeclaration');
+  if (!el) return;
+
+  el.style.transition = 'opacity 0.3s ease';
+
+  var messages = [];
+  var paid = n(pick(fin, ['debtPaymentsMTD'])) || 0;
+  if (paid > 1000) {
+    messages.push('$' + Math.round(paid).toLocaleString() + ' PAID DOWN THIS MONTH');
+  }
+  messages.push('EVERY DOLLAR HAS A JOB');
+  messages.push('DEBT FREE IS THE MISSION');
+  messages.push('PROTECT THE FAMILY');
+
+  if (messages.length < 2) return;
+
+  var idx = 0;
+  el.textContent = messages[0];
+  setInterval(function() {
+    el.style.opacity = '0';
+    setTimeout(function() {
+      idx = (idx + 1) % messages.length;
+      el.textContent = messages[idx];
+      el.style.opacity = '1';
+    }, 300);
+  }, 12000);
+}
+
+// v46: Workday lit pulse on declaration
+function pulseDeclarationLit() {
+  var now = new Date();
+  var day = now.getDay();
+  var hour = now.getHours();
+  if (day >= 1 && day <= 5 && hour >= 8 && hour < 18) {
+    var el = document.getElementById('spineDeclaration');
+    if (el) {
+      el.className = (el.className || '') + ' lit';
+      setTimeout(function() {
+        el.className = (el.className || '').replace(/\blit\b/g, '').trim();
+      }, 8000);
+    }
+  }
+}
+
 function applyKidWatermark(childKey, data) {
   var elId = childKey === 'jj' ? 'jjWatermark' : 'bugWatermark';
   var cardId = childKey === 'jj' ? 'jj' : 'buggsy';
@@ -1062,3 +1128,4 @@ function updateEarnedToday(childKey, data) {
 </script>
 </body>
 </html>
+<!-- TheSpine v46 -->
