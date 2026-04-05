@@ -61,10 +61,33 @@ These expand the relay behavior but do not block the core loop.
    - pushes a `[review-fix-N]` commit, or
    - exits cleanly with a no-op summary, or
    - marks the cycle stalled after the configured cap
-9. Approve the PR and confirm the watcher moves the PR to `pipeline:ready`.
+9. Confirm the watcher shows explicit current-head states for:
+   - `CI`
+   - `Gemini workflow`
+   - `Gemini review`
+   - `Codex review`
+10. Approve the PR and confirm the watcher moves the PR to `pipeline:ready` only after:
+   - CI is `PASS`
+   - Gemini workflow is `PASS`
+   - Gemini review is `PASS`
+   - Codex review is `PASS`
+   - GitHub approval state is `APPROVED`
+   - unresolved actionable threads are `0`
+
+## Review Gate Contract
+
+Use the watcher summary comment as the authoritative gate view for open PRs.
+
+| Gate | What counts as current | What counts as pass | What still blocks |
+|---|---|---|---|
+| `CI` | Latest `TBM Smoke + Regression` run on the PR head SHA | Workflow conclusion `success` | `RUNNING`, `WAITING`, or any failing conclusion |
+| `Gemini workflow` | Latest `Gemini Code Review` run on the PR head SHA | Workflow conclusion `success` | Missing rerun on `synchronize`, in-progress, or failed workflow |
+| `Gemini review` | Latest Gemini-authored review on the PR head SHA | Review state `APPROVED` | `COMMENTED`, `WAITING`, `STALE`, or `FAIL` |
+| `Codex review` | Latest Codex-authored review on the PR head SHA | Review state `APPROVED` | `COMMENTED`, `WAITING`, `STALE`, or `FAIL` |
 
 ## Manual Backstops
 
 - If `PIPELINE_BOT_TOKEN` is missing, fix pushes may succeed but not retrigger the full workflow chain.
 - If Notion properties are missing, relay events can still succeed through push notification alone.
 - If the watcher state drifts, use the manual `workflow_dispatch` entry on `review-watcher.yml` with a PR number to recompute labels and the summary comment.
+- If a PR predates the merged automation foundation, use the retrofit queue to re-review it and do not treat a `COMMENTED` Codex review as equivalent to Codex `PASS` or `FAIL`.

@@ -1,7 +1,7 @@
 name: Gemini Code Review
 on:
   pull_request:
-    types: [opened, ready_for_review]
+    types: [opened, reopened, synchronize, ready_for_review]
   issue_comment:
     types: [created]
 
@@ -24,10 +24,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Create Gemini config directory
-        run: |
-          mkdir -p /home/runner/.gemini
-          echo "{\"$GITHUB_WORKSPACE\": {\"shortId\": \"tbm\"}}" > /home/runner/.gemini/projects.json
       - name: Run Gemini CLI Action
         uses: google-github-actions/run-gemini-cli@v0
         with:

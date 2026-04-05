@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: pipeline-review-fixer-${{ github.event.pull_request.number || inputs.pr }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   fix:
@@ -145,6 +145,7 @@ jobs:
           HEAD_REF: ${{ steps.prepare.outputs.head_ref }}
         shell: bash
         run: |
+          rm -f review_fix_test_response.json review_fix_failure_payload.json relay_payload.json test_response.json test_summary.md
           git add -A
           if git diff --cached --quiet; then
             echo "No staged changes detected after fixer run."
