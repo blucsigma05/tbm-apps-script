@@ -137,11 +137,15 @@ function checkTemplateCompliance_() {
     }
   }
 
-  var ss = de_getWorkbook_();
-  var requiredSheets = ['💻 ErrorLog', '💻 PerfLog'];
-  for (i = 0; i < requiredSheets.length; i++) {
-    if (!ss.getSheetByName(requiredSheets[i])) {
-      result.missing.push(requiredSheets[i] + ' (sheet)');
+  // Only attempt workbook lookup if de_getWorkbook_ was found — calling it when
+  // it is missing would throw before the function can return a structured FAIL result
+  if (result.missing.indexOf('de_getWorkbook_ (infrastructure)') === -1) {
+    var ss = de_getWorkbook_();
+    var requiredSheets = ['💻 ErrorLog', '💻 PerfLog'];
+    for (i = 0; i < requiredSheets.length; i++) {
+      if (!ss.getSheetByName(requiredSheets[i])) {
+        result.missing.push(requiredSheets[i] + ' (sheet)');
+      }
     }
   }
 
@@ -573,12 +577,14 @@ Rules:
 
 ```javascript
 var lastRow = sheet.getLastRow();
+if (lastRow <= 1) return []; // header-only or empty sheet — getRange would throw
 var data = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
 ```
 
 Rules:
 - Never hardcode capped ranges unless justified
 - Warn when caps are being approached
+- Always guard `lastRow <= 1` before computing a row count for `getRange` — a header-only tab is a normal initial state, not an error
 - Prefer script-computed values over complex stale-prone sheet formulas when reliability matters
 
 ### 6.4 — Formula Protection
