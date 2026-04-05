@@ -83,7 +83,14 @@ function matchesSha(expectedSha, candidateSha) {
     candidate.indexOf(expected) === 0;
 }
 
-function buildActorReviewState(reviews, matcher, headSha) {
+function parseExplicitOutcome(body) {
+  const text = String(body || '').toLowerCase();
+  if (text.indexOf('codex fail') !== -1) return 'FAIL';
+  if (text.indexOf('codex pass') !== -1) return 'PASS';
+  return '';
+}
+
+function buildActorReviewState(reviews, matcher, headSha, explicitOutcomeParser) {
   const actorReviews = reviews
     .filter((review) => matcher(review.user && review.user.login, review.body))
     .sort((a, b) => Date.parse(b.submitted_at || 0) - Date.parse(a.submitted_at || 0));
@@ -100,6 +107,14 @@ function buildActorReviewState(reviews, matcher, headSha) {
       failed: false,
       url: actorReviews[0].html_url || ''
     };
+  }
+
+  const explicitOutcome = explicitOutcomeParser ? explicitOutcomeParser(currentReview.body) : '';
+  if (explicitOutcome === 'PASS') {
+    return { label: 'PASS', pass: true, failed: false, url: currentReview.html_url || '' };
+  }
+  if (explicitOutcome === 'FAIL') {
+    return { label: 'FAIL', pass: false, failed: true, url: currentReview.html_url || '' };
   }
 
   const reviewState = String(currentReview.state || '').toUpperCase();
@@ -369,7 +384,7 @@ async function main() {
   }
 
   const ciState = formatWorkflowState(latestRunByName(ciWorkflowName));
-  const codexState = buildActorReviewState(reviews, isCodexSignal, pr.headRefOid);
+  const codexState = buildActorReviewState(reviews, isCodexSignal, pr.headRefOid, parseExplicitOutcome);
   const approvalState = pr.reviewDecision || 'REVIEW_REQUIRED';
   const fixCapReached = fixCycle >= MAX_FIX_CYCLES;
   const fixRequired = approvalState === 'CHANGES_REQUESTED' ||

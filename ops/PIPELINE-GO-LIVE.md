@@ -77,7 +77,7 @@ Use the watcher summary comment as the authoritative gate view for open PRs.
 | Gate | What counts as current | What counts as pass | What still blocks |
 |---|---|---|---|
 | `CI` | Latest `TBM Smoke + Regression` run on the PR head SHA | Workflow conclusion `success` | `RUNNING`, `WAITING`, or any failing conclusion |
-| `Codex review` | Latest Codex-authored review on the PR head SHA | Review state `APPROVED` | `COMMENTED`, `WAITING`, `STALE`, or `FAIL` |
+| `Codex review` | Latest Codex-authored review on the PR head SHA | Review state `APPROVED` or explicit current-head `Codex PASS` | `COMMENTED` without explicit outcome, `WAITING`, `STALE`, or explicit/current `FAIL` |
 
 ## Gemini Status
 
