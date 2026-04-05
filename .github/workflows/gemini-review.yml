@@ -44,6 +44,17 @@ jobs:
         run: |
           set -euo pipefail
 
+          write_output() {
+            local name="$1"
+            local value="$2"
+            local delimiter="GITHUB_OUTPUT_$(uuidgen)"
+            {
+              echo "${name}<<${delimiter}"
+              printf '%s\n' "${value}"
+              echo "${delimiter}"
+            } >> "${GITHUB_OUTPUT}"
+          }
+
           if [[ "${EVENT_NAME}" == "pull_request" ]]; then
             PR_NUMBER="${PR_NUMBER_FROM_EVENT}"
             ADDITIONAL_INSTRUCTIONS=""
@@ -64,20 +75,10 @@ jobs:
 
           gh pr diff "${PR_NUMBER}" --repo "${REPOSITORY}" --name-only > changed-files.txt
 
-          {
-            echo "pr_number=${PR_NUMBER}"
-            echo "additional_instructions<<EOF"
-            printf '%s\n' "${ADDITIONAL_INSTRUCTIONS}"
-            echo "EOF"
-            echo "pr_data<<EOF"
-            cat pr-data.json
-            echo
-            echo "EOF"
-            echo "changed_files<<EOF"
-            cat changed-files.txt
-            echo
-            echo "EOF"
-          } >> "${GITHUB_OUTPUT}"
+          echo "pr_number=${PR_NUMBER}" >> "${GITHUB_OUTPUT}"
+          write_output "additional_instructions" "${ADDITIONAL_INSTRUCTIONS}"
+          write_output "pr_data" "$(cat pr-data.json)"
+          write_output "changed_files" "$(cat changed-files.txt)"
 
       - name: Run Gemini PR review
         id: gemini
@@ -110,13 +111,13 @@ jobs:
                 }
               },
               "coreTools": [
-                "echo",
-                "gh pr view",
-                "gh pr diff",
-                "cat",
-                "head",
-                "tail",
-                "grep"
+                "run_shell_command(echo)",
+                "run_shell_command(gh pr view)",
+                "run_shell_command(gh pr diff)",
+                "run_shell_command(cat)",
+                "run_shell_command(head)",
+                "run_shell_command(tail)",
+                "run_shell_command(grep)"
               ]
             }
           prompt: |
@@ -137,9 +138,10 @@ jobs:
             - Start the top-level review body with `## Gemini Review Summary` so the pipeline can detect it.
             - Include the word `Gemini` in the top-level review body.
             - Use inline comments only for real, actionable findings on changed lines.
-            - If you find one or more blocking issues, submit the review with `REQUEST_CHANGES`.
-            - If you find no blocking issues, submit the review with `APPROVE`.
-            - Do not leave the review pending.
+            - The final tool call must be `submit_pending_pull_request_review`.
+            - When submitting that review, set `event` to `REQUEST_CHANGES` if you found one or more blocking issues.
+            - When submitting that review, set `event` to `APPROVE` if you found no blocking issues.
+            - Do not submit a `COMMENT` review and do not leave the review pending.
 
             Codebase constraints:
             - All `.html` files must stay ES5-safe for HtmlService / Fire Stick WebView. No arrow functions, `let`, `const`, template literals, `??`, `?.`, `.includes()`, or `backdrop-filter`.
