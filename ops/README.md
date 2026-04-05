@@ -13,8 +13,10 @@ These are **not** architecture docs or code docs. They are **management instrume
 | [DRIFT-LEDGER.md](DRIFT-LEDGER.md) | Feature-by-feature truth table: shipped, lost, regressed, partial | Per deploy / weekly |
 | [OPS-DASHBOARD.md](OPS-DASHBOARD.md) | Operator-facing health view: status, risks, wins, action queue | Weekly (Monday) |
 | [DEPLOY-CHECKLIST.md](DEPLOY-CHECKLIST.md) | Pre/post deploy gates + new surface checklist | Every deploy |
+| [PIPELINE-GO-LIVE.md](PIPELINE-GO-LIVE.md) | Required secrets, script properties, and first-live validation for the hosted pipeline | Before rollout |
 | [WEEKLY-CADENCE.md](WEEKLY-CADENCE.md) | Mon/Wed/Fri operating rhythm | Reference |
 | [HANDLER-GAP-AUDIT.md](HANDLER-GAP-AUDIT.md) | withFailureHandler() coverage audit and fix plan | Until resolved |
+| [specs/](specs) | Build specs using the Pipeline Operating Mode template | Before work starts |
 
 ## How To Use
 
@@ -28,5 +30,6 @@ These are **not** architecture docs or code docs. They are **management instrume
 
 - **CLAUDE.md** = build rules and code standards (what Claude follows)
 - **ops/** = operating framework (what the system operator tracks)
+- **ops/specs/** = approved build specs and pipeline handoff artifacts
 - **Notion** = architecture memory, QA history, handoffs, decision logs
 - **GitHub** = runtime truth (deployed code)

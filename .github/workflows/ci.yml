@@ -1,31 +1,14 @@
-# .github/workflows/ci.yml
-# TBM Continuous Integration — runs smoke + regression tests on every PR
-#
-# HOW IT WORKS:
-# 1. Developer pushes branch + creates PR
-# 2. This workflow fires automatically
-# 3. Hits the GAS deployment's ?action=runTests endpoint
-# 4. Posts PASS/FAIL as a PR comment
-# 5. Blocks merge if tests fail
-#
-# SETUP (one-time):
-# 1. Copy this file to .github/workflows/ci.yml in your repo
-# 2. Go to repo Settings → Secrets → Actions → New repository secret
-#    Name: GAS_DEPLOY_URL
-#    Value: https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
-# 3. Go to repo Settings → Branches → Add branch protection rule
-#    Branch name pattern: main
-#    ☑ Require status checks to pass before merging
-#    ☑ Require branches to be up to date before merging
-#    Search for "TBM Smoke + Regression" and add it
-# 4. Done. Every PR now auto-tests before merge is allowed.
-
 name: TBM Smoke + Regression
 
 on:
   pull_request:
     branches: [main]
-  workflow_dispatch:  # Manual trigger from GitHub UI
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   test:
@@ -39,70 +22,92 @@ jobs:
 
       - name: Run smoke + regression tests
         id: run_tests
+        shell: bash
+        env:
+          GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
         run: |
-          echo "🧪 Hitting GAS test endpoint..."
-          RESPONSE=$(curl -s -L --max-time 120 \
-            "${{ secrets.GAS_DEPLOY_URL }}?action=runTests")
+          if [ -z "$GAS_DEPLOY_URL" ]; then
+            cat <<'EOF' > test_summary.md
+          ## ⚠️ TBM Test Results: CONFIG_ERROR
 
-          echo "Raw response length: ${#RESPONSE}"
+          **Missing secret:** GAS_DEPLOY_URL
+          The CI workflow cannot hit the deployed Apps Script test endpoint until this repo secret is configured.
+          EOF
+            echo "overall=CONFIG_ERROR" >> "$GITHUB_OUTPUT"
+            cat test_summary.md
+            exit 1
+          fi
 
-          # Parse overall result
-          OVERALL=$(echo "$RESPONSE" | python3 -c "
-          import sys, json
+          echo "Hitting GAS test endpoint..."
+          if ! response="$(curl -sS -L --max-time 120 "${GAS_DEPLOY_URL}?action=runTests")"; then
+            cat <<'EOF' > test_summary.md
+          ## ⚠️ TBM Test Results: ENDPOINT_ERROR
+
+          The CI workflow could not reach the deployed Apps Script test endpoint.
+          Check `GAS_DEPLOY_URL`, deployment health, and workflow logs.
+          EOF
+            echo "overall=ENDPOINT_ERROR" >> "$GITHUB_OUTPUT"
+            cat test_summary.md
+            exit 1
+          fi
+          printf '%s' "$response" > test_response.json
+          echo "Raw response length: ${#response}"
+
+          overall="$(python3 - <<'PY'
+          import json
           try:
-              data = json.load(sys.stdin)
+              with open('test_response.json', 'r', encoding='utf-8') as fh:
+                  data = json.load(fh)
               print(data.get('overall', 'UNKNOWN'))
-          except:
+          except Exception:
               print('ERROR')
-          ")
+          PY
+          )"
+          echo "overall=$overall" >> "$GITHUB_OUTPUT"
 
-          echo "overall=$OVERALL" >> $GITHUB_OUTPUT
-
-          # Extract summary for PR comment
-          SUMMARY=$(echo "$RESPONSE" | python3 -c "
-          import sys, json
+          python3 - <<'PY' > test_summary.md
+          import json
           try:
-              data = json.load(sys.stdin)
+              with open('test_response.json', 'r', encoding='utf-8') as fh:
+                  data = json.load(fh)
               smoke = data.get('smoke', {})
               reg = data.get('regression', {})
               versions = data.get('versions', {})
-
-              lines = []
-              lines.append(f\"## {'✅' if data['overall'] == 'PASS' else '❌'} TBM Test Results: {data['overall']}\")
-              lines.append('')
-              lines.append(f\"**Smoke Test:** {smoke.get('overall', '?')} ({smoke.get('runtime_ms', '?')}ms)\")
-              lines.append(f\"**Regression:** {reg.get('overall', '?')} — {reg.get('passed', '?')}/{reg.get('total', '?')} passed\")
-              lines.append('')
-
-              # Show failures if any
+              icon = '✅' if data.get('overall') == 'PASS' else '❌'
+              lines = [
+                  f"## {icon} TBM Test Results: {data.get('overall', 'UNKNOWN')}",
+                  '',
+                  f"**Smoke Test:** {smoke.get('overall', '?')} ({smoke.get('runtime_ms', '?')}ms)",
+                  f"**Regression:** {reg.get('overall', '?')} - {reg.get('passed', '?')}/{reg.get('total', '?')} passed",
+                  ''
+              ]
               if reg.get('failed', 0) > 0:
-                  lines.append('### ⛔ Failures:')
-                  for a in reg.get('assertions', []):
-                      if a.get('status') == 'FAIL':
-                          lines.append(f\"- **{a['id']}**: {a.get('description', '')}\")
-                          lines.append(f\"  {a.get('details', '')}\")
+                  lines.append('### Failures')
+                  for assertion in reg.get('assertions', []):
+                      if assertion.get('status') == 'FAIL':
+                          lines.append(f"- **{assertion.get('id', '?')}**: {assertion.get('description', '')}")
+                          details = assertion.get('details', '')
+                          if details:
+                              lines.append(f"  {details}")
                   lines.append('')
+              if versions:
+                  version_line = ', '.join([f"{k} {v}" for k, v in versions.items()])
+                  lines.append(f"**Versions:** {version_line}")
+              lines.append(f"**Timestamp:** {data.get('timestamp', '?')}")
+              print('\n'.join(lines))
+          except Exception as exc:
+              print(f"⚠️ Could not parse test results: {exc}")
+          PY
 
-              lines.append(f\"**Versions:** {', '.join(f'{k} {v}' for k,v in versions.items())}\")
-              lines.append(f\"**Timestamp:** {data.get('timestamp', '?')}\")
+          cat test_summary.md
 
-              print(chr(10).join(lines))
-          except Exception as e:
-              print(f'⚠️ Could not parse test results: {e}')
-          ")
-
-          # Save summary for PR comment step
-          echo "$SUMMARY" > test_summary.md
-          echo "$SUMMARY"
-
-          # Set exit code
-          if [ "$OVERALL" = "PASS" ]; then
-            echo "✅ All tests passed"
+          if [ "$overall" = "PASS" ]; then
+            echo "All tests passed"
             exit 0
-          else
-            echo "❌ Tests failed — merge blocked"
-            exit 1
           fi
+
+          echo "Tests failed - merge blocked"
+          exit 1
 
       - name: Comment on PR
         if: always() && github.event_name == 'pull_request'
@@ -110,21 +115,22 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            let body;
+            let body = '⚠️ Test results could not be parsed. Check workflow logs.';
             try {
               body = fs.readFileSync('test_summary.md', 'utf8');
-            } catch {
-              body = '⚠️ Test results could not be parsed. Check workflow logs.';
+            } catch (error) {
+              core.info(`Unable to read test summary: ${error.message}`);
             }
 
-            // Find existing bot comment to update (avoid spam)
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
+              per_page: 100,
             });
-            const botComment = comments.data.find(c =>
-              c.user.type === 'Bot' && c.body.includes('TBM Test Results')
+
+            const botComment = comments.data.find((comment) =>
+              comment.user.type === 'Bot' && comment.body.includes('TBM Test Results')
             );
 
             if (botComment) {
@@ -132,13 +138,62 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: botComment.id,
-                body: body,
+                body,
               });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: body,
-              });
+              return;
             }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      - name: Notify pipeline relay on failed tests
+        if: always() && github.event_name == 'pull_request'
+        shell: bash
+        env:
+          RELAY_URL: ${{ secrets.PIPELINE_RELAY_URL }}
+          RELAY_SECRET: ${{ secrets.PIPELINE_SECRET }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          if [ -z "$RELAY_URL" ] || [ -z "$RELAY_SECRET" ]; then
+            echo "Pipeline relay secrets not configured; skipping."
+            exit 0
+          fi
+
+          if [ "${{ steps.run_tests.outputs.overall }}" = "PASS" ]; then
+            echo "Tests passed; review watcher will notify later."
+            exit 0
+          fi
+
+          python3 - <<'PY' > relay_payload.json
+          import json
+          import os
+
+          with open('test_summary.md', 'r', encoding='utf-8') as fh:
+              summary = fh.read().strip()
+
+          payload = {
+              "fn": "pipelineRelaySafe",
+              "args": [{
+                  "secret": os.environ["RELAY_SECRET"],
+                  "repo": os.environ["GITHUB_REPOSITORY"],
+                  "type": "tests_failed",
+                  "summary": summary[:500],
+                  "prNumber": os.environ.get("PR_NUMBER"),
+                  "prUrl": os.environ.get("PR_URL"),
+                  "sha": os.environ.get("GITHUB_SHA"),
+                  "runUrl": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+                  "cycle": 0
+              }]
+          }
+          print(json.dumps(payload))
+          PY
+
+          curl -sS -X POST \
+            -H "Content-Type: application/json" \
+            --data @relay_payload.json \
+            "$RELAY_URL"
