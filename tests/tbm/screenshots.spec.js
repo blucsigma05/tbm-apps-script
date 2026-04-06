@@ -7,7 +7,44 @@ var BASE_URL = process.env.TBM_BASE_URL || '';
 var FINANCE_PIN = process.env.TBM_PIN || '';
 var SCREENSHOT_DIR = path.join(process.cwd(), 'test-results', 'screenshots');
 
-// Real device viewports — each route tested at the device it actually runs on.
+// ── FILE → ROUTE MAP ────────────────────────────────────────────
+// Single source of truth: which source files affect which routes.
+// When adding a new surface: add the HTML file + route here, add the
+// viewport to ROUTE_VIEWPORTS, add the sentinel to SURFACES.
+// The workflow feeds CHANGED_FILES env var; this spec filters accordingly.
+var FILE_ROUTE_MAP = {
+  'TheSpine.html':              ['/spine'],
+  'TheSoul.html':               ['/soul'],
+  'KidsHub.html':               ['/buggsy', '/jj', '/parent'],
+  'ThePulse.html':              ['/pulse'],
+  'TheVein.html':               ['/vein'],
+  'daily-missions.html':        ['/daily-missions', '/daily-missions?child=jj'],
+  'SparkleLearning.html':       [],
+  'HomeworkModule.html':        [],
+  'WolfkidCER.html':            [],
+  'reading-module.html':        [],
+  'writing-module.html':        [],
+  'fact-sprint.html':           [],
+  'investigation-module.html':  [],
+  'BaselineDiagnostic.html':    [],
+  'ComicStudio.html':           [],
+  'DesignDashboard.html':       [],
+  'ProgressReport.html':        [],
+  'StoryLibrary.html':          [],
+  'StoryReader.html':           [],
+  'Vault.html':                 []
+};
+
+// Changes to these files affect ALL routes — screenshot everything.
+var GLOBAL_FILES = [
+  'Code.js', 'Code.gs',
+  'DataEngine.js', 'DataEngine.gs',
+  'cloudflare-worker.js',
+  'KidsHub.js', 'KidsHub.gs'
+];
+
+// ── VIEWPORT MAP ────────────────────────────────────────────────
+// Each route tested at the device it actually runs on.
 var ROUTE_VIEWPORTS = {
   '/spine':                    { width: 980,  height: 551,  device: 'Office Fire Stick' },
   '/soul':                     { width: 980,  height: 551,  device: 'Kitchen Fire Stick' },
@@ -20,11 +57,9 @@ var ROUTE_VIEWPORTS = {
   '/daily-missions?child=jj':  { width: 1920, height: 1200, device: 'S10 FE' }
 };
 
-// Desktop sanity check viewport — applied to every route as a second screenshot
 var DESKTOP = { width: 1920, height: 1080, device: 'Desktop' };
 
-// Data-proving sentinels: each selector ONLY matches when real server data
-// has been injected into the DOM. Timeout/error paths cannot satisfy these.
+// ── SURFACE DEFINITIONS ─────────────────────────────────────────
 var SURFACES = [
   { path: '/parent',    requiresPin: false, sentinel: '#app:not(:empty)' },
   { path: '/buggsy',    requiresPin: false, sentinel: '#app:not(:empty)' },
@@ -39,8 +74,62 @@ var SURFACES = [
 
 var SENTINEL_TIMEOUT = 45000;
 
+// ── DIFF-AWARE FILTERING ────────────────────────────────────────
+// CHANGED_FILES env var: comma-separated list of changed filenames from git diff.
+// Set by the workflow step. If empty/unset, capture ALL routes (local QA mode).
+function getActiveRoutes() {
+  var changedFiles = process.env.CHANGED_FILES || '';
+  if (!changedFiles) {
+    // No filter — local run or explicit "capture all"
+    return null;
+  }
+
+  var files = changedFiles.split(',').map(function(f) { return f.trim(); });
+
+  // If any global file changed, screenshot everything
+  for (var i = 0; i < files.length; i++) {
+    var basename = path.basename(files[i]);
+    if (GLOBAL_FILES.indexOf(basename) !== -1) {
+      return null; // all routes
+    }
+  }
+
+  // Map changed files to affected routes
+  var routes = {};
+  for (var j = 0; j < files.length; j++) {
+    var name = path.basename(files[j]);
+    var mapped = FILE_ROUTE_MAP[name];
+    if (mapped) {
+      for (var k = 0; k < mapped.length; k++) {
+        routes[mapped[k]] = true;
+      }
+    }
+  }
+
+  var result = Object.keys(routes);
+  return result.length > 0 ? result : 'none';
+}
+
+var ACTIVE_ROUTES = getActiveRoutes();
+
+function shouldCapture(routePath) {
+  if (ACTIVE_ROUTES === null) return true;       // all routes
+  if (ACTIVE_ROUTES === 'none') return false;     // no UI files changed
+  return ACTIVE_ROUTES.indexOf(routePath) !== -1; // specific routes
+}
+
+// ── HELPERS ─────────────────────────────────────────────────────
+
 test.beforeAll(function() {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
+
+  if (ACTIVE_ROUTES === 'none') {
+    console.log('No UI files changed — skipping all screenshots.');
+  } else if (ACTIVE_ROUTES === null) {
+    console.log('Capturing all routes (local run or global file changed).');
+  } else {
+    console.log('Capturing routes for changed files: ' + ACTIVE_ROUTES.join(', '));
+  }
 });
 
 test.beforeEach(function() {
@@ -71,7 +160,7 @@ function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-// Primary screenshots: each route at its real device viewport
+// ── PRIMARY: each route at its real device viewport ─────────────
 SURFACES.forEach(function(surface) {
   var vp = ROUTE_VIEWPORTS[surface.path];
   if (!vp) return;
@@ -79,6 +168,8 @@ SURFACES.forEach(function(surface) {
   var label = slugify(surface.path) + '-' + slugify(vp.device);
 
   test('screenshot: ' + label, async function({ page }) {
+    test.skip(!shouldCapture(surface.path), 'Route not affected by this PR.');
+
     if (surface.requiresPin && !FINANCE_PIN) {
       test.skip(true, 'Set TBM_PIN to capture finance surfaces.');
     }
@@ -95,11 +186,13 @@ SURFACES.forEach(function(surface) {
   });
 });
 
-// Desktop sanity check: every route at 1920x1080
+// ── DESKTOP: sanity check at 1920x1080 ─────────────────────────
 SURFACES.forEach(function(surface) {
   var label = slugify(surface.path) + '-desktop';
 
   test('screenshot: ' + label, async function({ page }) {
+    test.skip(!shouldCapture(surface.path), 'Route not affected by this PR.');
+
     if (surface.requiresPin && !FINANCE_PIN) {
       test.skip(true, 'Set TBM_PIN to capture finance surfaces.');
     }

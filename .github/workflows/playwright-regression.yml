@@ -68,12 +68,25 @@ jobs:
 
           python3 .github/scripts/parse_playwright_results.py
 
+      - name: Detect changed UI files
+        id: changed
+        run: |
+          git fetch origin main --depth=1
+          CHANGED=$(git diff origin/main...HEAD --name-only -- '*.html' '*.js' | tr '\n' ',')
+          echo "files=$CHANGED" >> "$GITHUB_OUTPUT"
+          if [ -z "$CHANGED" ]; then
+            echo "No UI files changed — screenshots will be skipped."
+          else
+            echo "Changed files: $CHANGED"
+          fi
+
       - name: Capture viewport screenshots
         id: screenshots
         if: always()
         env:
           TBM_BASE_URL: https://thompsonfams.com
           TBM_PIN: ${{ secrets.TBM_PIN }}
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
         run: |
           SCREENSHOT_SPEC="tests/tbm/screenshots.spec.js"
           if [ ! -f "$SCREENSHOT_SPEC" ]; then
