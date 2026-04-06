@@ -3842,7 +3842,7 @@ function pBatchApprove(child) {
       var r = safeParse(raw);
       if (r.status === 'ok') { toast('↩ Cleared — gate updated'); window.renderParent(); }
       else toast('Error: ' + (r.error || 'unknown'));
-    }).withFailureHandler(function(e) { toast('Error: ' + e.message); }).khOverrideTaskSafe(p.ri, p.tid);
+    }).withFailureHandler(function(e) { toast('Error: ' + e.message); }).khOverrideTaskSafe(p.ri, p.tid, mult);
   };
   window._v2ClearCancel = function() {
     window._clearPending = null;
