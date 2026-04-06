@@ -1791,6 +1791,7 @@ function getOpsHealth_() {
     health.perf = sysHealth.perf || {};
     health.versions = sysHealth.versions || {};
     health.triggers = sysHealth.triggers || {};
+    health.monthStatus = sysHealth.monthStatus || {};
 
     // Tiller sync status
     if (sysHealth.tillerSync && sysHealth.tillerSync.status === 'stale') {
@@ -1804,6 +1805,9 @@ function getOpsHealth_() {
 
     // Trigger health
     if (health.triggers.orphans > 0 && health.overall !== 'RED') health.overall = 'WATCH';
+
+    // Month-close grace period escalation
+    if (health.monthStatus.priorCloseStatus === 'overdue' && health.overall === 'GREEN') health.overall = 'WATCH';
   } catch(e) {
     health.systemHealthError = e.message;
     health.overall = 'RED';
@@ -1872,11 +1876,56 @@ function getOpsHealth_() {
     health.education = { status: 'error', error: e.message };
   }
 
-  // ── 4. RISK SUMMARY ────────────────────────────────────────
+  // ── 4. ERROR RATE CHECK (configurable threshold) ────────────
+  try {
+    var errorThreshold = 5;
+    try {
+      var customET = PropertiesService.getScriptProperties().getProperty('ERROR_RATE_THRESHOLD');
+      if (customET) errorThreshold = parseInt(customET, 10);
+    } catch(e2) {}
+    var errorSheet = SpreadsheetApp.openById(SSID).getSheetByName(TAB_MAP['ErrorLog'] || 'ErrorLog');
+    if (errorSheet) {
+      var cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      var errorData = errorSheet.getDataRange().getValues();
+      var errorCount = 0;
+      for (var ei = 1; ei < errorData.length; ei++) {
+        if (errorData[ei][0] instanceof Date && errorData[ei][0] > cutoff) errorCount++;
+      }
+      health.errors.count24h = errorCount;
+      health.errors.threshold = errorThreshold;
+      health.errors.status = errorCount === 0 ? 'green' : errorCount <= errorThreshold ? 'warning' : 'critical';
+      if (errorCount > errorThreshold && health.overall !== 'RED') health.overall = 'RED';
+      else if (errorCount > 0 && health.overall === 'GREEN') health.overall = 'WATCH';
+    }
+  } catch(e3) {
+    health.errors.checkError = e3.message;
+  }
+
+  // ── 5. TILLER FRESHNESS (configurable threshold) ───────────
+  try {
+    var tillerThreshold = 72;
+    try {
+      var customTH = PropertiesService.getScriptProperties().getProperty('TILLER_STALE_HOURS');
+      if (customTH) tillerThreshold = parseInt(customTH, 10);
+    } catch(e4) {}
+    health.tillerFreshness = { thresholdHours: tillerThreshold };
+    if (health.tillerSync && health.tillerSync.staleAccounts) {
+      health.tillerFreshness.staleCount = health.tillerSync.staleAccounts.length;
+      health.tillerFreshness.status = health.tillerSync.staleAccounts.length === 0 ? 'green' : 'yellow';
+    }
+  } catch(e5) {}
+
+  // ── 6. RISK SUMMARY (computed, not hardcoded) ──────────────
   var risks = [];
-  if (health.errors.count24h > 0) risks.push('P1: ' + health.errors.count24h + ' errors in last 24h');
-  if (health.surfaceCount.red > 0) risks.push('P0: ' + health.surfaceCount.red + ' surfaces failed to load');
+  if (health.errors.count24h > 0) risks.push('P1: ' + health.errors.count24h + ' errors in last 24h (threshold: ' + (health.errors.threshold || 5) + ')');
+  if (health.surfaceCount && health.surfaceCount.red > 0) risks.push('P0: ' + health.surfaceCount.red + ' surfaces failed to load');
   if (health.triggers && health.triggers.orphans > 0) risks.push('P2: ' + health.triggers.orphans + ' orphan triggers');
+  if (health.tillerSync && health.tillerSync.status === 'stale') risks.push('P1: Tiller data stale');
+  if (health.monthStatus && health.monthStatus.priorCloseStatus === 'overdue') {
+    risks.push('P1: ' + health.monthStatus.priorMonth + ' close overdue (' + health.monthStatus.daysSinceMonthEnd + 'd past month-end, grace period expired)');
+  } else if (health.monthStatus && health.monthStatus.priorCloseStatus === 'pending') {
+    risks.push('P2: ' + health.monthStatus.priorMonth + ' close pending (' + health.monthStatus.graceRemaining + 'd remaining in grace period)');
+  }
   health.risks = risks;
   health.riskCount = risks.length;
 
