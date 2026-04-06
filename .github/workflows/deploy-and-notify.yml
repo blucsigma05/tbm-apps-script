@@ -1,0 +1,127 @@
+name: Deploy and Notify
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'cloudflare-worker.js'
+      - 'wrangler.toml'
+      - '**.md'
+      - '.github/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: GAS Deploy + Smoke + Pushover
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        env:
+          CLASP_CREDENTIALS_JSON: ${{ secrets.CLASP_CREDENTIALS_JSON }}
+          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+          GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
+        run: |
+          MISSING=""
+          [ -z "$CLASP_CREDENTIALS_JSON" ] && MISSING="$MISSING CLASP_CREDENTIALS_JSON"
+          [ -z "$GAS_DEPLOYMENT_ID" ]      && MISSING="$MISSING GAS_DEPLOYMENT_ID"
+          [ -z "$GAS_DEPLOY_URL" ]         && MISSING="$MISSING GAS_DEPLOY_URL"
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing required secrets:$MISSING"
+            exit 1
+          fi
+
+      - name: Install clasp
+        env:
+          CLASP_CREDENTIALS_JSON: ${{ secrets.CLASP_CREDENTIALS_JSON }}
+        run: |
+          npm install -g @google/clasp
+          printf '%s' "$CLASP_CREDENTIALS_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+
+      - name: clasp push
+        id: push
+        run: clasp push --force
+
+      - name: clasp deploy
+        id: deploy
+        env:
+          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+        run: |
+          clasp deploy -i "$GAS_DEPLOYMENT_ID"
+          echo "deployed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Run smoke test
+        id: smoke
+        env:
+          GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
+        run: |
+          echo "Hitting smoke test endpoint..."
+          RESPONSE="$(curl -sS -L --max-time 120 "${GAS_DEPLOY_URL}?action=runTests")"
+          OVERALL="$(python3 -c "
+          import json, sys
+          try:
+              d = json.loads(sys.argv[1])
+              print(d.get('overall', 'UNKNOWN'))
+          except Exception:
+              print('PARSE_ERROR')
+          " "$RESPONSE" 2>/dev/null || echo 'ERROR')"
+
+          echo "Smoke result: $OVERALL"
+          echo "overall=$OVERALL" >> "$GITHUB_OUTPUT"
+
+          if [ "$OVERALL" != "PASS" ]; then
+            echo "::error::Smoke tests returned: $OVERALL"
+            exit 1
+          fi
+
+      - name: Pushover — deploy success
+        if: success()
+        env:
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+        run: |
+          if [ -z "$PUSHOVER_USER_KEY" ] || [ -z "$PUSHOVER_APP_TOKEN" ]; then
+            echo "Pushover secrets not set — skipping success notification."
+            exit 0
+          fi
+          SHA_SHORT="${GITHUB_SHA:0:7}"
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -sS \
+            --form-string "token=${PUSHOVER_APP_TOKEN}" \
+            --form-string "user=${PUSHOVER_USER_KEY}" \
+            --form-string "title=TBM Deploy: Live ✅" \
+            --form-string "message=Commit ${SHA_SHORT} is live. Smoke passed. Go verify the surfaces." \
+            --form-string "url=${RUN_URL}" \
+            --form-string "url_title=View run" \
+            --form-string "priority=0" \
+            https://api.pushover.net/1/messages.json
+
+      - name: Pushover — deploy failed
+        if: failure()
+        env:
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+        run: |
+          if [ -z "$PUSHOVER_USER_KEY" ] || [ -z "$PUSHOVER_APP_TOKEN" ]; then
+            echo "Pushover secrets not set — skipping failure notification."
+            exit 0
+          fi
+          SHA_SHORT="${GITHUB_SHA:0:7}"
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -sS \
+            --form-string "token=${PUSHOVER_APP_TOKEN}" \
+            --form-string "user=${PUSHOVER_USER_KEY}" \
+            --form-string "title=TBM Deploy: BLOCKED ❌" \
+            --form-string "message=Commit ${SHA_SHORT} — deploy or smoke failed. Nothing is broken live. Check the run." \
+            --form-string "url=${RUN_URL}" \
+            --form-string "url_title=View failed run" \
+            --form-string "priority=1" \
+            https://api.pushover.net/1/messages.json
