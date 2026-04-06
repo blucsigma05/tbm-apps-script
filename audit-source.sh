@@ -283,6 +283,27 @@ fi
 
 echo ""
 
+# ── ACTIONLINT: WORKFLOW YAML SYNTAX ─────────────────────────
+echo "--- GitHub Actions Workflow Lint (actionlint) ---"
+
+if command -v actionlint >/dev/null 2>&1; then
+  AL_OUT=$(actionlint .github/workflows/*.yml 2>&1)
+  if [ -n "$AL_OUT" ]; then
+    echo "  X actionlint found errors in workflow files:"
+    echo "$AL_OUT" | sed 's/^/      /'
+    echo "  FAIL -- Workflow YAML FAILED"
+    FAIL=1
+  else
+    echo "  OK -- All workflow files pass actionlint"
+  fi
+else
+  echo "  SKIP -- actionlint not installed (install: brew install actionlint)"
+  echo "  (Required before pushing any modified .github/workflows/*.yml)"
+  WARN=$((WARN + 1))
+fi
+
+echo ""
+
 # ── SUMMARY ───────────────────────────────────────────────────
 echo "=== SUMMARY ==="
 echo "Failures:  $FAIL"

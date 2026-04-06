@@ -54,6 +54,7 @@ Read source before writing assertions. Never claim a feature is missing, a value
 15. Pushing without running `audit-source.sh` first
 16. Adding a `google.script.run` call without adding the Safe function to smoke test wiring check
 17. Using `clasp deploy` without `-i` flag
+18. Pushing a new or modified `.github/workflows/*.yml` without running `actionlint` first. New workflow files cannot review themselves on their own PR (chicken-and-egg — the workflow doesn't exist on main yet when the PR is opened). Validate locally before every push: `actionlint .github/workflows/*.yml`
 
 ### Tier 3 — Causes Drift
 18. Duplicating constants across files (shared global scope — they're already available)
@@ -426,6 +427,7 @@ For evening deploys, next-morning check is acceptable.
 | Gate 1 (wiring) | Before every push | PowerShell script above |
 | Gate 2 (visual) | When KidsHub.html touched | PowerShell script above |
 | Gate 3 (version) | Before every push | Grep 3 locations per file |
+| actionlint | When any `.github/workflows/*.yml` added or modified | `actionlint .github/workflows/*.yml` (install: `brew install actionlint`). New workflow files CANNOT review themselves — lint locally before every push. |
 
 ---
 
