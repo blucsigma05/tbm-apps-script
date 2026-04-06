@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v47 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v48 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 47; }
+function getKidsHubVersion() { return 48; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2558,7 +2558,7 @@ function getTodayContent_(child) {
     if (isNaN(startDate.getTime())) continue;
     var endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 7);
-    if (today >= startDate && today < endDate) { bestRow = data[i]; break; }
+    if (today >= startDate && today < endDate) { bestRow = data[i]; } // no break — last match wins (latest-seeded week takes precedence)
   }
   if (!bestRow) return null;
   try {
@@ -3888,5 +3888,5 @@ function getDesignUnlockedSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v47
+// END OF FILE — KidsHub.gs v48
 // ════════════════════════════════════════════════════════════════════
