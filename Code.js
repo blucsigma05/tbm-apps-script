@@ -35,11 +35,12 @@ var KH_CACHE_HB_KEY = 'KH_LAST_HB'; // stores last-seen heartbeat value
  * v47: Get cached KH data if heartbeat hasn't changed.
  * Returns raw JSON string or null (cache miss / stale).
  */
-function getCachedKHPayload_() {
+function getCachedKHPayload_(key) {
   try {
+    var cacheKey = key || KH_CACHE_KEY;
     var cache = CacheService.getScriptCache();
-    var keys = cache.getAll([KH_CACHE_KEY, KH_CACHE_HB_KEY]);
-    var raw = keys[KH_CACHE_KEY];
+    var keys = cache.getAll([cacheKey, KH_CACHE_HB_KEY]);
+    var raw = keys[cacheKey];
     var cachedHB = keys[KH_CACHE_HB_KEY];
     if (!raw || !cachedHB) return null;
 
@@ -57,18 +58,19 @@ function getCachedKHPayload_() {
 /**
  * v47: Store KH data + current heartbeat in cache.
  */
-function setCachedKHPayload_(jsonStr) {
+function setCachedKHPayload_(jsonStr, key) {
   try {
+    var cacheKey = key || KH_CACHE_KEY;
     var cache = CacheService.getScriptCache();
     var currentHB = getKHLastModified();
     if (!currentHB) return; // no heartbeat → don't cache stale
     var payload = {};
-    payload[KH_CACHE_KEY] = jsonStr;
+    payload[cacheKey] = jsonStr;
     payload[KH_CACHE_HB_KEY] = currentHB;
     cache.putAll(payload, KH_CACHE_TTL);
     var size = jsonStr.length;
     if (size > 50000) {
-      Logger.log('📦 KH cache payload: ' + Math.round(size / 1024) + 'KB');
+      Logger.log('📦 KH cache payload (' + cacheKey + '): ' + Math.round(size / 1024) + 'KB');
     }
   } catch(e) {
     Logger.log('setCachedKHPayload_ error (non-fatal): ' + e.message);
@@ -168,8 +170,10 @@ function bustCache() {
       chunkKeys.push(DE_CACHE_KEY + '_chunk_' + i);
       chunkKeys.push(monthKey + '_chunk_' + i);
     }
-    // v47: Also bust KH cache
+    // v47/v70: Also bust KH cache (all + per-child keys)
     chunkKeys.push(KH_CACHE_KEY);
+    chunkKeys.push(KH_CACHE_KEY + '_buggsy');
+    chunkKeys.push(KH_CACHE_KEY + '_jj');
     chunkKeys.push(KH_CACHE_HB_KEY);
     cache.removeAll(chunkKeys);
   } catch(e) { if (typeof logError_ === 'function') logError_('bustCache', e); }
@@ -627,15 +631,12 @@ function updateFamilyNoteSafe(noteText) {
 function getKidsHubDataSafe(child) {
   return withMonitor_('getKidsHubDataSafe', function() {
     var resolvedChild = child || 'all';
-    // v47: Cache only 'all' requests (ambient displays, parent dashboard, widget)
-    if (resolvedChild === 'all') {
-      var cached = getCachedKHPayload_();
-      if (cached) return cached;
-    }
+    // v70: Cache ALL requests — 'all', 'buggsy', 'jj' — each with own key
+    var cacheKey = KH_CACHE_KEY + (resolvedChild === 'all' ? '' : '_' + resolvedChild);
+    var cached = getCachedKHPayload_(cacheKey);
+    if (cached) return cached;
     var result = getKidsHubData(resolvedChild, Date.now());
-    if (resolvedChild === 'all') {
-      setCachedKHPayload_(result);
-    }
+    setCachedKHPayload_(result, cacheKey);
     return result;
   });
 }
