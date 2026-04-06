@@ -11,8 +11,8 @@ crons = ["*/5 * * * *"]
 #   Then copy the namespace_id here and re-deploy.
 [[kv_namespaces]]
 binding    = "UPTIME_KV"
-id         = "REPLACE_WITH_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id         = "fa802b13db164a09a226607d5d68d847"
+preview_id = "fa802b13db164a09a226607d5d68d847"
 
 # Secrets (set via CLI, never in this file):
 #   wrangler secret put PUSHOVER_TOKEN --config wrangler-uptime.toml
