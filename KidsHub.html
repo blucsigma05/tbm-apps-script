@@ -3837,12 +3837,13 @@ function pBatchApprove(child) {
     window._clearPending = null;
     var modal = document.getElementById('clearModal');
     if (modal) modal.style.display = 'none';
-    toast('Clearing must-do...');
+    var effectiveMult = (mult != null && mult >= 0) ? mult : 1;
+    toast('Clearing must-do' + (effectiveMult < 1 ? ' (' + effectiveMult + 'x)' : '') + '...');
     google.script.run.withSuccessHandler(function(raw) {
       var r = safeParse(raw);
-      if (r.status === 'ok') { toast('↩ Cleared — gate updated'); window.renderParent(); }
+      if (r.status === 'ok') { toast('↩ Cleared' + (effectiveMult < 1 ? ' at ' + effectiveMult + 'x' : '') + ' — gate updated'); window.renderParent(); }
       else toast('Error: ' + (r.error || 'unknown'));
-    }).withFailureHandler(function(e) { toast('Error: ' + e.message); }).khOverrideTaskSafe(p.ri, p.tid);
+    }).withFailureHandler(function(e) { toast('Error: ' + e.message); }).khOverrideTaskSafe(p.ri, p.tid, effectiveMult);
   };
   window._v2ClearCancel = function() {
     window._clearPending = null;

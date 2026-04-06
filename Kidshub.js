@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v46 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v47 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 46; }
+function getKidsHubVersion() { return 47; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -1501,7 +1501,7 @@ function khUncompleteTask(rowIndex, expectedTaskID) {
 }
 
 
-function khOverrideTask(rowIndex, expectedTaskID) {
+function khOverrideTask(rowIndex, expectedTaskID, mult) {
   var lk = acquireLock_();
   if (!lk.acquired) return JSON.stringify({ status: 'locked', message: 'Try again.' });
   try {
@@ -1523,12 +1523,17 @@ function khOverrideTask(rowIndex, expectedTaskID) {
       return JSON.stringify({ status: 'ok', already: true, uid: uid, rowIndex: rowIndex });
     }
 
+    // v47: Read base points from row and apply multiplier
+    var effectiveMult = (mult != null && mult >= 0) ? mult : 1;
+    var basePoints = Number(row[khCol_(h, 'Points')]) || 0;
+    var awardedPoints = Math.round(basePoints * effectiveMult);
+
     // v25: Batch write — modify row in memory, single writeback
     row[khCol_(h, 'Completed')] = true;
     row[khCol_(h, 'Completed_Date')] = today;
     row[khCol_(h, 'Parent_Approved')] = true;
     sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
-    appendHistory_(uid, taskID, child, task, 0, 0, 1, 'override', today, now);
+    appendHistory_(uid, taskID, child, task, awardedPoints, basePoints, effectiveMult, 'override', today, now);
     console.log('KH_WRITE', JSON.stringify({ fn: 'khOverrideTask', status: 'ok', uid: uid, child: child }));
     var _result = JSON.stringify({ status: 'ok', uid: uid, child: child, rowIndex: rowIndex });
     stampKHHeartbeat_();
@@ -3879,5 +3884,5 @@ function getDesignUnlockedSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v46
+// END OF FILE — KidsHub.gs v47
 // ════════════════════════════════════════════════════════════════════
