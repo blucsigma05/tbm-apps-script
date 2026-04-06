@@ -1243,9 +1243,9 @@ function _renderKidsWidget(data) {
     var s = kid.stats || {};
     var req = kid.requiredStatus || {};
     var avatar = key === 'buggsy' ? 'https://i.ibb.co/Y7rjjNDg/1773710329577.png' : 'https://i.ibb.co/N2Qn0J0Q/1773720439302.png';
-    var completedCount = req.done || s.completedCount || 0;
-    var totalTasks = req.total || s.totalTasks || 0;
-    var pct = totalTasks > 0 ? Math.round(completedCount / totalTasks * 100) : (s.completionPct || 100);
+    var completedCount = (req.done != null) ? req.done : ((s.completedCount != null) ? s.completedCount : 0);
+    var totalTasks = (req.total != null) ? req.total : ((s.totalTasks != null) ? s.totalTasks : 0);
+    var pct = totalTasks > 0 ? Math.round(completedCount / totalTasks * 100) : (s.completionPct != null ? s.completionPct : 100);
     var earnedPoints = s.earnedPoints || 0;
     var pendingCount = s.pendingCount || 0;
     var st = kid.screenTime || {};
