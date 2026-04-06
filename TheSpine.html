@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<meta name="tbm-version" content="TheSpine v48">
-<title>TheSpine v48 — Office Ambient Display</title>
+<meta name="tbm-version" content="TheSpine v49">
+<title>TheSpine v49 — Office Ambient Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -70,7 +70,7 @@ body.evening{
 .loader-ring{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.22);border-top-color:var(--ice);animation:spin .9s linear infinite}
 .loader-txt{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.page{position:relative;z-index:1;width:100vw;height:100vh;padding:28px 18px 46px var(--safe);display:grid;grid-template-rows:auto 11% 43% 42% auto;gap:4px}
+.page{position:relative;z-index:1;width:100vw;height:100vh;padding:28px 18px 46px var(--safe);display:grid;grid-template-rows:auto 11% 40% 45% auto;gap:4px}
 .glass{position:relative;border:1px solid rgba(212,168,67,.28);border-radius:var(--r);background:var(--card);box-shadow:0 4px 20px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden}
 .glass.warm{background:var(--card-warm)}
 .glass::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,67,.22),transparent)}
@@ -176,7 +176,7 @@ body.evening{
 .account-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}.account-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--text-mid)}
 .bridge{font-size:11px;color:var(--text-mid);margin-top:4px}
 .kids{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:0}
-.kid-card{padding:4px 8px;display:grid;grid-template-rows:auto auto auto auto auto 1fr;gap:1px;min-height:0;position:relative;overflow:hidden}
+.kid-card{padding:2px 6px;display:grid;grid-template-rows:auto auto auto auto auto 1fr;gap:1px;min-height:0;position:relative;overflow:hidden}
 .kid-card::after{content:'';position:absolute;right:-12px;bottom:-14px;width:90px;height:90px;border-radius:50%;pointer-events:none;opacity:.22;filter:blur(26px)}
 .kid-card.buggsy{background:rgba(60,58,48,.78)}.kid-card.buggsy::after{background:radial-gradient(circle,rgba(212,168,67,.38),transparent 68%)}
 .kid-card.jj{background:rgba(72,56,58,.72)}.kid-card.jj::after{background:radial-gradient(circle,rgba(232,152,184,.30),transparent 68%)}
@@ -204,7 +204,7 @@ body.evening{
 .kid-col-head.active{color:var(--mint)}
 .kid-col-head.pend-h{color:var(--ice)}
 .kid-tasks{display:flex;flex-direction:column;gap:2px;overflow:hidden;flex:1;min-height:0}
-.kid-task{display:flex;align-items:center;gap:5px;padding:3px 6px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.kid-task{display:flex;align-items:center;gap:5px;padding:2px 5px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
 .kid-task.done{opacity:.5}
 .kid-task-icon{font-size:12px;flex-shrink:0;width:16px;text-align:center}
 .kid-task-name{font-size:14px;font-weight:700;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
@@ -236,8 +236,9 @@ body.evening{
   position: absolute;
   right: -8px;
   bottom: -8px;
-  font-size: 64px;
-  line-height: 1;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
   opacity: 0.08;
   pointer-events: none;
   z-index: 0;
@@ -438,7 +439,7 @@ body.evening{
 
   <section class="kids">
     <article class="glass kid-card buggsy">
-      <div class="kid-char-wm" id="bugWatermark">&#x1F43A;</div>
+      <img class="kid-char-wm" id="bugWatermark" src="https://i.ibb.co/8L0ccf6p/1773982420674.png" alt="Wolfkid" onerror="this.style.display='none'">
       <div class="kid-head"><div class="kid-head-main"><img class="kid-avatar gold" src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" alt="Buggsy avatar"><div><div class="kid-name gold">Buggsy</div><div class="kid-sub" id="buggsySub">Loading…</div></div></div><div class="mini-label" id="buggsyReward">Loading…</div></div>
       <div class="kid-pills">
         <div class="kid-pill"><div class="v gold" id="bCur">—</div><div class="t">Rings</div></div>
@@ -452,7 +453,7 @@ body.evening{
       <div class="kid-task-zone" id="bTasks"><div class="kid-empty">Loading tasks…</div></div>
     </article>
     <article class="glass kid-card jj">
-      <div class="kid-char-wm" id="jjWatermark">&#x1F984;</div>
+      <img class="kid-char-wm" id="jjWatermark" src="https://i.ibb.co/9md3x6zp/1773982606233.png" alt="JJ Sparkle" onerror="this.style.display='none'">
       <div class="kid-head"><div class="kid-head-main"><img class="kid-avatar rose" src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" alt="JJ avatar"><div><div class="kid-name rose">JJ</div><div class="kid-sub" id="jjSub">Loading…</div></div></div><div class="mini-label" id="jjReward">Loading…</div></div>
       <div class="kid-pills">
         <div class="kid-pill"><div class="v rose" id="jCur">—</div><div class="t">Stars</div></div>
@@ -483,7 +484,7 @@ var TBM_VERSION = 'TheSpine v47';
 var FINANCE_MS = 300000;
 var KIDS_MS = 180000;
 var BOARD_MS = 600000;
-var MAX_TASKS = 4;
+var MAX_TASKS = 3;
 var state = { finance:null, kids:null, board:null, levels:null, loaded:{finance:false,kids:false,board:false} };
 // v41: Confidence Rail + Graceful Degradation
 var _spineLastFetch = null;

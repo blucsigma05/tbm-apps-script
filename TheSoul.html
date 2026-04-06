@@ -1,11 +1,11 @@
-<!-- TheSoul v50 — crest scale 1.55, origin 48% -->
+<!-- TheSoul v51 — crest scale 1.55, origin 48% -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<meta name="tbm-version" content="TheSoul v50">
-<title>TheSoul v50 — Thompson Family Display</title>
+<meta name="tbm-version" content="TheSoul v51">
+<title>TheSoul v51 — Thompson Family Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
@@ -81,7 +81,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
   position:relative;z-index:1;height:var(--real-h);
   padding:10px 16px 4px 16px;
   display:grid;
-  grid-template-rows:minmax(140px,.82fr) auto 20px 1.18fr;
+  grid-template-rows:minmax(130px,.74fr) auto 20px 1.26fr;
   gap:3px;overflow:hidden;
 }
 .page::before{content:'';position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:100vw;height:100vh;background:url('https://i.ibb.co/FLDTT6QH/1774020751171.png') center/contain no-repeat;opacity:0.04;pointer-events:none;z-index:0}
@@ -196,7 +196,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 
 .kids-zone{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:0}
 .kid-panel{position:relative;border-radius:16px;overflow:hidden;box-shadow:var(--shadow);min-height:0}
-.kid-shell{height:100%;display:grid;animation:fadeInSoft 0.3s ease;grid-template-rows:auto auto auto auto 1fr;gap:2px;padding:5px 9px;min-height:0;position:relative}
+.kid-shell{height:100%;display:grid;animation:fadeInSoft 0.3s ease;grid-template-rows:auto auto auto auto 1fr;gap:1px;padding:4px 8px;min-height:0;position:relative}
 .kid-shell.buggsy{background:radial-gradient(ellipse 58% 42% at 50% 100%, rgba(212,168,67,.10) 0%, transparent 65%),linear-gradient(160deg,#3C3A30,#342E26 52%,#2C2820 100%);border:1px solid rgba(212,168,67,.16)}
 .kid-shell.jj{background:radial-gradient(ellipse 65% 45% at 18% 8%, rgba(232,168,200,.14) 0%, transparent 54%),radial-gradient(ellipse 58% 40% at 88% 82%, rgba(168,120,160,.14) 0%, transparent 52%),linear-gradient(160deg,#4A3640,#3E2C36 55%,#342430 100%);border:1px solid rgba(232,168,200,.14)}
 .kid-mascot{width:40px;height:40px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 2px 8px rgba(0,0,0,.28));border-radius:8px}
@@ -246,7 +246,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 .kid-shell.jj .kid-col-head.active{color:#f9a8d4}
 .kid-col-head.pend-h{color:var(--cyan)}
 .kid-tasks{display:flex;flex-direction:column;gap:3px;overflow:hidden;flex:1;min-height:0}
-.kid-task{display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.kid-task{display:flex;align-items:center;gap:5px;padding:3px 7px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
 .kid-task.done{opacity:.5}
 .kid-task-icon{font-size:13px;flex-shrink:0;width:16px;text-align:center}
 .kid-task-name{font-size:12px;font-weight:700;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
@@ -301,7 +301,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 }
 
 @media (max-width:980px){
-  .page{grid-template-rows:minmax(130px,.76fr) auto 20px 1.24fr}
+  .page{grid-template-rows:minmax(120px,.70fr) auto 20px 1.30fr}
   .identity-greeting{font-size:clamp(18px,2.2vw,26px)}
   .sched-title{font-size:18px}
 }
@@ -418,7 +418,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 (function(){
   'use strict';
   var SOUL_VERSION = 50;
-  var TBM_VERSION = 'TheSoul v50';
+  var TBM_VERSION = 'TheSoul v51';
   var REFRESH_MS = 120000;
   var _soulLastFetch = null;
   var _soulLastBoard = null;
@@ -1053,4 +1053,4 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 </script>
 </body>
 </html>
-<!-- TheSoul v50 — EOF -->
+<!-- TheSoul v51 — EOF -->
