@@ -1,12 +1,12 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// AlertEngine.gs v8 — Push Notifications via Pushover API
+// AlertEngine.gs v9 — Push Notifications via Pushover API
 // WRITES TO: (Pushover API only — no sheet writes)
 // READS FROM: 💻🧮 Helpers (for config)
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
-function getAlertEngineVersion() { return 8; }
+function getAlertEngineVersion() { return 9; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor
 var _aeSS = null;
@@ -14,6 +14,24 @@ function getAESS_() {
   if (!_aeSS) _aeSS = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
   return _aeSS;
 }
+
+// ── PUSHOVER PRIORITY TIERS ─────────────────────────────────────
+// HYG-12: Use these constants for all sendPush_() priority arguments.
+// Never pass bare integers — name the intent.
+var PUSHOVER_PRIORITY = {
+  DEPLOY_OK:          -2,  // silent — CI PR comments confirm deploys
+  HYGIENE_REPORT_LOW: -1,  // quiet delivery — weekly stale sweeps
+  CHORE_APPROVAL:      0,  // normal — chore/ask/approval notifications
+  BACKLOG_STALE:       0,  // normal — backlog age warnings
+  CLAUDE_MD_BLOAT:     0,  // normal — CLAUDE.md growth trigger (HYG-04)
+  TILLER_STALE:        1,  // high (vibrate) — Tiller freshness breach
+  CLOSE_OVERDUE:       1,  // high — month-close gate (escalates to 2 on day 21+)
+  SECRET_EXPIRING:     1,  // high — secrets audit
+  SYSTEM_ERROR:        1,  // high — GAS ErrorLog new entries
+  PROD_DOWN:           2,  // emergency + ack — production outage
+  DEPLOY_FAIL:         2,  // emergency + ack — deploy pipeline blocked
+  GATE_BREACH:         2   // emergency + ack — hard gate violation
+};
 
 // ── PUSHOVER CONFIG ─────────────────────────────────────────────
 // Script Properties: PUSHOVER_TOKEN, PUSHOVER_USER_LT, PUSHOVER_USER_JT
@@ -194,7 +212,7 @@ function checkPendingApprovals() {
       var title = pending.length + ' task' + (pending.length > 1 ? 's' : '') + ' waiting for approval';
       var body = lines.join('\n');
 
-      var sent = sendPush_(title, body, 'BOTH', 0, getParentDashUrl_());
+      var sent = sendPush_(title, body, 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL, getParentDashUrl_());
 
       if (sent) {
         console.log('ALERT_SENT', JSON.stringify({
@@ -265,7 +283,7 @@ function checkPendingAsks() {
         body += '\n' + pending.length + ' total asks waiting';
       }
 
-      sendPush_(title, body, 'BOTH', 0, getParentDashUrl_());
+      sendPush_(title, body, 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL, getParentDashUrl_());
     }
 
     props.setProperty('ALERT_LAST_ASKS', String(pending.length));
@@ -313,7 +331,7 @@ function checkSystemErrors() {
       var body = newErrors.slice(0, 3).join('\n');
       if (newErrors.length > 3) body += '\n+' + (newErrors.length - 3) + ' more';
 
-      sendPush_(title, body, 'LT', 1); // priority 1 = high for errors
+      sendPush_(title, body, 'LT', PUSHOVER_PRIORITY.SYSTEM_ERROR);
 
       // Update last error timestamp to most recent
       var latestTS = String(data[data.length - 1][tsCol] || '');
@@ -482,7 +500,7 @@ function diagnoseAlertEngine() {
   results.push('');
   results.push('--- PUSH TEST ---');
   var diagText = results.join('\n');
-  var ok = sendPush_('TBM Diagnostic', diagText, 'LT', -1); // low priority
+  var ok = sendPush_('TBM Diagnostic', diagText, 'LT', PUSHOVER_PRIORITY.HYGIENE_REPORT_LOW);
   results.push(ok ? 'Diagnostic push sent ✅' : 'Diagnostic push FAILED ❌');
 
   var output = results.join('\n');
@@ -639,5 +657,5 @@ function dailyHealthCheck() {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — AlertEngine v8
+// END OF FILE — AlertEngine v9
 // ════════════════════════════════════════════════════════════════════

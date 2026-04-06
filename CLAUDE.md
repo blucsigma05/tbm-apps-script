@@ -329,11 +329,31 @@ HTML modules served via Cloudflare use the `google.script.run` shim which POSTs 
 | Version reporting | GASHardening.gs → `getDeployedVersions()` |
 | Cache read/write | Code.gs → `getCachedPayload_()`, `setCachedPayload_()` |
 | Workbook reference | `openById(SSID)` — NEVER `getActiveSpreadsheet()` |
-| Push notifications | AlertEngine.gs → `sendPush_()` (recipients: LT, JT, BOTH) |
+| Push notifications | AlertEngine.gs → `sendPush_()` (recipients: LT, JT, BOTH) — use `PUSHOVER_PRIORITY.*` constants, never bare integers |
 | KH heartbeat | KidsHub.gs → `stampKHHeartbeat_()` after every write |
 | Lock acquisition | `waitLock(30000)` — NEVER `tryLock()` |
 | Smoke + regression | Code.gs → `?action=runTests` returns combined JSON |
 | New `google.script.run` call | Must have `withFailureHandler()`. Must add Safe wrapper to smoke test check. Must run audit-source.sh. |
+
+---
+
+## Alert Tiers (HYG-12)
+All `sendPush_()` calls must use a named constant from `PUSHOVER_PRIORITY` in AlertEngine.gs. No bare integers.
+
+| Constant | Value | Behavior | Use for |
+|----------|-------|----------|---------|
+| `DEPLOY_OK` | -2 | Silent | Successful deploys (CI PR comments confirm) |
+| `HYGIENE_REPORT_LOW` | -1 | Quiet delivery | Weekly stale sweeps, diagnostics |
+| `CHORE_APPROVAL` | 0 | Normal sound | Chore/ask/approval notifications |
+| `BACKLOG_STALE` | 0 | Normal sound | Backlog age warnings |
+| `CLAUDE_MD_BLOAT` | 0 | Normal sound | CLAUDE.md growth trigger (HYG-04) |
+| `TILLER_STALE` | 1 | Vibrate (high) | Tiller freshness breach |
+| `CLOSE_OVERDUE` | 1 | Vibrate (high) | Month-close gate day 6–20 (escalates to 2 on day 21+) |
+| `SECRET_EXPIRING` | 1 | Vibrate (high) | Secrets audit |
+| `SYSTEM_ERROR` | 1 | Vibrate (high) | GAS ErrorLog new entries |
+| `PROD_DOWN` | 2 | Emergency + ack | Production outage |
+| `DEPLOY_FAIL` | 2 | Emergency + ack | Deploy pipeline blocked |
+| `GATE_BREACH` | 2 | Emergency + ack | Hard gate violation |
 
 ---
 
