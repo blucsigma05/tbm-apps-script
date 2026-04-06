@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// CodeSnapshot.gs v3 — Thin wrappers calling ThompsonLib
+// CodeSnapshot.gs v4 — Thin wrappers calling ThompsonLib
 // WRITES TO: (Google Drive only — no sheet writes)
 // READS FROM: (reads .gs source files for snapshot)
 // ════════════════════════════════════════════════════════════════════
 
-function getCodeSnapshotVersion() { return 3; }
+function getCodeSnapshotVersion() { return 'CodeSnapshot v4'; }
 
 function _snapshotConfig_() {
   var props = PropertiesService.getScriptProperties();
@@ -43,3 +43,5 @@ function runSnapshotSingle() {
   if (!cfg.folderId) throw new Error('Set SNAPSHOT_FOLDER_ID in Script Properties.');
   return ThompsonLib.snapshotToSingleDoc(cfg);
 }
+
+// END CodeSnapshot.js v4
