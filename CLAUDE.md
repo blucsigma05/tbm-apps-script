@@ -47,22 +47,25 @@ Read source before writing assertions. Never claim a feature is missing, a value
 10. Adding a `google.script.run` call without a matching `withFailureHandler()`
 
 ### Tier 2 — Causes Deploy Problems
-11. Stopping at `clasp push` without completing the full pipeline (steps 1–13)
+11. Stopping at `clasp push` without completing the full pipeline
 12. Creating a new GAS deployment instead of updating existing
 13. Version mismatches across the 3 required locations (header, getter, EOF)
 14. Pushing to GAS without `git commit` + `git push` after
 15. Pushing without running `audit-source.sh` first
 16. Adding a `google.script.run` call without adding the Safe function to smoke test wiring check
 17. Using `clasp deploy` without `-i` flag
+18. Pushing a branch that is behind `origin/main` (staleness gate catches this)
+19. Embedding Python/bash heredocs in workflow YAML instead of using `.github/scripts/`
 
 ### Tier 3 — Causes Drift
-18. Duplicating constants across files (shared global scope — they're already available)
-19. Writing to a sheet tab owned by another module
-20. Skipping Notion deploy page update after deploy
-21. Updating Notion page icon+title together (double-emoji bug — update title only)
-22. Guessing at versions — read the actual file header
-23. Starting a big refactor without a Step 0 cleanup commit
-24. Trusting a grep that returned suspiciously few results without re-running narrower
+20. Duplicating constants across files (shared global scope — they're already available)
+21. Writing to a sheet tab owned by another module
+22. Skipping Notion deploy page update after deploy
+23. Updating Notion page icon+title together (double-emoji bug — update title only)
+24. Guessing at versions — read the actual file header
+25. Starting a big refactor without a Step 0 cleanup commit
+26. Trusting a grep that returned suspiciously few results without re-running narrower
+27. Running multiple PRs that touch hot files (workflows, CLAUDE.md, audit-source.sh) in parallel
 
 ---
 
@@ -151,6 +154,15 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 | audit-wiring.sh | Wiring verification (post-new-call gate) |
 | CLAUDE.md | This file |
 
+### CI/CD scripts (.github/scripts/)
+| Script | Called by | Purpose |
+|--------|-----------|---------|
+| `codex_review.py` | codex-pr-review.yml | Send PR diff to OpenAI gpt-4o, format review comment |
+| `parse_test_results.py` | ci.yml | Parse GAS smoke+regression JSON into PR comment |
+| `parse_playwright_results.py` | playwright-regression.yml | Parse Playwright JSON into PR comment |
+
+Each script is runnable standalone for local testing. Each reads env vars — no positional args.
+
 ### Cloudflare Worker Routes
 All routes proxy to GAS `?page=` equivalents. Verify all return 200 after deploy.
 
@@ -197,6 +209,19 @@ thompsonfams.com/api              → POST proxy to google.script.run
 thompsonfams.com/api/verify-pin   → PIN verification for finance surfaces
 ```
 
+### Device Viewport Map (for Playwright screenshots)
+| Route | Viewport | Device |
+|-------|----------|--------|
+| `/spine` | 980x551 | Office Fire Stick |
+| `/soul` | 980x551 | Kitchen Fire Stick |
+| `/parent` | 412x915 | JT S25 |
+| `/pulse` | 412x915 | JT S25 |
+| `/vein` | 1920x1080 | LT Desktop |
+| `/buggsy` | 1340x800 | A9 Tablet |
+| `/jj` | 1340x800 | A7 Tablet |
+| `/daily-missions` | 1368x912 | Surface Pro |
+| `/daily-missions?child=jj` | 1920x1200 | S10 FE |
+
 ---
 
 ## Deploy Pipeline (MANDATORY — every deploy)
@@ -205,21 +230,31 @@ Run steps 1–13 autonomously. Report results at end. LT's only action: review P
 
 1. **EDIT** → Make changes locally in `C:\Dev\tbm-apps-script`
 2. **VERSION** → Bump version in ALL 3 locations per changed `.gs` file: line 3 header, `get*Version()` return, EOF comment. All three MUST match. Grep to verify.
-3. **AUDIT** → `bash audit-source.sh` — FAIL = stop. WARN = review each, fix or document.
+3. **AUDIT** → `bash audit-source.sh` — FAIL = stop. WARN = review each, fix or document. Includes: ES5 compliance, version consistency, wiring check, route integrity, branch staleness, workflow lint (if changed), script compile (if changed).
 4. **ES5 CHECK** → Run banned-pattern greps on changed `.html` files. Any match = fix.
-5. **PRE-PUSH GATES** → Gate 1 (wiring), Gate 2 (visual, if KidsHub touched), Gate 3 (version consistency). Any FAIL = stop.
+5. **PRE-PUSH GATES** → Gate 1 (wiring — now in audit-source.sh), Gate 3 (version consistency — now in audit-source.sh). Any FAIL = stop.
 6. **PUSH** → `clasp push`
 7. **PRE-QA** → Run `diagPreQA()` from GASHardening.gs. Must show ALL categories PASS. Any FAIL = stop, fix, re-push, re-run.
 8. **DEPLOY** → `clasp deploy -i <deploymentId>`
-9. **VERIFY** → Hit `?action=runTests` on PRODUCTION `/exec` URL. Check ErrorLog for new errors (last 5 min). NOTE: `/dev` URLs require Google auth — curl/fetch cannot reach them.
-10. **GIT** → Git Bash only (NOT PowerShell): `git checkout -b <branch>` → `git add .` → `git commit` → `git push origin <branch>` → Open PR
+9. **VERIFY** → Hit `?action=runTests` on PRODUCTION `/exec` URL. Assert structured JSON: `overall == "PASS"` AND `smoke.overall == "PASS"`. Check ErrorLog for new errors (last 5 min). NOTE: `/dev` URLs require Google auth — curl/fetch cannot reach them.
+10. **GIT** → Git Bash only (NOT PowerShell): `git checkout -b <branch>` → `git add <specific files>` → `git commit` → `git push origin <branch>` → Open PR
 11. **NOTION** → Update PM Active Versions DB. Write thread handoff to Archive. Update deploy page title (version only, NOT icon).
 12. **CF VERIFY** → curl all CF proxy endpoints from route list above, expect 200.
 13. **RELEASE** → `gh release create v<version> --notes "<summary>"`
 
 **Never stop at step 6.**
 
-## Deploy Manifest (Gate 4)
+### Deploy Proof
+Deploy success is proven, not inferred:
+- **Deploy success = HTTP 200 from `?action=runTests` AND structured JSON assertion of `overall == "PASS"` AND `smoke.overall == "PASS"`.** NOT just "workflow completed."
+- **The deploy Pushover MUST include:** deployment ID, version, smoke result, commit SHA, timestamp.
+- **If any proof field can't be captured,** the workflow fails and sends BLOCKED Pushover. Don't ship a deploy proof that can be silently truncated.
+
+---
+
+## QA Gates
+
+### Gate 4: Deploy Manifest
 Every build spec produces a grep manifest WHEN THE SPEC IS CREATED — not after the build. Before declaring "QA ready," run every manifest line. Zero matches or `display:none` = NOT DONE.
 
 Format:
@@ -228,88 +263,32 @@ Format:
 grep -n "[unique identifier]" [file]    → expected: [what should be there]
 ```
 
----
-
-## Feature Verification Checklist (Gate 5)
+### Gate 5: Feature Verification Checklist
 
 Every build spec must include BOTH a Deploy Manifest (Gate 4) AND a Feature Verification Checklist (Gate 5).
 
 - Deploy Manifest answers: "Does this feature EXIST?"
 - Feature Verification answers: "Is this feature CORRECT?"
 
-### Rules:
+**Rules:**
 1. Checklist is created AT SPEC TIME by Chat. Code does NOT define its own checklist.
 2. Each item has a specific, measurable pass condition — not "looks good" but "background is #2D1B69" or "avatar is 120px" or "streak shows consecutive days."
 3. The checklist is CUMULATIVE. Prior verified items carry forward to every future build of that surface. When fixing audit findings, re-verify ALL cumulative items plus new ones.
 4. Before declaring "QA ready" or writing a handoff that says "complete," verify every checklist item by grep or by running the function and reading output.
 5. Items verified only by reading source don't count. Run it, read Logger output, confirm the value.
 
-### What goes on the checklist:
-- Specific hex colors ("background must be #2D1B69")
-- Pixel dimensions ("avatar must be 120px", "watermark must fill ~85vw")
-- Math/formula outputs ("streak counter shows consecutive days")
-- Conditional logic ("if streak=0 show X, if streak>0 show Y")
-- Text content ("header says 'Buggsy's Quest Board'")
-- State transitions ("clicking DONE moves task to completed")
-- Interaction behavior ("PIN modal appears on parent actions only")
+**What goes on the checklist:** specific hex colors, pixel dimensions, math/formula outputs, conditional logic, text content, state transitions, interaction behavior.
 
-### Checklist format (produced by Chat, verified by Code):
-```
-# [Surface] Feature Verification Checklist
-# Spec: [source spec name]
-# Created: [date]
-# Cumulative items: [count]
-# New items: [count]
+### Gate 7: Post-Deploy Check
 
-## Cumulative (from prior verified builds)
-- [ ] [item]: [expected value] (verified [version], spec: [source])
+After deploy, verify production is stable — not just at deploy time but an hour later.
 
-## New (this build)
-- [ ] [item]: [expected value]
-```
+1. MonitorEngine log: zero errors since deploy timestamp
+2. KidsHub heartbeat cache: age < 120 seconds
+3. No Pushover error alerts fired since deploy
+4. Hit each surface URL once, confirm no 500/error screen
 
----
-
-## Pre-Push Gates
-
-### Gate 1: Wiring Verification
-Every `google.script.run.XXX` in HTML must have a matching function in `.js`:
-```powershell
-$htmlCalls = Get-ChildItem -Path "C:\Dev\tbm-apps-script\*.html" |
-  Select-String -Pattern '\.(\w+Safe\w*)\(' -AllMatches |
-  ForEach-Object { $_.Matches } |
-  ForEach-Object { $_.Groups[1].Value } |
-  Sort-Object -Unique
-$missing = @()
-foreach ($fn in $htmlCalls) {
-  $found = Get-ChildItem -Path "C:\Dev\tbm-apps-script\*.js" |
-    Select-String -Pattern "function $fn\b" -Quiet
-  if (-not $found) { $missing += $fn }
-}
-if ($missing.Count -gt 0) {
-  Write-Host "WIRING FAIL" -ForegroundColor Red
-  $missing | ForEach-Object { Write-Host "  MISSING: $_" -ForegroundColor Red }
-} else {
-  Write-Host "WIRING PASS — all $($htmlCalls.Count) calls verified" -ForegroundColor Green
-}
-```
-
-### Gate 2: Visual Regression (KidsHub.html only)
-Run when KidsHub.html is touched:
-```powershell
-$file = "C:\Dev\tbm-apps-script\KidsHub.html"
-$fails = @()
-if (-not (Select-String -Path $file -Pattern "\.char-avatar" -Context 0,2 | Select-String -Pattern "48px" -Quiet)) { $fails += "char-avatar not 48px" }
-if (-not (Select-String -Path $file -Pattern "\.char-stat-img" -Context 0,2 | Select-String -Pattern "48px" -Quiet)) { $fails += "char-stat-img not 48px" }
-if (-not (Select-String -Path $file -Pattern "\.char-flavor" -Context 0,2 | Select-String -Pattern "140px" -Quiet)) { $fails += "char-flavor not 140px" }
-if (-not (Select-String -Path $file -Pattern "Wolfkid celebrating" | Select-String -Pattern "180px" -Quiet)) { $fails += "ALL CLEAR Wolfkid not 180px" }
-if (-not (Select-String -Path $file -Pattern "JJ celebrating" | Select-String -Pattern "180px" -Quiet)) { $fails += "ALL CLEAR JJ not 180px" }
-if ($fails.Count -gt 0) { $fails | ForEach-Object { Write-Host "FAIL: $_" -ForegroundColor Red } }
-else { Write-Host "VISUAL PASS" -ForegroundColor Green }
-```
-
-### Gate 3: Version Consistency
-Every changed `.gs` file must have matching versions in 3 locations: line 3 header, `get*Version()` return, EOF comment. Grep all three before pushing.
+For evening deploys, next-morning check is acceptable.
 
 ---
 
@@ -332,39 +311,14 @@ Android WebView and Fully Kiosk Browser do NOT support ES6+.
 | Destructuring `{a, b} = obj` | `var a = obj.a` |
 | `backdrop-filter` CSS | Not supported on Fire TV |
 
-Pre-push check:
-```bash
-grep -rn "=>" *.html | grep -v "http" | grep -v "<!--"
-grep -rn "\blet \b\|\bconst \b" *.html
-grep -rn '`' *.html | grep -v "<!--"
-grep -rn '??' *.html
-grep -rn '?\.' *.html
-grep -rn "\.includes(" *.html
-grep -rn "backdrop-filter" *.html
-```
+### ES5 Allowed Methods
+These ES5.1 methods ARE allowed — they work in all target WebViews (Fully Kiosk 4.x+, Fire TV Silk, Samsung Internet 4+):
+`Object.keys()`, `Array.isArray()`, `JSON.parse()`/`JSON.stringify()`, `indexOf()`, `forEach()`, `map()`, `filter()`, `trim()`
 
 ---
 
 ## API Proxy Contract
-HTML modules served via Cloudflare use the `google.script.run` shim which
-POSTs to `/api?fn=FUNCTION_NAME`. When accessed directly via GAS (not
-Cloudflare), the XHR fallback in StoryLibrary.html uses
-`?action=api&fn=FUNCTION_NAME&args=[]` — this is handled by the same
-`serveData()` router branch in Code.gs. Both paths resolve to the same
-function execution.
-
-## ES5 Allowed Methods
-The following ES5.1 methods ARE allowed despite edge-case compatibility
-concerns, because they work in all target WebViews (Fully Kiosk 4.x+,
-Fire TV Silk, Samsung Internet 4+):
-- `Object.keys()`
-- `Array.isArray()`
-- `JSON.parse()` / `JSON.stringify()`
-- `Array.prototype.indexOf()`
-- `Array.prototype.forEach()`
-- `Array.prototype.map()`
-- `Array.prototype.filter()`
-- `String.prototype.trim()`
+HTML modules served via Cloudflare use the `google.script.run` shim which POSTs to `/api?fn=FUNCTION_NAME`. When accessed directly via GAS (not Cloudflare), the XHR fallback uses `?action=api&fn=FUNCTION_NAME&args=[]` — this is handled by the same `serveData()` router branch in Code.gs. Both paths resolve to the same function execution.
 
 ## Pattern Registry
 | Pattern | Canonical location |
@@ -379,7 +333,59 @@ Fire TV Silk, Samsung Internet 4+):
 | KH heartbeat | KidsHub.gs → `stampKHHeartbeat_()` after every write |
 | Lock acquisition | `waitLock(30000)` — NEVER `tryLock()` |
 | Smoke + regression | Code.gs → `?action=runTests` returns combined JSON |
-| New `google.script.run` call | Must have `withFailureHandler()`. Must add Safe wrapper to smoke test check. Must run Gate 1. |
+| New `google.script.run` call | Must have `withFailureHandler()`. Must add Safe wrapper to smoke test check. Must run audit-source.sh. |
+
+---
+
+## CI/CD Pipeline
+
+### Automated Checks (audit-source.sh — runs before every push)
+| Check | Behavior |
+|-------|----------|
+| Branch staleness | Fails if branch is behind `origin/main`. Run `git rebase origin/main` first. |
+| ES5 compliance | Scans all `.html` files for banned ES6+ patterns. |
+| Version consistency | Verifies 3-location match (header, getter, EOF) in all `.gs` files. |
+| eval() usage | Warns on eval() in server code. |
+| Failure handler wiring | Verifies every `withSuccessHandler` has a matching `withFailureHandler`. |
+| Route integrity | Verifies CF worker routes → GAS routes → backing HTML files all align. |
+| Workflow YAML lint | Runs actionlint on workflow files (only when `.github/workflows/` files changed). |
+| Python script compile | Runs py_compile on scripts (only when `.github/scripts/` files changed). |
+
+### CI Checks (GitHub Actions — runs on every PR)
+| Order | Check | Workflow | Purpose |
+|-------|-------|----------|---------|
+| 1 | Workflow Lint | `workflow-lint.yml` | actionlint + py_compile + shellcheck — runs first |
+| 2 | TBM Smoke + Regression | `ci.yml` | GAS smoke + regression tests |
+| 2 | Playwright Regression | `playwright-regression.yml` | E2E + viewport screenshots |
+| 2 | Codex PR Review | `codex-pr-review.yml` | gpt-4o code review — has `needs: lint-gate` |
+
+LT applies branch protection in GitHub Settings > Branches > Branch protection rules (UI action).
+
+**Auto-merge policy:** Auto-merge can be enabled once the pipeline has run cleanly on 5 consecutive PRs without false negatives.
+
+### Workflow Safety Rules
+1. **Workflow YAML should orchestrate only.** Real logic (Python, bash) belongs in `.github/scripts/`. No embedded heredocs. Each script gets a header comment: purpose, calling workflow, env vars expected.
+2. **New workflow files CANNOT review their own introduction** — they require manual lint plus one sacrificial test PR before becoming a required check.
+3. **Codex bot comment updates use an HTML marker** (`<!-- codex-pr-review -->`) for deterministic matching.
+4. **workflow-lint runs before all other PR checks.** codex-pr-review has `needs: lint-gate` — broken YAML fails fast without wasting an OpenAI API call.
+5. **CI tool versions are pinned.** actionlint v1.7.7, shellcheck from ubuntu-latest. Deterministic CI.
+6. **Local lint is conditional on changed files.** audit-source.sh only runs actionlint/py_compile when those files changed. CI runs unconditionally.
+
+### Branch Hygiene
+1. **Sync before push.** Mandatory `git fetch origin main` and rebase before any push. The staleness gate in audit-source.sh enforces this.
+2. **Branch from latest.** New branches must be created from `origin/main` after a fresh fetch.
+3. **No merge if behind.** Rebase on current main, then rerun checks before requesting merge.
+4. **No broad "take ours" on shared files.** During conflict resolution on workflow YAML, CLAUDE.md, audit-source.sh, or UI files, rebuild each conflicted file from intent. Inspect the final diff.
+5. **Hot file lock.** When a PR touches `.github/workflows/**`, `.github/scripts/**`, `CLAUDE.md`, or `audit-source.sh`, only ONE such PR may be in flight. Others wait, then rebase.
+6. **Pre-flight conflict check.** Run `git merge-tree origin/main HEAD` before opening a PR. Resolve conflicts locally.
+
+### Merge Order
+When multiple PRs touch the same files, they merge sequentially. After each merge, other PRs touching those files rebase on new main and re-run checks.
+
+### Visual Regression
+Playwright captures viewport screenshots at each route's real device viewport plus a 1920x1080 desktop check. Uploaded as artifacts on every PR.
+
+**Phase 2 (future):** Pixel-diff comparison against baselines in `.github/visual-baselines/`. Build once we've collected stable baselines from 3-5 clean deploys.
 
 ---
 
@@ -399,33 +405,6 @@ Fire TV Silk, Samsung Internet 4+):
 - `old_str`/`new_str` requires EXACT whitespace matching — fetch page first
 - Table cell updates via MCP fail — flag for manual edit
 - NEVER set icon and title together (double-emoji bug)
-
----
-
-## Post-Deploy Check (Gate 7)
-
-After deploy, verify production is stable — not just at deploy time but an hour later.
-
-### Check:
-1. MonitorEngine log: zero errors since deploy timestamp
-2. KidsHub heartbeat cache: age < 120 seconds
-3. No Pushover error alerts fired since deploy
-4. Hit each surface URL once, confirm no 500/error screen
-
-For evening deploys, next-morning check is acceptable.
-
----
-
-## Audit Tools
-| Tool | When | Command |
-|------|------|---------|
-| Static source audit | Before every `clasp push` | `bash audit-source.sh` |
-| Wiring audit | After adding `google.script.run` calls | `bash audit-wiring.sh` |
-| Runtime tests | After every push AND deploy | Hit `?action=runTests` |
-| Pre-QA diagnostic | Before every deploy | `diagPreQA()` in GASHardening.gs |
-| Gate 1 (wiring) | Before every push | PowerShell script above |
-| Gate 2 (visual) | When KidsHub.html touched | PowerShell script above |
-| Gate 3 (version) | Before every push | Grep 3 locations per file |
 
 ---
 

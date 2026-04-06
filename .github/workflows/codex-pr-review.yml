@@ -1,3 +1,10 @@
+# .github/workflows/codex-pr-review.yml
+# Codex PR Review — sends PR diff to OpenAI gpt-4o for TBM-specific code review.
+# Logic lives in .github/scripts/codex_review.py (no heredocs in YAML).
+#
+# Runs a fast YAML lint gate first; skips the OpenAI call if workflows are broken.
+# This avoids wasting API calls on a PR that will fail workflow-lint anyway.
+
 name: Codex PR Review
 
 on:
@@ -19,8 +26,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Fast gate: if workflow YAML is broken, fail early and skip the OpenAI call.
+  lint-gate:
+    name: Pre-flight Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install actionlint v1.7.7
+        run: |
+          curl -sL "https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz" \
+            | tar xz -C /usr/local/bin actionlint
+
+      - name: Lint workflows
+        run: actionlint .github/workflows/*.yml
+
+      - name: Compile scripts
+        run: |
+          for pyfile in .github/scripts/*.py; do
+            [ -f "$pyfile" ] && python3 -m py_compile "$pyfile"
+          done
+
   review:
     name: Codex PR Review
+    needs: lint-gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: >
@@ -53,128 +84,9 @@ jobs:
         id: review
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          if [ -z "$OPENAI_API_KEY" ]; then
-            echo "verdict=SKIP" >> "$GITHUB_OUTPUT"
-            echo "## ⚠️ Codex PR Review: SKIPPED" > review_comment.md
-            echo "" >> review_comment.md
-            echo "**Missing secret:** \`OPENAI_API_KEY\` — configure it in repo Settings → Secrets." >> review_comment.md
-            exit 0
-          fi
-
-          python3 - <<'PY'
-          import json, os, sys, time, urllib.request, urllib.error
-
-          diff = open('pr_diff_send.txt').read()
-          truncated = os.environ.get('TRUNCATED', 'false') == 'true'
-
-          system_prompt = """You are a senior code reviewer for TBM (TillerBudgetMaster), a Google Apps Script \
-+ HtmlService household finance and kids-chore system. Review the PR diff against these rules:
-
-P1 — CRITICAL (fail the check):
-1. No hardcoded sheet names with emoji prefixes — must use TAB_MAP from DataEngine.gs
-2. No SpreadsheetApp.getActiveSpreadsheet() — must use openById(SSID)
-3. No lock.tryLock() — must use waitLock(30000)
-4. No ES6 syntax in .html files (no let/const, no => arrows, no template literals ``, no ??, no ?., no async/await, no destructuring, no .includes(), no .find())
-5. Every google.script.run call must have a .withFailureHandler() chained
-6. Version must be bumped in all 3 locations: line-3 header comment, getter function, EOF comment
-
-P2 — WARNINGS (note but do not fail):
-7. No duplicate constants — global GAS scope is shared; never redeclare SSID, TAB_MAP, etc.
-8. New google.script.run calls must also be added to smoke test wiring check
-9. logError_() pattern used for error logging (not console.error or Logger.log for errors)
-
-Respond in this exact format:
-**Critical Violations (P1):** [list each with file and line if visible, or "None"]
-**Warnings (P2):** [list each or "None"]
-**Verdict:** PASS or FAIL"""
-
-          user_content = f"PR diff to review{' (truncated at 12000 chars)' if truncated else ''}:\n\n{diff}"
-
-          payload = {
-              "model": "gpt-4o",
-              "messages": [
-                  {"role": "system", "content": system_prompt},
-                  {"role": "user", "content": user_content}
-              ],
-              "max_tokens": 1200,
-              "temperature": 0
-          }
-
-          headers = {
-              "Content-Type": "application/json",
-              "Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}"
-          }
-
-          last_error = None
-          for attempt in range(4):
-              try:
-                  req = urllib.request.Request(
-                      "https://api.openai.com/v1/chat/completions",
-                      data=json.dumps(payload).encode(),
-                      headers=headers,
-                      method="POST"
-                  )
-                  with urllib.request.urlopen(req, timeout=60) as resp:
-                      result = json.load(resp)
-                      with open('codex_response.json', 'w') as f:
-                          json.dump(result, f)
-                      sys.exit(0)
-              except urllib.error.HTTPError as e:
-                  last_error = e
-                  if e.code == 429 and attempt < 3:
-                      wait = 2 ** (attempt + 1)
-                      print(f"Rate limited (429), retrying in {wait}s...", file=sys.stderr)
-                      time.sleep(wait)
-                  elif e.code == 401:
-                      print("OpenAI auth failed — check OPENAI_API_KEY secret.", file=sys.stderr)
-                      with open('codex_response.json', 'w') as f:
-                          json.dump({"error": "auth_expired"}, f)
-                      sys.exit(0)
-                  else:
-                      print(f"OpenAI API error {e.code}: {e}", file=sys.stderr)
-                      with open('codex_response.json', 'w') as f:
-                          json.dump({"error": str(e)}, f)
-                      sys.exit(0)
-              except Exception as e:
-                  last_error = e
-                  if attempt < 3:
-                      time.sleep(2 ** (attempt + 1))
-
-          with open('codex_response.json', 'w') as f:
-              json.dump({"error": str(last_error)}, f)
-          PY
-
-          python3 - <<'PY' > review_comment.md
-          import json, os
-
-          data = json.load(open('codex_response.json'))
-          truncated = os.environ.get('TRUNCATED', 'false') == 'true'
-          trunc_note = '\n\n> ⚠️ Diff truncated at 12 000 chars — large PR, review may be partial.' if truncated else ''
-
-          if 'error' in data:
-              err = data['error']
-              if err == 'auth_expired':
-                  print("## ⚠️ Codex PR Review: AUTH ERROR\n\n`OPENAI_API_KEY` secret has expired or is invalid. Update it in repo Settings → Secrets." + trunc_note)
-              else:
-                  print(f"## ⚠️ Codex PR Review: API ERROR\n\nCould not reach OpenAI: `{err}`\n\nCheck workflow logs." + trunc_note)
-          else:
-              content = data['choices'][0]['message']['content']
-              verdict = 'FAIL' if '**Verdict:** FAIL' in content else 'PASS'
-              icon = '✅' if verdict == 'PASS' else '❌'
-              print(f"## {icon} Codex PR Review: {verdict}{trunc_note}\n\n{content}")
-          PY
-
-          VERDICT=$(python3 -c "
-          import json
-          data = json.load(open('codex_response.json'))
-          if 'error' in data:
-              print('ERROR')
-          else:
-              c = data['choices'][0]['message']['content']
-              print('FAIL' if '**Verdict:** FAIL' in c else 'PASS')
-          ")
-          echo "verdict=$VERDICT" >> "$GITHUB_OUTPUT"
+          DIFF_FILE: pr_diff_send.txt
+          TRUNCATED: ${{ steps.diff.outputs.truncated }}
+        run: python3 .github/scripts/codex_review.py
 
       - name: Post review comment on PR
         if: always() && github.event_name == 'pull_request'
@@ -182,7 +94,7 @@ Respond in this exact format:
         with:
           script: |
             const fs = require('fs');
-            let body = '⚠️ Codex review output could not be read. Check workflow logs.';
+            let body = 'Codex review output could not be read. Check workflow logs.';
             try { body = fs.readFileSync('review_comment.md', 'utf8'); } catch (e) {}
 
             const { data: comments } = await github.rest.issues.listComments({
@@ -192,7 +104,7 @@ Respond in this exact format:
               per_page: 100,
             });
             const existing = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('Codex PR Review')
+              c.user.type === 'Bot' && c.body.includes('<!-- codex-pr-review -->')
             );
             if (existing) {
               await github.rest.issues.updateComment({

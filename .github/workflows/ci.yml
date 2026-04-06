@@ -1,3 +1,7 @@
+# .github/workflows/ci.yml
+# TBM Continuous Integration — runs smoke + regression tests on every PR.
+# Result parsing lives in .github/scripts/parse_test_results.py.
+
 name: TBM Smoke + Regression
 
 on:
@@ -31,12 +35,12 @@ jobs:
           GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
         run: |
           if [ -z "$GAS_DEPLOY_URL" ]; then
-            cat <<'EOF' > test_summary.md
-          ## ⚠️ TBM Test Results: CONFIG_ERROR
+            cat <<'ERRDOC' > test_summary.md
+          ## TBM Test Results: CONFIG_ERROR
 
           **Missing secret:** GAS_DEPLOY_URL
           The CI workflow cannot hit the deployed Apps Script test endpoint until this repo secret is configured.
-          EOF
+          ERRDOC
             echo "overall=CONFIG_ERROR" >> "$GITHUB_OUTPUT"
             cat test_summary.md
             exit 1
@@ -44,12 +48,12 @@ jobs:
 
           echo "Hitting GAS test endpoint..."
           if ! response="$(curl -sS -L --max-time 120 "${GAS_DEPLOY_URL}?action=runTests")"; then
-            cat <<'EOF' > test_summary.md
-          ## ⚠️ TBM Test Results: ENDPOINT_ERROR
+            cat <<'ERRDOC' > test_summary.md
+          ## TBM Test Results: ENDPOINT_ERROR
 
           The CI workflow could not reach the deployed Apps Script test endpoint.
-          Check `GAS_DEPLOY_URL`, deployment health, and workflow logs.
-          EOF
+          Check GAS_DEPLOY_URL, deployment health, and workflow logs.
+          ERRDOC
             echo "overall=ENDPOINT_ERROR" >> "$GITHUB_OUTPUT"
             cat test_summary.md
             exit 1
@@ -57,61 +61,7 @@ jobs:
           printf '%s' "$response" > test_response.json
           echo "Raw response length: ${#response}"
 
-          overall="$(python3 - <<'PY'
-          import json
-          try:
-              with open('test_response.json', 'r', encoding='utf-8') as fh:
-                  data = json.load(fh)
-              print(data.get('overall', 'UNKNOWN'))
-          except Exception:
-              print('ERROR')
-          PY
-          )"
-          echo "overall=$overall" >> "$GITHUB_OUTPUT"
-
-          python3 - <<'PY' > test_summary.md
-          import json
-          try:
-              with open('test_response.json', 'r', encoding='utf-8') as fh:
-                  data = json.load(fh)
-              smoke = data.get('smoke', {})
-              reg = data.get('regression', {})
-              versions = data.get('versions', {})
-              icon = '✅' if data.get('overall') in ('PASS', 'WARN') else '❌'
-              lines = [
-                  f"## {icon} TBM Test Results: {data.get('overall', 'UNKNOWN')}",
-                  '',
-                  f"**Smoke Test:** {smoke.get('overall', '?')} ({smoke.get('runtime_ms', '?')}ms)",
-                  f"**Regression:** {reg.get('overall', '?')} - {reg.get('passed', '?')}/{reg.get('total', '?')} passed",
-                  ''
-              ]
-              if reg.get('failed', 0) > 0:
-                  lines.append('### Failures')
-                  for assertion in reg.get('assertions', []):
-                      if assertion.get('status') == 'FAIL':
-                          lines.append(f"- **{assertion.get('id', '?')}**: {assertion.get('description', '')}")
-                          details = assertion.get('details', '')
-                          if details:
-                              lines.append(f"  {details}")
-                  lines.append('')
-              if versions:
-                  version_line = ', '.join([f"{k} {v}" for k, v in versions.items()])
-                  lines.append(f"**Versions:** {version_line}")
-              lines.append(f"**Timestamp:** {data.get('timestamp', '?')}")
-              print('\n'.join(lines))
-          except Exception as exc:
-              print(f"⚠️ Could not parse test results: {exc}")
-          PY
-
-          cat test_summary.md
-
-          if [ "$overall" = "PASS" ] || [ "$overall" = "WARN" ]; then
-            echo "Tests passed (overall: $overall)"
-            exit 0
-          fi
-
-          echo "Tests failed (overall: $overall) - merge blocked"
-          exit 1
+          python3 .github/scripts/parse_test_results.py
 
       - name: Comment on PR
         if: always() && github.event_name == 'pull_request'
@@ -119,7 +69,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            let body = '⚠️ Test results could not be parsed. Check workflow logs.';
+            let body = 'Test results could not be parsed. Check workflow logs.';
             try {
               body = fs.readFileSync('test_summary.md', 'utf8');
             } catch (error) {
@@ -173,29 +123,26 @@ jobs:
             exit 0
           fi
 
-          python3 - <<'PY' > relay_payload.json
-          import json
-          import os
-
+          python3 -c "
+          import json, os
           with open('test_summary.md', 'r', encoding='utf-8') as fh:
               summary = fh.read().strip()
-
           payload = {
-              "fn": "pipelineRelaySafe",
-              "args": [{
-                  "secret": os.environ["RELAY_SECRET"],
-                  "repo": os.environ["GITHUB_REPOSITORY"],
-                  "type": "tests_failed",
-                  "summary": summary[:500],
-                  "prNumber": os.environ.get("PR_NUMBER"),
-                  "prUrl": os.environ.get("PR_URL"),
-                  "sha": os.environ.get("GITHUB_SHA"),
-                  "runUrl": f"{os.environ['GITHUB_SERVER_URL']}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
-                  "cycle": 0
+              'fn': 'pipelineRelaySafe',
+              'args': [{
+                  'secret': os.environ['RELAY_SECRET'],
+                  'repo': os.environ['GITHUB_REPOSITORY'],
+                  'type': 'tests_failed',
+                  'summary': summary[:500],
+                  'prNumber': os.environ.get('PR_NUMBER'),
+                  'prUrl': os.environ.get('PR_URL'),
+                  'sha': os.environ.get('GITHUB_SHA'),
+                  'runUrl': os.environ['GITHUB_SERVER_URL'] + '/' + os.environ['GITHUB_REPOSITORY'] + '/actions/runs/' + os.environ['GITHUB_RUN_ID'],
+                  'cycle': 0
               }]
           }
           print(json.dumps(payload))
-          PY
+          " > relay_payload.json
 
           curl -sS -X POST \
             -H "Content-Type: application/json" \

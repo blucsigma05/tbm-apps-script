@@ -1,3 +1,7 @@
+# .github/workflows/playwright-regression.yml
+# Playwright E2E Regression — runs Chromium tests against thompsonfams.com.
+# Result parsing lives in .github/scripts/parse_playwright_results.py.
+
 name: Playwright Regression
 
 on:
@@ -47,86 +51,68 @@ jobs:
           SPEC="tests/tbm/tbm-e2e-safe.spec.js"
           if [ ! -f "$SPEC" ]; then
             echo "::warning::Spec file $SPEC not found — skipping Playwright run."
-            echo "## ⚠️ Playwright Regression: SKIPPED" > playwright-comment.md
+            echo "## Playwright Regression: SKIPPED" > playwright-comment.md
             echo "" >> playwright-comment.md
             echo "Spec file \`$SPEC\` not found in repo." >> playwright-comment.md
             echo "verdict=SKIP" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          # Run with JSON reporter; capture exit code without failing immediately
           npx playwright test "$SPEC" \
             --reporter=json \
             --output=test-results \
-            2>&1 | tee playwright-output.txt
-          PW_EXIT=$?
+            2>&1 | tee playwright-output.txt || true
+          PW_EXIT=${PIPESTATUS[0]}
           echo "pw_exit=$PW_EXIT" >> "$GITHUB_OUTPUT"
+          export PW_EXIT
 
-          python3 - <<'PY' > playwright-comment.md
-          import json, os
+          python3 .github/scripts/parse_playwright_results.py
 
-          pw_exit = int(os.environ.get('PW_EXIT', '1'))
-          output_txt = ''
-          try:
-              output_txt = open('playwright-output.txt').read()
-          except Exception:
-              pass
+      - name: Detect changed UI files
+        id: changed
+        run: |
+          git fetch origin main --depth=1
+          CHANGED=$(git diff origin/main...HEAD --name-only -- '*.html' '*.js' | tr '\n' ',')
+          echo "files=$CHANGED" >> "$GITHUB_OUTPUT"
+          if [ -z "$CHANGED" ]; then
+            echo "No UI files changed — screenshots will be skipped."
+          else
+            echo "Changed files: $CHANGED"
+          fi
 
-          # Try to parse JSON reporter output from stdout
-          json_data = None
-          for line in output_txt.splitlines():
-              line = line.strip()
-              if line.startswith('{') and '"stats"' in line:
-                  try:
-                      json_data = json.loads(line)
-                      break
-                  except Exception:
-                      pass
+      - name: Capture viewport screenshots
+        id: screenshots
+        if: always()
+        env:
+          TBM_BASE_URL: https://thompsonfams.com
+          TBM_PIN: ${{ secrets.TBM_PIN }}
+          CHANGED_FILES: ${{ steps.changed.outputs.files }}
+        run: |
+          SCREENSHOT_SPEC="tests/tbm/screenshots.spec.js"
+          if [ ! -f "$SCREENSHOT_SPEC" ]; then
+            echo "::warning::Screenshot spec not found — skipping."
+            exit 0
+          fi
+          npx playwright test "$SCREENSHOT_SPEC" \
+            --reporter=list \
+            --output=test-results \
+            2>&1 | tee screenshot-output.txt || true
+          echo "Screenshots captured to test-results/screenshots/"
 
-          if json_data:
-              stats = json_data.get('stats', {})
-              passed = stats.get('expected', 0)
-              failed = stats.get('unexpected', 0)
-              skipped = stats.get('skipped', 0)
-              duration_ms = stats.get('duration', 0)
-              verdict = 'PASS' if failed == 0 else 'FAIL'
-              icon = '✅' if verdict == 'PASS' else '❌'
-              lines = [
-                  f'## {icon} Playwright Regression: {verdict}',
-                  '',
-                  f'**{passed} passed · {failed} failed · {skipped} skipped** ({duration_ms}ms)',
-                  '',
-                  '_Tested against: https://thompsonfams.com_',
-              ]
-              if failed > 0:
-                  lines.append('')
-                  lines.append('### Failures')
-                  for suite in json_data.get('suites', []):
-                      for spec in suite.get('specs', []):
-                          for test in spec.get('tests', []):
-                              if test.get('status') != 'expected':
-                                  title = spec.get('title', '?')
-                                  status = test.get('status', '?')
-                                  lines.append(f'- **{title}**: {status}')
-                                  for result in test.get('results', []):
-                                      err = result.get('error', {})
-                                      if err.get('message'):
-                                          lines.append(f'  `{err["message"][:200]}`')
-              print('\n'.join(lines))
-          else:
-              verdict = 'FAIL' if pw_exit != 0 else 'PASS'
-              icon = '✅' if verdict == 'PASS' else '❌'
-              snippet = output_txt[-800:] if output_txt else '(no output)'
-              print(f'## {icon} Playwright Regression: {verdict}\n\nCould not parse JSON results.\n\n```\n{snippet}\n```')
-          PY
+      - name: Upload screenshots (every PR)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: viewport-screenshots-${{ github.run_id }}
+          path: test-results/screenshots/
+          retention-days: 14
+          if-no-files-found: ignore
 
-          echo "verdict=$([ $PW_EXIT -eq 0 ] && echo PASS || echo FAIL)" >> "$GITHUB_OUTPUT"
-
-      - name: Upload screenshots and traces on failure
+      - name: Upload traces on failure
         if: steps.playwright.outputs.pw_exit != '0'
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-screenshots-${{ github.run_id }}
+          name: playwright-traces-${{ github.run_id }}
           path: test-results/
           retention-days: 7
           if-no-files-found: ignore
@@ -137,7 +123,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            let body = '⚠️ Playwright results could not be read. Check workflow logs.';
+            let body = 'Playwright results could not be read. Check workflow logs.';
             try { body = fs.readFileSync('playwright-comment.md', 'utf8'); } catch (e) {}
 
             const { data: comments } = await github.rest.issues.listComments({

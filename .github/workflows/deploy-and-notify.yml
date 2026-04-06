@@ -1,3 +1,7 @@
+# .github/workflows/deploy-and-notify.yml
+# GAS Deploy + Smoke + Pushover — deploys on merge to main, verifies via HTTP, notifies.
+# Pushover includes deployment proof: deploy ID, HTTP status, smoke PASS/FAIL, version.
+
 name: Deploy and Notify
 
 on:
@@ -55,7 +59,10 @@ jobs:
         env:
           GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
         run: |
-          clasp deploy -i "$GAS_DEPLOYMENT_ID"
+          OUTPUT=$(clasp deploy -i "$GAS_DEPLOYMENT_ID" 2>&1)
+          echo "$OUTPUT"
+          DEPLOY_ID=$(echo "$OUTPUT" | grep -oP '(?<=- )\S+(?= @)' || echo "$GAS_DEPLOYMENT_ID")
+          echo "deploy_id=$DEPLOY_ID" >> "$GITHUB_OUTPUT"
           echo "deployed=true" >> "$GITHUB_OUTPUT"
 
       - name: Run smoke test
@@ -64,21 +71,59 @@ jobs:
           GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
         run: |
           echo "Hitting smoke test endpoint..."
-          RESPONSE="$(curl -sS -L --max-time 120 "${GAS_DEPLOY_URL}?action=runTests")"
-          OVERALL="$(python3 -c "
+          HTTP_CODE=$(curl -sS -L -o smoke_response.txt -w '%{http_code}' \
+            --max-time 120 "${GAS_DEPLOY_URL}?action=runTests")
+          RESPONSE=$(cat smoke_response.txt)
+          echo "HTTP status: $HTTP_CODE"
+          echo "http_code=$HTTP_CODE" >> "$GITHUB_OUTPUT"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Smoke test returned HTTP $HTTP_CODE (expected 200)"
+            echo "overall=HTTP_FAIL" >> "$GITHUB_OUTPUT"
+            echo "smoke_line=HTTP $HTTP_CODE — endpoint unreachable" >> "$GITHUB_OUTPUT"
+            cat smoke_response.txt >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+          # Structured JSON assertion — don't grep for "PASS" string
+          PARSE_RESULT=$(python3 -c "
           import json, sys
           try:
               d = json.loads(sys.argv[1])
-              print(d.get('overall', 'UNKNOWN'))
-          except Exception:
-              print('PARSE_ERROR')
-          " "$RESPONSE" 2>/dev/null || echo 'ERROR')"
+              overall = d.get('overall', 'MISSING')
+              smoke_overall = d.get('smoke', {}).get('overall', 'MISSING')
+              versions = d.get('versions', {})
+              code_ver = versions.get('codeGs', '?')
+              print('overall=' + overall)
+              print('smoke_overall=' + smoke_overall)
+              print('code_version=' + code_ver)
+          except Exception as e:
+              print('overall=PARSE_ERROR')
+              print('smoke_overall=PARSE_ERROR')
+              print('code_version=?')
+              print('parse_error=' + str(e), file=sys.stderr)
+          " "$RESPONSE" 2>parse_err.txt)
 
-          echo "Smoke result: $OVERALL"
+          # Extract fields from structured parse
+          OVERALL=$(echo "$PARSE_RESULT" | grep '^overall=' | cut -d= -f2)
+          SMOKE_OVERALL=$(echo "$PARSE_RESULT" | grep '^smoke_overall=' | cut -d= -f2)
+          CODE_VERSION=$(echo "$PARSE_RESULT" | grep '^code_version=' | cut -d= -f2)
+
+          echo "Overall: $OVERALL | Smoke: $SMOKE_OVERALL | Version: $CODE_VERSION"
           echo "overall=$OVERALL" >> "$GITHUB_OUTPUT"
+          echo "code_version=$CODE_VERSION" >> "$GITHUB_OUTPUT"
 
-          if [ "$OVERALL" != "PASS" ]; then
-            echo "::error::Smoke tests returned: $OVERALL"
+          if [ "$OVERALL" = "PASS" ] && [ "$SMOKE_OVERALL" = "PASS" ]; then
+            echo "smoke_line=Smoke PASS (HTTP $HTTP_CODE)" >> "$GITHUB_OUTPUT"
+          elif [ "$OVERALL" = "PARSE_ERROR" ]; then
+            echo "smoke_line=JSON parse failed (HTTP $HTTP_CODE)" >> "$GITHUB_OUTPUT"
+            echo "::error::Could not parse runTests response as JSON"
+            cat parse_err.txt
+            echo "Response body:" && head -c 500 smoke_response.txt
+            exit 1
+          else
+            echo "smoke_line=Smoke $OVERALL (HTTP $HTTP_CODE)" >> "$GITHUB_OUTPUT"
+            echo "::error::Structured assertion failed: overall=$OVERALL smoke.overall=$SMOKE_OVERALL"
             exit 1
           fi
 
@@ -87,6 +132,10 @@ jobs:
         env:
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          DEPLOY_ID: ${{ steps.deploy.outputs.deploy_id }}
+          HTTP_CODE: ${{ steps.smoke.outputs.http_code }}
+          SMOKE_LINE: ${{ steps.smoke.outputs.smoke_line }}
+          CODE_VERSION: ${{ steps.smoke.outputs.code_version }}
         run: |
           if [ -z "$PUSHOVER_USER_KEY" ] || [ -z "$PUSHOVER_APP_TOKEN" ]; then
             echo "Pushover secrets not set — skipping success notification."
@@ -94,11 +143,18 @@ jobs:
           fi
           SHA_SHORT="${GITHUB_SHA:0:7}"
           RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          DEPLOY_SHORT="${DEPLOY_ID: -8}"
+          TIMESTAMP=$(date -u +"%H:%M UTC")
+          # Include version if available
+          VER_PART=""
+          if [ -n "$CODE_VERSION" ] && [ "$CODE_VERSION" != "?" ]; then
+            VER_PART=" — ${CODE_VERSION}"
+          fi
           curl -sS \
             --form-string "token=${PUSHOVER_APP_TOKEN}" \
             --form-string "user=${PUSHOVER_USER_KEY}" \
-            --form-string "title=TBM Deploy: Live ✅" \
-            --form-string "message=Commit ${SHA_SHORT} is live. Smoke passed. Go verify the surfaces." \
+            --form-string "title=TBM Live ✅" \
+            --form-string "message=Deploy ...${DEPLOY_SHORT}${VER_PART} — ${SMOKE_LINE} — Commit ${SHA_SHORT} — ${TIMESTAMP} — Go look" \
             --form-string "url=${RUN_URL}" \
             --form-string "url_title=View run" \
             --form-string "priority=0" \
@@ -109,6 +165,9 @@ jobs:
         env:
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          DEPLOY_ID: ${{ steps.deploy.outputs.deploy_id }}
+          HTTP_CODE: ${{ steps.smoke.outputs.http_code }}
+          SMOKE_LINE: ${{ steps.smoke.outputs.smoke_line }}
         run: |
           if [ -z "$PUSHOVER_USER_KEY" ] || [ -z "$PUSHOVER_APP_TOKEN" ]; then
             echo "Pushover secrets not set — skipping failure notification."
@@ -116,11 +175,19 @@ jobs:
           fi
           SHA_SHORT="${GITHUB_SHA:0:7}"
           RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          DEPLOY_SHORT="${DEPLOY_ID: -8}"
+          FAIL_MSG="Deploy ...${DEPLOY_SHORT}"
+          if [ -n "$SMOKE_LINE" ]; then
+            FAIL_MSG="$FAIL_MSG — $SMOKE_LINE"
+          else
+            FAIL_MSG="$FAIL_MSG — smoke did not run"
+          fi
+          FAIL_MSG="$FAIL_MSG — Commit ${SHA_SHORT} — BLOCKED, nothing broken live"
           curl -sS \
             --form-string "token=${PUSHOVER_APP_TOKEN}" \
             --form-string "user=${PUSHOVER_USER_KEY}" \
             --form-string "title=TBM Deploy: BLOCKED ❌" \
-            --form-string "message=Commit ${SHA_SHORT} — deploy or smoke failed. Nothing is broken live. Check the run." \
+            --form-string "message=${FAIL_MSG}" \
             --form-string "url=${RUN_URL}" \
             --form-string "url_title=View failed run" \
             --form-string "priority=1" \

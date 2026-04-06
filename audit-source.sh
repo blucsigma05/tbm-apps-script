@@ -10,6 +10,21 @@ WARN=0
 echo "=== TBM STATIC SOURCE AUDIT ==="
 echo ""
 
+# ── BRANCH STALENESS CHECK ───────────────────────────────────
+echo "--- Branch Staleness ---"
+
+git fetch origin main --quiet 2>/dev/null
+if git merge-base --is-ancestor origin/main HEAD 2>/dev/null; then
+  echo "  OK -- Branch is up to date with origin/main"
+else
+  echo "  FAIL -- Branch is behind origin/main"
+  echo "  Run: git fetch origin main && git rebase origin/main"
+  echo "  Resolve any conflicts before pushing."
+  FAIL=1
+fi
+
+echo ""
+
 # ── ES5 COMPLIANCE (all .html files) ──────────────────────────
 echo "--- ES5 Compliance ---"
 
@@ -279,6 +294,82 @@ if [ $ROUTE_FAIL -eq 1 ]; then
   FAIL=1
 else
   echo "  OK -- Route integrity PASSED ($(echo "$WORKER_PAGES" | wc -w) worker pages, $(echo "$GAS_HTMLSOURCE" | wc -w) htmlSource mappings, $(echo "$GAS_FILES" | wc -w) backing files)"
+fi
+
+echo ""
+
+# ── WORKFLOW YAML LINT (conditional on changed files) ────────
+echo "--- Workflow YAML Lint ---"
+
+# Only run if workflow files were changed in this commit
+WF_CHANGED=$(git diff --name-only HEAD 2>/dev/null | grep "^\.github/workflows/" || true)
+if [ -z "$WF_CHANGED" ]; then
+  WF_CHANGED=$(git diff --cached --name-only 2>/dev/null | grep "^\.github/workflows/" || true)
+fi
+
+if [ -n "$WF_CHANGED" ]; then
+  if command -v actionlint >/dev/null 2>&1; then
+    WF_FAIL=0
+    for wffile in .github/workflows/*.yml; do
+      if [ -f "$wffile" ]; then
+        LINT_OUT=$(actionlint "$wffile" 2>&1)
+        if [ $? -ne 0 ]; then
+          echo "  X $wffile:"
+          echo "$LINT_OUT" | sed 's/^/      /'
+          WF_FAIL=1
+        fi
+      fi
+    done
+
+    if [ $WF_FAIL -eq 1 ]; then
+      echo "  FAIL -- Workflow YAML lint FAILED"
+      FAIL=1
+    else
+      echo "  OK -- Workflow YAML lint PASSED"
+    fi
+  else
+    echo "  FAIL -- actionlint not installed (required when workflow files changed)"
+    echo "  Install:"
+    echo "    Mac:     brew install actionlint"
+    echo "    Windows: scoop install actionlint  OR  choco install actionlint"
+    echo "    Linux:   Download from https://github.com/rhysd/actionlint/releases"
+    FAIL=1
+  fi
+else
+  echo "  SKIP -- no workflow files changed"
+fi
+
+echo ""
+
+# ── PYTHON SCRIPT COMPILE CHECK (conditional on changed files) ──
+echo "--- Python Script Compile Check ---"
+
+SCRIPT_CHANGED=$(git diff --name-only HEAD 2>/dev/null | grep "^\.github/scripts/" || true)
+if [ -z "$SCRIPT_CHANGED" ]; then
+  SCRIPT_CHANGED=$(git diff --cached --name-only 2>/dev/null | grep "^\.github/scripts/" || true)
+fi
+
+if [ -n "$SCRIPT_CHANGED" ]; then
+  PY_FAIL=0
+  for pyfile in .github/scripts/*.py; do
+    if [ -f "$pyfile" ]; then
+      if python3 -m py_compile "$pyfile" 2>/dev/null; then
+        true
+      else
+        echo "  X $pyfile: compile error"
+        PY_FAIL=1
+      fi
+    fi
+  done
+
+  if [ $PY_FAIL -eq 1 ]; then
+    echo "  FAIL -- Python script compile FAILED"
+    FAIL=1
+  else
+    echo "  OK -- Python script compile PASSED"
+  fi
+else
+  echo "  SKIP -- no script files changed"
 fi
 
 echo ""

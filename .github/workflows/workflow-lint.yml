@@ -1,0 +1,85 @@
+# .github/workflows/workflow-lint.yml
+# Lint gate for workflow files and scripts — prevents broken YAML from reaching main.
+
+name: Workflow Lint
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - '.github/scripts/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint Workflows + Scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Pin tool versions for deterministic CI — no surprise failures from upstream updates.
+      - name: Install actionlint v1.7.7
+        run: |
+          ACTIONLINT_VERSION="1.7.7"
+          curl -sL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+            | tar xz -C /usr/local/bin actionlint
+          actionlint --version
+
+      - name: Verify shellcheck version
+        run: |
+          # Pre-installed on ubuntu-latest runners. Log version for audit trail.
+          SC_VERSION=$(shellcheck --version | grep '^version:' | awk '{print $2}')
+          echo "shellcheck $SC_VERSION"
+
+      - name: Lint workflow YAML files
+        run: |
+          echo "--- actionlint v1.7.7: all workflow files ---"
+          actionlint .github/workflows/*.yml
+          echo "PASS: all workflow YAML files are valid"
+
+      - name: Compile Python scripts
+        run: |
+          echo "--- py_compile: all Python scripts ---"
+          FAIL=0
+          for pyfile in .github/scripts/*.py; do
+            if [ -f "$pyfile" ]; then
+              if python3 -m py_compile "$pyfile"; then
+                echo "  OK: $pyfile"
+              else
+                echo "  FAIL: $pyfile"
+                FAIL=1
+              fi
+            fi
+          done
+          if [ $FAIL -eq 1 ]; then
+            echo "FAIL: one or more Python scripts failed to compile"
+            exit 1
+          fi
+          echo "PASS: all Python scripts compile cleanly"
+
+      - name: Check shell scripts with shellcheck
+        run: |
+          echo "--- shellcheck: all shell scripts ---"
+          FAIL=0
+          for shfile in .github/scripts/*.sh; do
+            if [ -f "$shfile" ]; then
+              if shellcheck "$shfile"; then
+                echo "  OK: $shfile"
+              else
+                echo "  FAIL: $shfile"
+                FAIL=1
+              fi
+            fi
+          done
+          if [ $FAIL -eq 1 ]; then
+            echo "FAIL: one or more shell scripts have issues"
+            exit 1
+          fi
+          echo "PASS: all shell scripts pass shellcheck (or none found)"
