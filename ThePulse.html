@@ -525,7 +525,7 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
 <div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 
 <script>
-var TBM_VERSION = 'v60';
+var TBM_VERSION = 'v61';
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 var _lastFetchTime = null;
 var _lastGoodSim = null;
@@ -1232,84 +1232,114 @@ function _renderKidsWidget(data) {
 
   window._kidsWidgetData = data;
 
-  // v51 UX Restructure: Compact summary gauge — full task management moved to Parent Dashboard
+  // v61: KidsHub parity — full card layout matching TheVein skeleton, ThePulse palette
   var h = data.household;
   var bStats = data.buggsy && data.buggsy.stats ? data.buggsy.stats : {};
   var jStats = data.jj && data.jj.stats ? data.jj.stats : {};
-  var bReq = data.buggsy && data.buggsy.requiredStatus ? data.buggsy.requiredStatus : {};
-  var jReq = data.jj && data.jj.requiredStatus ? data.jj.requiredStatus : {};
-  var bDone = bReq.done || 0, bTotal = bReq.total || 0;
-  var jDone = jReq.done || 0, jTotal = jReq.total || 0;
-  var bPct = bTotal > 0 ? Math.round(bDone / bTotal * 100) : 100;
-  var jPct = jTotal > 0 ? Math.round(jDone / jTotal * 100) : 100;
 
-  // Compact kid summary rows
-  function _kidSummaryRow(kid, key, done, total, pct) {
-    var emoji = key === 'jj' ? '\u2B50' : '\u2B55';
+  // Full kid card — same skeleton as TheVein, warm ThePulse palette via CSS classes
+  function buildKidCard(kid, key) {
+    if (!kid) return '';
+    var s = kid.stats || {};
+    var req = kid.requiredStatus || {};
     var avatar = key === 'buggsy' ? 'https://i.ibb.co/Y7rjjNDg/1773710329577.png' : 'https://i.ibb.co/N2Qn0J0Q/1773720439302.png';
-    var barColor = pct >= 100 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
-    var st = kid.screenTime || { TV: { balance: 0 }, Gaming: { balance: 0 } };
+    var completedCount = req.done || s.completedCount || 0;
+    var totalTasks = req.total || s.totalTasks || 0;
+    var pct = totalTasks > 0 ? Math.round(completedCount / totalTasks * 100) : (s.completionPct || 100);
+    var earnedPoints = s.earnedPoints || 0;
+    var pendingCount = s.pendingCount || 0;
+    var st = kid.screenTime || {};
     var tvBal = (st.TV && st.TV.balance) || 0;
     var gameBal = (st.Gaming && st.Gaming.balance) || 0;
-    var screenStr = tvBal + 'm TV';
-    if (key === 'buggsy' && gameBal > 0) screenStr += ' · ' + gameBal + 'm Game';
-    var pendCnt = (kid.stats && kid.stats.pendingCount) || 0;
-    var pendBadge = pendCnt > 0 ? ' <span style="background:var(--amber);color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:8px;margin-left:4px;animation:pulse-badge 2s ease infinite">' + pendCnt + ' pending</span>' : '';
-    var rowBorder = pendCnt > 0 ? 'border-left:3px solid var(--amber);' : '';
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);' + rowBorder + '">' +
-      '<img src="' + avatar + '" alt="' + kid.name + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover">' +
-      '<div style="flex:1;min-width:0">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between">' +
-          '<span style="font-size:13px;font-weight:700;color:var(--ink)">' + emoji + ' ' + kid.name + pendBadge + '</span>' +
-          '<span style="font-size:12px;font-weight:600;color:var(--ink2)">' + done + '/' + total + ' must-dos</span>' +
+    var bankBalance = (kid.bankBalance != null) ? Number(kid.bankBalance).toFixed(2) : '0.00';
+    var allowanceMTD = kid.allowanceMTD ? Number(kid.allowanceMTD) : 0;
+    var nextR = s.nextReward;
+    var nextRewardHTML = nextR
+      ? '<div class="kid-next-reward"><span class="kid-next-reward-icon">' + (nextR.icon || '') + '</span>' +
+        '<span>' + (nextR.name || '') + '</span>' +
+        '<span class="kid-next-reward-cost">' + (nextR.cost || 0) + ' ' + (key === 'jj' ? '\u2B50' : '\u2B55') + '</span></div>'
+      : '<div class="kid-next-reward">Max reward unlocked!</div>';
+    var moneyHTML = allowanceMTD > 0
+      ? '<div class="kid-stat-pill"><div class="kid-stat-pill-val">$' + allowanceMTD.toFixed(2) + '</div><div class="kid-stat-pill-lbl">Owed MTD</div></div>'
+      : '';
+    var pendingPill = pendingCount > 0
+      ? '<div class="kid-stat-pill"><div class="kid-stat-pill-val" style="color:var(--amber)">' + pendingCount + '</div><div class="kid-stat-pill-lbl">Pending</div></div>'
+      : '';
+    return '<div class="kid-card ' + key + '">' +
+      '<div class="kid-card-glow"></div>' +
+      '<div class="kid-card-top">' +
+        '<div class="kid-card-name">' +
+          '<img src="' + avatar + '" alt="' + kid.name + '" class="kid-avatar"> ' + kid.name +
         '</div>' +
-        '<div style="height:5px;background:rgba(0,0,0,0.06);border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:3px;transition:width 0.3s"></div></div>' +
-        '<div style="display:flex;gap:10px;margin-top:3px;font-size:10px;color:var(--ink3);font-weight:500">' +
-          '<span>\uD83D\uDCFA ' + screenStr + '</span>' +
-          '<span>\uD83C\uDFE6 $' + ((kid.bankBalance != null) ? Number(kid.bankBalance).toFixed(2) : '0.00') + '</span>' +
-          '<span>' + ((kid.stats && kid.stats.earnedPoints) || 0) + ' ' + (key === 'jj' ? 'stars' : 'rings') + '</span>' +
+        '<div>' +
+          '<div class="kid-points">' + earnedPoints + '</div>' +
+          '<div class="kid-points-label">' + (key === 'jj' ? 'STARS' : 'RINGS') + '</div>' +
         '</div>' +
       '</div>' +
+      '<div class="kid-prog-wrap">' +
+        '<div class="kid-prog-label">' +
+          '<span>' + completedCount + ' / ' + totalTasks + ' done</span>' +
+          '<span>' + pct + '%</span>' +
+        '</div>' +
+        '<div class="kid-prog-track"><div class="kid-prog-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>' +
+      '<div class="kid-stats-row">' +
+        '<div class="kid-stat-pill"><div class="kid-stat-pill-val">\uD83C\uDFE6 $' + bankBalance + '</div><div class="kid-stat-pill-lbl">Bank</div></div>' +
+        '<div class="kid-stat-pill"><div class="kid-stat-pill-val">' + tvBal + 'm</div><div class="kid-stat-pill-lbl">TV Bank</div></div>' +
+        (key === 'buggsy' ? '<div class="kid-stat-pill"><div class="kid-stat-pill-val">' + gameBal + 'm</div><div class="kid-stat-pill-lbl">Game Bank</div></div>' : '') +
+        pendingPill +
+        moneyHTML +
+      '</div>' +
+      nextRewardHTML +
     '</div>';
   }
 
-  // Pending approvals summary
+  // Pending alert banner
   var totalPending = (bStats.pendingCount || 0) + (jStats.pendingCount || 0);
   var totalAsks = (data.buggsy && data.buggsy.pendingRequestCount || 0) + (data.jj && data.jj.pendingRequestCount || 0);
   var alertParts = [];
   if (totalPending > 0) alertParts.push(totalPending + ' task' + (totalPending > 1 ? 's' : '') + ' need approval');
   if (totalAsks > 0) alertParts.push(totalAsks + ' ask' + (totalAsks > 1 ? 's' : '') + ' waiting');
   var alertHTML = alertParts.length > 0
-    ? '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--amber-bg);border-radius:8px;margin-bottom:6px">' +
+    ? '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--amber-bg);border-radius:8px;margin-bottom:10px">' +
         '<span style="font-size:14px">\u26A0\uFE0F</span>' +
         '<span style="font-size:12px;font-weight:700;color:var(--amber)">' + alertParts.join(' \u00b7 ') + '</span>' +
       '</div>'
     : '';
 
-  // Budget line
-  var budgetLine = '';
-  if (h.totalOwedMTD > 0 || h.totalApprovedMTD > 0) {
-    budgetLine = '<div style="display:flex;justify-content:center;gap:16px;padding:6px 12px;font-size:10px;font-weight:600;color:var(--ink3)">' +
-      '<span>Owed: $' + h.totalOwedMTD.toFixed(2) + '</span>' +
-      '<span>Approved: $' + h.totalApprovedMTD.toFixed(2) + '</span>' +
-    '</div>';
-  }
+  // Budget footer
+  var budgetHTML = '<div class="kids-budget-footer">' +
+    '<div class="kids-budget-stat">' +
+      '<div class="kids-budget-val' + (h.totalOwedMTD > 0 ? ' warning' : '') + '">$' + h.totalOwedMTD.toFixed(2) + '</div>' +
+      '<div class="kids-budget-lbl">Owed MTD</div>' +
+    '</div>' +
+    '<div class="kids-budget-stat">' +
+      '<div class="kids-budget-val">$' + h.totalApprovedMTD.toFixed(2) + '</div>' +
+      '<div class="kids-budget-lbl">Approved</div>' +
+    '</div>' +
+    '<div class="kids-budget-stat">' +
+      '<div class="kids-budget-val' + ((h.weeklyBudgetImpact || 0) > 0 ? ' warning' : '') + '">$' + ((h.weeklyBudgetImpact || 0).toFixed(2)) + '</div>' +
+      '<div class="kids-budget-lbl">~Weekly Rate</div>' +
+    '</div>' +
+  '</div>';
 
   // Parent dashboard link
   var _pUrl = _tbmBaseUrl ? (_tbmBaseUrl + '?page=kidshub&view=parent') : '#';
   var _pReady = _pUrl !== '#';
-  var navHTML = '<div style="padding:8px 12px;text-align:center">' +
-    '<a href="' + _pUrl + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;background:var(--paper);border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:700;color:var(--ink);text-decoration:none;letter-spacing:0.3px' + (!_pReady ? ';opacity:0.4;pointer-events:none' : '') + '">' +
-      '\u2699\uFE0F Manage Tasks & Approvals' +
+  var navHTML = '<div class="kids-links">' +
+    '<a href="' + _pUrl + '" target="_blank" class="kids-link-btn buggsy" style="' + (!_pReady ? 'opacity:0.4;pointer-events:none;' : '') + '">' +
+      '\u2699\uFE0F Manage Tasks' +
     '</a>' +
   '</div>';
 
-  // Assemble compact widget
+  // Assemble card-grid widget
   body.innerHTML =
     alertHTML +
-    _kidSummaryRow(data.buggsy, 'buggsy', bDone, bTotal, bPct) +
-    _kidSummaryRow(data.jj, 'jj', jDone, jTotal, jPct) +
-    budgetLine +
+    '<div class="kids-grid">' +
+      buildKidCard(data.buggsy, 'buggsy') +
+      buildKidCard(data.jj, 'jj') +
+    '</div>' +
+    budgetHTML +
     navHTML;
 }
 
