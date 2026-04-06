@@ -157,7 +157,7 @@ jobs:
             --form-string "message=Deploy ...${DEPLOY_SHORT}${VER_PART} — ${SMOKE_LINE} — Commit ${SHA_SHORT} — ${TIMESTAMP} — Go look" \
             --form-string "url=${RUN_URL}" \
             --form-string "url_title=View run" \
-            --form-string "priority=0" \
+            --form-string "priority=-2" \
             https://api.pushover.net/1/messages.json
 
       - name: Pushover — deploy failed
@@ -190,5 +190,5 @@ jobs:
             --form-string "message=${FAIL_MSG}" \
             --form-string "url=${RUN_URL}" \
             --form-string "url_title=View failed run" \
-            --form-string "priority=1" \
+            --form-string "priority=2" \
             https://api.pushover.net/1/messages.json

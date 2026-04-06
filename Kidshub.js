@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v49 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v50 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 49; }
+function getKidsHubVersion() { return 50; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -1348,7 +1348,7 @@ function khCompleteTask(rowIndex, expectedTaskID) {
     try {
       if (typeof sendPush_ === 'function') {
         var childDisplay = child.charAt(0).toUpperCase() + child.slice(1).toLowerCase();
-        sendPush_('Chore Completed', childDisplay + ' completed "' + task + '" — needs approval', 'BOTH', 0);
+        sendPush_('Chore Completed', childDisplay + ' completed "' + task + '" — needs approval', 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL);
       }
     } catch(e) {
       console.log('KH_PUSH_FAIL', JSON.stringify({
@@ -3584,7 +3584,7 @@ function submitHomework_(data) {
     try {
       if (typeof sendPush_ === 'function') {
         var childDisplay = childLower.charAt(0).toUpperCase() + childLower.slice(1);
-        sendPush_(childDisplay + ' submitted ' + (data.subject || 'homework'), 'Needs your review on Parent Dashboard', 'BOTH', 0);
+        sendPush_(childDisplay + ' submitted ' + (data.subject || 'homework'), 'Needs your review on Parent Dashboard', 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL);
       }
     } catch(e) { /* non-blocking */ }
   }
@@ -3713,7 +3713,7 @@ function approveHomework_(rowIndex, action, notes) {
     try {
       if (typeof sendPush_ === 'function') {
         var childDisplay = child.charAt(0).toUpperCase() + child.slice(1);
-        sendPush_(childDisplay + ': Writing approved! +' + rings + ' rings', String(notes || 'Great work!'), 'BOTH', 0);
+        sendPush_(childDisplay + ': Writing approved! +' + rings + ' rings', String(notes || 'Great work!'), 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL);
       }
     } catch(e) { /* non-blocking */ }
   }
@@ -3896,5 +3896,5 @@ function getDesignUnlockedSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v49
+// END OF FILE — KidsHub.gs v50
 // ════════════════════════════════════════════════════════════════════
