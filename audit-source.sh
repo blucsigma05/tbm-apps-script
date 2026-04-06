@@ -254,6 +254,63 @@ fi
 
 echo ""
 
+# ── WORKFLOW YAML LINT ───────────────────────────────────────
+echo "--- Workflow YAML Lint ---"
+
+if command -v actionlint >/dev/null 2>&1; then
+  WF_FAIL=0
+  for wffile in .github/workflows/*.yml; do
+    if [ -f "$wffile" ]; then
+      LINT_OUT=$(actionlint "$wffile" 2>&1)
+      if [ $? -ne 0 ]; then
+        echo "  X $wffile:"
+        echo "$LINT_OUT" | sed 's/^/      /'
+        WF_FAIL=1
+      fi
+    fi
+  done
+
+  if [ $WF_FAIL -eq 1 ]; then
+    echo "  FAIL -- Workflow YAML lint FAILED"
+    FAIL=1
+  else
+    echo "  OK -- Workflow YAML lint PASSED"
+  fi
+else
+  echo "  FAIL -- actionlint not installed (required for workflow lint gate)"
+  echo "  Install:"
+  echo "    Mac:     brew install actionlint"
+  echo "    Windows: scoop install actionlint  OR  choco install actionlint"
+  echo "    Linux:   Download from https://github.com/rhysd/actionlint/releases"
+  FAIL=1
+fi
+
+echo ""
+
+# ── PYTHON SCRIPT COMPILE CHECK ──────────────────────────────
+echo "--- Python Script Compile Check ---"
+
+PY_FAIL=0
+for pyfile in .github/scripts/*.py; do
+  if [ -f "$pyfile" ]; then
+    if python3 -m py_compile "$pyfile" 2>/dev/null; then
+      true
+    else
+      echo "  X $pyfile: compile error"
+      PY_FAIL=1
+    fi
+  fi
+done
+
+if [ $PY_FAIL -eq 1 ]; then
+  echo "  FAIL -- Python script compile FAILED"
+  FAIL=1
+else
+  echo "  OK -- Python script compile PASSED"
+fi
+
+echo ""
+
 # ── SUMMARY ───────────────────────────────────────────────────
 echo "=== SUMMARY ==="
 echo "Failures:  $FAIL"

@@ -426,6 +426,50 @@ For evening deploys, next-morning check is acceptable.
 | Gate 1 (wiring) | Before every push | PowerShell script above |
 | Gate 2 (visual) | When KidsHub.html touched | PowerShell script above |
 | Gate 3 (version) | Before every push | Grep 3 locations per file |
+| Workflow lint | Before every push | `actionlint .github/workflows/*.yml` (via audit-source.sh) |
+| Python compile | Before every push | `python3 -m py_compile .github/scripts/*.py` (via audit-source.sh) |
+
+---
+
+## Workflow Safety Policy
+
+Workflow files (.github/workflows/*.yml) are a special class of change. Broken YAML in a workflow can silently disable CI gates, letting regressions reach main undetected. These rules exist because PR #67 shipped a broken workflow that was never caught.
+
+### Rules
+
+1. **Any modified `.github/workflows/*.yml` file MUST pass actionlint before commit.** The pre-push gate (`audit-source.sh`) enforces this. If actionlint is not installed, the gate fails.
+2. **New workflow files CANNOT review their own introduction** — they require manual lint plus one sacrificial test PR before being added as a required check.
+3. **Workflow YAML should orchestrate only.** Real logic (Python, bash) belongs in versioned scripts under `.github/scripts/`. No big embedded heredocs in workflow YAML. Each script gets a header comment: purpose, called by which workflow, env vars expected.
+4. **Deploy automation is not "done" until the live target is verified by HTTP.** Workflow run success is necessary but not sufficient — the deploy must prove the result, not infer it from comments or run status.
+
+### Scripts Directory
+
+`.github/scripts/` is the canonical home for all real logic that workflows orchestrate:
+
+| Script | Called by | Purpose |
+|--------|-----------|---------|
+| `codex_review.py` | codex-pr-review.yml | Send PR diff to OpenAI gpt-4o, format review comment |
+| `parse_test_results.py` | ci.yml | Parse GAS smoke+regression JSON into PR comment |
+| `parse_playwright_results.py` | playwright-regression.yml | Parse Playwright JSON into PR comment |
+
+Each script is runnable standalone for local testing. Each reads env vars — no positional args.
+
+---
+
+## Branch Protection (main)
+
+Required status checks before merge:
+
+| Check | Workflow | Purpose |
+|-------|----------|---------|
+| Workflow Lint | `workflow-lint.yml` | actionlint + py_compile + shellcheck |
+| TBM Smoke + Regression | `ci.yml` | GAS smoke + regression tests |
+| Playwright Regression | `playwright-regression.yml` | E2E browser tests against thompsonfams.com |
+| Codex PR Review | `codex-pr-review.yml` | gpt-4o code review against TBM rules |
+
+**LT applies these in GitHub Settings > Branches > Branch protection rules** (UI action, not code).
+
+**Auto-merge policy:** Auto-merge can be enabled once the new pipeline has run cleanly on 5 consecutive PRs without false negatives.
 
 ---
 
