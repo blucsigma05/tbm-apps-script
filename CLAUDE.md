@@ -426,8 +426,10 @@ For evening deploys, next-morning check is acceptable.
 | Gate 1 (wiring) | Before every push | PowerShell script above |
 | Gate 2 (visual) | When KidsHub.html touched | PowerShell script above |
 | Gate 3 (version) | Before every push | Grep 3 locations per file |
-| Workflow lint | Before every push | `actionlint .github/workflows/*.yml` (via audit-source.sh) |
-| Python compile | Before every push | `python3 -m py_compile .github/scripts/*.py` (via audit-source.sh) |
+| Branch staleness | Before every push | `git merge-base --is-ancestor origin/main HEAD` (via audit-source.sh) |
+| Workflow lint | Before every push (if workflow files changed) | `actionlint .github/workflows/*.yml` (via audit-source.sh) |
+| Python compile | Before every push (if script files changed) | `python3 -m py_compile .github/scripts/*.py` (via audit-source.sh) |
+| Viewport screenshots | Every PR (Playwright) | `tests/tbm/screenshots.spec.js` — real device viewports + desktop |
 
 ---
 
@@ -473,6 +475,61 @@ Required status checks before merge (execution order matters):
 **LT applies these in GitHub Settings > Branches > Branch protection rules** (UI action, not code).
 
 **Auto-merge policy:** Auto-merge can be enabled once the new pipeline has run cleanly on 5 consecutive PRs without false negatives.
+
+---
+
+## Branch Hygiene — Staleness Is a Bug
+
+These rules exist because PR #74 was silently blocked by merge conflicts from a stale branch. The pre-push gate (`audit-source.sh`) enforces the staleness check automatically.
+
+1. **Sync before push.** Mandatory `git fetch origin main` and rebase (or merge) before any push, on any branch. If the rebase produces conflicts, resolve them locally and re-verify before pushing — never push a conflicted branch to GitHub.
+2. **Branch from latest.** New branches must be created from `origin/main` after a fresh fetch. Never branch from a local main that may be hours behind.
+3. **No merge if behind.** A PR cannot merge if its branch is behind main or has unresolved conflicts. Rebase/merge current main, then rerun checks before requesting merge.
+4. **No broad "take ours" on shared files.** During conflict resolution on workflow YAML, CLAUDE.md, audit-source.sh, or any UI files, do NOT bulk-accept one side. Rebuild each conflicted file from intent, then inspect the final diff before committing.
+5. **Hot file lock.** When a PR touches `.github/workflows/**`, `.github/scripts/**`, `CLAUDE.md`, `audit-source.sh`, or any other shared infrastructure file, only ONE such PR may be in flight at a time. Other PRs touching those files must wait until the in-flight PR merges, then rebase on the new main before continuing.
+6. **Pre-flight conflict check.** Before opening a PR, run `git merge-tree origin/main HEAD` to detect conflicts. If conflicts exist, resolve locally first — don't push and let GitHub block.
+
+---
+
+## Deploy Proof — HTTP, Not Inference
+
+Deploy success is proven, not inferred:
+
+1. **Deploy success = HTTP 200 from `?action=runTests` AND structured JSON assertion of `overall == "PASS"` AND `smoke.overall == "PASS"`.** NOT just "workflow completed."
+2. **The deploy Pushover MUST include:** deployment ID, version, smoke result, commit SHA, timestamp.
+3. **If any proof field can't be captured,** the workflow fails and sends BLOCKED Pushover. Don't ship a deploy proof that can be silently truncated.
+
+---
+
+## Merge Order — Sequential, Not Parallel
+
+When multiple PRs are in flight that touch the same files, they must merge sequentially, not in parallel. After each merge, all other open PRs touching the same files must rebase on the new main and re-run checks before they can merge.
+
+The hardening PR (#74) is the canonical example: it touched workflow YAML, CLAUDE.md, and audit-source.sh — all hot files. Any PR opened during its lifetime that touched the same files had to wait or rebase.
+
+---
+
+## Visual Regression — Playwright Screenshots
+
+Any UI-affecting PR requires Playwright viewport screenshots for the touched routes. The `playwright-regression.yml` workflow captures screenshots at each route's real device viewport and uploads them as artifacts on every PR.
+
+### Route Viewport Map
+
+| Route | Viewport | Device |
+|-------|----------|--------|
+| `/spine` | 980x551 | Office Fire Stick |
+| `/soul` | 980x551 | Kitchen Fire Stick |
+| `/parent` | 412x915 | JT S25 |
+| `/pulse` | 412x915 | JT S25 |
+| `/vein` | 1920x1080 | LT Desktop |
+| `/buggsy` | 1340x800 | A9 Tablet |
+| `/jj` | 1340x800 | A7 Tablet |
+| `/daily-missions` | 1368x912 | Surface Pro |
+| `/daily-missions?child=jj` | 1920x1200 | S10 FE |
+
+Each route gets two screenshots: one at its real device viewport, one at 1920x1080 desktop. Artifacts are uploaded on every PR for reviewer inspection.
+
+**Phase 2 (future):** Pixel-diff comparison against baseline screenshots stored in `.github/visual-baselines/`. Failing diffs block merge. Build this once we've collected stable baselines from 3-5 clean deploys.
 
 ---
 

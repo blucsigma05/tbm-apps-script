@@ -68,11 +68,38 @@ jobs:
 
           python3 .github/scripts/parse_playwright_results.py
 
-      - name: Upload screenshots and traces on failure
+      - name: Capture viewport screenshots
+        id: screenshots
+        if: always()
+        env:
+          TBM_BASE_URL: https://thompsonfams.com
+          TBM_PIN: ${{ secrets.TBM_PIN }}
+        run: |
+          SCREENSHOT_SPEC="tests/tbm/screenshots.spec.js"
+          if [ ! -f "$SCREENSHOT_SPEC" ]; then
+            echo "::warning::Screenshot spec not found — skipping."
+            exit 0
+          fi
+          npx playwright test "$SCREENSHOT_SPEC" \
+            --reporter=list \
+            --output=test-results \
+            2>&1 | tee screenshot-output.txt || true
+          echo "Screenshots captured to test-results/screenshots/"
+
+      - name: Upload screenshots (every PR)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: viewport-screenshots-${{ github.run_id }}
+          path: test-results/screenshots/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload traces on failure
         if: steps.playwright.outputs.pw_exit != '0'
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-screenshots-${{ github.run_id }}
+          name: playwright-traces-${{ github.run_id }}
           path: test-results/
           retention-days: 7
           if-no-files-found: ignore

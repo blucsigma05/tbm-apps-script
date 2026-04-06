@@ -10,6 +10,21 @@ WARN=0
 echo "=== TBM STATIC SOURCE AUDIT ==="
 echo ""
 
+# ── BRANCH STALENESS CHECK ───────────────────────────────────
+echo "--- Branch Staleness ---"
+
+git fetch origin main --quiet 2>/dev/null
+if git merge-base --is-ancestor origin/main HEAD 2>/dev/null; then
+  echo "  OK -- Branch is up to date with origin/main"
+else
+  echo "  FAIL -- Branch is behind origin/main"
+  echo "  Run: git fetch origin main && git rebase origin/main"
+  echo "  Resolve any conflicts before pushing."
+  FAIL=1
+fi
+
+echo ""
+
 # ── ES5 COMPLIANCE (all .html files) ──────────────────────────
 echo "--- ES5 Compliance ---"
 
