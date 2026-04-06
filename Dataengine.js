@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v83 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v84 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 83; }
+function getDataEngineVersion() { return 84; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -3294,6 +3294,11 @@ function setupBoardConfig() {
 function de_buildPulseSummary_(payload) {
   var summary = { headline: '', detail: '', alert: null };
 
+  // v84: comma-format a positive integer as a dollar string
+  function fmtAmt_(n) {
+    return '$' + Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
   // Determine headline from spending vs time-in-month pace
   var totalBudget = (payload['expenses.fixed_expenses.budget'] || 0) +
                     (payload['expenses.necessary_living.budget'] || 0) +
@@ -3301,10 +3306,16 @@ function de_buildPulseSummary_(payload) {
                     (payload['expenses.debt_cost.budget'] || 0);
   var totalActual = payload.operatingExpenses || 0;
 
+  // v84: guard — if budget fields are zero/missing, don't show a false headline
+  if (totalBudget === 0) {
+    summary.headline = 'Budget data unavailable.';
+    return summary;
+  }
+
   var dayOfMonth = payload.dayOfMonth || new Date().getDate();
   var daysInMonth = payload.daysInMonth || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
   var timePct = (dayOfMonth / daysInMonth) * 100;
-  var spendPct = totalBudget > 0 ? (totalActual / totalBudget) * 100 : 0;
+  var spendPct = (totalActual / totalBudget) * 100;
 
   if (spendPct <= timePct - 10) {
     summary.headline = 'On track this month.';
@@ -3333,7 +3344,7 @@ function de_buildPulseSummary_(payload) {
 
   var details = [];
   if (worstOver) {
-    details.push(worstOver.name + ' is $' + worstOver.over + ' over budget.');
+    details.push(worstOver.name + ' is ' + fmtAmt_(worstOver.over) + ' over budget.');
   }
 
   var daysRemaining = payload.daysRemaining || 0;
@@ -3345,7 +3356,7 @@ function de_buildPulseSummary_(payload) {
   var incomeThrottle = payload.incomeThrottle;
   if (incomeThrottle != null && incomeThrottle !== undefined) {
     if (incomeThrottle < 0) {
-      details.push('Spending $' + Math.abs(Math.round(incomeThrottle)) + ' more than earned so far.');
+      details.push('Spending ' + fmtAmt_(incomeThrottle) + ' more than earned so far.');
     }
   }
 
@@ -3390,4 +3401,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v83
+// END OF FILE — DataEngine v84
