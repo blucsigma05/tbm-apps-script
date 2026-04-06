@@ -636,7 +636,10 @@ function getKidsHubDataSafe(child) {
     var cached = getCachedKHPayload_(cacheKey);
     if (cached) return cached;
     var result = getKidsHubData(resolvedChild, Date.now());
-    setCachedKHPayload_(result, cacheKey);
+    // v70: Never cache error responses — let next request retry
+    if (result && result.indexOf('"error"') === -1) {
+      setCachedKHPayload_(result, cacheKey);
+    }
     return result;
   });
 }

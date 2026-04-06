@@ -16,7 +16,8 @@ var DEVICES = {
   omnibook: { width: 1920, height: 1200 }
 };
 
-// Sentinel selectors: each proves the page loaded real data, not just the loader.
+// Data-proving sentinels: each selector ONLY matches when real server data
+// has been injected into the DOM. Timeout/error paths cannot satisfy these.
 var SURFACES = [
   { path: '/parent', device: 's25', label: 'parent-s25',
     sentinel: '#app:not(:empty)' },
@@ -25,14 +26,16 @@ var SURFACES = [
   { path: '/jj', device: 'a7', label: 'jj-a7',
     sentinel: '#app:not(:empty)' },
   { path: '/soul', device: 'firestick', label: 'soul-firestick',
-    sentinel: '#soulPage' },
+    sentinel: '.kid-stat-val' },
   { path: '/spine', device: 'firestick', label: 'spine-firestick',
-    sentinel: '#loader.hidden' },
+    sentinel: '#waterfallRows .wf-val' },
   { path: '/pulse', device: 's25', label: 'pulse-s25',
     requiresPin: true, sentinel: '#loading-overlay' },
   { path: '/vein', device: 'omnibook', label: 'vein-omnibook',
-    requiresPin: true, sentinel: '#loader.hidden' }
+    requiresPin: true, sentinel: '#debtRows .d-bal' }
 ];
+
+var SENTINEL_TIMEOUT = 45000;
 
 test.beforeAll(function() {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
@@ -43,66 +46,41 @@ test.beforeEach(function() {
 });
 
 /**
- * Wait for a sentinel element that proves real data loaded.
- * Falls back to 8s timeout if sentinel never appears.
+ * Wait for a data-proving sentinel. NO fallback — if the sentinel
+ * never appears, the test fails. That's the point.
  */
-function waitForSentinel(page, surface) {
+async function waitForSentinel(page, surface) {
   var sel = surface.sentinel;
-  if (!sel) {
-    return page.waitForTimeout(8000);
-  }
 
-  // For #loader.hidden and #loading-overlay, we wait for the element state
-  if (sel === '#loader.hidden') {
-    return page.waitForSelector('#loader.hidden', { timeout: 30000 })
-      .catch(function() {
-        return page.waitForTimeout(8000);
-      });
-  }
   if (sel === '#loading-overlay') {
-    // Wait for overlay to be hidden (display:none)
-    return page.waitForFunction(
+    // ThePulse: wait for overlay to be hidden (display:none)
+    await page.waitForFunction(
       'document.getElementById("loading-overlay") && ' +
       'document.getElementById("loading-overlay").style.display === "none"',
-      { timeout: 30000 }
-    ).catch(function() {
-      return page.waitForTimeout(8000);
-    });
+      { timeout: SENTINEL_TIMEOUT }
+    );
+    return;
   }
-  // For #soulPage, wait until it has grid display
-  if (sel === '#soulPage') {
-    return page.waitForFunction(
-      'document.getElementById("soulPage") && ' +
-      'document.getElementById("soulPage").style.display === "grid"',
-      { timeout: 30000 }
-    ).catch(function() {
-      return page.waitForTimeout(8000);
-    });
-  }
-  // Default: wait for element to be visible and non-empty
-  return page.waitForSelector(sel, { state: 'visible', timeout: 30000 })
-    .catch(function() {
-      return page.waitForTimeout(8000);
-    });
+
+  // Default: wait for data-injected element to exist in DOM
+  await page.waitForSelector(sel, { state: 'attached', timeout: SENTINEL_TIMEOUT });
+
+  // Verify the sentinel has real content (not just an empty shell)
+  var text = await page.locator(sel).first().textContent();
+  expect(text.trim().length).toBeGreaterThan(0);
 }
 
-function handlePIN(page, requiresPin) {
-  if (!requiresPin || !FINANCE_PIN) return Promise.resolve();
-  return page.locator('input[type="password"], input[type="text"][placeholder*="PIN"], input[id*="pin"]')
-    .first().isVisible({ timeout: 5000 })
-    .then(function(hasPinGate) {
-      if (!hasPinGate) return;
-      return page.locator('input[type="password"], input[type="text"][placeholder*="PIN"], input[id*="pin"]')
-        .first().fill(FINANCE_PIN)
-        .then(function() {
-          return page.locator('button[type="submit"], button:has-text("Enter"), button:has-text("Go")')
-            .first().click();
-        })
-        .then(function() {
-          return page.waitForLoadState('domcontentloaded', { timeout: 15000 });
-        });
-    })
-    .catch(function() { /* no PIN gate found — continue */ });
+async function handlePIN(page, requiresPin) {
+  if (!requiresPin || !FINANCE_PIN) return;
+  try {
+    var pinInput = page.locator('input[type="password"], input[type="text"][placeholder*="PIN"], input[id*="pin"]');
+    var hasPinGate = await pinInput.first().isVisible({ timeout: 5000 });
+    if (!hasPinGate) return;
+    await pinInput.first().fill(FINANCE_PIN);
+    await page.locator('button[type="submit"], button:has-text("Enter"), button:has-text("Go")')
+      .first().click();
+    await page.waitForLoadState('domcontentloaded', { timeout: 15000 });
+  } catch (_) { /* no PIN gate found — continue */ }
 }
 
 SURFACES.forEach(function(surface) {
@@ -115,9 +93,6 @@ SURFACES.forEach(function(surface) {
     await page.goto(BASE_URL + surface.path, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await handlePIN(page, surface.requiresPin);
     await waitForSentinel(page, surface);
-
-    var body = await page.locator('body').textContent();
-    expect(body.length).toBeGreaterThan(50);
 
     await page.screenshot({
       path: path.join(SCREENSHOT_DIR, surface.label + '.png'),
