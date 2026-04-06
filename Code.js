@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v70 — Apps Script Router (TBM Consolidated)
+// Code.gs v71 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 70; }
+function getCodeVersion() { return 71; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -828,10 +828,10 @@ function khApproveWithBonusSafe(rowIndex, multiplier) {
     catch(e) { _khDiag_('khApproveWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier}, e); throw e; }
   });
 }
-function khOverrideTaskSafe(rowIndex, expectedTaskID, mult) {
+function khOverrideTaskSafe(rowIndex, expectedTaskID, multiplier) {
   return withMonitor_('khOverrideTaskSafe', function() {
-    try { return JSON.parse(khOverrideTask(rowIndex, expectedTaskID, mult)); }
-    catch(e) { _khDiag_('khOverrideTaskSafe', {rowIndex: rowIndex, mult: mult}, e); throw e; }
+    try { return JSON.parse(khOverrideTask(rowIndex, expectedTaskID, multiplier)); }
+    catch(e) { _khDiag_('khOverrideTaskSafe', {rowIndex: rowIndex}, e); throw e; }
   });
 }
 function khRedeemRewardSafe(child, rewardID, quantity) {
@@ -1938,4 +1938,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v70
+// END OF FILE — Code.gs v71

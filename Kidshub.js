@@ -1058,7 +1058,7 @@ function sumHistoryPoints_(child) {
   var data = readSheet_('KH_History');
   if (!data || data.length < 2) return 0;
   var h = data[0].map(String);
-  var POINT_EVENTS = ['approval', 'bonus', 'rejection', 'education'];
+  var POINT_EVENTS = ['approval', 'bonus', 'rejection', 'education', 'override'];
   var total = 0;
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
@@ -1501,7 +1501,7 @@ function khUncompleteTask(rowIndex, expectedTaskID) {
 }
 
 
-function khOverrideTask(rowIndex, expectedTaskID, mult) {
+function khOverrideTask(rowIndex, expectedTaskID, multiplier) {
   var lk = acquireLock_();
   if (!lk.acquired) return JSON.stringify({ status: 'locked', message: 'Try again.' });
   try {
@@ -1515,6 +1515,11 @@ function khOverrideTask(rowIndex, expectedTaskID, mult) {
     var taskID = String(row[khCol_(h, 'Task_ID')] || '');
     var child = String(row[khCol_(h, 'Child')] || '');
     var task = String(row[khCol_(h, 'Task')] || '');
+    var basePoints = Number(row[khCol_(h, 'Points')]) || 0;
+    // v47 F01: validate multiplier — 0 (no points), 0.5 (half), 1 (full)
+    var parsedMult = parseFloat(multiplier);
+    var validMult = (parsedMult === 0 || parsedMult === 0.5 || parsedMult === 1) ? parsedMult : 1;
+    var effectivePoints = Math.round(basePoints * validMult);
     var today = getTodayISO_();
     var now = getNowISO_();
     var uid = taskID + '_' + today + '_' + child.toLowerCase() + '_override';
@@ -1523,19 +1528,15 @@ function khOverrideTask(rowIndex, expectedTaskID, mult) {
       return JSON.stringify({ status: 'ok', already: true, uid: uid, rowIndex: rowIndex });
     }
 
-    // v47: Read base points from row and apply multiplier
-    var effectiveMult = (mult != null && mult >= 0) ? mult : 1;
-    var basePoints = Number(row[khCol_(h, 'Points')]) || 0;
-    var awardedPoints = Math.round(basePoints * effectiveMult);
-
     // v25: Batch write — modify row in memory, single writeback
     row[khCol_(h, 'Completed')] = true;
     row[khCol_(h, 'Completed_Date')] = today;
     row[khCol_(h, 'Parent_Approved')] = true;
+    row[khCol_(h, 'Bonus_Multiplier')] = validMult;
     sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
-    appendHistory_(uid, taskID, child, task, awardedPoints, basePoints, effectiveMult, 'override', today, now);
-    console.log('KH_WRITE', JSON.stringify({ fn: 'khOverrideTask', status: 'ok', uid: uid, child: child }));
-    var _result = JSON.stringify({ status: 'ok', uid: uid, child: child, rowIndex: rowIndex });
+    appendHistory_(uid, taskID, child, task, effectivePoints, basePoints, validMult, 'override', today, now);
+    console.log('KH_WRITE', JSON.stringify({ fn: 'khOverrideTask', status: 'ok', uid: uid, child: child, points: effectivePoints, mult: validMult }));
+    var _result = JSON.stringify({ status: 'ok', uid: uid, child: child, rowIndex: rowIndex, points: effectivePoints, multiplier: validMult });
     stampKHHeartbeat_();
     return _result;
   } finally {
@@ -2135,9 +2136,9 @@ function updateMealPlan(meal, cook, notes) {
     sheet.appendRow([today, mealName, cookedBy, mealNotes, now]);
     stampKHHeartbeat_();
     return JSON.stringify({ status: 'ok', meal: mealName, cook: cookedBy });
-  } catch (e) {
+  } catch(e) {
     if (typeof logError_ === 'function') logError_('updateMealPlan', e);
-    return JSON.stringify({ status: 'error', message: e.message || 'Dinner log failed' });
+    return JSON.stringify({ status: 'error', message: e.message });
   } finally {
     lk.lock.releaseLock();
   }
