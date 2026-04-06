@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<title>TheSpine v46 — Office Ambient Display</title>
+<title>TheSpine v47 — Office Ambient Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -477,7 +477,7 @@ body.evening{
 
 <script>
 // Version history tracked in Notion deploy page.
-var SPINE_VERSION = 46;
+var SPINE_VERSION = 47;
 var FINANCE_MS = 300000;
 var KIDS_MS = 180000;
 var BOARD_MS = 600000;
@@ -986,8 +986,16 @@ function renderBoard(b){
   var icon = pick(b,['weather.icon','weather.emoji']) || '\u2600\uFE0F';
   document.getElementById('weatherMain').textContent = icon + ' ' + (typeof temp === 'number' ? Math.round(temp) + '\u00B0' : temp);
   document.getElementById('weatherSub').textContent = cond;
-  renderEventGroup('todayEvents', pick(b,['calendar.today','todayEvents','events']) || []);
-  renderEventGroup('upcomingList', pick(b,['calendar.upcoming','upcomingEvents','tomorrow']) || []);
+  renderEventGroup('todayEvents', b.events || []);
+  var tmr = b.tomorrowPreview;
+  var tmrArr = [];
+  if (tmr && tmr.first) {
+    tmrArr.push({ title: tmr.first, timeStr: tmr.firstTime || '' });
+    if (tmr.count > 1) {
+      tmrArr.push({ title: '+ ' + (tmr.count - 1) + ' more', timeStr: '' });
+    }
+  }
+  renderEventGroup('upcomingList', tmrArr);
   var staleBanner = document.getElementById('staleBanner');
   if(staleBanner){
     if(b.spineStale){ staleBanner.classList.add('visible'); } else { staleBanner.classList.remove('visible'); }
@@ -1132,4 +1140,4 @@ function updateEarnedToday(childKey, data) {
 </script>
 </body>
 </html>
-<!-- TheSpine v46 -->
+<!-- TheSpine v47 -->
