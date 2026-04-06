@@ -2858,7 +2858,7 @@ function _kidsOverride(rowIndex, el, taskID) {
       console.error('Vein override failed:', err);
       initKidsWidget();
     })
-    .khOverrideTaskSafe(rowIndex, taskID);
+    .khOverrideTaskSafe(rowIndex, taskID, 0);
 }
 function _renderKidsWidget(data) {
   if (!data || data.error) {
