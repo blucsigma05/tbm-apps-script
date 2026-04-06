@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v48 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v49 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 48; }
+function getKidsHubVersion() { return 49; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3813,11 +3813,19 @@ function checkDay1_(child) {
   if (child !== 'buggsy' && child !== 'jj') {
     return { isDay1: false };
   }
+  // Check KH_History for any education events
   var data = readSheet_('KH_History');
   for (var i = 0; i < data.length; i++) {
     var rowChild = String(data[i][2] || '').toLowerCase();
     var eventType = String(data[i][7] || '').toLowerCase();
     if (rowChild === child && eventType === 'education') {
+      return { isDay1: false };
+    }
+  }
+  // Also check KH_MissionState — any prior mission record means setup is done
+  var missions = readSheet_('KH_MissionState');
+  for (var j = 0; j < missions.length; j++) {
+    if (String(missions[j][0] || '').toLowerCase() === child) {
       return { isDay1: false };
     }
   }
@@ -3888,5 +3896,5 @@ function getDesignUnlockedSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v48
+// END OF FILE — KidsHub.gs v49
 // ════════════════════════════════════════════════════════════════════
