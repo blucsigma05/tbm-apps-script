@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════
-// MonitorEngine.gs v8
+// MonitorEngine.gs v9
 // WRITES TO: 💻🧮 Close History, 💻🧮 Month-End Review
 // READS FROM: 💻🧮 DebtModel, 💻🧮 Helpers, 🔒 Transactions, 🔒 Balance History
 // ═══════════════════════════════════════════════════
 
-function getMonitorEngineVersion() { return 8; }
+function getMonitorEngineVersion() { return 9; }
 
 // v8: Lazy accessors — avoid parse-time openById for trigger safety
 var _meSS = null;
@@ -494,4 +494,44 @@ function runMonthlyMERReport_() {
   }
 }
 
-// EOF — MonitorEngine.gs v8
+// ── HYG-10: MONTH-CLOSE GATE ────────────────────────────────────────
+// Called daily from AlertEngine dailyHealthCheck(). Sends escalating Pushover
+// if previous month not stamped Closed by the current day-of-month tier.
+// Day 6–10: BACKLOG_STALE (0) | Day 11–20: TILLER_STALE (1) | Day 21+: GATE_BREACH (2)
+function hyg10MonthCloseGate_() {
+  var today = new Date();
+  var dayOfMonth = today.getDate();
+  if (dayOfMonth < 6) { return; }
+
+  var MN = ['January','February','March','April','May','June',
+            'July','August','September','October','November','December'];
+  var prevMo = today.getMonth() === 0 ? 11 : today.getMonth() - 1;
+  var prevYr = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
+  var displayMonth = MN[prevMo] + ' ' + prevYr;
+
+  var chSheet = me_getSS_().getSheetByName('💻🧮 Close History');
+  if (!chSheet) { return; }
+  var chData = chSheet.getDataRange().getValues();
+  for (var i = 1; i < chData.length; i++) {
+    var rowMonth = String(chData[i][0] || '').trim();
+    var rowStatus = String(chData[i][1] || '').trim().toLowerCase();
+    if (rowMonth === displayMonth && rowStatus === 'closed') { return; }
+  }
+
+  var priority, urgency;
+  if (dayOfMonth >= 21) {
+    priority = PUSHOVER_PRIORITY.GATE_BREACH;  urgency = 'OVERDUE';
+  } else if (dayOfMonth >= 11) {
+    priority = PUSHOVER_PRIORITY.TILLER_STALE; urgency = 'URGENT';
+  } else {
+    priority = PUSHOVER_PRIORITY.BACKLOG_STALE; urgency = 'REMINDER';
+  }
+  sendPush_(
+    'HYG-10: Month Close ' + urgency,
+    displayMonth + ' not closed — day ' + dayOfMonth + '. Run stampCloseMonth().',
+    'LT',
+    priority
+  );
+}
+
+// EOF — MonitorEngine.gs v9

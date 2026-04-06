@@ -76,6 +76,29 @@ export default {
 
     // Route: everything else → serve HTML page from GAS
     return servePage(request, url);
+  },
+
+  // HYG-09: Tiller freshness check — cron daily 12:00 UTC (see wrangler.toml)
+  async scheduled(event, env, ctx) {
+    try {
+      const resp = await fetch(GAS_URL + '?action=tillerFreshness');
+      if (!resp.ok) { throw new Error('GAS returned HTTP ' + resp.status); }
+      const data = await resp.json();
+      if (!data.fresh && data.hoursSince > data.threshold) {
+        if (env.PUSHOVER_USER_KEY && env.PUSHOVER_APP_TOKEN) {
+          const body = new URLSearchParams({
+            token: env.PUSHOVER_APP_TOKEN,
+            user: env.PUSHOVER_USER_KEY,
+            title: 'HYG-09: Tiller Stale',
+            message: 'Latest transaction is ' + Math.round(data.hoursSince) + 'h old (threshold: ' + data.threshold + 'h). Check Tiller sync.',
+            priority: '1'
+          });
+          await fetch('https://api.pushover.net/1/messages.json', { method: 'POST', body });
+        }
+      }
+    } catch (e) {
+      console.error('HYG-09 Tiller freshness check failed: ' + e.message);
+    }
   }
 };
 
