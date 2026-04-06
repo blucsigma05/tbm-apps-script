@@ -392,6 +392,23 @@ async function handleVerifyPin(request, env) {
     var pin = String(body.pin || '').replace(/\D/g, '').slice(0, 4);
     var target = body.target === 'vein' ? 'vein' : 'pulse';
 
+    var clientIP = request.headers.get('CF-Connecting-IP') || 'unknown';
+    var rateLimitResult = await env.PIN_RATE_LIMITER.limit({
+      key: 'verify-pin:' + target + ':' + clientIP
+    });
+    if (!rateLimitResult.success) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Too many attempts. Try again shortly.' }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': '10'
+          }
+        }
+      );
+    }
+
     if (!env.FINANCE_PIN) {
       return jsonResponse({ ok: false, error: 'PIN not configured' }, 500);
     }

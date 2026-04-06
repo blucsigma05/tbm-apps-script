@@ -7,3 +7,11 @@ compatibility_date = "2024-09-01"
 # routes = [
 #   { pattern = "thompsonfams.com/*", zone_name = "thompsonfams.com" }
 # ]
+
+[[ratelimits]]
+name = "PIN_RATE_LIMITER"
+namespace_id = "1001"
+
+[ratelimits.simple]
+limit = 2
+period = 10
