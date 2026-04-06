@@ -1,0 +1,172 @@
+name: Playwright Regression
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: playwright-regression-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  playwright:
+    name: Playwright E2E Regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.draft == false &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install -D @playwright/test
+          npx playwright install --with-deps chromium
+
+      - name: Run E2E regression
+        id: playwright
+        env:
+          TBM_BASE_URL: https://thompsonfams.com
+          TBM_PIN: ${{ secrets.TBM_PIN }}
+        run: |
+          SPEC="tests/tbm/tbm-e2e-safe.spec.js"
+          if [ ! -f "$SPEC" ]; then
+            echo "::warning::Spec file $SPEC not found — skipping Playwright run."
+            echo "## ⚠️ Playwright Regression: SKIPPED" > playwright-comment.md
+            echo "" >> playwright-comment.md
+            echo "Spec file \`$SPEC\` not found in repo." >> playwright-comment.md
+            echo "verdict=SKIP" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Run with JSON reporter; capture exit code without failing immediately
+          npx playwright test "$SPEC" \
+            --reporter=json \
+            --output=test-results \
+            2>&1 | tee playwright-output.txt
+          PW_EXIT=$?
+          echo "pw_exit=$PW_EXIT" >> "$GITHUB_OUTPUT"
+
+          python3 - <<'PY' > playwright-comment.md
+          import json, os
+
+          pw_exit = int(os.environ.get('PW_EXIT', '1'))
+          output_txt = ''
+          try:
+              output_txt = open('playwright-output.txt').read()
+          except Exception:
+              pass
+
+          # Try to parse JSON reporter output from stdout
+          json_data = None
+          for line in output_txt.splitlines():
+              line = line.strip()
+              if line.startswith('{') and '"stats"' in line:
+                  try:
+                      json_data = json.loads(line)
+                      break
+                  except Exception:
+                      pass
+
+          if json_data:
+              stats = json_data.get('stats', {})
+              passed = stats.get('expected', 0)
+              failed = stats.get('unexpected', 0)
+              skipped = stats.get('skipped', 0)
+              duration_ms = stats.get('duration', 0)
+              verdict = 'PASS' if failed == 0 else 'FAIL'
+              icon = '✅' if verdict == 'PASS' else '❌'
+              lines = [
+                  f'## {icon} Playwright Regression: {verdict}',
+                  '',
+                  f'**{passed} passed · {failed} failed · {skipped} skipped** ({duration_ms}ms)',
+                  '',
+                  '_Tested against: https://thompsonfams.com_',
+              ]
+              if failed > 0:
+                  lines.append('')
+                  lines.append('### Failures')
+                  for suite in json_data.get('suites', []):
+                      for spec in suite.get('specs', []):
+                          for test in spec.get('tests', []):
+                              if test.get('status') != 'expected':
+                                  title = spec.get('title', '?')
+                                  status = test.get('status', '?')
+                                  lines.append(f'- **{title}**: {status}')
+                                  for result in test.get('results', []):
+                                      err = result.get('error', {})
+                                      if err.get('message'):
+                                          lines.append(f'  `{err["message"][:200]}`')
+              print('\n'.join(lines))
+          else:
+              verdict = 'FAIL' if pw_exit != 0 else 'PASS'
+              icon = '✅' if verdict == 'PASS' else '❌'
+              snippet = output_txt[-800:] if output_txt else '(no output)'
+              print(f'## {icon} Playwright Regression: {verdict}\n\nCould not parse JSON results.\n\n```\n{snippet}\n```')
+          PY
+
+          echo "verdict=$([ $PW_EXIT -eq 0 ] && echo PASS || echo FAIL)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload screenshots and traces on failure
+        if: steps.playwright.outputs.pw_exit != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-screenshots-${{ github.run_id }}
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Post results comment on PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '⚠️ Playwright results could not be read. Check workflow logs.';
+            try { body = fs.readFileSync('playwright-comment.md', 'utf8'); } catch (e) {}
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('Playwright Regression')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      - name: Fail check on test failures
+        if: steps.playwright.outputs.verdict == 'FAIL'
+        run: |
+          echo "Playwright found failures — merge blocked."
+          exit 1
