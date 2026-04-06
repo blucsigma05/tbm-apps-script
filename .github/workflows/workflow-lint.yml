@@ -34,10 +34,9 @@ jobs:
 
       - name: Verify shellcheck version
         run: |
-          # shellcheck is pre-installed on ubuntu-latest runners.
-          # Pin-check: fail if major version drifts unexpectedly.
-          SHELLCHECK_VERSION=$(shellcheck --version | grep '^version:' | awk '{print $2}')
-          echo "shellcheck $SHELLCHECK_VERSION"
+          # Pre-installed on ubuntu-latest runners. Log version for audit trail.
+          SC_VERSION=$(shellcheck --version | grep '^version:' | awk '{print $2}')
+          echo "shellcheck $SC_VERSION"
 
       - name: Lint workflow YAML files
         run: |
