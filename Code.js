@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v69 — Apps Script Router (TBM Consolidated)
+// Code.gs v71 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 69; }
+function getCodeVersion() { return 71; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -35,11 +35,12 @@ var KH_CACHE_HB_KEY = 'KH_LAST_HB'; // stores last-seen heartbeat value
  * v47: Get cached KH data if heartbeat hasn't changed.
  * Returns raw JSON string or null (cache miss / stale).
  */
-function getCachedKHPayload_() {
+function getCachedKHPayload_(key) {
   try {
+    var cacheKey = key || KH_CACHE_KEY;
     var cache = CacheService.getScriptCache();
-    var keys = cache.getAll([KH_CACHE_KEY, KH_CACHE_HB_KEY]);
-    var raw = keys[KH_CACHE_KEY];
+    var keys = cache.getAll([cacheKey, KH_CACHE_HB_KEY]);
+    var raw = keys[cacheKey];
     var cachedHB = keys[KH_CACHE_HB_KEY];
     if (!raw || !cachedHB) return null;
 
@@ -57,18 +58,19 @@ function getCachedKHPayload_() {
 /**
  * v47: Store KH data + current heartbeat in cache.
  */
-function setCachedKHPayload_(jsonStr) {
+function setCachedKHPayload_(jsonStr, key) {
   try {
+    var cacheKey = key || KH_CACHE_KEY;
     var cache = CacheService.getScriptCache();
     var currentHB = getKHLastModified();
     if (!currentHB) return; // no heartbeat → don't cache stale
     var payload = {};
-    payload[KH_CACHE_KEY] = jsonStr;
+    payload[cacheKey] = jsonStr;
     payload[KH_CACHE_HB_KEY] = currentHB;
     cache.putAll(payload, KH_CACHE_TTL);
     var size = jsonStr.length;
     if (size > 50000) {
-      Logger.log('📦 KH cache payload: ' + Math.round(size / 1024) + 'KB');
+      Logger.log('📦 KH cache payload (' + cacheKey + '): ' + Math.round(size / 1024) + 'KB');
     }
   } catch(e) {
     Logger.log('setCachedKHPayload_ error (non-fatal): ' + e.message);
@@ -168,8 +170,10 @@ function bustCache() {
       chunkKeys.push(DE_CACHE_KEY + '_chunk_' + i);
       chunkKeys.push(monthKey + '_chunk_' + i);
     }
-    // v47: Also bust KH cache
+    // v47/v70: Also bust KH cache (all + per-child keys)
     chunkKeys.push(KH_CACHE_KEY);
+    chunkKeys.push(KH_CACHE_KEY + '_buggsy');
+    chunkKeys.push(KH_CACHE_KEY + '_jj');
     chunkKeys.push(KH_CACHE_HB_KEY);
     cache.removeAll(chunkKeys);
   } catch(e) { if (typeof logError_ === 'function') logError_('bustCache', e); }
@@ -279,7 +283,10 @@ function doPost(e) {
     var body = JSON.parse(e.postData.contents);
     var fn = body.fn;
     var args = body.args || [];
-    var whitelist = { 'seedStaarRlaSprintSafe': seedStaarRlaSprintSafe };
+    var whitelist = {
+      'seedStaarRlaSprintSafe': seedStaarRlaSprintSafe,
+      'pipelineRelaySafe': pipelineRelaySafe
+    };
     if (!whitelist[fn]) {
       return ContentService.createTextOutput(JSON.stringify({ error: 'Function not in POST whitelist: ' + fn }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -624,14 +631,14 @@ function updateFamilyNoteSafe(noteText) {
 function getKidsHubDataSafe(child) {
   return withMonitor_('getKidsHubDataSafe', function() {
     var resolvedChild = child || 'all';
-    // v47: Cache only 'all' requests (ambient displays, parent dashboard, widget)
-    if (resolvedChild === 'all') {
-      var cached = getCachedKHPayload_();
-      if (cached) return cached;
-    }
+    // v70: Cache ALL requests — 'all', 'buggsy', 'jj' — each with own key
+    var cacheKey = KH_CACHE_KEY + (resolvedChild === 'all' ? '' : '_' + resolvedChild);
+    var cached = getCachedKHPayload_(cacheKey);
+    if (cached) return cached;
     var result = getKidsHubData(resolvedChild, Date.now());
-    if (resolvedChild === 'all') {
-      setCachedKHPayload_(result);
+    // v70: Never cache error responses — let next request retry
+    if (result && result.indexOf('"error"') === -1) {
+      setCachedKHPayload_(result, cacheKey);
     }
     return result;
   });
@@ -821,9 +828,9 @@ function khApproveWithBonusSafe(rowIndex, multiplier) {
     catch(e) { _khDiag_('khApproveWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier}, e); throw e; }
   });
 }
-function khOverrideTaskSafe(rowIndex) {
+function khOverrideTaskSafe(rowIndex, expectedTaskID, multiplier) {
   return withMonitor_('khOverrideTaskSafe', function() {
-    try { return JSON.parse(khOverrideTask(rowIndex)); }
+    try { return JSON.parse(khOverrideTask(rowIndex, expectedTaskID, multiplier)); }
     catch(e) { _khDiag_('khOverrideTaskSafe', {rowIndex: rowIndex}, e); throw e; }
   });
 }
@@ -1270,7 +1277,8 @@ function healthCheck() {
     'khRejectTaskSafe', 'khApproveWithBonusSafe', 'khOverrideTaskSafe',
     'getKHAppUrls', 'setupKHSheets', 'validateTaskIDs',
     'runDailyGateCheck', 'installDailyGateAlert', 'removeDailyGateAlert',
-    'notionApi_', 'pushQAResult', 'testNotionConnection',
+    'notionApi_', 'pushQAResult', 'pushPipelineEvent_', 'testNotionConnection',
+    'isPipelineUrl_', 'pipelineStatusForType_', 'normalizePipelinePayload_', 'pipelineRelaySafe',
     'reconcileVeinPulse', 'reconcileVeinPulseSafe', 'resolveNestedKey_',
     'getCodeVersion',
     'getBoardData', 'getBoardDataSafe',
@@ -1502,6 +1510,146 @@ function pushQAResult(result) {
   });
 }
 
+function isPipelineUrl_(value) {
+  if (!value) return false;
+  var str = String(value);
+  return str.indexOf('https://') === 0 || str.indexOf('http://') === 0;
+}
+
+function pipelineStatusForType_(type) {
+  var map = {
+    deploy_complete: 'PASS',
+    tests_failed: 'FAIL',
+    review_ready: 'READY',
+    fix_needed: 'ACTION_NEEDED',
+    fix_pushed: 'INFO',
+    pipeline_stalled: 'STOPPED'
+  };
+  return map[type] || 'INFO';
+}
+
+function normalizePipelinePayload_(payload) {
+  var props = PropertiesService.getScriptProperties();
+  var expectedSecret = props.getProperty('PIPELINE_SECRET');
+  var safePayload = payload || {};
+  var allowedTypes = {
+    deploy_complete: true,
+    tests_failed: true,
+    review_ready: true,
+    fix_needed: true,
+    fix_pushed: true,
+    pipeline_stalled: true
+  };
+  if (!expectedSecret) {
+    return { ok: false, error: 'PIPELINE_SECRET not configured' };
+  }
+  if (String(safePayload.secret || '') !== expectedSecret) {
+    return { ok: false, error: 'Invalid pipeline secret' };
+  }
+  var type = String(safePayload.type || '');
+  if (!allowedTypes[type]) {
+    return { ok: false, error: 'Unsupported pipeline type: ' + type };
+  }
+  var repo = String(safePayload.repo || '').trim();
+  if (!repo) {
+    return { ok: false, error: 'repo is required' };
+  }
+  var summary = String(safePayload.summary || '').trim();
+  if (!summary) {
+    return { ok: false, error: 'summary is required' };
+  }
+  var truncated = false;
+  if (summary.length > 500) {
+    summary = summary.substring(0, 500);
+    truncated = true;
+  }
+  var prNumber = safePayload.prNumber;
+  if (prNumber !== null && prNumber !== undefined && prNumber !== '') {
+    prNumber = parseInt(prNumber, 10);
+    if (isNaN(prNumber)) prNumber = null;
+  } else {
+    prNumber = null;
+  }
+  var cycle = safePayload.cycle;
+  if (cycle !== null && cycle !== undefined && cycle !== '') {
+    cycle = parseInt(cycle, 10);
+    if (isNaN(cycle)) cycle = null;
+  } else {
+    cycle = null;
+  }
+  return {
+    ok: true,
+    truncated: truncated,
+    payload: {
+      repo: repo,
+      type: type,
+      summary: summary,
+      prNumber: prNumber,
+      prUrl: isPipelineUrl_(safePayload.prUrl) ? String(safePayload.prUrl) : '',
+      sha: String(safePayload.sha || '').substring(0, 40),
+      runUrl: isPipelineUrl_(safePayload.runUrl) ? String(safePayload.runUrl) : '',
+      cycle: cycle
+    }
+  };
+}
+
+function pushPipelineEvent_(payload) {
+  var dbId = PropertiesService.getScriptProperties().getProperty('NOTION_PIPELINE_DB_ID');
+  if (!dbId) {
+    return { ok: false, skipped: true, error: 'NOTION_PIPELINE_DB_ID not found' };
+  }
+
+  var event = notionApi_('/v1/pages', 'post', {
+    parent: { database_id: dbId },
+    properties: {
+      'Event': { title: [{ text: { content: payload.repo + ' ' + payload.type + ' — ' + new Date().toISOString() } }] },
+      'Repo': { rich_text: [{ text: { content: payload.repo } }] },
+      'Type': { rich_text: [{ text: { content: payload.type } }] },
+      'Status': { rich_text: [{ text: { content: pipelineStatusForType_(payload.type) } }] },
+      'Summary': { rich_text: [{ text: { content: payload.summary } }] },
+      'PR Number': { number: payload.prNumber === null ? null : payload.prNumber },
+      'PR URL': payload.prUrl ? { url: payload.prUrl } : { url: null },
+      'SHA': { rich_text: [{ text: { content: payload.sha || '' } }] },
+      'Run URL': payload.runUrl ? { url: payload.runUrl } : { url: null },
+      'Cycle': { number: payload.cycle === null ? null : payload.cycle },
+      'Timestamp': { date: { start: new Date().toISOString() } }
+    }
+  });
+
+  return { ok: true, id: event.id, url: event.url };
+}
+
+function pipelineRelaySafe(payload) {
+  return withMonitor_('pipelineRelaySafe', function() {
+    var normalized = normalizePipelinePayload_(payload);
+    if (!normalized.ok) return normalized;
+
+    var safePayload = normalized.payload;
+    var notification;
+    var notion;
+
+    try {
+      notification = sendPipelineNotification_(safePayload.type, safePayload);
+    } catch (notifyErr) {
+      notification = { ok: false, error: notifyErr.message };
+    }
+
+    try {
+      notion = pushPipelineEvent_(safePayload);
+    } catch (notionErr) {
+      notion = { ok: false, error: notionErr.message };
+    }
+
+    return {
+      ok: !!(notification && notification.ok) || !!(notion && notion.ok),
+      truncated: normalized.truncated,
+      notification: notification,
+      notion: notion,
+      payload: safePayload
+    };
+  });
+}
+
 function testNotionConnection() {
   try {
     var token = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
@@ -1512,6 +1660,11 @@ function testNotionConnection() {
     if (dbId) {
       var db = notionApi_('/v1/databases/' + dbId, 'get');
       Logger.log('✅ QA Log accessible: ' + db.title[0].plain_text);
+    }
+    var pipelineDbId = PropertiesService.getScriptProperties().getProperty('NOTION_PIPELINE_DB_ID');
+    if (pipelineDbId) {
+      var pipelineDb = notionApi_('/v1/databases/' + pipelineDbId, 'get');
+      Logger.log('✅ Pipeline Log accessible: ' + pipelineDb.title[0].plain_text);
     }
   } catch (e) { Logger.log('❌ Connection failed: ' + e.message); }
 }
@@ -1621,14 +1774,14 @@ function getOpsHealth_() {
   var now = new Date();
   var health = {
     timestamp: now.toISOString(),
-    env: typeof TBM_ENV !== 'undefined' ? TBM_ENV.ENV : 'unknown',
     overall: 'GREEN',
     surfaces: {},
     errors: {},
     perf: {},
     versions: {},
     triggers: {},
-    education: {}
+    education: {},
+    scorecard: { overall: 6.2, anchor: 'eabc5b9', lastUpdated: '2026-04-04' }
   };
 
   // ── 1. SYSTEM HEALTH (delegates to GASHardening) ────────────
@@ -1638,6 +1791,7 @@ function getOpsHealth_() {
     health.perf = sysHealth.perf || {};
     health.versions = sysHealth.versions || {};
     health.triggers = sysHealth.triggers || {};
+    health.monthStatus = sysHealth.monthStatus || {};
 
     // Tiller sync status
     if (sysHealth.tillerSync && sysHealth.tillerSync.status === 'stale') {
@@ -1651,6 +1805,9 @@ function getOpsHealth_() {
 
     // Trigger health
     if (health.triggers.orphans > 0 && health.overall !== 'RED') health.overall = 'WATCH';
+
+    // Month-close grace period escalation
+    if (health.monthStatus.priorCloseStatus === 'overdue' && health.overall === 'GREEN') health.overall = 'WATCH';
   } catch(e) {
     health.systemHealthError = e.message;
     health.overall = 'RED';
@@ -1666,8 +1823,7 @@ function getOpsHealth_() {
     investigation: 'investigation-module', baseline: 'BaselineDiagnostic',
     'comic-studio': 'ComicStudio', dashboard: 'DesignDashboard',
     progress: 'ProgressReport', 'story-library': 'StoryLibrary',
-    story: 'StoryReader', 'wolfkid-power-scan': 'wolfkid-power-scan',
-    vault: 'Vault'
+    story: 'StoryReader', 'wolfkid-power-scan': 'wolfkid-power-scan'
   };
   var surfaceResults = {};
   var surfaceKeys = Object.keys(surfaceMap);
@@ -1722,7 +1878,7 @@ function getOpsHealth_() {
 
   // ── 4. ERROR RATE CHECK (configurable threshold) ────────────
   try {
-    var errorThreshold = 10;
+    var errorThreshold = 5;
     try {
       var customET = PropertiesService.getScriptProperties().getProperty('ERROR_RATE_THRESHOLD');
       if (customET) errorThreshold = parseInt(customET, 10);
@@ -1761,13 +1917,17 @@ function getOpsHealth_() {
 
   // ── 6. RISK SUMMARY (computed, not hardcoded) ──────────────
   var risks = [];
-  if (health.errors.count24h > 0) risks.push('P1: ' + health.errors.count24h + ' errors in last 24h (threshold: ' + (health.errors.threshold || 10) + ')');
+  if (health.errors.count24h > 0) risks.push('P1: ' + health.errors.count24h + ' errors in last 24h (threshold: ' + (health.errors.threshold || 5) + ')');
   if (health.surfaceCount && health.surfaceCount.red > 0) risks.push('P0: ' + health.surfaceCount.red + ' surfaces failed to load');
   if (health.triggers && health.triggers.orphans > 0) risks.push('P2: ' + health.triggers.orphans + ' orphan triggers');
   if (health.tillerSync && health.tillerSync.status === 'stale') risks.push('P1: Tiller data stale');
+  if (health.monthStatus && health.monthStatus.priorCloseStatus === 'overdue') {
+    risks.push('P1: ' + health.monthStatus.priorMonth + ' close overdue (' + health.monthStatus.daysSinceMonthEnd + 'd past month-end, grace period expired)');
+  } else if (health.monthStatus && health.monthStatus.priorCloseStatus === 'pending') {
+    risks.push('P2: ' + health.monthStatus.priorMonth + ' close pending (' + health.monthStatus.graceRemaining + 'd remaining in grace period)');
+  }
   health.risks = risks;
   health.riskCount = risks.length;
-  health.note = 'All checks computed at runtime. No hardcoded scores.';
 
   return health;
 }
@@ -1778,4 +1938,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v69
+// END OF FILE — Code.gs v71

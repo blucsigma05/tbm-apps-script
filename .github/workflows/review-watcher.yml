@@ -1,0 +1,48 @@
+name: Pipeline Review Watcher
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number to recompute
+        required: true
+  workflow_run:
+    workflows: ["TBM Smoke + Regression"]
+    types: [requested, in_progress, completed]
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  update-summary:
+    name: Update pipeline review summary
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.event == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Recompute PR review state
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CI_WORKFLOW_NAME: TBM Smoke + Regression
+          PIPELINE_RELAY_URL: ${{ secrets.PIPELINE_RELAY_URL }}
+          PIPELINE_SECRET: ${{ secrets.PIPELINE_SECRET }}
+          TARGET_PR: ${{ inputs.pr }}
+        run: node .github/scripts/review-watcher.js

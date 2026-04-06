@@ -1,6 +1,6 @@
 # .github/workflows/deploy-and-notify.yml
 # GAS Deploy + Smoke + Pushover — deploys on merge to main, verifies via HTTP, notifies.
-# Pushover includes deployment proof: deploy ID, HTTP status, smoke PASS/FAIL.
+# Pushover includes deployment proof: deploy ID, HTTP status, smoke PASS/FAIL, version.
 
 name: Deploy and Notify
 

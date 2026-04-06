@@ -1,9 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// KH_Fix_v6.gs — Run-once utility functions
+// Utility.js v7 — Run-once utility functions
 // ═══════════════════════════════════════════════════════════════
 // The isStaleDaily_ and isStaleWeekly_ fixes are already in
 // KidsHub.gs v6 Full Deploy. These utilities handle cleanup.
 // ═══════════════════════════════════════════════════════════════
+
+function getUtilityVersion() { return 7; }
 
 
 // ── FIX 3: Add Parent_PIN column to KH_Children ─────────────
@@ -266,3 +268,5 @@ function verifyKHFix() {
   Logger.log(allPass ? '✅ ALL CHECKS PASSED — v6 fix is working' : '❌ ISSUES FOUND — review above');
   Logger.log('═══ End ═══');
 }
+
+// END Utility.js v7

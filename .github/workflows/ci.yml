@@ -7,10 +7,15 @@ name: TBM Smoke + Regression
 on:
   pull_request:
     branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review]
+  push:
+    branches-ignore: [main]
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: read
+  issues: write
   pull-requests: write
 
 jobs:
@@ -25,14 +30,37 @@ jobs:
 
       - name: Run smoke + regression tests
         id: run_tests
+        shell: bash
         env:
           GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
         run: |
+          if [ -z "$GAS_DEPLOY_URL" ]; then
+            cat <<'ERRDOC' > test_summary.md
+          ## TBM Test Results: CONFIG_ERROR
+
+          **Missing secret:** GAS_DEPLOY_URL
+          The CI workflow cannot hit the deployed Apps Script test endpoint until this repo secret is configured.
+          ERRDOC
+            echo "overall=CONFIG_ERROR" >> "$GITHUB_OUTPUT"
+            cat test_summary.md
+            exit 1
+          fi
+
           echo "Hitting GAS test endpoint..."
-          RESPONSE=$(curl -s -L --max-time 120 \
-            "${GAS_DEPLOY_URL}?action=runTests")
-          echo "Raw response length: ${#RESPONSE}"
-          export TEST_RESPONSE="$RESPONSE"
+          if ! response="$(curl -sS -L --max-time 120 "${GAS_DEPLOY_URL}?action=runTests")"; then
+            cat <<'ERRDOC' > test_summary.md
+          ## TBM Test Results: ENDPOINT_ERROR
+
+          The CI workflow could not reach the deployed Apps Script test endpoint.
+          Check GAS_DEPLOY_URL, deployment health, and workflow logs.
+          ERRDOC
+            echo "overall=ENDPOINT_ERROR" >> "$GITHUB_OUTPUT"
+            cat test_summary.md
+            exit 1
+          fi
+          printf '%s' "$response" > test_response.json
+          echo "Raw response length: ${#response}"
+
           python3 .github/scripts/parse_test_results.py
 
       - name: Comment on PR
@@ -41,20 +69,22 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            let body;
+            let body = 'Test results could not be parsed. Check workflow logs.';
             try {
               body = fs.readFileSync('test_summary.md', 'utf8');
-            } catch {
-              body = 'Test results could not be parsed. Check workflow logs.';
+            } catch (error) {
+              core.info(`Unable to read test summary: ${error.message}`);
             }
 
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
+              per_page: 100,
             });
-            const botComment = comments.data.find(c =>
-              c.user.type === 'Bot' && c.body.includes('TBM Test Results')
+
+            const botComment = comments.data.find((comment) =>
+              comment.user.type === 'Bot' && comment.body.includes('TBM Test Results')
             );
 
             if (botComment) {
@@ -62,13 +92,74 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 comment_id: botComment.id,
-                body: body,
+                body,
               });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: body,
-              });
+              return;
             }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+      - name: Notify pipeline relay on failed tests
+        if: always() && github.event_name == 'pull_request'
+        shell: bash
+        env:
+          RELAY_URL: ${{ secrets.PIPELINE_RELAY_URL }}
+          RELAY_SECRET: ${{ secrets.PIPELINE_SECRET }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          if [ -z "$RELAY_URL" ] || [ -z "$RELAY_SECRET" ]; then
+            echo "Pipeline relay secrets not configured; skipping."
+            exit 0
+          fi
+
+          if [ "${{ steps.run_tests.outputs.overall }}" = "PASS" ]; then
+            echo "Tests passed; review watcher will notify later."
+            exit 0
+          fi
+
+          python3 -c "
+          import json, os
+          with open('test_summary.md', 'r', encoding='utf-8') as fh:
+              summary = fh.read().strip()
+          payload = {
+              'fn': 'pipelineRelaySafe',
+              'args': [{
+                  'secret': os.environ['RELAY_SECRET'],
+                  'repo': os.environ['GITHUB_REPOSITORY'],
+                  'type': 'tests_failed',
+                  'summary': summary[:500],
+                  'prNumber': os.environ.get('PR_NUMBER'),
+                  'prUrl': os.environ.get('PR_URL'),
+                  'sha': os.environ.get('GITHUB_SHA'),
+                  'runUrl': os.environ['GITHUB_SERVER_URL'] + '/' + os.environ['GITHUB_REPOSITORY'] + '/actions/runs/' + os.environ['GITHUB_RUN_ID'],
+                  'cycle': 0
+              }]
+          }
+          print(json.dumps(payload))
+          " > relay_payload.json
+
+          curl -sS -X POST \
+            -H "Content-Type: application/json" \
+            --data @relay_payload.json \
+            "$RELAY_URL"
+
+      - name: Refresh pipeline review summary after CI completes
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'review-watcher.yml',
+              ref: context.payload.pull_request.base.ref,
+              inputs: {
+                pr: String(context.payload.pull_request.number),
+              },
+            });

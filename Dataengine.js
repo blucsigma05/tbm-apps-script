@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v83 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v85 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 83; }
+function getDataEngineVersion() { return 85; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -3030,33 +3030,35 @@ function getBoardData() {
   var moreCount = hasMore ? events.length - 3 : 0;
   events = events.slice(0, 3);
 
-  // ── 5. Tomorrow preview (after 3 PM — matches Spine client threshold) ──
-  var tomorrowPreview = null;
-  if (hour >= 15) {
-    try {
-      var tmrStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
-      var tmrEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59);
-      var tmrEvents = [];
-      var defTmr = CalendarApp.getDefaultCalendar().getEvents(tmrStart, tmrEnd);
-      for (var ti = 0; ti < defTmr.length; ti++) tmrEvents.push(_boardFormatEvent(defTmr[ti], 'Default'));
-      for (var tci = 0; tci < calNames.length; tci++) {
-        var tCals = CalendarApp.getCalendarsByName(calNames[tci]);
-        for (var tcj = 0; tcj < tCals.length; tcj++) {
-          var tCalEvts = tCals[tcj].getEvents(tmrStart, tmrEnd);
-          for (var tce = 0; tce < tCalEvts.length; tce++) tmrEvents.push(_boardFormatEvent(tCalEvts[tce], calNames[tci]));
+  // ── 5. 7-day upcoming events (all day, all calendars except finance) ──
+  var upcomingEvents = [];
+  var tomorrowPreview = null; // kept for backward-compat; clients should use upcomingEvents
+  try {
+    var upDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    for (var ud = 1; ud <= 7; ud++) {
+      var upStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + ud, 0, 0, 0);
+      var upEnd   = new Date(now.getFullYear(), now.getMonth(), now.getDate() + ud, 23, 59, 59);
+      var upLabel = ud === 1 ? 'Tomorrow' : upDayNames[upStart.getDay()];
+      var upEvts  = [];
+      var upDef = CalendarApp.getDefaultCalendar().getEvents(upStart, upEnd);
+      for (var udi = 0; udi < upDef.length; udi++) upEvts.push(_boardFormatEvent(upDef[udi], 'Default'));
+      for (var uci = 0; uci < calNames.length; uci++) {
+        if (calNames[uci] === 'Bills and Financial') continue; // skip finance events
+        var uCals = CalendarApp.getCalendarsByName(calNames[uci]);
+        for (var ucj = 0; ucj < uCals.length; ucj++) {
+          var uCalEvts = uCals[ucj].getEvents(upStart, upEnd);
+          for (var uce = 0; uce < uCalEvts.length; uce++) upEvts.push(_boardFormatEvent(uCalEvts[uce], calNames[uci]));
         }
       }
-      tmrEvents.sort(function(a, b) { return (a.startHour * 60 + a.startMin) - (b.startHour * 60 + b.startMin); });
-      if (tmrEvents.length > 0) {
-        tomorrowPreview = {
-          count: tmrEvents.length,
-          first: tmrEvents[0].title,
-          firstTime: tmrEvents[0].timeStr
-        };
+      upEvts.sort(function(a, b) { return (a.startHour * 60 + a.startMin) - (b.startHour * 60 + b.startMin); });
+      for (var uei = 0; uei < upEvts.length; uei++) {
+        if (upcomingEvents.length >= 3) break;
+        upcomingEvents.push({ title: upEvts[uei].title, timeStr: upLabel });
       }
-    } catch(e) {
-      if (typeof logError_ === 'function') logError_('de_getBoardData_Tomorrow', e);
+      if (upcomingEvents.length >= 3) break;
     }
+  } catch(e) {
+    if (typeof logError_ === 'function') logError_('de_getBoardData_UpcomingEvents', e);
   }
 
   // ── 6. KidsHub chore status ───────────────────────────────────────
@@ -3135,6 +3137,7 @@ function getBoardData() {
     weather:          weather,
     events:           events,
     eventsMore:       moreCount,
+    upcomingEvents:   upcomingEvents,
     tomorrowPreview:  tomorrowPreview,
     choreStatus:      choreStatus,
     familyNote:       familyNote,
@@ -3294,6 +3297,11 @@ function setupBoardConfig() {
 function de_buildPulseSummary_(payload) {
   var summary = { headline: '', detail: '', alert: null };
 
+  // v84: comma-format a positive integer as a dollar string
+  function fmtAmt_(n) {
+    return '$' + Math.round(Math.abs(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
   // Determine headline from spending vs time-in-month pace
   var totalBudget = (payload['expenses.fixed_expenses.budget'] || 0) +
                     (payload['expenses.necessary_living.budget'] || 0) +
@@ -3301,10 +3309,16 @@ function de_buildPulseSummary_(payload) {
                     (payload['expenses.debt_cost.budget'] || 0);
   var totalActual = payload.operatingExpenses || 0;
 
+  // v84: guard — if budget fields are zero/missing, don't show a false headline
+  if (totalBudget === 0) {
+    summary.headline = 'Budget data unavailable.';
+    return summary;
+  }
+
   var dayOfMonth = payload.dayOfMonth || new Date().getDate();
   var daysInMonth = payload.daysInMonth || new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
   var timePct = (dayOfMonth / daysInMonth) * 100;
-  var spendPct = totalBudget > 0 ? (totalActual / totalBudget) * 100 : 0;
+  var spendPct = (totalActual / totalBudget) * 100;
 
   if (spendPct <= timePct - 10) {
     summary.headline = 'On track this month.';
@@ -3333,7 +3347,7 @@ function de_buildPulseSummary_(payload) {
 
   var details = [];
   if (worstOver) {
-    details.push(worstOver.name + ' is $' + worstOver.over + ' over budget.');
+    details.push(worstOver.name + ' is ' + fmtAmt_(worstOver.over) + ' over budget.');
   }
 
   var daysRemaining = payload.daysRemaining || 0;
@@ -3345,7 +3359,7 @@ function de_buildPulseSummary_(payload) {
   var incomeThrottle = payload.incomeThrottle;
   if (incomeThrottle != null && incomeThrottle !== undefined) {
     if (incomeThrottle < 0) {
-      details.push('Spending $' + Math.abs(Math.round(incomeThrottle)) + ' more than earned so far.');
+      details.push('Spending ' + fmtAmt_(incomeThrottle) + ' more than earned so far.');
     }
   }
 
@@ -3390,4 +3404,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v83
+// END OF FILE — DataEngine v85

@@ -72,6 +72,7 @@ jobs:
           git diff origin/main...HEAD -- '*.js' '*.html' > pr_diff.txt
           DIFF_BYTES=$(wc -c < pr_diff.txt)
           echo "diff_bytes=$DIFF_BYTES" >> "$GITHUB_OUTPUT"
+          # Truncate to 12000 chars — keeps well under gpt-4o 128k context, costs ~$0.01/review
           head -c 12000 pr_diff.txt > pr_diff_send.txt
           if [ "$DIFF_BYTES" -gt 12000 ]; then
             echo "truncated=true" >> "$GITHUB_OUTPUT"

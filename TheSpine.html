@@ -4,7 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<title>TheSpine v43 — Office Ambient Display</title>
+<meta name="tbm-version" content="TheSpine v49">
+<title>TheSpine v49 — Office Ambient Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -69,7 +70,7 @@ body.evening{
 .loader-ring{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.22);border-top-color:var(--ice);animation:spin .9s linear infinite}
 .loader-txt{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.page{position:relative;z-index:1;width:100vw;height:100vh;padding:var(--safe) 18px 46px var(--safe);display:grid;grid-template-rows:auto 11% 43% 42% auto;gap:4px}
+.page{position:relative;z-index:1;width:100vw;height:100vh;padding:28px 18px 46px var(--safe);display:grid;grid-template-rows:auto 11% 40% 45% auto;gap:4px}
 .glass{position:relative;border:1px solid rgba(212,168,67,.28);border-radius:var(--r);background:var(--card);box-shadow:0 4px 20px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden}
 .glass.warm{background:var(--card-warm)}
 .glass::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,67,.22),transparent)}
@@ -175,7 +176,7 @@ body.evening{
 .account-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}.account-row{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--text-mid)}
 .bridge{font-size:11px;color:var(--text-mid);margin-top:4px}
 .kids{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:0}
-.kid-card{padding:4px 8px;display:grid;grid-template-rows:auto auto auto auto 1fr;gap:1px;min-height:0;position:relative;overflow:hidden}
+.kid-card{padding:2px 6px;display:grid;grid-template-rows:auto auto auto auto auto 1fr;gap:1px;min-height:0;position:relative;overflow:hidden}
 .kid-card::after{content:'';position:absolute;right:-12px;bottom:-14px;width:90px;height:90px;border-radius:50%;pointer-events:none;opacity:.22;filter:blur(26px)}
 .kid-card.buggsy{background:rgba(60,58,48,.78)}.kid-card.buggsy::after{background:radial-gradient(circle,rgba(212,168,67,.38),transparent 68%)}
 .kid-card.jj{background:rgba(72,56,58,.72)}.kid-card.jj::after{background:radial-gradient(circle,rgba(232,152,184,.30),transparent 68%)}
@@ -203,7 +204,7 @@ body.evening{
 .kid-col-head.active{color:var(--mint)}
 .kid-col-head.pend-h{color:var(--ice)}
 .kid-tasks{display:flex;flex-direction:column;gap:2px;overflow:hidden;flex:1;min-height:0}
-.kid-task{display:flex;align-items:center;gap:5px;padding:3px 6px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.kid-task{display:flex;align-items:center;gap:5px;padding:2px 5px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
 .kid-task.done{opacity:.5}
 .kid-task-icon{font-size:12px;flex-shrink:0;width:16px;text-align:center}
 .kid-task-name{font-size:14px;font-weight:700;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
@@ -220,12 +221,113 @@ body.evening{
 .hb-dot{display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:3px;vertical-align:middle}.hb-dot.green{background:var(--positive)}.hb-dot.yellow{background:var(--warning)}.hb-dot.red{background:var(--rose-soft)}.hb-dot.dim{background:var(--text-muted)}
 .error-note{font-size:10px;color:var(--rose-soft)}
 .hidden{display:none!important}
+#spineDeclaration.lit {
+  color: rgba(212,168,67,.9);
+  text-shadow: 0 0 12px rgba(212,168,67,.3);
+}
+.lit {
+  animation: litPulse 2s ease-in-out 4;
+}
+@keyframes litPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.15); }
+}
+.kid-char-wm {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.6s ease, filter 0.6s ease;
+}
+.kid-card.buggsy.wm-active .kid-char-wm {
+  opacity: 0.22;
+  filter: drop-shadow(0 0 8px rgba(212,168,67,.5));
+}
+.kid-card.jj.wm-active .kid-char-wm {
+  opacity: 0.22;
+  filter: drop-shadow(0 0 8px rgba(249,168,212,.5));
+}
+.kid-card > * { position: relative; z-index: 1; }
+.kid-earned-today {
+  font-size: 9px;
+  font-weight: 700;
+  text-align: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--gold);
+  background: rgba(212,168,67,.05);
+  position: relative;
+  z-index: 1;
+  transition: color .3s;
+}
+.kid-earned-today.jj-earned {
+  color: var(--rose);
+  background: rgba(232,152,184,.05);
+}
+.kid-earned-today.earned-active {
+  animation: glowPulse 3s ease-in-out 1;
+}
+@keyframes glowPulse {
+  0%, 100% { transform: scale(1); opacity: .92; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+.wf-bar.next-win {
+  box-shadow: 0 0 8px rgba(110,231,183,.45), 0 0 3px rgba(110,231,183,.6);
+}
+@keyframes interestBreathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+.interest-pulse {
+  animation: interestBreathe 5s ease-in-out infinite;
+}
+#spineDeclaration {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 50;
+  text-align: center;
+  padding: 5px 0 4px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .20em;
+  text-transform: uppercase;
+  color: rgba(212,168,67,.55);
+  border-bottom: 0.5px solid rgba(255,255,255,.08);
+  background: rgba(0,0,0,.14);
+  transition: color .4s, text-shadow .4s;
+  pointer-events: none;
+}
+.kid-card.buggsy.wm-active {
+  border-color: rgba(212,168,67,.55);
+  box-shadow: 0 0 16px rgba(212,168,67,.1);
+  transition: border-color .5s, box-shadow .5s;
+}
+.kid-card.jj.wm-active {
+  border-color: rgba(249,168,212,.55);
+  box-shadow: 0 0 16px rgba(249,168,212,.1);
+  transition: border-color .5s, box-shadow .5s;
+}
+@keyframes deficitBreathe {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.02); }
+}
+.deficit-breathe {
+  animation: deficitBreathe 6s ease-in-out infinite;
+  display: inline-block;
+}
 </style>
 </head>
 <body>
 <div class="atmo"><div class="bloom"></div><div class="coolwash"></div><div class="river"></div><div class="goldaccent"></div><div class="kidorb left"></div><div class="kidorb right"></div></div>
 <div id="loader"><div class="loader-ring"></div><div class="loader-txt">Loading The Backbone</div></div>
 <div class="stale-banner" id="staleBanner">&#x26A0; Backbone data may be stale — check connection</div>
+<div id="spineDeclaration">STRONGER AS A PACK &nbsp;&middot;&nbsp; loading&hellip;</div>
 <div class="page">
   <header class="header">
     <div>
@@ -261,6 +363,7 @@ body.evening{
         <div class="hero-kicker">Road to Zero</div>
         <div class="hero-amount" id="debtHeroAmount">—</div>
         <div class="hero-meta"><span id="debtHeroMeta">7 categories · live grouped view</span><span class="grad" id="debtHeroSub">debtByType live</span></div>
+        <div id="spineDebtProgress" style="font-size:10px;font-weight:700;color:#6ee7b7;margin-top:4px;opacity:0;"></div>
       </div>
       <div class="wf" id="waterfallRows"></div>
       <div class="timeline">
@@ -336,6 +439,7 @@ body.evening{
 
   <section class="kids">
     <article class="glass kid-card buggsy">
+      <img class="kid-char-wm" id="bugWatermark" src="https://i.ibb.co/8L0ccf6p/1773982420674.png" alt="Wolfkid" onerror="this.style.display='none'">
       <div class="kid-head"><div class="kid-head-main"><img class="kid-avatar gold" src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" alt="Buggsy avatar"><div><div class="kid-name gold">Buggsy</div><div class="kid-sub" id="buggsySub">Loading…</div></div></div><div class="mini-label" id="buggsyReward">Loading…</div></div>
       <div class="kid-pills">
         <div class="kid-pill"><div class="v gold" id="bCur">—</div><div class="t">Rings</div></div>
@@ -345,9 +449,11 @@ body.evening{
       </div>
       <div class="kid-bar"><span id="bBar"></span></div>
       <div class="kid-gate" id="bGate"></div>
+      <div class="kid-earned-today" id="bugEarnedToday">Earned today: $0.00</div>
       <div class="kid-task-zone" id="bTasks"><div class="kid-empty">Loading tasks…</div></div>
     </article>
     <article class="glass kid-card jj">
+      <img class="kid-char-wm" id="jjWatermark" src="https://i.ibb.co/9md3x6zp/1773982606233.png" alt="JJ Sparkle" onerror="this.style.display='none'">
       <div class="kid-head"><div class="kid-head-main"><img class="kid-avatar rose" src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" alt="JJ avatar"><div><div class="kid-name rose">JJ</div><div class="kid-sub" id="jjSub">Loading…</div></div></div><div class="mini-label" id="jjReward">Loading…</div></div>
       <div class="kid-pills">
         <div class="kid-pill"><div class="v rose" id="jCur">—</div><div class="t">Stars</div></div>
@@ -357,6 +463,7 @@ body.evening{
       </div>
       <div class="kid-bar"><span id="jBar"></span></div>
       <div class="kid-gate" id="jGate"></div>
+      <div class="kid-earned-today jj-earned" id="jjEarnedToday">Stars today: 0 &#11088;</div>
       <div class="kid-task-zone" id="jTasks"><div class="kid-empty">Loading tasks…</div></div>
     </article>
   </section>
@@ -372,11 +479,12 @@ body.evening{
 
 <script>
 // Version history tracked in Notion deploy page.
-var SPINE_VERSION = 43;
+var SPINE_VERSION = 47;
+var TBM_VERSION = 'TheSpine v47';
 var FINANCE_MS = 300000;
 var KIDS_MS = 180000;
 var BOARD_MS = 600000;
-var MAX_TASKS = 4;
+var MAX_TASKS = 3;
 var state = { finance:null, kids:null, board:null, levels:null, loaded:{finance:false,kids:false,board:false} };
 // v41: Confidence Rail + Graceful Degradation
 var _spineLastFetch = null;
@@ -434,6 +542,8 @@ function nextLevel(pts, child) {
 window.addEventListener('load', boot);
 function boot(){
   applyTimeTheme();
+  var declEl = document.getElementById('spineDeclaration');
+  if (declEl) declEl.textContent = 'STRONGER AS A PACK';
   loadFinance(); loadKids(); loadBoard(); loadHeartbeat();
   setInterval(loadFinance, FINANCE_MS);
   setInterval(loadKids, KIDS_MS);
@@ -527,6 +637,17 @@ function renderFinance(d){
   document.getElementById('periodVal').textContent = period;
   var totalDebt = pick(d, ['debtCurrent','allNonMortgageDebt']);
   animateNum(document.getElementById('debtHeroAmount'), n(totalDebt) || 0, fmtMoney);
+  // v45: Debt progress stat
+  var progEl = document.getElementById('spineDebtProgress');
+  var debtPaidMTD = n(pick(d, ['debtPaymentsMTD'])) || 0;
+  if (progEl) {
+    if (debtPaidMTD > 0) {
+      progEl.style.opacity = '1';
+      progEl.textContent = '\u2193 Down $' + Math.round(debtPaidMTD).toLocaleString() + ' in ' + new Date().toLocaleString('en-US', {month: 'long'});
+    } else {
+      progEl.style.opacity = '0';
+    }
+  }
   var debtByType = Array.isArray(d.debtByType) ? d.debtByType.slice() : [];
   debtByType = debtByType.filter(function(r){ return (r.type || '').toLowerCase() !== 'mortgage'; });
   debtByType.sort(function(a,b){ return (n(b.total)||0) - (n(a.total)||0); });
@@ -546,10 +667,27 @@ function renderFinance(d){
       wf.appendChild(row);
     });
   }
+  var wfBars = document.querySelectorAll('.wf-bar');
+  var minTotal = Infinity;
+  var minBarIdx = -1;
+  for (var nwi = 0; nwi < debtByType.length; nwi++) {
+    var nwt = Number(debtByType[nwi].total) || 0;
+    if (nwt > 0 && nwt < minTotal) { minTotal = nwt; minBarIdx = nwi; }
+  }
+  for (var nwj = 0; nwj < wfBars.length; nwj++) {
+    wfBars[nwj].classList.remove('next-win');
+  }
+  if (minBarIdx >= 0 && wfBars[minBarIdx]) {
+    wfBars[minBarIdx].classList.add('next-win');
+  }
   document.getElementById('tlPromo').textContent = pickPromoDate(d) || "Apr '26";
   document.getElementById('tlCf').textContent = fmtDateToken(pick(d, ['cashFlowPositiveDate'])) || '\u2014';
   document.getElementById('tlFree').textContent = fmtDateToken(pick(d, ['debtTarget','debtFreeTarget'])) || '\u2014';
   animateNum(document.getElementById('burnMo'), n(pick(d, ['interestBurn.monthly','canonicalInterestBurnMonthly','monthlyInterestBurn'])) || 0, fmtMoney);
+  var burnPulseEl = document.getElementById('burnMo');
+  if (burnPulseEl) {
+    burnPulseEl.classList.add('interest-pulse');
+  }
   document.getElementById('paidOffVal').textContent = fmtMoney(pick(d, ['debtPaidOff','paidOffSinceStart','paidOffAmount']));
   document.getElementById('nextPayoffVal').textContent = pick(d, ['nextWin.label','nextPayoff','promoAction']) || '\u2014';
   var netWorth = pick(d, ['netWorth']);
@@ -573,6 +711,11 @@ function renderFinance(d){
   var cfEl = document.getElementById('cfVal');
   animateNum(cfEl, cfResult, fmtMoney);
   cfEl.style.color = cfResult >= 0 ? 'var(--mint)' : 'var(--rose)';
+  if (cfResult < 0) {
+    cfEl.classList.add('deficit-breathe');
+  } else {
+    cfEl.classList.remove('deficit-breathe');
+  }
 
   // Pills
   var opEl = document.getElementById('opPill');
@@ -597,6 +740,8 @@ function renderFinance(d){
   // Cash Ready Now
   document.getElementById('lcVal').textContent = fmtMoney(pick(d, ['liquidCash','cashOnHand','cashAvailable','bridgeCash']));
   renderCashAccounts(d);
+  startDeclarationRotation(d);
+  pulseDeclarationLit();
 }
 function renderCashAccounts(d){
   var rows = [];
@@ -667,6 +812,10 @@ function renderKids(data){
   renderGate('jGate', reqStatus.jj, '\u2B50', pendingCounts.jj || 0);
   renderTaskZone('bTasks', bTasks, 'buggsy');
   renderTaskZone('jTasks', jTasks, 'jj');
+  applyKidWatermark('buggsy', data);
+  applyKidWatermark('jj', data);
+  updateEarnedToday('buggsy', data);
+  updateEarnedToday('jj', data);
 }
 
 function filterChild(tasks, key){
@@ -723,7 +872,7 @@ function renderGate(elId, req, icon, askCount){
   }
   if(!req || !req.total){
     el.className = 'kid-gate clear pulse';
-    el.innerHTML = '<span style="font-size:9px;font-weight:800;color:#6ed8b0">\u2705 All clear</span><span style="display:flex;align-items:center;gap:4px">' + askHtml + '<span style="font-size:8px;font-weight:800;color:var(--text-muted)">No active must-dos</span></span>';
+    el.innerHTML = '<span style="font-size:9px;font-weight:800;color:#6ed8b0">\u2705 Nothing waiting \u2014 good work.</span><span style="display:flex;align-items:center;gap:4px">' + askHtml + '<span style="font-size:8px;font-weight:800;color:var(--text-muted)">No active must-dos</span></span>';
     return;
   }
   var done = Number(req.done || 0);
@@ -732,7 +881,7 @@ function renderGate(elId, req, icon, askCount){
   var left = Math.max(total - done, 0);
   if(allClear){
     el.className = 'kid-gate clear pulse';
-    el.innerHTML = '<span style="font-size:9px;font-weight:800;color:#6ed8b0">\u2705 All clear</span><span style="display:flex;align-items:center;gap:4px">' + askHtml + '<span style="font-size:8px;font-weight:800;color:var(--text-muted)">' + done + '/' + total + ' done</span></span>';
+    el.innerHTML = '<span style="font-size:9px;font-weight:800;color:#6ed8b0">\u2705 Nothing waiting \u2014 good work.</span><span style="display:flex;align-items:center;gap:4px">' + askHtml + '<span style="font-size:8px;font-weight:800;color:var(--text-muted)">' + done + '/' + total + ' done</span></span>';
   } else {
     el.className = 'kid-gate locked';
     el.innerHTML = '<span style="font-size:9px;font-weight:800;color:#e8a838">\uD83D\uDD12 ' + left + ' must-do' + (left === 1 ? '' : 's') + ' left</span><span style="display:flex;align-items:center;gap:4px">' + askHtml + '<span style="font-size:8px;font-weight:800;color:var(--text-muted)">' + done + '/' + total + '</span></span>';
@@ -840,8 +989,8 @@ function renderBoard(b){
   var icon = pick(b,['weather.icon','weather.emoji']) || '\u2600\uFE0F';
   document.getElementById('weatherMain').textContent = icon + ' ' + (typeof temp === 'number' ? Math.round(temp) + '\u00B0' : temp);
   document.getElementById('weatherSub').textContent = cond;
-  renderEventGroup('todayEvents', pick(b,['calendar.today','todayEvents','events']) || []);
-  renderEventGroup('upcomingList', pick(b,['calendar.upcoming','upcomingEvents','tomorrow']) || []);
+  renderEventGroup('todayEvents', b.events || []);
+  renderEventGroup('upcomingList', b.upcomingEvents || []);
   var staleBanner = document.getElementById('staleBanner');
   if(staleBanner){
     if(b.spineStale){ staleBanner.classList.add('visible'); } else { staleBanner.classList.remove('visible'); }
@@ -883,6 +1032,107 @@ function loadHeartbeat(){
     /* GASHardening not deployed yet — fail silently */
   }
 }
+
+function updateDeclaration() {
+  var el = document.getElementById('spineDeclaration');
+  if (!el) return;
+  var debt = (state.finance && state.finance.debtCurrent) || (state.finance && state.finance.allNonMortgageDebt) || 0;
+  var runway = (state.finance && state.finance.weeksOfRunway) || null;
+  var debtFmt = debt ? ('$' + Math.round(debt/1000) + 'K') : '$\u2014';
+  var runwayFmt = runway ? (runway + ' WKS RUNWAY') : 'RUNWAY \u2014';
+  el.textContent = 'STRONGER AS A PACK\u00a0\u00b7\u00a0 ' + debtFmt + ' \u2192 $0 \u00a0\u00b7\u00a0 ' + runwayFmt;
+}
+
+// v46: Declaration strip rotation
+var _declRotationTimer = null;
+function startDeclarationRotation(fin) {
+  var el = document.getElementById('spineDeclaration');
+  if (!el) return;
+
+  // Clear prior interval to prevent buildup on finance refresh
+  if (_declRotationTimer) { clearInterval(_declRotationTimer); _declRotationTimer = null; }
+
+  el.style.transition = 'opacity 0.3s ease';
+
+  var messages = [];
+  var paid = n(pick(fin, ['debtPaymentsMTD'])) || 0;
+  if (paid > 1000) {
+    messages.push('$' + Math.round(paid).toLocaleString() + ' PAID DOWN THIS MONTH');
+  }
+  messages.push('EVERY DOLLAR HAS A JOB');
+  messages.push('DEBT FREE IS THE MISSION');
+  messages.push('PROTECT THE FAMILY');
+
+  if (messages.length < 2) return;
+
+  var idx = 0;
+  el.textContent = messages[0];
+  _declRotationTimer = setInterval(function() {
+    el.style.opacity = '0';
+    setTimeout(function() {
+      idx = (idx + 1) % messages.length;
+      el.textContent = messages[idx];
+      el.style.opacity = '1';
+    }, 300);
+  }, 12000);
+}
+
+// v46: Workday lit pulse on declaration
+function pulseDeclarationLit() {
+  var now = new Date();
+  var day = now.getDay();
+  var hour = now.getHours();
+  if (day >= 1 && day <= 5 && hour >= 8 && hour < 18) {
+    var el = document.getElementById('spineDeclaration');
+    if (el) {
+      el.className = (el.className || '') + ' lit';
+      setTimeout(function() {
+        el.className = (el.className || '').replace(/\blit\b/g, '').trim();
+      }, 8000);
+    }
+  }
+}
+
+function applyKidWatermark(childKey, data) {
+  var elId = childKey === 'jj' ? 'jjWatermark' : 'bugWatermark';
+  var cardId = childKey === 'jj' ? 'jj' : 'buggsy';
+  var wm = document.getElementById(elId);
+  var card = document.querySelector('.kid-card.' + cardId);
+  if (!wm || !card) return;
+  var req = (data.requiredStatus || {})[childKey] || {};
+  if (req.allClear) {
+    card.classList.add('wm-active');
+  } else {
+    card.classList.remove('wm-active');
+  }
+}
+
+function updateEarnedToday(childKey, data) {
+  var tasks = data.tasks || [];
+  var today = new Date().toDateString();
+  function isToday(t) {
+    if (!t.completedDate) return false;
+    return new Date(t.completedDate).toDateString() === today;
+  }
+  if (childKey === 'buggsy') {
+    var el = document.getElementById('bugEarnedToday');
+    if (!el) return;
+    var money = tasks
+      .filter(function(t) { return (t.child||'').toLowerCase()==='buggsy' && t.completed && t.parentApproved && isToday(t); })
+      .reduce(function(s,t){ return s + (Number(t.money)||0); }, 0);
+    el.textContent = 'Earned today: $' + money.toFixed(2);
+    if (money > 0) { el.classList.add('earned-active'); setTimeout(function(){ el.classList.remove('earned-active'); }, 3200); }
+  } else {
+    var jjEl = document.getElementById('jjEarnedToday');
+    if (!jjEl) return;
+    var stars = tasks
+      .filter(function(t) { return (t.child||'').toLowerCase()==='jj' && t.completed && t.parentApproved && isToday(t); })
+      .reduce(function(s,t){ return s + (Number(t.points)||0); }, 0);
+    jjEl.textContent = 'Stars today: ' + stars + ' \u2B50';
+    if (stars > 0) { jjEl.classList.add('earned-active'); setTimeout(function(){ jjEl.classList.remove('earned-active'); }, 3200); }
+  }
+}
 </script>
 </body>
 </html>
+<!-- TheSpine v47 -->

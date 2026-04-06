@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v46 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v48 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 46; }
+function getKidsHubVersion() { return 48; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -1058,7 +1058,7 @@ function sumHistoryPoints_(child) {
   var data = readSheet_('KH_History');
   if (!data || data.length < 2) return 0;
   var h = data[0].map(String);
-  var POINT_EVENTS = ['approval', 'bonus', 'rejection', 'education'];
+  var POINT_EVENTS = ['approval', 'bonus', 'rejection', 'education', 'override'];
   var total = 0;
   for (var i = 1; i < data.length; i++) {
     var row = data[i];
@@ -1501,7 +1501,7 @@ function khUncompleteTask(rowIndex, expectedTaskID) {
 }
 
 
-function khOverrideTask(rowIndex, expectedTaskID) {
+function khOverrideTask(rowIndex, expectedTaskID, multiplier) {
   var lk = acquireLock_();
   if (!lk.acquired) return JSON.stringify({ status: 'locked', message: 'Try again.' });
   try {
@@ -1515,6 +1515,11 @@ function khOverrideTask(rowIndex, expectedTaskID) {
     var taskID = String(row[khCol_(h, 'Task_ID')] || '');
     var child = String(row[khCol_(h, 'Child')] || '');
     var task = String(row[khCol_(h, 'Task')] || '');
+    var basePoints = Number(row[khCol_(h, 'Points')]) || 0;
+    // v47 F01: validate multiplier — 0 (no points), 0.5 (half), 1 (full)
+    var parsedMult = parseFloat(multiplier);
+    var validMult = (parsedMult === 0 || parsedMult === 0.5 || parsedMult === 1) ? parsedMult : 1;
+    var effectivePoints = Math.round(basePoints * validMult);
     var today = getTodayISO_();
     var now = getNowISO_();
     var uid = taskID + '_' + today + '_' + child.toLowerCase() + '_override';
@@ -1527,10 +1532,11 @@ function khOverrideTask(rowIndex, expectedTaskID) {
     row[khCol_(h, 'Completed')] = true;
     row[khCol_(h, 'Completed_Date')] = today;
     row[khCol_(h, 'Parent_Approved')] = true;
+    row[khCol_(h, 'Bonus_Multiplier')] = validMult;
     sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
-    appendHistory_(uid, taskID, child, task, 0, 0, 1, 'override', today, now);
-    console.log('KH_WRITE', JSON.stringify({ fn: 'khOverrideTask', status: 'ok', uid: uid, child: child }));
-    var _result = JSON.stringify({ status: 'ok', uid: uid, child: child, rowIndex: rowIndex });
+    appendHistory_(uid, taskID, child, task, effectivePoints, basePoints, validMult, 'override', today, now);
+    console.log('KH_WRITE', JSON.stringify({ fn: 'khOverrideTask', status: 'ok', uid: uid, child: child, points: effectivePoints, mult: validMult }));
+    var _result = JSON.stringify({ status: 'ok', uid: uid, child: child, rowIndex: rowIndex, points: effectivePoints, multiplier: validMult });
     stampKHHeartbeat_();
     return _result;
   } finally {
@@ -2130,6 +2136,9 @@ function updateMealPlan(meal, cook, notes) {
     sheet.appendRow([today, mealName, cookedBy, mealNotes, now]);
     stampKHHeartbeat_();
     return JSON.stringify({ status: 'ok', meal: mealName, cook: cookedBy });
+  } catch(e) {
+    if (typeof logError_ === 'function') logError_('updateMealPlan', e);
+    return JSON.stringify({ status: 'error', message: 'Could not save dinner: ' + e.message });
   } finally {
     lk.lock.releaseLock();
   }
@@ -2549,7 +2558,7 @@ function getTodayContent_(child) {
     if (isNaN(startDate.getTime())) continue;
     var endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 7);
-    if (today >= startDate && today < endDate) { bestRow = data[i]; break; }
+    if (today >= startDate && today < endDate) { bestRow = data[i]; } // no break — last match wins (latest-seeded week takes precedence)
   }
   if (!bestRow) return null;
   try {
@@ -3879,5 +3888,5 @@ function getDesignUnlockedSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v46
+// END OF FILE — KidsHub.gs v48
 // ════════════════════════════════════════════════════════════════════

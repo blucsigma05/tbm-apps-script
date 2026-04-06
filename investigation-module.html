@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="investigation-module">
-<meta name="tbm-version" content="v2">
+<meta name="tbm-version" content="v3">
 <title>Wolfkid Investigation Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -30,8 +30,8 @@ body {
   50% { transform: scale(1.1); }
 }
 @keyframes lockFlash {
-  0% { background: rgba(16,185,129,0.3); }
-  100% { background: rgba(16,185,129,0); }
+  0% { background: rgba(245,158,11,0.3); }
+  100% { background: rgba(245,158,11,0); }
 }
 textarea::-webkit-input-placeholder { color: #64748B; }
 textarea:-moz-placeholder { color: #64748B; }
@@ -55,8 +55,8 @@ input:-ms-input-placeholder { color: #64748B; }
 .star {
   position: absolute;
   border-radius: 50%;
-  background: #6EE7B7;
-  opacity: 0.3;
+  background: #ffffff;
+  opacity: 0.2;
 }
 
 /* Header */
@@ -85,7 +85,7 @@ input:-ms-input-placeholder { color: #64748B; }
   font-family: 'Orbitron', sans-serif;
   font-size: 13px;
   font-weight: 900;
-  background: linear-gradient(90deg, #10B981, #6EE7B7);
+  background: linear-gradient(90deg, #F59E0B, #fbbf24);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: 1px;
@@ -124,7 +124,7 @@ input:-ms-input-placeholder { color: #64748B; }
 }
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #10B981, #6EE7B7);
+  background: linear-gradient(90deg, #F59E0B, #fbbf24);
   border-radius: 2px;
   transition: width 0.4s ease;
   width: 0%;
@@ -140,8 +140,8 @@ input:-ms-input-placeholder { color: #64748B; }
   color: #475569;
   transition: color 0.3s;
 }
-.progress-step.active { color: #10B981; font-weight: 700; }
-.progress-step.done { color: #6EE7B7; }
+.progress-step.active { color: #F59E0B; font-weight: 700; }
+.progress-step.done { color: #fbbf24; }
 
 /* Main content */
 main {
@@ -164,7 +164,7 @@ main {
 .prompt-label {
   font-size: 11px;
   font-family: 'Orbitron', sans-serif;
-  color: #10B981;
+  color: #F59E0B;
   letter-spacing: 1.5px;
   margin-bottom: 6px;
 }
@@ -194,7 +194,7 @@ main {
   pointer-events: none;
 }
 .section-card.completed {
-  border-color: rgba(16,185,129,0.3);
+  border-color: rgba(245,158,11,0.3);
   animation: lockFlash 0.6s ease;
 }
 .section-number {
@@ -204,28 +204,28 @@ main {
   line-height: 28px;
   text-align: center;
   border-radius: 50%;
-  background: rgba(16,185,129,0.15);
-  color: #10B981;
+  background: rgba(245,158,11,0.15);
+  color: #F59E0B;
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   font-weight: 700;
   margin-right: 8px;
 }
 .section-card.completed .section-number {
-  background: #10B981;
+  background: #F59E0B;
   color: #0B0F1A;
 }
 .section-label {
   font-family: 'Orbitron', sans-serif;
   font-size: 14px;
   font-weight: 700;
-  color: #10B981;
+  color: #F59E0B;
   display: inline;
   vertical-align: middle;
 }
 .section-wolfname {
   font-size: 11px;
-  color: #6EE7B7;
+  color: #fbbf24;
   font-family: 'JetBrains Mono', monospace;
   margin-top: 2px;
   margin-bottom: 10px;
@@ -250,7 +250,7 @@ main {
   resize: vertical;
   outline: none;
 }
-.section-textarea:focus { border-color: #10B981; }
+.section-textarea:focus { border-color: #F59E0B; }
 .section-textarea:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* Procedure step inputs */
@@ -263,7 +263,7 @@ main {
 .step-num {
   font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
-  color: #10B981;
+  color: #F59E0B;
   font-weight: 700;
   min-width: 24px;
   text-align: center;
@@ -279,14 +279,14 @@ main {
   font-family: 'Nunito', sans-serif;
   outline: none;
 }
-.step-input:focus { border-color: #10B981; }
+.step-input:focus { border-color: #F59E0B; }
 .step-input:disabled { opacity: 0.6; cursor: not-allowed; }
 .add-step-btn {
-  background: rgba(16,185,129,0.1);
-  border: 1px dashed rgba(16,185,129,0.3);
+  background: rgba(245,158,11,0.1);
+  border: 1px dashed rgba(245,158,11,0.3);
   border-radius: 8px;
   padding: 8px 16px;
-  color: #10B981;
+  color: #F59E0B;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -294,7 +294,7 @@ main {
   transition: all 0.2s;
   margin-top: 4px;
 }
-.add-step-btn:hover { background: rgba(16,185,129,0.2); }
+.add-step-btn:hover { background: rgba(245,158,11,0.2); }
 .add-step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* Lock In button */
@@ -303,7 +303,7 @@ main {
   width: 100%;
   margin-top: 14px;
   padding: 12px 20px;
-  background: #10B981;
+  background: #F59E0B;
   border: none;
   border-radius: 10px;
   color: #fff;
@@ -314,7 +314,7 @@ main {
   letter-spacing: 1px;
   transition: all 0.2s;
 }
-.lock-btn:hover { background: #34D399; }
+.lock-btn:hover { background: #FBBF24; }
 .lock-btn:disabled {
   background: #1E2A4A;
   color: #64748B;
@@ -323,8 +323,8 @@ main {
 
 /* Locked answer display */
 .locked-answer {
-  background: rgba(16,185,129,0.06);
-  border: 1px solid rgba(16,185,129,0.2);
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.2);
   border-radius: 8px;
   padding: 12px;
   font-size: 14px;
@@ -333,7 +333,7 @@ main {
 }
 .locked-answer .locked-label {
   font-size: 10px;
-  color: #10B981;
+  color: #F59E0B;
   font-family: 'JetBrains Mono', monospace;
   margin-bottom: 4px;
 }
@@ -364,7 +364,7 @@ main {
   font-family: 'Orbitron', sans-serif;
   font-size: 18px;
   font-weight: 900;
-  color: #10B981;
+  color: #F59E0B;
   margin-bottom: 12px;
 }
 .plan-card p {
@@ -377,12 +377,12 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(16,185,129,0.1);
-  border: 1px solid rgba(16,185,129,0.2);
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.2);
   border-radius: 8px;
   padding: 6px 14px;
   font-size: 13px;
-  color: #6EE7B7;
+  color: #fbbf24;
   margin-bottom: 16px;
 }
 .plan-pills {
@@ -404,12 +404,12 @@ main {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #10B981;
+  color: #F59E0B;
   display: block;
   margin-bottom: 2px;
 }
 .start-btn {
-  background: #10B981;
+  background: #F59E0B;
   border: none;
   border-radius: 10px;
   padding: 14px 36px;
@@ -421,7 +421,7 @@ main {
   letter-spacing: 1px;
   transition: all 0.2s;
 }
-.start-btn:hover { background: #34D399; }
+.start-btn:hover { background: #FBBF24; }
 
 /* Completion overlay */
 #completion-overlay {
@@ -502,7 +502,7 @@ main {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #6c63ff;
+  color: #F59E0B;
   display: block;
   margin-bottom: 2px;
 }
@@ -510,16 +510,16 @@ main {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(99, 102, 241, 0.1);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  background: rgba(245,158,11, 0.1);
+  border: 1px solid rgba(245,158,11, 0.2);
   border-radius: 8px;
   padding: 6px 14px;
   font-size: 13px;
-  color: #a5b4fc;
+  color: #FBBF24;
   margin: 12px 0;
 }
 .es-ready-btn {
-  background: linear-gradient(135deg, #6c63ff 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #F59E0B 0%, #FBBF24 100%);
   color: #fff;
   border: none;
   border-radius: 12px;
@@ -542,7 +542,7 @@ main {
   border-radius: 10px;
   padding: 6px 14px;
   font-size: 13px;
-  color: #a5b4fc;
+  color: #FBBF24;
   font-family: 'JetBrains Mono', monospace;
   z-index: 100;
 }
@@ -688,6 +688,31 @@ main {
 @keyframes esFeedbackSlide {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.b-ring-particle {
+  position: fixed; width: 16px; height: 16px; border-radius: 50%;
+  border: 3px solid #ffd700;
+  box-shadow: 0 0 8px rgba(255,215,0,0.7), inset 0 0 4px rgba(255,215,0,0.2);
+  background: transparent; pointer-events: none; z-index: 500;
+  animation: ringBurst 0.8s cubic-bezier(0.15,0,0.55,1) forwards;
+}
+@keyframes ringBurst {
+  0%{opacity:1;transform:translate(0,0) scale(1.3)}
+  60%{opacity:1}
+  100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.2)}
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85vw; height: 85vh;
+  background: url('https://i.ibb.co/FLDTT6QH/1774020751171.png') center/contain no-repeat;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 0;
 }
 </style>
 </head>
@@ -1105,7 +1130,7 @@ var ExecSkills = (function() {
 
     var skillsList = '';
     for (var i = 0; i < skillsEarned.length; i++) {
-      skillsList += '<div style="font-size:13px;color:#a5b4fc;padding:4px 0;">' + skillsEarned[i] + '</div>';
+      skillsList += '<div style="font-size:13px;color:#FBBF24;padding:4px 0;">' + skillsEarned[i] + '</div>';
     }
 
     var html = '<div style="text-align:center;padding:24px;">' +
@@ -1118,7 +1143,7 @@ var ExecSkills = (function() {
       '<div style="font-size:18px;color:#22c55e;font-weight:700;margin:12px 0;">+' +
         options.rings + ' Rings Earned</div>' +
       '<div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;margin:16px 0;text-align:left;">' +
-        '<div style="font-size:11px;color:#6c63ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">' +
+        '<div style="font-size:11px;color:#F59E0B;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">' +
           'Executive Skills Built Today' +
         '</div>' +
         skillsList +
@@ -1154,7 +1179,7 @@ var ExecSkills = (function() {
    TEKS-Aligned. STAAR-Ready. Executive Skills-Driven.
    ============================================================ */
 
-var MODULE_VERSION = 'v2';
+var MODULE_VERSION = 'v3';
 var CHILD = 'buggsy';
 var RINGS_BASE = 8;
 var MAX_STEPS = 8;
@@ -1284,7 +1309,7 @@ function lockSection(num) {
     sectionData.procedure = steps;
     lockedHtml = '<div class="locked-answer"><div class="locked-label">LOCKED IN</div>';
     for (var j = 0; j < steps.length; j++) {
-      lockedHtml += '<div style="padding:2px 0;"><span style="color:#10B981;font-weight:700;">' + (j + 1) + '.</span> ' + escapeHtml(steps[j]) + '</div>';
+      lockedHtml += '<div style="padding:2px 0;"><span style="color:#F59E0B;font-weight:700;">' + (j + 1) + '.</span> ' + escapeHtml(steps[j]) + '</div>';
     }
     lockedHtml += '</div>';
     valid = true;
@@ -1362,6 +1387,26 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// ─── RING BURST EFFECT ───
+function fireRingBurst(cx, cy) {
+  for (var i = 0; i < 12; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var r = document.createElement('div');
+        r.className = 'b-ring-particle';
+        var angle = (idx / 12) * Math.PI * 2;
+        var dist = 50 + Math.random() * 40;
+        r.style.left = cx + 'px';
+        r.style.top = cy + 'px';
+        r.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(0) + 'px');
+        r.style.setProperty('--ty', (Math.sin(angle) * dist).toFixed(0) + 'px');
+        document.body.appendChild(r);
+        setTimeout(function() { if (r.parentNode) r.parentNode.removeChild(r); }, 900);
+      }, idx * 40);
+    })(i);
+  }
+}
+
 // ─── COMPLETION SCREEN ───
 function showCompletionScreen() {
   var dayOfWeek = getDayOfWeek();
@@ -1396,7 +1441,7 @@ function showCompletionScreen() {
         '<div class="es-mq-text">' + escapeHtml(sectionData.hypothesis) + '</div>' +
       '</div>' +
       '<div class="es-missed-q" style="cursor:default;">' +
-        '<div class="es-mq-label" style="color:#10B981;">Your Conclusion</div>' +
+        '<div class="es-mq-label" style="color:#F59E0B;">Your Conclusion</div>' +
         '<div class="es-mq-text">' + escapeHtml(sectionData.conclusion) + '</div>' +
       '</div>' +
       '<div class="es-journal-prompt">Were you surprised by anything? What would you change if you ran this investigation again?</div>' +
@@ -1418,6 +1463,13 @@ function showCompletionScreen() {
 
   var overlay = document.getElementById('completion-overlay');
   overlay.style.display = 'flex';
+
+  setTimeout(function() {
+    var cx = window.innerWidth / 2;
+    var cy = window.innerHeight / 3;
+    fireRingBurst(cx, cy);
+    setTimeout(function() { fireRingBurst(cx - 60, cy + 40); }, 300);
+  }, 400);
 }
 
 // ─── INVESTIGATION JOURNAL SUBMIT (Monday) ───
@@ -1501,7 +1553,7 @@ function submitForReview() {
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler(function() {
-            status.style.color = '#10B981';
+            status.style.color = '#F59E0B';
             status.textContent = 'Rings awarded!';
           })
           .withFailureHandler(function(err) {
@@ -1529,7 +1581,7 @@ function submitForReview() {
           .withSuccessHandler(function() {
             btn.textContent = 'SUBMITTED';
             btn.style.background = '#22C55E';
-            status.style.color = '#10B981';
+            status.style.color = '#F59E0B';
             status.textContent = 'Investigation logged successfully!';
             playBugsyComplete();
           })
@@ -1544,13 +1596,13 @@ function submitForReview() {
         // Standalone mode — simulate success
         btn.textContent = 'SUBMITTED';
         btn.style.background = '#22C55E';
-        status.style.color = '#10B981';
+        status.style.color = '#F59E0B';
         status.textContent = 'Investigation complete! (standalone mode)';
       }
     } catch (e) {
       btn.textContent = 'SUBMITTED';
       btn.style.background = '#22C55E';
-      status.style.color = '#10B981';
+      status.style.color = '#F59E0B';
       status.textContent = 'Investigation complete! (standalone mode)';
     }
   }

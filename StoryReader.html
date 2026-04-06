@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="story-reader">
-<meta name="tbm-version" content="v2">
+<meta name="tbm-version" content="v3">
 <title>Story Reader</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -20,7 +20,7 @@ body.mode-bedtime {
   background: #1A0A2E;
 }
 body.mode-listen {
-  background: #0B0F1A;
+  background: #1a0533;
 }
 @keyframes twinkle {
   0%, 100% { opacity: 0.15; }
@@ -55,7 +55,7 @@ body.mode-listen {
   opacity: 0.3;
 }
 .mode-bedtime .star { background: #C4B5FD; }
-.mode-listen .star { background: #93C5FD; }
+.mode-listen .star { background: #ffccff; }
 
 /* Header */
 #app-header {
@@ -66,7 +66,7 @@ body.mode-listen {
   padding: 10px 16px;
 }
 .mode-bedtime #app-header { background: rgba(26,10,46,0.95); }
-.mode-listen #app-header { background: rgba(11,15,26,0.95); }
+.mode-listen #app-header { background: rgba(26,5,51,0.95); }
 .header-inner {
   display: flex;
   justify-content: space-between;
@@ -136,7 +136,8 @@ body.mode-listen {
   animation: pulseGlow 1.5s ease infinite;
 }
 .mode-bedtime .audio-btn.playing { border-color: #A78BFA; color: #C4B5FD; }
-.mode-listen .audio-btn.playing { border-color: #3B82F6; color: #60A5FA; }
+.mode-listen .audio-btn { background: linear-gradient(135deg, #ec4899, #a855f7); border-color: #ec4899; }
+.mode-listen .audio-btn.playing { border-color: #ec4899; color: #fff; }
 
 /* Main content */
 main {
@@ -180,8 +181,9 @@ main {
   border: 1px solid rgba(168,85,247,0.15);
 }
 .mode-listen .scene-card {
-  background: rgba(23,29,48,0.8);
-  border: 1px solid #1E2A4A;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(236,72,153,0.2);
+  border-radius: 20px;
 }
 .scene-number {
   font-family: 'Orbitron', sans-serif;
@@ -380,7 +382,7 @@ main {
   gap: 10px;
 }
 .mode-bedtime .nav-bar-bottom { background: rgba(26,10,46,0.95); border-top: 1px solid rgba(168,85,247,0.15); }
-.mode-listen .nav-bar-bottom { background: rgba(11,15,26,0.95); border-top: 1px solid #1E2A4A; }
+.mode-listen .nav-bar-bottom { background: rgba(26,5,51,0.95); border-top: 1px solid rgba(236,72,153,0.2); }
 .nav-btn {
   padding: 10px 20px;
   border-radius: 10px;
@@ -394,8 +396,8 @@ main {
 }
 .mode-bedtime .nav-btn { background: #7C3AED; color: #fff; }
 .mode-bedtime .nav-btn:hover { background: #A78BFA; }
-.mode-listen .nav-btn { background: #3B82F6; color: #fff; }
-.mode-listen .nav-btn:hover { background: #60A5FA; }
+.mode-listen .nav-btn { background: linear-gradient(135deg, #ec4899, #a855f7); color: #fff; }
+.mode-listen .nav-btn:hover { background: linear-gradient(135deg, #f472b6, #c084fc); }
 .nav-btn:disabled { opacity: 0.3; cursor: default; }
 .nav-dots {
   display: flex;
@@ -411,7 +413,7 @@ main {
 .mode-bedtime .nav-dot { background: #2D1B4E; }
 .mode-bedtime .nav-dot.active { background: #A78BFA; width: 20px; border-radius: 4px; }
 .mode-listen .nav-dot { background: #1E2A4A; }
-.mode-listen .nav-dot.active { background: #3B82F6; width: 20px; border-radius: 4px; }
+.mode-listen .nav-dot.active { background: #ec4899; width: 20px; border-radius: 4px; }
 
 /* The End */
 .the-end {
@@ -447,6 +449,23 @@ main {
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-text { color: #64748B; font-size: 14px; }
 
+@keyframes jjMascotBob {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-10px) rotate(3deg); }
+}
+.mode-bedtime .scene-card {
+  position: relative;
+}
+.mode-bedtime .scene-card::after {
+  content: '';
+  position: absolute;
+  bottom: 8px; right: 8px;
+  width: 60px; height: 60px;
+  background: url('https://i.ibb.co/FLDTT6QH/1774020751171.png') center/contain no-repeat;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 0;
+}
 .hidden { display: none; }
 </style>
 </head>
@@ -486,7 +505,7 @@ main {
 
 <script>
 var MODULE_NAME = 'story-reader';
-var MODULE_VERSION = 'v2';
+var MODULE_VERSION = 'v3';
 
 // State
 var storyData = null;
@@ -637,10 +656,10 @@ function narrateCurrentScene() {
 function updateAudioBtn() {
   var btn = document.getElementById('audio-btn');
   if (isNarrating) {
-    btn.innerHTML = '&#9724;';
+    btn.innerHTML = mode === 'listen' ? '\u2B50' : '&#9724;';
     btn.className = 'audio-btn playing';
   } else {
-    btn.innerHTML = '&#9654;';
+    btn.innerHTML = mode === 'listen' ? '\u2728' : '&#9654;';
     btn.className = 'audio-btn';
   }
 }
@@ -656,6 +675,13 @@ function renderScene() {
   if (currentScene === -1) {
     // Cover
     html += '<div class="cover">';
+    if (mode === 'listen') {
+      html += '<div style="text-align:center;margin-bottom:16px;">';
+      html += '<img src="https://i.ibb.co/DBgRLCw/1773982672701.png" ';
+      html += 'style="width:120px;height:auto;filter:drop-shadow(0 0 20px rgba(236,72,153,0.4));';
+      html += 'animation:jjMascotBob 3s ease-in-out infinite;" onerror="this.style.display=\'none\'">';
+      html += '</div>';
+    }
     html += '<div class="cover-title">' + escapeHtml(storyData.title) + '</div>';
     html += '<div class="cover-meta">' + escapeHtml(storyData.character) + ' Story';
     if (storyData.type) html += ' &bull; ' + escapeHtml(storyData.type.replace(/_/g, ' '));

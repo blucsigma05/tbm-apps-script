@@ -3,29 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="tbm-version" content="v60">
-<title>The Pulse v60 — Thompson Household</title>
+<meta name="tbm-version" content="v61">
+<title>The Pulse v61 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{
---ink:#F5E6E0;--ink2:rgba(245,230,224,0.5);--ink3:rgba(245,230,224,0.35);
---paper:#5c2833;--card:rgba(92,40,51,0.95);--card-border:rgba(212,160,137,0.45);
---red:#F0B4B4;--red-bg:rgba(240,180,180,0.1);--green:#8ECDA0;--green-bg:rgba(142,205,160,0.1);
---amber:#D4A853;--amber-bg:rgba(212,168,83,0.1);--blue:#B76E79;--blue-bg:rgba(183,110,121,0.1);
---border:rgba(245,230,224,0.08);--shadow:0 2px 12px rgba(0,0,0,0.15);--r:16px;--r-sm:10px;--r-lg:20px;
---gold:#D4A853;--gold-soft:rgba(212,168,83,0.3);--rose:#B76E79;
---positive:#8ECDA0;--negative:#F0B4B4;--warning:#D4A853;
---rose-gold:#B76E79;--citrine:#D4A853;--sage:#8ECDA0;
+:root {
+  --ink: #F5E8EE;
+  --ink2: rgba(245,232,238,0.55);
+  --ink3: rgba(245,232,238,0.32);
+  --paper: #3d1a2e;
+  --card: rgba(80,30,50,0.65);
+  --card-border: rgba(255,200,220,0.12);
+  --red: #d4888a;
+  --red-bg: rgba(212,136,138,0.1);
+  --green: #7aab85;
+  --green-bg: rgba(122,171,133,0.1);
+  --amber: #C9A84C;
+  --amber-bg: rgba(201,168,76,0.1);
+  --blue: #B8836A;
+  --blue-bg: rgba(184,131,106,0.1);
+  --border: rgba(255,200,220,0.08);
+  --shadow: 0 2px 12px rgba(0,0,0,0.2);
+  --r: 2px;
+  --r-sm: 2px;
+  --r-lg: 4px;
+  --gold: #C9A84C;
+  --gold-soft: rgba(201,168,76,0.3);
+  --rose: #B8836A;
+  --positive: #7aab85;
+  --negative: #d4888a;
+  --warning: #C9A84C;
+  --rose-gold: #B8836A;
+  --citrine: #C9A84C;
+  --sage: #7aab85;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'DM Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;line-height:1.5;overscroll-behavior-y:contain;
-background:linear-gradient(155deg, #5c2833 0%, #7a3344 15%, #8e3d4e 30%, #7a3344 50%, #5c2833 70%, #4a2028 85%, #3d1a22 100%);
+background:linear-gradient(155deg, #4a2038 0%, #3d1a2e 30%, #2e1220 60%, #3d1a2e 80%, #4a2038 100%);
 }
-body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-background:
-radial-gradient(ellipse 60% 40% at 30% 20%, rgba(212,168,83,0.06) 0%, transparent 70%),
-radial-gradient(ellipse 50% 30% at 70% 60%, rgba(183,110,121,0.05) 0%, transparent 70%);
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(212,140,160,0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 30% 20%, rgba(212,168,83,0.05) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 body::after{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.04;
 background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
@@ -50,8 +75,13 @@ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
 .sec.a1{animation:rise .5s .1s ease forwards}.sec.a2{animation:rise .5s .18s ease forwards}
 .sec.a3{animation:rise .5s .26s ease forwards}.sec.a4{animation:rise .5s .34s ease forwards}
 .sec.a5{animation:rise .5s .42s ease forwards}
-.sec-label{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:8px;padding:0;background:none;display:flex;align-items:center;gap:8px}
+.sec-label{font-size:9px;letter-spacing:5px;text-transform:uppercase;color:rgba(201,168,76,0.45);font-weight:600;margin-bottom:8px;padding:0;background:none;display:flex;align-items:center;gap:8px}
 .sec-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-soft),transparent)}
+.gold-thread {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(201,168,76,0.3) 15%, rgba(232,200,150,0.6) 50%, rgba(201,168,76,0.3) 85%, transparent 100%);
+  margin: 0;
+}
 .card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--r);box-shadow:none;padding:22px}
 .pulse-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
 .pulse-card{background:rgba(92,40,51,0.92);border:1px solid rgba(212,160,137,0.5);border-radius:var(--r);box-shadow:0 2px 16px rgba(0,0,0,0.2);padding:16px;text-align:center}
@@ -456,6 +486,11 @@ input[type=range]::-webkit-slider-thumb{width:36px;height:36px}
 </style>
 </head>
 <body>
+<div style="background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.012) 0px,rgba(255,255,255,0.012) 1px,transparent 1px,transparent 3px),repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);pointer-events:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:0;"></div>
+<div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:0;pointer-events:none;text-align:center;">
+  <div style="font-family:'Cormorant Garamond',serif;font-size:96px;font-weight:300;letter-spacing:24px;text-transform:uppercase;color:transparent;-webkit-background-clip:text;background-clip:text;background:linear-gradient(180deg,rgba(255,200,220,0.10) 0%,rgba(255,200,220,0.04) 40%,rgba(180,100,130,0.07) 60%,rgba(255,200,220,0.10) 100%);-webkit-background-clip:text;text-shadow:0 1px 0 rgba(255,210,230,0.18),0 -1px 0 rgba(0,0,0,0.35),0 2px 4px rgba(0,0,0,0.2);">THOMPSON</div>
+  <div style="font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:300;letter-spacing:32px;text-transform:uppercase;color:transparent;-webkit-background-clip:text;background-clip:text;background:linear-gradient(180deg,rgba(255,200,220,0.08) 0%,rgba(255,200,220,0.03) 40%,rgba(180,100,130,0.05) 60%,rgba(255,200,220,0.08) 100%);-webkit-background-clip:text;text-shadow:0 1px 0 rgba(255,210,230,0.12),0 -1px 0 rgba(0,0,0,0.25),0 2px 4px rgba(0,0,0,0.15);">FAMILY</div>
+</div>
 <div id="jt-emboss"><img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson Family Crest"></div>
 <div id="tbm-nav" style="position:sticky;top:0;z-index:1000;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;padding:6px 12px;background:rgba(183,110,121,0.95);border-bottom:1px solid rgba(255,255,255,0.15);font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:0.4px;">
 <a id="nav-pulse" onclick="tbmNav('pulse')" style="padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.6);transition:all 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.9)';this.style.background='rgba(255,255,255,0.1)'" onmouseout="if(!this.classList.contains('tbm-active')){this.style.color='rgba(255,255,255,0.6)';this.style.background='transparent'}"><span style="display:inline-flex;align-items:center;gap:6px;"><img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson crest" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px;opacity:0.85;border-radius:50%" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="pulse-crest-chip" style="display:none" aria-hidden="true"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5 18.5 5v6c0 4.4-2.7 8.1-6.5 10-3.8-1.9-6.5-5.6-6.5-10V5Z" fill="#1E3A8A" stroke="#C9A84C" stroke-width="1.4"/><path d="M12 7.5v8" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/><path d="M9.4 7.5h5.2" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>The Pulse</span></span></a>
@@ -490,7 +525,7 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
 <div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 
 <script>
-var TBM_VERSION = 'v60';
+var TBM_VERSION = 'v61';
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 var _lastFetchTime = null;
 var _lastGoodSim = null;
@@ -734,7 +769,7 @@ function render(){
     html += '<div id="summaryBlock" style="background:var(--card);border-left:4px solid var(--gold-soft);padding:14px 16px;margin:0 16px 16px;border-radius:0 8px 8px 0;">';
     html += '<div style="font-weight:600;font-size:15px;color:var(--ink);margin-bottom:4px;">' + escapeHtml(_ps.headline) + '</div>';
     if (_ps.detail) {
-      html += '<div style="font-size:13px;color:var(--ink2);">' + escapeHtml(_ps.detail) + '</div>';
+      html += '<div style="font-size:13px;font-weight:500;color:var(--ink);">' + escapeHtml(_ps.detail) + '</div>';
     }
     if (_ps.alert) {
       html += '<div style="font-size:12px;color:var(--amber);margin-top:6px;padding:6px 10px;background:var(--amber-bg);border-radius:6px;">' + escapeHtml(_ps.alert) + '</div>';
@@ -1197,84 +1232,114 @@ function _renderKidsWidget(data) {
 
   window._kidsWidgetData = data;
 
-  // v51 UX Restructure: Compact summary gauge — full task management moved to Parent Dashboard
+  // v61: KidsHub parity — full card layout matching TheVein skeleton, ThePulse palette
   var h = data.household;
   var bStats = data.buggsy && data.buggsy.stats ? data.buggsy.stats : {};
   var jStats = data.jj && data.jj.stats ? data.jj.stats : {};
-  var bReq = data.buggsy && data.buggsy.requiredStatus ? data.buggsy.requiredStatus : {};
-  var jReq = data.jj && data.jj.requiredStatus ? data.jj.requiredStatus : {};
-  var bDone = bReq.done || 0, bTotal = bReq.total || 0;
-  var jDone = jReq.done || 0, jTotal = jReq.total || 0;
-  var bPct = bTotal > 0 ? Math.round(bDone / bTotal * 100) : 100;
-  var jPct = jTotal > 0 ? Math.round(jDone / jTotal * 100) : 100;
 
-  // Compact kid summary rows
-  function _kidSummaryRow(kid, key, done, total, pct) {
-    var emoji = key === 'jj' ? '\u2B50' : '\u2B55';
+  // Full kid card — same skeleton as TheVein, warm ThePulse palette via CSS classes
+  function buildKidCard(kid, key) {
+    if (!kid) return '';
+    var s = kid.stats || {};
+    var req = kid.requiredStatus || {};
     var avatar = key === 'buggsy' ? 'https://i.ibb.co/Y7rjjNDg/1773710329577.png' : 'https://i.ibb.co/N2Qn0J0Q/1773720439302.png';
-    var barColor = pct >= 100 ? 'var(--green)' : pct >= 50 ? 'var(--amber)' : 'var(--red)';
-    var st = kid.screenTime || { TV: { balance: 0 }, Gaming: { balance: 0 } };
+    var completedCount = (req.done != null) ? req.done : ((s.completedCount != null) ? s.completedCount : 0);
+    var totalTasks = (req.total != null) ? req.total : ((s.totalTasks != null) ? s.totalTasks : 0);
+    var pct = totalTasks > 0 ? Math.round(completedCount / totalTasks * 100) : (s.completionPct != null ? s.completionPct : 100);
+    var earnedPoints = s.earnedPoints || 0;
+    var pendingCount = s.pendingCount || 0;
+    var st = kid.screenTime || {};
     var tvBal = (st.TV && st.TV.balance) || 0;
     var gameBal = (st.Gaming && st.Gaming.balance) || 0;
-    var screenStr = tvBal + 'm TV';
-    if (key === 'buggsy' && gameBal > 0) screenStr += ' · ' + gameBal + 'm Game';
-    var pendCnt = (kid.stats && kid.stats.pendingCount) || 0;
-    var pendBadge = pendCnt > 0 ? ' <span style="background:var(--amber);color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:8px;margin-left:4px;animation:pulse-badge 2s ease infinite">' + pendCnt + ' pending</span>' : '';
-    var rowBorder = pendCnt > 0 ? 'border-left:3px solid var(--amber);' : '';
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);' + rowBorder + '">' +
-      '<img src="' + avatar + '" alt="' + kid.name + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover">' +
-      '<div style="flex:1;min-width:0">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between">' +
-          '<span style="font-size:13px;font-weight:700;color:var(--ink)">' + emoji + ' ' + kid.name + pendBadge + '</span>' +
-          '<span style="font-size:12px;font-weight:600;color:var(--ink2)">' + done + '/' + total + ' must-dos</span>' +
+    var bankBalance = (kid.bankBalance != null) ? Number(kid.bankBalance).toFixed(2) : '0.00';
+    var allowanceMTD = kid.allowanceMTD ? Number(kid.allowanceMTD) : 0;
+    var nextR = s.nextReward;
+    var nextRewardHTML = nextR
+      ? '<div class="kid-next-reward"><span class="kid-next-reward-icon">' + (nextR.icon || '') + '</span>' +
+        '<span>' + (nextR.name || '') + '</span>' +
+        '<span class="kid-next-reward-cost">' + (nextR.cost || 0) + ' ' + (key === 'jj' ? '\u2B50' : '\u2B55') + '</span></div>'
+      : '<div class="kid-next-reward">Max reward unlocked!</div>';
+    var moneyHTML = allowanceMTD > 0
+      ? '<div class="kid-stat-pill"><div class="kid-stat-pill-val">$' + allowanceMTD.toFixed(2) + '</div><div class="kid-stat-pill-lbl">Owed MTD</div></div>'
+      : '';
+    var pendingPill = pendingCount > 0
+      ? '<div class="kid-stat-pill"><div class="kid-stat-pill-val" style="color:var(--amber)">' + pendingCount + '</div><div class="kid-stat-pill-lbl">Pending</div></div>'
+      : '';
+    return '<div class="kid-card ' + key + '">' +
+      '<div class="kid-card-glow"></div>' +
+      '<div class="kid-card-top">' +
+        '<div class="kid-card-name">' +
+          '<img src="' + avatar + '" alt="' + kid.name + '" class="kid-avatar"> ' + kid.name +
         '</div>' +
-        '<div style="height:5px;background:rgba(0,0,0,0.06);border-radius:3px;margin-top:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + barColor + ';border-radius:3px;transition:width 0.3s"></div></div>' +
-        '<div style="display:flex;gap:10px;margin-top:3px;font-size:10px;color:var(--ink3);font-weight:500">' +
-          '<span>\uD83D\uDCFA ' + screenStr + '</span>' +
-          '<span>\uD83C\uDFE6 $' + ((kid.bankBalance != null) ? Number(kid.bankBalance).toFixed(2) : '0.00') + '</span>' +
-          '<span>' + ((kid.stats && kid.stats.earnedPoints) || 0) + ' ' + (key === 'jj' ? 'stars' : 'rings') + '</span>' +
+        '<div>' +
+          '<div class="kid-points">' + earnedPoints + '</div>' +
+          '<div class="kid-points-label">' + (key === 'jj' ? 'STARS' : 'RINGS') + '</div>' +
         '</div>' +
       '</div>' +
+      '<div class="kid-prog-wrap">' +
+        '<div class="kid-prog-label">' +
+          '<span>' + completedCount + ' / ' + totalTasks + ' done</span>' +
+          '<span>' + pct + '%</span>' +
+        '</div>' +
+        '<div class="kid-prog-track"><div class="kid-prog-fill" style="width:' + pct + '%"></div></div>' +
+      '</div>' +
+      '<div class="kid-stats-row">' +
+        '<div class="kid-stat-pill"><div class="kid-stat-pill-val">\uD83C\uDFE6 $' + bankBalance + '</div><div class="kid-stat-pill-lbl">Bank</div></div>' +
+        '<div class="kid-stat-pill"><div class="kid-stat-pill-val">' + tvBal + 'm</div><div class="kid-stat-pill-lbl">TV Bank</div></div>' +
+        (key === 'buggsy' ? '<div class="kid-stat-pill"><div class="kid-stat-pill-val">' + gameBal + 'm</div><div class="kid-stat-pill-lbl">Game Bank</div></div>' : '') +
+        pendingPill +
+        moneyHTML +
+      '</div>' +
+      nextRewardHTML +
     '</div>';
   }
 
-  // Pending approvals summary
+  // Pending alert banner
   var totalPending = (bStats.pendingCount || 0) + (jStats.pendingCount || 0);
   var totalAsks = (data.buggsy && data.buggsy.pendingRequestCount || 0) + (data.jj && data.jj.pendingRequestCount || 0);
   var alertParts = [];
   if (totalPending > 0) alertParts.push(totalPending + ' task' + (totalPending > 1 ? 's' : '') + ' need approval');
   if (totalAsks > 0) alertParts.push(totalAsks + ' ask' + (totalAsks > 1 ? 's' : '') + ' waiting');
   var alertHTML = alertParts.length > 0
-    ? '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--amber-bg);border-radius:8px;margin-bottom:6px">' +
+    ? '<div style="display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--amber-bg);border-radius:8px;margin-bottom:10px">' +
         '<span style="font-size:14px">\u26A0\uFE0F</span>' +
         '<span style="font-size:12px;font-weight:700;color:var(--amber)">' + alertParts.join(' \u00b7 ') + '</span>' +
       '</div>'
     : '';
 
-  // Budget line
-  var budgetLine = '';
-  if (h.totalOwedMTD > 0 || h.totalApprovedMTD > 0) {
-    budgetLine = '<div style="display:flex;justify-content:center;gap:16px;padding:6px 12px;font-size:10px;font-weight:600;color:var(--ink3)">' +
-      '<span>Owed: $' + h.totalOwedMTD.toFixed(2) + '</span>' +
-      '<span>Approved: $' + h.totalApprovedMTD.toFixed(2) + '</span>' +
-    '</div>';
-  }
+  // Budget footer
+  var budgetHTML = '<div class="kids-budget-footer">' +
+    '<div class="kids-budget-stat">' +
+      '<div class="kids-budget-val' + (h.totalOwedMTD > 0 ? ' warning' : '') + '">$' + h.totalOwedMTD.toFixed(2) + '</div>' +
+      '<div class="kids-budget-lbl">Owed MTD</div>' +
+    '</div>' +
+    '<div class="kids-budget-stat">' +
+      '<div class="kids-budget-val">$' + h.totalApprovedMTD.toFixed(2) + '</div>' +
+      '<div class="kids-budget-lbl">Approved</div>' +
+    '</div>' +
+    '<div class="kids-budget-stat">' +
+      '<div class="kids-budget-val' + ((h.weeklyBudgetImpact || 0) > 0 ? ' warning' : '') + '">$' + ((h.weeklyBudgetImpact || 0).toFixed(2)) + '</div>' +
+      '<div class="kids-budget-lbl">~Weekly Rate</div>' +
+    '</div>' +
+  '</div>';
 
   // Parent dashboard link
   var _pUrl = _tbmBaseUrl ? (_tbmBaseUrl + '?page=kidshub&view=parent') : '#';
   var _pReady = _pUrl !== '#';
-  var navHTML = '<div style="padding:8px 12px;text-align:center">' +
-    '<a href="' + _pUrl + '" target="_blank" style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;background:var(--paper);border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:700;color:var(--ink);text-decoration:none;letter-spacing:0.3px' + (!_pReady ? ';opacity:0.4;pointer-events:none' : '') + '">' +
-      '\u2699\uFE0F Manage Tasks & Approvals' +
+  var navHTML = '<div class="kids-links">' +
+    '<a href="' + _pUrl + '" target="_blank" class="kids-link-btn buggsy" style="' + (!_pReady ? 'opacity:0.4;pointer-events:none;' : '') + '">' +
+      '\u2699\uFE0F Manage Tasks' +
     '</a>' +
   '</div>';
 
-  // Assemble compact widget
+  // Assemble card-grid widget
   body.innerHTML =
     alertHTML +
-    _kidSummaryRow(data.buggsy, 'buggsy', bDone, bTotal, bPct) +
-    _kidSummaryRow(data.jj, 'jj', jDone, jTotal, jPct) +
-    budgetLine +
+    '<div class="kids-grid">' +
+      buildKidCard(data.buggsy, 'buggsy') +
+      buildKidCard(data.jj, 'jj') +
+    '</div>' +
+    budgetHTML +
     navHTML;
 }
 

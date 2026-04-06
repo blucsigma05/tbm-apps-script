@@ -1,11 +1,11 @@
 // ════════════════════════════════════════════════════════════════════
-// GAS HARDENING v7 — Centralized Monitoring, Logging & Maintenance
+// GAS HARDENING v8 — Centralized Monitoring, Logging & Maintenance
 // WRITES TO: ErrorLog, PerfLog
 // READS FROM: (all files for version reporting)
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 7; }
+function getGASHardeningVersion() { return 8; }
 
 // v6: openById migration — trigger-safe spreadsheet accessor
 var _ghSS = null;
@@ -562,7 +562,9 @@ function migrateConfigToProperties() {
   // Only set if not already set (don't overwrite manual edits)
   var defaults = {
     'KIDS_DOMAIN': 'kids.memovein.com',
-    'TILLER_STALE_DAYS': '3',
+    'TILLER_STALE_HOURS': '72',
+    'MONTH_CLOSE_GRACE_DAYS': '15',
+    'ERROR_RATE_THRESHOLD': '5',
     'PERF_ALERT_THRESHOLD_SEC': '240',
     'ERROR_LOG_MAX_ROWS': '500',
     'PERF_LOG_SLOW_THRESHOLD_SEC': '3'
@@ -821,13 +823,13 @@ function getSystemHealth() {
             accountDates[acct] = txnDate;
           }
         }
-        var staleDays = parseInt(getConfig_('TILLER_STALE_DAYS', '3'));
+        var staleHours = parseInt(getConfig_('TILLER_STALE_HOURS', '72'));
         var stale = [];
         var accounts = Object.keys(accountDates);
         for (var a = 0; a < accounts.length; a++) {
-          var ageDays = Math.floor((now.getTime() - accountDates[accounts[a]].getTime()) / (1000 * 60 * 60 * 24));
-          if (ageDays > staleDays) {
-            stale.push({ name: accounts[a], ageDays: ageDays });
+          var ageHours = Math.floor((now.getTime() - accountDates[accounts[a]].getTime()) / (1000 * 60 * 60));
+          if (ageHours > staleHours) {
+            stale.push({ name: accounts[a], ageHours: ageHours });
           }
         }
         tillerStatus.status = stale.length === 0 ? 'healthy' : 'stale';
@@ -893,6 +895,12 @@ function getSystemHealth() {
       }
       monthStatus.priorMonth = priorLabel;
       monthStatus.priorClosed = priorClosed;
+      var monthEndDate = new Date(priorYear, priorMonth, 0);
+      var daysSinceMonthEnd = Math.floor((now.getTime() - monthEndDate.getTime()) / (1000 * 60 * 60 * 24));
+      var graceDays = parseInt(getConfig_('MONTH_CLOSE_GRACE_DAYS', '15'));
+      monthStatus.daysSinceMonthEnd = daysSinceMonthEnd;
+      monthStatus.graceRemaining = priorClosed ? 0 : Math.max(0, graceDays - daysSinceMonthEnd);
+      monthStatus.priorCloseStatus = priorClosed ? 'closed' : (daysSinceMonthEnd > graceDays ? 'overdue' : 'pending');
     } catch(e) {}
     
     result.monthStatus = monthStatus;
@@ -914,8 +922,10 @@ function getSystemHealth() {
           recent.push({ fn: errData[e1][1], msg: errData[e1][2], at: errData[e1][0] });
         }
       }
+      var errThreshold = parseInt(getConfig_('ERROR_RATE_THRESHOLD', '5'));
       errorSummary.count24h = recent.length;
-      errorSummary.status = recent.length === 0 ? 'healthy' : (recent.length > 5 ? 'critical' : 'warning');
+      errorSummary.threshold = errThreshold;
+      errorSummary.status = recent.length === 0 ? 'healthy' : (recent.length > errThreshold ? 'critical' : 'warning');
       if (recent.length > 0) {
         errorSummary.lastError = { fn: recent[recent.length - 1].fn, msg: recent[recent.length - 1].msg };
       }
@@ -1883,5 +1893,5 @@ function diagPreQA() {
 }
 
 
-// END OF FILE — GAS HARDENING v7
+// END OF FILE — GAS HARDENING v8
 // ═══════════════════════════════════════════════════════════════
