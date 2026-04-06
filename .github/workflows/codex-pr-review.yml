@@ -68,8 +68,7 @@ jobs:
           diff = open('pr_diff_send.txt').read()
           truncated = os.environ.get('TRUNCATED', 'false') == 'true'
 
-          system_prompt = """You are a senior code reviewer for TBM (TillerBudgetMaster), a Google Apps Script \
-+ HtmlService household finance and kids-chore system. Review the PR diff against these rules:
+          system_prompt = """You are a senior code reviewer for TBM (TillerBudgetMaster), a Google Apps Script + HtmlService household finance and kids-chore system. Review the PR diff against these rules:
 
 P1 — CRITICAL (fail the check):
 1. No hardcoded sheet names with emoji prefixes — must use TAB_MAP from DataEngine.gs
