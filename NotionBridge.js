@@ -8,7 +8,7 @@
 //
 // Version history tracked in Notion deploy page. Do not add version comments here.
 
-function getNotionBridgeVersion() { return 'NotionBridge v3'; }
+function getNotionBridgeVersion() { return 3; }
 
 // ═══════════════════════════════════════════════════════════════
 // SECTION 1: Configuration

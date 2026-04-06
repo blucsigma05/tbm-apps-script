@@ -5,7 +5,7 @@
 // KidsHub.gs v6 Full Deploy. These utilities handle cleanup.
 // ═══════════════════════════════════════════════════════════════
 
-function getUtilityVersion() { return 'Utility v7'; }
+function getUtilityVersion() { return 7; }
 
 
 // ── FIX 3: Add Parent_PIN column to KH_Children ─────────────

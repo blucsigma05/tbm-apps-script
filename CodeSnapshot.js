@@ -5,7 +5,7 @@
 // READS FROM: (reads .gs source files for snapshot)
 // ════════════════════════════════════════════════════════════════════
 
-function getCodeSnapshotVersion() { return 'CodeSnapshot v4'; }
+function getCodeSnapshotVersion() { return 4; }
 
 function _snapshotConfig_() {
   var props = PropertiesService.getScriptProperties();
@@ -44,4 +44,4 @@ function runSnapshotSingle() {
   return ThompsonLib.snapshotToSingleDoc(cfg);
 }
 
-// END CodeSnapshot.js v4
+// END CodeSnapshot.gs v4
