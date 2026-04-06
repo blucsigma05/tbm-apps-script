@@ -2138,7 +2138,7 @@ function updateMealPlan(meal, cook, notes) {
     return JSON.stringify({ status: 'ok', meal: mealName, cook: cookedBy });
   } catch(e) {
     if (typeof logError_ === 'function') logError_('updateMealPlan', e);
-    return JSON.stringify({ status: 'error', message: e.message });
+    return JSON.stringify({ status: 'error', message: 'Could not save dinner: ' + e.message });
   } finally {
     lk.lock.releaseLock();
   }
