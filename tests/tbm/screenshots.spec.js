@@ -30,7 +30,7 @@ var SURFACES = [
   { path: '/spine', device: 'firestick', label: 'spine-firestick',
     sentinel: '#waterfallRows .wf-val' },
   { path: '/pulse', device: 's25', label: 'pulse-s25',
-    requiresPin: true, sentinel: '#loading-overlay' },
+    requiresPin: true, sentinel: '#app .footer' },
   { path: '/vein', device: 'omnibook', label: 'vein-omnibook',
     requiresPin: true, sentinel: '#debtRows .d-bal' }
 ];
@@ -52,17 +52,7 @@ test.beforeEach(function() {
 async function waitForSentinel(page, surface) {
   var sel = surface.sentinel;
 
-  if (sel === '#loading-overlay') {
-    // ThePulse: wait for overlay to be hidden (display:none)
-    await page.waitForFunction(
-      'document.getElementById("loading-overlay") && ' +
-      'document.getElementById("loading-overlay").style.display === "none"',
-      { timeout: SENTINEL_TIMEOUT }
-    );
-    return;
-  }
-
-  // Default: wait for data-injected element to exist in DOM
+  // Wait for data-injected element to exist in DOM
   await page.waitForSelector(sel, { state: 'attached', timeout: SENTINEL_TIMEOUT });
 
   // Verify the sentinel has real content (not just an empty shell)
