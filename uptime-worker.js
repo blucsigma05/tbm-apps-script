@@ -127,8 +127,13 @@ function handleResult(name, url, isUp, statusCode, errorMsg) {
     // ── State transition ─────────────────────────────────────────────────────
     var newState;
     if (isUp) {
+      if (prevStatus === null) {
+        // First check ever — initialize silently, no alert
+        newState = { status: 'UP', since: now, lastAlertAt: 0 };
+        return writeKVState(kvKey, newState);
+      }
       // DOWN → UP: send recovery alert
-      var downSince = prev ? (prev.since || now) : now;
+      var downSince = prev.since || now;
       var downDur   = formatDuration(now - downSince);
       var recMsg    = 'TBM RECOVERED — ' + name + ' back online after ' + downDur;
       newState = { status: 'UP', since: now, lastAlertAt: 0 };
