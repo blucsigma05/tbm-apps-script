@@ -1,0 +1,61 @@
+# .github/workflows/hyg-02-orphaned-prs.yml
+# Orphaned PR Sweep — runs daily at 10:00 UTC.
+# Identifies open PRs with no activity for ORPHAN_DAYS. Sends Pushover.
+# Called by: cron daily 10:00 UTC + workflow_dispatch
+# Env vars required: GH_TOKEN (auto), PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN
+
+name: HYG-02 Orphaned PR Sweep
+
+on:
+  schedule:
+    - cron: '0 10 * * *'   # Daily 10:00 UTC (05:00 Central)
+  workflow_dispatch:
+    inputs:
+      orphan_days:
+        description: 'Days without PR activity before orphaned (default: 5)'
+        required: false
+        default: '5'
+
+permissions:
+  contents: read
+
+jobs:
+  orphan-sweep:
+    name: Orphaned PR Sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run orphaned PR check
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ORPHAN_DAYS: ${{ inputs.orphan_days || '5' }}
+          GITHUB_OUTPUT: ${{ env.GITHUB_OUTPUT }}
+        run: python3 .github/scripts/check_orphaned_prs.py
+
+      - name: Pushover — orphaned PRs found
+        if: steps.check.outputs.has_findings == 'true'
+        env:
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+        run: |
+          if [ -z "$PUSHOVER_USER_KEY" ] || [ -z "$PUSHOVER_APP_TOKEN" ]; then
+            echo "Pushover secrets not set — skipping notification."
+            exit 0
+          fi
+          MSG=$(cat hyg02-message.txt 2>/dev/null || echo "Orphaned PRs found — see Actions log.")
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -sS \
+            --form-string "token=${PUSHOVER_APP_TOKEN}" \
+            --form-string "user=${PUSHOVER_USER_KEY}" \
+            --form-string "title=HYG-02: Orphaned PRs" \
+            --form-string "message=${MSG}" \
+            --form-string "url=${RUN_URL}" \
+            --form-string "url_title=View run" \
+            --form-string "priority=0" \
+            https://api.pushover.net/1/messages.json
