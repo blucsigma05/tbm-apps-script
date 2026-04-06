@@ -1,4 +1,4 @@
-// NotionBridge.gs v2
+// NotionBridge.gs v3
 // Pushes TBM health data to Notion for Custom Agent consumption.
 // Setup: Script Properties → NOTION_TOKEN = your integration token
 //        Script Properties → NOTION_HEALTH_DB = 82411a222f774ee59574e06d5ac76154
@@ -7,6 +7,8 @@
 // Install trigger: Run installWeeklyHealthPush() once from Apps Script editor.
 //
 // Version history tracked in Notion deploy page. Do not add version comments here.
+
+function getNotionBridgeVersion() { return 3; }
 
 // ═══════════════════════════════════════════════════════════════
 // SECTION 1: Configuration
@@ -541,4 +543,4 @@ function installWeeklyHealthPush() {
   Logger.log('✅ Weekly trigger installed: pushHealthSnapshot() every Wednesday ~10 AM');
 }
 
-// EOF — NotionBridge.gs v2
+// EOF — NotionBridge.gs v3
