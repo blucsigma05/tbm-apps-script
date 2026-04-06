@@ -22,6 +22,9 @@ import time
 import urllib.request
 import urllib.error
 
+# HTML marker for deterministic comment matching in the workflow.
+# The workflow finds/updates existing comments by this marker, not by fuzzy text.
+COMMENT_MARKER = "<!-- codex-pr-review -->"
 
 SYSTEM_PROMPT = (
     "You are a senior code reviewer for TBM (TillerBudgetMaster), a Google Apps Script "
@@ -102,7 +105,11 @@ def send_to_openai(diff_text, truncated, api_key):
 
 
 def format_comment(data, truncated):
-    """Format the API response into a Markdown PR comment."""
+    """Format the API response into a Markdown PR comment.
+
+    Every comment starts with COMMENT_MARKER so the workflow can find and
+    update it deterministically without fuzzy text matching.
+    """
     trunc_note = ""
     if truncated:
         trunc_note = "\n\n> Warning: Diff truncated at 12 000 chars — large PR, review may be partial."
@@ -111,11 +118,13 @@ def format_comment(data, truncated):
         err = data["error"]
         if err == "auth_expired":
             return (
+                COMMENT_MARKER + "\n"
                 "## Warning Codex PR Review: AUTH ERROR\n\n"
                 "`OPENAI_API_KEY` secret has expired or is invalid. "
                 "Update it in repo Settings > Secrets." + trunc_note
             )
         return (
+            COMMENT_MARKER + "\n"
             "## Warning Codex PR Review: API ERROR\n\n"
             "Could not reach OpenAI: `%s`\n\nCheck workflow logs." % err + trunc_note
         )
@@ -123,7 +132,7 @@ def format_comment(data, truncated):
     content = data["choices"][0]["message"]["content"]
     verdict = "FAIL" if "**Verdict:** FAIL" in content else "PASS"
     icon = "PASS" if verdict == "PASS" else "FAIL"
-    return "## %s Codex PR Review: %s%s\n\n%s" % (icon, verdict, trunc_note, content)
+    return "%s\n## %s Codex PR Review: %s%s\n\n%s" % (COMMENT_MARKER, icon, verdict, trunc_note, content)
 
 
 def extract_verdict(data):
@@ -152,6 +161,7 @@ def main():
         write_github_output("verdict", "SKIP")
         with open("review_comment.md", "w") as f:
             f.write(
+                COMMENT_MARKER + "\n"
                 "## Warning Codex PR Review: SKIPPED\n\n"
                 "**Missing secret:** `OPENAI_API_KEY` — configure it in repo Settings > Secrets.\n"
             )
@@ -165,7 +175,7 @@ def main():
         print("Diff file not found: %s" % diff_file, file=sys.stderr)
         write_github_output("verdict", "ERROR")
         with open("review_comment.md", "w") as f:
-            f.write("## Warning Codex PR Review: ERROR\n\nDiff file `%s` not found.\n" % diff_file)
+            f.write(COMMENT_MARKER + "\n## Warning Codex PR Review: ERROR\n\nDiff file `%s` not found.\n" % diff_file)
         return
 
     # Send to OpenAI

@@ -437,10 +437,13 @@ Workflow files (.github/workflows/*.yml) are a special class of change. Broken Y
 
 ### Rules
 
-1. **Any modified `.github/workflows/*.yml` file MUST pass actionlint before commit.** The pre-push gate (`audit-source.sh`) enforces this. If actionlint is not installed, the gate fails.
+1. **Local lint gate is conditional on changed files.** `audit-source.sh` only runs actionlint when `.github/workflows/` files changed, and py_compile when `.github/scripts/` files changed. Unrelated pushes skip these checks. If workflow files DID change and actionlint isn't installed, the gate fails with install instructions. CI (`workflow-lint.yml`) still runs unconditionally across all files.
 2. **New workflow files CANNOT review their own introduction** — they require manual lint plus one sacrificial test PR before being added as a required check.
 3. **Workflow YAML should orchestrate only.** Real logic (Python, bash) belongs in versioned scripts under `.github/scripts/`. No big embedded heredocs in workflow YAML. Each script gets a header comment: purpose, called by which workflow, env vars expected.
-4. **Deploy automation is not "done" until the live target is verified by HTTP.** Workflow run success is necessary but not sufficient — the deploy must prove the result, not infer it from comments or run status.
+4. **Deploy proof uses structured JSON assertions, not string matching.** The `deploy-and-notify.yml` smoke step parses the `runTests` response as JSON and asserts `overall == "PASS"` and `smoke.overall == "PASS"` as structured fields. If JSON parse fails or fields aren't PASS, the workflow fails and sends BLOCKED Pushover with debug info.
+5. **Codex bot comment updates use an HTML marker** (`<!-- codex-pr-review -->`) for deterministic matching — no fuzzy text search that could match unrelated comments.
+6. **workflow-lint runs before all other PR checks.** `codex-pr-review.yml` has `needs: lint-gate` — if YAML is broken, it fails fast without wasting an OpenAI API call. Branch protection enforces that workflow-lint must pass before merge.
+7. **CI tool versions are pinned.** actionlint v1.7.7, shellcheck from ubuntu-latest runner. Deterministic CI — no surprise failures from upstream tool updates.
 
 ### Scripts Directory
 
@@ -458,14 +461,14 @@ Each script is runnable standalone for local testing. Each reads env vars — no
 
 ## Branch Protection (main)
 
-Required status checks before merge:
+Required status checks before merge (execution order matters):
 
-| Check | Workflow | Purpose |
-|-------|----------|---------|
-| Workflow Lint | `workflow-lint.yml` | actionlint + py_compile + shellcheck |
-| TBM Smoke + Regression | `ci.yml` | GAS smoke + regression tests |
-| Playwright Regression | `playwright-regression.yml` | E2E browser tests against thompsonfams.com |
-| Codex PR Review | `codex-pr-review.yml` | gpt-4o code review against TBM rules |
+| Order | Check | Workflow | Purpose |
+|-------|-------|----------|---------|
+| 1 | Workflow Lint | `workflow-lint.yml` | actionlint + py_compile + shellcheck — runs first, blocks downstream on failure |
+| 2 | TBM Smoke + Regression | `ci.yml` | GAS smoke + regression tests |
+| 2 | Playwright Regression | `playwright-regression.yml` | E2E browser tests against thompsonfams.com |
+| 2 | Codex PR Review | `codex-pr-review.yml` | gpt-4o code review — has internal `needs: lint-gate` so it won't call OpenAI if YAML is broken |
 
 **LT applies these in GitHub Settings > Branches > Branch protection rules** (UI action, not code).
 

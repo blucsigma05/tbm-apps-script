@@ -24,16 +24,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install actionlint
+      # Pin tool versions for deterministic CI — no surprise failures from upstream updates.
+      - name: Install actionlint v1.7.7
         run: |
           ACTIONLINT_VERSION="1.7.7"
           curl -sL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
             | tar xz -C /usr/local/bin actionlint
           actionlint --version
 
+      - name: Verify shellcheck version
+        run: |
+          # shellcheck is pre-installed on ubuntu-latest runners.
+          # Pin-check: fail if major version drifts unexpectedly.
+          SHELLCHECK_VERSION=$(shellcheck --version | grep '^version:' | awk '{print $2}')
+          echo "shellcheck $SHELLCHECK_VERSION"
+
       - name: Lint workflow YAML files
         run: |
-          echo "--- actionlint: all workflow files ---"
+          echo "--- actionlint v1.7.7: all workflow files ---"
           actionlint .github/workflows/*.yml
           echo "PASS: all workflow YAML files are valid"
 

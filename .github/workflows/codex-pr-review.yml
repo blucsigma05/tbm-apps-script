@@ -1,6 +1,9 @@
 # .github/workflows/codex-pr-review.yml
 # Codex PR Review — sends PR diff to OpenAI gpt-4o for TBM-specific code review.
 # Logic lives in .github/scripts/codex_review.py (no heredocs in YAML).
+#
+# Runs a fast YAML lint gate first; skips the OpenAI call if workflows are broken.
+# This avoids wasting API calls on a PR that will fail workflow-lint anyway.
 
 name: Codex PR Review
 
@@ -23,8 +26,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Fast gate: if workflow YAML is broken, fail early and skip the OpenAI call.
+  lint-gate:
+    name: Pre-flight Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install actionlint v1.7.7
+        run: |
+          curl -sL "https://github.com/rhysd/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz" \
+            | tar xz -C /usr/local/bin actionlint
+
+      - name: Lint workflows
+        run: actionlint .github/workflows/*.yml
+
+      - name: Compile scripts
+        run: |
+          for pyfile in .github/scripts/*.py; do
+            [ -f "$pyfile" ] && python3 -m py_compile "$pyfile"
+          done
+
   review:
     name: Codex PR Review
+    needs: lint-gate
     runs-on: ubuntu-latest
     timeout-minutes: 10
     if: >
@@ -76,7 +103,7 @@ jobs:
               per_page: 100,
             });
             const existing = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('Codex PR Review')
+              c.user.type === 'Bot' && c.body.includes('<!-- codex-pr-review -->')
             );
             if (existing) {
               await github.rest.issues.updateComment({
