@@ -1,0 +1,23 @@
+name = "tbm-uptime"
+main = "uptime-worker.js"
+compatibility_date = "2024-09-01"
+
+# Cron: every 5 minutes
+[triggers]
+crons = ["*/5 * * * *"]
+
+# KV namespace binding — LT must create this namespace first:
+#   CF Dashboard → Workers & Pages → KV → Create namespace → "UPTIME_KV"
+#   Then copy the namespace_id here and re-deploy.
+[[kv_namespaces]]
+binding    = "UPTIME_KV"
+id         = "fa802b13db164a09a226607d5d68d847"
+preview_id = "fa802b13db164a09a226607d5d68d847"
+
+# Secrets (set via CLI, never in this file):
+#   wrangler secret put PUSHOVER_TOKEN --config wrangler-uptime.toml
+#   wrangler secret put PUSHOVER_USER  --config wrangler-uptime.toml
+#   wrangler secret put UPTIME_ENDPOINTS --config wrangler-uptime.toml
+#
+# UPTIME_ENDPOINTS value (JSON array, one line):
+#   [{"name":"TBM Web","url":"https://thompsonfams.com/pulse"},{"name":"GAS API","url":"https://thompsonfams.com/api?fn=getOpsHealthSafe&args=[]"}]
