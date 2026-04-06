@@ -2135,6 +2135,9 @@ function updateMealPlan(meal, cook, notes) {
     sheet.appendRow([today, mealName, cookedBy, mealNotes, now]);
     stampKHHeartbeat_();
     return JSON.stringify({ status: 'ok', meal: mealName, cook: cookedBy });
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('updateMealPlan', e);
+    return JSON.stringify({ status: 'error', message: e.message || 'Dinner log failed' });
   } finally {
     lk.lock.releaseLock();
   }

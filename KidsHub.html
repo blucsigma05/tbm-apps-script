@@ -2246,10 +2246,10 @@ function updateBuggsy() {
         var todHint = mustDoAvailable[0].timeOfDay ? mustDoAvailable[0].timeOfDay.replace(/^\d+-/,'') : '';
         gateMsg = '⚡ Last one! ' + (todHint ? todHint + ': ' : '') + lastTask;
       } else {
-        var periodHint = req.currentPeriod === 'morning' ? 'morning ' : (req.currentPeriod === 'afternoon' ? 'morning + afternoon ' : '');
-        gateMsg = '🔒 Clear ' + leftCount + ' of ' + (req.total || 0) + ' ' + periodHint + 'must-do' + ((req.total || 0) === 1 ? '' : 's') + ' to unlock rewards!';
+        gateMsg = '🔒 ' + leftCount + ' must-do' + (leftCount === 1 ? '' : 's') + ' left — clear to unlock rewards!';
       }
-      qlHtml += '<div style="margin-bottom:10px;padding:10px 12px;border-radius:8px;border:1px solid ' + (req.allClear ? 'rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);color:#86efac' : 'rgba(245,158,11,0.35);background:rgba(245,158,11,0.08);color:#fbbf24') + ';font-family:\'Press Start 2P\', monospace;font-size:7px;line-height:1.8">' + gateMsg + '</div>';
+      var gateProgress = (req.done || 0) + '/' + (req.total || 0) + ' done';
+      qlHtml += '<div style="margin-bottom:10px;padding:10px 12px;border-radius:8px;border:1px solid ' + (req.allClear ? 'rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);color:#86efac' : 'rgba(245,158,11,0.35);background:rgba(245,158,11,0.08);color:#fbbf24') + ';font-family:\'Press Start 2P\', monospace;font-size:7px;line-height:1.8">' + gateMsg + '<div style="font-size:6px;margin-top:4px;opacity:0.7">' + gateProgress + '</div></div>';
       qlHtml += '<div class="b-sec" style="padding:0 0 8px;max-width:none;margin:0"><span class="b-sec-title" style="color:#22c55e">✅ MUST DO</span><span class="b-sec-badge">' + mustDoAvailable.length + '</span></div>';
       if (mustDoAvailable.length === 0) {
         qlHtml += '<div class="b-empty">All must-dos clear ✅</div>';
@@ -2744,9 +2744,8 @@ function updateJJ() {
         jjGateMsg = periodLabel + ' · ' + (req.done || 0) + '/' + (req.total || 0) + ' clear';
         jjGateDetail = '⚡ Last one! ' + (todHint ? todHint + ': ' : '') + lastTask;
       } else {
-        var periodHint = req.currentPeriod === 'morning' ? 'morning ' : (req.currentPeriod === 'afternoon' ? 'morning + afternoon ' : '');
-        jjGateMsg = periodLabel + ' · ' + (req.done || 0) + '/' + (req.total || 0) + ' clear';
-        jjGateDetail = 'Clear ' + leftCount + ' of ' + (req.total || 0) + ' ' + periodHint + 'must-do' + ((req.total || 0) === 1 ? '' : 's') + ' to unlock rewards!';
+        jjGateMsg = periodLabel + ' · ' + (req.done || 0) + '/' + (req.total || 0) + ' done';
+        jjGateDetail = leftCount + ' must-do' + (leftCount === 1 ? '' : 's') + ' left — clear to unlock rewards!';
       }
       tlHtml += '<div style="margin:0 14px 10px;padding:12px 14px;border-radius:18px;border:2px solid ' + (req.allClear ? 'rgba(134,239,172,0.45);background:rgba(134,239,172,0.12);color:#86efac' : 'rgba(253,230,138,0.4);background:rgba(253,230,138,0.12);color:#fde68a') + ';font-size:14px;font-weight:800;text-align:center">' + jjGateMsg + '<div style="font-size:12px;font-weight:700;margin-top:4px">' + jjGateDetail + '</div></div>';
       tlHtml += '<div class="jj-sec-title" style="color:#86efac;padding-top:0">✅ Must-Do</div>';
