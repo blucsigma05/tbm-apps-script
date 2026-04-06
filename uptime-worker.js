@@ -198,10 +198,11 @@ function sendPushover(message, priority) {
     body:    body
   }).then(function(resp) {
     if (!resp.ok) {
-      console.error('Pushover returned ' + resp.status);
+      return Promise.reject(new Error('Pushover returned ' + resp.status));
     }
   }).catch(function(e) {
     console.error('Pushover send failed: ' + e.message);
+    return Promise.reject(e);
   });
 }
 
