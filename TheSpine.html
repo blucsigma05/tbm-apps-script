@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
-<meta name="tbm-version" content="TheSpine v49">
-<title>TheSpine v49 — Office Ambient Display</title>
+<meta name="tbm-version" content="TheSpine v50">
+<title>TheSpine v50 — Office Ambient Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -70,7 +70,7 @@ body.evening{
 .loader-ring{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,.22);border-top-color:var(--ice);animation:spin .9s linear infinite}
 .loader-txt{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-dim)}
 @keyframes spin{to{transform:rotate(360deg)}}
-.page{position:relative;z-index:1;width:100vw;height:100vh;padding:28px 18px 46px var(--safe);display:grid;grid-template-rows:auto 11% 40% 45% auto;gap:4px}
+.page{position:relative;z-index:1;width:100vw;height:100vh;padding:20px 18px 8px var(--safe);padding-top:calc(28px + 22px);display:grid;grid-template-rows:auto 10% 37% 1fr auto;gap:4px}
 .glass{position:relative;border:1px solid rgba(212,168,67,.28);border-radius:var(--r);background:var(--card);box-shadow:0 4px 20px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.06);overflow:hidden}
 .glass.warm{background:var(--card-warm)}
 .glass::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,67,.22),transparent)}
@@ -198,12 +198,12 @@ body.evening{
 .kid-gate.clear.pulse{animation:allClearPulse 2s ease-in-out 1}
 .kid-gate.yesterday{background:rgba(232,168,56,.10);border-color:rgba(232,168,56,.22)}
 .kid-ask-badge{font-size:8px;font-weight:800;color:rgba(245,158,11,.74);padding:1px 5px;border-radius:4px;background:rgba(245,158,11,.10);border:1px solid rgba(245,158,11,.18)}
-.kid-task-zone{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:0;overflow:hidden}
+.kid-task-zone{display:grid;grid-template-columns:1fr 1fr;gap:4px;min-height:0;overflow:hidden;align-content:start}
 .kid-col{display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .kid-col-head{font-size:7px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;margin-bottom:2px;flex-shrink:0}
 .kid-col-head.active{color:var(--mint)}
 .kid-col-head.pend-h{color:var(--ice)}
-.kid-tasks{display:flex;flex-direction:column;gap:2px;overflow:hidden;flex:1;min-height:0}
+.kid-tasks{display:flex;flex-direction:column;gap:2px;overflow:hidden;flex:1;min-height:0;max-height:100%}
 .kid-task{display:flex;align-items:center;gap:5px;padding:2px 5px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);flex-shrink:0}
 .kid-task.done{opacity:.5}
 .kid-task-icon{font-size:12px;flex-shrink:0;width:16px;text-align:center}
@@ -234,23 +234,29 @@ body.evening{
 }
 .kid-char-wm {
   position: absolute;
-  right: -8px;
-  bottom: -8px;
-  width: 80px;
-  height: 80px;
+  right: -10px;
+  bottom: -10px;
+  width: 140px;
+  height: 140px;
   object-fit: contain;
-  opacity: 0.08;
+  opacity: 0.28;
   pointer-events: none;
   z-index: 0;
   transition: opacity 0.6s ease, filter 0.6s ease;
 }
+.kid-card.buggsy .kid-char-wm {
+  filter: drop-shadow(0 0 12px rgba(212,168,67,.35));
+}
+.kid-card.jj .kid-char-wm {
+  filter: drop-shadow(0 0 12px rgba(249,168,212,.35));
+}
 .kid-card.buggsy.wm-active .kid-char-wm {
-  opacity: 0.22;
-  filter: drop-shadow(0 0 8px rgba(212,168,67,.5));
+  opacity: 0.52;
+  filter: drop-shadow(0 0 18px rgba(212,168,67,.6));
 }
 .kid-card.jj.wm-active .kid-char-wm {
-  opacity: 0.22;
-  filter: drop-shadow(0 0 8px rgba(249,168,212,.5));
+  opacity: 0.52;
+  filter: drop-shadow(0 0 18px rgba(249,168,212,.6));
 }
 .kid-card > * { position: relative; z-index: 1; }
 .kid-earned-today {
@@ -291,15 +297,15 @@ body.evening{
   top: 0; left: 0; right: 0;
   z-index: 50;
   text-align: center;
-  padding: 5px 0 4px;
+  padding: 6px 0 5px;
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 9px;
-  font-weight: 500;
-  letter-spacing: .20em;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .22em;
   text-transform: uppercase;
-  color: rgba(212,168,67,.55);
-  border-bottom: 0.5px solid rgba(255,255,255,.08);
-  background: rgba(0,0,0,.14);
+  color: rgba(240,242,248,.88);
+  border-bottom: 0.5px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.32);
   transition: color .4s, text-shadow .4s;
   pointer-events: none;
 }
@@ -480,7 +486,7 @@ body.evening{
 <script>
 // Version history tracked in Notion deploy page.
 var SPINE_VERSION = 47;
-var TBM_VERSION = 'TheSpine v47';
+var TBM_VERSION = 'TheSpine v50';
 var FINANCE_MS = 300000;
 var KIDS_MS = 180000;
 var BOARD_MS = 600000;
@@ -1135,4 +1141,4 @@ function updateEarnedToday(childKey, data) {
 </script>
 </body>
 </html>
-<!-- TheSpine v47 -->
+<!-- TheSpine v50 -->
