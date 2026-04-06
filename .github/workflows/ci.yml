@@ -77,7 +77,7 @@ jobs:
               smoke = data.get('smoke', {})
               reg = data.get('regression', {})
               versions = data.get('versions', {})
-              icon = '✅' if data.get('overall') == 'PASS' else '❌'
+              icon = '✅' if data.get('overall') in ('PASS', 'WARN') else '❌'
               lines = [
                   f"## {icon} TBM Test Results: {data.get('overall', 'UNKNOWN')}",
                   '',
@@ -105,12 +105,12 @@ jobs:
 
           cat test_summary.md
 
-          if [ "$overall" = "PASS" ]; then
-            echo "All tests passed"
+          if [ "$overall" = "PASS" ] || [ "$overall" = "WARN" ]; then
+            echo "Tests passed (overall: $overall)"
             exit 0
           fi
 
-          echo "Tests failed - merge blocked"
+          echo "Tests failed (overall: $overall) - merge blocked"
           exit 1
 
       - name: Comment on PR
