@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v72 — Apps Script Router (TBM Consolidated)
+// Code.gs v73 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 72; }
+function getCodeVersion() { return 73; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -1039,14 +1039,28 @@ function logHomeworkCompletionSafe(data) {
     var apiKey = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
     if (!apiKey) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_API_KEY not set' }));
 
+    // Map incoming subject to Homework Tracker DB select options
+    var SUBJ_MAP = {
+      'Math': 'Math', 'math': 'Math',
+      'Science': 'Science', 'science': 'Science',
+      'RLA': 'Reading', 'Reading': 'Reading', 'reading': 'Reading',
+      'Writing': 'Writing', 'RLA-Writing': 'Writing', 'RLA-Writing-CER': 'Writing',
+      'Social Studies': 'Social Studies', 'Spelling': 'Spelling'
+    };
+    var notionSubject = SUBJ_MAP[String(data.subject || '')] || 'Other';
+    var notesText = 'Child: ' + String(data.child || 'buggsy') +
+      (data.score !== undefined && data.score !== null
+        ? ' | Score: ' + data.score + (data.total ? '/' + data.total : '')
+        : '');
+
     var payload = {
-      parent: { database_id: '331cea3cd9e8816aa07feec250328cf8' },
+      parent: { database_id: '9164c6a594b448028426366ff62952b5' },
       properties: {
-        'Name': { title: [{ text: { content: String(data.title || 'Homework Entry') } }] },
-        'Child': { select: { name: String(data.child || 'buggsy') } },
-        'Subject': { select: { name: String(data.subject || 'General') } },
-        'Score': { number: parseInt(data.score, 10) || 0 },
-        'Date': { date: { start: String(data.date || new Date().toISOString().slice(0, 10)) } }
+        'Assignment': { title: [{ text: { content: String(data.title || data.assignment || 'Homework Entry') } }] },
+        'Subject': { select: { name: notionSubject } },
+        'Due Date': { date: { start: String(data.date || new Date().toISOString().slice(0, 10)) } },
+        'Status': { select: { name: 'Turned In' } },
+        'Notes': { rich_text: [{ text: { content: notesText } }] }
       }
     };
 
@@ -1943,4 +1957,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v72
+// END OF FILE — Code.gs v73
