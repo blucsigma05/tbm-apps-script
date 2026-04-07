@@ -1,0 +1,125 @@
+# .github/workflows/code-sweep.yml
+# Daily Notion Trust Backlog sweep — picks up specs marked "Spec Ready"
+# and builds them on feature branches with PR + CI.
+#
+# Auth: Uses ANTHROPIC_API_KEY (separate from Max subscription).
+# Verify auth mode in anthropics/claude-code-action README before first run.
+#
+# TODO: Notion access requires NOTION_API_KEY secret — currently not configured.
+#       Until added, this workflow operates in dry-run / spec-file mode only.
+#       Claude Code action cannot fetch Notion pages without a Notion integration token.
+#
+# Guardrails:
+#   - Max 3 items per run (prevents runaway builds)
+#   - Never auto-merges — always PR → CI → human merge
+#   - Stops on first smoke test failure
+#   - Posts status back to Notion item
+
+name: Code Sweep (Daily Build Queue)
+
+on:
+  schedule:
+    - cron: '0 13 * * *'   # 8:00 AM Central (UTC-5)
+  workflow_dispatch:
+    inputs:
+      max_items:
+        description: 'Max specs to process (default 3)'
+        required: false
+        default: '3'
+        type: string
+      dry_run:
+        description: 'Dry run — read queue but do not build'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  sweep:
+    name: Sweep Trust Backlog
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Gate — require Notion access
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        run: |
+          if [ -z "$NOTION_API_KEY" ]; then
+            echo "::error::NOTION_API_KEY secret not configured. Code Sweep cannot access the Trust Backlog without it."
+            echo "Add a Notion integration token to repo Settings > Secrets before enabling this workflow."
+            exit 1
+          fi
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude Code sweep
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are the TBM automated build agent. Your job is to sweep the
+            Trust Backlog in Notion and build specs that are ready.
+
+            ## Context
+            - Repository: blucsigma05/tbm-apps-script
+            - CLAUDE.md is at the repo root — read it fully before any work.
+            - Max items this run: ${{ inputs.max_items || '3' }}
+            - Dry run: ${{ inputs.dry_run || 'false' }}
+
+            ## Instructions
+
+            1. Read CLAUDE.md for all project rules.
+
+            2. Fetch the Notion Trust Backlog page.
+               Look for items with status "Spec Ready — Awaiting Build".
+               Sort by priority (P0 first), then by creation date (oldest first).
+
+            3. For each item (up to max_items), in order:
+
+               a. Read the linked spec page in Notion.
+               b. If dry_run is true: log what you WOULD build, then skip to next.
+               c. Create a new branch: `harden-<spec-id>` from latest origin/main.
+               d. Implement the spec following all CLAUDE.md rules:
+                  - ES5 for .html files
+                  - TAB_MAP for sheet references
+                  - openById(SSID) not getActiveSpreadsheet()
+                  - waitLock(30000) not tryLock()
+                  - Version bumps in all 3 locations
+                  - Re-read modified files to verify edits
+               e. Run `bash audit-source.sh` — if FAIL, stop this item.
+               f. Commit with a clear message referencing the spec ID.
+               g. Push the branch.
+               h. Open a PR targeting main. PR body should include:
+                  - ## Summary (what was built)
+                  - ## Spec Reference (Notion link)
+                  - ## Deploy Manifest (grep checks from the spec)
+                  - ## Test Plan
+               i. Update the Notion item status to "In Review" with PR link.
+
+            4. If any item fails audit-source.sh or smoke test:
+               - Update that Notion item to "Build Failed" with the error.
+               - Continue to the next item (don't abort the whole run).
+
+            5. After processing all items, output a summary:
+               - Items processed: N
+               - PRs created: [list with URLs]
+               - Items failed: [list with reasons]
+               - Items skipped (dry run): [list]
+
+            ## Safety Rules
+            - NEVER push directly to main.
+            - NEVER auto-merge any PR.
+            - NEVER skip audit-source.sh.
+            - If a spec is ambiguous or requires architectural decisions,
+              skip it and update Notion to "Needs Clarification".
