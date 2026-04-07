@@ -59,6 +59,7 @@ jobs:
           fi
 
           npx playwright test "$SPEC" \
+            --project=tbm-workflows \
             --reporter=json \
             --output=test-results \
             2>&1 | tee playwright-output.txt || true

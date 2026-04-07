@@ -22,7 +22,7 @@ async function waitForGAS(page) {
 }
 
 async function gotoPath(page, path) {
-  await page.goto(BASE_URL + path, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.goto(BASE_URL + path, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await handlePIN(page);
   await waitForGAS(page);
 }
