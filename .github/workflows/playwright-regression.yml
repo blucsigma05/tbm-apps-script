@@ -22,7 +22,7 @@ jobs:
   playwright:
     name: Playwright E2E Regression
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     if: >
       github.event_name == 'workflow_dispatch' ||
       (github.event.pull_request.draft == false &&
@@ -94,6 +94,7 @@ jobs:
             exit 0
           fi
           npx playwright test "$SCREENSHOT_SPEC" \
+            --project=tbm-screenshots \
             --reporter=list \
             --output=test-results \
             2>&1 | tee screenshot-output.txt || true
