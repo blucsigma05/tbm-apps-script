@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="tbm-version" content="KidsHub v39">
-<title>Kids Hub v39</title>
+<meta name="tbm-version" content="KidsHub v40">
+<title>Kids Hub v40</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -935,7 +935,7 @@ body { min-height: 100vh; }
 <!-- v1 TBM: Scriptlet injection via createTemplateFromFile (Code.gs v20) -->
 <!-- Fixes parent dashboard blank page bug — config is server-injected   -->
 <script>
-var TBM_VERSION = 'KidsHub v39';
+var TBM_VERSION = 'KidsHub v40';
 var INIT_CHILD = "<?= INIT_CHILD ?>";
 var INIT_VIEW  = "<?= INIT_VIEW ?>";
 </script>
@@ -3523,6 +3523,21 @@ function pBatchApprove(child) {
     h += rReset();
     h += rGuide();
     body.innerHTML = h;
+    // v40: Staggered card fade-up on parent board render
+    (function() {
+      var els = body.querySelectorAll('.p-summary, .p-triage-hdr, .p-v2-tabs, .p-reset-panel');
+      for (var ci = 0; ci < els.length; ci++) {
+        (function(el, delay) {
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(10px)';
+          setTimeout(function() {
+            el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+          }, delay);
+        })(els[ci], ci * 45);
+      }
+    })();
     // Fetch API stats asynchronously (guarded for CF proxy)
     try {
       var _sfRunner = google.script.run
