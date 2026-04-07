@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v7">
+  <meta name="tbm-version" content="v8">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -593,6 +593,7 @@ var completedActivities = [];
 var totalStars = 0;
 var lettersCompleted = [];
 var audioCache = {};
+var _activeClip = null;
 var activityLocked = false;
 var countState = {};
 var traceState = {};
@@ -632,15 +633,25 @@ function speak(text, onEndOrKey, maybeOnEnd) {
     audioKey = autoMatchAudio(String(text));
   }
 
+  // Stop any currently playing audio before starting new
+  if (_activeClip) {
+    try { _activeClip.pause(); _activeClip.currentTime = 0; _activeClip.onended = null; } catch(e) {}
+    _activeClip = null;
+  }
+
   // Try ElevenLabs cache
   if (audioKey && audioCache[audioKey]) {
     try {
       var clip = audioCache[audioKey];
       clip.currentTime = 0;
-      if (onEnd) { clip.onended = onEnd; } else { clip.onended = null; }
+      _activeClip = clip;
+      clip.onended = function() {
+        _activeClip = null;
+        if (onEnd) { onEnd(); }
+      };
       clip.play();
       return;
-    } catch (e) { /* fall through to Web Speech */ }
+    } catch (e) { _activeClip = null; /* fall through to Web Speech */ }
   }
   // Fallback: Web Speech API
   if (!window.speechSynthesis) { if (onEnd) { onEnd(); } return; }
@@ -1649,7 +1660,7 @@ function handleWrongAnswer(el) {
 function renderLetterIntro(activity) {
   var mc = getMainContent();
   var letter = activity.letter || 'A';
-  var words = activity.words || ['Apple', 'Ant', 'Alligator'];
+  var words = activity.words || (activity.word ? [activity.word] : ['Apple', 'Ant', 'Alligator']);
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Meet the letter:</p>';
@@ -2551,7 +2562,7 @@ function checkMoreOrLess(el, side) {
    ═══════════════════════════════════════════════════════════ */
 function renderNameBuilder(activity) {
   var mc = getMainContent();
-  var target = (activity.target || 'JJ').toUpperCase();
+  var target = (activity.target || activity.name || 'JJ').toUpperCase();
   var letters = activity.letters || null;
 
   if (!letters) {
@@ -2667,8 +2678,9 @@ function renderSparkleChallenge(activity) {
     }
     html += '</div></div>';
     mc.innerHTML = html;
-    speak(q.prompt || 'Pick the answer');
-    speakOptions(q.options || [], 0);
+    speak(q.prompt || 'Pick the answer', function() {
+      speakOptions(q.options || [], 0);
+    });
   }
 
   window.handleSC = function(idx) {
