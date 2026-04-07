@@ -3,11 +3,11 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 14.0
+// Version: 15.2
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 14; }
+function getStoryFactoryVersion() { return 15.2; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -45,6 +45,8 @@ IMAGE_MODEL: 'gemini-2.5-flash-image',
 STORY_MODEL: 'gemini-2.5-flash',
 MEMORY_STORY_COUNT: 5,
 MEMORY_CANON_COUNT: 20,
+MIN_IMAGES_REQUIRED: 1, // Throw IMAGE_GATE_FAILED if fewer than this many images succeed (LT can set to 4 for strict mode)
+FAILURE_LOG_SHEET_NAME: 'SF_FailureLog', // v15.2 telemetry: append-only failure log tab in TillerBudgetMaster (set to '' to disable)
 };
 
 function sf_logError_(context, error) {
@@ -1106,10 +1108,14 @@ return result.url;
 
 // ── UPDATE NOTION ROW ────────────────────────────────────────
 
-function updateNotionRow(pageId, storyLink, status) {
+function updateNotionRow(pageId, storyLink, status, resumeHint) {
 var payload = { properties: { 'Status': { select: { name: status } } } };
 if (storyLink) payload.properties['Story Link'] = { url: storyLink };
-
+if (resumeHint) {
+  try {
+    payload.properties['Resume Hint'] = { rich_text: [{ text: { content: String(resumeHint).substring(0, 2000) } }] };
+  } catch (e) { /* Resume Hint property not yet added to Notion DB — run v14_2_migrationGuide() */ }
+}
 notionPatch('pages/' + pageId, payload);
 }
 
@@ -1131,8 +1137,24 @@ return 7;
 // ── MAIN PIPELINE ────────────────────────────────────────────
 
 function runStoryFactory(topic, character, tone) {
-Logger.log('=== Story Factory v14 ===');
+Logger.log('=== Story Factory v15.1 ===');
 Logger.log('Topic: ' + topic + ' | Character: ' + character + ' | Tone: ' + (tone || 'Funny'));
+
+// Run-state object — tracks which phases completed so the catch block can produce honest hints.
+// These are IN-MEMORY ONLY. There is no persistent checkpoint store — the only retry path is
+// setting Status back to Idea. Do not present any intermediate status as a resumable checkpoint.
+var state = {
+  story_generated: false,
+  audit_passed: false,
+  canon_extracted: false,
+  images_generated: false,
+  pdf_built: false,
+  notion_updated: false,
+  pdfUrl: null,
+  successfulImageCount: 0,
+  character: character,   // v15.2: captured for telemetry
+  topic: topic            // v15.2: captured for telemetry (pageId not available here — set by pollForNewStories)
+};
 
 try {
 // Config validation — fail fast with clear message
@@ -1192,39 +1214,85 @@ for (var v = 0; v < storyData.scenes.length; v++) {
 }
 
 Logger.log('Story: "' + storyData.title + '" (' + storyData.scenes.length + ' scenes)');
+state.story_generated = true;
 
 // v6: Post-generation audit
 var audit = auditStoryText_(storyData, character);
 storyData._audit = audit;
+state.audit_passed = true;
 
 // Phase 4: Extract canon from the generated story
 Logger.log('Step 1b: Extracting canon from story...');
 var canonData = extractCanonFromStory(storyData);
+state.canon_extracted = true;
 
 // Step 2: Generate images with scene-level character filtering
 Logger.log('Step 2: Generating images...');
 var imageBlobs = generateSceneImages(storyData.scenes, characters);
 
+// v15.1: Image gate — refuse to ship a text-only PDF as a complete story
+var successfulImages = 0;
+for (var _bi = 0; _bi < imageBlobs.length; _bi++) {
+  if (imageBlobs[_bi]) successfulImages++;
+}
+var minRequired = (CONFIG.MIN_IMAGES_REQUIRED != null) ? CONFIG.MIN_IMAGES_REQUIRED : 1;
+if (successfulImages < minRequired) {
+  throw new Error('IMAGE_GATE_FAILED: only ' + successfulImages + ' of ' + CONFIG.IMAGE_SCENES.length +
+    ' images generated (minimum: ' + minRequired + '). Likely an API outage, auth failure, or full safety block. ' +
+    'Story text was good but no PDF will be built. To retry: set Status back to Idea.');
+}
+if (successfulImages < CONFIG.IMAGE_SCENES.length) {
+  Logger.log('WARNING: ' + successfulImages + ' of ' + CONFIG.IMAGE_SCENES.length +
+    ' images generated (below full count but above floor). Proceeding with partial illustration.');
+}
+state.images_generated = true;
+state.successfulImageCount = successfulImages;
+
 var bookNumber = getNextBookNumber();
 Logger.log('Step 3: Building PDF for Book #' + bookNumber + '...');
 var pdf = buildStoryPDF(storyData, imageBlobs, bookNumber);
 Logger.log('PDF: ' + pdf.url);
+state.pdf_built = true;
+state.pdfUrl = pdf.url;
 
 Logger.log('Step 4: Creating Notion page with canon data...');
 var notionUrl = buildNotionCataloguePage(storyData, pdf.url, bookNumber, canonData, tone || 'Funny');
 Logger.log('Notion: ' + notionUrl);
+state.notion_updated = true;
 
 Logger.log('DONE! Book #' + bookNumber + ': "' + storyData.title + '"');
 Logger.log('Summary: ' + (canonData.summary || '(none)'));
 Logger.log('Proposed canon: ' + (canonData.proposed_canon ? canonData.proposed_canon.length : 0) + ' facts');
 Logger.log('Canon audit: ' + (canonData._auditStatus || 'unknown'));
-return { success: true, title: storyData.title, pdfUrl: pdf.url, notionUrl: notionUrl, bookNumber: bookNumber };
+return { success: true, title: storyData.title, pdfUrl: pdf.url, notionUrl: notionUrl, bookNumber: bookNumber, successfulImageCount: successfulImages };
 
 } catch(e) {
 Logger.log('FAILED: ' + e.message);
 Logger.log('Stack: ' + e.stack);
 sf_logError_('runStoryFactory', e);
-return { success: false, error: e.message };
+sf_logFailure_(state, e.message); // v15.2 telemetry — must never throw
+
+// v15.1: Honest resume hints — no false checkpoint promises.
+// Every hint ends with "set Status back to Idea" — the ONLY retry path that works.
+// Intermediate statuses (Story Ready, Images Ready, etc.) are in-flight indicators only, NOT resumable.
+var hint;
+if (!state.story_generated) {
+  hint = 'FAILED at story generation: ' + e.message + ' | To retry: set Status back to Idea.';
+} else if (!state.audit_passed) {
+  hint = 'FAILED at audit gate: ' + e.message + ' | To retry: set Status back to Idea.';
+} else if (!state.canon_extracted) {
+  hint = 'FAILED at canon extraction. Story text was generated successfully but discarded (no persistent checkpoint). To retry: set Status back to Idea.';
+} else if (!state.images_generated) {
+  hint = 'FAILED at image generation: ' + e.message + ' | Story text was generated but discarded. To retry: set Status back to Idea.';
+} else if (!state.pdf_built) {
+  hint = 'FAILED at PDF build: ' + e.message + ' | Story text and images were generated but discarded. To retry: set Status back to Idea.';
+} else if (!state.notion_updated) {
+  hint = 'FAILED at final Notion write: ' + e.message + ' | PDF was built and may exist at ' + (state.pdfUrl || 'unknown') + ' but the trigger row did not finalize. Manual review needed.';
+} else {
+  hint = 'FAILED in unknown phase: ' + e.message + ' | To retry: set Status back to Idea.';
+}
+Logger.log('Resume hint: ' + hint);
+return { success: false, error: e.message, resumeHint: hint };
 }
 }
 
@@ -1259,6 +1327,15 @@ return;
 }
 }
 
+// v15.1: Concurrency guard — skip this trigger fire if a previous invocation is still running.
+// Uses tryLock (intentionally — we want to SKIP, not wait) so two triggers never double-process.
+var sfLock = LockService.getScriptLock();
+if (!sfLock.tryLock(1000)) {
+Logger.log('Another pollForNewStories invocation is already running. Skipping this trigger fire.');
+return;
+}
+
+try {
 Logger.log('Polling for new story requests...');
 var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
 filter: { property: 'Status', select: { equals: 'Idea' } }
@@ -1281,6 +1358,8 @@ var tone = (page.properties['Tone'] && page.properties['Tone'].select)
 ? page.properties['Tone'].select.name
 : 'Funny';
 
+// v15.1: Atomically claim the row by flipping Status BEFORE expensive work.
+// Prevents a second invocation (manual run, concurrent trigger, etc.) from picking up the same row.
 updateNotionRow(pageId, null, 'Generating');
 var r = runStoryFactory(topic, character, tone);
 
@@ -1288,8 +1367,8 @@ if (r.success) {
 updateNotionRow(pageId, r.pdfUrl, 'Ready');
 props.setProperty('SF_CONSECUTIVE_FAILS', '0');
 } else {
-updateNotionRow(pageId, null, 'Failed');
-Logger.log('Set to Failed. Change to Idea manually to retry.');
+updateNotionRow(pageId, null, 'Failed', r.resumeHint || null);
+Logger.log('Set to Failed. ' + (r.resumeHint || 'Change to Idea manually to retry.'));
 sf_logError_('pollForNewStories', new Error('Story generation failed: ' + (r.error || 'unknown')));
 consecutiveFails++;
 props.setProperty('SF_CONSECUTIVE_FAILS', String(consecutiveFails));
@@ -1298,6 +1377,9 @@ var pauseDuration = 3600000; // 1 hour
 props.setProperty('SF_PAUSED_UNTIL', String(Date.now() + pauseDuration));
 Logger.log('Circuit breaker TRIPPED — ' + consecutiveFails + ' consecutive failures. Pausing for 1 hour.');
 }
+}
+} finally {
+sfLock.releaseLock();
 }
 }
 
@@ -1636,5 +1718,118 @@ function listStoredStoriesSafe() {
   });
 }
 
-// END OF FILE — StoryFactory v14
+// ── FAILURE TELEMETRY (v15.2) ────────────────────────────────────────────────
+
+// Append a failure record to the SF_FailureLog sheet (append-only, never reads/modifies history).
+// Wrapped in try/catch — telemetry must NEVER throw or it would break the failure path it observes.
+// Disable by setting CONFIG.FAILURE_LOG_SHEET_NAME = '' in CONFIG.
+function sf_logFailure_(state, errorMessage) {
+  try {
+    if (!CONFIG.FAILURE_LOG_SHEET_NAME) return; // kill switch
+    var ss = SpreadsheetApp.openById(SSID);
+    var sheet = ss.getSheetByName(CONFIG.FAILURE_LOG_SHEET_NAME);
+    if (!sheet) {
+      sheet = ss.insertSheet(CONFIG.FAILURE_LOG_SHEET_NAME);
+      sheet.appendRow([
+        'timestamp', 'pageId', 'phase', 'error_family',
+        'error_message', 'character', 'topic', 'successful_image_count'
+      ]);
+    }
+
+    // Detect which phase failed using state flags from runStoryFactory
+    var phase;
+    if (!state.story_generated) phase = 'story_generation';
+    else if (!state.audit_passed) phase = 'audit';
+    else if (!state.canon_extracted) phase = 'canon_extraction';
+    else if (!state.images_generated) phase = 'image_generation';
+    else if (!state.pdf_built) phase = 'pdf_build';
+    else if (!state.notion_updated) phase = 'notion_write';
+    else phase = 'unknown';
+
+    // Classify error by message pattern
+    var msg = String(errorMessage || '');
+    var family;
+    if (msg.indexOf('IMAGE_GATE_FAILED') >= 0) family = 'image_gate';
+    else if (msg.indexOf('AUDIT_FAILED') >= 0) family = 'audit_fail';
+    else if (msg.indexOf('RATE_LIMITED') >= 0 || msg.indexOf('429') >= 0) family = 'rate_limit';
+    else if (msg.indexOf('RESOURCE_EXHAUSTED') >= 0 || msg.toLowerCase().indexOf('quota') >= 0) family = 'quota';
+    else if (msg.toLowerCase().indexOf('safety') >= 0 || msg.toLowerCase().indexOf('blocked') >= 0) family = 'safety';
+    else if (msg.indexOf('503') >= 0 || msg.indexOf('UNAVAILABLE') >= 0) family = 'gemini_5xx';
+    else if (msg.toLowerCase().indexOf('drive') >= 0) family = 'drive';
+    else if (msg.indexOf('Notion error') >= 0 || msg.indexOf('notionPatch') >= 0 || msg.indexOf('notionPost') >= 0) family = 'notion';
+    else if (msg.indexOf('JSON_PARSE_FAILED') >= 0 || msg.indexOf('JSON parse') >= 0) family = 'parse';
+    else if (msg.toLowerCase().indexOf('timeout') >= 0) family = 'timeout';
+    else family = 'other';
+
+    sheet.appendRow([
+      new Date().toISOString(),
+      state.pageId || '',
+      phase,
+      family,
+      msg.substring(0, 200),
+      state.character || '',
+      String(state.topic || '').substring(0, 60),
+      state.successfulImageCount || 0
+    ]);
+  } catch(loggingErr) {
+    // Telemetry must never break the factory. Swallow and log.
+    Logger.log('sf_logFailure_ FAILED (non-critical): ' + loggingErr.message);
+  }
+}
+
+// Read the SF_FailureLog sheet and return a summary of failures in the last N days.
+// Run from Script Editor to make the checkpoint store unblock call (day 14).
+//   unblockCheckpointSpec: true → recoverable phase failures >= 2 AND total failures >= 3
+//   unblockCheckpointSpec: false → keep checkpoint store BLOCKED
+function sf_getFailureSummary_(days) {
+  var d = days || 14;
+  if (!CONFIG.FAILURE_LOG_SHEET_NAME) return { error: 'FAILURE_LOG_SHEET_NAME not configured' };
+  var ss = SpreadsheetApp.openById(SSID);
+  var sheet = ss.getSheetByName(CONFIG.FAILURE_LOG_SHEET_NAME);
+  if (!sheet) return { totalFailures: 0, days: d, byPhase: {}, byFamily: {}, recentRows: [] };
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return { totalFailures: 0, days: d, byPhase: {}, byFamily: {}, recentRows: [] };
+
+  var cutoffMs = Date.now() - (d * 24 * 60 * 60 * 1000);
+  var byPhase = {};
+  var byFamily = {};
+  var recent = [];
+  var total = 0;
+
+  for (var i = 1; i < data.length; i++) {
+    var rowTime = new Date(data[i][0]).getTime();
+    if (isNaN(rowTime) || rowTime < cutoffMs) continue;
+    total++;
+    var phase = data[i][2] || 'unknown';
+    var family = data[i][3] || 'other';
+    byPhase[phase] = (byPhase[phase] || 0) + 1;
+    byFamily[family] = (byFamily[family] || 0) + 1;
+    recent.push({
+      timestamp: data[i][0],
+      phase: phase,
+      family: family,
+      message: String(data[i][4] || '').substring(0, 80),
+      character: data[i][5],
+      topic: data[i][6]
+    });
+  }
+
+  var stories = parseInt(PropertiesService.getScriptProperties().getProperty('SF_STORY_COUNT') || '0') || 0;
+  var recoverablePhases = (byPhase['image_generation'] || 0) + (byPhase['pdf_build'] || 0);
+  var unblockCheckpointSpec = (total >= 3 && recoverablePhases >= 2);
+
+  return {
+    days: d,
+    totalFailures: total,
+    totalStoriesAttempted: stories,
+    byPhase: byPhase,
+    byFamily: byFamily,
+    recoverablePhaseFailures: recoverablePhases,
+    unblockCheckpointSpec: unblockCheckpointSpec,
+    recentRows: recent.slice(-20)
+  };
+}
+
+// END OF FILE — StoryFactory v15.2
 // ════════════════════════════════════════════════════════════════════
