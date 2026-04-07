@@ -319,7 +319,7 @@ function serveData(e) {
         'comic-studio': 'ComicStudio', 'progress': 'ProgressReport',
         'story': 'StoryReader',
         'homework': 'HomeworkModule', 'sparkle': 'SparkleLearning',
-        'wolfkid': 'WolfkidCER', 'wolfdome': 'DesignDashboard', 'sparkle-kingdom': 'JJHome',
+        'wolfkid': 'WolfkidCER', 'wolfdome': 'DesignDashboard', 'dashboard': 'DesignDashboard', 'sparkle-kingdom': 'JJHome',
         'facts': 'fact-sprint', 'reading': 'reading-module',
         'writing': 'writing-module',
         'investigation': 'investigation-module', 'daily-missions': 'daily-missions',

@@ -21,6 +21,7 @@ const PATH_ROUTES = {
   '/sparkle-free':  { page: 'sparkle', mode: 'freeplay' },
   '/wolfkid':       { page: 'wolfkid' },
   '/wolfdome':          { page: 'wolfdome' },
+  '/dashboard':         { page: 'wolfdome' },
   '/sparkle-kingdom':   { page: 'sparkle-kingdom' },
   '/facts':         { page: 'facts' },
   '/reading':       { page: 'reading' },

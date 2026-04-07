@@ -791,8 +791,8 @@ function renderReviewQueue() {
     var subjectLabel = String(item.subject || item.module || 'Homework').toUpperCase();
     html += '<div class="review-queue-card" id="rcard-' + item.rowIndex + '">';
     html += '<div class="review-card-header">';
-    html += '<div class="review-card-meta">&#x1F4DD; ' + subjectLabel + ' &mdash; ' + (item.child || 'Buggsy').toUpperCase() + '</div>';
-    html += '<div class="review-card-time">' + ts + '</div>';
+    html += '<div class="review-card-meta">&#x1F4DD; ' + escapeHtml(subjectLabel) + ' &mdash; ' + escapeHtml((item.child || 'Buggsy').toUpperCase()) + '</div>';
+    html += '<div class="review-card-time">' + escapeHtml(ts) + '</div>';
     html += '</div>';
 
     if (item.responseText) {
