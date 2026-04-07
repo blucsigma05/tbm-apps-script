@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v6">
+<meta name="tbm-version" content="v9">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -582,10 +582,29 @@ body.jj-theme .bonus-desc { color: #C490B8; }
 body.jj-theme .launch-btn {
   animation: jjBtnPulse 2s ease-in-out infinite;
 }
+#launch-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: #07001a;
+  z-index: 9999;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  padding-top: 200px;
+  text-align: center;
+}
+#launch-overlay .ov-icon { font-size: 72px; margin-bottom: 20px; }
+#launch-overlay .ov-text { color: #fff; font-size: 26px; font-weight: 800; letter-spacing: 3px; }
+#launch-overlay .ov-sub  { color: rgba(255,255,255,0.45); font-size: 15px; margin-top: 14px; }
 </style>
 </head>
 <body>
 
+<div id="launch-overlay">
+  <div class="ov-icon">&#128640;</div>
+  <div class="ov-text">LOADING...</div>
+  <div class="ov-sub" id="overlay-mission-name"></div>
+</div>
 <div id="starfield"></div>
 <div class="jj-sparkle-bg" id="jj-sparkle-bg"></div>
 
@@ -610,6 +629,53 @@ body.jj-theme .launch-btn {
 // ============================================================
 // ES5 STRICT — Daily Missions Landing Page
 // ============================================================
+
+// ── Themed Loading Screen ──
+function showBuggsyLoader() {
+  var el = document.createElement('div');
+  el.id = 'bLoader';
+  el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#030a10;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+  var img = document.createElement('img');
+  img.src = 'https://i.ibb.co/93k6DNRc/1775230300543.png';
+  img.style.cssText = 'width:120px;height:auto;filter:drop-shadow(0 0 12px #ff2200) drop-shadow(0 0 24px #ff6600)';
+  var txt = document.createElement('div');
+  txt.style.cssText = "font-family:'Orbitron',monospace;font-size:11px;color:#f59e0b;letter-spacing:3px;";
+  txt.textContent = 'LOADING MISSION DATA...';
+  el.appendChild(img);
+  el.appendChild(txt);
+  document.body.appendChild(el);
+}
+function hideBuggsyLoader() {
+  var el = document.getElementById('bLoader');
+  if (el) el.parentNode.removeChild(el);
+}
+function showJJLoader() {
+  var el = document.createElement('div');
+  el.id = 'jjLoader';
+  el.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:#1a0533;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px';
+  var img = document.createElement('img');
+  img.src = 'https://i.ibb.co/k2sWCnvH/Gemini-Generated-Image-8uhoc98uhoc98uho.png';
+  img.style.cssText = 'width:140px;height:auto;';
+  var txt = document.createElement('div');
+  txt.style.cssText = "font-family:'Fredoka One',cursive;font-size:18px;color:#f472b6;";
+  txt.textContent = 'Getting your sparkles ready... \u2728';
+  el.appendChild(img);
+  el.appendChild(txt);
+  document.body.appendChild(el);
+}
+function hideJJLoader() {
+  var el = document.getElementById('jjLoader');
+  if (el) el.parentNode.removeChild(el);
+}
+function showDailyMissionsLoader() {
+  var isJJ = window.location.search.indexOf('child=jj') >= 0;
+  if (isJJ) { showJJLoader(); } else { showBuggsyLoader(); }
+}
+function hideDailyMissionsLoader() {
+  hideBuggsyLoader();
+  hideJJLoader();
+}
+showDailyMissionsLoader();
 
 // ── Test Mode Detection ──
 var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
@@ -735,6 +801,7 @@ var MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'
 // ── Globals ──
 var currentChild = 'buggsy';
 var todayKey = '';
+var launchedKey = '';
 var dayOfWeek = 0;
 var _serverStateLoaded = false;
 var _cachedMissionState = {};
@@ -852,6 +919,7 @@ function setupDate() {
   if (m.length < 2) m = '0' + m;
   if (d.length < 2) d = '0' + d;
   todayKey = 'missions_' + y + '-' + m + '-' + d;
+  launchedKey = 'launched_' + y + '-' + m + '-' + d;
 
   var dateStr = DAY_NAMES[dayOfWeek] + ', ' + MONTH_NAMES[now.getMonth()] + ' ' + now.getDate();
   document.getElementById('header-date').textContent = dateStr;
@@ -1031,10 +1099,30 @@ function buildLaunchUrl(block) {
   return url;
 }
 
+function getLaunchedState() {
+  try { return JSON.parse(localStorage.getItem(launchedKey) || '{}'); } catch(e) { return {}; }
+}
+
+function launchMission(url, missionId, missionName) {
+  try {
+    var launched = getLaunchedState();
+    launched[missionId] = true;
+    localStorage.setItem(launchedKey, JSON.stringify(launched));
+  } catch(e) {}
+  var overlay = document.getElementById('launch-overlay');
+  if (overlay) {
+    overlay.style.display = 'block';
+    var nameEl = document.getElementById('overlay-mission-name');
+    if (nameEl) { nameEl.innerHTML = missionName || ''; }
+  }
+  setTimeout(function() { window.location.href = url; }, 280);
+}
+
 // ============================================================
 // RENDER
 // ============================================================
 function render() {
+  hideDailyMissionsLoader();
   var container = document.getElementById('main-content');
 
   // Set header emoji for Buggsy
@@ -1057,6 +1145,7 @@ function render() {
 
   var blocks = dayData.blocks;
   var state = getMissionState();
+  var launched = getLaunchedState();
   var doneCount = 0;
   var totalTime = 0;
 
@@ -1143,17 +1232,22 @@ function render() {
       html += '</div>';
 
       // Actions
+      var hasLaunched = launched[missionId] === true;
       html += '<div class="mission-actions">';
       if (!done) {
         var launchUrl = buildLaunchUrl(block);
+        var safeName = (block.name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         if (currentChild === 'jj') {
-          html += '<button class="launch-btn" onclick="window.location.href=\'' + launchUrl + '\'">Let\'s Go!</button>';
+          html += '<button class="launch-btn" onclick="launchMission(\'' + launchUrl + '\',\'' + missionId + '\',\'' + safeName + '\')">Let\'s Go!</button>';
         } else {
-          html += '<button class="launch-btn" onclick="window.location.href=\'' + launchUrl + '\'">LAUNCH</button>';
+          html += '<button class="launch-btn" onclick="launchMission(\'' + launchUrl + '\',\'' + missionId + '\',\'' + safeName + '\')">LAUNCH</button>';
         }
       }
-      html += '<button class="check-btn' + (done ? ' checked' : '') + '" onclick="toggleMission(\'' + missionId + '\')" title="' + (done ? 'Mark incomplete' : 'Mark complete') + '">' +
-        (done ? '\u2713' : '') + '</button>';
+      // Done checkbox only visible after launch (or already done)
+      if (done || hasLaunched) {
+        html += '<button class="check-btn' + (done ? ' checked' : '') + '" onclick="toggleMission(\'' + missionId + '\')" title="' + (done ? 'Mark incomplete' : 'Mark complete') + '">' +
+          (done ? '\u2713' : '') + '</button>';
+      }
       html += '</div>';
 
       html += '</div>';
@@ -1214,13 +1308,13 @@ function renderWeekend(container) {
     html += '<div class="bonus-title">\u2728 SPARKLE BONUS \u2728</div>';
     html += '<div class="bonus-desc">Want to play a learning game for extra stars?</div>';
     html += '<div style="margin-top:12px">';
-    html += '<button class="launch-btn" onclick="window.location.href=\'/sparkle?activity=challenge&child=jj\'">Play!</button>';
+    html += '<button class="launch-btn" onclick="launchMission(\'/sparkle?activity=challenge&child=jj\',\'bonus_jj\',\'Sparkle Bonus\')">Play!</button>';
     html += '</div>';
   } else {
     html += '<div class="bonus-title">\u26A1 WOLFKID BONUS MISSION \u26A1</div>';
     html += '<div class="bonus-desc">Wolfkid never stops training. Run a bonus homework round for +5 Rings.</div>';
     html += '<div style="margin-top:12px">';
-    html += '<button class="launch-btn" onclick="window.location.href=\'/homework\'">ACCEPT MISSION</button>';
+    html += '<button class="launch-btn" onclick="launchMission(\'/homework\',\'bonus_buggsy\',\'Bonus Mission\')">ACCEPT MISSION</button>';
     html += '</div>';
   }
   html += '</div>';

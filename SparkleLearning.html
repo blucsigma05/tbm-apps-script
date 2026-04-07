@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v7">
+  <meta name="tbm-version" content="v11">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -593,6 +593,7 @@ var completedActivities = [];
 var totalStars = 0;
 var lettersCompleted = [];
 var audioCache = {};
+var _activeClip = null;
 var activityLocked = false;
 var countState = {};
 var traceState = {};
@@ -632,15 +633,25 @@ function speak(text, onEndOrKey, maybeOnEnd) {
     audioKey = autoMatchAudio(String(text));
   }
 
+  // Stop any currently playing audio before starting new
+  if (_activeClip) {
+    try { _activeClip.pause(); _activeClip.currentTime = 0; _activeClip.onended = null; } catch(e) {}
+    _activeClip = null;
+  }
+
   // Try ElevenLabs cache
   if (audioKey && audioCache[audioKey]) {
     try {
       var clip = audioCache[audioKey];
       clip.currentTime = 0;
-      if (onEnd) { clip.onended = onEnd; } else { clip.onended = null; }
+      _activeClip = clip;
+      clip.onended = function() {
+        _activeClip = null;
+        if (onEnd) { onEnd(); }
+      };
       clip.play();
       return;
-    } catch (e) { /* fall through to Web Speech */ }
+    } catch (e) { _activeClip = null; /* fall through to Web Speech */ }
   }
   // Fallback: Web Speech API
   if (!window.speechSynthesis) { if (onEnd) { onEnd(); } return; }
@@ -694,6 +705,13 @@ function autoMatchAudio(text) {
     return 'jj_letter_name_' + t.toUpperCase() + '.mp3';
   }
 
+  // Single digit 1–10: route to cached number clip
+  var numMatch = t.match(/^(\d{1,2})$/);
+  if (numMatch) {
+    var n = parseInt(numMatch[1], 10);
+    if (n >= 1 && n <= 10) { return 'jj_number_' + n + '.mp3'; }
+  }
+
   // "X is for Y" pattern
   var isForMatch = t.match(/^([a-z]) is for/);
   if (isForMatch) { return 'jj_letter_phrase_' + isForMatch[1].toUpperCase() + '.mp3'; }
@@ -734,12 +752,21 @@ function speakOptions(options, index, callback) {
 }
 
 function playAudioCached(name, fallbackText) {
+  // Stop any active clip and cancel speech before playing feedback audio
+  if (_activeClip) {
+    try { _activeClip.pause(); _activeClip.currentTime = 0; _activeClip.onended = null; } catch(e) {}
+    _activeClip = null;
+  }
+  if (window.speechSynthesis) { speechSynthesis.cancel(); }
   if (audioCache[name]) {
     try {
-      audioCache[name].currentTime = 0;
-      audioCache[name].play();
+      var clip = audioCache[name];
+      clip.currentTime = 0;
+      _activeClip = clip;
+      clip.onended = function() { _activeClip = null; };
+      clip.play();
       return;
-    } catch (e) { /* fall through */ }
+    } catch (e) { _activeClip = null; /* fall through */ }
   }
   if (fallbackText) {
     speak(fallbackText);
@@ -1120,7 +1147,7 @@ function buildSparkleKingdomBg() {
   var mascot = document.createElement('img');
   mascot.src = 'https://i.ibb.co/DBgRLCw/1773982672701.png';
   mascot.alt = 'Sparkle Sprinkles';
-  mascot.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:220px;height:auto;animation:jjMascotBob 3s ease-in-out infinite;z-index:2;pointer-events:none;';
+  mascot.style.cssText = 'position:absolute;bottom:6%;left:50%;transform:translateX(-50%);width:200px;height:auto;animation:jjMascotBob 3s ease-in-out infinite;z-index:2;pointer-events:none;';
   mascot.onerror = function() { this.style.display = 'none'; };
   bg.appendChild(mascot);
   // 22 sparkle crosses
@@ -1367,6 +1394,7 @@ function renderFreePlayMenu() {
 
   html += '</div></div>';
   mc.innerHTML = html;
+  setMascotVisible(false);
   speak('Pick a game to play!', 'jj_instruction_pick_game.mp3');
 }
 
@@ -1541,6 +1569,7 @@ function renderActivity(index) {
     return;
   }
 
+  setMascotVisible(true);
   currentActivityIndex = index;
   activityLocked = false;
   updateProgressBar();
@@ -1649,7 +1678,7 @@ function handleWrongAnswer(el) {
 function renderLetterIntro(activity) {
   var mc = getMainContent();
   var letter = activity.letter || 'A';
-  var words = activity.words || ['Apple', 'Ant', 'Alligator'];
+  var words = activity.words || (activity.word ? [activity.word] : ['Apple', 'Ant', 'Alligator']);
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Meet the letter:</p>';
@@ -1755,8 +1784,8 @@ function checkFindNumber(el, chosen, target) {
    ═══════════════════════════════════════════════════════════ */
 function renderCountWithMe(activity) {
   var mc = getMainContent();
-  var count = activity.count || 5;
-  var shape = activity.shape || 'star';
+  var count = activity.count || activity.targetNumber || 5;
+  var shape = activity.shape || activity.objects || 'star';
   var color = activity.color || 'pink';
 
   countState = { total: count, tapped: 0, done: false };
@@ -1809,11 +1838,14 @@ function tapCountObject(idx) {
    ═══════════════════════════════════════════════════════════ */
 function renderQuantityMatch(activity) {
   var mc = getMainContent();
-  var groups = activity.groups || [
-    { dots: 3, numeral: '3' },
-    { dots: 5, numeral: '5' },
-    { dots: 2, numeral: '2' }
-  ];
+  var groups = activity.groups;
+  if (!groups && activity.numbers) {
+    groups = [];
+    for (var ni = 0; ni < activity.numbers.length; ni++) {
+      groups.push({ dots: activity.numbers[ni], numeral: String(activity.numbers[ni]) });
+    }
+  }
+  if (!groups) { groups = [{ dots: 3, numeral: '3' }, { dots: 5, numeral: '5' }, { dots: 2, numeral: '2' }]; }
 
   var qmState = { phase: 'dots', selectedDots: null, pairsLeft: groups.length, groups: groups };
   window._qmState = qmState;
@@ -2551,7 +2583,7 @@ function checkMoreOrLess(el, side) {
    ═══════════════════════════════════════════════════════════ */
 function renderNameBuilder(activity) {
   var mc = getMainContent();
-  var target = (activity.target || 'JJ').toUpperCase();
+  var target = (activity.target || activity.name || 'JJ').toUpperCase();
   var letters = activity.letters || null;
 
   if (!letters) {
@@ -2667,8 +2699,9 @@ function renderSparkleChallenge(activity) {
     }
     html += '</div></div>';
     mc.innerHTML = html;
-    speak(q.prompt || 'Pick the answer');
-    speakOptions(q.options || [], 0);
+    speak(q.prompt || 'Pick the answer', function() {
+      speakOptions(q.options || [], 0);
+    });
   }
 
   window.handleSC = function(idx) {
