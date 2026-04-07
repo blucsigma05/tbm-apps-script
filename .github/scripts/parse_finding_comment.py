@@ -17,7 +17,7 @@ Behavior:
   - Skips bot's own comments (loop prevention).
   - Rejects authors not in AUTHOR_WHITELIST; silent exit.
   - Scans body for visible-text OR HTML-comment finding markers.
-  - If found: adds pipeline:fix-needed + type-specific label, posts confirmation reply.
+  - If found: adds pipeline:fix-needed (created if absent) + type-specific label (created if absent).
   - Prevents duplicate replies via COMMENT_MARKER check.
   - If no marker: silent exit (no labels, no reply).
 """
@@ -26,6 +26,7 @@ import json
 import os
 import re
 import sys
+import urllib.parse
 import urllib.request
 import urllib.error
 
@@ -57,6 +58,15 @@ TYPE_LABELS = {
     'BLOCK': 'finding:block',
 }
 
+# Default colors when auto-creating labels that don't exist in the repo yet.
+LABEL_COLORS = {
+    'pipeline:fix-needed': 'e4e669',
+    'finding:hold':        'd73a4a',
+    'finding:fix':         '0075ca',
+    'finding:fyi':         'cfd3d7',
+    'finding:block':       'b60205',
+}
+
 
 def gh_api(path, method='GET', body=None, token=None):
     """Call GitHub REST API. Returns parsed JSON or None on error."""
@@ -79,6 +89,30 @@ def gh_api(path, method='GET', body=None, token=None):
         except Exception:
             pass
         return None
+
+
+def ensure_label_(repo, name, token):
+    """Create the label in the repo if it does not exist. Returns True if ready."""
+    encoded = urllib.parse.quote(name, safe='')
+    existing = gh_api('/repos/%s/labels/%s' % (repo, encoded), token=token)
+    if existing is not None:
+        return True  # already exists
+    color = LABEL_COLORS.get(name, 'ededed')
+    result = gh_api('/repos/%s/labels' % repo, method='POST',
+                    body={'name': name, 'color': color}, token=token)
+    if result is not None:
+        print('Created missing label: %s' % name)
+    return result is not None
+
+
+def add_label_(repo, pr_number, label_name, token):
+    """Ensure label exists in repo, then apply it to the issue/PR."""
+    ensure_label_(repo, label_name, token)
+    path = '/repos/%s/issues/%s/labels' % (repo, pr_number)
+    result = gh_api(path, method='POST', body={'labels': [label_name]}, token=token)
+    if result is not None:
+        print('Label applied: %s' % label_name)
+    return result is not None
 
 
 def main():
@@ -138,15 +172,13 @@ def main():
 
     print('Finding detected: %s on PR #%s by %s' % (finding_type, pr_number, author))
 
-    # Apply labels: pipeline:fix-needed + type-specific label
-    labels = ['pipeline:fix-needed']
+    # Apply pipeline:fix-needed first — independently, so it always lands
+    add_label_(repo, pr_number, 'pipeline:fix-needed', token)
+
+    # Apply type-specific label independently (create in repo if absent)
     type_label = TYPE_LABELS.get(finding_type)
     if type_label:
-        labels.append(type_label)
-    label_path = '/repos/%s/issues/%s/labels' % (repo, pr_number)
-    result = gh_api(label_path, method='POST', body={'labels': labels}, token=token)
-    if result is not None:
-        print('Labels added: %s' % ', '.join(labels))
+        add_label_(repo, pr_number, type_label, token)
 
     # Post confirmation reply — check for existing to prevent duplicates
     comments_path = '/repos/%s/issues/%s/comments' % (repo, pr_number)

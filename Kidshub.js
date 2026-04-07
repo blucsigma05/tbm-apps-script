@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v51 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v52 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 51; }
+function getKidsHubVersion() { return 52; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2113,7 +2113,7 @@ function khDebitScreenTime(child, screenType, minutes) {
 }
 
 
-// v51: Meal Plan — log dinner entry from Parent Dashboard; kidMeal col F when different
+// v52: Meal Plan — log dinner entry from Parent Dashboard; kidMeal col F when different
 function updateMealPlan(meal, cook, notes, kidMeal) {
   var mealName = String(meal || '').trim();
   var cookedBy = String(cook || '').trim();
@@ -2131,6 +2131,9 @@ function updateMealPlan(meal, cook, notes, kidMeal) {
     if (!sheet) {
       sheet = ss.insertSheet(tabName);
       sheet.appendRow(['Date', 'Meal', 'Cook', 'Notes', 'Timestamp', 'KidMeal']);
+    } else if (!sheet.getRange(1, 6).getValue()) {
+      // v52: Migrate existing sheets — add KidMeal header to F1
+      sheet.getRange(1, 6).setValue('KidMeal');
     }
     var today = getTodayISO_();
     var now = getNowISO_();
@@ -3898,5 +3901,5 @@ function getDesignUnlockedSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v51
+// END OF FILE — KidsHub.gs v52
 // ════════════════════════════════════════════════════════════════════
