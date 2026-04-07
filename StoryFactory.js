@@ -1112,11 +1112,19 @@ function updateNotionRow(pageId, storyLink, status, resumeHint) {
 var payload = { properties: { 'Status': { select: { name: status } } } };
 if (storyLink) payload.properties['Story Link'] = { url: storyLink };
 if (resumeHint) {
-  try {
-    payload.properties['Resume Hint'] = { rich_text: [{ text: { content: String(resumeHint).substring(0, 2000) } }] };
-  } catch (e) { /* Resume Hint property not yet added to Notion DB — run v14_2_migrationGuide() */ }
+  payload.properties['Resume Hint'] = { rich_text: [{ text: { content: String(resumeHint).substring(0, 2000) } }] };
 }
-notionPatch('pages/' + pageId, payload);
+try {
+  notionPatch('pages/' + pageId, payload);
+} catch (e) {
+  // Resume Hint property may not exist in Notion DB yet — retry without it
+  if (resumeHint && String(e).indexOf('Resume Hint') !== -1) {
+    delete payload.properties['Resume Hint'];
+    notionPatch('pages/' + pageId, payload);
+  } else {
+    throw e;
+  }
+}
 }
 
 // ── GET NEXT BOOK NUMBER ─────────────────────────────────────
