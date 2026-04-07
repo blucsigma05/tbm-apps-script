@@ -26,7 +26,6 @@ import json
 import os
 import re
 import sys
-import urllib.parse
 import urllib.request
 import urllib.error
 
@@ -52,20 +51,13 @@ HTML_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+# Map finding types to existing repo labels only — never auto-create labels.
+# Uses pipeline:* labels that already exist in the repo.
 TYPE_LABELS = {
-    'HOLD':  'finding:hold',
-    'FIX':   'finding:fix',
-    'FYI':   'finding:fyi',
-    'BLOCK': 'finding:block',
-}
-
-# Default colors when auto-creating labels that don't exist in the repo yet.
-LABEL_COLORS = {
-    'pipeline:fix-needed': 'e4e669',
-    'finding:hold':        'd73a4a',
-    'finding:fix':         '0075ca',
-    'finding:fyi':         'cfd3d7',
-    'finding:block':       'b60205',
+    'HOLD':  'pipeline:stalled',
+    'FIX':   'pipeline:fix-needed',
+    'FYI':   None,
+    'BLOCK': 'pipeline:stalled',
 }
 
 
@@ -92,28 +84,15 @@ def gh_api(path, method='GET', body=None, token=None):
         return None
 
 
-def ensure_label_(repo, name, token):
-    """Create the label in the repo if it does not exist. Returns True if ready."""
-    encoded = urllib.parse.quote(name, safe='')
-    existing = gh_api('/repos/%s/labels/%s' % (repo, encoded), token=token)
-    if existing is not None:
-        return True  # already exists
-    color = LABEL_COLORS.get(name, 'ededed')
-    result = gh_api('/repos/%s/labels' % repo, method='POST',
-                    body={'name': name, 'color': color}, token=token)
-    if result is not None:
-        print('Created missing label: %s' % name)
-    return result is not None
-
-
 def add_label_(repo, pr_number, label_name, token):
-    """Ensure label exists in repo, then apply it to the issue/PR."""
-    ensure_label_(repo, label_name, token)
+    """Apply a label to the issue/PR. Returns True only if the API call succeeds."""
     path = '/repos/%s/issues/%s/labels' % (repo, pr_number)
     result = gh_api(path, method='POST', body={'labels': [label_name]}, token=token)
     if result is not None:
         print('Label applied: %s' % label_name)
-    return result is not None
+        return True
+    print('Failed to apply label: %s' % label_name, file=sys.stderr)
+    return False
 
 
 def main():
@@ -177,15 +156,21 @@ def main():
 
     print('Finding detected: %s on PR #%s by %s' % (finding_type, pr_number, author))
 
-    # Apply pipeline:fix-needed first — independently, so it always lands
-    add_label_(repo, pr_number, 'pipeline:fix-needed', token)
+    # Apply pipeline:fix-needed label
+    label_ok = add_label_(repo, pr_number, 'pipeline:fix-needed', token)
 
-    # Apply type-specific label independently (create in repo if absent)
+    # Apply type-specific label if one is mapped
     type_label = TYPE_LABELS.get(finding_type)
-    if type_label:
-        add_label_(repo, pr_number, type_label, token)
+    if type_label and type_label != 'pipeline:fix-needed':
+        type_ok = add_label_(repo, pr_number, type_label, token)
+        label_ok = label_ok or type_ok
 
-    # Post confirmation reply — check for existing to prevent duplicates
+    # Only post confirmation reply if at least one label was applied
+    if not label_ok:
+        print('No labels applied — skipping confirmation reply', file=sys.stderr)
+        return
+
+    # Check for existing confirmation to prevent duplicates
     comments_path = '/repos/%s/issues/%s/comments' % (repo, pr_number)
     existing = gh_api(comments_path, token=token) or []
     for c in existing:
@@ -193,11 +178,15 @@ def main():
             print('Confirmation reply already exists — skipping duplicate')
             return
 
+    labels_applied = ['`pipeline:fix-needed`']
+    if type_label and type_label != 'pipeline:fix-needed':
+        labels_applied.append('`%s`' % type_label)
+
     reply = (
         COMMENT_MARKER + '\n'
         '\U0001f916 Finding detected (type: **%s**). '
-        '`pipeline:fix-needed` label added. Pipeline Review Fixer will pick this up.'
-    ) % finding_type
+        '%s label(s) applied.'
+    ) % (finding_type, ' + '.join(labels_applied))
     gh_api(comments_path, method='POST', body={'body': reply}, token=token)
     print('Confirmation reply posted.')
 
