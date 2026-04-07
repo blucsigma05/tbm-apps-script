@@ -1191,7 +1191,10 @@ function init() {
   // Free play mode — skip curriculum, show game picker (no bulk preload)
   var isFreePlay = getParam('mode') === 'freeplay' || window.location.pathname.indexOf('sparkle-free') !== -1;
   if (isFreePlay) {
-    setTimeout(function() { hideSparkleLoading(); renderFreePlayMenu(); }, 1200);
+    setTimeout(function() {
+      hideSparkleLoading();
+      renderFreePlayMenu();
+    }, 1200);
     return;
   }
 
