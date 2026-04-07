@@ -73,8 +73,8 @@ var SURFACES = [
   { path: '/vein',      requiresPin: true,  sentinel: '#debtRows .d-bal' },
   { path: '/daily-missions',          requiresPin: false, sentinel: '#app:not(:empty)' },
   { path: '/daily-missions?child=jj', requiresPin: false, sentinel: '#app:not(:empty)' },
-  { path: '/wolfdome',                requiresPin: false, sentinel: '#home-view, #loading' },
-  { path: '/sparkle-kingdom',         requiresPin: false, sentinel: '#home-view, #loading' }
+  { path: '/wolfdome',                requiresPin: false, sentinel: '#home-view:not(:empty)' },
+  { path: '/sparkle-kingdom',         requiresPin: false, sentinel: '#home-view:not(:empty)' }
 ];
 
 var SENTINEL_TIMEOUT = 45000;
