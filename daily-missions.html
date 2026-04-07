@@ -629,7 +629,7 @@ var BUGGSY_SCHEDULE = {
     blocks: [
       { name: 'Power Scan', time: 10, page: 'power-scan' },
       { name: 'Baseline Diagnostic', time: 15, page: 'baseline' },
-      { name: 'THE WOLFDOME BUILDER', time: 0, page: 'dashboard', unlockAfterHomework: true, noTimer: true }
+      { name: 'THE WOLFDOME BUILDER', time: 0, page: 'wolfdome', unlockAfterHomework: true, noTimer: true }
     ]
   },
   1: { // Monday
@@ -1105,7 +1105,7 @@ function render() {
       html += '<div class="mission-number" style="background:linear-gradient(135deg,#003311,#001a0a);border-color:#00ff88;color:#00ff88;">\uD83C\uDF89</div>';
       html += '<div class="mission-info"><div class="mission-name">' + block.name + '</div>';
       html += '<div class="mission-meta"><span class="mission-time">Take as long as you want. No timer.</span></div></div>';
-      html += '<div class="mission-actions"><button class="launch-btn" onclick="window.location.href=\'/dashboard\'" style="border-color:#00ff88;color:#00ff88;box-shadow:0 0 10px rgba(0,255,136,0.3);">ENTER \u2192</button></div>';
+      html += '<div class="mission-actions"><button class="launch-btn" onclick="window.location.href=\'/wolfdome?customize=1\'" style="border-color:#00ff88;color:#00ff88;box-shadow:0 0 10px rgba(0,255,136,0.3);">ENTER \u2192</button></div>';
       html += '</div>';
     } else {
       // Normal card

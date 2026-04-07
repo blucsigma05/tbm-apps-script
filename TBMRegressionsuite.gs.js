@@ -582,7 +582,7 @@ function runEnvironmentAssertions_(results) {
     var a = { id: 'ENV-006B', category: 'wiring', description: 'Every google.script.run call has withFailureHandler', status: 'PASS', details: '' };
     var htmlFiles = ['KidsHub', 'ThePulse', 'TheVein', 'TheSoul', 'TheSpine',
       'SparkleLearning', 'HomeworkModule', 'WolfkidCER', 'StoryLibrary', 'StoryReader',
-      'ComicStudio', 'DesignDashboard', 'ProgressReport', 'BaselineDiagnostic',
+      'ComicStudio', 'DesignDashboard', 'JJHome', 'ProgressReport', 'BaselineDiagnostic',
       'daily-missions', 'fact-sprint', 'investigation-module', 'reading-module',
       'writing-module', 'wolfkid-power-scan'];
     var violations = [];

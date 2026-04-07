@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v3.2 — thompsonfams.com — Front Door + PIN Gate
+// TBM Smart Proxy v3.3 — thompsonfams.com — Front Door + PIN Gate
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -20,7 +20,8 @@ const PATH_ROUTES = {
   '/sparkle':       { page: 'sparkle' },
   '/sparkle-free':  { page: 'sparkle', mode: 'freeplay' },
   '/wolfkid':       { page: 'wolfkid' },
-  '/dashboard':     { page: 'dashboard' },
+  '/wolfdome':      { page: 'wolfdome' },
+  '/sparkle-kingdom': { page: 'sparkle-kingdom' },
   '/facts':         { page: 'facts' },
   '/reading':       { page: 'reading' },
   '/writing':       { page: 'writing' },

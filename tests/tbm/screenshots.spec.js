@@ -28,7 +28,8 @@ var FILE_ROUTE_MAP = {
   'investigation-module.html':  [],
   'BaselineDiagnostic.html':    [],
   'ComicStudio.html':           [],
-  'DesignDashboard.html':       [],
+  'DesignDashboard.html':       ['/wolfdome'],
+  'JJHome.html':                ['/sparkle-kingdom'],
   'ProgressReport.html':        [],
   'StoryLibrary.html':          [],
   'StoryReader.html':           [],
@@ -54,7 +55,9 @@ var ROUTE_VIEWPORTS = {
   '/buggsy':                   { width: 1340, height: 800,  device: 'A9 Tablet' },
   '/jj':                       { width: 1340, height: 800,  device: 'A7 Tablet' },
   '/daily-missions':           { width: 1368, height: 912,  device: 'Surface Pro' },
-  '/daily-missions?child=jj':  { width: 1920, height: 1200, device: 'S10 FE' }
+  '/daily-missions?child=jj':  { width: 1920, height: 1200, device: 'S10 FE' },
+  '/wolfdome':                 { width: 1340, height: 800,  device: 'A9 Tablet' },
+  '/sparkle-kingdom':          { width: 1340, height: 800,  device: 'A7 Tablet' }
 };
 
 var DESKTOP = { width: 1920, height: 1080, device: 'Desktop' };
@@ -69,7 +72,9 @@ var SURFACES = [
   { path: '/pulse',     requiresPin: true,  sentinel: '#app .footer' },
   { path: '/vein',      requiresPin: true,  sentinel: '#debtRows .d-bal' },
   { path: '/daily-missions',          requiresPin: false, sentinel: '#app:not(:empty)' },
-  { path: '/daily-missions?child=jj', requiresPin: false, sentinel: '#app:not(:empty)' }
+  { path: '/daily-missions?child=jj', requiresPin: false, sentinel: '#app:not(:empty)' },
+  { path: '/wolfdome',                requiresPin: false, sentinel: '#home-view, #loading' },
+  { path: '/sparkle-kingdom',         requiresPin: false, sentinel: '#home-view, #loading' }
 ];
 
 var SENTINEL_TIMEOUT = 45000;
