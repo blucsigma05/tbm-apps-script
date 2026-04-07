@@ -243,9 +243,10 @@ def main():
             )
         return
 
-    # Read diff
+    # Read diff — use errors='replace' so byte-truncated multi-byte chars (e.g. emoji)
+    # don't crash with UnicodeDecodeError when head -c cuts mid-sequence.
     try:
-        with open(diff_file) as f:
+        with open(diff_file, encoding='utf-8', errors='replace') as f:
             diff_text = f.read()
     except FileNotFoundError:
         print("Diff file not found: %s" % diff_file, file=sys.stderr)

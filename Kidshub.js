@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v50 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v53 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 50; }
+function getKidsHubVersion() { return 53; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2113,11 +2113,12 @@ function khDebitScreenTime(child, screenType, minutes) {
 }
 
 
-// v30: Meal Plan — log dinner entry from Parent Dashboard
-function updateMealPlan(meal, cook, notes) {
+// v52: Meal Plan — log dinner entry from Parent Dashboard; kidMeal col F when different
+function updateMealPlan(meal, cook, notes, kidMeal) {
   var mealName = String(meal || '').trim();
   var cookedBy = String(cook || '').trim();
   var mealNotes = String(notes || '').trim();
+  var kidMealName = String(kidMeal || '').trim();
   if (!mealName) return JSON.stringify({ status: 'error', message: 'Meal name required' });
   if (!cookedBy) cookedBy = 'JT';
 
@@ -2129,11 +2130,18 @@ function updateMealPlan(meal, cook, notes) {
     var sheet = ss.getSheetByName(tabName);
     if (!sheet) {
       sheet = ss.insertSheet(tabName);
-      sheet.appendRow(['Date', 'Meal', 'Cook', 'Notes', 'Timestamp']);
+      sheet.appendRow(['Date', 'Meal', 'Cook', 'Notes', 'Timestamp', 'KidMeal']);
+    } else {
+      var f1Val = sheet.getRange(1, 6).getValue();
+      if (!f1Val || String(f1Val).toLowerCase() === 'updatedat') {
+        // v53: Migrate existing sheets — blank F1 or legacy 'UpdatedAt' header → KidMeal
+        sheet.getRange(1, 6).setValue('KidMeal');
+      }
     }
     var today = getTodayISO_();
     var now = getNowISO_();
-    sheet.appendRow([today, mealName, cookedBy, mealNotes, now]);
+    var kidMealVal = (kidMealName && kidMealName !== mealName) ? kidMealName : '';
+    sheet.appendRow([today, mealName, cookedBy, mealNotes, now, kidMealVal]);
     stampKHHeartbeat_();
     return JSON.stringify({ status: 'ok', meal: mealName, cook: cookedBy });
   } catch(e) {
@@ -3896,5 +3904,5 @@ function getDesignUnlockedSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v50
+// END OF FILE — KidsHub.gs v53
 // ════════════════════════════════════════════════════════════════════

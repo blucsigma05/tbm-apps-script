@@ -1,11 +1,11 @@
-<!-- TheSoul v51 — crest scale 1.55, origin 48% -->
+<!-- TheSoul v52 — crest scale 1.55, origin 48% -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<meta name="tbm-version" content="TheSoul v51">
-<title>TheSoul v51 — Thompson Family Display</title>
+<meta name="tbm-version" content="TheSoul v52">
+<title>TheSoul v52 — Thompson Family Display</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&display=swap" rel="stylesheet">
@@ -418,7 +418,7 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 (function(){
   'use strict';
   var SOUL_VERSION = 50;
-  var TBM_VERSION = 'TheSoul v51';
+  var TBM_VERSION = 'TheSoul v52';
   var REFRESH_MS = 120000;
   var _soulLastFetch = null;
   var _soulLastBoard = null;
@@ -665,11 +665,12 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
       card.className = card.className.replace('empty', '').replace('set', '').trim() + ' set';
       icon.textContent = emoji;
       icon.className = 'dinner-icon-set';
-      nameEl.textContent = dinner.meal;
+      var hasKidMeal = dinner.kidMeal && dinner.kidMeal !== dinner.meal;
+      nameEl.textContent = hasKidMeal ? ('Parents: ' + dinner.meal) : dinner.meal;
       nameEl.className = 'dinner-name-set';
       metaEl.textContent = (dinner.cook ? dinner.cook + ' cooking' : 'Takeout') + (dinner.notes ? ' \u00B7 ' + dinner.notes : '');
       metaEl.className = 'dinner-cook-set';
-      if (noteEl) noteEl.textContent = '';
+      if (noteEl) noteEl.textContent = hasKidMeal ? ('Kids: ' + dinner.kidMeal) : '';
       card.classList.add('dinner-shimmer');
       setTimeout(function() { card.classList.remove('dinner-shimmer'); }, 650);
     } else {
@@ -1053,4 +1054,4 @@ body{height:100%;width:100%;overflow:hidden;margin:0;padding:0;background:radial
 </script>
 </body>
 </html>
-<!-- TheSoul v51 — EOF -->
+<!-- TheSoul v52 — EOF -->
