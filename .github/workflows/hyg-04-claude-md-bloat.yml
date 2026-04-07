@@ -34,7 +34,6 @@ jobs:
           BASELINE_PATH: claude-md-baseline.json
           LINE_DELTA_THRESHOLD: '30'
           REPO_ROOT: .
-          GITHUB_OUTPUT: ${{ env.GITHUB_OUTPUT }}
         run: python3 .github/scripts/check_claude_md.py
 
       - name: Post PR comment
