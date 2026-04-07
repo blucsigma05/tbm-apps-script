@@ -1,0 +1,61 @@
+# .github/workflows/hyg-08-dead-workflows.yml
+# Dead Workflow Detector — runs monthly 1st at 9am Central (15:00 UTC).
+# Flags workflows with no successful run in 30 days.
+# Called by: cron 1st 15:00 UTC + workflow_dispatch
+# Env vars required: GH_TOKEN (auto), PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN
+
+name: HYG-08 Dead Workflow Detector
+
+on:
+  schedule:
+    - cron: '0 15 1 * *'   # 1st 09:00 Central (15:00 UTC)
+  workflow_dispatch:
+    inputs:
+      dead_days:
+        description: 'Days without a run before flagged dead (default: 30)'
+        required: false
+        default: '30'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  dead-workflow-check:
+    name: Dead Workflow Detector
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run dead workflow check
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DEAD_DAYS: ${{ inputs.dead_days || '30' }}
+        run: python3 .github/scripts/check_dead_workflows.py
+
+      - name: Pushover — dead workflows found
+        if: steps.check.outputs.has_findings == 'true'
+        env:
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+        run: |
+          if [ -z "$PUSHOVER_USER_KEY" ] || [ -z "$PUSHOVER_APP_TOKEN" ]; then
+            echo "Pushover secrets not set — skipping notification."
+            exit 0
+          fi
+          MSG=$(cat hyg08-message.txt 2>/dev/null || echo "Dead workflows found — see Actions log.")
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -sS \
+            --form-string "token=${PUSHOVER_APP_TOKEN}" \
+            --form-string "user=${PUSHOVER_USER_KEY}" \
+            --form-string "title=HYG-08: Dead Workflows" \
+            --form-string "message=${MSG}" \
+            --form-string "url=${RUN_URL}" \
+            --form-string "url_title=View run" \
+            --form-string "priority=0" \
+            https://api.pushover.net/1/messages.json

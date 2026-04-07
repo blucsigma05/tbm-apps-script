@@ -1,0 +1,60 @@
+# .github/workflows/hyg-03-integration-map-drift.yml
+# Integration Map Drift Detector — runs every Sunday at 7am Central (13:00 UTC).
+# Reads Notion Integration Map DB, flags entries with last_reviewed > 30 days.
+# Called by: cron Sunday 13:00 UTC + workflow_dispatch
+# Env vars required: NOTION_API_KEY, NOTION_INTEGRATION_MAP_DB, PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN
+
+name: HYG-03 Integration Map Drift Detector
+
+on:
+  schedule:
+    - cron: '0 13 * * 0'   # Sunday 07:00 Central (13:00 UTC)
+  workflow_dispatch:
+    inputs:
+      drift_days:
+        description: 'Days since last review before flagged (default: 30)'
+        required: false
+        default: '30'
+
+permissions:
+  contents: read
+
+jobs:
+  drift-check:
+    name: Integration Map Drift Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run drift detector
+        id: check
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_INTEGRATION_MAP_DB: ${{ secrets.NOTION_INTEGRATION_MAP_DB }}
+          DRIFT_DAYS: ${{ inputs.drift_days || '30' }}
+        run: python3 .github/scripts/check_integration_map_drift.py
+
+      - name: Pushover — drift found
+        if: steps.check.outputs.has_findings == 'true'
+        env:
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+        run: |
+          if [ -z "$PUSHOVER_USER_KEY" ] || [ -z "$PUSHOVER_APP_TOKEN" ]; then
+            echo "Pushover secrets not set — skipping notification."
+            exit 0
+          fi
+          MSG=$(cat hyg03-message.txt 2>/dev/null || echo "Integration Map drift found — see Actions log.")
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -sS \
+            --form-string "token=${PUSHOVER_APP_TOKEN}" \
+            --form-string "user=${PUSHOVER_USER_KEY}" \
+            --form-string "title=HYG-03: Integration Map Drift" \
+            --form-string "message=${MSG}" \
+            --form-string "url=${RUN_URL}" \
+            --form-string "url_title=View run" \
+            --form-string "priority=0" \
+            https://api.pushover.net/1/messages.json

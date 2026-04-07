@@ -1,0 +1,65 @@
+# .github/workflows/hyg-13-knowledge-graph-diff.yml
+# Knowledge Graph Diff — triggered on push to main touching knowledge files.
+# Posts a diff summary to Notion changelog.
+# Called by: push to main (filtered paths) + workflow_dispatch
+# Env vars required: NOTION_API_KEY, PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN
+
+name: HYG-13 Knowledge Graph Diff
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'CLAUDE.md'
+      - 'ops/**'
+      - 'specs/**'
+      - '*.json'
+      - '.claude/CLAUDE.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  knowledge-diff:
+    name: Knowledge Graph Diff
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code (with history for diff)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run knowledge diff
+        id: check
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_THREAD_ARCHIVE_ID: '322cea3cd9e881bb8afcd560fe772481'
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: python3 .github/scripts/check_knowledge_graph_diff.py
+
+      - name: Pushover — knowledge changes detected
+        if: steps.check.outputs.has_findings == 'true'
+        env:
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+        run: |
+          if [ -z "$PUSHOVER_USER_KEY" ] || [ -z "$PUSHOVER_APP_TOKEN" ]; then
+            echo "Pushover secrets not set — skipping notification."
+            exit 0
+          fi
+          MSG=$(cat hyg13-message.txt 2>/dev/null || echo "Knowledge files changed — see Actions log.")
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          curl -sS \
+            --form-string "token=${PUSHOVER_APP_TOKEN}" \
+            --form-string "user=${PUSHOVER_USER_KEY}" \
+            --form-string "title=HYG-13: Knowledge Graph Changed" \
+            --form-string "message=${MSG}" \
+            --form-string "url=${RUN_URL}" \
+            --form-string "url_title=View run" \
+            --form-string "priority=-1" \
+            https://api.pushover.net/1/messages.json
