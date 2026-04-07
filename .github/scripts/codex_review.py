@@ -217,6 +217,19 @@ def main():
     api_key = os.environ.get("OPENAI_API_KEY", "")
     diff_file = os.environ.get("DIFF_FILE", "pr_diff_send.txt")
     truncated = os.environ.get("TRUNCATED", "false") == "true"
+    empty_diff = os.environ.get("EMPTY_DIFF", "false") == "true"
+
+    # Files changed but diff is empty (e.g. binary-only PR) — INCONCLUSIVE
+    if empty_diff:
+        write_github_output("verdict", "INCONCLUSIVE")
+        with open("review_comment.md", "w") as f:
+            f.write(
+                COMMENT_MARKER + "\n"
+                "## ⚠️ Codex PR Review: INCONCLUSIVE — Empty Diff\n\n"
+                "PR has changed files but the text diff is empty (binary-only or "
+                "all changes in non-diffable files). Manual Codex audit required.\n"
+            )
+        return
 
     # No API key — INCONCLUSIVE, not a silent skip
     if not api_key:

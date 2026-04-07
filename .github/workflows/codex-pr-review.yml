@@ -69,15 +69,24 @@ jobs:
         id: diff
         run: |
           git fetch origin main --depth=1
-          git diff origin/main...HEAD -- '*.js' '*.html' '*.yml' '*.yaml' '*.py' '*.json' '*.md' > pr_diff.txt
+          # Diff ALL text files — no extension filter. Binary files are excluded by git diff default.
+          git diff origin/main...HEAD > pr_diff.txt
           DIFF_BYTES=$(wc -c < pr_diff.txt)
+          CHANGED_COUNT=$(git diff --name-only origin/main...HEAD | wc -l)
           echo "diff_bytes=$DIFF_BYTES" >> "$GITHUB_OUTPUT"
+          echo "changed_count=$CHANGED_COUNT" >> "$GITHUB_OUTPUT"
           # Truncate to 12000 chars — keeps well under gpt-4o 128k context, costs ~$0.01/review
           head -c 12000 pr_diff.txt > pr_diff_send.txt
           if [ "$DIFF_BYTES" -gt 12000 ]; then
             echo "truncated=true" >> "$GITHUB_OUTPUT"
           else
             echo "truncated=false" >> "$GITHUB_OUTPUT"
+          fi
+          # Force INCONCLUSIVE when files changed but diff is empty (binary-only PR)
+          if [ "$CHANGED_COUNT" -gt 0 ] && [ "$DIFF_BYTES" -eq 0 ]; then
+            echo "empty_diff=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "empty_diff=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Send to OpenAI gpt-4o
@@ -86,6 +95,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DIFF_FILE: pr_diff_send.txt
           TRUNCATED: ${{ steps.diff.outputs.truncated }}
+          EMPTY_DIFF: ${{ steps.diff.outputs.empty_diff }}
         run: python3 .github/scripts/codex_review.py
 
       - name: Post review comment on PR
