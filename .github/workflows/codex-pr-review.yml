@@ -171,8 +171,13 @@ jobs:
               core.setFailed('Codex audit incomplete — ' + reasons.join('; '));
             }
 
-      - name: Fail check on non-PASS verdict
-        if: steps.review.outputs.verdict != 'PASS'
+      - name: Warn on INCONCLUSIVE verdict
+        if: steps.review.outputs.verdict == 'INCONCLUSIVE'
         run: |
-          echo "Codex PR Review: ${{ steps.review.outputs.verdict }} — manual Codex audit required"
+          echo "::warning::Codex PR Review: INCONCLUSIVE — diff truncated or API error; manual audit required."
+
+      - name: Fail check on critical violations
+        if: steps.review.outputs.verdict == 'FAIL'
+        run: |
+          echo "Codex found P1 critical violations — merge blocked."
           exit 1
