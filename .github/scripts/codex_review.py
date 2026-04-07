@@ -12,7 +12,16 @@ Env vars expected:
 Outputs:
   review_comment.md — formatted PR comment
   codex_response.json — raw API response (for debugging)
-  GITHUB_OUTPUT: verdict=PASS|FAIL|SKIP|ERROR
+  GITHUB_OUTPUT: verdict=PASS|FAIL|INCONCLUSIVE
+
+Verdict rules (INCONCLUSIVE = CI blocks, manual review required):
+  - OPENAI_API_KEY missing          → INCONCLUSIVE
+  - TRUNCATED=true                  → INCONCLUSIVE (partial diff cannot be trusted)
+  - API / auth / rate-limit error   → INCONCLUSIVE
+  - Response malformed              → INCONCLUSIVE
+  - Content lacks explicit Verdict  → INCONCLUSIVE
+  - Explicit "**Verdict:** FAIL"    → FAIL
+  - Explicit "**Verdict:** PASS"    → PASS
 """
 
 import json
@@ -47,7 +56,8 @@ SYSTEM_PROMPT = (
     "Respond in this exact format:\n"
     "**Critical Violations (P1):** [list each with file and line if visible, or \"None\"]\n"
     "**Warnings (P2):** [list each or \"None\"]\n"
-    "**Verdict:** PASS or FAIL"
+    "**Verdict:** PASS or FAIL\n"
+    "**Files Reviewed:** [comma-separated list of filenames from the diff, e.g. \"Code.js, TheSpine.html\" — or \"none visible in diff\" if the diff was empty]"
 )
 
 
@@ -112,35 +122,87 @@ def format_comment(data, truncated):
     """
     trunc_note = ""
     if truncated:
-        trunc_note = "\n\n> Warning: Diff truncated at 12 000 chars — large PR, review may be partial."
+        trunc_note = "\n\n> ⚠️ Diff truncated at 12 000 chars — review is partial. Verdict is INCONCLUSIVE regardless of findings."
 
     if "error" in data:
         err = data["error"]
         if err == "auth_expired":
             return (
                 COMMENT_MARKER + "\n"
-                "## Warning Codex PR Review: AUTH ERROR\n\n"
+                "## ⚠️ Codex PR Review: INCONCLUSIVE — Auth Error\n\n"
                 "`OPENAI_API_KEY` secret has expired or is invalid. "
-                "Update it in repo Settings > Secrets." + trunc_note
+                "Update it in repo Settings > Secrets. Manual Codex audit required." + trunc_note
             )
         return (
             COMMENT_MARKER + "\n"
-            "## Warning Codex PR Review: API ERROR\n\n"
-            "Could not reach OpenAI: `%s`\n\nCheck workflow logs." % err + trunc_note
+            "## ⚠️ Codex PR Review: INCONCLUSIVE — API Error\n\n"
+            "Could not reach OpenAI: `%s`\n\nCheck workflow logs. Manual Codex audit required." % err + trunc_note
         )
 
-    content = data["choices"][0]["message"]["content"]
-    verdict = "FAIL" if "**Verdict:** FAIL" in content else "PASS"
-    icon = "PASS" if verdict == "PASS" else "FAIL"
-    return "%s\n## %s Codex PR Review: %s%s\n\n%s" % (COMMENT_MARKER, icon, verdict, trunc_note, content)
+    # Validate response shape
+    try:
+        content = data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError):
+        return (
+            COMMENT_MARKER + "\n"
+            "## ⚠️ Codex PR Review: INCONCLUSIVE — Malformed Response\n\n"
+            "OpenAI response did not contain expected choices/message/content. "
+            "Check `codex_response.json` in workflow artifacts. Manual Codex audit required." + trunc_note
+        )
+
+    has_pass = "**Verdict:** PASS" in content
+    has_fail = "**Verdict:** FAIL" in content
+
+    if truncated:
+        verdict_label = "INCONCLUSIVE"
+        icon = "⚠️"
+    elif has_fail:
+        verdict_label = "FAIL"
+        icon = "❌"
+    elif has_pass:
+        verdict_label = "PASS"
+        icon = "✅"
+    else:
+        verdict_label = "INCONCLUSIVE"
+        icon = "⚠️"
+
+    # When effective verdict is INCONCLUSIVE, strip any model PASS/FAIL verdict
+    # to avoid contradicting the header verdict with a raw model verdict below.
+    display_content = content
+    if verdict_label == "INCONCLUSIVE":
+        display_content = display_content.replace("**Verdict:** PASS", "**Verdict:** ~~PASS~~ INCONCLUSIVE (overridden — see header)")
+        display_content = display_content.replace("**Verdict:** FAIL", "**Verdict:** ~~FAIL~~ INCONCLUSIVE (overridden — see header)")
+
+    return "%s\n## %s Codex PR Review: %s%s\n\n%s" % (
+        COMMENT_MARKER, icon, verdict_label, trunc_note, display_content
+    )
 
 
-def extract_verdict(data):
-    """Return PASS, FAIL, or ERROR from the API response."""
+def extract_verdict(data, truncated=False):
+    """Return PASS, FAIL, or INCONCLUSIVE from the API response.
+
+    INCONCLUSIVE blocks the CI check and requires manual review. It is
+    returned for any situation where the review cannot be fully trusted:
+    truncated diff, API error, malformed response, or no explicit verdict.
+    """
+    if truncated:
+        return "INCONCLUSIVE"
     if "error" in data:
-        return "ERROR"
-    content = data["choices"][0]["message"]["content"]
-    return "FAIL" if "**Verdict:** FAIL" in content else "PASS"
+        return "INCONCLUSIVE"
+    try:
+        content = data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError):
+        return "INCONCLUSIVE"
+    if "**Verdict:** FAIL" in content:
+        return "FAIL"
+    if "**Verdict:** PASS" in content:
+        # PASS also requires the reviewer to confirm which files were reviewed.
+        # A missing Files Reviewed section means the reviewer may not have seen the diff.
+        if "**Files Reviewed:**" not in content:
+            return "INCONCLUSIVE"
+        return "PASS"
+    # Response arrived but contained no explicit verdict — rubber-stamp guard
+    return "INCONCLUSIVE"
 
 
 def write_github_output(key, value):
@@ -156,14 +218,15 @@ def main():
     diff_file = os.environ.get("DIFF_FILE", "pr_diff_send.txt")
     truncated = os.environ.get("TRUNCATED", "false") == "true"
 
-    # No API key — skip gracefully
+    # No API key — INCONCLUSIVE, not a silent skip
     if not api_key:
-        write_github_output("verdict", "SKIP")
+        write_github_output("verdict", "INCONCLUSIVE")
         with open("review_comment.md", "w") as f:
             f.write(
                 COMMENT_MARKER + "\n"
-                "## Warning Codex PR Review: SKIPPED\n\n"
-                "**Missing secret:** `OPENAI_API_KEY` — configure it in repo Settings > Secrets.\n"
+                "## ⚠️ Codex PR Review: INCONCLUSIVE — Missing API Key\n\n"
+                "**Missing secret:** `OPENAI_API_KEY` — configure it in repo Settings > Secrets. "
+                "Manual Codex audit required.\n"
             )
         return
 
@@ -173,25 +236,28 @@ def main():
             diff_text = f.read()
     except FileNotFoundError:
         print("Diff file not found: %s" % diff_file, file=sys.stderr)
-        write_github_output("verdict", "ERROR")
+        write_github_output("verdict", "INCONCLUSIVE")
         with open("review_comment.md", "w") as f:
-            f.write(COMMENT_MARKER + "\n## Warning Codex PR Review: ERROR\n\nDiff file `%s` not found.\n" % diff_file)
+            f.write(
+                COMMENT_MARKER + "\n"
+                "## ⚠️ Codex PR Review: INCONCLUSIVE — Diff File Missing\n\n"
+                "Diff file `%s` not found. Manual Codex audit required.\n" % diff_file
+            )
         return
 
-    # Send to OpenAI
+    # Send to OpenAI (even for truncated diffs — partial review is better than none)
     data = send_to_openai(diff_text, truncated, api_key)
 
     # Save raw response for debugging
     with open("codex_response.json", "w") as f:
         json.dump(data, f)
 
-    # Format comment
+    # Format comment and extract verdict
     comment = format_comment(data, truncated)
     with open("review_comment.md", "w") as f:
         f.write(comment)
 
-    # Write verdict
-    verdict = extract_verdict(data)
+    verdict = extract_verdict(data, truncated)
     write_github_output("verdict", verdict)
     print("Codex verdict: %s" % verdict)
 
