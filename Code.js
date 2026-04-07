@@ -229,6 +229,7 @@ function servePage(page, e) {
     'sparkle':   { file: 'SparkleLearning', title: 'Sparkle Learning — JJ Letter & Number Games' },
     'wolfkid':   { file: 'WolfkidCER',     title: 'Wolfkid CER — Episode 3' },
     'wolfdome':        { file: 'DesignDashboard', title: 'The Wolfdome — Buggsy Home' },
+    'dashboard':       { file: 'DesignDashboard', title: 'The Wolfdome — Buggsy Home' },
     'sparkle-kingdom': { file: 'JJHome',          title: 'The Sparkle Kingdom — JJ Home' },
     'facts':     { file: 'fact-sprint',    title: 'Fact Sprint — Math Drill' },
     'reading':       { file: 'reading-module',  title: 'Reading Module — Thompson Education' },
