@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v85 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v86 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 85; }
+function getDataEngineVersion() { return 86; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -3118,7 +3118,7 @@ function getBoardData() {
             cook: String(mpData[mp][2] || ''),
             notes: String(mpData[mp][3] || ''),
             updatedBy: String(mpData[mp][4] || ''),
-            updatedAt: String(mpData[mp][5] || '')
+            kidMeal: String(mpData[mp][5] || '')
           };
           break;
         }
@@ -3404,4 +3404,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v85
+// END OF FILE — DataEngine v86

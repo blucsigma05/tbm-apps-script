@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="tbm-version" content="KidsHub v37">
-<title>Kids Hub v37</title>
+<meta name="tbm-version" content="KidsHub v38">
+<title>Kids Hub v38</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -935,7 +935,7 @@ body { min-height: 100vh; }
 <!-- v1 TBM: Scriptlet injection via createTemplateFromFile (Code.gs v20) -->
 <!-- Fixes parent dashboard blank page bug — config is server-injected   -->
 <script>
-var TBM_VERSION = 'KidsHub v37';
+var TBM_VERSION = 'KidsHub v38';
 var INIT_CHILD = "<?= INIT_CHILD ?>";
 var INIT_VIEW  = "<?= INIT_VIEW ?>";
 </script>
@@ -3691,12 +3691,15 @@ function pBatchApprove(child) {
   function rDinner() {
     return '<div class="p-reset-panel" style="margin-bottom:20px"><div class="p-reset-title">🍽 DINNER LOG</div>' +
       '<div style="display:flex;flex-direction:column;gap:10px">' +
-      '<input type="text" id="dinnerMeal" placeholder="What\'s for dinner?" style="padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0;outline:none">' +
+      '<input type="text" id="dinnerMeal" placeholder="Dinner for everyone?" style="padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0;outline:none">' +
       '<div style="display:flex;gap:10px">' +
       '<select id="dinnerCook" style="flex:1;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0">' +
       '<option value="JT">JT cooked</option><option value="LT">LT cooked</option><option value="Takeout">Takeout</option><option value="Other">Other</option></select>' +
       '<input type="text" id="dinnerNotes" placeholder="Notes (optional)" style="flex:2;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0;outline:none">' +
       '</div>' +
+      '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#94a3b8;cursor:pointer">' +
+      '<input type="checkbox" id="dinnerKidsSplit" onchange="window._toggleKidMeal()" style="cursor:pointer"> Kids eating something different?</label>' +
+      '<input type="text" id="dinnerKidMeal" placeholder="Kids\' meal?" style="display:none;padding:10px 12px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;font-size:14px;font-family:inherit;background:rgba(20,20,40,0.4);color:#e2e8f0;outline:none">' +
       '<button id="dinnerBtn" onclick="window._v2LogDinner()" style="padding:12px;background:#22c55e;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🍽 Log Dinner</button>' +
       '<div id="dinnerStatus" style="display:none;font-size:12px;padding:6px 10px;border-radius:6px;text-align:center"></div>' +
       '</div></div>';
@@ -3987,10 +3990,17 @@ function pBatchApprove(child) {
       toast('Error: ' + e.message);
     }).khAddBonusTaskSafe(child, name, points, '⭐', timeBlock);
   };
+  window._toggleKidMeal = function() {
+    var cb = document.getElementById('dinnerKidsSplit');
+    var kidInput = document.getElementById('dinnerKidMeal');
+    if (cb && kidInput) kidInput.style.display = cb.checked ? 'block' : 'none';
+  };
   window._v2LogDinner = function() {
     var meal = (document.getElementById('dinnerMeal').value || '').trim();
     var cook = document.getElementById('dinnerCook').value;
     var notes = (document.getElementById('dinnerNotes').value || '').trim();
+    var splitCb = document.getElementById('dinnerKidsSplit');
+    var kidMeal = (splitCb && splitCb.checked) ? ((document.getElementById('dinnerKidMeal').value || '').trim()) : '';
     var statusEl = document.getElementById('dinnerStatus');
     var btn = document.getElementById('dinnerBtn');
     if (!meal) { statusEl.style.display = 'block'; statusEl.style.background = '#fef2f2'; statusEl.style.color = '#ef4444'; statusEl.textContent = 'Enter a meal name'; return; }
@@ -4003,6 +4013,8 @@ function pBatchApprove(child) {
       if (r.status === 'ok') {
         document.getElementById('dinnerMeal').value = '';
         document.getElementById('dinnerNotes').value = '';
+        if (splitCb) { splitCb.checked = false; window._toggleKidMeal(); }
+        document.getElementById('dinnerKidMeal').value = '';
         statusEl.style.display = 'block'; statusEl.style.background = '#f0fdf4'; statusEl.style.color = '#16a34a';
         statusEl.textContent = 'Logged: ' + r.meal + ' (by ' + r.cook + ')';
         toast('🍽 Dinner logged!');
@@ -4014,7 +4026,7 @@ function pBatchApprove(child) {
       btn.disabled = false;
       btn.textContent = '🍽 Log Dinner';
       toast('Error: ' + e.message);
-    }).updateMealPlanSafe(meal, cook, notes);
+    }).updateMealPlanSafe(meal, cook, notes, kidMeal);
   };
   window._v2DebitScreen = function(child, screenType, minutes) {
     var label = screenType === 'TV' ? '📺 TV' : '🎮 Gaming';

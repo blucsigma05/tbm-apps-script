@@ -908,9 +908,9 @@ function getStoryApiStatsSafe() {
     return getStoryApiStats();
   });
 }
-function updateMealPlanSafe(meal, cook, notes) {
+function updateMealPlanSafe(meal, cook, notes, kidMeal) {
   return withMonitor_('updateMealPlanSafe', function() {
-    try { return JSON.parse(updateMealPlan(meal, cook, notes)); }
+    try { return JSON.parse(updateMealPlan(meal, cook, notes, kidMeal)); }
     catch(e) { _khDiag_('updateMealPlanSafe', {meal: meal, cook: cook}, e); throw e; }
   });
 }
