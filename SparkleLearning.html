@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v10">
+  <meta name="tbm-version" content="v11">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -752,12 +752,21 @@ function speakOptions(options, index, callback) {
 }
 
 function playAudioCached(name, fallbackText) {
+  // Stop any active clip and cancel speech before playing feedback audio
+  if (_activeClip) {
+    try { _activeClip.pause(); _activeClip.currentTime = 0; _activeClip.onended = null; } catch(e) {}
+    _activeClip = null;
+  }
+  if (window.speechSynthesis) { speechSynthesis.cancel(); }
   if (audioCache[name]) {
     try {
-      audioCache[name].currentTime = 0;
-      audioCache[name].play();
+      var clip = audioCache[name];
+      clip.currentTime = 0;
+      _activeClip = clip;
+      clip.onended = function() { _activeClip = null; };
+      clip.play();
       return;
-    } catch (e) { /* fall through */ }
+    } catch (e) { _activeClip = null; /* fall through */ }
   }
   if (fallbackText) {
     speak(fallbackText);
