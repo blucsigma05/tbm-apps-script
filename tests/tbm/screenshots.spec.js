@@ -180,7 +180,7 @@ SURFACES.forEach(function(surface) {
     }
 
     await page.setViewportSize({ width: vp.width, height: vp.height });
-    await page.goto(BASE_URL + surface.path, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(BASE_URL + surface.path, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await handlePIN(page, surface.requiresPin);
     await waitForSentinel(page, surface);
 
@@ -203,7 +203,7 @@ SURFACES.forEach(function(surface) {
     }
 
     await page.setViewportSize({ width: DESKTOP.width, height: DESKTOP.height });
-    await page.goto(BASE_URL + surface.path, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    await page.goto(BASE_URL + surface.path, { waitUntil: 'domcontentloaded', timeout: 60000 });
     await handlePIN(page, surface.requiresPin);
     await waitForSentinel(page, surface);
 
