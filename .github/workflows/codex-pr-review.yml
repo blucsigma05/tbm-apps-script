@@ -69,7 +69,7 @@ jobs:
         id: diff
         run: |
           git fetch origin main --depth=1
-          git diff origin/main...HEAD -- '*.js' '*.html' > pr_diff.txt
+          git diff origin/main...HEAD -- '*.js' '*.html' '*.yml' '*.yaml' '*.py' '*.json' '*.md' > pr_diff.txt
           DIFF_BYTES=$(wc -c < pr_diff.txt)
           echo "diff_bytes=$DIFF_BYTES" >> "$GITHUB_OUTPUT"
           # Truncate to 12000 chars — keeps well under gpt-4o 128k context, costs ~$0.01/review
@@ -122,8 +122,47 @@ jobs:
               });
             }
 
-      - name: Fail check on critical violations
-        if: steps.review.outputs.verdict == 'FAIL'
+      - name: Integrity check — detect rubber-stamped audits
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '';
+            try { body = fs.readFileSync('review_comment.md', 'utf8'); } catch (e) {}
+
+            const MARKER = '<!-- codex-pr-review -->';
+
+            // Skip rubber-stamp check when review script already set INCONCLUSIVE —
+            // the truncation note IS the intended output, not a rubber stamp.
+            if (body.includes('INCONCLUSIVE')) {
+              core.info('Review is INCONCLUSIVE — skipping rubber-stamp check.');
+              return;
+            }
+
+            const rubberStamp = [
+              'usage limits',
+              'Please provide the PR diff',
+              'could not review',
+              'cannot review',
+              'no diff provided',
+              'no code to review',
+              'please share',
+              'could you provide',
+            ];
+
+            const missingMarker = !body.includes(MARKER);
+            const matched = rubberStamp.filter(p => body.toLowerCase().includes(p.toLowerCase()));
+
+            if (missingMarker || matched.length > 0) {
+              const reasons = [];
+              if (missingMarker) reasons.push('missing HTML marker (<!-- codex-pr-review -->)');
+              matched.forEach(p => reasons.push('contains rubber-stamp phrase: "' + p + '"'));
+              core.setFailed('Codex audit incomplete — ' + reasons.join('; '));
+            }
+
+      - name: Fail check on non-PASS verdict
+        if: steps.review.outputs.verdict != 'PASS'
         run: |
-          echo "Codex found P1 critical violations — merge blocked."
+          echo "Codex PR Review: ${{ steps.review.outputs.verdict }} — manual Codex audit required"
           exit 1
