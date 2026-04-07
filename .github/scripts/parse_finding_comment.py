@@ -39,9 +39,10 @@ BOT_LOGINS = {'github-actions[bot]', 'github-actions'}
 # HTML marker appended to confirmation replies; used to detect existing replies.
 COMMENT_MARKER = '<!-- codex-finding-listener -->'
 
-# Visible text marker: "Codex finding: HOLD" / "Codex manual audit: FIX" (case-insensitive)
+# Visible text marker: "Codex finding: HOLD" / "Codex manual audit: **FIX**" (case-insensitive)
+# \*{0,2} handles optional markdown bold markers around the type word.
 VISIBLE_PATTERN = re.compile(
-    r'^codex\s+(?:manual\s+audit|finding)\s*:\s*(HOLD|FIX|FYI|BLOCK)',
+    r'^codex\s+(?:manual\s+audit|finding)\s*:\s*\*{0,2}(HOLD|FIX|FYI|BLOCK)\*{0,2}',
     re.IGNORECASE | re.MULTILINE
 )
 
