@@ -48,6 +48,16 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      - name: Gate — require Notion access
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+        run: |
+          if [ -z "$NOTION_API_KEY" ]; then
+            echo "::error::NOTION_API_KEY secret not configured. Code Sweep cannot access the Trust Backlog without it."
+            echo "Add a Notion integration token to repo Settings > Secrets before enabling this workflow."
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
