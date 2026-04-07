@@ -30,7 +30,7 @@ jobs:
       - name: Checkout code (with history for diff)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Run knowledge diff
         id: check
@@ -39,6 +39,7 @@ jobs:
           NOTION_THREAD_ARCHIVE_ID: '322cea3cd9e881bb8afcd560fe772481'
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_SHA: ${{ github.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
         run: python3 .github/scripts/check_knowledge_graph_diff.py
 
       - name: Pushover — knowledge changes detected

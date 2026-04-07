@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """check_knowledge_graph_diff.py
-Purpose:   Compute diff of knowledge files between HEAD~1 and HEAD, post summary to Notion.
+Purpose:   Compute diff of knowledge files across the full push range, post summary to Notion.
 Called by: .github/workflows/hyg-13-knowledge-graph-diff.yml
 Env vars:  NOTION_API_KEY              Notion integration token (optional — skips post if missing)
            NOTION_THREAD_ARCHIVE_ID    Notion page ID for Thread Handoff Archive
            GITHUB_REPOSITORY           owner/repo (set by Actions runner)
            GITHUB_SHA                  commit SHA (set by Actions runner)
+           PUSH_BEFORE                 commit SHA before the push (from github.event.before)
            GITHUB_OUTPUT               Set by Actions runner; used to pass step outputs
 
 Knowledge files: CLAUDE.md, ops/*, specs/*, *.json, .claude/CLAUDE.md
@@ -23,6 +24,7 @@ NOTION_API_KEY = os.environ.get('NOTION_API_KEY', '')
 ARCHIVE_ID = os.environ.get('NOTION_THREAD_ARCHIVE_ID', '')
 REPO = os.environ.get('GITHUB_REPOSITORY', '')
 SHA = os.environ.get('GITHUB_SHA', '')[:8]
+PUSH_BEFORE = os.environ.get('PUSH_BEFORE', '')
 GITHUB_OUTPUT = os.environ.get('GITHUB_OUTPUT', '')
 
 KNOWLEDGE_PATTERNS = [
@@ -61,8 +63,16 @@ def is_knowledge_file(path):
     return False
 
 
+def get_base_ref():
+    """Use push event's before SHA if available, fall back to HEAD~1 for workflow_dispatch."""
+    if PUSH_BEFORE and PUSH_BEFORE != '0000000000000000000000000000000000000000':
+        return PUSH_BEFORE
+    return 'HEAD~1'
+
+
 def get_diff_stat(filepath):
-    stat = run_git(['diff', '--stat', 'HEAD~1', 'HEAD', '--', filepath])
+    base = get_base_ref()
+    stat = run_git(['diff', '--stat', base, 'HEAD', '--', filepath])
     return stat
 
 
@@ -109,9 +119,10 @@ def post_to_notion(summary):
 
 
 def main():
-    changed_files = run_git(['diff', '--name-only', 'HEAD~1', 'HEAD'])
+    base = get_base_ref()
+    changed_files = run_git(['diff', '--name-only', base, 'HEAD'])
     if not changed_files:
-        print('No changed files between HEAD~1 and HEAD.')
+        print('No changed files between ' + base[:8] + ' and HEAD.')
         set_output('has_findings', 'false')
         return 0
 
@@ -132,7 +143,7 @@ def main():
     diff_details = []
     for f in knowledge_files:
         stat = get_diff_stat(f)
-        additions = run_git(['diff', '--numstat', 'HEAD~1', 'HEAD', '--', f])
+        additions = run_git(['diff', '--numstat', base, 'HEAD', '--', f])
         diff_details.append({'file': f, 'stat': stat, 'numstat': additions})
 
     print(json.dumps({
