@@ -18,6 +18,7 @@ package-lock.json
 tests/**
 playwright-report/**
 ops/**
+specs/**
 .gitignore
 staar-rla-sprint-final.json
 claude-md-baseline.json
