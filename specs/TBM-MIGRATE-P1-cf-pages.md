@@ -76,10 +76,11 @@ surfaces use the existing XHR shim that POSTs to `/api?fn=FUNCTION_NAME`.
 This shim already exists in the CF Worker — it's how Cloudflare-proxied surfaces
 work today. No new API gateway needed.
 
-**Security:** CF Worker already handles the signing. For Phase 1, the existing
-HMAC pattern in the worker continues unchanged. GAS `serveData` API whitelist
-(Code.js:367–420) stays as the authorization layer — only whitelisted functions
-are callable.
+**Security:** The CF Worker does **not** currently implement HMAC signing — it
+forwards `fn`/`args` to GAS and relies on the GAS `serveData` API whitelist
+(Code.js:367–420) as the sole authorization layer. Only whitelisted functions
+are callable. HMAC request signing should be added before moving auth-sensitive
+surfaces to Pages, but is not required for Phase 1 read-only surfaces.
 
 ## Migration Protocol (per surface)
 

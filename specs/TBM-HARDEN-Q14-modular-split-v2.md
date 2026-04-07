@@ -71,6 +71,11 @@ Code.js is not just `servePage`. Full classification of all 1,941 lines:
 | Ops Health | 1770–1940 | `getOpsHealth_`, `getOpsHealthSafe` | `OpsHealth.js` (new, ~170 lines) |
 | Utilities | 14–18 | `leftPad2_`, `getCodeVersion` | **Code.js** (stays) |
 
+**⚠️ Known gap:** This table is a point-in-time snapshot and is not exhaustive.
+Functions added after the initial audit (e.g. `getScriptUrl()`, `getStoryApiStatsSafe()`,
+`updateMealPlanSafe()`, `getStoredStorySafe()`, `setupFeedbackSheet()`) are not listed.
+**Gate 1 requirement:** regenerate the manifest from current source before approval.
+
 **Result:** Code.js shrinks from 1,941 → ~310 lines (router + API dispatcher + utilities).
 
 ---
@@ -126,7 +131,10 @@ code, not the PR branch. For split PRs this is meaningless.
 
 **Required before Phase 2:**
 - Add a `GAS_TEST_DEPLOY_URL` secret pointing to a dedicated test deployment.
-- Before each PR, `clasp push` + `clasp deploy -i <test-deployment-id>`.
+- **CI must deploy the current PR head** — the workflow itself runs `clasp push` +
+  `clasp deploy -i <test-deployment-id>` using a service account credential, with
+  `concurrency: group` serialization to prevent parallel deploys. A manually
+  maintained test deployment can still point at old code or another branch.
 - CI workflow runs tests against `GAS_TEST_DEPLOY_URL` for PRs on `harden-*` branches.
 - Production deployment unchanged (only on merge to main).
 

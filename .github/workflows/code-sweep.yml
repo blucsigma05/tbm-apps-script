@@ -5,6 +5,10 @@
 # Auth: Uses ANTHROPIC_API_KEY (separate from Max subscription).
 # Verify auth mode in anthropics/claude-code-action README before first run.
 #
+# TODO: Notion access requires NOTION_API_KEY secret — currently not configured.
+#       Until added, this workflow operates in dry-run / spec-file mode only.
+#       Claude Code action cannot fetch Notion pages without a Notion integration token.
+#
 # Guardrails:
 #   - Max 3 items per run (prevents runaway builds)
 #   - Never auto-merges — always PR → CI → human merge
