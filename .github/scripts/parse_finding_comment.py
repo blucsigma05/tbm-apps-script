@@ -6,7 +6,7 @@ Called by: .github/workflows/codex-finding-listener.yml
 Env vars expected:
   GITHUB_TOKEN      — GitHub token with issues:write and pull-requests:write (required)
   REPO              — owner/repo slug, e.g. blucsigma05/tbm-apps-script (required)
-  GITHUB_EVENT_NAME — 'issue_comment' or 'pull_request_review_comment' (required)
+  GITHUB_EVENT_NAME — 'issue_comment', 'pull_request_review_comment', or 'pull_request_review' (required)
   COMMENT_AUTHOR    — login of the comment author (required)
   COMMENT_BODY      — full body of the comment (required)
   ISSUE_NUMBER      — issue/PR number from issue_comment event (may be empty)
@@ -139,7 +139,11 @@ def main():
             print('issue_comment on plain issue #%s — skipping' % issue_number)
             return
         pr_number = issue_number
+    elif event_name == 'pull_request_review':
+        # pull_request_review is always on a PR — no API verification needed
+        pr_number = pr_number_raw
     else:
+        # pull_request_review_comment — PR number from workflow env
         pr_number = pr_number_raw
 
     if not pr_number:

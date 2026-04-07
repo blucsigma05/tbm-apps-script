@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v86 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v87 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 86; }
+function getDataEngineVersion() { return 87; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -3165,7 +3165,7 @@ function setupMealPlanSheet() {
   var sheet = ss.getSheetByName(tabName);
   if (!sheet) {
     sheet = ss.insertSheet(tabName);
-    sheet.appendRow(['Date', 'Meal', 'Cook', 'Notes', 'UpdatedBy', 'UpdatedAt']);
+    sheet.appendRow(['Date', 'Meal', 'Cook', 'Notes', 'Timestamp', 'KidMeal']);
     sheet.setFrozenRows(1);
     sheet.getRange('1:1').setFontWeight('bold');
     sheet.setColumnWidth(1, 120);
@@ -3404,4 +3404,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v86
+// END OF FILE — DataEngine v87
