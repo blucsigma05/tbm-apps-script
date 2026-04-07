@@ -36,7 +36,6 @@ jobs:
         env:
           GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
           REPO_ROOT: .
-          GITHUB_OUTPUT: ${{ env.GITHUB_OUTPUT }}
         run: python3 .github/scripts/check_version_drift.py
 
       - name: Pushover — version drift found
