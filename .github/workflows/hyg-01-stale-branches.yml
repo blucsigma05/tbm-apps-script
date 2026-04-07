@@ -35,7 +35,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           STALE_DAYS: ${{ inputs.stale_days || '7' }}
-          GITHUB_OUTPUT: ${{ env.GITHUB_OUTPUT }}
         run: python3 .github/scripts/check_stale_branches.py
 
       - name: Pushover — stale branches found

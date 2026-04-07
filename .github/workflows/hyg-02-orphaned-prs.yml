@@ -35,7 +35,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           ORPHAN_DAYS: ${{ inputs.orphan_days || '5' }}
-          GITHUB_OUTPUT: ${{ env.GITHUB_OUTPUT }}
         run: python3 .github/scripts/check_orphaned_prs.py
 
       - name: Pushover — orphaned PRs found
