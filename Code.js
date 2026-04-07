@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v71 — Apps Script Router (TBM Consolidated)
+// Code.gs v72 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 71; }
+function getCodeVersion() { return 72; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -228,7 +228,8 @@ function servePage(page, e) {
     'homework':  { file: 'HomeworkModule',  title: 'Homework Module — Thompson Education' },
     'sparkle':   { file: 'SparkleLearning', title: 'Sparkle Learning — JJ Letter & Number Games' },
     'wolfkid':   { file: 'WolfkidCER',     title: 'Wolfkid CER — Episode 3' },
-    'dashboard': { file: 'DesignDashboard', title: 'Design Dashboard — Ring Quest Creator' },
+    'wolfdome': { file: 'DesignDashboard', title: 'The Wolfdome — Buggsy Home' },
+    'sparkle-kingdom': { file: 'JJHome', title: 'The Sparkle Kingdom — JJ Home' },
     'facts':     { file: 'fact-sprint',    title: 'Fact Sprint — Math Drill' },
     'reading':       { file: 'reading-module',  title: 'Reading Module — Thompson Education' },
     'writing':       { file: 'writing-module', title: 'Writing Module — Thompson Education' },
@@ -318,7 +319,7 @@ function serveData(e) {
         'comic-studio': 'ComicStudio', 'progress': 'ProgressReport',
         'story': 'StoryReader',
         'homework': 'HomeworkModule', 'sparkle': 'SparkleLearning',
-        'wolfkid': 'WolfkidCER', 'dashboard': 'DesignDashboard',
+        'wolfkid': 'WolfkidCER', 'wolfdome': 'DesignDashboard', 'sparkle-kingdom': 'JJHome',
         'facts': 'fact-sprint', 'reading': 'reading-module',
         'writing': 'writing-module',
         'investigation': 'investigation-module', 'daily-missions': 'daily-missions',
@@ -1333,7 +1334,7 @@ function healthCheck() {
   var activeFiles = ['TheVein', 'ThePulse', 'Vault', 'KidsHub', 'TheSpine', 'TheSoul', 'StoryLibrary',
     'HomeworkModule', 'SparkleLearning', 'fact-sprint', 'reading-module', 'writing-module',
     'wolfkid-power-scan', 'investigation-module', 'daily-missions', 'BaselineDiagnostic',
-    'StoryReader', 'ComicStudio', 'ProgressReport', 'WolfkidCER', 'DesignDashboard'];
+    'StoryReader', 'ComicStudio', 'ProgressReport', 'WolfkidCER', 'DesignDashboard', 'JJHome'];
   for (var ai = 0; ai < activeFiles.length; ai++) {
     var fname = activeFiles[ai];
     try {
@@ -1821,7 +1822,7 @@ function getOpsHealth_() {
     'daily-missions': 'daily-missions', 'fact-sprint': 'fact-sprint',
     reading: 'reading-module', writing: 'writing-module',
     investigation: 'investigation-module', baseline: 'BaselineDiagnostic',
-    'comic-studio': 'ComicStudio', dashboard: 'DesignDashboard',
+    'comic-studio': 'ComicStudio', wolfdome: 'DesignDashboard', 'sparkle-kingdom': 'JJHome',
     progress: 'ProgressReport', 'story-library': 'StoryLibrary',
     story: 'StoryReader', 'wolfkid-power-scan': 'wolfkid-power-scan'
   };
@@ -1938,4 +1939,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v71
+// END OF FILE — Code.gs v72

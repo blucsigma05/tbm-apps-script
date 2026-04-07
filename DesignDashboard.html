@@ -3,23 +3,229 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="tbm-version" content="v2">
+<meta name="tbm-version" content="v3">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
+  /* ── Wolfdome keyframes ── */
+  @keyframes wdTwinkle {
+    0%, 100% { opacity: var(--min, 0.1); }
+    50%       { opacity: var(--max, 0.6); }
+  }
+  @keyframes wdBoltFlash {
+    0%,  49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  @keyframes wdPulse {
+    0%   { width: 20px; height: 20px; opacity: 0.7; margin-left: -10px; }
+    100% { width: 300px; height: 300px; opacity: 0; margin-left: -150px; }
+  }
+  @keyframes wdSpot {
+    from { transform: rotate(-12deg); }
+    to   { transform: rotate(12deg); }
+  }
+  @keyframes wdFloorScroll {
+    from { background-position: 0 0; }
+    to   { background-position: 40px 40px; }
+  }
+  @keyframes wdSparkFloat {
+    0%, 100% { transform: translateY(0) translateX(0); opacity: 0.8; }
+    50%       { transform: translateY(-60px) translateX(var(--dx, 0px)); opacity: 0.3; }
+  }
+  @keyframes wdSignPulse {
+    0%, 100% { opacity: 0.9; }
+    50%       { opacity: 1; }
+  }
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     min-height: 100vh;
-    background: #0B0F1A;
+    background: #020508;
     color: #E2E8F0;
     font-family: 'Nunito', sans-serif;
   }
   input::placeholder { color: #64748B; }
 
-  /* Header */
+  /* ── HOME VIEW ── */
+  #home-view {
+    display: none;
+    position: relative;
+    z-index: 5;
+    min-height: 100vh;
+    padding: 88px 16px 80px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  #wd-ring-pill {
+    position: fixed;
+    top: 14px;
+    right: 14px;
+    z-index: 30;
+    background: rgba(3, 10, 20, 0.75);
+    border: 1px solid rgba(30, 120, 255, 0.45);
+    border-radius: 20px;
+    padding: 6px 14px;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 6px;
+  }
+  #wd-ring-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    color: #FFD700;
+    font-weight: 700;
+  }
+  .wd-today-card {
+    background: rgba(10, 20, 50, 0.55);
+    border: 1px solid rgba(30, 120, 255, 0.25);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  #wd-today-text {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #60A5FA;
+    letter-spacing: 2px;
+  }
+  .wd-nav-cards {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .wd-card {
+    background: rgba(10, 20, 50, 0.55);
+    border: 1px solid rgba(30, 120, 255, 0.25);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .wd-card:active {
+    border-color: rgba(30, 120, 255, 0.7);
+    background: rgba(20, 40, 90, 0.7);
+  }
+  .wd-card-icon { font-size: 32px; -webkit-flex-shrink: 0; flex-shrink: 0; }
+  .wd-card-body { -webkit-flex: 1; flex: 1; }
+  .wd-card-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: #E2E8F0;
+    letter-spacing: 1px;
+  }
+  .wd-card-sub { font-size: 12px; color: #64748B; margin-top: 3px; }
+  .wd-card-arrow { font-size: 18px; color: rgba(30, 120, 255, 0.6); }
+  #wd-wrench {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 30;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(10, 20, 50, 0.85);
+    border: 1px solid rgba(30, 120, 255, 0.3);
+    display: none;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    font-size: 20px;
+    cursor: pointer;
+  }
+
+  /* ── PIN OVERLAY ── */
+  #wd-pin-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 200;
+    background: rgba(2, 5, 8, 0.88);
+    display: none;
+    -webkit-align-items: center;
+    align-items: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .wd-pin-box {
+    width: 100%;
+    max-width: 320px;
+    background: rgba(5, 12, 30, 0.98);
+    border: 1px solid rgba(30, 120, 255, 0.45);
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+  }
+  .wd-pin-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: #FFD700;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .wd-pin-sub { font-size: 12px; color: #64748B; margin-bottom: 20px; }
+  .wd-pin-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid rgba(30, 120, 255, 0.4);
+    color: #E2E8F0;
+    font-size: 32px;
+    text-align: center;
+    letter-spacing: 12px;
+    padding: 8px 10px;
+    outline: none;
+    font-family: 'Orbitron', monospace;
+    transition: border-bottom-color 0.2s;
+  }
+  .wd-pin-input:focus { border-bottom-color: rgba(30, 120, 255, 0.9); }
+  .wd-pin-error { min-height: 16px; font-size: 12px; color: #ff8383; margin-top: 8px; }
+  .wd-pin-enter {
+    width: 100%;
+    margin-top: 16px;
+    padding: 12px;
+    background: linear-gradient(135deg, #1e78ff, #0a3a8a);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+  .wd-pin-cancel {
+    background: transparent;
+    border: none;
+    color: #64748B;
+    font-size: 13px;
+    margin-top: 10px;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+  }
+
+  /* ── WIZARD VIEW ── */
+  #wizard-view { display: none; }
+
+  /* Wizard header */
   .dd-header {
     background: rgba(11,15,26,0.95);
     border-bottom: 1px solid #1E2A4A;
@@ -44,46 +250,33 @@
     text-align: center;
     margin-top: 4px;
   }
-  .dd-progress { display: flex; gap: 4px; margin-top: 10px; }
+  .dd-progress { display: -webkit-flex; display: flex; gap: 4px; margin-top: 10px; }
   .dd-bar {
-    flex: 1;
+    -webkit-flex: 1; flex: 1;
     height: 4px;
     border-radius: 2px;
     transition: background 0.3s;
   }
   .dd-bar-active { background: #3B82F6; }
   .dd-bar-inactive { background: #1E2A4A; }
-  .dd-labels { display: flex; justify-content: space-between; margin-top: 4px; }
-  .dd-label {
-    font-size: 9px;
-    font-family: 'Orbitron', sans-serif;
-  }
+  .dd-labels { display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between; margin-top: 4px; }
+  .dd-label { font-size: 9px; font-family: 'Orbitron', sans-serif; }
   .dd-label-active { color: #60A5FA; font-weight: 700; }
   .dd-label-inactive { color: #64748B; font-weight: 400; }
 
-  /* Main */
+  /* Wizard main */
   .dd-main {
     max-width: 600px;
     margin: 0 auto;
     padding: 16px 16px 100px;
   }
   .dd-step { animation: fadeUp 0.3s ease; }
-  .dd-step-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    text-align: center;
-  }
-  .dd-step-desc {
-    font-size: 13px;
-    color: #94A3B8;
-    text-align: center;
-    margin-bottom: 16px;
-  }
+  .dd-step-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; text-align: center; }
+  .dd-step-desc { font-size: 13px; color: #94A3B8; text-align: center; margin-bottom: 16px; }
 
-  /* Choice cards */
-  .dd-choices { display: flex; flex-direction: column; gap: 8px; }
-  .dd-card {
+  /* Wizard choice cards (renamed from dd-card to dd-wizcard) */
+  .dd-choices { display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; gap: 8px; }
+  .dd-wizcard {
     width: 100%;
     text-align: left;
     padding: 14px;
@@ -98,82 +291,66 @@
     font-family: 'Nunito', sans-serif;
     font-size: 14px;
   }
-  .dd-card-selected {
+  .dd-wizcard-selected {
     background: rgba(59,130,246,0.08);
     border-color: #3B82F6;
   }
-  .dd-card-check {
+  .dd-wizcard-check {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 8px; right: 8px;
     background: #3B82F6;
     border-radius: 50%;
-    width: 22px;
-    height: 22px;
+    width: 22px; height: 22px;
     display: none;
-    align-items: center;
-    justify-content: center;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
     font-size: 12px;
     color: #fff;
   }
-  .dd-card-selected .dd-card-check { display: flex; }
-  .dd-card-row { display: flex; gap: 12px; align-items: center; }
-  .dd-card-icon {
-    width: 52px;
-    height: 52px;
+  .dd-wizcard-selected .dd-wizcard-check { display: -webkit-flex; display: flex; }
+  .dd-wizcard-row { display: -webkit-flex; display: flex; gap: 12px; -webkit-align-items: center; align-items: center; }
+  .dd-wizcard-icon {
+    width: 52px; height: 52px;
     border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
     font-size: 24px;
-    flex-shrink: 0;
+    -webkit-flex-shrink: 0; flex-shrink: 0;
   }
-  .dd-card-mascot-icon {
-    width: 48px;
-    height: 48px;
+  .dd-wizcard-mascot-icon {
+    width: 48px; height: 48px;
     border-radius: 50%;
     background: #131829;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
+    -webkit-justify-content: center; justify-content: center;
     font-size: 24px;
     border: 1px solid #1E2A4A;
-    flex-shrink: 0;
+    -webkit-flex-shrink: 0; flex-shrink: 0;
   }
-  .dd-card-body { flex: 1; }
-  .dd-card-name { font-size: 15px; font-weight: 700; color: #E2E8F0; }
-  .dd-card-desc { font-size: 12px; color: #94A3B8; margin-top: 2px; }
-  .dd-swatches { display: flex; gap: 4px; margin-top: 6px; }
-  .dd-swatch {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    border: 1px solid rgba(255,255,255,0.1);
-  }
+  .dd-wizcard-body { -webkit-flex: 1; flex: 1; }
+  .dd-wizcard-name { font-size: 15px; font-weight: 700; color: #E2E8F0; }
+  .dd-wizcard-desc { font-size: 12px; color: #94A3B8; margin-top: 2px; }
+  .dd-swatches { display: -webkit-flex; display: flex; gap: 4px; margin-top: 6px; }
+  .dd-swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); }
 
   /* Section names */
   .dd-section-label {
-    font-size: 11px;
-    color: #F97316;
+    font-size: 11px; color: #F97316;
     font-family: 'Orbitron', sans-serif;
-    letter-spacing: 1.5px;
-    margin-bottom: 8px;
+    letter-spacing: 1.5px; margin-bottom: 8px;
     text-transform: uppercase;
   }
   .dd-section-group { margin-bottom: 16px; }
-  .dd-section-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-  }
+  .dd-section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .dd-section-btn {
     padding: 10px 12px;
     background: #171D30;
     border: 1px solid #1E2A4A;
     border-radius: 8px;
     color: #94A3B8;
-    font-size: 13px;
-    font-weight: 400;
+    font-size: 13px; font-weight: 400;
     cursor: pointer;
     font-family: 'Nunito', sans-serif;
     transition: all 0.2s;
@@ -187,8 +364,7 @@
 
   /* Name input */
   .dd-name-input {
-    width: 100%;
-    padding: 16px;
+    width: 100%; padding: 16px;
     background: #171D30;
     border: 2px solid #1E2A4A;
     border-radius: 12px;
@@ -201,55 +377,31 @@
     transition: border-color 0.2s;
   }
   .dd-name-input-active { border-color: #3B82F6; }
-  .dd-char-count {
-    font-size: 11px;
-    color: #64748B;
-    text-align: right;
-    margin-top: 4px;
-  }
-  .dd-name-preview {
-    margin-top: 16px;
-    padding: 20px;
-    border-radius: 12px;
-    text-align: center;
-  }
+  .dd-char-count { font-size: 11px; color: #64748B; text-align: right; margin-top: 4px; }
+  .dd-name-preview { margin-top: 16px; padding: 20px; border-radius: 12px; text-align: center; }
   .dd-name-preview-text {
     font-family: 'Orbitron', sans-serif;
-    font-size: 22px;
-    font-weight: 900;
+    font-size: 22px; font-weight: 900;
     color: #fff;
     text-shadow: 0 2px 8px rgba(0,0,0,0.5);
   }
 
   /* Preview step */
-  .dd-preview-banner {
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    border: 1px solid #1E2A4A;
-  }
+  .dd-preview-banner { border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid #1E2A4A; }
   .dd-preview-title {
     font-family: 'Orbitron', sans-serif;
-    font-size: 18px;
-    font-weight: 900;
-    color: #fff;
-    text-align: center;
+    font-size: 18px; font-weight: 900;
+    color: #fff; text-align: center;
     text-shadow: 0 2px 8px rgba(0,0,0,0.5);
     margin-bottom: 4px;
   }
-  .dd-preview-theme {
-    font-size: 11px;
-    color: rgba(255,255,255,0.6);
-    text-align: center;
-  }
-  .dd-preview-sections { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .dd-preview-theme { font-size: 11px; color: rgba(255,255,255,0.6); text-align: center; }
+  .dd-preview-sections { display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; gap: 8px; margin-bottom: 16px; }
   .dd-preview-section {
-    background: #171D30;
-    border: 1px solid #1E2A4A;
-    border-radius: 10px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
+    background: #171D30; border: 1px solid #1E2A4A;
+    border-radius: 10px; padding: 12px;
+    display: -webkit-flex; display: flex;
+    -webkit-align-items: center; align-items: center;
     gap: 10px;
   }
   .dd-preview-section-icon { font-size: 20px; }
@@ -258,155 +410,74 @@
 
   /* Summary table */
   .dd-summary {
-    background: #131829;
-    border: 1px solid #1E2A4A;
-    border-radius: 12px;
-    padding: 14px;
-    font-size: 12px;
+    background: #131829; border: 1px solid #1E2A4A;
+    border-radius: 12px; padding: 14px; font-size: 12px;
   }
-  .dd-summary-header {
-    color: #3B82F6;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 10px;
-    letter-spacing: 1.5px;
-    margin-bottom: 8px;
-  }
-  .dd-summary-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-    border-bottom: 1px solid #1E2A4A;
-  }
+  .dd-summary-header { color: #3B82F6; font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 1.5px; margin-bottom: 8px; }
+  .dd-summary-row { display: -webkit-flex; display: flex; -webkit-justify-content: space-between; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #1E2A4A; }
   .dd-summary-row-last { border-bottom: none; }
   .dd-summary-label { color: #64748B; }
   .dd-summary-value { color: #E2E8F0; font-weight: 600; }
 
-  /* Lock in button */
+  /* Lock in */
   .dd-lockin {
-    width: 100%;
-    margin-top: 16px;
-    padding: 14px;
+    width: 100%; margin-top: 16px; padding: 14px;
     background: linear-gradient(135deg, #3B82F6, #2563EB);
-    border: none;
-    border-radius: 12px;
+    border: none; border-radius: 12px;
     color: #fff;
     font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    letter-spacing: 1px;
+    font-weight: 700; font-size: 14px;
+    cursor: pointer; letter-spacing: 1px;
     box-shadow: 0 4px 20px rgba(59,130,246,0.3);
   }
 
   /* Submitted */
   .dd-done { animation: fadeUp 0.5s ease; text-align: center; padding-top: 40px; }
   .dd-done-emoji { font-size: 56px; margin-bottom: 12px; }
-  .dd-done-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 22px;
-    font-weight: 900;
-    color: #22C55E;
-    margin-bottom: 8px;
-  }
-  .dd-done-text {
-    font-size: 14px;
-    color: #94A3B8;
-    line-height: 1.7;
-    margin-bottom: 24px;
-  }
-  .dd-done-ring {
-    background: rgba(249,115,22,0.06);
-    border: 1px solid rgba(249,115,22,0.19);
-    border-radius: 10px;
-    padding: 14px;
-    font-size: 13px;
-    color: #94A3B8;
-  }
+  .dd-done-title { font-family: 'Orbitron', sans-serif; font-size: 22px; font-weight: 900; color: #22C55E; margin-bottom: 8px; }
+  .dd-done-text { font-size: 14px; color: #94A3B8; line-height: 1.7; margin-bottom: 24px; }
+  .dd-done-ring { background: rgba(249,115,22,0.06); border: 1px solid rgba(249,115,22,0.19); border-radius: 10px; padding: 14px; font-size: 13px; color: #94A3B8; }
 
   /* Plan Your Attack */
-  .dd-plan {
-    animation: fadeUp 0.3s ease;
-    text-align: center;
-    padding-top: 20px;
-  }
+  .dd-plan { animation: fadeUp 0.3s ease; text-align: center; padding-top: 20px; }
   .dd-plan-icon { font-size: 48px; margin-bottom: 12px; }
-  .dd-plan-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 20px;
-    font-weight: 900;
-    color: #60A5FA;
-    margin-bottom: 8px;
-  }
-  .dd-plan-desc {
-    font-size: 14px;
-    color: #94A3B8;
-    line-height: 1.7;
-    margin-bottom: 16px;
-  }
-  .dd-plan-time {
-    background: #131829;
-    border: 1px solid #1E2A4A;
-    border-radius: 10px;
-    padding: 12px;
-    font-size: 13px;
-    color: #64748B;
-    margin-bottom: 20px;
-  }
+  .dd-plan-title { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 900; color: #60A5FA; margin-bottom: 8px; }
+  .dd-plan-desc { font-size: 14px; color: #94A3B8; line-height: 1.7; margin-bottom: 16px; }
+  .dd-plan-time { background: #131829; border: 1px solid #1E2A4A; border-radius: 10px; padding: 12px; font-size: 13px; color: #64748B; margin-bottom: 20px; }
   .dd-plan-time strong { color: #F97316; }
   .dd-plan-start {
     padding: 14px 32px;
     background: linear-gradient(135deg, #3B82F6, #2563EB);
-    border: none;
-    border-radius: 12px;
+    border: none; border-radius: 12px;
     color: #fff;
     font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    letter-spacing: 1px;
+    font-weight: 700; font-size: 14px;
+    cursor: pointer; letter-spacing: 1px;
     box-shadow: 0 4px 20px rgba(59,130,246,0.3);
   }
 
   /* Nav */
   .dd-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    position: fixed; bottom: 0; left: 0; right: 0;
     background: rgba(11,15,26,0.95);
     border-top: 1px solid #1E2A4A;
     padding: 10px 16px;
-    display: flex;
-    justify-content: space-between;
-    max-width: 600px;
-    margin: 0 auto;
-    z-index: 20;
+    display: -webkit-flex; display: flex;
+    -webkit-justify-content: space-between; justify-content: space-between;
+    max-width: 600px; margin: 0 auto; z-index: 20;
   }
   .dd-back {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: pointer;
+    padding: 10px 20px; border-radius: 8px;
+    font-size: 13px; cursor: pointer;
     font-family: 'Nunito', sans-serif;
-    background: #171D30;
-    border: 1px solid #1E2A4A;
-    color: #94A3B8;
+    background: #171D30; border: 1px solid #1E2A4A; color: #94A3B8;
   }
-  .dd-back-hidden {
-    background: transparent;
-    border: 1px solid transparent;
-    color: transparent;
-    cursor: default;
-  }
+  .dd-back-hidden { background: transparent; border: 1px solid transparent; color: transparent; cursor: default; }
   .dd-next {
-    padding: 10px 24px;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 700;
+    padding: 10px 24px; border: none; border-radius: 8px;
+    font-size: 13px; font-weight: 700;
     font-family: 'Orbitron', sans-serif;
-    letter-spacing: 0.5px;
-    cursor: pointer;
+    letter-spacing: 0.5px; cursor: pointer;
   }
   .dd-next-enabled { background: #3B82F6; color: #fff; }
   .dd-next-disabled { background: #1E2A4A; color: #64748B; cursor: not-allowed; }
@@ -414,20 +485,96 @@
 </head>
 <body>
 
-<div id="dd-app"></div>
+<div id="loading"></div>
+
+<div id="home-view">
+  <div id="wd-ring-pill">
+    <span style="font-size:18px;">&#x1F48D;</span>
+    <span id="wd-ring-value">--</span>
+  </div>
+  <div class="wd-today-card">
+    <div id="wd-today-text">WOLFKID COMMAND CENTER</div>
+  </div>
+  <div class="wd-nav-cards">
+    <a class="wd-card" href="/daily-missions">
+      <div class="wd-card-icon">&#x1F3AF;</div>
+      <div class="wd-card-body">
+        <div class="wd-card-title">DAILY MISSIONS</div>
+        <div class="wd-card-sub">Today's activities &amp; goals</div>
+      </div>
+      <div class="wd-card-arrow">&#x276F;</div>
+    </a>
+    <a class="wd-card" href="/homework">
+      <div class="wd-card-icon">&#x1F4DA;</div>
+      <div class="wd-card-body">
+        <div class="wd-card-title">HOMEWORK MODULE</div>
+        <div class="wd-card-sub">Math, Science, CER training</div>
+      </div>
+      <div class="wd-card-arrow">&#x276F;</div>
+    </a>
+    <a class="wd-card" href="/buggsy">
+      <div class="wd-card-icon">&#x1F43A;</div>
+      <div class="wd-card-body">
+        <div class="wd-card-title">BUGGSY BOARD</div>
+        <div class="wd-card-sub">Chores, rings &amp; rewards</div>
+      </div>
+      <div class="wd-card-arrow">&#x276F;</div>
+    </a>
+  </div>
+</div>
+
+<div id="wd-wrench" onclick="showPinOverlay()">&#x1F527;</div>
+
+<div id="wd-pin-overlay">
+  <div class="wd-pin-box">
+    <div class="wd-pin-title">CUSTOMIZE</div>
+    <div class="wd-pin-sub">Parent PIN required</div>
+    <input class="wd-pin-input" id="wd-pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="****">
+    <div class="wd-pin-error" id="wd-pin-error"></div>
+    <button class="wd-pin-enter" onclick="submitPin()">ENTER</button>
+    <button class="wd-pin-cancel" onclick="hidePinOverlay()">Cancel</button>
+  </div>
+</div>
+
+<div id="wizard-view">
+  <div id="dd-app"></div>
+</div>
 
 <script>
-// ── Test Mode Detection ──
+// ── Mode Detection ──
 var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+var TBM_CUSTOMIZE_MODE = window.location.search.indexOf('customize=1') !== -1;
+
 if (TBM_TEST_MODE) {
   var _tbanner = document.createElement('div');
   _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
-  _tbanner.textContent = 'TEST MODE — Nothing saves';
+  _tbanner.textContent = 'TEST MODE \u2014 Nothing saves';
   document.body.appendChild(_tbanner);
   document.body.style.paddingTop = '28px';
 }
 
-/* ===== DATA ===== */
+/* ===== LEVELS ===== */
+var LEVELS_FALLBACK = [
+  { min: 0, label: 'Recruit', color: '#64748B' },
+  { min: 25, label: 'Scout', color: '#22C55E' },
+  { min: 75, label: 'Ranger', color: '#3B82F6' },
+  { min: 150, label: 'Warrior', color: '#8B5CF6' },
+  { min: 300, label: 'Champion', color: '#F97316' },
+  { min: 500, label: 'Legend', color: '#FFD700' }
+];
+
+function safeParse(d) { return typeof d === 'string' ? JSON.parse(d) : d; }
+
+function getLevel(points, tiers) {
+  var tbl = tiers || LEVELS_FALLBACK;
+  var lvl = tbl[0];
+  for (var i = 0; i < tbl.length; i++) {
+    if (points >= tbl[i].min) { lvl = tbl[i]; }
+  }
+  return lvl;
+}
+
+/* ===== WIZARD DATA ===== */
 var THEMES = [
   { id: "wolfkid", name: "Wolfkid Universe", emoji: "\uD83D\uDC3A", colors: ["#0B0F1A","#3B82F6","#60A5FA","#EF4444"], desc: "Dark & electric. Your original universe.", preview: "linear-gradient(135deg, #0B0F1A 0%, #1E293B 50%, #3B82F6 100%)" },
   { id: "minecraft", name: "Minecraft", emoji: "\u26CF\uFE0F", colors: ["#3B7D4F","#8B6914","#5C8A3C","#4A4A4A"], desc: "Blocky, green, earthy. Craft your homework.", preview: "linear-gradient(135deg, #3B7D4F 0%, #5C8A3C 50%, #8B6914 100%)" },
@@ -439,21 +586,21 @@ var THEMES = [
 
 var SECTION_NAMES = {
   homework: ["Training Module", "Mission Control", "The Lab", "Quest Board", "Level Up Zone", "My Workshop"],
-  chores: ["Daily Quests", "Side Missions", "The Grind", "Task Board", "Challenge Board", "Chore Zone"],
-  rewards: ["Loot Shop", "Prize Vault", "Reward Center", "Trophy Room", "The Armory", "Power-Up Shop"]
+  chores:   ["Daily Quests", "Side Missions", "The Grind", "Task Board", "Challenge Board", "Chore Zone"],
+  rewards:  ["Loot Shop", "Prize Vault", "Reward Center", "Trophy Room", "The Armory", "Power-Up Shop"]
 };
 
 var MASCOT_IDEAS = [
-  { id: "wolfkid", name: "Wolfkid", emoji: "\uD83D\uDC3A", desc: "Your original character" },
-  { id: "custom_creature", name: "New Character", emoji: "\uD83C\uDFA8", desc: "Design something brand new" },
-  { id: "robot", name: "Robot/Mech", emoji: "\uD83E\uDD16", desc: "A tech-powered helper" },
-  { id: "dragon", name: "Dragon", emoji: "\uD83D\uDC09", desc: "Fire-breathing study buddy" },
-  { id: "none", name: "No Mascot", emoji: "\uD83D\uDE0E", desc: "Keep it clean, no character" }
+  { id: "wolfkid",        name: "Wolfkid",        emoji: "\uD83D\uDC3A", desc: "Your original character" },
+  { id: "custom_creature",name: "New Character",   emoji: "\uD83C\uDFA8", desc: "Design something brand new" },
+  { id: "robot",          name: "Robot/Mech",      emoji: "\uD83E\uDD16", desc: "A tech-powered helper" },
+  { id: "dragon",         name: "Dragon",          emoji: "\uD83D\uDC09", desc: "Fire-breathing study buddy" },
+  { id: "none",           name: "No Mascot",       emoji: "\uD83D\uDE0E", desc: "Keep it clean, no character" }
 ];
 
 var STEPS = ["Theme", "Sections", "Mascot", "Name It", "Preview"];
 
-/* ===== STATE ===== */
+/* ===== WIZARD STATE ===== */
 var state = {
   started: false,
   step: 0,
@@ -468,80 +615,185 @@ var state = {
 
 /* ===== HELPERS ===== */
 function escHtml(str) {
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-
 function findTheme(id) {
-  for (var i = 0; i < THEMES.length; i++) {
-    if (THEMES[i].id === id) return THEMES[i];
-  }
+  for (var i = 0; i < THEMES.length; i++) { if (THEMES[i].id === id) return THEMES[i]; }
   return null;
 }
-
 function findMascot(id) {
-  for (var i = 0; i < MASCOT_IDEAS.length; i++) {
-    if (MASCOT_IDEAS[i].id === id) return MASCOT_IDEAS[i];
-  }
+  for (var i = 0; i < MASCOT_IDEAS.length; i++) { if (MASCOT_IDEAS[i].id === id) return MASCOT_IDEAS[i]; }
   return null;
 }
-
 function canNext() {
   var s = state.step;
   if (s === 0) return state.theme !== null;
   if (s === 1) return state.sectionHomework !== null && state.sectionChores !== null && state.sectionRewards !== null;
   if (s === 2) return state.mascot !== null;
-  if (s === 3) return state.dashName.replace(/^\s+|\s+$/g, '').length > 0;
+  if (s === 3) return state.dashName.replace(/^\s+|\s+$/g,'').length > 0;
   return true;
 }
 
-/* ===== ACTIONS ===== */
-function startWizard() {
+/* ===== HOME VIEW ACTIONS ===== */
+function showPinOverlay() {
+  var overlay = document.getElementById('wd-pin-overlay');
+  var inp = document.getElementById('wd-pin-input');
+  var err = document.getElementById('wd-pin-error');
+  if (overlay) { overlay.style.display = '-webkit-flex'; overlay.style.display = 'flex'; }
+  if (err) { err.textContent = ''; }
+  if (inp) { inp.value = ''; setTimeout(function() { inp.focus(); }, 50); }
+}
+
+function hidePinOverlay() {
+  var overlay = document.getElementById('wd-pin-overlay');
+  if (overlay) { overlay.style.display = 'none'; }
+}
+
+function submitPin() {
+  var inp = document.getElementById('wd-pin-input');
+  var err = document.getElementById('wd-pin-error');
+  var pin = (inp ? inp.value : '').replace(/\D/g,'').slice(0,4);
+  if (pin.length !== 4) {
+    if (err) { err.textContent = 'Enter all 4 digits'; }
+    return;
+  }
+  if (TBM_TEST_MODE) {
+    hidePinOverlay();
+    showWizardView();
+    return;
+  }
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    var btn = document.querySelector('.wd-pin-enter');
+    if (btn) { btn.disabled = true; }
+    google.script.run
+      .withSuccessHandler(function(ok) {
+        if (btn) { btn.disabled = false; }
+        if (ok) { hidePinOverlay(); showWizardView(); }
+        else { if (err) { err.textContent = 'Incorrect PIN'; } if (inp) { inp.value = ''; inp.focus(); } }
+      })
+      .withFailureHandler(function() {
+        if (btn) { btn.disabled = false; }
+        if (err) { err.textContent = 'Connection error — try again'; }
+      })
+      .khVerifyPinSafe(pin);
+  } else {
+    hidePinOverlay();
+    showWizardView();
+  }
+}
+
+function showWizardView() {
+  var homeView = document.getElementById('home-view');
+  var wrench = document.getElementById('wd-wrench');
+  var wizView = document.getElementById('wizard-view');
+  if (homeView) { homeView.style.display = 'none'; }
+  if (wrench) { wrench.style.display = 'none'; }
+  if (wizView) { wizView.style.display = 'block'; }
+  // Pre-populate defaults
+  if (!state.theme) { state.theme = 'wolfkid'; }
+  if (!state.mascot) { state.mascot = 'custom_creature'; }
+  if (!state.sectionHomework) { state.sectionHomework = 'Mission Control'; }
+  if (!state.sectionChores) { state.sectionChores = 'Daily Quests'; }
+  if (!state.sectionRewards) { state.sectionRewards = 'Power-Up Shop'; }
+  if (!state.dashName) { state.dashName = 'THE WOLFDOME'; }
   state.started = true;
+  state.step = 0;
   render();
 }
 
-function goBack() {
-  if (state.step > 0) {
-    state.step--;
-    render();
+function onWizardBack() {
+  if (TBM_CUSTOMIZE_MODE) {
+    window.location.href = '/wolfdome';
+  } else {
+    var homeView = document.getElementById('home-view');
+    var wrench = document.getElementById('wd-wrench');
+    var wizView = document.getElementById('wizard-view');
+    if (homeView) { homeView.style.display = 'block'; }
+    if (wrench) { wrench.style.display = '-webkit-flex'; wrench.style.display = 'flex'; }
+    if (wizView) { wizView.style.display = 'none'; }
   }
 }
 
-function goNext() {
-  if (canNext() && state.step < 4) {
-    state.step++;
-    render();
+/* ===== HOME DATA ===== */
+function loadHomeData() {
+  var timeout = setTimeout(function() {
+    showHomeView();
+  }, 8000);
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(raw) {
+        clearTimeout(timeout);
+        onKidsHubData(raw);
+      })
+      .withFailureHandler(function() {
+        clearTimeout(timeout);
+        showHomeView();
+      })
+      .getKidsHubDataSafe('buggsy');
+  } else {
+    clearTimeout(timeout);
+    showHomeView();
   }
 }
 
-function selectTheme(id) {
-  state.theme = id;
-  render();
+function onKidsHubData(raw) {
+  try {
+    var data = safeParse(raw);
+    var balance = (data && data.balances && data.balances.buggsy) ? (data.balances.buggsy.balance || 0) : 0;
+    var ringVal = document.getElementById('wd-ring-value');
+    if (ringVal) { ringVal.textContent = balance; }
+    // Seed defaults on first load
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(choices) {
+          if (!choices) {
+            var defaults = {
+              child: 'buggsy', theme: 'wolfkid', dashName: 'THE WOLFDOME',
+              mascot: 'custom_creature', sectionHomework: 'Mission Control',
+              sectionChores: 'Daily Quests', sectionRewards: 'Power-Up Shop',
+              date: new Date().toISOString()
+            };
+            google.script.run
+              .withSuccessHandler(function() {})
+              .withFailureHandler(function() {})
+              .saveDesignChoicesSafe(defaults);
+          }
+        })
+        .withFailureHandler(function() {})
+        .getDesignChoicesSafe('buggsy');
+    }
+  } catch(e) {}
+  showHomeView();
 }
 
+function showHomeView() {
+  var loading = document.getElementById('loading');
+  var homeView = document.getElementById('home-view');
+  var wrench = document.getElementById('wd-wrench');
+  if (loading) { loading.style.display = 'none'; }
+  if (homeView) { homeView.style.display = 'block'; }
+  if (wrench) { wrench.style.display = '-webkit-flex'; wrench.style.display = 'flex'; }
+}
+
+/* ===== WIZARD ACTIONS ===== */
+function startWizard() { state.started = true; render(); }
+function goBack() { if (state.step > 0) { state.step--; render(); } }
+function goNext() { if (canNext() && state.step < 4) { state.step++; render(); } }
+function selectTheme(id) { state.theme = id; render(); }
 function selectSection(category, name) {
-  if (category === 'homework') state.sectionHomework = name;
-  else if (category === 'chores') state.sectionChores = name;
-  else if (category === 'rewards') state.sectionRewards = name;
+  if (category === 'homework') { state.sectionHomework = name; }
+  else if (category === 'chores') { state.sectionChores = name; }
+  else if (category === 'rewards') { state.sectionRewards = name; }
   render();
 }
-
-function selectMascot(id) {
-  state.mascot = id;
-  render();
-}
-
+function selectMascot(id) { state.mascot = id; render(); }
 function updateDashName(el) {
   state.dashName = el.value;
   render();
-  /* Restore focus and cursor position */
   var inp = document.getElementById('dash-name-input');
-  if (inp) {
-    inp.focus();
-    inp.setSelectionRange(inp.value.length, inp.value.length);
-  }
+  if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
 }
-
 function lockItIn() {
   var payload = {
     child: 'buggsy',
@@ -553,270 +805,200 @@ function lockItIn() {
     sectionRewards: state.sectionRewards,
     date: new Date().toISOString()
   };
-
   if (TBM_TEST_MODE) {
     console.log('[TEST MODE] saveDesignChoicesSafe skipped', payload);
-    state.submitted = true;
-    render();
-    return;
+    state.submitted = true; render(); return;
   }
-
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
-      .withSuccessHandler(function() {
-        state.submitted = true;
-        render();
-      })
-      .withFailureHandler(function(err) {
-        alert('Save failed — ' + (err && err.message ? err.message : 'unknown error') + '. Try again.');
-      })
+      .withSuccessHandler(function() { state.submitted = true; render(); })
+      .withFailureHandler(function(err) { alert('Save failed \u2014 ' + (err && err.message ? err.message : 'unknown error') + '. Try again.'); })
       .saveDesignChoicesSafe(payload);
   } else {
-    state.submitted = true;
-    render();
+    state.submitted = true; render();
   }
 }
 
-/* ===== RENDER ===== */
+/* ===== WIZARD RENDER ===== */
 function render() {
   var app = document.getElementById('dd-app');
+  if (!app) return;
   var html = '';
 
-  /* Header */
   html += '<header class="dd-header"><div class="dd-header-inner">';
   html += '<div class="dd-title">\uD83C\uDFA8 DESIGN YOUR DASHBOARD</div>';
   html += '<div class="dd-subtitle">First mission: make this YOURS</div>';
-
   if (state.started && !state.submitted) {
-    /* Progress bars */
     html += '<div class="dd-progress">';
     for (var i = 0; i < STEPS.length; i++) {
       html += '<div class="dd-bar ' + (i <= state.step ? 'dd-bar-active' : 'dd-bar-inactive') + '"></div>';
     }
-    html += '</div>';
-    /* Labels */
-    html += '<div class="dd-labels">';
+    html += '</div><div class="dd-labels">';
     for (var i = 0; i < STEPS.length; i++) {
       html += '<span class="dd-label ' + (i === state.step ? 'dd-label-active' : 'dd-label-inactive') + '">' + STEPS[i] + '</span>';
     }
     html += '</div>';
   }
-
   html += '</div></header>';
 
-  /* Main */
   html += '<main class="dd-main">';
-
-  if (!state.started) {
-    html += renderPlanScreen();
-  } else if (state.submitted) {
-    html += renderSubmitted();
-  } else if (state.step === 0) {
-    html += renderThemeStep();
-  } else if (state.step === 1) {
-    html += renderSectionsStep();
-  } else if (state.step === 2) {
-    html += renderMascotStep();
-  } else if (state.step === 3) {
-    html += renderNameStep();
-  } else if (state.step === 4) {
-    html += renderPreviewStep();
-  }
-
+  if (!state.started) { html += renderPlanScreen(); }
+  else if (state.submitted) { html += renderSubmitted(); }
+  else if (state.step === 0) { html += renderThemeStep(); }
+  else if (state.step === 1) { html += renderSectionsStep(); }
+  else if (state.step === 2) { html += renderMascotStep(); }
+  else if (state.step === 3) { html += renderNameStep(); }
+  else if (state.step === 4) { html += renderPreviewStep(); }
   html += '</main>';
 
-  /* Nav */
-  if (state.started && !state.submitted) {
-    html += renderNav();
-  }
-
+  if (state.started && !state.submitted) { html += renderNav(); }
   app.innerHTML = html;
 }
 
 function renderPlanScreen() {
   var h = '';
   h += '<div class="dd-plan">';
+  if (!TBM_CUSTOMIZE_MODE) {
+    h += '<div style="margin-bottom:12px"><button onclick="onWizardBack()" style="background:rgba(30,120,255,0.12);border:1px solid rgba(30,120,255,0.3);color:#60A5FA;border-radius:8px;padding:8px 16px;font-size:12px;cursor:pointer;font-family:Nunito,sans-serif;">\u2190 Back to Wolfdome</button></div>';
+  }
   h += '<div class="dd-plan-icon">\uD83D\uDCCB</div>';
   h += '<div class="dd-plan-title">PLAN YOUR ATTACK</div>';
-  h += '<div class="dd-plan-desc">';
-  h += 'Before we build, here\'s the plan.<br>';
-  h += 'You\'ll pick your theme, name your sections,<br>';
-  h += 'choose a guide, and name your dashboard.';
-  h += '</div>';
-  h += '<div class="dd-plan-time">';
-  h += '\u23F1 Estimated time: <strong>2-3 minutes</strong>';
-  h += '</div>';
+  h += '<div class="dd-plan-desc">Before we build, here\'s the plan.<br>You\'ll pick your theme, name your sections,<br>choose a guide, and name your dashboard.</div>';
+  h += '<div class="dd-plan-time">\u23F1 Estimated time: <strong>2-3 minutes</strong></div>';
   h += '<button class="dd-plan-start" onclick="startWizard()">\uD83D\uDE80 LET\'S BUILD IT</button>';
   h += '</div>';
   return h;
 }
 
 function renderThemeStep() {
-  var h = '';
-  h += '<div class="dd-step">';
+  var h = '<div class="dd-step">';
   h += '<div class="dd-step-title">Pick Your Vibe</div>';
   h += '<div class="dd-step-desc">This sets the colors and feel for YOUR entire dashboard.<br>You can always change it later.</div>';
   h += '<div class="dd-choices">';
-
   for (var i = 0; i < THEMES.length; i++) {
     var t = THEMES[i];
     var sel = state.theme === t.id;
-    h += '<button class="dd-card' + (sel ? ' dd-card-selected' : '') + '" onclick="selectTheme(\'' + t.id + '\')">';
-    h += '<div class="dd-card-check">\u2713</div>';
-    h += '<div class="dd-card-row">';
-    h += '<div class="dd-card-icon" style="background:' + t.preview + '">' + t.emoji + '</div>';
-    h += '<div class="dd-card-body">';
-    h += '<div class="dd-card-name">' + escHtml(t.name) + '</div>';
-    h += '<div class="dd-card-desc">' + escHtml(t.desc) + '</div>';
+    h += '<button class="dd-wizcard' + (sel ? ' dd-wizcard-selected' : '') + '" onclick="selectTheme(\'' + t.id + '\')">';
+    h += '<div class="dd-wizcard-check">\u2713</div>';
+    h += '<div class="dd-wizcard-row">';
+    h += '<div class="dd-wizcard-icon" style="background:' + t.preview + '">' + t.emoji + '</div>';
+    h += '<div class="dd-wizcard-body">';
+    h += '<div class="dd-wizcard-name">' + escHtml(t.name) + '</div>';
+    h += '<div class="dd-wizcard-desc">' + escHtml(t.desc) + '</div>';
     h += '<div class="dd-swatches">';
     for (var j = 0; j < t.colors.length; j++) {
       h += '<div class="dd-swatch" style="background:' + t.colors[j] + '"></div>';
     }
     h += '</div></div></div></button>';
   }
-
   h += '</div></div>';
   return h;
 }
 
 function renderSectionsStep() {
-  var h = '';
   var categories = [
     { key: "homework", label: "\uD83D\uDCDA Homework Area", stateKey: "sectionHomework" },
-    { key: "chores", label: "\uD83C\uDFE0 Chores Area", stateKey: "sectionChores" },
-    { key: "rewards", label: "\uD83C\uDF81 Rewards Area", stateKey: "sectionRewards" }
+    { key: "chores",   label: "\uD83C\uDFE0 Chores Area",   stateKey: "sectionChores" },
+    { key: "rewards",  label: "\uD83C\uDF81 Rewards Area",  stateKey: "sectionRewards" }
   ];
-
-  h += '<div class="dd-step">';
+  var h = '<div class="dd-step">';
   h += '<div class="dd-step-title">Name Your Sections</div>';
   h += '<div class="dd-step-desc">What do you want to call each part of your dashboard?</div>';
-
   for (var c = 0; c < categories.length; c++) {
     var cat = categories[c];
     var options = SECTION_NAMES[cat.key];
     var selected = state[cat.stateKey];
-
     h += '<div class="dd-section-group">';
     h += '<div class="dd-section-label">' + cat.label + '</div>';
     h += '<div class="dd-section-grid">';
-
     for (var i = 0; i < options.length; i++) {
       var name = options[i];
       var isSel = selected === name;
       h += '<button class="dd-section-btn' + (isSel ? ' dd-section-btn-selected' : '') + '" ';
       h += 'onclick="selectSection(\'' + cat.key + '\', \'' + escHtml(name) + '\')">';
-      h += escHtml(name);
-      h += '</button>';
+      h += escHtml(name) + '</button>';
     }
-
     h += '</div></div>';
   }
-
   h += '</div>';
   return h;
 }
 
 function renderMascotStep() {
-  var h = '';
-  h += '<div class="dd-step">';
+  var h = '<div class="dd-step">';
   h += '<div class="dd-step-title">Pick Your Guide</div>';
   h += '<div class="dd-step-desc">Who shows up on your dashboard? This character represents YOU.</div>';
   h += '<div class="dd-choices">';
-
   for (var i = 0; i < MASCOT_IDEAS.length; i++) {
     var m = MASCOT_IDEAS[i];
     var sel = state.mascot === m.id;
-    h += '<button class="dd-card' + (sel ? ' dd-card-selected' : '') + '" onclick="selectMascot(\'' + m.id + '\')">';
-    h += '<div class="dd-card-check">\u2713</div>';
-    h += '<div class="dd-card-row">';
-    h += '<div class="dd-card-mascot-icon">' + m.emoji + '</div>';
-    h += '<div class="dd-card-body">';
-    h += '<div class="dd-card-name">' + escHtml(m.name) + '</div>';
-    h += '<div class="dd-card-desc">' + escHtml(m.desc) + '</div>';
+    h += '<button class="dd-wizcard' + (sel ? ' dd-wizcard-selected' : '') + '" onclick="selectMascot(\'' + m.id + '\')">';
+    h += '<div class="dd-wizcard-check">\u2713</div>';
+    h += '<div class="dd-wizcard-row">';
+    h += '<div class="dd-wizcard-mascot-icon">' + m.emoji + '</div>';
+    h += '<div class="dd-wizcard-body">';
+    h += '<div class="dd-wizcard-name">' + escHtml(m.name) + '</div>';
+    h += '<div class="dd-wizcard-desc">' + escHtml(m.desc) + '</div>';
     h += '</div></div></button>';
   }
-
   h += '</div></div>';
   return h;
 }
 
 function renderNameStep() {
-  var h = '';
   var selTheme = findTheme(state.theme);
   var preview = selTheme ? selTheme.preview : '#171D30';
-
-  h += '<div class="dd-step">';
+  var h = '<div class="dd-step">';
   h += '<div class="dd-step-title">Name Your Dashboard</div>';
   h += '<div class="dd-step-desc">This is what shows up at the top. Make it yours.</div>';
-
   h += '<input id="dash-name-input" class="dd-name-input' + (state.dashName ? ' dd-name-input-active' : '') + '" ';
   h += 'value="' + escHtml(state.dashName) + '" ';
   h += 'placeholder="e.g., Wolfkid HQ, The Arena, Mission Control..." ';
-  h += 'maxlength="30" ';
-  h += 'oninput="updateDashName(this)">';
-
+  h += 'maxlength="30" oninput="updateDashName(this)">';
   h += '<div class="dd-char-count">' + state.dashName.length + '/30</div>';
-
   if (state.dashName) {
     h += '<div class="dd-name-preview" style="background:' + preview + '">';
     h += '<div class="dd-name-preview-text">' + escHtml(state.dashName.toUpperCase()) + '</div>';
     h += '</div>';
   }
-
   h += '</div>';
   return h;
 }
 
 function renderPreviewStep() {
-  var h = '';
   var selTheme = findTheme(state.theme);
   var selMascot = findMascot(state.mascot);
   var preview = selTheme ? selTheme.preview : '#171D30';
   var mascotEmoji = selMascot ? selMascot.emoji : '';
   var mascotName = selMascot ? selMascot.name : '';
   var themeName = selTheme ? selTheme.name : '';
-
-  h += '<div class="dd-step">';
+  var sections = [
+    { key: "sectionHomework", icon: "\uD83D\uDCDA", color: "#8B5CF6", sub: "Math, Science, CER" },
+    { key: "sectionChores",   icon: "\uD83C\uDFE0", color: "#22C55E", sub: "Daily tasks" },
+    { key: "sectionRewards",  icon: "\uD83C\uDF81", color: "#F97316", sub: "Rings & unlocks" }
+  ];
+  var h = '<div class="dd-step">';
   h += '<div class="dd-step-title">Here\'s Your Dashboard</div>';
   h += '<div class="dd-step-desc">This is what YOUR homework command center will look like.</div>';
-
-  /* Banner */
   h += '<div class="dd-preview-banner" style="background:' + preview + '">';
   h += '<div class="dd-preview-title">' + mascotEmoji + ' ' + escHtml(state.dashName.toUpperCase()) + '</div>';
   h += '<div class="dd-preview-theme">Theme: ' + escHtml(themeName) + '</div>';
   h += '</div>';
-
-  /* Section previews */
-  var sections = [
-    { key: "sectionHomework", icon: "\uD83D\uDCDA", color: "#8B5CF6", sub: "Math, Science, CER" },
-    { key: "sectionChores", icon: "\uD83C\uDFE0", color: "#22C55E", sub: "Daily tasks" },
-    { key: "sectionRewards", icon: "\uD83C\uDF81", color: "#F97316", sub: "Rings & unlocks" }
-  ];
-
   h += '<div class="dd-preview-sections">';
   for (var i = 0; i < sections.length; i++) {
     var s = sections[i];
     h += '<div class="dd-preview-section" style="border-left:3px solid ' + s.color + '">';
     h += '<span class="dd-preview-section-icon">' + s.icon + '</span>';
-    h += '<div>';
-    h += '<div class="dd-preview-section-name">' + escHtml(state[s.key] || '') + '</div>';
-    h += '<div class="dd-preview-section-sub">' + s.sub + '</div>';
-    h += '</div></div>';
+    h += '<div><div class="dd-preview-section-name">' + escHtml(state[s.key] || '') + '</div>';
+    h += '<div class="dd-preview-section-sub">' + s.sub + '</div></div></div>';
   }
   h += '</div>';
-
-  /* Summary */
   var rows = [
-    ["Theme", themeName],
-    ["Dashboard Name", state.dashName],
-    ["Guide", mascotName],
-    ["Homework Section", state.sectionHomework || ''],
-    ["Chores Section", state.sectionChores || ''],
-    ["Rewards Section", state.sectionRewards || '']
+    ["Theme", themeName], ["Dashboard Name", state.dashName],
+    ["Guide", mascotName], ["Homework Section", state.sectionHomework || ''],
+    ["Chores Section", state.sectionChores || ''], ["Rewards Section", state.sectionRewards || '']
   ];
-
-  h += '<div class="dd-summary">';
-  h += '<div class="dd-summary-header">YOUR CHOICES</div>';
+  h += '<div class="dd-summary"><div class="dd-summary-header">YOUR CHOICES</div>';
   for (var i = 0; i < rows.length; i++) {
     var isLast = (i === rows.length - 1);
     h += '<div class="dd-summary-row' + (isLast ? ' dd-summary-row-last' : '') + '">';
@@ -825,17 +1007,13 @@ function renderPreviewStep() {
     h += '</div>';
   }
   h += '</div>';
-
-  /* Lock in */
   h += '<button class="dd-lockin" onclick="lockItIn()">\uD83D\uDE80 LOCK IT IN \u2014 BUILD MY DASHBOARD</button>';
-
   h += '</div>';
   return h;
 }
 
 function renderSubmitted() {
-  var h = '';
-  h += '<div class="dd-done">';
+  var h = '<div class="dd-done">';
   h += '<div class="dd-done-emoji">\uD83C\uDF89</div>';
   h += '<div class="dd-done-title">DASHBOARD LOCKED IN</div>';
   h += '<div class="dd-done-text">';
@@ -846,40 +1024,272 @@ function renderSubmitted() {
   h += '\uD83D\uDC3A <strong style="color:#F97316">+15 Rings earned</strong> for completing your first mission.';
   h += '<br>Your dashboard is now being built. Episode 3 of Wolfkid drops next.';
   h += '</div>';
-  h += '<button style="margin-top:24px;padding:14px 32px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=\'/daily-missions\'">Back to Missions</button>';
+  h += '<button style="margin-top:24px;padding:14px 32px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=\'/wolfdome\'">Back to Wolfdome</button>';
   h += '</div>';
   return h;
 }
 
 function renderNav() {
-  var h = '';
   var enabled = canNext();
   var showBack = state.step > 0;
-
-  h += '<div class="dd-nav">';
-
-  /* Back button */
+  var h = '<div class="dd-nav">';
   h += '<button class="dd-back' + (!showBack ? ' dd-back-hidden' : '') + '" ';
-  if (showBack) {
-    h += 'onclick="goBack()"';
-  }
+  if (showBack) { h += 'onclick="goBack()"'; }
   h += '>\u2190 Back</button>';
-
-  /* Next button */
   h += '<button class="dd-next ' + (enabled ? 'dd-next-enabled' : 'dd-next-disabled') + '" ';
-  if (enabled && state.step < 4) {
-    h += 'onclick="goNext()"';
-  }
+  if (enabled && state.step < 4) { h += 'onclick="goNext()"'; }
   h += '>';
   h += (state.step === 4 ? 'Review \u2191' : 'Next \u2192');
   h += '</button>';
-
   h += '</div>';
   return h;
 }
 
-/* Initial render */
-render();
+/* ===== BUILDER FUNCTIONS (copied from KidsHub.html) ===== */
+function buildBuggsyLoadingScreen() {
+  var loading = document.getElementById('loading');
+  loading.innerHTML = '';
+  loading.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;overflow:hidden;background:#030a10;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
+  var style = document.createElement('style');
+  style.textContent = '@keyframes bRush{0%{left:-100%;opacity:0}10%{opacity:0.8}90%{opacity:0.8}100%{left:120%;opacity:0}}@keyframes bGridScroll{from{background-position:0 0}to{background-position:40px 40px}}@keyframes bScan{0%{top:-5px}100%{top:105%}}@keyframes bMachDash{from{transform:translateX(-6px) scaleX(1.05)}to{transform:translateX(6px) scaleX(0.95)}}@keyframes bSpeedUp{0%{width:15%}70%{width:98%}85%{width:95%}100%{width:15%}}@keyframes bNeedleMove{0%{left:15%}70%{left:97%}85%{left:95%}100%{left:15%}}@keyframes bNamePulse{0%,100%{opacity:0.8}50%{opacity:1}}@keyframes bBlink{0%,100%{opacity:1}50%{opacity:0}}@keyframes bFlyRing{0%{left:110%;opacity:0;transform:rotate(0deg) scale(0.6)}10%{opacity:1}90%{opacity:1}100%{left:-10%;opacity:0;transform:rotate(-360deg) scale(1.2)}}';
+  document.head.appendChild(style);
+  var grid = document.createElement('div');
+  grid.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(255,80,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(30,120,255,0.04) 1px,transparent 1px);background-size:40px 40px;animation:bGridScroll 2s linear infinite;';
+  loading.appendChild(grid);
+  var lineColors = ['#ff2200','#ff6600','#1e78ff','#ff4400','#4aa8ff'];
+  for (var li = 0; li < 15; li++) {
+    var sl = document.createElement('div');
+    var w = Math.floor(Math.random()*200+80);
+    sl.style.cssText = 'position:absolute;height:2px;background:linear-gradient(90deg,transparent,' + lineColors[li%lineColors.length] + ',transparent);animation:bRush ' + (Math.random()*1.5+0.6) + 's linear ' + (Math.random()*3) + 's infinite;opacity:0.6;top:' + (Math.random()*100) + '%;left:-100%;width:' + w + 'px;';
+    loading.appendChild(sl);
+  }
+  var scan = document.createElement('div');
+  scan.style.cssText = 'position:absolute;width:100%;height:3px;background:rgba(255,80,0,0.15);animation:bScan 3s linear infinite;';
+  loading.appendChild(scan);
+  var ringEmojis = ['\uD83D\uDFE1','\uD83D\uDFE1','\uD83D\uDD35','\uD83D\uDFE0','\uD83D\uDFE1','\uD83D\uDD35'];
+  for (var ri = 0; ri < 6; ri++) {
+    var ring = document.createElement('div');
+    ring.style.cssText = 'position:absolute;font-size:' + (Math.floor(Math.random()*16+12)) + 'px;opacity:0;pointer-events:none;top:' + (Math.random()*85+5) + '%;animation:bFlyRing ' + (Math.random()*2+1) + 's linear ' + (Math.random()*4) + 's infinite;';
+    ring.textContent = ringEmojis[ri%ringEmojis.length];
+    loading.appendChild(ring);
+  }
+  var corners = ['top:16px;left:16px;border-width:2px 0 0 2px;','top:16px;right:16px;border-width:2px 2px 0 0;','bottom:16px;left:16px;border-width:0 0 2px 2px;','bottom:16px;right:16px;border-width:0 2px 2px 0;'];
+  for (var ci = 0; ci < 4; ci++) {
+    var corner = document.createElement('div');
+    corner.style.cssText = 'position:absolute;width:20px;height:20px;border-color:#ff6600;border-style:solid;opacity:0.5;' + corners[ci];
+    loading.appendChild(corner);
+  }
+  var center = document.createElement('div');
+  center.style.cssText = 'position:relative;z-index:10;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;gap:0;font-family:"Orbitron",monospace;';
+  var charWrap = document.createElement('div');
+  charWrap.style.cssText = 'position:relative;z-index:10;margin-bottom:16px;';
+  var turboImg = document.createElement('img');
+  turboImg.src = 'https://i.ibb.co/93k6DNRc/1775230300543.png';
+  turboImg.alt = 'Mach Turbo Light';
+  turboImg.style.cssText = 'width:140px;height:auto;display:block;margin:0 auto;filter:drop-shadow(0 0 12px #ff2200) drop-shadow(0 0 24px #ff6600) drop-shadow(0 0 40px rgba(30,120,255,0.5));animation:bMachDash 0.4s ease-in-out infinite alternate;';
+  turboImg.onerror = function() { charWrap.innerHTML = '<div style="font-size:72px;text-align:center;">\uD83D\uDC3A</div>'; };
+  charWrap.appendChild(turboImg);
+  var machName = document.createElement('div');
+  machName.style.cssText = 'font-size:15px;color:#ff6600;letter-spacing:4px;text-shadow:0 0 10px #ff6600,0 0 30px #ff2200;animation:bNamePulse 1.2s ease-in-out infinite;margin-bottom:2px;';
+  machName.textContent = 'TURBO LIGHT MACH';
+  var mainTitle = document.createElement('div');
+  mainTitle.style.cssText = 'font-size:32px;font-weight:900;color:#fff;letter-spacing:3px;text-shadow:0 0 20px #ff2200,0 0 40px #ff6600,0 0 60px rgba(30,120,255,0.5);line-height:1.1;';
+  mainTitle.textContent = 'BUGGSY';
+  var subTitle = document.createElement('div');
+  subTitle.style.cssText = 'font-size:11px;color:#60aaff;letter-spacing:6px;margin-top:4px;animation:bNamePulse 2s ease-in-out infinite;';
+  subTitle.textContent = 'WOLFKID \u00B7 THE WOLFDOME';
+  var speedoWrap = document.createElement('div');
+  speedoWrap.style.cssText = 'margin-top:28px;width:260px;';
+  var speedoTrack = document.createElement('div');
+  speedoTrack.style.cssText = 'width:100%;height:8px;background:#180a00;border:1px solid #3d1200;border-radius:4px;overflow:hidden;position:relative;';
+  var speedoFill = document.createElement('div');
+  speedoFill.style.cssText = 'height:100%;background:linear-gradient(90deg,#ff2200,#1e78ff);border-radius:4px;animation:bSpeedUp 1.8s ease-in-out infinite;box-shadow:0 0 8px #ff2200,0 0 16px rgba(30,120,255,0.5);';
+  var speedoNeedle = document.createElement('div');
+  speedoNeedle.style.cssText = 'position:absolute;top:-2px;width:3px;height:12px;background:#ffffff;border-radius:2px;animation:bNeedleMove 1.8s ease-in-out infinite;box-shadow:0 0 6px #ff2200,0 0 12px #1e78ff;';
+  speedoTrack.appendChild(speedoFill);
+  speedoTrack.appendChild(speedoNeedle);
+  speedoWrap.appendChild(speedoTrack);
+  var statusEl = document.createElement('div');
+  statusEl.style.cssText = 'margin-top:20px;font-size:10px;color:#ff6600;letter-spacing:3px;animation:bBlink 0.9s step-end infinite;';
+  statusEl.textContent = 'INITIALIZING MISSION SYSTEMS_';
+  var statusMsgs = ['INITIALIZING MISSION SYSTEMS_','LOADING WOLFKID PROTOCOL_','CALIBRATING SPEED DRIVE_','TURBO LIGHT MACH ONLINE_','MISSIONS LOCKED AND LOADED_'];
+  var msgIdx = 0;
+  setInterval(function() { msgIdx = (msgIdx + 1) % statusMsgs.length; statusEl.textContent = statusMsgs[msgIdx]; }, 900);
+  center.appendChild(charWrap);
+  center.appendChild(machName);
+  center.appendChild(mainTitle);
+  center.appendChild(subTitle);
+  center.appendChild(speedoWrap);
+  center.appendChild(statusEl);
+  loading.appendChild(center);
+}
+
+function buildWolfdomeBackground() {
+  var bg = document.createElement('div');
+  bg.id = 'wolfdome-bg';
+  bg.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:-1;overflow:hidden;background:#020508;';
+  document.body.insertBefore(bg, document.body.firstChild);
+  var space = document.createElement('div');
+  space.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 80% 60% at 50% 30%, #0a1628 0%, #040810 55%, #020508 100%);';
+  bg.appendChild(space);
+  var starColors = ['#ffffff','#cce8ff','#aad4ff'];
+  for (var i = 0; i < 90; i++) {
+    var s = document.createElement('div');
+    var sz = (Math.random() * 2.5 + 0.5).toFixed(1);
+    var col = starColors[Math.floor(Math.random() * starColors.length)];
+    var dur = (Math.random() * 3 + 1.5).toFixed(1);
+    var delay = (Math.random() * 4).toFixed(1);
+    var minO = (Math.random() * 0.15 + 0.05).toFixed(2);
+    var maxO = (Math.random() * 0.5 + 0.4).toFixed(2);
+    s.style.cssText = 'position:absolute;border-radius:50%;width:' + sz + 'px;height:' + sz + 'px;background:' + col + ';left:' + (Math.random()*100).toFixed(1) + '%;top:' + (Math.random()*75).toFixed(1) + '%;animation:wdTwinkle ' + dur + 's ease-in-out ' + delay + 's infinite;--min:' + minO + ';--max:' + maxO + ';';
+    bg.appendChild(s);
+  }
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 800 560');
+  svg.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;';
+  svg.innerHTML = [
+    '<g transform="translate(400,295)" opacity="0.13">',
+      '<path d="M-90,-110 L90,-110 L90,40 Q90,110 0,140 Q-90,110 -90,40 Z" fill="#1e78ff" stroke="#4aa8ff" stroke-width="2"/>',
+      '<path d="M-76,-97 L76,-97 L76,38 Q76,100 0,128 Q-76,100 -76,38 Z" fill="none" stroke="#4aa8ff" stroke-width="1.5" opacity="0.6"/>',
+      '<polygon points="-35,-130 -60,-165 -10,-130" fill="#1e78ff" stroke="#4aa8ff" stroke-width="1.5"/>',
+      '<polygon points="35,-130 60,-165 10,-130" fill="#1e78ff" stroke="#4aa8ff" stroke-width="1.5"/>',
+      '<ellipse cx="0" cy="-30" rx="50" ry="52" fill="#0a3a8a"/>',
+      '<ellipse cx="0" cy="20" rx="26" ry="20" fill="#0a3a8a"/>',
+      '<ellipse cx="-20" cy="-38" rx="10" ry="10" fill="#1e78ff"/><ellipse cx="20" cy="-38" rx="10" ry="10" fill="#1e78ff"/>',
+      '<ellipse cx="-20" cy="-38" rx="5" ry="5" fill="#60c0ff"/><ellipse cx="20" cy="-38" rx="5" ry="5" fill="#60c0ff"/>',
+      '<ellipse cx="0" cy="10" rx="8" ry="6" fill="#1e78ff"/>',
+      '<line x1="-90" y1="10" x2="90" y2="10" stroke="#4aa8ff" stroke-width="1" opacity="0.5"/>',
+      '<circle cx="-30" cy="70" r="7" fill="#FFD700"/><circle cx="0" cy="70" r="7" fill="#FFD700"/><circle cx="30" cy="70" r="7" fill="#FFD700"/>',
+      '<path d="M-70,105 L70,105 L60,125 L-60,125 Z" fill="#0a3a8a" stroke="#4aa8ff" stroke-width="1"/>',
+      '<text x="0" y="121" text-anchor="middle" font-family="Orbitron,monospace" font-size="10" fill="#4aa8ff" font-weight="700">WOLFDOME</text>',
+    '</g>',
+    '<path d="M 60 480 Q 400 60 740 480" fill="none" stroke="rgba(30,120,255,0.22)" stroke-width="2"/>',
+    '<path d="M 120 480 Q 400 130 680 480" fill="none" stroke="rgba(30,120,255,0.17)" stroke-width="1.2"/>',
+    '<path d="M 175 480 Q 400 195 625 480" fill="none" stroke="rgba(30,120,255,0.14)" stroke-width="1"/>',
+    '<path d="M 225 480 Q 400 255 575 480" fill="none" stroke="rgba(30,120,255,0.11)" stroke-width="1"/>',
+    '<path d="M 270 480 Q 400 305 530 480" fill="none" stroke="rgba(30,120,255,0.09)" stroke-width="1"/>',
+    '<path d="M 310 480 Q 400 345 490 480" fill="none" stroke="rgba(30,120,255,0.07)" stroke-width="1"/>',
+    '<path d="M 400 62 Q 310 260 245 480" fill="none" stroke="rgba(30,120,255,0.13)" stroke-width="1"/>',
+    '<path d="M 400 62 Q 490 260 555 480" fill="none" stroke="rgba(30,120,255,0.13)" stroke-width="1"/>',
+    '<path d="M 400 62 Q 250 200 165 480" fill="none" stroke="rgba(30,120,255,0.09)" stroke-width="1"/>',
+    '<path d="M 400 62 Q 550 200 635 480" fill="none" stroke="rgba(30,120,255,0.09)" stroke-width="1"/>',
+    '<circle cx="400" cy="62" r="6" fill="#1e78ff" opacity="0.85"/>',
+    '<circle cx="400" cy="62" r="14" fill="none" stroke="#1e78ff" stroke-width="1" opacity="0.4"/>',
+    '<g class="wd-bolt" style="animation:wdBoltFlash 1.8s steps(1) 0s infinite">',
+      '<path d="M 295 200 L 280 245 L 292 245 L 275 295 L 300 235 L 288 235 Z" fill="#ffffff" stroke="#60d8ff" stroke-width="1.5" opacity="0.95"/>',
+      '<path d="M 295 200 L 280 245 L 292 245 L 275 295 L 300 235 L 288 235 Z" fill="#1e78ff" opacity="0.25"/>',
+    '</g>',
+    '<g class="wd-bolt" style="animation:wdBoltFlash 2.1s steps(1) 0.4s infinite">',
+      '<path d="M 525 200 L 540 245 L 528 245 L 545 295 L 520 235 L 532 235 Z" fill="#ffffff" stroke="#60d8ff" stroke-width="1.5" opacity="0.95"/>',
+      '<path d="M 525 200 L 540 245 L 528 245 L 545 295 L 520 235 L 532 235 Z" fill="#1e78ff" opacity="0.25"/>',
+    '</g>',
+    '<g style="animation:wdBoltFlash 1.4s steps(1) 0.7s infinite">',
+      '<path d="M 268 30 L 261 50 L 267 50 L 260 70 L 272 48 L 266 48 Z" fill="#FFD700" stroke="#FFE066" stroke-width="1" opacity="0.9"/>',
+    '</g>',
+    '<g style="animation:wdBoltFlash 1.6s steps(1) 0.2s infinite">',
+      '<path d="M 547 30 L 554 50 L 548 50 L 555 70 L 543 48 L 549 48 Z" fill="#FFD700" stroke="#FFE066" stroke-width="1" opacity="0.9"/>',
+    '</g>',
+    '<path d="M 60 480 Q 400 465 740 480" fill="none" stroke="rgba(30,120,255,0.3)" stroke-width="2"/>'
+  ].join('');
+  bg.appendChild(svg);
+  var wolfImg = document.createElement('div');
+  wolfImg.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);z-index:2;opacity:0.18;pointer-events:none;';
+  var wolfImgTag = document.createElement('img');
+  wolfImgTag.src = 'https://i.ibb.co/bMSWhSCY/344db695-da5d-4d8f-bdef-f979348df5b7.jpg';
+  wolfImgTag.alt = 'Wolfkid';
+  wolfImgTag.style.cssText = 'width:260px;height:auto;display:block;';
+  wolfImgTag.onerror = function() { wolfImg.style.display = 'none'; };
+  wolfImg.appendChild(wolfImgTag);
+  bg.appendChild(wolfImg);
+  for (var p = 0; p < 3; p++) {
+    var pr = document.createElement('div');
+    pr.style.cssText = 'position:absolute;bottom:80px;left:50%;transform:translateX(-50%);border-radius:50%;border:1px solid rgba(30,120,255,0.4);animation:wdPulse 3s ease-out ' + p + 's infinite;';
+    bg.appendChild(pr);
+  }
+  var spots = [
+    {left:'18%', dur:'4s', delay:'0s'},
+    {left:'30%', dur:'5.5s', delay:'1s'},
+    {right:'18%', dur:'4.2s', delay:'0.5s'},
+    {right:'30%', dur:'3.8s', delay:'1.5s'}
+  ];
+  for (var sp = 0; sp < spots.length; sp++) {
+    var sl2 = document.createElement('div');
+    var spotStyle = 'position:absolute;bottom:80px;width:2px;height:280px;transform-origin:bottom center;background:linear-gradient(to top, rgba(30,120,255,0.45), transparent);filter:blur(1px);animation:wdSpot ' + spots[sp].dur + ' ease-in-out ' + spots[sp].delay + ' infinite alternate;';
+    if (spots[sp].left) { spotStyle += 'left:' + spots[sp].left + ';'; }
+    if (spots[sp].right) { spotStyle += 'right:' + spots[sp].right + ';'; }
+    sl2.style.cssText = spotStyle;
+    bg.appendChild(sl2);
+  }
+  var floor = document.createElement('div');
+  floor.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:90px;overflow:hidden;background:#010408;';
+  var floorGrid = document.createElement('div');
+  floorGrid.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;animation:wdFloorScroll 3s linear infinite;background-image:repeating-linear-gradient(90deg,rgba(30,120,255,0.13) 0,rgba(30,120,255,0.13) 1px,transparent 1px,transparent 40px),repeating-linear-gradient(0deg,rgba(30,120,255,0.08) 0,rgba(30,120,255,0.08) 1px,transparent 1px,transparent 40px);background-size:40px 40px;';
+  floor.appendChild(floorGrid);
+  var floorLine = document.createElement('div');
+  floorLine.style.cssText = 'position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:80%;height:2px;background:linear-gradient(90deg,transparent,#1e78ff,#1e78ff,transparent);box-shadow:0 0 18px 4px rgba(30,120,255,0.4);';
+  floor.appendChild(floorLine);
+  bg.appendChild(floor);
+  for (var k = 0; k < 30; k++) {
+    var spark = document.createElement('div');
+    var isGold = Math.random() > 0.55;
+    var dx = (Math.random() * 70 - 35).toFixed(0);
+    spark.style.cssText = 'position:absolute;width:2px;height:2px;border-radius:50%;background:' + (isGold ? '#FFD700' : '#1e78ff') + ';box-shadow:0 0 4px ' + (isGold ? '#FFD700' : '#1e78ff') + ';left:' + (Math.random()*80+10).toFixed(1) + '%;bottom:' + (Math.random()*130+88).toFixed(0) + 'px;animation:wdSparkFloat ' + (Math.random()*4+3).toFixed(1) + 's ease-in-out ' + (Math.random()*5).toFixed(1) + 's infinite;--dx:' + dx + 'px;';
+    bg.appendChild(spark);
+  }
+  var corners2 = [
+    'top:12px;left:12px;border-width:2px 0 0 2px;',
+    'top:12px;right:12px;border-width:2px 2px 0 0;',
+    'bottom:12px;left:12px;border-width:0 0 2px 2px;',
+    'bottom:12px;right:12px;border-width:0 2px 2px 0;'
+  ];
+  for (var c = 0; c < 4; c++) {
+    var corner2 = document.createElement('div');
+    corner2.style.cssText = 'position:fixed;width:20px;height:20px;border-color:rgba(30,120,255,0.55);border-style:solid;z-index:10;' + corners2[c];
+    bg.appendChild(corner2);
+  }
+  var sign = document.createElement('div');
+  sign.id = 'wd-sign';
+  sign.style.cssText = 'position:fixed;top:28px;left:50%;transform:translateX(-50%);text-align:center;z-index:20;white-space:nowrap;';
+  var signTitle = document.createElement('div');
+  signTitle.style.cssText = "font-family:'Orbitron','Courier New',monospace;font-size:26px;font-weight:900;color:#FFD700;letter-spacing:6px;text-shadow:0 0 10px #FFD700,0 0 30px #FFD700,0 0 60px rgba(255,215,0,0.35),2px 2px 0 rgba(0,0,0,0.8);animation:wdSignPulse 3s ease-in-out infinite;";
+  signTitle.textContent = 'THE WOLFDOME';
+  var signSub = document.createElement('div');
+  signSub.style.cssText = "font-family:'Orbitron',monospace;font-size:8px;color:#1e78ff;letter-spacing:9px;text-shadow:0 0 8px #1e78ff;margin-top:4px;animation:wdSignPulse 3s ease-in-out 0.5s infinite;";
+  signSub.textContent = 'WOLFKID COMMAND CENTER';
+  sign.appendChild(signTitle);
+  sign.appendChild(signSub);
+  bg.appendChild(sign);
+}
+
+/* ===== INIT ===== */
+buildBuggsyLoadingScreen();
+buildWolfdomeBackground();
+
+// PIN input handler
+var pinInp = document.getElementById('wd-pin-input');
+if (pinInp) {
+  pinInp.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g,'').slice(0,4);
+    var err = document.getElementById('wd-pin-error');
+    if (err) { err.textContent = ''; }
+  });
+  pinInp.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { submitPin(); }
+    if (e.key === 'Escape') { hidePinOverlay(); }
+  });
+}
+
+if (TBM_CUSTOMIZE_MODE) {
+  // Skip home view — go straight to wizard
+  var loading2 = document.getElementById('loading');
+  if (loading2) { loading2.style.display = 'none'; }
+  var wizView2 = document.getElementById('wizard-view');
+  if (wizView2) { wizView2.style.display = 'block'; }
+  render();
+} else {
+  loadHomeData();
+}
 </script>
 </body>
 </html>
+<!-- DesignDashboard.html v3 — THE WOLFDOME home + wizard behind wrench -->

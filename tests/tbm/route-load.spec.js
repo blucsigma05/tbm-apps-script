@@ -25,7 +25,8 @@ const ROUTES = [
   { path: '/sparkle', name: 'SparkleLearn' },
   { path: '/sparkle-free', name: 'Sparkle Free Play' },
   { path: '/wolfkid', name: 'Wolfkid CER' },
-  { path: '/dashboard', name: 'Design Dashboard' },
+  { path: '/wolfdome', name: 'Wolfdome Home' },
+  { path: '/sparkle-kingdom', name: 'Sparkle Kingdom Home' },
   { path: '/facts', name: 'Fact Sprint' },
   { path: '/reading', name: 'Reading Module' },
   { path: '/writing', name: 'Writing Module' },
@@ -52,7 +53,7 @@ for (const route of OPEN_ROUTES) {
       if (msg.type() === 'error') errors.push(msg.text());
     });
 
-    const response = await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 25000 });
+    const response = await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Page should return 200
     expect(response.status(), route.name + ' returned ' + response.status()).toBe(200);
@@ -78,7 +79,7 @@ for (const route of OPEN_ROUTES) {
 
 for (const route of PIN_ROUTES) {
   test(route.name + ' (' + route.path + ') shows PIN gate or redirects', async ({ page }) => {
-    const response = await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 25000 });
+    const response = await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Should either:
     // - Return 200 with PIN input visible

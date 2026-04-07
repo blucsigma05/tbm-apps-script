@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="tbm-version" content="v1">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ── Sparkle Kingdom keyframes ── */
+  @keyframes skSignPulse {
+    0%, 100% { opacity: 0.9; }
+    50%       { opacity: 1; }
+  }
+  @keyframes jjAurora {
+    0%   { opacity: 0.6; transform: translateX(-3%); }
+    100% { opacity: 1;   transform: translateX(3%); }
+  }
+  @keyframes jjBgTwinkle {
+    0%, 100% { opacity: var(--min, 0.1); transform: scale(1); }
+    50%       { opacity: var(--max, 0.6); transform: scale(var(--sc, 1.2)); }
+  }
+  @keyframes jjOrbitCW  { from { transform: rotate(0deg);    } to { transform: rotate(360deg);  } }
+  @keyframes jjOrbitCCW { from { transform: rotate(0deg);    } to { transform: rotate(-360deg); } }
+  @keyframes jjMascotBob {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-8px); }
+  }
+  @keyframes jjSparkleFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg);   opacity: 0.7; }
+    50%       { transform: translateY(-30px) rotate(30deg); opacity: 0.4; }
+  }
+  @keyframes jjShoot {
+    0%   { opacity: 0; transform: translate(0,0) rotate(-30deg); }
+    10%  { opacity: 1; }
+    90%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(120px, 80px) rotate(-30deg); }
+  }
+  @keyframes jjBurstPulse {
+    0%, 100% { transform: scale(1);   opacity: 0.6; }
+    50%       { transform: scale(1.6); opacity: 1; }
+  }
+  @keyframes jjRainbowPulse {
+    0%   { opacity: 0.08; }
+    50%  { opacity: 0.18; }
+    100% { opacity: 0.08; }
+  }
+  @keyframes jjDotScroll {
+    from { background-position: 0 0; }
+    to   { background-position: 20px 0; }
+  }
+  @keyframes jjCartwheelArc {
+    0%   { transform: translate(-120px, 20px) rotate(0deg);   }
+    50%  { transform: translate(0px, -30px)   rotate(180deg); }
+    100% { transform: translate(120px, 20px)  rotate(360deg); }
+  }
+  @keyframes jjCartwheelReturn {
+    0%   { transform: translate(120px, 20px)  rotate(0deg);   }
+    50%  { transform: translate(0px, -30px)   rotate(-180deg); }
+    100% { transform: translate(-120px, 20px) rotate(-360deg); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    background: #1a0533;
+    color: #F0E6FF;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  /* ── HOME VIEW ── */
+  #home-view {
+    display: none;
+    position: relative;
+    z-index: 5;
+    min-height: 100vh;
+    padding: 90px 16px 24px;
+    max-width: 600px;
+    margin: 0 auto;
+    animation: fadeUp 0.4s ease;
+  }
+  .sk-today-card {
+    background: rgba(45, 10, 90, 0.55);
+    border: 1px solid rgba(200, 80, 255, 0.25);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  #sk-today-text {
+    font-family: 'Fredoka One', cursive;
+    font-size: 16px;
+    color: #E8AAFF;
+    letter-spacing: 1px;
+  }
+  .sk-nav-cards {
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .sk-card {
+    background: rgba(45, 10, 90, 0.55);
+    border: 1px solid rgba(200, 80, 255, 0.25);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: center;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .sk-card:active {
+    border-color: rgba(200, 80, 255, 0.65);
+    background: rgba(80, 20, 140, 0.65);
+  }
+  .sk-card-icon { font-size: 32px; -webkit-flex-shrink: 0; flex-shrink: 0; }
+  .sk-card-body { -webkit-flex: 1; flex: 1; }
+  .sk-card-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 22px;
+    color: #F0E6FF;
+  }
+  .sk-card-sub { font-size: 12px; color: #B880E8; margin-top: 3px; }
+  .sk-card-arrow { font-size: 18px; color: rgba(200, 80, 255, 0.6); }
+</style>
+</head>
+<body>
+
+<div id="loading"></div>
+
+<div id="home-view">
+  <div class="sk-today-card">
+    <div id="sk-today-text">SPARKLE KINGDOM</div>
+  </div>
+  <div class="sk-nav-cards">
+    <a class="sk-card" href="/daily-missions?child=jj">
+      <div class="sk-card-icon">&#x1F3AF;</div>
+      <div class="sk-card-body">
+        <div class="sk-card-title">Daily Adventures</div>
+        <div class="sk-card-sub">Today's activities &amp; goals</div>
+      </div>
+      <div class="sk-card-arrow">&#x276F;</div>
+    </a>
+    <a class="sk-card" href="/jj">
+      <div class="sk-card-icon">&#x2728;</div>
+      <div class="sk-card-body">
+        <div class="sk-card-title">JJ Board</div>
+        <div class="sk-card-sub">Chores, stars &amp; rewards</div>
+      </div>
+      <div class="sk-card-arrow">&#x276F;</div>
+    </a>
+    <a class="sk-card" href="/sparkle?mode=freeplay">
+      <div class="sk-card-icon">&#x1F31F;</div>
+      <div class="sk-card-body">
+        <div class="sk-card-title">Sparkle Learning</div>
+        <div class="sk-card-sub">Free play games</div>
+      </div>
+      <div class="sk-card-arrow">&#x276F;</div>
+    </a>
+  </div>
+</div>
+
+<script>
+function safeParse(d) { return typeof d === 'string' ? JSON.parse(d) : d; }
+
+/* ===== BUILDER FUNCTIONS (copied from KidsHub.html) ===== */
+function buildJJLoadingScreen() {
+  var loading = document.getElementById('loading');
+  loading.innerHTML = '';
+  loading.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;overflow:hidden;background:linear-gradient(135deg,#1a0533 0%,#2d0a5e 40%,#4a0e8f 70%,#1a0533 100%);display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
+  var style = document.createElement('style');
+  style.textContent = '@keyframes jjTwinkle{0%,100%{opacity:0.2;transform:scale(1)}50%{opacity:1;transform:scale(1.6)}}@keyframes jjFloatUp{0%{opacity:0;transform:translateY(0) scale(0.5)}20%{opacity:1}80%{opacity:1}100%{opacity:0;transform:translateY(-320px) rotate(40deg) scale(1.2)}}@keyframes jjStarPulse{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.2) rotate(5deg)}}@keyframes jjBounce{from{transform:translateY(0) scale(1)}to{transform:translateY(-12px) scale(1.05)}}@keyframes jjShimmer{0%,100%{opacity:0.7;color:#ffaaee}50%{opacity:1;color:#ffe0ff}}@keyframes jjDotBounce{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-16px) scale(1.3)}}@keyframes jjSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes jjSpinRev{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}';
+  document.head.appendChild(style);
+  var starsBg = document.createElement('div');
+  starsBg.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;';
+  for (var si = 0; si < 40; si++) {
+    var star = document.createElement('div');
+    var sz = (Math.random() * 3 + 2);
+    star.style.cssText = 'position:absolute;border-radius:50%;background:white;width:' + sz + 'px;height:' + sz + 'px;left:' + (Math.random()*100) + '%;top:' + (Math.random()*100) + '%;animation:jjTwinkle ' + (Math.random()*2.5+1.5) + 's ease-in-out ' + (Math.random()*3) + 's infinite;';
+    starsBg.appendChild(star);
+  }
+  loading.appendChild(starsBg);
+  var emojis = ['\uD83C\uDF1F','\uD83D\uDC9C','\uD83C\uDF38','\uD83E\uDD8B','\uD83C\uDF08','\uD83D\uDCAB','\uD83C\uDF80','\uD83C\uDF6C'];
+  for (var fi = 0; fi < 8; fi++) {
+    var floater = document.createElement('div');
+    var fsz = Math.floor(Math.random()*18+18);
+    floater.style.cssText = 'position:absolute;font-size:' + fsz + 'px;left:' + (Math.random()*90+5) + '%;bottom:-20px;opacity:0;pointer-events:none;animation:jjFloatUp ' + (Math.random()*4+3) + 's ease-in-out ' + (Math.random()*6) + 's infinite;';
+    floater.textContent = emojis[fi];
+    loading.appendChild(floater);
+  }
+  var center = document.createElement('div');
+  center.style.cssText = 'position:relative;z-index:10;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;gap:0;';
+  var orbitWrap = document.createElement('div');
+  orbitWrap.style.cssText = 'position:relative;width:200px;height:200px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
+  var outerRing = document.createElement('div');
+  outerRing.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;animation:jjSpin 4s linear infinite;';
+  var orbColors = ['#ff66cc','#aa44ff','#ffdd44','#44ddff','#ff4499','#66ffaa'];
+  for (var oi = 0; oi < 6; oi++) {
+    var angle = (oi/6)*360; var rad = angle*Math.PI/180;
+    var ox = 50 + 46*Math.cos(rad); var oy = 50 + 46*Math.sin(rad);
+    var dot = document.createElement('div');
+    dot.style.cssText = 'position:absolute;width:12px;height:12px;border-radius:50%;left:calc(' + ox + '% - 6px);top:calc(' + oy + '% - 6px);background:' + orbColors[oi] + ';box-shadow:0 0 8px ' + orbColors[oi] + ';';
+    outerRing.appendChild(dot);
+  }
+  orbitWrap.appendChild(outerRing);
+  var cartwheelWrap = document.createElement('div');
+  cartwheelWrap.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:0;height:0;z-index:15;';
+  var cartwheelImg = document.createElement('img');
+  cartwheelImg.src = 'https://i.ibb.co/k2sWCnvH/Gemini-Generated-Image-8uhoc98uhoc98uho.png';
+  cartwheelImg.alt = 'JJ cartwheel';
+  cartwheelImg.style.cssText = 'width:130px;height:auto;display:block;position:absolute;left:-65px;top:-65px;filter:drop-shadow(0 0 12px #ff80ff) drop-shadow(0 0 24px rgba(255,128,255,0.4));animation:jjCartwheelArc 2.4s ease-in-out 0s infinite;';
+  var cartwheelDir = 0;
+  cartwheelImg.addEventListener('animationiteration', function() {
+    cartwheelDir = 1 - cartwheelDir;
+    cartwheelImg.style.animationName = cartwheelDir === 0 ? 'jjCartwheelArc' : 'jjCartwheelReturn';
+  });
+  cartwheelImg.onerror = function() {
+    cartwheelImg.style.display = 'none';
+    var fallback = document.createElement('div');
+    fallback.style.cssText = 'font-size:60px;position:absolute;left:-30px;top:-30px;animation:jjCartwheelArc 2.4s ease-in-out infinite;';
+    fallback.textContent = '\u2728';
+    cartwheelWrap.appendChild(fallback);
+  };
+  cartwheelWrap.appendChild(cartwheelImg);
+  orbitWrap.appendChild(cartwheelWrap);
+  var hiText = document.createElement('div');
+  hiText.style.cssText = 'font-family:"Fredoka One",cursive;font-size:42px;color:#fff;text-shadow:0 0 20px #cc44ff,0 0 40px #8800ff;animation:jjBounce 0.8s ease-in-out infinite alternate;margin-top:8px;letter-spacing:2px;';
+  hiText.textContent = 'Hi JJ! \uD83E\uDD84';
+  var subText = document.createElement('div');
+  subText.style.cssText = 'font-family:"Fredoka One",cursive;font-size:20px;color:#ffaaee;margin-top:8px;animation:jjShimmer 2s ease-in-out infinite;letter-spacing:1px;';
+  subText.textContent = 'Getting your sparkles ready...';
+  var dotsRow = document.createElement('div');
+  dotsRow.style.cssText = 'display:-webkit-flex;display:flex;gap:12px;margin-top:28px;';
+  var dotColors = ['#ff66cc','#aa44ff','#66aaff','#44ddaa','#ffdd44'];
+  for (var di = 0; di < 5; di++) {
+    var d = document.createElement('div');
+    d.style.cssText = 'width:18px;height:18px;border-radius:50%;background:' + dotColors[di] + ';animation:jjDotBounce 1s ease-in-out ' + (di*0.15) + 's infinite;';
+    dotsRow.appendChild(d);
+  }
+  center.appendChild(orbitWrap);
+  center.appendChild(hiText);
+  center.appendChild(subText);
+  center.appendChild(dotsRow);
+  loading.appendChild(center);
+}
+
+function buildSparkleKingdomBackground() {
+  var bg = document.createElement('div');
+  bg.id = 'sparkle-bg';
+  bg.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;z-index:-1;overflow:hidden;background:#1a0533;';
+  document.body.insertBefore(bg, document.body.firstChild);
+  var sky = document.createElement('div');
+  sky.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse 90% 70% at 50% 25%, #3d0d7a 0%, #1a0533 45%, #0d001f 100%);';
+  bg.appendChild(sky);
+  var aurora = document.createElement('div');
+  aurora.style.cssText = 'position:absolute;top:8%;left:-10%;width:120%;height:35%;background:linear-gradient(180deg, transparent 0%, rgba(120,40,200,0.25) 20%, rgba(200,80,255,0.15) 40%, rgba(80,180,255,0.1) 60%, transparent 100%);filter:blur(8px);animation:jjAurora 6s ease-in-out infinite alternate;';
+  bg.appendChild(aurora);
+  var skStarColors = ['#ffffff','#ffccff','#ccaaff','#aaddff','#ffffcc','#ffaacc'];
+  for (var i = 0; i < 100; i++) {
+    var st = document.createElement('div');
+    var sz = (Math.random() * 3 + 0.5).toFixed(1);
+    var col = skStarColors[Math.floor(Math.random() * skStarColors.length)];
+    var dur = (Math.random() * 3 + 2).toFixed(1);
+    var delay = (Math.random() * 5).toFixed(1);
+    var minO = (Math.random() * 0.1 + 0.05).toFixed(2);
+    var maxO = (Math.random() * 0.5 + 0.4).toFixed(2);
+    var sc = (Math.random() * 0.5 + 1.1).toFixed(2);
+    st.style.cssText = 'position:absolute;border-radius:50%;width:' + sz + 'px;height:' + sz + 'px;background:' + col + ';left:' + (Math.random()*100).toFixed(1) + '%;top:' + (Math.random()*70).toFixed(1) + '%;animation:jjBgTwinkle ' + dur + 's ease-in-out ' + delay + 's infinite;--min:' + minO + ';--max:' + maxO + ';--sc:' + sc + ';';
+    bg.appendChild(st);
+  }
+  var arcSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  arcSvg.setAttribute('viewBox', '0 0 800 600');
+  arcSvg.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;opacity:0.13;';
+  var arcColors = ['#ff4444','#ff8844','#ffdd44','#44dd44','#4488ff','#8844ff'];
+  var arcInner = '';
+  for (var a = 0; a < 6; a++) {
+    var r = 320 - a * 25;
+    arcInner += '<path d="M ' + (400 - r) + ' 580 Q 400 ' + (580 - r) + ' ' + (400 + r) + ' 580" fill="none" stroke="' + arcColors[a] + '" stroke-width="8"/>';
+  }
+  arcSvg.innerHTML = arcInner;
+  bg.appendChild(arcSvg);
+  var innerOrbit = document.createElement('div');
+  innerOrbit.style.cssText = 'position:absolute;top:50%;left:50%;width:160px;height:80px;border:1px solid rgba(200,80,255,0.2);border-radius:50%;animation:jjOrbitCW 6s linear infinite;';
+  var innerDotColors = ['#ff66cc','#aa44ff'];
+  for (var id = 0; id < 2; id++) {
+    var iDot = document.createElement('div');
+    var iAngle = (id / 2) * 360;
+    var iRad = iAngle * Math.PI / 180;
+    var ix = 50 + 50 * Math.cos(iRad);
+    var iy = 50 + 50 * Math.sin(iRad);
+    iDot.style.cssText = 'position:absolute;width:8px;height:8px;border-radius:50%;background:' + innerDotColors[id] + ';box-shadow:0 0 6px ' + innerDotColors[id] + ';left:calc(' + ix.toFixed(1) + '% - 4px);top:calc(' + iy.toFixed(1) + '% - 4px);';
+    innerOrbit.appendChild(iDot);
+  }
+  bg.appendChild(innerOrbit);
+  var outerOrbit = document.createElement('div');
+  outerOrbit.style.cssText = 'position:absolute;top:50%;left:50%;width:220px;height:110px;border:1px solid rgba(200,80,255,0.12);border-radius:50%;animation:jjOrbitCCW 9s linear infinite;';
+  var outerDotColors = ['#ffdd44','#44ddff','#ff4499'];
+  for (var od = 0; od < 3; od++) {
+    var oDot = document.createElement('div');
+    var oAngle = (od / 3) * 360;
+    var oRad = oAngle * Math.PI / 180;
+    var ox = 50 + 50 * Math.cos(oRad);
+    var oy = 50 + 50 * Math.sin(oRad);
+    oDot.style.cssText = 'position:absolute;width:6px;height:6px;border-radius:50%;background:' + outerDotColors[od] + ';box-shadow:0 0 5px ' + outerDotColors[od] + ';left:calc(' + ox.toFixed(1) + '% - 3px);top:calc(' + oy.toFixed(1) + '% - 3px);';
+    outerOrbit.appendChild(oDot);
+  }
+  bg.appendChild(outerOrbit);
+  var mascotWrap = document.createElement('div');
+  mascotWrap.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:-1;text-align:center;';
+  var mascotImg = document.createElement('img');
+  mascotImg.src = 'https://i.ibb.co/DBgRLCw/1773982672701.png';
+  mascotImg.alt = 'Sparkle Sprinkles';
+  mascotImg.style.cssText = 'width:220px;height:auto;animation:jjMascotBob 3s ease-in-out infinite;position:relative;z-index:-1;';
+  mascotWrap.appendChild(mascotImg);
+  bg.appendChild(mascotWrap);
+  for (var sc = 0; sc < 22; sc++) {
+    var sparkle = document.createElement('div');
+    var sSz = (Math.random() * 12 + 6).toFixed(0);
+    var sColor = skStarColors[Math.floor(Math.random() * skStarColors.length)];
+    var sDur = (Math.random() * 4 + 3).toFixed(1);
+    var sDelay = (Math.random() * 6).toFixed(1);
+    sparkle.style.cssText = 'position:absolute;width:' + sSz + 'px;height:' + sSz + 'px;left:' + (Math.random()*90+5).toFixed(1) + '%;top:' + (Math.random()*80+5).toFixed(1) + '%;animation:jjSparkleFloat ' + sDur + 's ease-in-out ' + sDelay + 's infinite;opacity:0.7;';
+    var hBar = document.createElement('div');
+    hBar.style.cssText = 'position:absolute;top:50%;left:0;width:100%;height:2px;background:' + sColor + ';transform:translateY(-50%);';
+    sparkle.appendChild(hBar);
+    var vBar = document.createElement('div');
+    vBar.style.cssText = 'position:absolute;left:50%;top:0;height:100%;width:2px;background:' + sColor + ';transform:translateX(-50%);';
+    sparkle.appendChild(vBar);
+    bg.appendChild(sparkle);
+  }
+  var shootStarts = [
+    {left:'10%', top:'8%', delay:'0s'},
+    {left:'60%', top:'5%', delay:'2.5s'},
+    {left:'35%', top:'15%', delay:'5s'}
+  ];
+  for (var sh = 0; sh < 3; sh++) {
+    var shoot = document.createElement('div');
+    shoot.style.cssText = 'position:absolute;left:' + shootStarts[sh].left + ';top:' + shootStarts[sh].top + ';width:40px;height:2px;background:linear-gradient(90deg,#ffffff,transparent);border-radius:1px;opacity:0;animation:jjShoot 4s linear ' + shootStarts[sh].delay + ' infinite;';
+    bg.appendChild(shoot);
+  }
+  var burstPositions = [
+    {left:'5%', top:'20%'}, {right:'5%', top:'30%'},
+    {left:'8%', top:'60%'}, {right:'8%', top:'70%'},
+    {left:'3%', top:'45%'}, {right:'3%', top:'50%'}
+  ];
+  for (var b = 0; b < 6; b++) {
+    var burst = document.createElement('div');
+    var bStyle = 'position:absolute;width:6px;height:6px;border-radius:50%;background:#ff80ff;box-shadow:0 0 12px #ff40ff;animation:jjBurstPulse ' + (Math.random()*2+2).toFixed(1) + 's ease-in-out ' + (Math.random()*3).toFixed(1) + 's infinite;';
+    if (burstPositions[b].left)  { bStyle += 'left:'  + burstPositions[b].left  + ';'; }
+    if (burstPositions[b].right) { bStyle += 'right:' + burstPositions[b].right + ';'; }
+    bStyle += 'top:' + burstPositions[b].top + ';';
+    burst.style.cssText = bStyle;
+    bg.appendChild(burst);
+  }
+  var ground = document.createElement('div');
+  ground.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:80px;overflow:hidden;background:linear-gradient(180deg, transparent 0%, #1a0533 30%, #0d001f 100%);';
+  var dotStrip = document.createElement('div');
+  dotStrip.style.cssText = 'position:absolute;bottom:0;left:0;right:0;height:20px;animation:jjDotScroll 2s linear infinite;background-image:radial-gradient(circle 2px, rgba(200,80,255,0.4) 100%, transparent 100%);background-size:20px 20px;';
+  ground.appendChild(dotStrip);
+  var horizonLine = document.createElement('div');
+  horizonLine.style.cssText = 'position:absolute;top:0;left:50%;transform:translateX(-50%);width:90%;height:1px;background:linear-gradient(90deg,transparent,rgba(200,80,255,0.5),rgba(200,80,255,0.5),transparent);box-shadow:0 0 12px 2px rgba(200,80,255,0.3);';
+  ground.appendChild(horizonLine);
+  bg.appendChild(ground);
+  var skCorners = [
+    'top:12px;left:12px;border-width:2px 0 0 2px;',
+    'top:12px;right:12px;border-width:2px 2px 0 0;',
+    'bottom:12px;left:12px;border-width:0 0 2px 2px;',
+    'bottom:12px;right:12px;border-width:0 2px 2px 0;'
+  ];
+  for (var hc = 0; hc < 4; hc++) {
+    var hCorner = document.createElement('div');
+    hCorner.style.cssText = 'position:fixed;width:20px;height:20px;border-color:rgba(200,80,255,0.5);border-style:solid;z-index:10;' + skCorners[hc];
+    bg.appendChild(hCorner);
+  }
+  var skSign = document.createElement('div');
+  skSign.id = 'sk-sign';
+  skSign.style.cssText = 'position:fixed;top:26px;left:50%;transform:translateX(-50%);text-align:center;z-index:30;white-space:nowrap;';
+  var skTitle = document.createElement('div');
+  skTitle.style.cssText = "font-family:'Fredoka One','Comic Sans MS',cursive;font-size:30px;font-weight:900;color:#ff80ff;letter-spacing:4px;text-shadow:0 0 10px #ff40ff,0 0 30px rgba(255,80,255,0.5),2px 2px 0 rgba(0,0,0,0.6);animation:skSignPulse 3s ease-in-out infinite;";
+  skTitle.textContent = 'THE SPARKLE KINGDOM';
+  var skSub = document.createElement('div');
+  skSub.style.cssText = "font-family:'Fredoka One',cursive;font-size:10px;color:#c080ff;letter-spacing:6px;text-shadow:0 0 8px #a040ff;margin-top:2px;";
+  skSub.textContent = 'KINDLEKID MAGIC ZONE';
+  skSign.appendChild(skTitle);
+  skSign.appendChild(skSub);
+  bg.appendChild(skSign);
+  var starCount = document.createElement('div');
+  starCount.id = 'sk-star-count';
+  starCount.style.cssText = 'position:fixed;top:14px;right:14px;z-index:30;background:rgba(30,0,60,0.7);border:1px solid rgba(200,80,255,0.4);border-radius:20px;padding:6px 14px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:6px;';
+  var starIcon = document.createElement('span');
+  starIcon.style.cssText = 'font-size:18px;';
+  starIcon.textContent = '\u2B50';
+  var starVal = document.createElement('span');
+  starVal.id = 'sk-star-value';
+  starVal.style.cssText = "font-family:'Fredoka One',cursive;font-size:16px;color:#FFD700;";
+  starVal.textContent = '--';
+  starCount.appendChild(starIcon);
+  starCount.appendChild(starVal);
+  bg.appendChild(starCount);
+}
+
+/* ===== DATA LOAD ===== */
+function loadHomeData() {
+  var timeout = setTimeout(function() { showHomeView(); }, 8000);
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(raw) {
+        clearTimeout(timeout);
+        onKidsHubData(raw);
+      })
+      .withFailureHandler(function() {
+        clearTimeout(timeout);
+        showHomeView();
+      })
+      .getKidsHubDataSafe('jj');
+  } else {
+    clearTimeout(timeout);
+    showHomeView();
+  }
+}
+
+function onKidsHubData(raw) {
+  try {
+    var data = safeParse(raw);
+    var balance = (data && data.balances && data.balances.jj) ? (data.balances.jj.balance || 0) : 0;
+    var starVal = document.getElementById('sk-star-value');
+    if (starVal) { starVal.textContent = balance; }
+    var todayText = document.getElementById('sk-today-text');
+    if (todayText && data && data.todayMissionCount) {
+      todayText.textContent = data.todayMissionCount + ' ACTIVITIES TODAY! \u2728';
+    }
+  } catch(e) {}
+  showHomeView();
+}
+
+function showHomeView() {
+  var loading = document.getElementById('loading');
+  var homeView = document.getElementById('home-view');
+  if (loading) { loading.style.display = 'none'; }
+  if (homeView) { homeView.style.display = 'block'; }
+}
+
+/* ===== INIT ===== */
+buildJJLoadingScreen();
+buildSparkleKingdomBackground();
+loadHomeData();
+</script>
+</body>
+</html>
+<!-- JJHome.html v1 — THE SPARKLE KINGDOM -->
