@@ -56,10 +56,10 @@ def get_source_version(filename, fn_name):
             content = fh.read()
     except FileNotFoundError:
         return None
-    # Match: function getFooVersion() { return N; }
-    pattern = r'function\s+' + re.escape(fn_name) + r'\s*\(\s*\)\s*\{\s*return\s+(\d+)\s*;\s*\}'
+    # Match: function getFooVersion() { return N; } — supports int (42) or decimal (15.1)
+    pattern = r'function\s+' + re.escape(fn_name) + r'\s*\(\s*\)\s*\{\s*return\s+([\d.]+)\s*;\s*\}'
     m = re.search(pattern, content)
-    return int(m.group(1)) if m else None
+    return float(m.group(1)) if m else None
 
 
 def main():
@@ -83,20 +83,20 @@ def main():
             print('SKIP ' + key + ': not in deployed response')
             continue
         try:
-            deployed_int = int(deployed_ver)
+            deployed_num = float(deployed_ver)
         except (ValueError, TypeError):
-            print('SKIP ' + key + ': deployed value "' + str(deployed_ver) + '" not an int')
+            print('SKIP ' + key + ': deployed value "' + str(deployed_ver) + '" not a number')
             continue
         source_ver = get_source_version(filename, fn_name)
         if source_ver is None:
             print('SKIP ' + key + ': could not parse source version from ' + filename)
             continue
-        if source_ver > deployed_int:
+        if source_ver > deployed_num:
             drifted.append({
                 'key': key,
                 'file': filename,
                 'source': source_ver,
-                'deployed': deployed_int,
+                'deployed': deployed_num,
                 'delta': source_ver - deployed_int,
             })
             print('DRIFT ' + key + ': source=v' + str(source_ver) + ' deployed=v' + str(deployed_int))
