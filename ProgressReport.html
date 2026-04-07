@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="progress-report">
-<meta name="tbm-version" content="v1">
+<meta name="tbm-version" content="v2">
 <title>Weekly Progress Report</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -353,6 +353,84 @@ main {
 }
 
 .hidden { display: none; }
+
+/* Review Queue */
+.review-queue-card {
+  background: #171D30;
+  border: 1px solid rgba(245,158,11,0.4);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  animation: fadeSlide 0.4s ease;
+}
+.review-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.review-card-meta {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  color: #F59E0B;
+  letter-spacing: 1px;
+}
+.review-card-time {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #64748B;
+}
+.review-response {
+  background: rgba(30,42,74,0.6);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #CBD5E1;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.review-gemini {
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+.review-gemini-label {
+  font-size: 10px;
+  color: #60A5FA;
+  letter-spacing: 1px;
+  font-family: 'Orbitron', sans-serif;
+  margin-bottom: 4px;
+}
+.review-gemini-text {
+  font-size: 12px;
+  color: #94A3B8;
+  line-height: 1.5;
+}
+.review-actions { display: flex; gap: 8px; }
+.btn-approve {
+  flex: 1; padding: 10px;
+  background: rgba(34,197,94,0.15);
+  border: 1px solid rgba(34,197,94,0.4);
+  border-radius: 8px; color: #22C55E;
+  font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer;
+}
+.btn-return {
+  flex: 1; padding: 10px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px; color: #EF4444;
+  font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer;
+}
+.review-badge {
+  display: inline-block;
+  background: #F59E0B; color: #0B0F1A;
+  border-radius: 10px; font-size: 10px; font-weight: 800;
+  padding: 1px 6px; margin-left: 4px; vertical-align: middle;
+}
 </style>
 </head>
 <body>
@@ -373,7 +451,7 @@ main {
 </div>
 
 <div class="nav-bar" id="nav-bar">
-  <button class="nav-tab active" onclick="switchTab('buggsy')">Buggsy</button>
+  <button class="nav-tab active" onclick="switchTab('buggsy')">Buggsy<span id="review-badge" style="display:none" class="review-badge">0</span></button>
   <button class="nav-tab" onclick="switchTab('jj')">JJ</button>
   <button class="nav-tab" onclick="switchTab('overview')">Overview</button>
 </div>
@@ -383,6 +461,9 @@ main {
     <div class="loading-spinner"></div>
     <div class="loading-text">Loading progress data...</div>
   </div>
+
+  <!-- Review Queue (above tabs, Buggsy only) -->
+  <div id="review-queue-container"></div>
 
   <!-- Buggsy Tab -->
   <div id="tab-buggsy" class="hidden"></div>
@@ -396,9 +477,10 @@ main {
 
 <script>
 var MODULE_NAME = 'progress-report';
-var MODULE_VERSION = 'v1';
+var MODULE_VERSION = 'v2';
 var activeTab = 'buggsy';
 var reportData = null;
+var pendingItems = [];
 
 // Stars
 function createStars() {
@@ -495,16 +577,28 @@ function renderBuggsy(data) {
   var b = data.buggsy;
   var html = '';
 
+  // Normalize field names — handle both real backend shape and mock shape
+  var rings = b.ringsThisWeek !== undefined ? b.ringsThisWeek : (b.ringsEarned || 0);
+  var streak = b.streak !== undefined ? b.streak : (b.streakDays || 0);
+  var done = b.sessionsCompleted !== undefined ? b.sessionsCompleted : (b.questionsAnswered || 0);
+  var total = b.sessionsTotal || 5;
+  var avgPct = b.avgScore !== undefined ? Math.round(b.avgScore) : (b.accuracy !== undefined ? Math.round(b.accuracy * 100) : null);
+  var completion = b.completionRate !== undefined ? b.completionRate : Math.min(100, Math.round((done / total) * 100));
+  var pending = b.pendingReview || 0;
+
   html += '<div class="section-label">WEEKLY STATS</div>';
   html += '<div class="stat-grid">';
-  html += buildStatCard(b.ringsThisWeek, 'Rings This Week');
-  html += buildStatCard(b.streak, 'Day Streak');
-  html += buildStatCard(b.sessionsCompleted + '/' + b.sessionsTotal, 'Sessions');
-  html += buildStatCard(b.avgScore ? Math.round(b.avgScore) + '%' : '--', 'Avg Score');
+  html += buildStatCard(rings, 'Rings This Week');
+  html += buildStatCard(streak, 'Day Streak');
+  html += buildStatCard(done + '/' + total, 'Sessions');
+  html += buildStatCard(avgPct !== null ? avgPct + '%' : '--', 'MC Accuracy');
+  if (pending > 0) {
+    html += buildStatCard(pending, 'Needs Review');
+  }
   html += '</div>';
 
   html += '<div class="section-label">COMPLETION</div>';
-  html += buildScoreBar('Weekly Completion', b.completionRate, '#22C55E');
+  html += buildScoreBar('Weekly Completion', completion, '#22C55E');
 
   if (b.subjects && b.subjects.length > 0) {
     html += '<div class="section-label">BY SUBJECT</div>';
@@ -661,7 +755,131 @@ function renderOverview(data) {
   document.getElementById('tab-overview').innerHTML = html;
 }
 
-// Data loading
+// ── Review Queue ──────────────────────────────────────────────
+
+function loadPendingReviews() {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  google.script.run
+    .withSuccessHandler(function(result) {
+      pendingItems = (result && result.pending) ? result.pending : [];
+      renderReviewQueue();
+    })
+    .withFailureHandler(function(err) {
+      console.error('Queue load failed:', err);
+    })
+    .getEducationQueueSafe();
+}
+
+function renderReviewQueue() {
+  var container = document.getElementById('review-queue-container');
+  if (!container) return;
+  if (!pendingItems || pendingItems.length === 0) {
+    container.innerHTML = '';
+    document.getElementById('review-badge').style.display = 'none';
+    return;
+  }
+
+  // Show badge on Buggsy nav tab
+  var badge = document.getElementById('review-badge');
+  badge.textContent = String(pendingItems.length);
+  badge.style.display = 'inline-block';
+
+  var html = '<div class="section-label" style="margin-top:16px">NEEDS YOUR REVIEW</div>';
+  for (var i = 0; i < pendingItems.length; i++) {
+    var item = pendingItems[i];
+    var ts = item.timestamp ? String(item.timestamp).slice(0, 16).replace('T', ' ') : '';
+    var subjectLabel = String(item.subject || item.module || 'Homework').toUpperCase();
+    html += '<div class="review-queue-card" id="rcard-' + item.rowIndex + '">';
+    html += '<div class="review-card-header">';
+    html += '<div class="review-card-meta">&#x1F4DD; ' + escapeHtml(subjectLabel) + ' &mdash; ' + escapeHtml((item.child || 'Buggsy').toUpperCase()) + '</div>';
+    html += '<div class="review-card-time">' + escapeHtml(ts) + '</div>';
+    html += '</div>';
+
+    if (item.responseText) {
+      html += '<div style="font-size:10px;color:#64748B;letter-spacing:1px;margin-bottom:4px;">RESPONSE</div>';
+      html += '<div class="review-response">' + escapeHtml(item.responseText) + '</div>';
+    }
+
+    if (item.geminiFeedback && String(item.geminiFeedback).trim().length > 0) {
+      html += '<div class="review-gemini">';
+      html += '<div class="review-gemini-label">&#x1F916; GEMINI FIRST PASS</div>';
+      html += '<div class="review-gemini-text">' + escapeHtml(item.geminiFeedback) + '</div>';
+      html += '</div>';
+    } else {
+      html += '<div style="font-size:11px;color:#475569;margin-bottom:12px;font-style:italic;">Gemini review pending or not available.</div>';
+    }
+
+    html += '<div class="review-actions">';
+    html += '<button class="btn-approve" onclick="handleApprove(' + item.rowIndex + ')">&#10003; Approve (+10 rings)</button>';
+    html += '<button class="btn-return" onclick="handleReturn(' + item.rowIndex + ')">&#8617; Return</button>';
+    html += '</div>';
+    html += '</div>';
+  }
+  container.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function handleApprove(rowIndex) {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  var card = document.getElementById('rcard-' + rowIndex);
+  if (card) { card.style.opacity = '0.5'; card.style.pointerEvents = 'none'; }
+  google.script.run
+    .withSuccessHandler(function() {
+      if (card) card.parentNode.removeChild(card);
+      // Remove from pendingItems array
+      for (var i = pendingItems.length - 1; i >= 0; i--) {
+        if (pendingItems[i].rowIndex === rowIndex) { pendingItems.splice(i, 1); break; }
+      }
+      // Update badge
+      var badge = document.getElementById('review-badge');
+      if (pendingItems.length === 0) {
+        badge.style.display = 'none';
+      } else {
+        badge.textContent = String(pendingItems.length);
+      }
+    })
+    .withFailureHandler(function(err) {
+      if (card) { card.style.opacity = '1'; card.style.pointerEvents = ''; }
+      alert('Approve failed: ' + (err.message || err));
+    })
+    .approveHomeworkSafe(rowIndex, 'approve', '');
+}
+
+function handleReturn(rowIndex) {
+  var notes = prompt('Return note (optional):', 'Please try again');
+  if (notes === null) return; // cancelled
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  var card = document.getElementById('rcard-' + rowIndex);
+  if (card) { card.style.opacity = '0.5'; card.style.pointerEvents = 'none'; }
+  google.script.run
+    .withSuccessHandler(function() {
+      if (card) card.parentNode.removeChild(card);
+      for (var i = pendingItems.length - 1; i >= 0; i--) {
+        if (pendingItems[i].rowIndex === rowIndex) { pendingItems.splice(i, 1); break; }
+      }
+      var badge = document.getElementById('review-badge');
+      if (pendingItems.length === 0) {
+        badge.style.display = 'none';
+      } else {
+        badge.textContent = String(pendingItems.length);
+      }
+    })
+    .withFailureHandler(function(err) {
+      if (card) { card.style.opacity = '1'; card.style.pointerEvents = ''; }
+      alert('Return failed: ' + (err.message || err));
+    })
+    .approveHomeworkSafe(rowIndex, 'return', notes);
+}
+
+// ── Data loading ────────────────────────────────────────────────
+
 function loadData() {
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
@@ -717,6 +935,8 @@ function onDataLoaded() {
   renderOverview(reportData);
   // Show first tab
   document.getElementById('tab-buggsy').className = '';
+  // Load pending review queue separately
+  loadPendingReviews();
 }
 
 // Init

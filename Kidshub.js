@@ -2936,14 +2936,15 @@ function getWeeklyProgressSafe() {
     var histData = readSheet_('KH_History');
     var histH = histData && histData.length > 0 ? histData[0].map(String) : [];
 
-    // Read KH_Grades for education data
-    var gradeData = readSheet_('KH_Grades');
-    var gradeH = gradeData && gradeData.length > 0 ? gradeData[0].map(String) : [];
+    // Read KH_Education for daily homework data
+    // Schema: Timestamp,Child,Module,Subject,Score,AutoGraded,ResponseText,Status,ParentNotes,RingsAwarded,ReviewTimestamp,GeminiFeedback
+    var eduData = readSheet_('KH_Education');
+    var eduH = eduData && eduData.length > 0 ? eduData[0].map(String) : [];
 
     for (var ci = 0; ci < children.length; ci++) {
       var child = children[ci];
       var choresCompleted = 0, ringsEarned = 0, streakDays = 0;
-      var questionsAnswered = 0, totalCorrect = 0, totalPossible = 0;
+      var modulesCompleted = 0, pendingReview = 0, mcRingsTotal = 0, mcCount = 0;
       var subjectCounts = {};
       var uniqueDays = {};
 
@@ -2976,22 +2977,33 @@ function getWeeklyProgressSafe() {
         checkDate.setDate(checkDate.getDate() - 1);
       }
 
-      // Aggregate KH_Grades this week
-      if (gradeData && gradeH.length > 0) {
-        var gChild = gradeH.indexOf('Child');
-        var gDate = gradeH.indexOf('Date');
-        var gSubject = gradeH.indexOf('Subject');
-        var gScore = gradeH.indexOf('Score');
-        var gTotal = gradeH.indexOf('Total');
-        for (var gi = 1; gi < gradeData.length; gi++) {
-          var grow = gradeData[gi];
-          if (String(grow[gChild] || '').toLowerCase() !== child) continue;
-          var gRowDate = String(grow[gDate] || '');
-          if (gRowDate < mondayISO) continue;
-          questionsAnswered++;
-          totalCorrect += Number(grow[gScore]) || 0;
-          totalPossible += Number(grow[gTotal]) || 0;
-          var subj = String(grow[gSubject] || 'Other');
+      // Aggregate KH_Education this week (daily homework submissions)
+      if (eduData && eduH.length > 0) {
+        var eChild = eduH.indexOf('Child');
+        var eTimestamp = eduH.indexOf('Timestamp');
+        var eSubject = eduH.indexOf('Subject');
+        var eScore = eduH.indexOf('Score');
+        var eAutoGraded = eduH.indexOf('AutoGraded');
+        var eStatus = eduH.indexOf('Status');
+        var eRings = eduH.indexOf('RingsAwarded');
+        for (var ei = 1; ei < eduData.length; ei++) {
+          var erow = eduData[ei];
+          if (String(erow[eChild] || '').toLowerCase() !== child) continue;
+          // Filter to this week using timestamp date portion
+          var ts = erow[eTimestamp];
+          var tsDate = ts instanceof Date
+            ? (ts.getFullYear() + '-' + (ts.getMonth() + 1 < 10 ? '0' : '') + (ts.getMonth() + 1) + '-' + (ts.getDate() < 10 ? '0' : '') + ts.getDate())
+            : String(ts || '').slice(0, 10);
+          if (tsDate < mondayISO) continue;
+          modulesCompleted++;
+          var rowStatus = String(erow[eStatus] || '');
+          if (rowStatus === 'pending_review') pendingReview++;
+          var isAuto = String(erow[eAutoGraded] || '').toLowerCase();
+          if (isAuto === 'true' || erow[eAutoGraded] === true) {
+            mcRingsTotal += Number(erow[eRings]) || 0;
+            mcCount++;
+          }
+          var subj = String(erow[eSubject] || 'Other');
           subjectCounts[subj] = (subjectCounts[subj] || 0) + 1;
         }
       }
@@ -3002,15 +3014,21 @@ function getWeeklyProgressSafe() {
         if (subjectCounts[sk] > topCount) { topCount = subjectCounts[sk]; topSubject = sk; }
       }
 
+      // accuracy: for MC modules, rings/8 per module ≈ score %. Capped at 1.0.
+      var accuracy = (mcCount > 0 && mcRingsTotal > 0)
+        ? Math.min(1, Math.round((mcRingsTotal / (mcCount * 8)) * 100) / 100)
+        : 0;
+
       result[child] = {
         child: child,
         weekLabel: 'Week of ' + (monday.getMonth() + 1) + '/' + monday.getDate(),
         choresCompleted: choresCompleted,
         ringsEarned: ringsEarned,
-        questionsAnswered: questionsAnswered,
-        accuracy: totalPossible > 0 ? Math.round((totalCorrect / totalPossible) * 100) / 100 : 0,
+        questionsAnswered: modulesCompleted,
+        accuracy: accuracy,
         streakDays: streakDays,
-        topSubject: topSubject || 'None yet'
+        topSubject: topSubject || 'None yet',
+        pendingReview: pendingReview
       };
     }
 

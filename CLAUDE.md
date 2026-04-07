@@ -391,6 +391,26 @@ LT applies branch protection in GitHub Settings > Branches > Branch protection r
 5. **CI tool versions are pinned.** actionlint v1.7.7, shellcheck from ubuntu-latest. Deterministic CI.
 6. **Local lint is conditional on changed files.** audit-source.sh only runs actionlint/py_compile when those files changed. CI runs unconditionally.
 
+### Codex PR Audit Lane
+
+When Codex is asked to audit PRs:
+1. Prefer GitHub connector tools for posting PR comments/reviews.
+2. Use `gh`/`git` for PR diff, PR metadata, and local grep as needed.
+3. At the start of any review session, request reusable permission for the full audit lane — one batch, not per-command:
+   - `gh pr view`
+   - `gh pr diff`
+   - `gh pr comment`
+   - `gh api repos/blucsigma05/tbm-apps-script/pulls`
+   - `git fetch origin`
+4. Post findings directly to the PR thread via GitHub connector.
+5. Return only a short summary in chat with links to the posted comments.
+
+**Pass/fail standard (enforced by `codex-pr-review.yml`):**
+- **PASS** requires: explicit `**Verdict:** PASS` + `**Files Reviewed:**` section listing files seen. No P1 violations.
+- **FAIL** — explicit findings or `**Verdict:** FAIL`.
+- **INCONCLUSIVE** — anything else: usage-limit hit, truncated diff, missing diff, no verdict, `**Files Reviewed:**` absent, rubber-stamp phrases detected. INCONCLUSIVE blocks merge, same as FAIL.
+- "Looks good" / no explicit verdict / reviewer asks a question = INCONCLUSIVE. Not a pass.
+
 ### Branch Hygiene
 1. **Sync before push.** Mandatory `git fetch origin main` and rebase before any push. The staleness gate in audit-source.sh enforces this.
 2. **Branch from latest.** New branches must be created from `origin/main` after a fresh fetch.

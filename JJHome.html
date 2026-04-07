@@ -3,175 +3,267 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- TBM: JJHome.html v1 — THE SPARKLE KINGDOM home -->
 <meta name="tbm-version" content="v1">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ── Sparkle Kingdom keyframes ── */
-  @keyframes skSignPulse {
-    0%, 100% { opacity: 0.9; }
-    50%       { opacity: 1; }
-  }
-  @keyframes jjAurora {
-    0%   { opacity: 0.6; transform: translateX(-3%); }
-    100% { opacity: 1;   transform: translateX(3%); }
-  }
-  @keyframes jjBgTwinkle {
-    0%, 100% { opacity: var(--min, 0.1); transform: scale(1); }
-    50%       { opacity: var(--max, 0.6); transform: scale(var(--sc, 1.2)); }
-  }
-  @keyframes jjOrbitCW  { from { transform: rotate(0deg);    } to { transform: rotate(360deg);  } }
-  @keyframes jjOrbitCCW { from { transform: rotate(0deg);    } to { transform: rotate(-360deg); } }
-  @keyframes jjMascotBob {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-8px); }
-  }
-  @keyframes jjSparkleFloat {
-    0%, 100% { transform: translateY(0) rotate(0deg);   opacity: 0.7; }
-    50%       { transform: translateY(-30px) rotate(30deg); opacity: 0.4; }
-  }
-  @keyframes jjShoot {
-    0%   { opacity: 0; transform: translate(0,0) rotate(-30deg); }
-    10%  { opacity: 1; }
-    90%  { opacity: 1; }
-    100% { opacity: 0; transform: translate(120px, 80px) rotate(-30deg); }
-  }
-  @keyframes jjBurstPulse {
-    0%, 100% { transform: scale(1);   opacity: 0.6; }
-    50%       { transform: scale(1.6); opacity: 1; }
-  }
-  @keyframes jjRainbowPulse {
-    0%   { opacity: 0.08; }
-    50%  { opacity: 0.18; }
-    100% { opacity: 0.08; }
-  }
-  @keyframes jjDotScroll {
-    from { background-position: 0 0; }
-    to   { background-position: 20px 0; }
-  }
-  @keyframes jjCartwheelArc {
-    0%   { transform: translate(-120px, 20px) rotate(0deg);   }
-    50%  { transform: translate(0px, -30px)   rotate(180deg); }
-    100% { transform: translate(120px, 20px)  rotate(360deg); }
-  }
-  @keyframes jjCartwheelReturn {
-    0%   { transform: translate(120px, 20px)  rotate(0deg);   }
-    50%  { transform: translate(0px, -30px)   rotate(-180deg); }
-    100% { transform: translate(-120px, 20px) rotate(-360deg); }
-  }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    min-height: 100vh;
-    background: #1a0533;
-    color: #F0E6FF;
-    font-family: 'Nunito', sans-serif;
-  }
+/* ══════════════════════════════════════════
+   SPARKLE KINGDOM BACKGROUND KEYFRAMES
+   ══════════════════════════════════════════ */
+.sparkle-body { background: #1a0533; }
+@keyframes skSignPulse {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.8; }
+}
+@keyframes jjAurora {
+  from { transform: scaleX(1) translateY(0); opacity: 0.6; }
+  to   { transform: scaleX(1.1) translateY(20px); opacity: 1; }
+}
+@keyframes jjBgTwinkle {
+  0%,100% { opacity: var(--min, 0.05); transform: scale(1); }
+  50%     { opacity: var(--max, 0.9); transform: scale(var(--sc, 1.3)); }
+}
+@keyframes jjOrbitCW  { from { transform: translate(-50%,-50%) rotate(0deg);   } to { transform: translate(-50%,-50%) rotate(360deg);  } }
+@keyframes jjOrbitCCW { from { transform: translate(-50%,-50%) rotate(360deg); } to { transform: translate(-50%,-50%) rotate(0deg);    } }
+@keyframes jjMascotBob {
+  0%,100% { transform: translateY(0) rotate(-3deg); }
+  50%     { transform: translateY(-14px) rotate(3deg); }
+}
+@keyframes jjSparkleFloat {
+  0%,100% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.7; }
+  33%     { transform: translateY(-20px) rotate(45deg) scale(1.2); opacity: 1; }
+  66%     { transform: translateY(-10px) rotate(90deg) scale(0.9); opacity: 0.8; }
+}
+@keyframes jjShoot {
+  0%  { opacity: 0; transform: translate(0,0) rotate(-35deg); }
+  5%  { opacity: 1; }
+  40% { opacity: 0; transform: translate(200px,120px) rotate(-35deg); }
+  100%{ opacity: 0; transform: translate(200px,120px) rotate(-35deg); }
+}
+@keyframes jjBurstPulse {
+  0%,100% { transform: scale(1); }
+  50%     { transform: scale(1.4); }
+}
+@keyframes jjCartwheelArc {
+  0%   { transform: translateX(-140px) translateY(20px) rotate(0deg); opacity: 0; }
+  8%   { opacity: 1; }
+  50%  { transform: translateX(0px) translateY(-40px) rotate(180deg); opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateX(140px) translateY(20px) rotate(360deg); opacity: 0; }
+}
+@keyframes jjCartwheelReturn {
+  0%   { transform: translateX(140px) translateY(20px) rotate(360deg); opacity: 0; }
+  8%   { opacity: 1; }
+  50%  { transform: translateX(0px) translateY(-40px) rotate(180deg); opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateX(-140px) translateY(20px) rotate(0deg); opacity: 0; }
+}
+@keyframes jjRainbowPulse {
+  0%,100% { opacity: 0.09; }
+  50%     { opacity: 0.16; }
+}
+@keyframes jjDotScroll {
+  from { background-position: 0 0; }
+  to   { background-position: 20px 0; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  /* ── HOME VIEW ── */
-  #home-view {
-    display: none;
-    position: relative;
-    z-index: 5;
-    min-height: 100vh;
-    padding: 90px 16px 24px;
-    max-width: 600px;
-    margin: 0 auto;
-    animation: fadeUp 0.4s ease;
-  }
-  .sk-today-card {
-    background: rgba(45, 10, 90, 0.55);
-    border: 1px solid rgba(200, 80, 255, 0.25);
-    border-radius: 14px;
-    padding: 16px 20px;
-    margin-bottom: 16px;
-    text-align: center;
-  }
-  #sk-today-text {
-    font-family: 'Fredoka One', cursive;
-    font-size: 16px;
-    color: #E8AAFF;
-    letter-spacing: 1px;
-  }
-  .sk-nav-cards {
-    display: -webkit-flex;
-    display: flex;
-    -webkit-flex-direction: column;
-    flex-direction: column;
-    gap: 12px;
-  }
-  .sk-card {
-    background: rgba(45, 10, 90, 0.55);
-    border: 1px solid rgba(200, 80, 255, 0.25);
-    border-radius: 14px;
-    padding: 18px 20px;
-    display: -webkit-flex;
-    display: flex;
-    -webkit-align-items: center;
-    align-items: center;
-    gap: 16px;
-    cursor: pointer;
-    text-decoration: none;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .sk-card:active {
-    border-color: rgba(200, 80, 255, 0.65);
-    background: rgba(80, 20, 140, 0.65);
-  }
-  .sk-card-icon { font-size: 32px; -webkit-flex-shrink: 0; flex-shrink: 0; }
-  .sk-card-body { -webkit-flex: 1; flex: 1; }
-  .sk-card-title {
-    font-family: 'Fredoka One', cursive;
-    font-size: 22px;
-    color: #F0E6FF;
-  }
-  .sk-card-sub { font-size: 12px; color: #B880E8; margin-top: 3px; }
-  .sk-card-arrow { font-size: 18px; color: rgba(200, 80, 255, 0.6); }
+/* ══════════════════════════════════════════
+   BASE
+   ══════════════════════════════════════════ */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: #1a0533;
+  color: #F0E6FF;
+  font-family: 'Fredoka One', 'Comic Sans MS', cursive;
+}
+
+/* ══════════════════════════════════════════
+   LOADING SCREEN
+   ══════════════════════════════════════════ */
+#loading {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: linear-gradient(135deg, #1a0533 0%, #2d0a5e 40%, #4a0e8f 70%, #1a0533 100%);
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+
+/* ══════════════════════════════════════════
+   HOME VIEW
+   ══════════════════════════════════════════ */
+#home-view {
+  min-height: 100vh;
+  padding: 100px 16px 80px;
+  position: relative;
+  z-index: 1;
+}
+.sk-content {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* Today card */
+.sk-today-card {
+  background: rgba(30,0,60,0.7);
+  border: 2px solid rgba(200,80,255,0.35);
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 22px;
+  text-align: center;
+  cursor: pointer;
+  animation: fadeUp 0.4s ease;
+}
+.sk-today-card:active { border-color: rgba(200,80,255,0.8); }
+.sk-today-main {
+  font-family: 'Fredoka One', cursive;
+  font-size: 28px;
+  color: #fff;
+  text-shadow: 0 0 12px rgba(255,128,255,0.6);
+  letter-spacing: 1px;
+}
+.sk-today-sub {
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  color: #c080ff;
+  margin-top: 6px;
+}
+
+/* Nav cards */
+.sk-nav-cards {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: column;
+  flex-direction: column;
+  gap: 14px;
+  animation: fadeUp 0.5s ease;
+}
+.sk-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 22px 72px 22px 20px;
+  background: rgba(30,0,60,0.75);
+  border: 2px solid rgba(200,80,255,0.3);
+  border-radius: 18px;
+  cursor: pointer;
+  color: #F0E6FF;
+  position: relative;
+  min-height: 90px;
+  -webkit-transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.sk-card:active {
+  border-color: rgba(255,80,255,0.8);
+  box-shadow: 0 0 20px rgba(200,80,255,0.35);
+}
+.sk-card-top {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.sk-card-icon { font-size: 28px; }
+.sk-card-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 22px;
+  color: #FFD700;
+  text-shadow: 0 0 8px rgba(255,215,0,0.4);
+  letter-spacing: 1px;
+}
+.sk-card-sub {
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  color: #c080ff;
+  margin-left: 40px;
+}
+.sk-card-arrow {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  transform: translateY(-50%);
+  font-family: 'Fredoka One', cursive;
+  font-size: 16px;
+  color: #ff80ff;
+}
+
 </style>
 </head>
 <body>
 
+<!-- Loading screen — filled by buildJJLoadingScreen() -->
 <div id="loading"></div>
 
-<div id="home-view">
-  <div class="sk-today-card">
-    <div id="sk-today-text">SPARKLE KINGDOM</div>
-  </div>
-  <div class="sk-nav-cards">
-    <a class="sk-card" href="/daily-missions?child=jj">
-      <div class="sk-card-icon">&#x1F3AF;</div>
-      <div class="sk-card-body">
-        <div class="sk-card-title">Daily Adventures</div>
-        <div class="sk-card-sub">Today's activities &amp; goals</div>
-      </div>
-      <div class="sk-card-arrow">&#x276F;</div>
-    </a>
-    <a class="sk-card" href="/jj">
-      <div class="sk-card-icon">&#x2728;</div>
-      <div class="sk-card-body">
-        <div class="sk-card-title">JJ Board</div>
-        <div class="sk-card-sub">Chores, stars &amp; rewards</div>
-      </div>
-      <div class="sk-card-arrow">&#x276F;</div>
-    </a>
-    <a class="sk-card" href="/sparkle?mode=freeplay">
-      <div class="sk-card-icon">&#x1F31F;</div>
-      <div class="sk-card-body">
-        <div class="sk-card-title">Sparkle Learning</div>
-        <div class="sk-card-sub">Free play games</div>
-      </div>
-      <div class="sk-card-arrow">&#x276F;</div>
-    </a>
+<!-- Home view — shown after data loads -->
+<div id="home-view" style="display:none">
+  <div class="sk-content">
+    <div class="sk-today-card" onclick="window.location.href='/daily-missions?child=jj'">
+      <div class="sk-today-main" id="sk-today-text">LET'S PLAY! &#x2728;</div>
+      <div class="sk-today-sub">Tap to see today's missions</div>
+    </div>
+    <div class="sk-nav-cards">
+      <button class="sk-card" onclick="window.location.href='/daily-missions?child=jj'">
+        <div class="sk-card-top">
+          <span class="sk-card-icon">&#x1F31F;</span>
+          <span class="sk-card-title">TODAY'S MISSIONS</span>
+        </div>
+        <div class="sk-card-sub">JJ's learning games</div>
+        <span class="sk-card-arrow">Let's Go! &#x2192;</span>
+      </button>
+      <button class="sk-card" onclick="window.location.href='/jj'">
+        <div class="sk-card-top">
+          <span class="sk-card-icon">&#x2728;</span>
+          <span class="sk-card-title">MY SPARKLE JOBS</span>
+        </div>
+        <div class="sk-card-sub">Chores + stars</div>
+        <span class="sk-card-arrow">Let's Go! &#x2192;</span>
+      </button>
+      <button class="sk-card" onclick="window.location.href='/sparkle?mode=freeplay'">
+        <div class="sk-card-top">
+          <span class="sk-card-icon">&#x1F3AE;</span>
+          <span class="sk-card-title">SPARKLE GAMES</span>
+        </div>
+        <div class="sk-card-sub">Free play</div>
+        <span class="sk-card-arrow">Let's Go! &#x2192;</span>
+      </button>
+    </div>
   </div>
 </div>
 
 <script>
+// JJHome.html v1 — THE SPARKLE KINGDOM
+// EOF: JJHome v1
+
+/* ===== CONFIG ===== */
+var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+
+if (TBM_TEST_MODE) {
+  var _tbanner = document.createElement('div');
+  _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _tbanner.textContent = 'TEST MODE — Nothing saves';
+  document.body.appendChild(_tbanner);
+}
+
+/* ===== HELPERS ===== */
 function safeParse(d) { return typeof d === 'string' ? JSON.parse(d) : d; }
 
-/* ===== BUILDER FUNCTIONS (copied from KidsHub.html) ===== */
+/* ═══════════════════════════════════════════════════════════════════
+   BACKGROUND BUILDERS — copied exactly from KidsHub.html
+   ═══════════════════════════════════════════════════════════════════ */
+
 function buildJJLoadingScreen() {
   var loading = document.getElementById('loading');
   loading.innerHTML = '';
@@ -278,7 +370,7 @@ function buildSparkleKingdomBackground() {
   }
   var arcSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   arcSvg.setAttribute('viewBox', '0 0 800 600');
-  arcSvg.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;opacity:0.13;';
+  arcSvg.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;opacity:0.13;animation:jjRainbowPulse 4s ease-in-out infinite;';
   var arcColors = ['#ff4444','#ff8844','#ffdd44','#44dd44','#4488ff','#8844ff'];
   var arcInner = '';
   for (var a = 0; a < 6; a++) {
@@ -313,6 +405,7 @@ function buildSparkleKingdomBackground() {
     outerOrbit.appendChild(oDot);
   }
   bg.appendChild(outerOrbit);
+  // MASCOT — z-index:-1 in JJHome (not KidsHub) so cards are not obscured
   var mascotWrap = document.createElement('div');
   mascotWrap.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:-1;text-align:center;';
   var mascotImg = document.createElement('img');
@@ -392,6 +485,7 @@ function buildSparkleKingdomBackground() {
   skSign.appendChild(skTitle);
   skSign.appendChild(skSub);
   bg.appendChild(skSign);
+  // Star counter pill — updated by onKidsHubData
   var starCount = document.createElement('div');
   starCount.id = 'sk-star-count';
   starCount.style.cssText = 'position:fixed;top:14px;right:14px;z-index:30;background:rgba(30,0,60,0.7);border:1px solid rgba(200,80,255,0.4);border-radius:20px;padding:6px 14px;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:6px;';
@@ -407,52 +501,94 @@ function buildSparkleKingdomBackground() {
   bg.appendChild(starCount);
 }
 
-/* ===== DATA LOAD ===== */
+/* ═══════════════════════════════════════════════════════════════════
+   HOME — DATA LOADING
+   ═══════════════════════════════════════════════════════════════════ */
+
+var _homeDataLoaded = false;
+var _homeTimeout    = null;
+
 function loadHomeData() {
-  var timeout = setTimeout(function() { showHomeView(); }, 8000);
+  _homeTimeout = setTimeout(function() {
+    if (!_homeDataLoaded) {
+      _homeDataLoaded = true;
+      showHomeView();
+    }
+  }, 8000);
+
+  if (TBM_TEST_MODE) {
+    setTimeout(function() { showHomeView(); }, 500);
+    return;
+  }
 
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
-      .withSuccessHandler(function(raw) {
-        clearTimeout(timeout);
-        onKidsHubData(raw);
-      })
-      .withFailureHandler(function() {
-        clearTimeout(timeout);
-        showHomeView();
-      })
+      .withSuccessHandler(onKidsHubData)
+      .withFailureHandler(function() { onKidsHubData(null); })
       .getKidsHubDataSafe('jj');
+
+    google.script.run
+      .withSuccessHandler(onDailySchedule)
+      .withFailureHandler(function() {})
+      .getDailyScheduleSafe('jj');
   } else {
-    clearTimeout(timeout);
-    showHomeView();
+    setTimeout(function() { showHomeView(); }, 400);
   }
 }
 
 function onKidsHubData(raw) {
-  try {
-    var data = safeParse(raw);
-    var balance = (data && data.balances && data.balances.jj) ? (data.balances.jj.balance || 0) : 0;
-    var starVal = document.getElementById('sk-star-value');
-    if (starVal) { starVal.textContent = balance; }
-    var todayText = document.getElementById('sk-today-text');
-    if (todayText && data && data.todayMissionCount) {
-      todayText.textContent = data.todayMissionCount + ' ACTIVITIES TODAY! \u2728';
+  if (raw) {
+    try {
+      var data = safeParse(raw);
+      var stars = (data && data.balances && data.balances.jj) ? data.balances.jj.balance : null;
+      if (stars !== null) {
+        var starEl = document.getElementById('sk-star-value');
+        if (starEl) starEl.textContent = stars;
+      }
+    } catch(e) {
+      console.log('[SK] onKidsHubData error: ' + e.message);
     }
-  } catch(e) {}
-  showHomeView();
+  }
+  if (!_homeDataLoaded) {
+    _homeDataLoaded = true;
+    if (_homeTimeout) { clearTimeout(_homeTimeout); _homeTimeout = null; }
+    showHomeView();
+  }
+}
+
+function onDailySchedule(raw) {
+  if (!raw) return;
+  try {
+    var schedule = safeParse(raw);
+    var count = 0;
+    if (Array.isArray(schedule)) {
+      count = schedule.length;
+    } else if (schedule && schedule.blocks && Array.isArray(schedule.blocks)) {
+      count = schedule.blocks.length;
+    } else if (schedule && typeof schedule === 'object') {
+      count = Object.keys(schedule).length;
+    }
+    if (count > 0) {
+      var todayEl = document.getElementById('sk-today-text');
+      if (todayEl) todayEl.textContent = count + ' ACTIVITIES TODAY! \u2728';
+    }
+  } catch(e) {
+    console.log('[SK] onDailySchedule error: ' + e.message);
+  }
 }
 
 function showHomeView() {
-  var loading = document.getElementById('loading');
-  var homeView = document.getElementById('home-view');
-  if (loading) { loading.style.display = 'none'; }
-  if (homeView) { homeView.style.display = 'block'; }
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('home-view').style.display = 'block';
 }
 
-/* ===== INIT ===== */
+/* ═══════════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════════ */
 buildJJLoadingScreen();
 buildSparkleKingdomBackground();
 loadHomeData();
+
 </script>
 </body>
 </html>
