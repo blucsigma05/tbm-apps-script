@@ -1,12 +1,12 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// AlertEngine.gs v9 — Push Notifications via Pushover API
+// AlertEngine.gs v10 — Push Notifications via Pushover API
 // WRITES TO: (Pushover API only — no sheet writes)
 // READS FROM: 💻🧮 Helpers (for config)
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
-function getAlertEngineVersion() { return 9; }
+function getAlertEngineVersion() { return 10; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor
 var _aeSS = null;
@@ -656,6 +656,32 @@ function dailyHealthCheck() {
   return result;
 }
 
+// ── HYG-12 ACCEPTANCE TEST ──────────────────────────────────────────
+// Run from GAS editor to verify each Pushover priority tier fires correctly.
+// Sends 5 notifications to LT (one per tier). Check phone behavior after each.
+function testPushoverTiers() {
+  var tiers = [
+    { key: 'DEPLOY_OK',          pri: PUSHOVER_PRIORITY.DEPLOY_OK,          expect: 'silent — no sound, low badge' },
+    { key: 'HYGIENE_REPORT_LOW', pri: PUSHOVER_PRIORITY.HYGIENE_REPORT_LOW, expect: 'quiet — low priority delivery' },
+    { key: 'CHORE_APPROVAL',     pri: PUSHOVER_PRIORITY.CHORE_APPROVAL,     expect: 'normal — default sound + banner' },
+    { key: 'TILLER_STALE',       pri: PUSHOVER_PRIORITY.TILLER_STALE,       expect: 'high — bypasses DND, vibrates' },
+    { key: 'DEPLOY_FAIL',        pri: PUSHOVER_PRIORITY.DEPLOY_FAIL,        expect: 'emergency — repeats every 30s until ack' }
+  ];
+  Logger.log('testPushoverTiers — sending ' + tiers.length + ' notifications. Watch your phone.');
+  for (var i = 0; i < tiers.length; i++) {
+    var t = tiers[i];
+    sendPush_(
+      'TBM Tier Test: ' + t.key + ' (p' + t.pri + ')',
+      'Expected: ' + t.expect,
+      'LT',
+      t.pri
+    );
+    Logger.log('[' + (i + 1) + '/' + tiers.length + '] Sent ' + t.key + ' — ' + t.expect);
+    if (i < tiers.length - 1) { Utilities.sleep(3000); }
+  }
+  Logger.log('Done. Verify phone matched all 5 expectations.');
+}
+
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — AlertEngine v9
+// END OF FILE — AlertEngine v10
 // ════════════════════════════════════════════════════════════════════
