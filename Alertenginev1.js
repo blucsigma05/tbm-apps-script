@@ -638,7 +638,7 @@ function dailyHealthCheck() {
       if (latestDate) {
         var staleHours = (Date.now() - latestDate.getTime()) / 3600000;
         if (staleHours > 48) {
-          alerts.push({title: 'Tiller Stale', msg: 'Latest transaction is ' + Math.round(staleHours) + 'h old. Check Tiller sync.', to: 'LT', pri: 1});
+          alerts.push({title: 'Tiller Stale', msg: 'Latest transaction is ' + Math.round(staleHours) + 'h old. Check Tiller sync.', to: 'LT', pri: PUSHOVER_PRIORITY.TILLER_STALE});
         }
       }
     }
@@ -650,6 +650,9 @@ function dailyHealthCheck() {
   for (var a = 0; a < alerts.length; a++) {
     sendPush_(alerts[a].title, alerts[a].msg, alerts[a].to, alerts[a].pri);
   }
+
+  // HYG-10: month-close gate (MonitorEngine) — independent escalating check
+  try { hyg10MonthCloseGate_(); } catch(e) { console.log('HYG-10 gate check failed: ' + e.message); }
 
   var result = {checked: true, alertCount: alerts.length, timestamp: new Date().toISOString()};
   Logger.log('dailyHealthCheck complete: ' + JSON.stringify(result));
@@ -680,6 +683,37 @@ function testPushoverTiers() {
     if (i < tiers.length - 1) { Utilities.sleep(3000); }
   }
   Logger.log('Done. Verify phone matched all 5 expectations.');
+// ── HYG-09: TILLER FRESHNESS CHECK ──────────────────────────────────
+// Called via ?action=tillerFreshness (Code.gs router) — no Pushover from here.
+// Returns freshness JSON for CF Worker scheduled handler to act on.
+function checkTillerFreshness_() {
+  var THRESHOLD_HOURS = 72;
+  try {
+    var ss = getAESS_();
+    var txTab = typeof TAB_MAP !== 'undefined' ? TAB_MAP['Transactions'] : 'Transactions';
+    var txSheet = ss.getSheetByName(txTab);
+    if (!txSheet || txSheet.getLastRow() <= 1) {
+      return {fresh: true, hoursSince: 0, threshold: THRESHOLD_HOURS, error: 'no data'};
+    }
+    var txHeaders = txSheet.getRange(1, 1, 1, txSheet.getLastColumn()).getValues()[0];
+    var dateCol = 0;
+    for (var d = 0; d < txHeaders.length; d++) {
+      if (String(txHeaders[d]).trim().toLowerCase() === 'date') { dateCol = d; break; }
+    }
+    var startRow = Math.max(2, txSheet.getLastRow() - 49);
+    var dateRange = txSheet.getRange(startRow, dateCol + 1, txSheet.getLastRow() - startRow + 1, 1).getValues();
+    var latestDate = null;
+    for (var k = dateRange.length - 1; k >= 0; k--) {
+      if (dateRange[k][0] instanceof Date) { latestDate = dateRange[k][0]; break; }
+    }
+    if (!latestDate) {
+      return {fresh: true, hoursSince: 0, threshold: THRESHOLD_HOURS, error: 'no dates found'};
+    }
+    var hoursSince = (Date.now() - latestDate.getTime()) / 3600000;
+    return {fresh: hoursSince <= THRESHOLD_HOURS, hoursSince: Math.round(hoursSince), threshold: THRESHOLD_HOURS, latestDate: latestDate.toISOString()};
+  } catch(e) {
+    return {fresh: true, hoursSince: 0, threshold: THRESHOLD_HOURS, error: e.message};
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════

@@ -484,6 +484,10 @@ function serveData(e) {
       result = getLOCCapacity();
     } else if (action === 'opsHealth') {
       result = getOpsHealth_();
+    } else if (action === 'tillerFreshness') {
+      result = checkTillerFreshness_();
+    } else if (action === 'allVersions') {
+      result = getDeployedVersions();
     } else {
       var start, end;
       if (e.parameter.month) {
