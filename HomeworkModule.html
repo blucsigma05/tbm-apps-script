@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v5">
+<meta name="tbm-version" content="v6">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1411,13 +1411,42 @@ function renderResults() {
     if (!completionLogged) {
       completionLogged = true;
       var ringsEarned = totalMC > 0 ? Math.round(8 * (totalMCCorrect / totalMC)) : 0;
+
+      // Collect open-ended responses grouped by subject
+      var openEndedBySubject = { science: [], math: [] };
+      var i, q, key, a;
+      for (i = 0; i < allQs.length; i++) {
+        q = allQs[i];
+        if (!isMCQuestion(q)) {
+          key = "q" + q.id;
+          a = answers[key];
+          if (a && a.text && a.text.replace(/^\s+|\s+$/g, "").length > 0) {
+            var subj = (q.id <= 6) ? "science" : "math";
+            openEndedBySubject[subj].push({
+              id: q.id,
+              prompt: q.text || "",
+              response: a.text
+            });
+          }
+        }
+      }
+
+      // Build combined responseText for server (all open-ended answers)
+      var allOpenEnded = openEndedBySubject.science.concat(openEndedBySubject.math);
+      var responseText = "";
+      for (i = 0; i < allOpenEnded.length; i++) {
+        if (i > 0) responseText += "\n---\n";
+        responseText += "Q: " + allOpenEnded[i].prompt + "\nA: " + allOpenEnded[i].response;
+      }
+
       if (TBM_TEST_MODE) {
         console.log('[TEST MODE] awardRingsSafe skipped, rings=' + ringsEarned);
-        console.log('[TEST MODE] submitHomeworkSafe skipped');
+        console.log('[TEST MODE] submitHomeworkSafe skipped, responseText length=' + responseText.length);
         console.log('[TEST MODE] logHomeworkCompletionSafe skipped');
       } else if (_usingFallback) {
         console.log('Practice mode — rings not awarded');
       } else {
+        // Submit with collected open-ended responses
         google.script.run
           .withSuccessHandler(function(result) {
             console.log('Submitted: ' + (result && result.status ? result.status : 'unknown'));
@@ -1426,9 +1455,10 @@ function renderResults() {
           .submitHomeworkSafe({
             child: 'buggsy',
             module: 'homework',
-            subject: MODULE.science ? 'Science' : 'Math',
+            subject: MODULE.science ? 'Science & Math' : 'Math',
             score: totalMCCorrect,
-            responseText: '',
+            responseText: responseText,
+            prompt: allOpenEnded.length > 0 ? allOpenEnded.length + ' open-ended question(s)' : '',
             rings: ringsEarned
           });
 
