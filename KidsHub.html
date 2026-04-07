@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="tbm-version" content="KidsHub v38">
-<title>Kids Hub v38</title>
+<meta name="tbm-version" content="KidsHub v39">
+<title>Kids Hub v39</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
 /* ════════════════════════════════════════
@@ -935,7 +935,7 @@ body { min-height: 100vh; }
 <!-- v1 TBM: Scriptlet injection via createTemplateFromFile (Code.gs v20) -->
 <!-- Fixes parent dashboard blank page bug — config is server-injected   -->
 <script>
-var TBM_VERSION = 'KidsHub v38';
+var TBM_VERSION = 'KidsHub v39';
 var INIT_CHILD = "<?= INIT_CHILD ?>";
 var INIT_VIEW  = "<?= INIT_VIEW ?>";
 </script>
@@ -1376,9 +1376,11 @@ function mapReward(r) {
 window.onload = function () {
   applyBodyClass(); addSparkles(); setupPinEvents();
   if (IS_PARENT) {
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    renderParent();
+    setTimeout(function() {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      renderParent();
+    }, 700);
     // v36: Parent dashboard heartbeat poll — 120s, visibility+interaction+story-gated
     setInterval(function() {
       if (_dataLoading || _actionInFlight || document.hidden || window._storyInProgress) return;
@@ -1431,7 +1433,7 @@ document.addEventListener('visibilitychange', function() {
 });
 
 function applyBodyClass() {
-  if (IS_PARENT) { document.body.className = 'parent-body'; document.getElementById('loadText').textContent = 'Loading dashboard...'; }
+  if (IS_PARENT) { document.body.className = 'parent-body'; buildParentLoadingScreen(); }
   else if (IS_JJ) { document.body.className = 'jj-body sparkle-body'; buildJJLoadingScreen(); buildSparkleKingdomBackground(); }
   else { document.body.className = 'buggsy-body wolfdome-body'; buildBuggsyLoadingScreen(); buildWolfdomeBackground(); }
 }
@@ -2132,6 +2134,58 @@ function showErr(msg) {
   document.getElementById('app').style.display = 'block';
   var cls = IS_JJ ? 'jj-wrap' : 'b-list';
   document.getElementById('app').innerHTML = '<div class="'+cls+'"><div style="color:'+(IS_JJ?'#fca5a5':'#f87171')+';text-align:center;padding:30px;font-size:14px;line-height:1.8;">'+msg+'</div></div>';
+}
+
+// ══════════════════════════════════════════
+//  PARENT LOADING SCREEN (v39)
+// ══════════════════════════════════════════
+function buildParentLoadingScreen() {
+  var loading = document.getElementById('loading');
+  loading.innerHTML = '';
+  loading.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;overflow:hidden;background:linear-gradient(160deg,#0a1020 0%,#111827 50%,#0a1020 100%);display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;';
+  var style = document.createElement('style');
+  style.textContent = '@keyframes pRingCW{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes pRingCCW{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}@keyframes pGlow{0%,100%{opacity:0.75;filter:drop-shadow(0 0 14px rgba(212,168,67,0.28))}50%{opacity:1;filter:drop-shadow(0 0 32px rgba(212,168,67,0.65))}}@keyframes pShimmer{0%{transform:translateX(-80px)}100%{transform:translateX(280px)}}@keyframes pFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}';
+  loading.appendChild(style);
+  var crest = document.createElement('div');
+  crest.style.cssText = 'position:relative;width:200px;height:200px;margin-bottom:28px';
+  var img = document.createElement('img');
+  img.src = 'https://i.ibb.co/FLDTT6QH/1774020751171.png';
+  img.alt = '';
+  img.style.cssText = 'width:140px;height:140px;object-fit:contain;position:absolute;top:50%;left:50%;margin-top:-70px;margin-left:-70px;animation:pGlow 2.5s ease-in-out infinite';
+  img.onerror = function() { this.remove(); };
+  var ringOut = document.createElement('div');
+  ringOut.style.cssText = 'position:absolute;top:0;left:0;width:200px;height:200px;border-radius:50%;border:2px solid transparent;border-top-color:#d4a843;border-right-color:rgba(212,168,67,0.25);animation:pRingCW 2.4s linear infinite';
+  var ringIn = document.createElement('div');
+  ringIn.style.cssText = 'position:absolute;top:18px;left:18px;width:164px;height:164px;border-radius:50%;border:1.5px solid transparent;border-top-color:rgba(255,255,255,0.3);border-left-color:rgba(255,255,255,0.12);animation:pRingCCW 1.8s linear infinite';
+  crest.appendChild(ringOut); crest.appendChild(ringIn); crest.appendChild(img);
+  loading.appendChild(crest);
+  var eyebrow = document.createElement('div');
+  eyebrow.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:11px;font-weight:700;letter-spacing:4px;color:rgba(212,168,67,0.8);text-transform:uppercase;margin-bottom:6px;animation:pFadeUp 0.6s ease forwards';
+  eyebrow.textContent = 'THOMPSON FAMILY';
+  loading.appendChild(eyebrow);
+  var heading = document.createElement('div');
+  heading.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:26px;font-weight:700;letter-spacing:2px;color:#e2e8f0;margin-bottom:28px;animation:pFadeUp 0.6s ease 0.1s both';
+  heading.textContent = 'PARENT DASHBOARD';
+  loading.appendChild(heading);
+  var barWrap = document.createElement('div');
+  barWrap.style.cssText = 'width:200px;height:1.5px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;margin-bottom:20px';
+  var bar = document.createElement('div');
+  bar.style.cssText = 'width:80px;height:100%;background:linear-gradient(90deg,transparent,#d4a843,transparent);animation:pShimmer 1.6s ease-in-out infinite';
+  barWrap.appendChild(bar); loading.appendChild(barWrap);
+  var statusEl = document.createElement('div');
+  statusEl.id = 'pLoadStatus';
+  statusEl.style.cssText = 'font-family:"Barlow Condensed",sans-serif;font-size:13px;font-weight:600;letter-spacing:1.5px;color:rgba(255,255,255,0.4);text-transform:uppercase';
+  statusEl.textContent = 'Gathering the crew\u2026';
+  loading.appendChild(statusEl);
+  var msgs = ['Gathering the crew\u2026', 'Checking on Buggsy\u2026', 'Checking on JJ\u2026', 'Almost ready\u2026'];
+  var mi = 0;
+  var msgTimer = setInterval(function() {
+    var el = document.getElementById('pLoadStatus');
+    if (!el || document.getElementById('loading').style.display === 'none') { clearInterval(msgTimer); return; }
+    mi = (mi + 1) % msgs.length;
+    el.style.opacity = '0';
+    setTimeout(function() { var e = document.getElementById('pLoadStatus'); if (e) { e.textContent = msgs[mi]; e.style.opacity = '1'; } }, 200);
+  }, 1800);
 }
 
 // ══════════════════════════════════════════

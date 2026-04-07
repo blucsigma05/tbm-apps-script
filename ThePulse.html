@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="tbm-version" content="v61">
-<title>The Pulse v61 — Thompson Household</title>
+<meta name="tbm-version" content="v62">
+<title>The Pulse v62 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -70,6 +70,9 @@ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/sv
 .refresh-btn svg{width:16px;height:16px}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,168,83,0.3)}50%{box-shadow:0 0 0 6px rgba(212,168,83,0)}}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes plSpinRev{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+@keyframes plGlow{0%,100%{opacity:0.75;filter:drop-shadow(0 0 14px rgba(201,168,76,0.28))}50%{opacity:1;filter:drop-shadow(0 0 32px rgba(201,168,76,0.65))}}
+@keyframes plShimmer{0%{transform:translateX(-80px)}100%{transform:translateX(280px)}}
 @keyframes rise{to{opacity:1;transform:translateY(0)}}
 .sec{margin:0 16px 14px;opacity:0;transform:translateY(10px)}
 .sec.a1{animation:rise .5s .1s ease forwards}.sec.a2{animation:rise .5s .18s ease forwards}
@@ -511,10 +514,20 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
   }
 }})();
 </script>
-<div id="loading-overlay" style="position:fixed;inset:0;background:var(--paper);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
-<div style="width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--ink);border-radius:50%;animation:spin 0.7s linear infinite"></div>
-<div style="font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink);letter-spacing:.3px">Loading The Pulse…</div>
+<div id="loading-overlay" style="position:fixed;inset:0;background:linear-gradient(155deg,#2e1220 0%,#3d1a2e 40%,#4a2038 80%,#3d1a2e 100%);z-index:999;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;-webkit-flex-direction:column;flex-direction:column;">
+  <div style="position:relative;width:200px;height:200px;margin-bottom:28px">
+    <img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="" style="width:140px;height:140px;object-fit:contain;position:absolute;top:50%;left:50%;margin-top:-70px;margin-left:-70px;animation:plGlow 2.5s ease-in-out infinite" onerror="this.remove()">
+    <div style="position:absolute;top:0;left:0;width:200px;height:200px;border-radius:50%;border:2px solid transparent;border-top-color:#C9A84C;border-right-color:rgba(201,168,76,0.25);animation:spin 2.4s linear infinite"></div>
+    <div style="position:absolute;top:18px;left:18px;width:164px;height:164px;border-radius:50%;border:1.5px solid transparent;border-top-color:rgba(245,232,238,0.3);border-left-color:rgba(245,232,238,0.12);animation:plSpinRev 1.8s linear infinite"></div>
+  </div>
+  <div style="font-family:'Playfair Display',serif;font-size:11px;font-weight:600;letter-spacing:5px;color:#C9A84C;text-transform:uppercase;margin-bottom:8px">Thompson Family</div>
+  <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#F5E8EE;letter-spacing:-0.5px;margin-bottom:28px">The Pulse</div>
+  <div style="width:200px;height:1.5px;background:rgba(245,232,238,0.08);border-radius:1px;overflow:hidden;margin-bottom:20px">
+    <div style="width:80px;height:100%;background:linear-gradient(90deg,transparent,#C9A84C,transparent);animation:plShimmer 1.6s ease-in-out infinite"></div>
+  </div>
+  <div id="pl-load-msg" style="font-family:'DM Sans',sans-serif;font-size:12px;color:rgba(245,232,238,0.45);letter-spacing:1.5px;text-transform:uppercase">Syncing Tiller&hellip;</div>
 </div>
+<script>(function(){var msgs=['Syncing Tiller\u2026','Reading your accounts\u2026','Calculating balances\u2026','Almost there\u2026'];var mi=0;var t=setInterval(function(){var ov=document.getElementById('loading-overlay');if(!ov||ov.style.display==='none'){clearInterval(t);return;}mi=(mi+1)%msgs.length;var el=document.getElementById('pl-load-msg');if(!el){clearInterval(t);return;}el.style.opacity='0';setTimeout(function(){var e=document.getElementById('pl-load-msg');if(e){e.textContent=msgs[mi];e.style.opacity='1';}},250);},2200);})();</script>
 <div id="error-overlay" style="display:none;position:fixed;inset:0;background:var(--paper);z-index:998;align-items:center;justify-content:center;flex-direction:column;gap:8px;text-align:center;padding:32px;">
 <div style="font-size:24px">⚠️</div>
 <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;">Couldn't load data</div>
@@ -525,7 +538,7 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
 <div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 
 <script>
-var TBM_VERSION = 'v61';
+var TBM_VERSION = 'v62';
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 var _lastFetchTime = null;
 var _lastGoodSim = null;
