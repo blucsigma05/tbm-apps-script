@@ -683,6 +683,8 @@ function testPushoverTiers() {
     if (i < tiers.length - 1) { Utilities.sleep(3000); }
   }
   Logger.log('Done. Verify phone matched all 5 expectations.');
+}
+
 // ── HYG-09: TILLER FRESHNESS CHECK ──────────────────────────────────
 // Called via ?action=tillerFreshness (Code.gs router) — no Pushover from here.
 // Returns freshness JSON for CF Worker scheduled handler to act on.
