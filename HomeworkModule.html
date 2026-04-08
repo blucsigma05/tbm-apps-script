@@ -616,6 +616,17 @@ if (TBM_TEST_MODE) {
   document.body.style.paddingTop = '28px';
 }
 
+// v6: Sandbox mode — writes go to sandbox-buggsy instead of buggsy
+var TBM_SANDBOX = window.location.search.indexOf('sandbox=1') !== -1;
+var SANDBOX_CHILD = TBM_SANDBOX ? 'sandbox-buggsy' : 'buggsy';
+if (TBM_SANDBOX) {
+  var _sbanner = document.createElement('div');
+  _sbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f59e0b;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _sbanner.textContent = '\u26a0 SANDBOX MODE \u2014 writes isolated from production';
+  document.body.appendChild(_sbanner);
+  document.body.style.paddingTop = '28px';
+}
+
 // ── Audio System (Marco / ElevenLabs) ──
 var audioCache = {};
 var BUGGSY_AUDIO_FILES = [
@@ -869,7 +880,7 @@ function logScaffold(eventType, data) {
     google.script.run
       .withFailureHandler(function(err) { console.error('Scaffold log failed:', err); })
       .logScaffoldEventSafe({
-        child: 'buggsy',
+        child: SANDBOX_CHILD,
         module: MODULE_NAME || 'unknown',
         event: eventType,
         data: data || {}
@@ -1453,7 +1464,7 @@ function renderResults() {
           })
           .withFailureHandler(function(err) { console.error('Submit failed:', err); })
           .submitHomeworkSafe({
-            child: 'buggsy',
+            child: SANDBOX_CHILD,
             module: 'homework',
             subject: MODULE.science ? 'Science & Math' : 'Math',
             score: totalMCCorrect,
@@ -1468,7 +1479,7 @@ function renderResults() {
           google.script.run
             .withSuccessHandler(function() { console.log('Rings awarded: ' + ringsEarned); })
             .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })
-            .awardRingsSafe('buggsy', ringsEarned, 'homework-module');
+            .awardRingsSafe(SANDBOX_CHILD, ringsEarned, 'homework-module');
         } else if (allOpenEnded.length > 0) {
           console.log('Rings deferred — ' + allOpenEnded.length + ' open-ended question(s) pending parent review');
         }
@@ -1478,7 +1489,7 @@ function renderResults() {
           .withSuccessHandler(function() { console.log('Homework completion logged'); })
           .withFailureHandler(function(err) { console.error('Log failed:', err.message); })
           .logHomeworkCompletionSafe({
-            child: 'buggsy',
+            child: SANDBOX_CHILD,
             title: moduleTitle,
             subject: 'Math/Science',
             score: totalMCCorrect,

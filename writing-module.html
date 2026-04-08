@@ -696,6 +696,16 @@ if (TBM_TEST_MODE) {
   document.body.style.paddingTop = '28px';
 }
 
+var TBM_SANDBOX = window.location.search.indexOf('sandbox=1') !== -1;
+var SANDBOX_CHILD = TBM_SANDBOX ? 'sandbox-buggsy' : 'buggsy';
+if (TBM_SANDBOX) {
+  var _sbanner = document.createElement('div');
+  _sbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f59e0b;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _sbanner.textContent = '\u26a0 SANDBOX MODE \u2014 writes isolated from production';
+  document.body.appendChild(_sbanner);
+  document.body.style.paddingTop = '28px';
+}
+
 // ── Audio System (Marco / ElevenLabs) ──
 var audioCache = {};
 function preloadBugsyAudio() {
@@ -719,7 +729,7 @@ function playBugsyWrong() { var c = ['buggsy_feedback_wrong1.mp3','buggsy_feedba
 function playBugsyComplete() { var c = ['buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
 
 var MODULE_VERSION = 'v4';
-var CHILD = 'buggsy';
+var CHILD = TBM_SANDBOX ? 'sandbox-buggsy' : 'buggsy';
 var TARGET_MINUTES = 12;
 var _usingFallback = false;
 
