@@ -23,4 +23,6 @@ specs/**
 staar-rla-sprint-final.json
 claude-md-baseline.json
 spelling-catalog.json
+QAHarness.*
+TBMConfig.*
 !appsscript.json
