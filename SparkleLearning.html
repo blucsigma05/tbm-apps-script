@@ -2776,6 +2776,17 @@ function showSessionComplete() {
       .withSuccessHandler(function() {})
       .withFailureHandler(function(e) { console.error('Award:', e); })
       .awardRingsSafe('jj', sessionStars, 'sparkle-learn');
+    // v12: Log session to Notion Sparkle Progress DB
+    var sparkleSubject = lettersCompleted.length > 0 ? 'Letters' : 'Numbers';
+    google.script.run
+      .withSuccessHandler(function() { console.log('Sparkle progress logged to Notion'); })
+      .withFailureHandler(function(err) { console.error('Sparkle log failed:', err.message); })
+      .logSparkleProgressSafe({
+        activity: 'SparkleLearn Session',
+        subject: sparkleSubject,
+        score: sessionStars,
+        date: new Date().toISOString().slice(0, 10)
+      });
   }
 
   showCelebrationScreen(sessionStars);

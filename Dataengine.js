@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v87 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v88 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 87; }
+function getDataEngineVersion() { return 88; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -3113,6 +3113,8 @@ function getBoardData() {
           mpDate = mpY + '-' + (mpM < 10 ? '0' : '') + mpM + '-' + (mpD < 10 ? '0' : '') + mpD;
         }
         if (String(mpDate).indexOf(todayStr) === 0) {
+          // v88: Don't break — keep iterating so the LAST row for today wins.
+          // Meals are appended at the bottom, so the latest update is the last match.
           dinner = {
             meal: String(mpData[mp][1] || ''),
             cook: String(mpData[mp][2] || ''),
@@ -3120,7 +3122,6 @@ function getBoardData() {
             updatedBy: String(mpData[mp][4] || ''),
             kidMeal: String(mpData[mp][5] || '')
           };
-          break;
         }
       }
     }
@@ -3404,4 +3405,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v87
+// END OF FILE — DataEngine v88

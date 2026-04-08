@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════
-// MonitorEngine.gs v9
+// MonitorEngine.gs v10
 // WRITES TO: 💻🧮 Close History, 💻🧮 Month-End Review
 // READS FROM: 💻🧮 DebtModel, 💻🧮 Helpers, 🔒 Transactions, 🔒 Balance History
 // ═══════════════════════════════════════════════════
 
-function getMonitorEngineVersion() { return 9; }
+function getMonitorEngineVersion() { return 10; }
 
 // v8: Lazy accessors — avoid parse-time openById for trigger safety
 var _meSS = null;
@@ -132,10 +132,26 @@ function stampCloseMonth(monthLabel) {
     return { success: false, reason: 'Month not found: ' + displayMonth, debtCurrent: debtCurrent };
   }
 
-  chSheet.getRange(targetRow, 8).setValue(debtCurrent);
-  chSheet.getRange(targetRow, 2).setValue('Closed');
-  chSheet.getRange(targetRow, 3).setValue(new Date());
-  Logger.log('✅ Row ' + targetRow + ': H=$' + debtCurrent.toFixed(2) + ', B=Closed');
+  // v10: Lock around writes + idempotence guard
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+
+    // Re-read status under lock to prevent duplicate close from UI + auto race
+    var currentStatus = String(chSheet.getRange(targetRow, 2).getValue() || '').trim();
+    if (currentStatus === 'Closed') {
+      Logger.log('⚠️ Month already closed — skipping duplicate stamp.');
+      return { success: true, alreadyClosed: true, month: displayMonth, monthLabel: monthLabel,
+        row: targetRow, debtCurrent: debtCurrent, timestamp: new Date().toISOString() };
+    }
+
+    chSheet.getRange(targetRow, 8).setValue(debtCurrent);
+    chSheet.getRange(targetRow, 2).setValue('Closed');
+    chSheet.getRange(targetRow, 3).setValue(new Date());
+    Logger.log('✅ Row ' + targetRow + ': H=$' + debtCurrent.toFixed(2) + ', B=Closed');
+  } finally {
+    lock.releaseLock();
+  }
 
   return { success: true, month: displayMonth, monthLabel: monthLabel,
     row: targetRow, debtCurrent: debtCurrent, matched: matched,
@@ -534,4 +550,4 @@ function hyg10MonthCloseGate_() {
   );
 }
 
-// EOF — MonitorEngine.gs v9
+// EOF — MonitorEngine.gs v10
