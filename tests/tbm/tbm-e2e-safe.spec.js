@@ -149,13 +149,14 @@ test.describe('P2-1: Education Review Flow', function() {
 
 test.describe('P2-6: Auto-Refresh Behavior', function() {
   test('Parent Dashboard does not refresh while modal/input is active', async function({ page }) {
-    test.setTimeout(95000);
+    test.setTimeout(150000);
 
     await page.setViewportSize(DEVICES.s25);
     await gotoPath(page, '/parent');
 
+    // GAS cold start from CI can take 30-60s — wait for dinner input to render
     var dinnerInput = page.getByPlaceholder("What's for dinner?");
-    await expect(dinnerInput).toBeVisible({ timeout: 30000 });
+    await expect(dinnerInput).toBeVisible({ timeout: 60000 });
 
     await dinnerInput.focus();
     await dinnerInput.fill('test-refresh-guard');
