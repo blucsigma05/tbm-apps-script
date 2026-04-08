@@ -273,6 +273,10 @@ async function replyToReviewComment(owner, repo, prNumber, commentId, headers, b
 }
 
 async function resolveThread(threadId, headers) {
+  // Contract: never call GraphQL mutation with empty/null threadId.
+  // Structured findings have threadId '' — the caller should guard,
+  // but this is the last line of defense.
+  if (!threadId) return;
   await graphql(
     'mutation($threadId: ID!) { resolveReviewThread(input: { threadId: $threadId }) { thread { id isResolved } } }',
     { threadId: threadId },
@@ -473,7 +477,8 @@ async function prepare() {
           commentId: null,
           path: finding.file || '',
           summary: '[' + (finding.severity || 'unknown') + '] ' + (finding.title || 'Structured finding'),
-          ruleId: fRuleId
+          ruleId: fRuleId,
+          source: 'structured-report'
         });
       }
     }
