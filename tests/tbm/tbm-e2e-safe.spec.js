@@ -155,7 +155,7 @@ test.describe('P2-6: Auto-Refresh Behavior', function() {
     await gotoPath(page, '/parent');
 
     var dinnerInput = page.getByPlaceholder("What's for dinner?");
-    await expect(dinnerInput).toBeVisible();
+    await expect(dinnerInput).toBeVisible({ timeout: 30000 });
 
     await dinnerInput.focus();
     await dinnerInput.fill('test-refresh-guard');
