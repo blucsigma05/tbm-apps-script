@@ -27,7 +27,33 @@ def write_github_output(key, value):
 
 
 def parse_json_from_output(output_text):
-    """Try to find JSON reporter data in Playwright stdout."""
+    """Try to find JSON reporter data in Playwright stdout.
+
+    Playwright's JSON reporter outputs multi-line JSON. Try parsing the
+    full output first, then fall back to scanning for a single-line JSON
+    blob (older Playwright versions or piped output).
+    """
+    # Try parsing the entire output as JSON (multi-line reporter output)
+    stripped = output_text.strip()
+    if stripped.startswith("{"):
+        try:
+            data = json.loads(stripped)
+            if "stats" in data:
+                return data
+        except Exception:
+            pass
+
+    # Try finding JSON embedded after non-JSON preamble (e.g. console output)
+    brace_start = stripped.find("\n{")
+    if brace_start != -1:
+        try:
+            data = json.loads(stripped[brace_start + 1:])
+            if "stats" in data:
+                return data
+        except Exception:
+            pass
+
+    # Legacy fallback: single-line JSON blob
     for line in output_text.splitlines():
         line = line.strip()
         if line.startswith("{") and '"stats"' in line:
