@@ -85,10 +85,78 @@ function applySoulTickerFix(root) {
   );
 }
 
+// ── Phase 2 mechanical fixes (driven by structured findings) ────────
+// These fix ALL instances of a pattern in the target file, not just the
+// one the finding points to. This is intentional: ES5 compliance is
+// absolute for HTML files (Fire Stick WebView), so if one let/const
+// exists, they all must become var. The audit-source.sh gate verifies
+// the result before the fixer pushes.
+
+function applyEs6LetConstFix(root, finding) {
+  if (!finding || !finding.file) return false;
+  var filePath = path.join(root, finding.file);
+  if (!fs.existsSync(filePath)) return false;
+  var content = fs.readFileSync(filePath, 'utf8');
+  var original = content;
+  content = content.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, function(fullMatch, body) {
+    var fixed = body.replace(/\blet\s+/g, 'var ').replace(/\bconst\s+/g, 'var ');
+    return fullMatch.replace(body, fixed);
+  });
+  if (content === original) return false;
+  fs.writeFileSync(filePath, content, 'utf8');
+  return true;
+}
+
+function applyMissingFailureHandlerFix(root, finding) {
+  if (!finding || !finding.file) return false;
+  var filePath = path.join(root, finding.file);
+  if (!fs.existsSync(filePath)) return false;
+  var content = fs.readFileSync(filePath, 'utf8');
+  var lines = content.split('\n');
+  var changed = false;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    if (line.indexOf('withSuccessHandler') === -1) continue;
+    if (line.indexOf('withFailureHandler') !== -1) continue;
+    var context = '';
+    for (var j = Math.max(0, i - 2); j <= Math.min(lines.length - 1, i + 2); j++) {
+      context += lines[j];
+    }
+    if (context.indexOf('withFailureHandler') !== -1) continue;
+    if (context.indexOf('google.script.run') === -1) continue;
+    lines[i] = line.replace(
+      'withSuccessHandler',
+      'withFailureHandler(function(err){console.error(err);}).withSuccessHandler'
+    );
+    changed = true;
+  }
+  if (!changed) return false;
+  fs.writeFileSync(filePath, lines.join('\n'), 'utf8');
+  return true;
+}
+
+function applyEs6IncludesFix(root, finding) {
+  if (!finding || !finding.file) return false;
+  var filePath = path.join(root, finding.file);
+  if (!fs.existsSync(filePath)) return false;
+  var content = fs.readFileSync(filePath, 'utf8');
+  var original = content;
+  content = content.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, function(fullMatch, body) {
+    var fixed = body.replace(/\.includes\(([^)]+)\)/g, '.indexOf($1) !== -1');
+    return fullMatch.replace(body, fixed);
+  });
+  if (content === original) return false;
+  fs.writeFileSync(filePath, content, 'utf8');
+  return true;
+}
+
 const RULES = {
   tbm_ops_errorlog_tab: { needsDeploy: true, apply: applyErrorLogFix },
   tbm_ops_tiller_hours: { needsDeploy: true, apply: applyTillerHoursFix },
-  tbm_soul_ticker_special: { needsDeploy: true, apply: applySoulTickerFix }
+  tbm_soul_ticker_special: { needsDeploy: true, apply: applySoulTickerFix },
+  es6_let_const: { needsDeploy: true, apply: applyEs6LetConstFix },
+  missing_failure_handler: { needsDeploy: true, apply: applyMissingFailureHandlerFix },
+  es6_includes: { needsDeploy: true, apply: applyEs6IncludesFix }
 };
 
 // ── Structured report consumption ───────────────────────────────────
@@ -118,17 +186,29 @@ function extractStructuredReport(commentBody) {
 }
 
 // Classify a structured finding into a fixer rule ID if one matches.
-// Returns '' for findings that need human judgment or have no mechanical fix.
-//
-// Phase 1 (ORK-03 #110): This intentionally returns '' for all findings.
-// The fixer reads and reports structured findings but does not attempt
-// automated fixes beyond the 3 hardcoded rules above. Phase 2 will add
-// mechanical mappings here (ES6->ES5, missing withFailureHandler, etc.)
-// so the end-to-end loop has a proven auto-fix path.
 function classifyFinding(finding) {
   if (!finding || finding.requires_human_decision) return '';
-  // Phase 2: map finding types to mechanical rule IDs here.
-  // Example: if (finding.rule === 'P1.4' && finding.type === 'ui') return 'es6_to_es5';
+  var file = String(finding.file || '');
+  var title = String(finding.title || '').toLowerCase();
+  var evidence = String(finding.evidence || '').toLowerCase();
+  var fixHint = String(finding.fix_hint || '').toLowerCase();
+  var rule = String(finding.rule || '').toLowerCase();
+  var combined = title + ' ' + evidence + ' ' + fixHint;
+
+  if (file.indexOf('.html') !== -1) {
+    if (combined.indexOf('let ') !== -1 || combined.indexOf('const ') !== -1 ||
+        combined.indexOf('let/const') !== -1 ||
+        (rule.indexOf('p1.4') !== -1 && (combined.indexOf('let') !== -1 || combined.indexOf('const') !== -1))) {
+      return 'es6_let_const';
+    }
+    if (combined.indexOf('.includes(') !== -1) {
+      return 'es6_includes';
+    }
+  }
+  if (combined.indexOf('failurehandler') !== -1 || combined.indexOf('failure handler') !== -1 ||
+      combined.indexOf('withfailurehandler') !== -1 || rule.indexOf('p1.5') !== -1) {
+    return 'missing_failure_handler';
+  }
   return '';
 }
 
@@ -193,6 +273,10 @@ async function replyToReviewComment(owner, repo, prNumber, commentId, headers, b
 }
 
 async function resolveThread(threadId, headers) {
+  // Contract: never call GraphQL mutation with empty/null threadId.
+  // Structured findings have threadId '' — the caller should guard,
+  // but this is the last line of defense.
+  if (!threadId) return;
   await graphql(
     'mutation($threadId: ID!) { resolveReviewThread(input: { threadId: $threadId }) { thread { id isResolved } } }',
     { threadId: threadId },
@@ -393,7 +477,8 @@ async function prepare() {
           commentId: null,
           path: finding.file || '',
           summary: '[' + (finding.severity || 'unknown') + '] ' + (finding.title || 'Structured finding'),
-          ruleId: fRuleId
+          ruleId: fRuleId,
+          source: 'structured-report'
         });
       }
     }
@@ -423,15 +508,34 @@ async function prepare() {
     return;
   }
 
-  let needsDeploy = false;
-  const applied = {};
-  for (const item of supported) {
-    if (applied[item.ruleId]) continue;
-    const rule = RULES[item.ruleId];
-    if (!rule) continue;
-    rule.apply(process.cwd());
-    applied[item.ruleId] = true;
-    needsDeploy = needsDeploy || !!rule.needsDeploy;
+  var needsDeploy = false;
+  var applied = {};
+
+  // Apply thread-based rules (legacy hardcoded fixes)
+  for (var si = 0; si < supported.length; si++) {
+    var sItem = supported[si];
+    if (applied[sItem.ruleId]) continue;
+    var sRule = RULES[sItem.ruleId];
+    if (!sRule) continue;
+    sRule.apply(process.cwd());
+    applied[sItem.ruleId] = true;
+    needsDeploy = needsDeploy || !!sRule.needsDeploy;
+  }
+
+  // Apply structured-finding rules (per file, not just per rule)
+  for (var rf = 0; rf < reportFindings.length; rf++) {
+    var rfinding = reportFindings[rf];
+    var rfRuleId = classifyFinding(rfinding);
+    if (!rfRuleId) continue;
+    var rfRule = RULES[rfRuleId];
+    if (!rfRule) continue;
+    var fileKey = rfRuleId + ':' + (rfinding.file || '');
+    if (applied[fileKey]) continue;
+    var didApply = rfRule.apply(process.cwd(), rfinding);
+    if (didApply) {
+      applied[fileKey] = true;
+      needsDeploy = needsDeploy || !!rfRule.needsDeploy;
+    }
   }
 
   const files = changedFiles();
@@ -464,8 +568,15 @@ async function finalize() {
   if (result.status === 'applied') {
     const reply = 'Addressed automatically in [review-fix-' + result.nextCycle + ']. Updated files: ' + (result.changedFiles.length ? result.changedFiles.join(', ') : 'none') + '.';
     for (const item of result.supported) {
-      await replyToReviewComment(parts[0], parts[1], result.prNumber, item.commentId, headers, reply);
-      await resolveThread(item.threadId, headers);
+      // Structured findings have empty threadId/commentId — skip thread
+      // operations for those (they came from the codex review comment,
+      // not from PR review threads).
+      if (item.commentId) {
+        await replyToReviewComment(parts[0], parts[1], result.prNumber, item.commentId, headers, reply);
+      }
+      if (item.threadId) {
+        await resolveThread(item.threadId, headers);
+      }
     }
     await postRelay({
       repo: result.repo,

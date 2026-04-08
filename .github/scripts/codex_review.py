@@ -100,6 +100,17 @@ SYSTEM_PROMPT = (
     "9. Error logging not using logError_() pattern\n"
     "10. Sheet-writing functions missing waitLock()\n\n"
 
+    "DATA FLOW TRACING (critical — this catches real bugs):\n"
+    "- Trace newly introduced values from source to sink. If a variable is set\n"
+    "  in one place and consumed in another, verify the value is valid at both.\n"
+    "- Flag empty/null/default sentinel values passed into mutations, GraphQL\n"
+    "  calls, route loaders, thread resolvers, or external API calls.\n"
+    "- If a new/changed collection mixes thread-backed items and synthetic items,\n"
+    "  verify downstream consumers (loops, replies, resolvers) handle both shapes.\n"
+    "- If a workflow or test converts a failure into logging-only, treat that as\n"
+    "  a likely P1 blocker unless another failing signal still surfaces the error.\n"
+    "- A value that is valid at creation but invalid at consumption is a P1 bug.\n\n"
+
     "IMPORTANT RULES:\n"
     "- Only report findings you can SEE in the code. Include exact evidence.\n"
     "- Do not guess or infer. If you cannot point to a line, do not create a finding.\n"
