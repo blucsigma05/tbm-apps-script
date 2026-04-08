@@ -817,6 +817,8 @@ var _cachedMissionState = {};
 var dynamicSchedule = null;
 var _designUnlocked = false;
 
+function isJJ() { return currentChild === 'jj' || currentChild === 'sandbox-jj'; }
+
 // ============================================================
 // HOMEWORK GATE — Design unlocked after any education submission today
 // ============================================================
@@ -870,7 +872,7 @@ function init() {
   parseChildParam();
   setupDate();
 
-  if (currentChild === 'jj') {
+  if (isJJ()) {
     applyJJTheme();
   } else {
     buildStarfield();
@@ -884,7 +886,7 @@ function init() {
       checkDesignUnlock(function() {
         loadSchedule(function(dynamicBlocks) {
           if (dayOfWeek !== 0 && dynamicBlocks) {
-            var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
+            var schedule = isJJ() ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
             if (schedule[dayOfWeek]) {
               schedule[dayOfWeek].blocks = dynamicBlocks;
             }
@@ -1082,7 +1084,7 @@ function toggleMission(missionId) {
 // ============================================================
 function getGreeting() {
   var hour = new Date().getHours();
-  if (currentChild === 'jj') {
+  if (isJJ()) {
     return 'Hi JJ! Let\'s play!';
   }
   var timeOfDay = 'morning';
@@ -1100,7 +1102,7 @@ function buildLaunchUrl(block) {
   if (block.activity) {
     params.push('activity=' + block.activity);
   }
-  if (currentChild === 'jj') {
+  if (isJJ()) {
     params.push('child=jj');
   }
   if (params.length > 0) {
@@ -1142,11 +1144,11 @@ function render() {
   var container = document.getElementById('main-content');
 
   // Set header emoji for Buggsy
-  if (currentChild !== 'jj') {
+  if (!isJJ()) {
     document.getElementById('header-emoji').textContent = '\uD83C\uDFAF';
   }
 
-  var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
+  var schedule = isJJ() ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
   var dayData = schedule[dayOfWeek];
 
   // Weekend check — but allow Day 1 (key 0) to pass through
@@ -1176,7 +1178,7 @@ function render() {
 
   // Celebration banner
   html += '<div class="celebration-banner' + (allDone ? ' active' : '') + '">';
-  if (currentChild === 'jj') {
+  if (isJJ()) {
     html += '<div class="celebration-emoji">\uD83C\uDF1F\u2728\uD83C\uDF1F</div>';
     html += '<div class="celebration-text">YAY! ALL DONE!</div>';
     html += '<div class="celebration-sub">You earned all your stars today!</div>';
@@ -1228,7 +1230,7 @@ function render() {
       html += '<div class="mission-name">' + block.name + '</div>';
 
       // Star reward for JJ
-      if (currentChild === 'jj' && block.stars) {
+      if (isJJ() && block.stars) {
         var starStr = '';
         for (var s = 0; s < block.stars; s++) {
           starStr += '\u2B50';
@@ -1253,7 +1255,7 @@ function render() {
       if (!done) {
         var launchUrl = buildLaunchUrl(block);
         var safeName = (block.name || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        if (currentChild === 'jj') {
+        if (isJJ()) {
           html += '<button class="launch-btn" onclick="launchMission(\'' + launchUrl + '\',\'' + missionId + '\',\'' + safeName + '\')">Let\'s Go!</button>';
         } else {
           html += '<button class="launch-btn" onclick="launchMission(\'' + launchUrl + '\',\'' + missionId + '\',\'' + safeName + '\')">LAUNCH</button>';
@@ -1272,7 +1274,7 @@ function render() {
 
   // Footer summary
   html += '<div class="footer-summary">';
-  if (currentChild === 'jj') {
+  if (isJJ()) {
     var totalStars = 0;
     for (var k = 0; k < blocks.length; k++) {
       if (blocks[k].stars) totalStars += blocks[k].stars;
@@ -1292,7 +1294,7 @@ function render() {
   container.innerHTML = html;
 
   // Ring burst + XP pop on completion (Buggsy only)
-  if (allDone && currentChild !== 'jj') {
+  if (allDone && !isJJ()) {
     var banner = container.querySelector('.celebration-banner');
     if (banner) {
       var rect = banner.getBoundingClientRect();
@@ -1310,7 +1312,7 @@ function render() {
 // ============================================================
 function renderWeekend(container) {
   var html = '<div class="weekend-card">';
-  if (currentChild === 'jj') {
+  if (isJJ()) {
     html += '<div class="weekend-emoji">\uD83C\uDF08</div>';
     html += '<div class="weekend-text">No activities today! Enjoy your weekend, JJ!</div>';
   } else {
@@ -1320,7 +1322,7 @@ function renderWeekend(container) {
 
   // Bonus challenge card
   html += '<div class="bonus-card">';
-  if (currentChild === 'jj') {
+  if (isJJ()) {
     html += '<div class="bonus-title">\u2728 SPARKLE BONUS \u2728</div>';
     html += '<div class="bonus-desc">Want to play a learning game for extra stars?</div>';
     html += '<div style="margin-top:12px">';
