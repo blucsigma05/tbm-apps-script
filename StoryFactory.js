@@ -3,11 +3,11 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 15.2
+// Version: 15.3
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 15.2; }
+function getStoryFactoryVersion() { return 15.3; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -1499,8 +1499,11 @@ function listStoredStories() {
         }
       }
 
+      // v15.3: Return canonical short key (strip STORY_ prefix) so StoryLibrary
+      // passes keys that STORY_INDEX and getStoryForReader() accept
+      var canonicalKey = key.indexOf('STORY_') === 0 ? key.substring(6) : key;
       stories.push({
-        storyKey: key,
+        storyKey: canonicalKey,
         title: data.title || 'Untitled Story',
         character: data.character || 'Unknown',
         sceneCount: sceneCount,
@@ -1562,12 +1565,22 @@ var STORY_INDEX = {
  */
 function getStoryForReader(storyKey) {
   return withMonitor_('getStoryForReader', function() {
+    // v15.3: Strip STORY_ prefix if caller passes it (backward compat with old StoryLibrary)
+    if (storyKey && storyKey.indexOf('STORY_') === 0) {
+      storyKey = storyKey.substring(6);
+    }
     if (!storyKey || !STORY_INDEX[storyKey]) {
       return { error: 'Story not found: ' + storyKey };
     }
     var meta = STORY_INDEX[storyKey];
     var props = PropertiesService.getScriptProperties();
     var raw = props.getProperty(meta.propertyKey);
+    // v15.3: Fallback — try hyphenated key if underscore key not found
+    // (covers stories loaded directly to Props instead of via loadStoryToProps)
+    if (!raw) {
+      var hyphenKey = 'STORY_' + storyKey;
+      raw = props.getProperty(hyphenKey);
+    }
     if (!raw) {
       return { error: 'Story data not loaded. Run loadStoryToProps("' + storyKey + '") first.' };
     }
@@ -1839,5 +1852,5 @@ function sf_getFailureSummary_(days) {
   };
 }
 
-// END OF FILE — StoryFactory v15.2
+// END OF FILE — StoryFactory v15.3
 // ════════════════════════════════════════════════════════════════════
