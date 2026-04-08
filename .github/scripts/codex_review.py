@@ -100,6 +100,17 @@ SYSTEM_PROMPT = (
     "9. Error logging not using logError_() pattern\n"
     "10. Sheet-writing functions missing waitLock()\n\n"
 
+    "DATA FLOW TRACING (critical — this catches real bugs):\n"
+    "- Trace values through function calls. If a variable is set in one place and\n"
+    "  consumed in another, verify the value is valid at both sites.\n"
+    "- When objects are created with placeholder/empty fields (e.g. {id: ''}),\n"
+    "  trace where those fields are later read and whether empty/null will crash.\n"
+    "- When new code paths add items to arrays or maps, check if downstream\n"
+    "  consumers (loops, API calls, mutations) handle the new item shape.\n"
+    "- When error handling catches and suppresses exceptions, verify the caller\n"
+    "  still gets a valid result or fails safely.\n"
+    "- A value that is valid at creation but invalid at consumption is a P1 bug.\n\n"
+
     "IMPORTANT RULES:\n"
     "- Only report findings you can SEE in the code. Include exact evidence.\n"
     "- Do not guess or infer. If you cannot point to a line, do not create a finding.\n"
