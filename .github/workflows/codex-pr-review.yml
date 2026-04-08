@@ -243,10 +243,12 @@ jobs:
               core.setFailed('Codex audit incomplete — ' + reasons.join('; '));
             }
 
-      - name: Warn on INCONCLUSIVE verdict
+      - name: Fail check on INCONCLUSIVE verdict
         if: steps.review.outputs.verdict == 'INCONCLUSIVE' && steps.override.outputs.overridden != 'true'
         run: |
-          echo "::warning::Codex PR Review: INCONCLUSIVE — manual audit required."
+          echo "Codex PR Review: INCONCLUSIVE — context was truncated or review could not complete."
+          echo "Manual audit required before merge."
+          exit 1
 
       - name: Fail check on critical violations
         if: steps.review.outputs.verdict == 'FAIL' && steps.override.outputs.overridden != 'true'

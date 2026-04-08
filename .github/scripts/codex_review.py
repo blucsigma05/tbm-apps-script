@@ -446,8 +446,13 @@ def extract_verdict(report, has_api_error=False, truncation_notes=None):
 SEVERITY_ICONS = {"blocker": "\U0001f534", "critical": "\U0001f7e0", "major": "\U0001f7e1", "minor": "\u26aa"}
 
 
-def format_comment(report, truncation_notes, error_info=None):
-    """Generate human-readable PR comment with embedded JSON report."""
+def format_comment(report, truncation_notes, error_info=None, effective_verdict=None):
+    """Generate human-readable PR comment with embedded JSON report.
+
+    effective_verdict overrides report["verdict"] when truncation or other
+    safety guards force INCONCLUSIVE. The comment header, icon, and embedded
+    JSON all reflect the effective verdict, not the raw model output.
+    """
 
     if error_info:
         if error_info == "auth_expired":
@@ -471,15 +476,24 @@ def format_comment(report, truncation_notes, error_info=None):
             "Check `codex_response.json` in workflow artifacts.\n"
         )
 
-    verdict = report["verdict"]
+    # Use effective verdict (accounts for truncation/safety guards),
+    # NOT the raw model verdict which may say PASS on partial context.
+    verdict = effective_verdict if effective_verdict else report["verdict"]
     findings = report["findings"]
-    icon = "\u2705" if verdict == "PASS" else "\u274c"
+
+    if verdict == "INCONCLUSIVE":
+        icon = "\u26a0\ufe0f"
+    elif verdict == "FAIL":
+        icon = "\u274c"
+    else:
+        icon = "\u2705"
 
     lines = [COMMENT_MARKER]
     lines.append("## %s Codex PR Review: %s\n" % (icon, verdict))
 
     if truncation_notes:
-        lines.append("> \u26a0\ufe0f Context note: %s\n" % "; ".join(truncation_notes))
+        lines.append("> \u26a0\ufe0f **Review is INCONCLUSIVE due to truncation.** Manual audit required.")
+        lines.append("> Context: %s\n" % "; ".join(truncation_notes))
 
     if report.get("summary"):
         lines.append(report["summary"])
@@ -528,13 +542,16 @@ def format_comment(report, truncation_notes, error_info=None):
     lines.append("")
 
     # embed machine-readable JSON for fix agent consumption
+    # Use effective verdict in the embedded report, not the raw model output.
+    embedded_report = dict(report)
+    embedded_report["verdict"] = verdict
     lines.append("<details>")
     lines.append("<summary>\U0001f4cb Structured report (for fix agent)</summary>")
     lines.append("")
     lines.append(REPORT_JSON_START)
     lines.append("")
     lines.append("```json")
-    lines.append(json.dumps(report, indent=2))
+    lines.append(json.dumps(embedded_report, indent=2))
     lines.append("```")
     lines.append("")
     lines.append(REPORT_JSON_END)
@@ -627,8 +644,10 @@ def main():
     verdict = extract_verdict(report, has_error, truncation_notes)
 
     # ---- write review-report.json ----
+    # Use the effective verdict in the artifact, not the raw model verdict.
     if report:
-        report_out = report
+        report_out = dict(report)
+        report_out["verdict"] = verdict
     else:
         report_out = {
             "verdict": "INCONCLUSIVE",
@@ -641,7 +660,7 @@ def main():
         json.dump(report_out, fh, indent=2)
 
     # ---- write human comment ----
-    comment = format_comment(report, truncation_notes, error_info)
+    comment = format_comment(report, truncation_notes, error_info, effective_verdict=verdict)
     with open("review_comment.md", "w") as fh:
         fh.write(comment)
 
