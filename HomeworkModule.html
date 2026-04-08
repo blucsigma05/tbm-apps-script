@@ -666,19 +666,42 @@ if (TBM_SANDBOX) {
   document.body.style.paddingTop = '28px';
 }
 
-// ── Audio System (Marco / ElevenLabs) ──
+// ── Audio System (Marco / ElevenLabs) — Lazy Loading ──
+// Loads clips on demand per phase, not all 21 at page load.
+// Follows SparkleLearning.html lazy loader pattern.
 var audioCache = {};
-var BUGGSY_AUDIO_FILES = [
-  'buggsy_feedback_correct1.mp3','buggsy_feedback_correct2.mp3','buggsy_feedback_correct3.mp3','buggsy_feedback_correct4.mp3',
-  'buggsy_feedback_correct5.mp3','buggsy_feedback_correct6.mp3','buggsy_feedback_correct7.mp3','buggsy_feedback_correct8.mp3',
-  'buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3',
-  'buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3',
-  'buggsy_feedback_rings.mp3','buggsy_feedback_submitted.mp3',
-  'buggsy_nav_welcome.mp3','buggsy_nav_math.mp3','buggsy_nav_science.mp3',
-  'hype_lets_go.mp3'
-];
-function preloadBugsyAudio() {
-  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+var _audioPhaseLoaded = {};
+
+var AUDIO_CLIPS = {
+  mc: [
+    'buggsy_feedback_correct1.mp3','buggsy_feedback_correct2.mp3','buggsy_feedback_correct3.mp3','buggsy_feedback_correct4.mp3',
+    'buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3'
+  ],
+  complete: [
+    'buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3',
+    'buggsy_feedback_rings.mp3','buggsy_feedback_submitted.mp3'
+  ],
+  nav: [
+    'buggsy_nav_welcome.mp3','hype_lets_go.mp3'
+  ]
+};
+
+function loadAudioForPhase(phase, onReady) {
+  if (_audioPhaseLoaded[phase]) { if (onReady) { onReady(); } return; }
+  var files = AUDIO_CLIPS[phase] || [];
+  var needed = [];
+  for (var i = 0; i < files.length; i++) {
+    if (!audioCache[files[i]]) { needed.push(files[i]); }
+  }
+  if (needed.length === 0) {
+    _audioPhaseLoaded[phase] = true;
+    if (onReady) { onReady(); }
+    return;
+  }
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    if (onReady) { onReady(); }
+    return;
+  }
   google.script.run
     .withSuccessHandler(function(batch) {
       if (batch) {
@@ -688,10 +711,16 @@ function preloadBugsyAudio() {
           }
         }
       }
+      _audioPhaseLoaded[phase] = true;
+      if (onReady) { onReady(); }
     })
-    .withFailureHandler(function() { /* continue without audio */ })
-    .getAudioBatchSafe(BUGGSY_AUDIO_FILES);
+    .withFailureHandler(function() {
+      _audioPhaseLoaded[phase] = true;
+      if (onReady) { onReady(); }
+    })
+    .getAudioBatchSafe(needed);
 }
+
 function playBugsyAudio(name) {
   if (audioCache[name]) {
     try { audioCache[name].currentTime = 0; audioCache[name].play(); return true; } catch(e) {}
@@ -699,11 +728,11 @@ function playBugsyAudio(name) {
   return false;
 }
 function playBugsyCorrect() {
-  var clips = ['buggsy_feedback_correct1.mp3','buggsy_feedback_correct2.mp3','buggsy_feedback_correct3.mp3','buggsy_feedback_correct4.mp3','buggsy_feedback_correct5.mp3','buggsy_feedback_correct6.mp3','buggsy_feedback_correct7.mp3','buggsy_feedback_correct8.mp3'];
+  var clips = AUDIO_CLIPS.mc.filter(function(c) { return c.indexOf('correct') !== -1; });
   playBugsyAudio(clips[Math.floor(Math.random() * clips.length)]);
 }
 function playBugsyWrong() {
-  var clips = ['buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3'];
+  var clips = AUDIO_CLIPS.mc.filter(function(c) { return c.indexOf('wrong') !== -1; });
   playBugsyAudio(clips[Math.floor(Math.random() * clips.length)]);
 }
 function playBugsyComplete() {
@@ -1085,7 +1114,8 @@ function showCompletion() {
     setTimeout(function() { fireRingBurst(cx - 80, cy + 30); }, 300);
     setTimeout(function() { fireRingBurst(cx + 80, cy + 30); }, 600);
   }
-  playBugsyComplete();
+  // Lazy load complete clips, then play
+  loadAudioForPhase('complete', function() { playBugsyComplete(); });
 }
 
 function closeCompletion() {
@@ -1658,10 +1688,12 @@ function init() {
   renderMath();
   renderResults();
   updateProgress();
+  // Lazy load MC feedback clips now that questions are ready
+  loadAudioForPhase('mc');
 }
 
 loadCurriculumContent();
-preloadBugsyAudio();
+loadAudioForPhase('nav');
 </script>
 </body>
 </html>
