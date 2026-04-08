@@ -33,8 +33,10 @@ Verdict rules:
   - Explicit verdict PASS + files_reviewed -> PASS
 """
 
+import glob as _glob
 import json
 import os
+import re as _re
 import sys
 import time
 import urllib.request
@@ -48,7 +50,8 @@ REPORT_JSON_END = "<!-- /codex-review-report -->"
 # ── context limits ───────────────────────────────────────────────────
 MAX_DIFF_CHARS = 30000       # cap raw diff
 PER_FILE_CAP = 15000         # cap per changed file
-MAX_CONTEXT_CHARS = 80000    # cap total context sent to model
+MAX_CONTEXT_CHARS = 80000    # cap changed-file context
+RELATED_CONTEXT_CAP = 30000  # additional budget for caller/consumer context
 
 # ── model config ─────────────────────────────────────────────────────
 MODEL = "gpt-4o"
@@ -68,6 +71,15 @@ SYSTEM_PROMPT = (
     "- All .gs files share one global scope — SSID, TAB_MAP, etc. are available everywhere\n"
     "- google.script.run is the client-to-server bridge used in HTML files\n"
     "- SSID is the spreadsheet ID constant; sheets are opened via SpreadsheetApp.openById(SSID)\n\n"
+
+    "RELATED FILES:\n"
+    "You may also receive RELATED FILES that were NOT changed but are callers,\n"
+    "consumers, or siblings of the changed files. Use these to verify WIRING:\n"
+    "- Does a script match its workflow caller's expectations?\n"
+    "- Do HTML files properly call Safe functions defined in changed server files?\n"
+    "- Do pipeline scripts (watcher, fixer, codex_review) consume each other's output?\n"
+    "- Are new routes registered in Code.js for new HTML files?\n"
+    "- When a script writes structured output, does the consumer parse it correctly?\n\n"
 
     "P1 — CRITICAL (verdict MUST be FAIL if any found):\n"
     "1. Hardcoded sheet names with emoji prefixes — must use TAB_MAP from DataEngine.gs\n"
@@ -128,12 +140,98 @@ SYSTEM_PROMPT = (
 )
 
 
+# ── related-file discovery ───────────────────────────────────────────
+
+# Pipeline siblings — when one changes, the reviewer should see the others.
+_PIPELINE_SIBLINGS = {
+    "codex_review.py": ["review-watcher.js", "review-fixer.js"],
+    "review-watcher.js": ["review-fixer.js", "codex_review.py"],
+    "review-fixer.js": ["review-watcher.js", "codex_review.py"],
+    "parse_test_results.py": ["codex_review.py"],
+}
+
+
+def get_related_files(changed_files):
+    """Discover callers, consumers, and siblings of changed files.
+
+    Returns a sorted list of file paths that should be included as
+    cross-reference context for the reviewer.  Only changed-file
+    truncation affects the verdict; related-file truncation is
+    informational only.
+    """
+    related = set()
+
+    for raw_fname in changed_files:
+        fname = raw_fname.replace("\\", "/")
+        basename = os.path.basename(fname)
+
+        # ---- CI/CD scripts → their workflow callers ----
+        if fname.startswith(".github/scripts/"):
+            for wf_path in _glob.glob(".github/workflows/*.yml"):
+                try:
+                    with open(wf_path, encoding="utf-8") as fh:
+                        if basename in fh.read():
+                            related.add(wf_path.replace("\\", "/"))
+                except Exception:
+                    pass
+
+        # ---- Workflows → their scripts ----
+        if fname.startswith(".github/workflows/"):
+            try:
+                with open(fname, encoding="utf-8") as fh:
+                    content = fh.read()
+                for script_path in _glob.glob(".github/scripts/*"):
+                    if os.path.basename(script_path) in content:
+                        related.add(script_path.replace("\\", "/"))
+            except Exception:
+                pass
+
+        # ---- Pipeline siblings ----
+        if basename in _PIPELINE_SIBLINGS:
+            for sibling in _PIPELINE_SIBLINGS[basename]:
+                sibling_path = ".github/scripts/" + sibling
+                if os.path.isfile(sibling_path):
+                    related.add(sibling_path)
+
+        # ---- HTML files → Code.js (router + Safe wrappers) ----
+        if fname.endswith(".html") and not fname.startswith(".github"):
+            if os.path.isfile("Code.js"):
+                related.add("Code.js")
+
+        # ---- Server .js → HTML files that call their Safe functions ----
+        if fname.endswith(".js") and not fname.startswith(".github"):
+            try:
+                with open(fname, encoding="utf-8", errors="replace") as fh:
+                    server_content = fh.read()
+                safe_funcs = _re.findall(r"function\s+(\w+Safe)\s*\(", server_content)
+                if safe_funcs:
+                    for html_path in _glob.glob("*.html"):
+                        try:
+                            with open(html_path, encoding="utf-8", errors="replace") as hf:
+                                html_content = hf.read()
+                            for func in safe_funcs:
+                                if func in html_content:
+                                    related.add(html_path.replace("\\", "/"))
+                                    break
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+    # Remove files that are already changed or don't exist
+    related -= set(f.replace("\\", "/") for f in changed_files)
+    related = {f for f in related if os.path.isfile(f)}
+    return sorted(related)
+
+
 # ── context builder ──────────────────────────────────────────────────
 
-def build_context(diff_text, changed_files):
-    """Build review context from diff and full file contents.
+def build_context(diff_text, changed_files, related_files=None):
+    """Build review context from diff, changed files, and related files.
 
     Returns (context_string, truncation_notes_list).
+    truncation_notes only covers changed content (affects verdict).
+    Related-file truncation is informational and does NOT force INCONCLUSIVE.
     """
     parts = []
     truncation_notes = []
@@ -147,7 +245,7 @@ def build_context(diff_text, changed_files):
     else:
         parts.append(diff_text)
 
-    # ---- full files ----
+    # ---- changed files ----
     current_len = sum(len(p) for p in parts)
     remaining = MAX_CONTEXT_CHARS - current_len
     file_count = len(changed_files) if changed_files else 1
@@ -170,13 +268,42 @@ def build_context(diff_text, changed_files):
         parts.append(header)
         parts.append(content)
 
-    context = "".join(parts)
-
-    # final cap
-    if len(context) > MAX_CONTEXT_CHARS:
-        context = context[:MAX_CONTEXT_CHARS]
+    changed_context = "".join(parts)
+    if len(changed_context) > MAX_CONTEXT_CHARS:
+        changed_context = changed_context[:MAX_CONTEXT_CHARS]
         truncation_notes.append("total context capped at %d chars" % MAX_CONTEXT_CHARS)
 
+    # ---- related files (callers / consumers / siblings) ----
+    # Truncation here is informational only — does NOT affect verdict.
+    related_parts = []
+    if related_files:
+        related_parts.append(
+            "\n=== RELATED FILES (not changed — callers/consumers/siblings for cross-reference) ===\n"
+        )
+        rel_count = len(related_files) if related_files else 1
+        per_related = max(3000, RELATED_CONTEXT_CAP // rel_count)
+
+        for fname in related_files:
+            if not os.path.isfile(fname):
+                continue
+            try:
+                with open(fname, encoding="utf-8", errors="replace") as fh:
+                    content = fh.read()
+            except Exception:
+                continue
+
+            header = "\n=== RELATED: %s (%d chars) ===\n" % (fname, len(content))
+            if len(content) > per_related:
+                content = content[:per_related] + "\n[... related file truncated ...]\n"
+
+            related_parts.append(header)
+            related_parts.append(content)
+
+        related_text = "".join(related_parts)
+        if len(related_text) > RELATED_CONTEXT_CAP:
+            related_text = related_text[:RELATED_CONTEXT_CAP]
+
+    context = changed_context + "".join(related_parts)
     return context, truncation_notes
 
 
@@ -476,8 +603,13 @@ def main():
     except FileNotFoundError:
         pass  # no file list — just use the diff
 
+    # ---- discover related files ----
+    related_files = get_related_files(changed_files)
+    if related_files:
+        print("Related files for cross-reference: %s" % ", ".join(related_files))
+
     # ---- build context ----
-    context, truncation_notes = build_context(diff_text, changed_files)
+    context, truncation_notes = build_context(diff_text, changed_files, related_files)
 
     # ---- send to OpenAI ----
     data = send_to_openai(context, api_key)
