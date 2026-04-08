@@ -74,6 +74,44 @@ function isCodexSignal(login, body) {
     text.indexOf('codex') !== -1;
 }
 
+// Extract the automated Codex review verdict from the issue comment.
+// The codex-pr-review workflow posts an issue comment (not a PR review),
+// so buildActorReviewState() on PR reviews will not find it. This function
+// reads the structured JSON report embedded in the comment.
+function getAutomatedCodexVerdict(issueComments) {
+  var codexComment = null;
+  for (var i = 0; i < issueComments.length; i++) {
+    var body = String(issueComments[i].body || '');
+    if (body.indexOf('<!-- codex-pr-review -->') !== -1) {
+      codexComment = issueComments[i];
+      break;
+    }
+  }
+  if (!codexComment) return null;
+
+  var commentBody = codexComment.body;
+  var startMarker = '<!-- codex-review-report -->';
+  var endMarker = '<!-- /codex-review-report -->';
+  var startIdx = commentBody.indexOf(startMarker);
+  var endIdx = commentBody.indexOf(endMarker);
+  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) return null;
+
+  var block = commentBody.substring(startIdx + startMarker.length, endIdx);
+  var jsonStart = block.indexOf('{');
+  var jsonEnd = block.lastIndexOf('}');
+  if (jsonStart === -1 || jsonEnd === -1) return null;
+
+  try {
+    var report = JSON.parse(block.substring(jsonStart, jsonEnd + 1));
+    return {
+      verdict: String(report.verdict || '').toUpperCase(),
+      url: codexComment.html_url || ''
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 function matchesSha(expectedSha, candidateSha) {
   const expected = String(expectedSha || '').toLowerCase();
   const candidate = String(candidateSha || '').toLowerCase();
@@ -418,16 +456,42 @@ async function main() {
     return candidates.length ? candidates[0] : null;
   }
 
-  const ciState = formatWorkflowState(latestRunByName(ciWorkflowName));
-  const codexState = buildActorReviewState(reviews, isCodexSignal, pr.headRefOid, parseExplicitOutcome);
-  const approvalState = pr.reviewDecision || 'REVIEW_REQUIRED';
-  const fixCapReached = fixCycle >= MAX_FIX_CYCLES;
-  const fixRequired = approvalState === 'CHANGES_REQUESTED' ||
+  var ciState = formatWorkflowState(latestRunByName(ciWorkflowName));
+
+  // Playwright E2E must also pass for READY_TO_MERGE
+  var playwrightWorkflowName = getEnv('PLAYWRIGHT_WORKFLOW_NAME', '');
+  var playwrightState = playwrightWorkflowName
+    ? formatWorkflowState(latestRunByName(playwrightWorkflowName))
+    : { label: 'N/A', pass: true, failed: false, url: '' };
+
+  var codexState = buildActorReviewState(reviews, isCodexSignal, pr.headRefOid, parseExplicitOutcome);
+
+  // The automated Codex review posts an issue comment, not a PR review.
+  // If PR-review-based codex state is WAITING or STALE, check the issue
+  // comment for the structured report verdict.
+  if (codexState.label === 'WAITING' || codexState.label === 'STALE') {
+    var autoCodex = getAutomatedCodexVerdict(issueComments);
+    if (autoCodex) {
+      if (autoCodex.verdict === 'PASS') {
+        codexState = { label: 'PASS', pass: true, failed: false, url: autoCodex.url };
+      } else if (autoCodex.verdict === 'FAIL') {
+        codexState = { label: 'FAIL', pass: false, failed: true, url: autoCodex.url };
+      } else if (autoCodex.verdict === 'INCONCLUSIVE') {
+        codexState = { label: 'INCONCLUSIVE', pass: false, failed: false, url: autoCodex.url };
+      }
+    }
+  }
+
+  var approvalState = pr.reviewDecision || 'REVIEW_REQUIRED';
+  var fixCapReached = fixCycle >= MAX_FIX_CYCLES;
+  var fixRequired = approvalState === 'CHANGES_REQUESTED' ||
     ciState.failed ||
     codexState.failed ||
+    playwrightState.failed ||
     unresolvedThreads > 0;
-  const readyToMerge = ciState.pass &&
+  var readyToMerge = ciState.pass &&
     codexState.pass &&
+    (playwrightState.pass || !playwrightWorkflowName) &&
     approvalState !== 'CHANGES_REQUESTED' &&
     unresolvedThreads === 0;
 
@@ -448,6 +512,7 @@ async function main() {
     '## Pipeline Review Summary',
     '',
     '- CI: ' + renderState(ciState),
+    '- Playwright: ' + renderState(playwrightState),
     '- Codex review: ' + renderState(codexState),
     '- Unresolved actionable threads: ' + String(unresolvedThreads),
     '- Approval state: ' + approvalState,

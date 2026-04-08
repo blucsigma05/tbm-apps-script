@@ -287,9 +287,17 @@ RUBBER_STAMP_PHRASES = [
 ]
 
 
-def extract_verdict(report, has_api_error=False):
-    """Return PASS, FAIL, or INCONCLUSIVE."""
+def extract_verdict(report, has_api_error=False, truncation_notes=None):
+    """Return PASS, FAIL, or INCONCLUSIVE.
+
+    Any truncation forces INCONCLUSIVE — a partial review must not produce
+    a trusted PASS. This preserves the safety property from v1.
+    """
     if has_api_error or report is None:
+        return "INCONCLUSIVE"
+
+    # truncation guard: partial context cannot produce a trusted verdict
+    if truncation_notes:
         return "INCONCLUSIVE"
 
     # rubber-stamp guard: must have files_reviewed with actual files
@@ -484,7 +492,7 @@ def main():
     report = parse_report(data) if not has_error else None
 
     # ---- verdict ----
-    verdict = extract_verdict(report, has_error)
+    verdict = extract_verdict(report, has_error, truncation_notes)
 
     # ---- write review-report.json ----
     if report:

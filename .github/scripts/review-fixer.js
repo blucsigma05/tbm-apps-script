@@ -119,10 +119,16 @@ function extractStructuredReport(commentBody) {
 
 // Classify a structured finding into a fixer rule ID if one matches.
 // Returns '' for findings that need human judgment or have no mechanical fix.
+//
+// Phase 1 (ORK-03 #110): This intentionally returns '' for all findings.
+// The fixer reads and reports structured findings but does not attempt
+// automated fixes beyond the 3 hardcoded rules above. Phase 2 will add
+// mechanical mappings here (ES6->ES5, missing withFailureHandler, etc.)
+// so the end-to-end loop has a proven auto-fix path.
 function classifyFinding(finding) {
   if (!finding || finding.requires_human_decision) return '';
-  // Map structured findings to existing mechanical rules when possible.
-  // New rules can be added here as the fixer matures.
+  // Phase 2: map finding types to mechanical rule IDs here.
+  // Example: if (finding.rule === 'P1.4' && finding.type === 'ui') return 'es6_to_es5';
   return '';
 }
 
