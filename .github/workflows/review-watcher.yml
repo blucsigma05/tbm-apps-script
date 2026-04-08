@@ -44,5 +44,7 @@ jobs:
           CI_WORKFLOW_NAME: TBM Smoke + Regression
           PIPELINE_RELAY_URL: ${{ secrets.PIPELINE_RELAY_URL }}
           PIPELINE_SECRET: ${{ secrets.PIPELINE_SECRET }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
           TARGET_PR: ${{ inputs.pr }}
         run: node .github/scripts/review-watcher.js

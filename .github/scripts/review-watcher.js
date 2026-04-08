@@ -232,6 +232,38 @@ async function syncPipelineLabels(owner, repo, prNumber, action, headers) {
   );
 }
 
+async function sendPushover(title, message, priority, prUrl) {
+  var userKey = getEnv('PUSHOVER_USER_KEY', '');
+  var appToken = getEnv('PUSHOVER_APP_TOKEN', '');
+  if (!userKey || !appToken) {
+    console.log('Pushover secrets not configured; skipping notification.');
+    return;
+  }
+
+  var params = 'token=' + encodeURIComponent(appToken) +
+    '&user=' + encodeURIComponent(userKey) +
+    '&title=' + encodeURIComponent(title) +
+    '&message=' + encodeURIComponent(message) +
+    '&priority=' + String(priority);
+
+  if (prUrl) {
+    params += '&url=' + encodeURIComponent(prUrl) +
+      '&url_title=' + encodeURIComponent('View PR');
+  }
+
+  try {
+    var response = await fetch('https://api.pushover.net/1/messages.json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params
+    });
+    var body = await response.text();
+    console.log('Pushover response:', body);
+  } catch (err) {
+    console.log('Pushover send failed:', err.message || err);
+  }
+}
+
 async function postRelay(payload) {
   const relayUrl = getEnv('PIPELINE_RELAY_URL', '');
   const relaySecret = getEnv('PIPELINE_SECRET', '');
@@ -292,21 +324,8 @@ async function main() {
     return;
   }
 
-  // Gate: only process PRs with the 'release-candidate' label.
-  // Other PRs still get CI / Codex reviews, but the watcher skips
-  // summary comments, label sync, and relay alerts for them.
-  const RELEASE_LABEL = 'release-candidate';
-  const prLabels = await pagedGetJson(
-    'https://api.github.com/repos/' + owner + '/' + repo + '/issues/' + prNumber + '/labels?per_page=100',
-    headers
-  );
-  const hasReleaseLabel = prLabels.some(function (label) {
-    return label.name === RELEASE_LABEL;
-  });
-  if (!hasReleaseLabel) {
-    console.log('PR #' + prNumber + ' does not have the "' + RELEASE_LABEL + '" label; skipping pipeline summary.');
-    return;
-  }
+  // All non-draft PRs to main enter the pipeline automatically.
+  // No manual label required — the watcher processes every PR.
 
   const threadQuery = `
     query($owner: String!, $repo: String!, $number: Int!, $after: String) {
@@ -464,8 +483,8 @@ async function main() {
   }
 
   if (action !== previousAction && action !== 'WAITING') {
-    let relayType = 'fix_needed';
-    let relaySummary = 'PR #' + prNumber + ' needs fixes.';
+    var relayType = 'fix_needed';
+    var relaySummary = 'PR #' + prNumber + ' needs fixes.';
 
     if (action === 'READY_TO_MERGE') {
       relayType = 'review_ready';
@@ -491,6 +510,27 @@ async function main() {
       runUrl: process.env.GITHUB_SERVER_URL + '/' + repository + '/actions/runs/' + process.env.GITHUB_RUN_ID,
       cycle: fixCycle
     });
+
+    // Pushover on terminal states only — no mid-loop noise
+    var prHtmlUrl = 'https://github.com/' + repository + '/pull/' + prNumber;
+    if (action === 'READY_TO_MERGE') {
+      await sendPushover(
+        'PR #' + prNumber + ' Ready',
+        'CI: ' + ciState.label + ' | Codex: ' + codexState.label +
+        ' | Threads: ' + unresolvedThreads + '\nReady for your review.',
+        -1,
+        prHtmlUrl
+      );
+    } else if (action === 'STOPPED') {
+      await sendPushover(
+        'PR #' + prNumber + ' Stalled',
+        'Fix cycle ' + fixCycle + '/' + MAX_FIX_CYCLES + ' — cap reached.\n' +
+        'CI: ' + ciState.label + ' | Codex: ' + codexState.label +
+        ' | Threads: ' + unresolvedThreads + '\nNeeds manual intervention.',
+        0,
+        prHtmlUrl
+      );
+    }
   }
 
   console.log('Updated pipeline summary for PR #' + prNumber + ' with action ' + action + '.');
