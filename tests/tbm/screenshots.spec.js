@@ -71,8 +71,8 @@ var SURFACES = [
   { path: '/spine',     requiresPin: false, sentinel: '#waterfallRows .wf-val' },
   { path: '/pulse',     requiresPin: true,  sentinel: '#app .footer' },
   { path: '/vein',      requiresPin: true,  sentinel: '#debtRows .d-bal' },
-  { path: '/daily-missions',          requiresPin: false, sentinel: '#main-content:not(:empty)' },
-  { path: '/daily-missions?child=jj', requiresPin: false, sentinel: '#main-content:not(:empty)' },
+  { path: '/daily-missions',          requiresPin: false, sentinel: '.mission-card' },
+  { path: '/daily-missions?child=jj', requiresPin: false, sentinel: '.mission-card' },
   { path: '/wolfdome',                requiresPin: false, sentinel: '#home-view:not(:empty)' },
   { path: '/sparkle-kingdom',         requiresPin: false, sentinel: '#home-view:not(:empty)' }
 ];
