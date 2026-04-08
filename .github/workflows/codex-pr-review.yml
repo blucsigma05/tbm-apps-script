@@ -10,7 +10,7 @@ name: Codex PR Review
 on:
   pull_request:
     branches: [main]
-    types: [opened, reopened, synchronize, ready_for_review, labeled]
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
   workflow_dispatch:
     inputs:
       pr:
@@ -60,13 +60,14 @@ jobs:
        github.event.pull_request.head.repo.full_name == github.repository)
 
     steps:
-      # Manual audit override — if audit-pass label is present, skip the entire review.
-      # This allows merging when Codex throws a false positive after manual audit confirms PASS.
+      # Manual audit override — only activates on the label-add event itself.
+      # New pushes (synchronize) always run the full review, even if label is present.
+      # Removing the label (unlabeled) also runs the full review.
       - name: Check for audit-pass override
         id: override
-        if: contains(github.event.pull_request.labels.*.name, 'audit-pass')
+        if: github.event.action == 'labeled' && github.event.label.name == 'audit-pass'
         run: |
-          echo "audit-pass label found — manual audit override in effect."
+          echo "audit-pass label just added — manual audit override in effect."
           echo "overridden=true" >> "$GITHUB_OUTPUT"
 
       - name: Checkout code
