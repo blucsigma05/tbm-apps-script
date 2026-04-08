@@ -91,6 +91,47 @@ const RULES = {
   tbm_soul_ticker_special: { needsDeploy: true, apply: applySoulTickerFix }
 };
 
+// ── Structured report consumption ───────────────────────────────────
+// Extract the machine-readable JSON from the codex-pr-review comment.
+// The JSON sits between <!-- codex-review-report --> markers inside a
+// fenced code block in the comment body.
+
+function extractStructuredReport(commentBody) {
+  if (!commentBody) return null;
+  var startMarker = '<!-- codex-review-report -->';
+  var endMarker = '<!-- /codex-review-report -->';
+  var startIdx = commentBody.indexOf(startMarker);
+  var endIdx = commentBody.indexOf(endMarker);
+  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) return null;
+
+  var block = commentBody.substring(startIdx + startMarker.length, endIdx);
+  // Strip markdown fenced code block markers
+  var jsonStart = block.indexOf('{');
+  var jsonEnd = block.lastIndexOf('}');
+  if (jsonStart === -1 || jsonEnd === -1) return null;
+
+  try {
+    return JSON.parse(block.substring(jsonStart, jsonEnd + 1));
+  } catch (e) {
+    return null;
+  }
+}
+
+// Classify a structured finding into a fixer rule ID if one matches.
+// Returns '' for findings that need human judgment or have no mechanical fix.
+//
+// Phase 1 (ORK-03 #110): This intentionally returns '' for all findings.
+// The fixer reads and reports structured findings but does not attempt
+// automated fixes beyond the 3 hardcoded rules above. Phase 2 will add
+// mechanical mappings here (ES6->ES5, missing withFailureHandler, etc.)
+// so the end-to-end loop has a proven auto-fix path.
+function classifyFinding(finding) {
+  if (!finding || finding.requires_human_decision) return '';
+  // Phase 2: map finding types to mechanical rule IDs here.
+  // Example: if (finding.rule === 'P1.4' && finding.type === 'ui') return 'es6_to_es5';
+  return '';
+}
+
 function classify(repository, thread) {
   const comments = thread.comments && thread.comments.nodes ? thread.comments.nodes : [];
   const latest = comments.length ? comments[comments.length - 1] : null;
@@ -184,13 +225,13 @@ async function postRelay(payload) {
 }
 
 function renderBody(result) {
-  const changed = result.changedFiles.length ? result.changedFiles.map(function(file) {
+  var changed = result.changedFiles.length ? result.changedFiles.map(function(file) {
     return '- ' + file;
   }) : ['- none'];
-  const unsupported = result.unsupported.length ? result.unsupported.map(function(item) {
+  var unsupported = result.unsupported.length ? result.unsupported.map(function(item) {
     return '- ' + item.path + ': ' + item.summary;
   }) : ['- none'];
-  return [
+  var lines = [
     STATUS_MARKER,
     '## Pipeline Fixer',
     '',
@@ -198,16 +239,31 @@ function renderBody(result) {
     '- Cycle: ' + String(result.nextCycle) + '/3',
     '- Supported mechanical threads: ' + String(result.supported.length),
     '- Unsupported threads: ' + String(result.unsupported.length),
+    '- Structured report: ' + (result.hasStructuredReport ? 'yes' : 'no'),
     '- Needs deploy: ' + (result.needsDeploy ? 'yes' : 'no'),
     '',
     '### Files changed',
     changed.join('\n'),
     '',
     '### Still needs judgment',
-    unsupported.join('\n'),
-    '',
-    'Updated: ' + new Date().toISOString()
-  ].join('\n');
+    unsupported.join('\n')
+  ];
+
+  // Include structured report summary if available
+  if (result.reportFindings && result.reportFindings.length > 0) {
+    lines.push('');
+    lines.push('### Codex structured findings');
+    for (var ri = 0; ri < result.reportFindings.length; ri++) {
+      var rf = result.reportFindings[ri];
+      var sev = rf.severity || 'unknown';
+      var autofix = rf.requires_human_decision ? 'needs-human' : 'auto-fixable';
+      lines.push('- [' + sev.toUpperCase() + '] ' + (rf.title || 'No title') + ' — `' + (rf.file || '?') + '` (' + autofix + ')');
+    }
+  }
+
+  lines.push('');
+  lines.push('Updated: ' + new Date().toISOString());
+  return lines.join('\n');
 }
 
 async function prepare() {
@@ -289,11 +345,11 @@ async function prepare() {
   }
   const nextCycle = maxCycle + 1;
 
-  const actionable = threads.filter(function(thread) {
+  var actionable = threads.filter(function(thread) {
     return !thread.isResolved && !thread.isOutdated;
   }).map(function(thread) {
-    const comments = thread.comments && thread.comments.nodes ? thread.comments.nodes : [];
-    const latest = comments.length ? comments[comments.length - 1] : null;
+    var threadComments = thread.comments && thread.comments.nodes ? thread.comments.nodes : [];
+    var latest = threadComments.length ? threadComments[threadComments.length - 1] : null;
     return {
       threadId: thread.id,
       commentId: latest ? latest.databaseId : null,
@@ -302,10 +358,48 @@ async function prepare() {
       ruleId: classify(repository, thread)
     };
   });
-  const supported = actionable.filter(function(item) { return !!item.ruleId; });
-  const unsupported = actionable.filter(function(item) { return !item.ruleId; });
+  var supported = actionable.filter(function(item) { return !!item.ruleId; });
+  var unsupported = actionable.filter(function(item) { return !item.ruleId; });
 
-  const base = {
+  // ── Read structured report from codex-pr-review comment ───────────
+  // This enriches the fixer's understanding of what needs fixing beyond
+  // just review thread text matching.
+  var structuredReport = null;
+  var issueComments = await requestJson(
+    'https://api.github.com/repos/' + owner + '/' + repo + '/issues/' + prNumber + '/comments?per_page=100',
+    { headers: headers }
+  );
+  if (Array.isArray(issueComments)) {
+    var codexComment = issueComments.find(function(c) {
+      return String(c.body || '').indexOf('<!-- codex-pr-review -->') !== -1;
+    });
+    if (codexComment) {
+      structuredReport = extractStructuredReport(codexComment.body);
+    }
+  }
+
+  // If we have a structured report, add its auto-fixable findings to
+  // the unsupported list for reporting (Phase 2 will attempt fixes).
+  var reportFindings = [];
+  if (structuredReport && Array.isArray(structuredReport.findings)) {
+    reportFindings = structuredReport.findings;
+    for (var fi = 0; fi < reportFindings.length; fi++) {
+      var finding = reportFindings[fi];
+      // Check if this finding maps to a mechanical rule
+      var fRuleId = classifyFinding(finding);
+      if (fRuleId && !supported.some(function(s) { return s.ruleId === fRuleId; })) {
+        supported.push({
+          threadId: '',
+          commentId: null,
+          path: finding.file || '',
+          summary: '[' + (finding.severity || 'unknown') + '] ' + (finding.title || 'Structured finding'),
+          ruleId: fRuleId
+        });
+      }
+    }
+  }
+
+  var base = {
     repo: repository,
     prNumber: prNumber,
     prUrl: pr.url,
@@ -315,7 +409,9 @@ async function prepare() {
     supported: supported,
     unsupported: unsupported,
     changedFiles: [],
-    needsDeploy: false
+    needsDeploy: false,
+    hasStructuredReport: !!structuredReport,
+    reportFindings: reportFindings
   };
 
   if (nextCycle >= 4) {

@@ -13,7 +13,7 @@ on:
         description: Pull request number to recompute
         required: true
   workflow_run:
-    workflows: ["TBM Smoke + Regression"]
+    workflows: ["TBM Smoke + Regression", "Codex PR Review", "Playwright Regression"]
     types: [requested, in_progress, completed]
 
 permissions:
@@ -42,7 +42,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CI_WORKFLOW_NAME: TBM Smoke + Regression
+          PLAYWRIGHT_WORKFLOW_NAME: Playwright Regression
           PIPELINE_RELAY_URL: ${{ secrets.PIPELINE_RELAY_URL }}
           PIPELINE_SECRET: ${{ secrets.PIPELINE_SECRET }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
           TARGET_PR: ${{ inputs.pr }}
         run: node .github/scripts/review-watcher.js

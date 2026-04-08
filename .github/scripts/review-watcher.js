@@ -74,6 +74,44 @@ function isCodexSignal(login, body) {
     text.indexOf('codex') !== -1;
 }
 
+// Extract the automated Codex review verdict from the issue comment.
+// The codex-pr-review workflow posts an issue comment (not a PR review),
+// so buildActorReviewState() on PR reviews will not find it. This function
+// reads the structured JSON report embedded in the comment.
+function getAutomatedCodexVerdict(issueComments) {
+  var codexComment = null;
+  for (var i = 0; i < issueComments.length; i++) {
+    var body = String(issueComments[i].body || '');
+    if (body.indexOf('<!-- codex-pr-review -->') !== -1) {
+      codexComment = issueComments[i];
+      break;
+    }
+  }
+  if (!codexComment) return null;
+
+  var commentBody = codexComment.body;
+  var startMarker = '<!-- codex-review-report -->';
+  var endMarker = '<!-- /codex-review-report -->';
+  var startIdx = commentBody.indexOf(startMarker);
+  var endIdx = commentBody.indexOf(endMarker);
+  if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) return null;
+
+  var block = commentBody.substring(startIdx + startMarker.length, endIdx);
+  var jsonStart = block.indexOf('{');
+  var jsonEnd = block.lastIndexOf('}');
+  if (jsonStart === -1 || jsonEnd === -1) return null;
+
+  try {
+    var report = JSON.parse(block.substring(jsonStart, jsonEnd + 1));
+    return {
+      verdict: String(report.verdict || '').toUpperCase(),
+      url: codexComment.html_url || ''
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 function matchesSha(expectedSha, candidateSha) {
   const expected = String(expectedSha || '').toLowerCase();
   const candidate = String(candidateSha || '').toLowerCase();
@@ -232,6 +270,38 @@ async function syncPipelineLabels(owner, repo, prNumber, action, headers) {
   );
 }
 
+async function sendPushover(title, message, priority, prUrl) {
+  var userKey = getEnv('PUSHOVER_USER_KEY', '');
+  var appToken = getEnv('PUSHOVER_APP_TOKEN', '');
+  if (!userKey || !appToken) {
+    console.log('Pushover secrets not configured; skipping notification.');
+    return;
+  }
+
+  var params = 'token=' + encodeURIComponent(appToken) +
+    '&user=' + encodeURIComponent(userKey) +
+    '&title=' + encodeURIComponent(title) +
+    '&message=' + encodeURIComponent(message) +
+    '&priority=' + String(priority);
+
+  if (prUrl) {
+    params += '&url=' + encodeURIComponent(prUrl) +
+      '&url_title=' + encodeURIComponent('View PR');
+  }
+
+  try {
+    var response = await fetch('https://api.pushover.net/1/messages.json', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params
+    });
+    var body = await response.text();
+    console.log('Pushover response:', body);
+  } catch (err) {
+    console.log('Pushover send failed:', err.message || err);
+  }
+}
+
 async function postRelay(payload) {
   const relayUrl = getEnv('PIPELINE_RELAY_URL', '');
   const relaySecret = getEnv('PIPELINE_SECRET', '');
@@ -292,21 +362,8 @@ async function main() {
     return;
   }
 
-  // Gate: only process PRs with the 'release-candidate' label.
-  // Other PRs still get CI / Codex reviews, but the watcher skips
-  // summary comments, label sync, and relay alerts for them.
-  const RELEASE_LABEL = 'release-candidate';
-  const prLabels = await pagedGetJson(
-    'https://api.github.com/repos/' + owner + '/' + repo + '/issues/' + prNumber + '/labels?per_page=100',
-    headers
-  );
-  const hasReleaseLabel = prLabels.some(function (label) {
-    return label.name === RELEASE_LABEL;
-  });
-  if (!hasReleaseLabel) {
-    console.log('PR #' + prNumber + ' does not have the "' + RELEASE_LABEL + '" label; skipping pipeline summary.');
-    return;
-  }
+  // All non-draft PRs to main enter the pipeline automatically.
+  // No manual label required — the watcher processes every PR.
 
   const threadQuery = `
     query($owner: String!, $repo: String!, $number: Int!, $after: String) {
@@ -399,16 +456,42 @@ async function main() {
     return candidates.length ? candidates[0] : null;
   }
 
-  const ciState = formatWorkflowState(latestRunByName(ciWorkflowName));
-  const codexState = buildActorReviewState(reviews, isCodexSignal, pr.headRefOid, parseExplicitOutcome);
-  const approvalState = pr.reviewDecision || 'REVIEW_REQUIRED';
-  const fixCapReached = fixCycle >= MAX_FIX_CYCLES;
-  const fixRequired = approvalState === 'CHANGES_REQUESTED' ||
+  var ciState = formatWorkflowState(latestRunByName(ciWorkflowName));
+
+  // Playwright E2E must also pass for READY_TO_MERGE
+  var playwrightWorkflowName = getEnv('PLAYWRIGHT_WORKFLOW_NAME', '');
+  var playwrightState = playwrightWorkflowName
+    ? formatWorkflowState(latestRunByName(playwrightWorkflowName))
+    : { label: 'N/A', pass: true, failed: false, url: '' };
+
+  var codexState = buildActorReviewState(reviews, isCodexSignal, pr.headRefOid, parseExplicitOutcome);
+
+  // The automated Codex review posts an issue comment, not a PR review.
+  // If PR-review-based codex state is WAITING or STALE, check the issue
+  // comment for the structured report verdict.
+  if (codexState.label === 'WAITING' || codexState.label === 'STALE') {
+    var autoCodex = getAutomatedCodexVerdict(issueComments);
+    if (autoCodex) {
+      if (autoCodex.verdict === 'PASS') {
+        codexState = { label: 'PASS', pass: true, failed: false, url: autoCodex.url };
+      } else if (autoCodex.verdict === 'FAIL') {
+        codexState = { label: 'FAIL', pass: false, failed: true, url: autoCodex.url };
+      } else if (autoCodex.verdict === 'INCONCLUSIVE') {
+        codexState = { label: 'INCONCLUSIVE', pass: false, failed: false, url: autoCodex.url };
+      }
+    }
+  }
+
+  var approvalState = pr.reviewDecision || 'REVIEW_REQUIRED';
+  var fixCapReached = fixCycle >= MAX_FIX_CYCLES;
+  var fixRequired = approvalState === 'CHANGES_REQUESTED' ||
     ciState.failed ||
     codexState.failed ||
+    playwrightState.failed ||
     unresolvedThreads > 0;
-  const readyToMerge = ciState.pass &&
+  var readyToMerge = ciState.pass &&
     codexState.pass &&
+    (playwrightState.pass || !playwrightWorkflowName) &&
     approvalState !== 'CHANGES_REQUESTED' &&
     unresolvedThreads === 0;
 
@@ -429,6 +512,7 @@ async function main() {
     '## Pipeline Review Summary',
     '',
     '- CI: ' + renderState(ciState),
+    '- Playwright: ' + renderState(playwrightState),
     '- Codex review: ' + renderState(codexState),
     '- Unresolved actionable threads: ' + String(unresolvedThreads),
     '- Approval state: ' + approvalState,
@@ -464,8 +548,8 @@ async function main() {
   }
 
   if (action !== previousAction && action !== 'WAITING') {
-    let relayType = 'fix_needed';
-    let relaySummary = 'PR #' + prNumber + ' needs fixes.';
+    var relayType = 'fix_needed';
+    var relaySummary = 'PR #' + prNumber + ' needs fixes.';
 
     if (action === 'READY_TO_MERGE') {
       relayType = 'review_ready';
@@ -491,6 +575,27 @@ async function main() {
       runUrl: process.env.GITHUB_SERVER_URL + '/' + repository + '/actions/runs/' + process.env.GITHUB_RUN_ID,
       cycle: fixCycle
     });
+
+    // Pushover on terminal states only — no mid-loop noise
+    var prHtmlUrl = 'https://github.com/' + repository + '/pull/' + prNumber;
+    if (action === 'READY_TO_MERGE') {
+      await sendPushover(
+        'PR #' + prNumber + ' Ready',
+        'CI: ' + ciState.label + ' | Codex: ' + codexState.label +
+        ' | Threads: ' + unresolvedThreads + '\nReady for your review.',
+        -1,
+        prHtmlUrl
+      );
+    } else if (action === 'STOPPED') {
+      await sendPushover(
+        'PR #' + prNumber + ' Stalled',
+        'Fix cycle ' + fixCycle + '/' + MAX_FIX_CYCLES + ' — cap reached.\n' +
+        'CI: ' + ciState.label + ' | Codex: ' + codexState.label +
+        ' | Threads: ' + unresolvedThreads + '\nNeeds manual intervention.',
+        0,
+        prHtmlUrl
+      );
+    }
   }
 
   console.log('Updated pipeline summary for PR #' + prNumber + ' with action ' + action + '.');

@@ -1,9 +1,8 @@
 # .github/workflows/codex-pr-review.yml
-# Codex PR Review — sends PR diff to OpenAI gpt-4o for TBM-specific code review.
+# Codex PR Review v2 — structured review with full file context.
+# Sends full diff + changed files to OpenAI gpt-4o for TBM-specific review.
+# Outputs structured JSON findings for fix agent consumption.
 # Logic lives in .github/scripts/codex_review.py (no heredocs in YAML).
-#
-# Runs a fast YAML lint gate first; skips the OpenAI call if workflows are broken.
-# This avoids wasting API calls on a PR that will fail workflow-lint anyway.
 
 name: Codex PR Review
 
@@ -26,7 +25,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Fast gate: if workflow YAML is broken, fail early and skip the OpenAI call.
+  # Fast gate: broken YAML → fail early, skip OpenAI call.
   lint-gate:
     name: Pre-flight Lint
     runs-on: ubuntu-latest
@@ -60,9 +59,7 @@ jobs:
        github.event.pull_request.head.repo.full_name == github.repository)
 
     steps:
-      # Manual audit override — only activates on the label-add event itself.
-      # New pushes (synchronize) always run the full review, even if label is present.
-      # Removing the label (unlabeled) also runs the full review.
+      # Manual audit override — only on the label-add event itself.
       - name: Check for audit-pass override
         id: override
         if: github.event.action == 'labeled' && github.event.label.name == 'audit-pass'
@@ -76,25 +73,24 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build PR diff
+      - name: Build PR diff and file list
         if: steps.override.outputs.overridden != 'true'
         id: diff
         run: |
           git fetch origin main --depth=1
-          # Diff ALL text files — no extension filter. Binary files are excluded by git diff default.
+
+          # Full diff (not truncated — the Python script handles context limits)
           git diff origin/main...HEAD > pr_diff.txt
           DIFF_BYTES=$(wc -c < pr_diff.txt)
-          CHANGED_COUNT=$(git diff --name-only origin/main...HEAD | wc -l)
+
+          # List of changed files
+          git diff --name-only origin/main...HEAD > changed_files.txt
+          CHANGED_COUNT=$(wc -l < changed_files.txt)
+
           echo "diff_bytes=$DIFF_BYTES" >> "$GITHUB_OUTPUT"
           echo "changed_count=$CHANGED_COUNT" >> "$GITHUB_OUTPUT"
-          # Truncate to 12000 chars — keeps well under gpt-4o 128k context, costs ~$0.01/review
-          head -c 12000 pr_diff.txt > pr_diff_send.txt
-          if [ "$DIFF_BYTES" -gt 12000 ]; then
-            echo "truncated=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "truncated=false" >> "$GITHUB_OUTPUT"
-          fi
-          # Force INCONCLUSIVE when files changed but diff is empty (binary-only PR)
+
+          # Detect empty diff (binary-only PR)
           if [ "$CHANGED_COUNT" -gt 0 ] && [ "$DIFF_BYTES" -eq 0 ]; then
             echo "empty_diff=true" >> "$GITHUB_OUTPUT"
           else
@@ -106,10 +102,21 @@ jobs:
         id: review
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          DIFF_FILE: pr_diff_send.txt
-          TRUNCATED: ${{ steps.diff.outputs.truncated }}
+          DIFF_FILE: pr_diff.txt
+          CHANGED_FILES_FILE: changed_files.txt
           EMPTY_DIFF: ${{ steps.diff.outputs.empty_diff }}
         run: python3 .github/scripts/codex_review.py
+
+      - name: Upload review report artifact
+        if: always() && steps.override.outputs.overridden != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-report
+          path: |
+            review-report.json
+            codex_response.json
+          retention-days: 30
+          if-no-files-found: ignore
 
       - name: Post review comment on PR
         if: always() && github.event_name == 'pull_request' && steps.override.outputs.overridden != 'true'
@@ -145,6 +152,59 @@ jobs:
               });
             }
 
+      - name: Apply finding labels
+        if: always() && github.event_name == 'pull_request' && steps.override.outputs.overridden != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let report = null;
+            try { report = JSON.parse(fs.readFileSync('review-report.json', 'utf8')); } catch (e) {}
+            if (!report || !Array.isArray(report.findings)) return;
+
+            // Collect unique severity and type labels from findings
+            const newLabels = new Set();
+            for (const f of report.findings) {
+              if (f.severity) newLabels.add('severity:' + f.severity);
+              if (f.type) newLabels.add('type:' + f.type);
+            }
+
+            // Get current labels
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            // Remove old severity/type labels
+            for (const label of currentLabels) {
+              if (label.name.startsWith('severity:') || label.name.startsWith('type:')) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.issue.number,
+                    name: label.name,
+                  });
+                } catch (e) { /* label may already be removed */ }
+              }
+            }
+
+            // Add new labels (only if they exist in the repo)
+            const labelsToAdd = [...newLabels];
+            if (labelsToAdd.length > 0) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  labels: labelsToAdd,
+                });
+              } catch (e) {
+                core.warning('Could not add finding labels: ' + e.message);
+              }
+            }
+
       - name: Integrity check — detect rubber-stamped audits
         if: always() && github.event_name == 'pull_request' && steps.override.outputs.overridden != 'true'
         uses: actions/github-script@v7
@@ -156,8 +216,7 @@ jobs:
 
             const MARKER = '<!-- codex-pr-review -->';
 
-            // Skip rubber-stamp check when review script already set INCONCLUSIVE —
-            // the truncation note IS the intended output, not a rubber stamp.
+            // Skip rubber-stamp check when already INCONCLUSIVE
             if (body.includes('INCONCLUSIVE')) {
               core.info('Review is INCONCLUSIVE — skipping rubber-stamp check.');
               return;
@@ -184,10 +243,12 @@ jobs:
               core.setFailed('Codex audit incomplete — ' + reasons.join('; '));
             }
 
-      - name: Warn on INCONCLUSIVE verdict
+      - name: Fail check on INCONCLUSIVE verdict
         if: steps.review.outputs.verdict == 'INCONCLUSIVE' && steps.override.outputs.overridden != 'true'
         run: |
-          echo "::warning::Codex PR Review: INCONCLUSIVE — diff truncated or API error; manual audit required."
+          echo "Codex PR Review: INCONCLUSIVE — context was truncated or review could not complete."
+          echo "Manual audit required before merge."
+          exit 1
 
       - name: Fail check on critical violations
         if: steps.review.outputs.verdict == 'FAIL' && steps.override.outputs.overridden != 'true'
