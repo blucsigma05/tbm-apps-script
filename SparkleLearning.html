@@ -1507,6 +1507,10 @@ function loadContent() {
       .withSuccessHandler(function(content) {
         if (content && content.content && content.content.activities) {
           todayContent = content.content;
+          // Cap at 10 activities per session — 15 is too long for pre-K
+          if (todayContent.activities.length > 10) {
+            todayContent.activities = todayContent.activities.slice(0, 10);
+          }
           preloadCurriculumAudio(todayContent.activities);
           showReadyScreen(todayContent);
         } else {
@@ -1628,12 +1632,6 @@ function advanceActivity(starsEarned) {
 
   if (_freePlayMode && _freePlayGame) {
     _freePlayIdx++;
-    if (_freePlayIdx >= 10) {
-      _freePlayGame = null;
-      _freePlayIdx = 0;
-      setTimeout(function() { showSessionComplete(); }, 800);
-      return;
-    }
     setTimeout(function() { runFreePlayRound(); }, 800);
     return;
   }
