@@ -86,6 +86,11 @@ function applySoulTickerFix(root) {
 }
 
 // ── Phase 2 mechanical fixes (driven by structured findings) ────────
+// These fix ALL instances of a pattern in the target file, not just the
+// one the finding points to. This is intentional: ES5 compliance is
+// absolute for HTML files (Fire Stick WebView), so if one let/const
+// exists, they all must become var. The audit-source.sh gate verifies
+// the result before the fixer pushes.
 
 function applyEs6LetConstFix(root, finding) {
   if (!finding || !finding.file) return false;
@@ -558,8 +563,15 @@ async function finalize() {
   if (result.status === 'applied') {
     const reply = 'Addressed automatically in [review-fix-' + result.nextCycle + ']. Updated files: ' + (result.changedFiles.length ? result.changedFiles.join(', ') : 'none') + '.';
     for (const item of result.supported) {
-      await replyToReviewComment(parts[0], parts[1], result.prNumber, item.commentId, headers, reply);
-      await resolveThread(item.threadId, headers);
+      // Structured findings have empty threadId/commentId — skip thread
+      // operations for those (they came from the codex review comment,
+      // not from PR review threads).
+      if (item.commentId) {
+        await replyToReviewComment(parts[0], parts[1], result.prNumber, item.commentId, headers, reply);
+      }
+      if (item.threadId) {
+        await resolveThread(item.threadId, headers);
+      }
     }
     await postRelay({
       repo: result.repo,

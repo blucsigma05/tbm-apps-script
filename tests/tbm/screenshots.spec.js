@@ -143,15 +143,9 @@ test.beforeEach(function() {
 
 async function waitForSentinel(page, surface) {
   var sel = surface.sentinel;
-  try {
-    await page.waitForSelector(sel, { state: 'attached', timeout: SENTINEL_TIMEOUT });
-    var text = await page.locator(sel).first().textContent();
-    expect(text.trim().length).toBeGreaterThan(0);
-  } catch (e) {
-    // Capture screenshot anyway — a blank/error screenshot is still useful
-    // for diagnosing why the surface failed to render.
-    console.log('Sentinel wait failed for ' + surface.path + ': ' + e.message);
-  }
+  await page.waitForSelector(sel, { state: 'attached', timeout: SENTINEL_TIMEOUT });
+  var text = await page.locator(sel).first().textContent();
+  expect(text.trim().length).toBeGreaterThan(0);
 }
 
 async function handlePIN(page, requiresPin) {
