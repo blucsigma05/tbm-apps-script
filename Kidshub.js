@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v55 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v56 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 55; }
+function getKidsHubVersion() { return 56; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3605,15 +3605,16 @@ function submitHomework_(data) {
     lk.lock.releaseLock();
   }
 
-  // Phase 2: Push notification (no lock needed)
-  if (status === 'pending_review') {
-    try {
-      if (typeof sendPush_ === 'function') {
-        var childDisplay = childLower.charAt(0).toUpperCase() + childLower.slice(1);
-        sendPush_(childDisplay + ' submitted ' + (data.subject || 'homework'), 'Needs your review on Parent Dashboard', 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL);
-      }
-    } catch(e) { /* non-blocking */ }
-  }
+  // Phase 2: Push notification (no lock needed) — notify on ALL submissions
+  try {
+    if (typeof sendPush_ === 'function') {
+      var childDisplay = childLower.charAt(0).toUpperCase() + childLower.slice(1);
+      var pushMsg = status === 'pending_review'
+        ? 'Needs your review on Parent Dashboard'
+        : 'Auto-graded — ' + (rings > 0 ? rings + ' rings awarded' : 'complete');
+      sendPush_(childDisplay + ' submitted ' + (data.subject || 'homework'), pushMsg, 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL);
+    }
+  } catch(e) { /* non-blocking */ }
 
   // Phase 3: Award rings AFTER lock release (acquires its own lock)
   if (isAutoGrade && rings > 0) {
@@ -3996,5 +3997,5 @@ function resetSandboxSafe() {
   });
 }
 
-// END OF FILE — KidsHub.gs v55
+// END OF FILE — KidsHub.gs v56
 // ════════════════════════════════════════════════════════════════════
