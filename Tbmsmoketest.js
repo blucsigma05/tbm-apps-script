@@ -58,7 +58,7 @@ var CANONICAL_SAFE_FUNCTIONS = [
   'logQuestionResultSafe', 'savePowerScanResultsSafe', 'getWeeklyProgressSafe',
   'updateMealPlanSafe', 'getStoryApiStatsSafe', 'khHealthCheckSafe',
   'getDeployedVersionsSafe', 'reconcileVeinPulse', 'runTestsSafe',
-  'seedStaarRlaSprintSafe'
+  'seedStaarRlaSprintSafe', 'getDailyMissionsInitSafe'
 ];
 
 /**
