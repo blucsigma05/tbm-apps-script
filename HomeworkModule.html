@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v6">
+<meta name="tbm-version" content="v7">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1424,7 +1424,7 @@ function renderResults() {
             var subj = (q.id <= 6) ? "science" : "math";
             openEndedBySubject[subj].push({
               id: q.id,
-              prompt: q.text || "",
+              prompt: q.question || "",
               response: a.text
             });
           }
@@ -1462,10 +1462,16 @@ function renderResults() {
             rings: ringsEarned
           });
 
-        google.script.run
-          .withSuccessHandler(function() { console.log('Rings awarded: ' + ringsEarned); })
-          .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })
-          .awardRingsSafe('buggsy', ringsEarned, 'homework-module');
+        // Only award MC rings immediately if no open-ended questions pending review.
+        // If open-ended exists, all rings (MC + review) come on parent approval to prevent double award.
+        if (allOpenEnded.length === 0 && ringsEarned > 0) {
+          google.script.run
+            .withSuccessHandler(function() { console.log('Rings awarded: ' + ringsEarned); })
+            .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })
+            .awardRingsSafe('buggsy', ringsEarned, 'homework-module');
+        } else if (allOpenEnded.length > 0) {
+          console.log('Rings deferred — ' + allOpenEnded.length + ' open-ended question(s) pending parent review');
+        }
 
         var moduleTitle = 'Homework: ' + (MODULE.science ? MODULE.science.title : 'Module');
         google.script.run
