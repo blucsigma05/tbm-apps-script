@@ -1733,20 +1733,21 @@ function khSubmitGrade(params) {
     var today = getTodayISO_();
     var now = getNowISO_();
 
+    // v57: Dedup check BEFORE grade sheet write to prevent orphan rows
+    var histUID = kid.toLowerCase() + '_GRADE_' + subject.replace(/\s/g, '') + '_' + quarter + '_' + schoolYear.replace(/[^0-9]/g, '');
+    if (historyUIDExists_(histUID)) {
+      stampKHHeartbeat_();
+      return JSON.stringify({ status: 'ok', duplicate: true, kid: kid, subject: subject, grade: grade,
+        ringsAwarded: 0, cashAwarded: 0, message: 'Grade already recorded for this subject/quarter' });
+    }
+
     // 1. Append to KH_Grades
     var gradeSheet = getKHSheet_('KH_Grades');
     if (!gradeSheet) return JSON.stringify({ status: 'error', message: 'KH_Grades tab not found' });
     gradeSheet.appendRow([now, kid, subject, grade, quarter, schoolYear, reward.rings, reward.cash, enteredBy, notes]);
 
-    // 2. If rings > 0, append to KH_History as a bonus event (with dedup)
+    // 2. If rings > 0, append to KH_History as a bonus event
     if (reward.rings > 0) {
-      var histUID = kid.toLowerCase() + '_GRADE_' + subject.replace(/\s/g, '') + '_' + quarter + '_' + schoolYear.replace(/[^0-9]/g, '');
-      // v54: Check for duplicate grade submission before awarding
-      if (historyUIDExists_(histUID)) {
-        stampKHHeartbeat_();
-        return JSON.stringify({ status: 'ok', duplicate: true, kid: kid, subject: subject, grade: grade,
-          ringsAwarded: 0, cashAwarded: 0, message: 'Grade already recorded for this subject/quarter' });
-      }
       appendHistory_(histUID, 'GRADE', kid, subject + ' Grade: ' + grade, reward.rings, reward.rings, 1, 'bonus', today, now);
     }
 

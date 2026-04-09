@@ -1072,8 +1072,9 @@ function logHomeworkCompletionSafe(data) {
         ? ' | Score: ' + data.score + (data.total ? '/' + data.total : '')
         : '');
 
-    // v74: Read DB ID from Script Properties instead of hardcoding
-    var hwDbId = PropertiesService.getScriptProperties().getProperty('NOTION_HOMEWORK_DB_ID') || '9164c6a594b448028426366ff62952b5';
+    // v74: Read DB ID from Script Properties — fail-closed if not set
+    var hwDbId = PropertiesService.getScriptProperties().getProperty('NOTION_HOMEWORK_DB_ID');
+    if (!hwDbId) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_HOMEWORK_DB_ID not set' }));
     var payload = {
       parent: { database_id: hwDbId },
       properties: {
