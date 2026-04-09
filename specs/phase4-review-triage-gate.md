@@ -93,20 +93,31 @@ No LLM call, no external dependencies, no pip installs. Pure Python 3 stdlib.
 | `medium` | Default — everything not matched by skip/light/full | Codex runs at current defaults. Label: `pipeline:triage-medium` |
 | `full` | ANY HOT file touched (see HOT file list below) | Codex runs with `REVIEW_MODE=full`: current defaults + expanded context (same as #129 post-merge caps). Label: `pipeline:triage-full` |
 
-### Skip Conditions (all three must be true together — OR logic across subconditions)
+### Skip Conditions (OR logic across subconditions)
 
 A PR is `skip` if it satisfies **any one** of:
 
 - (a) Every changed file matches one of: `specs/**/*.md`, `docs/**/*.md`, `*.md` (repo
   root only), `*.txt` (repo root only), and no code file (`*.py`, `*.js`, `*.yml`,
   `*.yaml`, `*.gs`, `*.html`, `*.sh`) is present among changed files.
-- (b) Every changed file matches `*.generated.*` OR is listed in `.codex-review-skip`
-  (repo root, one glob pattern per line, comments with `#`).
+- (b) Every changed file is a **generated file** (see Generated File Detection below) AND
+  none of the changed files reside in a HOT path. Generated files are detected by naming
+  convention (`*.generated.*`), a `DO NOT EDIT BY HAND` header in the first 20 lines, or
+  explicit listing in `.codex-review-skip` (repo root, one glob pattern per line, comments
+  with `#`). Extension does NOT gate this path — `vocab.generated.js` qualifies even
+  though it has a `.js` extension.
 - (c) Zero-byte diff (diff file is empty, even if file list is non-empty — binary-only
   PR, e.g., an added PNG or audio file).
 
-If ANY code file is touched alongside a spec/docs file, the PR does NOT get `skip` —
-it falls through to `light`/`medium`/`full` depending on size and HOT file presence.
+**HOT-path carve-out for generated files:** If a generated file lives inside a HOT path
+(e.g., `.github/scripts/generated_config.py`), the `full` mode wins — trust-sensitive
+infrastructure overrides the skip, even when the content is machine-generated. The skip
+rule (b) only fires when ALL generated files are outside HOT paths.
+
+If ANY code file is touched alongside a spec/docs file, the PR does NOT get `skip` via
+condition (a) — it falls through to `light`/`medium`/`full` depending on size and HOT
+file presence. Condition (b) is independent and requires ALL files to be generated and
+outside HOT paths.
 
 ### HOT File List
 
@@ -144,8 +155,12 @@ If absent, only the constants above apply.
 `skip` > `full` > `light` > `medium`
 
 Rationale for each override:
-- `skip > full`: A HOT file that also appears in `.codex-review-skip` was explicitly
-  allowlisted by LT. Trust the allowlist.
+- `skip > full` (docs-only path): A docs/spec-only PR with no code files needs no Codex
+  review — the content is human prose reviewed by LT gate.
+- `full > skip` (generated files in HOT paths): A generated file inside `.github/` or
+  any other HOT path still triggers `full` review. Machine-generated content in
+  infrastructure directories is trust-sensitive regardless of how it was produced. The
+  generated-file skip (condition b) explicitly requires the file to be outside HOT paths.
 - `full > light`: A HOT-file edit that is also < 30 lines (e.g., a one-liner in
   `audit-source.sh`) is exactly the class of change that has caused incidents. Hot file
   overrides the size shortcut.
@@ -250,14 +265,25 @@ The `light` threshold applies to net diff lines: `added + removed <= 30`.
 
 ### Generated File Detection
 
-A file is considered "generated" if EITHER:
-- Its filename matches `*.generated.*` (e.g., `vocab.generated.js`)
-- Its first 20 lines (read from the diff `+++ b/` block headers, then checked in the
-  repo) contain `// DO NOT EDIT BY HAND` or `# DO NOT EDIT BY HAND`
+A file is considered "generated" if ANY of the following is true:
+- (a) Its filename matches `*.generated.*` (e.g., `vocab.generated.js`, `vocab.generated.ts`,
+  `catalog.generated.json`) — the `generated` segment can appear in any dot-delimited
+  position. Extension is irrelevant — `.js`, `.py`, `.gs` all qualify.
+- (b) Its first 20 lines (checked in the filesystem checkout) contain any of:
+  `// DO NOT EDIT BY HAND`, `# DO NOT EDIT BY HAND`, or `/* DO NOT EDIT BY HAND */`.
+- (c) It is matched by a glob pattern in `.codex-review-skip` (repo root, one glob per
+  line, `#` comments). Extension is irrelevant here too.
 
 For the workflow context, the script reads up to the first 20 lines of each changed
 file from the filesystem (the checkout is available). If the file is new (not in the
 working tree), skip the content check and rely only on the filename pattern.
+
+**Extension gate removed:** The previous design required `all_non_code` (no code
+extensions present) as a co-condition for the generated-file skip. This has been removed.
+A file like `vocab.generated.js` has a `.js` extension but its content is machine-generated
+and controlled by a generator that is reviewed separately. Blocking skip on extension
+defeats the purpose. The only guard that matters is whether the file lives in a HOT path
+(see HOT-path carve-out above).
 
 ### Full Python Implementation
 
@@ -369,26 +395,37 @@ def is_code_file(filepath):
 
 
 def is_generated_file(filepath, skip_patterns):
-    """Return True if the file is generated (by name or header comment)."""
+    """Return True if the file is generated (by name, header comment, or skip-list).
+
+    Extension-agnostic: vocab.generated.js qualifies even though .js is a code extension.
+    HOT-path handling is the caller's responsibility — this function does not check paths.
+    """
     basename = os.path.basename(filepath)
-    # Filename pattern: *.generated.*
+    # (a) Filename pattern: *.generated.* — 'generated' in any dot-delimited segment
     parts = basename.split(".")
     if len(parts) >= 3 and "generated" in [p.lower() for p in parts]:
         return True
-    # Explicit skip-list match
+    # (b) Explicit skip-list match (extension-agnostic glob patterns)
     norm = filepath.replace("\\", "/")
     for pattern in skip_patterns:
         if fnmatch.fnmatch(norm, pattern) or fnmatch.fnmatch(basename, pattern):
             return True
-    # Content check: first 20 lines of the file
+    # (c) Content check: first 20 lines — any DO NOT EDIT BY HAND variant
+    DO_NOT_EDIT_MARKERS = [
+        "// DO NOT EDIT BY HAND",
+        "# DO NOT EDIT BY HAND",
+        "/* DO NOT EDIT BY HAND */",
+        "DO NOT EDIT BY HAND",  # catch bare variant in XML/HTML comments
+    ]
     if os.path.isfile(filepath):
         try:
             with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
                 for i, line in enumerate(f):
                     if i >= 20:
                         break
-                    if "DO NOT EDIT BY HAND" in line:
-                        return True
+                    for marker in DO_NOT_EDIT_MARKERS:
+                        if marker in line:
+                            return True
         except OSError:
             pass
     return False
@@ -464,12 +501,22 @@ def main():
     mode = "medium"
     reason = "default: no specific condition matched"
 
-    # Determine if all files are docs/spec/generated (skip candidates)
-    non_skip_files = [
-        fp for fp in files
-        if not is_docs_file(fp) and not is_generated_file(fp, skip_patterns)
+    # Identify generated files that are NOT in a HOT path — those qualify for skip.
+    # Generated files inside HOT paths (e.g. .github/scripts/generated_config.py)
+    # are trust-sensitive infrastructure and always trigger FULL review.
+    generated_non_hot = [
+        fp for fp in generated_files
+        if not is_hot_file(fp, always_full_patterns)
     ]
+    generated_in_hot = [
+        fp for fp in generated_files
+        if is_hot_file(fp, always_full_patterns)
+    ]
+
+    # Docs-only skip: every file is a docs/spec file AND no code extensions present
     all_non_code = len(code_files_present) == 0
+    non_docs_files = [fp for fp in files if not is_docs_file(fp)]
+
     zero_diff = diff_bytes == 0
 
     # skip: zero-byte diff (binary-only)
@@ -477,13 +524,22 @@ def main():
         mode = "skip"
         reason = "binary-only PR: zero-byte diff with %d changed file(s)" % len(files)
 
-    # skip: all files are docs/spec/generated AND no code files
-    elif len(non_skip_files) == 0 and all_non_code and len(files) > 0:
-        if generated_files:
-            reason = "all changed files are generated or in skip list"
-        else:
-            reason = "all changed files are docs/specs (no code files touched)"
+    # skip (docs-only path): all files are docs/specs AND no code extensions present
+    elif len(non_docs_files) == 0 and all_non_code and len(files) > 0:
         mode = "skip"
+        reason = "all changed files are docs/specs (no code files touched)"
+
+    # skip (generated path): all files are generated AND none are in HOT paths
+    # NOTE: extension-agnostic — vocab.generated.js qualifies. HOT-path carve-out
+    # means a generated file in .github/ still triggers full, not skip.
+    elif (len(files) > 0
+          and len(generated_non_hot) == len(files)
+          and len(generated_in_hot) == 0):
+        mode = "skip"
+        reason = "all changed files are generated (outside HOT paths): %s" % (
+            ", ".join(generated_non_hot[:3])
+            + (" (+%d more)" % (len(generated_non_hot) - 3) if len(generated_non_hot) > 3 else "")
+        )
 
     # full: any HOT file touched (overrides light)
     elif hot_files_touched:
@@ -956,7 +1012,7 @@ python3 -m py_compile .github/scripts/triage_review.py
 | 1 | Triage script exists and compiles | `python3 -m py_compile .github/scripts/triage_review.py` exits 0 |
 | 2 | Skip mode: docs-only PR | Running triage with `changed_files.txt = specs/foo.md` → `mode: skip` in `triage_output.json` |
 | 3 | Skip mode: zero-byte diff | Running triage with empty `pr_diff.txt` and non-empty `changed_files.txt` → `mode: skip` |
-| 4 | Skip mode: generated file | File named `vocab.generated.js` in `changed_files.txt` (no other code files) → `mode: skip` |
+| 4 | Skip mode: generated file with code extension | File named `vocab.generated.js` in `changed_files.txt` (sole changed file) → `mode: skip`. The `.js` extension must NOT block skip — this is the extension-agnostic test. |
 | 5 | Full mode: HOT file basename | `Code.gs` in `changed_files.txt` → `mode: full` regardless of diff size |
 | 6 | Full mode: HOT pattern prefix | `.github/workflows/anything.yml` in `changed_files.txt` → `mode: full` |
 | 7 | Full overrides light | 5-line diff + `Code.gs` → `mode: full` (not `light`) |
@@ -968,6 +1024,7 @@ python3 -m py_compile .github/scripts/triage_review.py
 | 13 | Light mode: uses gpt-4o-mini | Review log confirms `model=gpt-4o-mini` for a < 30-line non-HOT code PR |
 | 14 | Triage label applied | After triage step, exactly one `pipeline:triage-*` label on the PR matching the classified mode |
 | 15 | Existing PASS/FAIL flow unchanged | A medium-mode PR still gets full gpt-4o review, posts PASS/FAIL comment, and blocks merge on FAIL |
+| 16 | HOT-path carve-out: generated file in .github/ → full | File named `.github/scripts/generated_config.py` in `changed_files.txt` → `mode: full`, NOT skip. Generated content in infrastructure paths is trust-sensitive. |
 
 ---
 
