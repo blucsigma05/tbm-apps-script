@@ -257,7 +257,13 @@ def truncate_preserving_edges(text, limit, label):
 
 
 def read_changed_file_content(fname):
-    """Prefer PR-head content, but fall back to the working tree for local runs."""
+    """Prefer PR-head content via git show. Fall back to the working tree ONLY in local runs.
+
+    In CI under pull_request_target, the working tree is the base branch, so
+    falling back to disk for a file git-show can't find means we'd read the
+    base-branch copy of a deleted file and send it as PR context. Return None
+    instead so the review sees the file as gone (which it is, in the PR).
+    """
     git_path = fname.replace("\\", "/")
 
     try:
@@ -268,6 +274,12 @@ def read_changed_file_content(fname):
     except Exception:
         pass
 
+    # In CI, the working tree is the base branch. Don't read base content for
+    # files that don't exist in pr-head — they were deleted or renamed in the PR.
+    if os.environ.get("GITHUB_ACTIONS") == "true" or os.environ.get("CI") == "true":
+        return None
+
+    # Local dev: fall back to disk so running the script outside CI still works.
     if not os.path.isfile(fname):
         return None
 

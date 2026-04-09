@@ -97,7 +97,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.pr.outputs.base_ref }}
-          fetch-depth: 50
+          fetch-depth: 0
 
       - name: Build PR diff and file list
         if: steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true'
@@ -106,8 +106,8 @@ jobs:
           BASE_REF: ${{ steps.pr.outputs.base_ref }}
           PR_NUMBER: ${{ steps.pr.outputs.number }}
         run: |
-          git fetch origin "$BASE_REF" --depth=50
-          git fetch origin "pull/${PR_NUMBER}/head:pr-head" --depth=50
+          git fetch origin "$BASE_REF"
+          git fetch origin "pull/${PR_NUMBER}/head:pr-head"
 
           # Full diff (not truncated — the Python script handles context limits)
           git diff "origin/$BASE_REF...pr-head" > pr_diff.txt
