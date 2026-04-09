@@ -58,12 +58,109 @@ The goal: a single `/qa` surface that wraps the existing backend with a UI LT
 can use from any device, ideally their phone during a walkthrough on the S10 FE
 or Surface Pro.
 
+## Critical constraint — TBM_ENV is GLOBAL, not per-route
+
+**Codex review 2026-04-09 flagged this as a P1 blocker.** Source:
+[TBMConfig.gs:20](https://github.com/blucsigma05/tbm-apps-script/blob/main/TBMConfig.gs#L20).
+The original spec draft treated `/qa` as "a QA surface alongside prod routes,"
+which is impossible given the current architecture:
+
+- `TBMConfig.gs:20` reads `TBM_ENV` from a single Script Property at module load
+  time and sets `SSID = TBM_ENV.SSID` as a file-level global.
+- Every Safe wrapper resolves workbook access through that single `SSID`.
+- There is no per-request override, no cookie-scoped env, no query-param override
+  that can route one request to QA and another to prod.
+
+**Real behavior:** flipping `TBM_ENV=qa` flips the ENTIRE deployment. Every
+route — `/jj`, `/buggsy`, `/parent`, `/pulse`, `/vein`, `/spine`, `/soul`,
+`/sparkle`, `/homework`, everything — reads from the QA workbook. The kids'
+tablets, the kitchen TV, LT's phone dashboards — all of them now show QA
+data.
+
+**What this means for the design:**
+
+1. `/qa` is not "an isolated QA surface." It is a control panel for a
+   deployment-wide mode flip.
+2. Entering QA mode has to be treated as a **deployment event**, not a
+   per-user action. Anyone viewing any TBM surface during QA mode sees QA
+   data.
+3. `qaExitToProdSafe()` cannot be a normal web-accessible Safe wrapper.
+   A client tap flipping the global env is a foot-gun with real blast radius
+   — one operator ending their QA session terminates everyone else's view of
+   prod in the process of resuming it, and vice versa. Worse: any authenticated
+   client with knowledge of the Safe wrapper name could drive-by call it.
+4. The `?qa=1` query-parameter pattern in the original draft's "Launch Surface"
+   section does nothing to route workbooks — it only sets a client-side visual
+   badge. The actual data read happens based on the global `TBM_ENV`.
+
+### Mitigation — how `/qa` actually works
+
+The revised spec treats `/qa` as a **display + coordination UI only**. It
+**does not flip the env itself.** Here is the honest workflow:
+
+1. **Enter QA mode** is a Script-Editor-only action. LT opens the GAS editor,
+   sets `TBM_ENV=qa` in Script Properties, hits Save. The entire deployment
+   is now in QA mode. This is unchanged from today — we are not making it
+   easier.
+2. **Every production route shows a QA banner when `TBM_ENV=qa`.** This is the
+   "bundled badge" from the original PR 2 + PR 3 collapse — it applies to all
+   surfaces, not just surfaces launched from `/qa`. The badge reads something
+   like "⚠ TBM IS IN QA MODE — DATA IS NOT REAL" across the top of every
+   dashboard and kids' tablet. Non-dismissable.
+3. **`/qa` dashboard** only loads when `TBM_ENV=qa` (server-side guard). It
+   provides the scenario loader, clock override, snapshot/restore, launch
+   buttons, persistence test runner. All of these go through Safe wrappers
+   that `tbm_requireQA_()` — they cannot accidentally run in prod.
+4. **Exit QA mode** is also Script-Editor-only. There is NO `qaExitToProdSafe`
+   web wrapper. The operator closes the scenario, documents any state change
+   via `snapshotQAState`, opens Script Properties, changes `TBM_ENV=prod`,
+   hits Save, reloads all the prod surfaces to confirm.
+5. **Coordination is manual** — because the env is global, if two operators
+   are in the system simultaneously they have to agree out-of-band before
+   entering QA mode. The kids must be off their tablets. Dashboards on TVs
+   will also show the QA banner, so anyone in the house will see it.
+
+### Why not a request-scoped env?
+
+Three alternatives considered and rejected:
+
+1. **Cookie-scoped env.** Set a cookie `TBM_ENV=qa` on the `/qa` surface that
+   every subsequent Safe wrapper respects. Rejected because `TBMConfig.gs:42`
+   sets `var SSID = TBM_ENV.SSID;` at module load — this is a constant across
+   the entire Apps Script execution, not a per-request value. Refactoring
+   every Safe wrapper to read SSID dynamically from a request-scoped source
+   is a multi-file cross-cutting change that's out of scope for a QA tool.
+2. **Separate GAS deployment for QA.** Run a second clasp project targeting
+   a QA workbook, deploy independently, host `/qa` there. True isolation, no
+   global flip. Rejected for Phase 1 because it doubles the deploy surface and
+   creates version-sync problems — every TBM change would need to deploy to
+   both. Kept as a possible Phase 3 if the global-flip model becomes too
+   painful.
+3. **Query-param override per Safe wrapper.** Pass `?env=qa` into every Safe
+   wrapper and use it to pick the SSID. Rejected because it either bleeds QA
+   data into prod routes (bad) or requires touching every wrapper (worst).
+
+### What the original draft got wrong
+
+The original draft's "Launch Surface" section implied that tapping "Launch
+/jj" from `/qa` would open `/jj` in a QA-scoped context. It does not. The
+actual behavior is: tapping "Launch /jj" opens `/jj` in whatever env
+`TBM_ENV` currently says — which is QA (because the `/qa` dashboard only
+renders when QA mode is active). The launched surface reads from the QA
+workbook. That's correct by accident — but it's correct because the env is
+already globally flipped, not because `/qa` does anything special.
+
+The `?qa=1` URL parameter on launched surfaces is purely cosmetic. It
+triggers the client-side badge injection. It does not affect workbook
+routing.
+
 ## Design
 
 A new HTML surface `QAOperator.html` served at `/qa`, wired to the existing
 QA harness via new Safe wrappers in Code.js. Protected by environment check
-+ PIN, indistinguishable from prod if `TBM_ENV=prod` (renders a red guard
-page).
+(server-side), indistinguishable from prod if `TBM_ENV=prod` (renders a red
+guard page). **Does not itself flip `TBM_ENV`** — that remains a
+Script-Editor-only action.
 
 ### Route
 
@@ -305,12 +402,23 @@ Optional for Phase 1, mandatory for Phase 2.
    page if `TBM_ENV.ENV !== 'qa'`. No operator UI renders at all.
 3. **PIN gate (tertiary):** PIN gate on client; if wrong, controls disabled.
    Not a security boundary — just prevents fat-finger access.
-4. **Big red banner:** cannot miss you're in QA. Header bar states the workbook
-   short hash so LT can verify at a glance.
+4. **Deployment-wide banner:** a non-dismissable top-of-page banner reading
+   "⚠ TBM IS IN QA MODE — DATA IS NOT REAL" is injected into **every** route
+   (not just `/qa`) when `TBM_ENV=qa`. The banner states the workbook short
+   hash so LT can verify at a glance. Kids' tablets, TVs, and phone dashboards
+   all show it. This is the bundled-badge change from the earlier PR 2 + PR 3
+   collapse, but it's now the primary signal that the whole deployment is in
+   QA — not an opt-in decoration.
 5. **Confirm dialog** before destructive actions (Clear, Reset, Restore).
-6. **Exit handoff:** "Back to Prod" button on the dashboard that swaps
-   `TBM_ENV=prod` in Script Properties via a `qaExitToProdSafe()` wrapper.
-   This closes the one manual step LT currently has to remember.
+6. **Exit is Script-Editor-only — NO `qaExitToProdSafe` web wrapper.** The
+   original draft proposed a "Back to Prod" button on the dashboard that
+   flipped `TBM_ENV=prod` via a Safe wrapper. Codex flagged this as a
+   blast-radius foot-gun because any authenticated client could call the
+   Safe wrapper to flip a global property. The revised spec removes the
+   wrapper entirely. To exit QA mode, LT opens Script Properties in the GAS
+   editor and changes `TBM_ENV=prod`. Inconvenient by design — a
+   deployment-wide state change should require deliberate, auditable action
+   on a real admin surface, not a dashboard tap.
 
 ## Trade-offs considered
 
@@ -355,7 +463,9 @@ scenario. No HTML surface.
 
 ### PR 1 — Safe wrappers only, dark
 
-- Add 11 Safe wrappers to `Code.js` (or a new `QAOperatorSafe.js` file).
+- Add 11 Safe wrappers to `Code.js` (or a new `QAOperatorSafe.js` file). Note: the
+  original draft listed 12 including `qaExitToProdSafe`, but per Codex review that
+  wrapper is removed — exit is Script-Editor-only, not web-callable.
 - Whitelist in `serveData` (line 407 area).
 - Wiring check in `Tbmsmoketest.js`.
 - No HTML, no route. Backend is ready for the client.
@@ -424,16 +534,25 @@ grep -n "/qa"                    cloudflare-worker.js → 1+ route entry
 | 12 | ES5 compliance | QAOperator.html has zero banned patterns |
 | 13 | PIN gate | Without correct PIN, all buttons disabled |
 | 14 | Cloudflare route | `thompsonfams.com/qa` returns 200 when in QA env |
-| 15 | Exit to prod | "Back to Prod" button switches `TBM_ENV=prod`, subsequent loads show guard |
+| 15 | Deployment-wide banner | When `TBM_ENV=qa`, ALL production routes (/jj, /buggsy, /parent, /pulse, /vein, /spine, /soul, /sparkle, /homework, etc.) render the "⚠ TBM IS IN QA MODE" banner — confirmed via manual load of each route |
+| 16 | No web exit wrapper | `grep -n "qaExitToProdSafe" Code.js` returns 0 matches — the function does NOT exist as a Safe wrapper. Exit is Script-Editor-only. |
+| 17 | Kids surfaces show banner | Loading `/jj` or `/buggsy` on the tablets during QA mode shows the banner — kids cannot accidentally think they're playing with real data |
 
 ## Open questions for LT review — ALL RESOLVED 2026-04-09
 
 1. **PIN source.** **RESOLVED: shared with ThePulse.** One PIN to remember.
 
-2. **`qaExitToProdSafe`.** **RESOLVED: client wrapper + hard confirm + PIN
-   challenge.** Accepts a dashboard tap but requires re-entering the PIN to
-   complete the exit. Prevents accidental prod-flips while keeping the
-   convenience.
+2. **`qaExitToProdSafe`.** **RESOLVED 2026-04-09 (REVISED per Codex review):
+   NO web wrapper.** The original draft proposed a dashboard button that
+   flipped `TBM_ENV=prod` via a Safe wrapper with a PIN challenge. Codex
+   flagged that this makes a deployment-wide global env flip web-accessible
+   — any authenticated client could drive-by call the wrapper. Since
+   `TBM_ENV` is a single global Script Property affecting every route (not
+   just `/qa`), flipping it is a deployment event, not a per-user action.
+   Revised: exit QA mode by opening the GAS Script Editor directly and
+   changing `TBM_ENV=prod` in Script Properties. Deliberately inconvenient.
+   See "Critical constraint — TBM_ENV is GLOBAL" section above for full
+   reasoning.
 
 3. **Scenario visibility.** **RESOLVED: hardcoded in `QA_SCENARIOS` (current
    behavior).** Data-driven editor is Phase 2. 5-min code edit + clasp push
