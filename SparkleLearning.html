@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v12">
+  <meta name="tbm-version" content="v13">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -594,6 +594,8 @@ var totalStars = 0;
 var lettersCompleted = [];
 var audioCache = {};
 var _activeClip = null;
+var _audioPlaying = false;
+var _audioRequestSeq = 0;
 var activityLocked = false;
 var countState = {};
 var traceState = {};
@@ -616,6 +618,29 @@ var COLOR_MAP = {
 /* ═══════════════════════════════════════════════════════════
    AUDIO SYSTEM
    ═══════════════════════════════════════════════════════════ */
+
+// Settle any in-flight audio before starting new playback.
+// If speechSynthesis is mid-cancel, the 20ms delay lets the
+// cancel flag flush before the next speak() fires (WebKit bug).
+function _stopAllAudio(cb) {
+  if (_activeClip) {
+    try {
+      _activeClip.onended = null;
+      _activeClip.onerror = null;
+      _activeClip.pause();
+      _activeClip.currentTime = 0;
+    } catch(e) {}
+    _activeClip = null;
+  }
+  _audioPlaying = false;
+  if (window.speechSynthesis && speechSynthesis.speaking) {
+    try { speechSynthesis.cancel(); } catch(e) {}
+    setTimeout(function() { if (cb) cb(); }, 20);
+    return;
+  }
+  if (cb) cb();
+}
+
 function speak(text, onEndOrKey, maybeOnEnd) {
   if (!text) { if (typeof onEndOrKey === 'function') { onEndOrKey(); } else if (maybeOnEnd) { maybeOnEnd(); } return; }
   // speak(text, onEnd) or speak(text, audioKey, onEnd)
@@ -629,39 +654,57 @@ function speak(text, onEndOrKey, maybeOnEnd) {
   }
 
   // Auto-match: if no explicit key, try to derive one from text
-  if (!audioKey) {
-    audioKey = autoMatchAudio(String(text));
-  }
+  if (!audioKey) { audioKey = autoMatchAudio(String(text)); }
 
-  // Stop any currently playing audio before starting new
-  if (_activeClip) {
-    try { _activeClip.pause(); _activeClip.currentTime = 0; _activeClip.onended = null; } catch(e) {}
-    _activeClip = null;
-  }
-  if (window.speechSynthesis) { speechSynthesis.cancel(); }
+  // Sequence guard: only the most-recent call wins.
+  _audioRequestSeq += 1;
+  var mySeq = _audioRequestSeq;
 
-  // Try ElevenLabs cache
-  if (audioKey && audioCache[audioKey]) {
-    try {
-      var clip = audioCache[audioKey];
-      clip.currentTime = 0;
-      _activeClip = clip;
-      clip.onended = function() {
+  _stopAllAudio(function() {
+    if (mySeq !== _audioRequestSeq) { return; } // superseded — bail
+
+    // Try ElevenLabs cached clip first
+    if (audioKey && audioCache[audioKey]) {
+      try {
+        var clip = audioCache[audioKey];
+        clip.currentTime = 0;
+        _activeClip = clip;
+        _audioPlaying = true;
+        clip.onended = function() {
+          _activeClip = null;
+          _audioPlaying = false;
+          if (onEnd) { onEnd(); }
+        };
+        clip.onerror = function() {
+          _activeClip = null;
+          _audioPlaying = false;
+          if (onEnd) { onEnd(); }
+        };
+        clip.play();
+        return;
+      } catch(e) {
         _activeClip = null;
-        if (onEnd) { onEnd(); }
-      };
-      clip.play();
-      return;
-    } catch (e) { _activeClip = null; /* fall through to Web Speech */ }
-  }
-  // Fallback: Web Speech API
-  if (!window.speechSynthesis) { if (onEnd) { onEnd(); } return; }
-  var u = new SpeechSynthesisUtterance(String(text));
-  u.rate = 0.85;
-  u.pitch = 1.1;
-  if (onEnd) { u.onend = onEnd; }
-  speechSynthesis.cancel();
-  speechSynthesis.speak(u);
+        _audioPlaying = false;
+        /* fall through to Web Speech */
+      }
+    }
+
+    // Web Speech fallback
+    if (!window.speechSynthesis) { if (onEnd) { onEnd(); } return; }
+    var u = new SpeechSynthesisUtterance(String(text));
+    u.rate = 0.85;
+    u.pitch = 1.1;
+    _audioPlaying = true;
+    u.onend = function() {
+      _audioPlaying = false;
+      if (onEnd) { onEnd(); }
+    };
+    u.onerror = function() {
+      _audioPlaying = false;
+      if (onEnd) { onEnd(); }
+    };
+    speechSynthesis.speak(u);
+  });
 }
 
 function autoMatchAudio(text) {
@@ -753,25 +796,30 @@ function speakOptions(options, index, callback) {
 }
 
 function playAudioCached(name, fallbackText) {
-  // Stop any active clip and cancel speech before playing feedback audio
-  if (_activeClip) {
-    try { _activeClip.pause(); _activeClip.currentTime = 0; _activeClip.onended = null; } catch(e) {}
-    _activeClip = null;
-  }
-  if (window.speechSynthesis) { speechSynthesis.cancel(); }
-  if (audioCache[name]) {
-    try {
-      var clip = audioCache[name];
-      clip.currentTime = 0;
-      _activeClip = clip;
-      clip.onended = function() { _activeClip = null; };
-      clip.play();
-      return;
-    } catch (e) { _activeClip = null; /* fall through */ }
-  }
-  if (fallbackText) {
-    speak(fallbackText);
-  }
+  _audioRequestSeq += 1;
+  var mySeq = _audioRequestSeq;
+
+  _stopAllAudio(function() {
+    if (mySeq !== _audioRequestSeq) { return; } // superseded — bail
+
+    if (audioCache[name]) {
+      try {
+        var clip = audioCache[name];
+        clip.currentTime = 0;
+        _activeClip = clip;
+        _audioPlaying = true;
+        clip.onended = function() { _activeClip = null; _audioPlaying = false; };
+        clip.onerror = function() { _activeClip = null; _audioPlaying = false; };
+        clip.play();
+        return;
+      } catch(e) {
+        _activeClip = null;
+        _audioPlaying = false;
+        /* fall through */
+      }
+    }
+    if (fallbackText) { speak(fallbackText); }
+  });
 }
 
 /* ═══════════════════════════════════════════════════════════
