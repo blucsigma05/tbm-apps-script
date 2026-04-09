@@ -1733,14 +1733,6 @@ function khSubmitGrade(params) {
     var today = getTodayISO_();
     var now = getNowISO_();
 
-    // v57: Dedup check BEFORE grade sheet write to prevent orphan rows
-    var histUID = kid.toLowerCase() + '_GRADE_' + subject.replace(/\s/g, '') + '_' + quarter + '_' + schoolYear.replace(/[^0-9]/g, '');
-    if (historyUIDExists_(histUID)) {
-      stampKHHeartbeat_();
-      return JSON.stringify({ status: 'ok', duplicate: true, kid: kid, subject: subject, grade: grade,
-        ringsAwarded: 0, cashAwarded: 0, message: 'Grade already recorded for this subject/quarter' });
-    }
-
     // 1. Append to KH_Grades
     var gradeSheet = getKHSheet_('KH_Grades');
     if (!gradeSheet) return JSON.stringify({ status: 'error', message: 'KH_Grades tab not found' });
@@ -1748,6 +1740,7 @@ function khSubmitGrade(params) {
 
     // 2. If rings > 0, append to KH_History as a bonus event
     if (reward.rings > 0) {
+      var histUID = kid.toLowerCase() + '_GRADE_' + subject.replace(/\s/g, '') + '_' + quarter + '_' + schoolYear.replace(/[^0-9]/g, '');
       appendHistory_(histUID, 'GRADE', kid, subject + ' Grade: ' + grade, reward.rings, reward.rings, 1, 'bonus', today, now);
     }
 
@@ -4005,6 +3998,52 @@ function resetSandbox_() {
 function resetSandboxSafe() {
   return withMonitor_('resetSandboxSafe', function() {
     return JSON.parse(resetSandbox_());
+  });
+}
+
+// ── COMBINED DAILY-MISSIONS INIT (v57 perf fix) ────────────────────
+/**
+ * Returns all data needed by daily-missions init in ONE server call.
+ * Collapses 4 sequential round-trips (isDay1, getMissionState,
+ * getDesignUnlocked, getDailySchedule) into a single call.
+ */
+function getDailyMissionsInit_(child) {
+  child = String(child || '').toLowerCase();
+  if (child !== 'buggsy' && child !== 'jj') {
+    return { isDay1: false, missionState: {}, designUnlocked: false, schedule: { blocks: [] } };
+  }
+
+  var today = getTodayISO_();
+  var dateKey = 'missions_' + today;
+
+  var result = {
+    isDay1: false,
+    missionState: {},
+    designUnlocked: false,
+    schedule: { blocks: [] },
+    dateKey: dateKey
+  };
+
+  // 1. Day 1 check
+  var day1Result = checkDay1_(child);
+  result.isDay1 = (day1Result && day1Result.isDay1 === true);
+
+  // 2. Mission state
+  result.missionState = getMissionState_(child, dateKey);
+
+  // 3. Design unlock (homework gate)
+  result.designUnlocked = getDesignUnlocked_(child);
+
+  // 4. Daily schedule from curriculum
+  var sched = getDailySchedule_(child);
+  result.schedule = sched || { blocks: [] };
+
+  return result;
+}
+
+function getDailyMissionsInitSafe(child) {
+  return withMonitor_('getDailyMissionsInitSafe', function() {
+    return JSON.parse(JSON.stringify(getDailyMissionsInit_(child)));
   });
 }
 

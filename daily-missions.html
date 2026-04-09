@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v9">
+<meta name="tbm-version" content="v10">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -963,7 +963,7 @@ function isDay1(callback) {
 }
 
 // ============================================================
-// INIT
+// INIT — v10 perf: single combined server call replaces 4 sequential
 // ============================================================
 function init() {
   parseChildParam();
@@ -975,12 +975,72 @@ function init() {
     buildStarfield();
   }
 
+  // Try combined endpoint first (1 call instead of 4)
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        try {
+          var data = (typeof result === 'string') ? JSON.parse(result) : result;
+          if (data && typeof data.isDay1 !== 'undefined') {
+            applyInitData_(data);
+            return;
+          }
+        } catch(e) { /* fall through to legacy */ }
+        initLegacy_();
+      })
+      .withFailureHandler(function() {
+        initLegacy_();
+      })
+      .getDailyMissionsInitSafe(currentChild);
+  } else {
+    initLegacy_();
+  }
+}
+
+// Apply combined init data from getDailyMissionsInitSafe
+function applyInitData_(data) {
+  // 1. Day 1
+  if (data.isDay1 === true) {
+    dayOfWeek = 0;
+  }
+
+  // 2. Mission state
+  if (data.missionState && typeof data.missionState === 'object') {
+    _cachedMissionState = data.missionState;
+    try { localStorage.setItem(todayKey, JSON.stringify(data.missionState)); } catch (e) {}
+  }
+  _serverStateLoaded = true;
+
+  // 3. Design unlock
+  _designUnlocked = (data.designUnlocked === true);
+
+  // 4. Schedule
+  var dynamicBlocks = null;
+  if (data.schedule && data.schedule.blocks && data.schedule.blocks.length > 0) {
+    dynamicSchedule = data.schedule;
+    dynamicBlocks = data.schedule.blocks;
+  }
+
+  if (dayOfWeek !== 0 && dynamicBlocks) {
+    var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
+    if (schedule[dayOfWeek]) {
+      schedule[dayOfWeek].blocks = dynamicBlocks;
+    }
+  }
+  render();
+}
+
+// Legacy fallback: parallel calls 2+3, then schedule, then render
+function initLegacy_() {
   isDay1(function(firstTime) {
     if (firstTime) {
       dayOfWeek = 0;
     }
-    loadMissionStateFromServer(function() {
-      checkDesignUnlock(function() {
+    // Fire calls 2 and 3 in parallel (they are independent)
+    var pendingCalls = 2;
+    function checkReady() {
+      pendingCalls--;
+      if (pendingCalls === 0) {
         loadSchedule(function(dynamicBlocks) {
           if (dayOfWeek !== 0 && dynamicBlocks) {
             var schedule = isJJ() ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
@@ -990,10 +1050,11 @@ function init() {
           }
           render();
         });
-      });
-    });
+      }
+    }
+    loadMissionStateFromServer(checkReady);
+    checkDesignUnlock(checkReady);
   });
-
 }
 
 // ============================================================

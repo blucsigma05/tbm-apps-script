@@ -425,6 +425,7 @@ function serveData(e) {
         'saveDesignChoicesSafe': saveDesignChoicesSafe,
         'getDesignChoicesSafe': getDesignChoicesSafe,
         'getDesignUnlockedSafe': getDesignUnlockedSafe,
+        'getDailyMissionsInitSafe': getDailyMissionsInitSafe,
         'seedAllCurriculumSafe': seedAllCurriculumSafe,
         'getOpsHealthSafe': getOpsHealthSafe,
         'resetSandboxSafe': resetSandboxSafe
