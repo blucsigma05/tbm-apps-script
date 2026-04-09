@@ -201,8 +201,13 @@ arrays with an explicit `tierB_blocked: true` marker so the UI can render a
   jj: {
     name: 'JJ (Kindle)',
     // Tier A (real — only these exist)
-    ringsThisWeek: 8,       // from KH_History education rings
-    streak: 2,              // from KH_History any education event
+    // Codex review 2026-04-09: JJ uses stars* naming consistently, NOT
+    // ringsThisWeek. This preserves the LT-approved "keep the split" — Buggsy
+    // is rings*, JJ is stars*. Half-migration risk: if any code path writes
+    // jj.ringsThisWeek, the UI renders blank. Enforced in _buildChildReport_
+    // below and in Gate 5 checklist item 16.
+    starsThisWeek: 8,       // from KH_History education rings (named stars for JJ)
+    streak: 2,              // streak is shared semantics across children
     // Tier B (blocked)
     sessionsCompleted: null,
     sessionsTotal: 5,
@@ -390,11 +395,17 @@ function getWeeklyProgressSafe() {
 }
 
 function _buildChildReport_(child, bounds, flags) {
+  var isJJ = (child === 'jj');
+  var pointsSum = _sumRingsThisWeek_(child, bounds); // same query, different label
+
   var base = {
-    name: child === 'buggsy' ? 'Buggsy' : 'JJ (Kindle)',
+    name: isJJ ? 'JJ (Kindle)' : 'Buggsy',
     child: child,
     // Tier A — real data
-    ringsThisWeek: _sumRingsThisWeek_(child, bounds),
+    // Naming split enforced: Buggsy uses rings*, JJ uses stars*.
+    // Using conditional keys keeps the backend payload self-consistent and
+    // prevents half-migration — if UI code reads jj.ringsThisWeek it gets
+    // undefined and the bug is loud, not silent.
     streak: _computeStreak_(child),
     sessionsCompleted: null,
     sessionsTotal: 5,
@@ -408,10 +419,17 @@ function _buildChildReport_(child, bounds, flags) {
     tierB_blocked: flags.tierBBlocked,
     tierB_reason: flags.tierBBlocked ? 'jj-lesson-run-data-model' : null,
     // Tier C (future)
-    ringsTotal: null,
     timeSpent: null,
     alerts: []
   };
+
+  if (isJJ) {
+    base.starsThisWeek = pointsSum;
+    base.starsTotal = null; // Tier C
+  } else {
+    base.ringsThisWeek = pointsSum;
+    base.ringsTotal = null; // Tier C
+  }
 
   if (flags.hasKHEducation) {
     var eduAgg = _aggregateKHEducation_(child, bounds);
@@ -513,7 +531,7 @@ grep -n "getWeeklyProgressVersion" Kidshub.js     → returns 2
 | 2 | Buggsy weekLog populated | Array has 5 entries, one per Mon-Fri, with `{day, status, score}` |
 | 3 | Buggsy subjects populated | Array of `{name, score, total}` grouped by subject |
 | 4 | Buggsy avgScore | `avgScore` is mean of `Score` column, not the rings/8 heuristic |
-| 5 | JJ shows real rings + streak | `jj.ringsThisWeek` and `jj.streak` are non-zero when JJ did work |
+| 5 | JJ shows real stars + streak | `jj.starsThisWeek` and `jj.streak` are non-zero when JJ did work |
 | 6 | JJ shows tierB_blocked marker | `jj.tierB_blocked === true` in Phase 1 |
 | 7 | JJ UI renders placeholder | Tier B section shows "Coming soon" text, not silent zeros |
 | 8 | Normalization bridge removed | grep for `b.ringsEarned` and `b.streakDays` in ProgressReport.html returns 0 |
@@ -524,6 +542,7 @@ grep -n "getWeeklyProgressVersion" Kidshub.js     → returns 2
 | 13 | ES5 compliant | Client-side changes don't introduce banned patterns |
 | 14 | Phase 2 readiness | `_buildChildReport_` accepts `hasKHLessonRuns: true` flag cleanly when Task 1 ships |
 | 15 | Smoke + regression pass | `runTests` JSON shows no new failures |
+| 16 | Naming split clean | `buggsy.starsThisWeek` is undefined AND `jj.ringsThisWeek` is undefined AND `buggsy.ringsThisWeek` is a number AND `jj.starsThisWeek` is a number. Enforced in `_buildChildReport_` via conditional field assignment. Per Codex non-blocking note 2026-04-09. |
 
 ## Open questions for LT review
 
