@@ -37,6 +37,7 @@ import glob as _glob
 import json
 import os
 import re as _re
+import subprocess
 import sys
 import time
 import urllib.request
@@ -254,6 +255,28 @@ def truncate_preserving_edges(text, limit, label):
     tail = remaining - head
     return text[:head] + marker + text[-tail:], True
 
+
+def read_changed_file_content(fname):
+    """Prefer PR-head content, but fall back to the working tree for local runs."""
+    git_path = fname.replace("\\", "/")
+
+    try:
+        return subprocess.check_output(
+            ["git", "show", "pr-head:" + git_path],
+            stderr=subprocess.DEVNULL,
+        ).decode("utf-8", errors="replace")
+    except Exception:
+        pass
+
+    if not os.path.isfile(fname):
+        return None
+
+    try:
+        with open(fname, encoding="utf-8", errors="replace") as fh:
+            return fh.read()
+    except Exception:
+        return None
+
 def build_context(diff_text, changed_files, related_files=None):
     """Build review context from diff, changed files, and related files.
 
@@ -278,12 +301,8 @@ def build_context(diff_text, changed_files, related_files=None):
     per_file = max(8000, min(PER_FILE_CAP, remaining // file_count if file_count else PER_FILE_CAP))
 
     for fname in changed_files:
-        if not os.path.isfile(fname):
-            continue
-        try:
-            with open(fname, encoding="utf-8", errors="replace") as fh:
-                content = fh.read()
-        except Exception:
+        content = read_changed_file_content(fname)
+        if content is None:
             continue
 
         header = "\n=== FULL FILE: %s (%d chars) ===\n" % (fname, len(content))
@@ -525,7 +544,7 @@ def format_comment(report, truncation_notes, error_info=None, effective_verdict=
     lines.append("## %s Codex PR Review: %s\n" % (icon, verdict))
 
     if truncation_notes:
-        lines.append("> \u26a0\ufe0f **Review is INCONCLUSIVE due to truncation.** Manual audit recommended.")
+        lines.append("> \u26a0\ufe0f **Review is INCONCLUSIVE due to truncation.** Manual audit required.")
         lines.append("> Context: %s\n" % "; ".join(truncation_notes))
 
     if report.get("summary"):
