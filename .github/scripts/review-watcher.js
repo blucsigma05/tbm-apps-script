@@ -66,6 +66,111 @@ function parsePreviousAction(body) {
   return body.substring(valueStart, valueEnd).trim();
 }
 
+// ── Aggregate summary for terminal states ──────────────────────────
+// Parse all pipeline-review-fixer comments to collect fix history
+// across cycles. Returns an array of cycle records.
+
+var FIXER_MARKER = '<!-- pipeline-review-fixer -->';
+
+function parseFixerComments(issueComments) {
+  var cycles = [];
+  for (var i = 0; i < issueComments.length; i++) {
+    var body = String(issueComments[i].body || '');
+    if (body.indexOf(FIXER_MARKER) === -1) continue;
+
+    var cycle = { cycle: 0, result: '', supported: 0, unsupported: 0, files: [] };
+
+    // Parse Result line
+    var resultMatch = body.match(/- Result:\s*(\S+)/i);
+    if (resultMatch) cycle.result = resultMatch[1].toUpperCase();
+
+    // Parse Cycle line (e.g. "- Cycle: 2/3")
+    var cycleMatch = body.match(/- Cycle:\s*(\d+)/);
+    if (cycleMatch) cycle.cycle = parseInt(cycleMatch[1], 10);
+
+    // Parse Supported mechanical threads count
+    var supportedMatch = body.match(/- Supported mechanical threads:\s*(\d+)/i);
+    if (supportedMatch) cycle.supported = parseInt(supportedMatch[1], 10);
+
+    // Parse Unsupported threads count
+    var unsupportedMatch = body.match(/- Unsupported threads:\s*(\d+)/i);
+    if (unsupportedMatch) cycle.unsupported = parseInt(unsupportedMatch[1], 10);
+
+    // Parse Files changed section
+    var filesSection = body.indexOf('### Files changed');
+    var filesEnd = body.indexOf('###', filesSection + 1);
+    if (filesSection !== -1) {
+      var filesBlock = filesEnd !== -1
+        ? body.substring(filesSection, filesEnd)
+        : body.substring(filesSection);
+      var fileLines = filesBlock.split('\n');
+      for (var f = 0; f < fileLines.length; f++) {
+        var fileLine = fileLines[f].trim();
+        if (fileLine.indexOf('- ') === 0 && fileLine !== '- none') {
+          cycle.files.push(fileLine.substring(2).trim());
+        }
+      }
+    }
+
+    cycles.push(cycle);
+  }
+  return cycles;
+}
+
+function buildAggregateSummary(cycles) {
+  var totalSupported = 0;
+  var totalUnsupported = 0;
+  var allFiles = {};
+  var appliedCycles = 0;
+
+  for (var i = 0; i < cycles.length; i++) {
+    var c = cycles[i];
+    totalSupported += c.supported;
+    totalUnsupported += c.unsupported;
+    if (c.result === 'APPLIED') appliedCycles++;
+    for (var f = 0; f < c.files.length; f++) {
+      allFiles[c.files[f]] = true;
+    }
+  }
+
+  var fileList = Object.keys(allFiles);
+  return {
+    totalCycles: cycles.length,
+    appliedCycles: appliedCycles,
+    totalSupported: totalSupported,
+    totalUnsupported: totalUnsupported,
+    allFiles: fileList,
+    cycles: cycles
+  };
+}
+
+function renderAggregateSummarySection(aggregate) {
+  var lines = [
+    '',
+    '### Aggregate Summary',
+    '',
+    '- Total fix cycles: ' + String(aggregate.totalCycles),
+    '- Cycles with changes: ' + String(aggregate.appliedCycles),
+    '- Total auto-fixes applied: ' + String(aggregate.totalSupported),
+    '- Total manual (unsupported): ' + String(aggregate.totalUnsupported),
+    '- Files touched: ' + (aggregate.allFiles.length ? aggregate.allFiles.join(', ') : 'none')
+  ];
+
+  if (aggregate.cycles.length > 0) {
+    lines.push('');
+    lines.push('**Cycle-by-cycle breakdown:**');
+    for (var i = 0; i < aggregate.cycles.length; i++) {
+      var c = aggregate.cycles[i];
+      lines.push('- Cycle ' + String(c.cycle) + ': ' + c.result +
+        ' (auto: ' + String(c.supported) +
+        ', manual: ' + String(c.unsupported) +
+        ', files: ' + (c.files.length ? c.files.join(', ') : 'none') + ')');
+    }
+  }
+
+  return lines;
+}
+
 function isCodexSignal(login, body) {
   const actor = String(login || '').toLowerCase();
   const text = String(body || '').toLowerCase();
@@ -506,7 +611,11 @@ async function main() {
     action = 'READY_TO_MERGE';
   }
 
-  const body = [
+  // Build aggregate summary from fixer comments for terminal states
+  var fixerCycles = parseFixerComments(issueComments);
+  var aggregate = buildAggregateSummary(fixerCycles);
+
+  var bodyLines = [
     MARKER,
     '<!-- pipeline-action: ' + action + ' -->',
     '## Pipeline Review Summary',
@@ -517,10 +626,25 @@ async function main() {
     '- Unresolved actionable threads: ' + String(unresolvedThreads),
     '- Approval state: ' + approvalState,
     '- Fix cycle: ' + String(fixCycle) + '/' + String(MAX_FIX_CYCLES),
-    '- Action: ' + action,
-    '',
-    'Last updated: ' + new Date().toISOString()
-  ].join('\n');
+    '- Action: ' + action
+  ];
+
+  if ((action === 'STOPPED' || action === 'READY_TO_MERGE') && aggregate.totalCycles > 0) {
+    var aggregateLines = renderAggregateSummarySection(aggregate);
+    for (var al = 0; al < aggregateLines.length; al++) {
+      bodyLines.push(aggregateLines[al]);
+    }
+    if (action === 'STOPPED' && aggregate.totalUnsupported > 0) {
+      bodyLines.push('');
+      bodyLines.push('**Escalation needed:** ' + String(aggregate.totalUnsupported) +
+        ' unresolved thread(s) require manual review.');
+    }
+  }
+
+  bodyLines.push('');
+  bodyLines.push('Last updated: ' + new Date().toISOString());
+
+  const body = bodyLines.join('\n');
 
   const existingComment = issueComments.find((comment) => String(comment.body || '').indexOf(MARKER) !== -1);
   const previousAction = existingComment ? parsePreviousAction(existingComment.body) : '';
@@ -552,11 +676,20 @@ async function main() {
     var relaySummary = 'PR #' + prNumber + ' needs fixes.';
 
     if (action === 'READY_TO_MERGE') {
-      relayType = 'review_ready';
-      relaySummary = 'PR #' + prNumber + ' reviews complete. Ready to merge.';
+      relayType = 'loop_complete';
+      relaySummary = 'PR #' + prNumber + ' ready to merge. ' +
+        String(aggregate.totalSupported) + ' total fixes applied across ' +
+        String(aggregate.totalCycles) + ' cycle(s). All checks green.';
     } else if (action === 'STOPPED') {
-      relayType = 'pipeline_stalled';
-      relaySummary = 'PR #' + prNumber + ' stalled after review-fix-' + String(fixCycle) + ' hit the cycle cap.';
+      relayType = 'loop_complete';
+      var filesStr = aggregate.allFiles.length
+        ? aggregate.allFiles.join(', ')
+        : 'none';
+      relaySummary = 'PR #' + prNumber + ' stalled after ' +
+        String(fixCycle) + ' fix cycle(s). Fixed: ' +
+        String(aggregate.totalSupported) + ' threads auto. Remaining: ' +
+        String(aggregate.totalUnsupported) + ' threads manual. Files touched: ' +
+        filesStr + '.';
     } else if (ciState.failed) {
       relaySummary = 'PR #' + prNumber + ' needs fixes. CI is ' + ciState.label + '.';
     } else if (codexState.failed) {
@@ -582,7 +715,10 @@ async function main() {
       await sendPushover(
         'PR #' + prNumber + ' Ready',
         'CI: ' + ciState.label + ' | Codex: ' + codexState.label +
-        ' | Threads: ' + unresolvedThreads + '\nReady for your review.',
+        ' | Threads: ' + unresolvedThreads +
+        '\nAuto-fixed: ' + String(aggregate.totalSupported) +
+        ' across ' + String(aggregate.totalCycles) + ' cycle(s).' +
+        '\nReady for your review.',
         -1,
         prHtmlUrl
       );
@@ -590,8 +726,10 @@ async function main() {
       await sendPushover(
         'PR #' + prNumber + ' Stalled',
         'Fix cycle ' + fixCycle + '/' + MAX_FIX_CYCLES + ' — cap reached.\n' +
-        'CI: ' + ciState.label + ' | Codex: ' + codexState.label +
-        ' | Threads: ' + unresolvedThreads + '\nNeeds manual intervention.',
+        'Auto-fixed: ' + String(aggregate.totalSupported) +
+        ' | Manual: ' + String(aggregate.totalUnsupported) +
+        ' | Files: ' + (aggregate.allFiles.length ? aggregate.allFiles.join(', ') : 'none') +
+        '\nNeeds manual intervention.',
         0,
         prHtmlUrl
       );
