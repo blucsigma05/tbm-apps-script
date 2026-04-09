@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v74 — Apps Script Router (TBM Consolidated)
+// Code.gs v75 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,17 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 74; }
+// v75: Feature flag — JJ lesson run completion contract (specs/jj-completion-contract.md)
+// Read from Script Property 'LESSON_RUNS_ENABLED' (set to '1' to enable).
+// Default: off. Dark rollout until Phase 2 client integration.
+function isLessonRunsEnabled_() {
+  try {
+    var v = PropertiesService.getScriptProperties().getProperty('LESSON_RUNS_ENABLED');
+    return v === '1' || v === 'true';
+  } catch (e) { return false; }
+}
+
+function getCodeVersion() { return 75; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -428,7 +438,11 @@ function serveData(e) {
         'getDailyMissionsInitSafe': getDailyMissionsInitSafe,
         'seedAllCurriculumSafe': seedAllCurriculumSafe,
         'getOpsHealthSafe': getOpsHealthSafe,
-        'resetSandboxSafe': resetSandboxSafe
+        'resetSandboxSafe': resetSandboxSafe,
+        'startLessonRunSafe': startLessonRunSafe,
+        'saveLessonRunStateSafe': saveLessonRunStateSafe,
+        'getLessonRunResumeSafe': getLessonRunResumeSafe,
+        'completeLessonRunSafe': completeLessonRunSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
@@ -1984,4 +1998,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v74
+// END OF FILE — Code.gs v75
