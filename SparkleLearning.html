@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v11">
+  <meta name="tbm-version" content="v12">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -638,6 +638,7 @@ function speak(text, onEndOrKey, maybeOnEnd) {
     try { _activeClip.pause(); _activeClip.currentTime = 0; _activeClip.onended = null; } catch(e) {}
     _activeClip = null;
   }
+  if (window.speechSynthesis) { speechSynthesis.cancel(); }
 
   // Try ElevenLabs cache
   if (audioKey && audioCache[audioKey]) {
@@ -780,8 +781,9 @@ function renderShape(shape, color, size) {
   var c = COLOR_MAP[color] || color || '#ec4899';
   var s = size || 48;
   var half = s / 2;
+  var sh = String(shape || 'circle').toLowerCase().replace(/s$/, '');
 
-  switch (shape) {
+  switch (sh) {
     case 'circle':
       return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
         '<circle cx="50" cy="50" r="45" fill="' + c + '"/></svg>';
@@ -1505,6 +1507,10 @@ function loadContent() {
       .withSuccessHandler(function(content) {
         if (content && content.content && content.content.activities) {
           todayContent = content.content;
+          // Cap at 10 activities per session — 15 is too long for pre-K
+          if (todayContent.activities.length > 10) {
+            todayContent.activities = todayContent.activities.slice(0, 10);
+          }
           preloadCurriculumAudio(todayContent.activities);
           showReadyScreen(todayContent);
         } else {
