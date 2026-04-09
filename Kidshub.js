@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v59 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v60 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 59; }
+function getKidsHubVersion() { return 60; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2925,125 +2925,297 @@ function verifyAudioFiles(expectedFilenames) {
 }
 
 /**
- * v29: Progress report data stub — called by ProgressReport.html.
- * Returns skeleton data structure. Wire to real sheet data when
- * KH_Homework and KH_SparkleProgress sheets have data flowing.
+ * v30: Parent-facing weekly progress report data.
+ *
+ * Tier classification (see specs/parent-reporting-scope.md):
+ *   Tier A (real, this week):   populated from KH_History + KH_Education
+ *   Tier B (blocked for JJ):    returns null + tierB_blocked=true until
+ *                               #133 Phase 2 lands KH_LessonRuns
+ *   Tier C (future):            lifetime totals, time tracking, alerts
+ *
+ * Naming split enforced: Buggsy uses ringsThisWeek/ringsTotal,
+ * JJ uses starsThisWeek/starsTotal. Conditional field assignment in
+ * _buildChildReport_ means the UI reading the wrong side gets undefined,
+ * which is louder than a silent zero.
+ *
+ * Closes #137 (Phase 1).
  */
+function getWeeklyProgressVersion() { return 2; }
+
 function getWeeklyProgressSafe() {
   return withMonitor_('getWeeklyProgressSafe', function() {
-    var today = new Date();
-    var dayOfWeek = today.getDay();
-    var mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    var monday = new Date(today);
-    monday.setDate(today.getDate() + mondayOffset);
-    monday.setHours(0, 0, 0, 0);
-    var mondayISO = monday.getFullYear() + '-' + (monday.getMonth() + 1 < 10 ? '0' : '') + (monday.getMonth() + 1) + '-' + (monday.getDate() < 10 ? '0' : '') + monday.getDate();
-
-    var children = ['buggsy', 'jj'];
-    var result = {};
-
-    // Read KH_History for chores this week
+    var bounds = _computeWeekBounds_();
     var histData = readSheet_('KH_History');
-    var histH = histData && histData.length > 0 ? histData[0].map(String) : [];
-
-    // Read KH_Education for daily homework data
-    // Schema: Timestamp,Child,Module,Subject,Score,AutoGraded,ResponseText,Status,ParentNotes,RingsAwarded,ReviewTimestamp,GeminiFeedback
     var eduData = readSheet_('KH_Education');
-    var eduH = eduData && eduData.length > 0 ? eduData[0].map(String) : [];
 
-    for (var ci = 0; ci < children.length; ci++) {
-      var child = children[ci];
-      var choresCompleted = 0, ringsEarned = 0, streakDays = 0;
-      var modulesCompleted = 0, pendingReview = 0, mcRingsTotal = 0, mcCount = 0;
-      var subjectCounts = {};
-      var uniqueDays = {};
+    var buggsy = _buildChildReport_('buggsy', bounds, histData, eduData, {
+      hasKHEducation: true,
+      tierBBlocked: false
+    });
 
-      // Aggregate KH_History this week
-      if (histData && histH.length > 0) {
-        var hChild = histH.indexOf('Child');
-        var hDate = histH.indexOf('Date');
-        var hPoints = histH.indexOf('Points');
-        var hType = histH.indexOf('Event_Type');
-        for (var hi = 1; hi < histData.length; hi++) {
-          var row = histData[hi];
-          if (String(row[hChild] || '').toLowerCase() !== child) continue;
-          var rowDate = String(row[hDate] || '');
-          if (rowDate < mondayISO) continue;
-          var evType = String(row[hType] || '');
-          if (evType === 'completion' || evType === 'approval') {
-            choresCompleted++;
-            ringsEarned += Number(row[hPoints]) || 0;
-            uniqueDays[rowDate] = true;
-          }
-        }
+    var jj = _buildChildReport_('jj', bounds, histData, eduData, {
+      hasKHEducation: false, // JJ does not write to KH_Education
+      tierBBlocked: true
+    });
+
+    return JSON.parse(JSON.stringify({
+      weekLabel: bounds.label,
+      weekStart: bounds.startISO,
+      weekEnd: bounds.endISO,
+      buggsy: buggsy,
+      jj: jj,
+      meta: {
+        generatedAt: new Date().toISOString(),
+        source: 'KH_History + KH_Education',
+        blockedTierB: ['jj'],
+        version: 2
       }
+    }));
+  });
+}
 
-      // Streak: count consecutive days with chores from today backwards
-      var dayKeys = Object.keys(uniqueDays).sort().reverse();
-      var checkDate = new Date(today);
-      for (var di = 0; di < 7; di++) {
-        var checkISO = checkDate.getFullYear() + '-' + (checkDate.getMonth() + 1 < 10 ? '0' : '') + (checkDate.getMonth() + 1) + '-' + (checkDate.getDate() < 10 ? '0' : '') + checkDate.getDate();
-        if (uniqueDays[checkISO]) { streakDays++; } else if (di > 0) { break; }
-        checkDate.setDate(checkDate.getDate() - 1);
-      }
+function _computeWeekBounds_() {
+  var today = new Date();
+  var dayOfWeek = today.getDay();
+  var mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  var monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+  monday.setHours(0, 0, 0, 0);
+  var friday = new Date(monday);
+  friday.setDate(monday.getDate() + 4);
+  var sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  return {
+    monday: monday,
+    friday: friday,
+    sunday: sunday,
+    startISO: _isoDate_(monday),
+    endISO: _isoDate_(sunday),
+    label: 'Week of ' + (monday.getMonth() + 1) + '/' + monday.getDate()
+  };
+}
 
-      // Aggregate KH_Education this week (daily homework submissions)
-      if (eduData && eduH.length > 0) {
-        var eChild = eduH.indexOf('Child');
-        var eTimestamp = eduH.indexOf('Timestamp');
-        var eSubject = eduH.indexOf('Subject');
-        var eScore = eduH.indexOf('Score');
-        var eAutoGraded = eduH.indexOf('AutoGraded');
-        var eStatus = eduH.indexOf('Status');
-        var eRings = eduH.indexOf('RingsAwarded');
-        for (var ei = 1; ei < eduData.length; ei++) {
-          var erow = eduData[ei];
-          if (String(erow[eChild] || '').toLowerCase() !== child) continue;
-          // Filter to this week using timestamp date portion
-          var ts = erow[eTimestamp];
-          var tsDate = ts instanceof Date
-            ? (ts.getFullYear() + '-' + (ts.getMonth() + 1 < 10 ? '0' : '') + (ts.getMonth() + 1) + '-' + (ts.getDate() < 10 ? '0' : '') + ts.getDate())
-            : String(ts || '').slice(0, 10);
-          if (tsDate < mondayISO) continue;
-          modulesCompleted++;
-          var rowStatus = String(erow[eStatus] || '');
-          if (rowStatus === 'pending_review') pendingReview++;
-          var isAuto = String(erow[eAutoGraded] || '').toLowerCase();
-          if (isAuto === 'true' || erow[eAutoGraded] === true) {
-            mcRingsTotal += Number(erow[eRings]) || 0;
-            mcCount++;
-          }
-          var subj = String(erow[eSubject] || 'Other');
-          subjectCounts[subj] = (subjectCounts[subj] || 0) + 1;
-        }
-      }
+function _isoDate_(d) {
+  var m = d.getMonth() + 1;
+  var day = d.getDate();
+  return d.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (day < 10 ? '0' : '') + day;
+}
 
-      var topSubject = '';
-      var topCount = 0;
-      for (var sk in subjectCounts) {
-        if (subjectCounts[sk] > topCount) { topCount = subjectCounts[sk]; topSubject = sk; }
-      }
+function _weekdayLabel_(dayIdx) {
+  // 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri
+  return ['Mon','Tue','Wed','Thu','Fri'][dayIdx] || '';
+}
 
-      // accuracy: for MC modules, rings/8 per module ≈ score %. Capped at 1.0.
-      var accuracy = (mcCount > 0 && mcRingsTotal > 0)
-        ? Math.min(1, Math.round((mcRingsTotal / (mcCount * 8)) * 100) / 100)
-        : 0;
+// Sum Points from KH_History where event_type is completion, approval, or education
+// for this child this week (bounds.startISO inclusive → bounds.endISO inclusive).
+// Also returns unique-day set for streak calculation.
+function _sumRingsThisWeek_(child, bounds, histData) {
+  var result = { pointsSum: 0, uniqueDays: {} };
+  if (!histData || histData.length < 2) return result;
+  var h = histData[0].map(String);
+  var hChild = h.indexOf('Child');
+  var hDate = h.indexOf('Date');
+  var hPoints = h.indexOf('Points');
+  var hType = h.indexOf('Event_Type');
+  if (hChild < 0 || hDate < 0 || hPoints < 0 || hType < 0) return result;
+  for (var i = 1; i < histData.length; i++) {
+    var row = histData[i];
+    if (String(row[hChild] || '').toLowerCase() !== child) continue;
+    var rowDate = String(row[hDate] || '').slice(0, 10);
+    if (rowDate < bounds.startISO || rowDate > bounds.endISO) continue;
+    var evType = String(row[hType] || '');
+    if (evType !== 'completion' && evType !== 'approval' && evType !== 'education') continue;
+    result.pointsSum += Number(row[hPoints]) || 0;
+    result.uniqueDays[rowDate] = true;
+  }
+  return result;
+}
 
-      result[child] = {
-        child: child,
-        weekLabel: 'Week of ' + (monday.getMonth() + 1) + '/' + monday.getDate(),
-        choresCompleted: choresCompleted,
-        ringsEarned: ringsEarned,
-        questionsAnswered: modulesCompleted,
-        accuracy: accuracy,
-        streakDays: streakDays,
-        topSubject: topSubject || 'None yet',
-        pendingReview: pendingReview
-      };
+// Walk backwards from today counting consecutive days with any
+// completion/approval/education row. Accepts the uniqueDays set from _sumRingsThisWeek_.
+// Gap on a day before today breaks the streak; missing today only breaks if yesterday
+// also missed (today's zero is allowed at the start of the day).
+function _computeStreakFromDays_(uniqueDays) {
+  var streak = 0;
+  var checkDate = new Date();
+  for (var di = 0; di < 30; di++) {
+    var iso = _isoDate_(checkDate);
+    if (uniqueDays[iso]) {
+      streak++;
+    } else if (di > 0) {
+      break;
+    }
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+  return streak;
+}
+
+// Aggregate KH_Education rows for one child this week into:
+//   count        — sessionsCompleted
+//   avgScore     — mean of Score column for auto-graded rows (0 if none)
+//   pendingReview — count of rows with Status='pending_review'
+//   weekLog      — 5 entries Mon-Fri of {day, status, score}
+//   subjects     — array of {name, score, total} grouped by Subject
+function _aggregateKHEducation_(child, bounds, eduData) {
+  var out = {
+    count: 0,
+    avgScore: null,
+    pendingReview: 0,
+    weekLog: [],
+    subjects: []
+  };
+  // Initialize 5-day weekLog with position-aware default status:
+  //   past empty days → 'missed' (no activity recorded after the day passed)
+  //   today or future → 'none'  (not yet active; renderer shows dimmed/empty cell)
+  var todayIso = getTodayISO_();
+  var initDate = new Date(bounds.monday);
+  for (var di = 0; di < 5; di++) {
+    var dayIso = _isoDate_(initDate);
+    var defaultStatus = (dayIso < todayIso) ? 'missed' : 'none';
+    out.weekLog.push({ day: _weekdayLabel_(di), status: defaultStatus, score: null });
+    initDate.setDate(initDate.getDate() + 1);
+  }
+  if (!eduData || eduData.length < 2) return out;
+
+  var h = eduData[0].map(String);
+  var eChild = h.indexOf('Child');
+  var eTimestamp = h.indexOf('Timestamp');
+  var eSubject = h.indexOf('Subject');
+  var eScore = h.indexOf('Score');
+  var eAutoGraded = h.indexOf('AutoGraded');
+  var eStatus = h.indexOf('Status');
+  if (eChild < 0 || eTimestamp < 0) return out;
+
+  var scoreSum = 0;
+  var scoreCount = 0;
+  var subjectAgg = {}; // name → { score, total }
+  var dayAgg = {}; // iso → { status, scoreSum, scoreCount }
+
+  for (var i = 1; i < eduData.length; i++) {
+    var row = eduData[i];
+    if (String(row[eChild] || '').toLowerCase() !== child) continue;
+    var ts = row[eTimestamp];
+    var tsIso;
+    if (ts instanceof Date) {
+      tsIso = _isoDate_(ts);
+    } else {
+      tsIso = String(ts || '').slice(0, 10);
+    }
+    if (tsIso < bounds.startISO || tsIso > bounds.endISO) continue;
+
+    out.count++;
+    var statusVal = String(row[eStatus] || '');
+    if (statusVal === 'pending_review') out.pendingReview++;
+
+    var isAuto = String(row[eAutoGraded] || '').toLowerCase() === 'true' || row[eAutoGraded] === true;
+    var scoreVal = Number(row[eScore]) || 0;
+    if (isAuto && eScore >= 0) {
+      scoreSum += scoreVal;
+      scoreCount++;
     }
 
-    return JSON.parse(JSON.stringify(result));
-  });
+    var subjName = String(row[eSubject] || 'Other');
+    if (!subjectAgg[subjName]) subjectAgg[subjName] = { score: 0, total: 0 };
+    subjectAgg[subjName].total++;
+    if (isAuto) subjectAgg[subjName].score++;
+
+    // Track per-day status
+    if (!dayAgg[tsIso]) dayAgg[tsIso] = { status: 'none', scoreSum: 0, scoreCount: 0 };
+    var dayEntry = dayAgg[tsIso];
+    if (statusVal === 'pending_review') {
+      dayEntry.status = 'pending';
+    } else if (statusVal === 'auto_approved' || statusVal === 'approved') {
+      dayEntry.status = 'done';
+    }
+    if (isAuto) {
+      dayEntry.scoreSum += scoreVal;
+      dayEntry.scoreCount++;
+    }
+  }
+
+  if (scoreCount > 0) out.avgScore = Math.round(scoreSum / scoreCount);
+
+  // Fill weekLog Mon-Fri from dayAgg
+  var checkDate = new Date(bounds.monday);
+  for (var wi = 0; wi < 5; wi++) {
+    var wiso = _isoDate_(checkDate);
+    if (dayAgg[wiso]) {
+      out.weekLog[wi].status = dayAgg[wiso].status;
+      if (dayAgg[wiso].scoreCount > 0) {
+        out.weekLog[wi].score = Math.round(dayAgg[wiso].scoreSum / dayAgg[wiso].scoreCount);
+      }
+    }
+    checkDate.setDate(checkDate.getDate() + 1);
+  }
+
+  // Flatten subjects
+  var subjKeys = Object.keys(subjectAgg);
+  for (var sk = 0; sk < subjKeys.length; sk++) {
+    var key = subjKeys[sk];
+    out.subjects.push({
+      name: key,
+      score: subjectAgg[key].score,
+      total: subjectAgg[key].total
+    });
+  }
+
+  return out;
+}
+
+function _buildChildReport_(child, bounds, histData, eduData, flags) {
+  var isJJ = (child === 'jj');
+  var histAgg = _sumRingsThisWeek_(child, bounds, histData);
+  var streak = _computeStreakFromDays_(histAgg.uniqueDays);
+
+  // Build the base shape. Fields common to both children live here.
+  // Child-specific naming split (ringsThisWeek vs starsThisWeek) is applied below.
+  var base = {
+    name: isJJ ? 'JJ (Kindle)' : 'Buggsy',
+    child: child,
+    // Tier A — fields populated downstream
+    streak: streak,
+    sessionsCompleted: null,
+    sessionsTotal: 5,
+    completionRate: null,
+    avgScore: null,
+    pendingReview: 0,
+    weekLog: [],
+    subjects: [],
+    // Tier B (blocked marker for client UI)
+    milestones: [],
+    tierB_blocked: !!flags.tierBBlocked,
+    tierB_reason: flags.tierBBlocked ? 'jj-lesson-run-data-model' : null,
+    // Tier C (future)
+    timeSpent: null,
+    alerts: []
+  };
+
+  // Naming split: Buggsy → rings*, JJ → stars*. UI code reading the wrong
+  // side gets undefined, which is louder than a silent zero. Enforced by
+  // Gate 5 checklist item 16.
+  if (isJJ) {
+    base.starsThisWeek = histAgg.pointsSum;
+    base.starsTotal = null; // Tier C
+  } else {
+    base.ringsThisWeek = histAgg.pointsSum;
+    base.ringsTotal = null; // Tier C
+  }
+
+  if (flags.hasKHEducation) {
+    var eduAgg = _aggregateKHEducation_(child, bounds, eduData);
+    base.sessionsCompleted = eduAgg.count;
+    base.completionRate = Math.min(100, Math.round((eduAgg.count / base.sessionsTotal) * 100));
+    base.avgScore = eduAgg.avgScore;
+    base.pendingReview = eduAgg.pendingReview;
+    base.weekLog = eduAgg.weekLog;
+    base.subjects = eduAgg.subjects;
+  }
+
+  // Phase 2 (#133 lands KH_LessonRuns): merge in JJ data from lesson runs.
+  // Intentionally omitted from Phase 1 — branch will be added when
+  // _aggregateKHLessonRuns_ helper ships in the Phase 2 PR.
+
+  return base;
 }
 
 
@@ -4414,5 +4586,5 @@ function getDailyMissionsInitSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v59
+// END OF FILE — KidsHub.gs v60
 // ════════════════════════════════════════════════════════════════════

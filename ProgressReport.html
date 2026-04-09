@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="progress-report">
-<meta name="tbm-version" content="v2">
+<meta name="tbm-version" content="v4">
 <title>Weekly Progress Report</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -314,6 +314,36 @@ main {
   color: #64748B;
   font-size: 14px;
 }
+.load-error-block {
+  text-align: center;
+  padding: 40px 20px;
+}
+.load-error-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+  color: #EF4444;
+}
+.load-error-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #E2E8F0;
+  margin-bottom: 6px;
+}
+.load-error-detail {
+  font-size: 12px;
+  color: #64748B;
+  margin-bottom: 16px;
+}
+.load-error-retry {
+  background: #3B82F6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
 
 /* Overview summary */
 .overview-card {
@@ -559,6 +589,14 @@ function buildAlert(icon, text, type) {
 }
 
 function buildDayRow(dayName, status, score) {
+  // 'none' = today or future day with no data yet — render dimmed empty cell
+  if (status === 'none') {
+    return '<div class="day-row">' +
+      '<div class="day-name">' + dayName + '</div>' +
+      '<div class="day-status" style="color:#475569;">--</div>' +
+      '<div class="day-score" style="color:#475569;">--</div>' +
+      '</div>';
+  }
   var statusClass = 'pending';
   var statusText = 'Pending';
   if (status === 'done') { statusClass = 'done'; statusText = 'Completed'; }
@@ -577,13 +615,13 @@ function renderBuggsy(data) {
   var b = data.buggsy;
   var html = '';
 
-  // Normalize field names — handle both real backend shape and mock shape
-  var rings = b.ringsThisWeek !== undefined ? b.ringsThisWeek : (b.ringsEarned || 0);
-  var streak = b.streak !== undefined ? b.streak : (b.streakDays || 0);
-  var done = b.sessionsCompleted !== undefined ? b.sessionsCompleted : (b.questionsAnswered || 0);
+  // Direct field reads — Phase 1 real shape (specs/parent-reporting-scope.md)
+  var rings = b.ringsThisWeek || 0;
+  var streak = b.streak || 0;
+  var done = b.sessionsCompleted || 0;
   var total = b.sessionsTotal || 5;
-  var avgPct = b.avgScore !== undefined ? Math.round(b.avgScore) : (b.accuracy !== undefined ? Math.round(b.accuracy * 100) : null);
-  var completion = b.completionRate !== undefined ? b.completionRate : Math.min(100, Math.round((done / total) * 100));
+  var avgPct = b.avgScore !== null && b.avgScore !== undefined ? Math.round(b.avgScore) : null;
+  var completion = b.completionRate !== null && b.completionRate !== undefined ? b.completionRate : Math.min(100, Math.round((done / total) * 100));
   var pending = b.pendingReview || 0;
 
   html += '<div class="section-label">WEEKLY STATS</div>';
@@ -646,15 +684,27 @@ function renderJJ(data) {
   var j = data.jj;
   var html = '';
 
+  // Tier A fields available in Phase 1: starsThisWeek, streak
   html += '<div class="section-label">WEEKLY STATS</div>';
   html += '<div class="stat-grid">';
-  html += buildStatCard(j.starsThisWeek, 'Stars This Week');
-  html += buildStatCard(j.streak, 'Day Streak');
-  html += buildStatCard(j.sessionsCompleted + '/' + j.sessionsTotal, 'Sessions');
+  html += buildStatCard(j.starsThisWeek || 0, 'Stars This Week');
+  html += buildStatCard(j.streak || 0, 'Day Streak');
   html += '</div>';
 
+  // Tier B blocked: session/weekLog/subjects/avgScore/milestones unavailable until Phase 2 (#133)
+  if (j.tierB_blocked) {
+    html += '<div class="section-label">DETAILED PROGRESS</div>';
+    html += '<div class="empty-state" style="padding:20px;text-align:center;">';
+    html += '<div style="font-size:28px;margin-bottom:8px;">&#128303;</div>';
+    html += '<div style="font-weight:700;margin-bottom:6px;">Detailed Progress Coming Soon</div>';
+    html += '<div style="font-size:12px;color:#94A3B8;">Full session data, daily log, and subject breakdown will appear here once JJ\'s lesson data model is updated. Stars and streak are live.</div>';
+    html += '</div>';
+    document.getElementById('tab-jj').innerHTML = html;
+    return;
+  }
+
   html += '<div class="section-label">COMPLETION</div>';
-  html += buildScoreBar('Weekly Completion', j.completionRate, '#FBBF24');
+  html += buildScoreBar('Weekly Completion', j.completionRate || 0, '#FBBF24');
 
   if (j.milestones && j.milestones.length > 0) {
     html += '<div class="section-label">MILESTONES</div>';
@@ -714,7 +764,7 @@ function renderOverview(data) {
   html += '<h3>BUGGSY</h3>';
   html += '<div class="overview-row"><span class="overview-label">Rings This Week</span><span class="overview-value">' + b.ringsThisWeek + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Total Rings</span><span class="overview-value">' + b.ringsTotal + '</span></div>';
-  html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + b.sessionsCompleted + '/' + b.sessionsTotal + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + (b.sessionsCompleted !== null && b.sessionsCompleted !== undefined ? b.sessionsCompleted + '/' + b.sessionsTotal : '--') + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Avg Score</span><span class="overview-value">' + (b.avgScore ? Math.round(b.avgScore) + '%' : '--') + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Streak</span><span class="overview-value">' + b.streak + ' days</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Time Spent</span><span class="overview-value">' + (b.timeSpent || 0) + ' min</span></div>';
@@ -724,7 +774,7 @@ function renderOverview(data) {
   html += '<h3>JJ (KINDLE)</h3>';
   html += '<div class="overview-row"><span class="overview-label">Stars This Week</span><span class="overview-value">' + j.starsThisWeek + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Total Stars</span><span class="overview-value">' + j.starsTotal + '</span></div>';
-  html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + j.sessionsCompleted + '/' + j.sessionsTotal + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + (j.sessionsCompleted !== null && j.sessionsCompleted !== undefined ? j.sessionsCompleted + '/' + j.sessionsTotal : 'Not yet tracked') + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Streak</span><span class="overview-value">' + j.streak + ' days</span></div>';
   html += '</div>';
 
@@ -888,40 +938,75 @@ function loadData() {
         onDataLoaded();
       })
       .withFailureHandler(function(err) {
-        useMockData();
+        showLoadError(err);
       })
       .getWeeklyProgressSafe();
   } else {
+    // No google.script.run — offline/dev environment. Use mock data.
     useMockData();
   }
 }
 
+// Show error state when getWeeklyProgressSafe fails in production.
+// Does NOT fall through to useMockData — silently showing zeros would mask real errors.
+function showLoadError(err) {
+  var now = new Date();
+  var hh = now.getHours();
+  var mm = now.getMinutes();
+  var timeStr = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+  var errMsg = (err && err.message) ? String(err.message) : 'Unknown error';
+  var loadEl = document.getElementById('loading');
+  if (loadEl) {
+    loadEl.innerHTML =
+      '<div class="load-error-block">' +
+      '<div class="load-error-icon">&#9888;</div>' +
+      '<div class="load-error-title">Error loading weekly data &mdash; last attempt at ' + timeStr + '</div>' +
+      '<div class="load-error-detail">' + errMsg + '</div>' +
+      '<button class="load-error-retry" onclick="loadData()">Retry</button>' +
+      '</div>';
+    loadEl.className = 'loading-wrap';
+  }
+}
+
+// useMockData is for local dev/offline only (when google.script.run is unavailable).
+// It mirrors the Phase 1 tier-classified shape so the renderer paths stay testable.
+// Production failure path is showLoadError() — not this function.
 function useMockData() {
   reportData = {
     buggsy: {
       name: 'Buggsy',
+      child: 'buggsy',
       ringsThisWeek: 0,
-      ringsTotal: 0,
+      ringsTotal: null,
       streak: 0,
       completionRate: 0,
       sessionsCompleted: 0,
       sessionsTotal: 5,
-      avgScore: 0,
-      timeSpent: 0,
+      avgScore: null,
+      pendingReview: 0,
+      timeSpent: null,
       subjects: [],
       weekLog: [],
+      milestones: [],
+      tierB_blocked: false,
+      tierB_reason: null,
       alerts: []
     },
     jj: {
       name: 'JJ (Kindle)',
+      child: 'jj',
       starsThisWeek: 0,
-      starsTotal: 0,
+      starsTotal: null,
       streak: 0,
-      completionRate: 0,
-      sessionsCompleted: 0,
+      sessionsCompleted: null,
       sessionsTotal: 5,
+      completionRate: null,
+      avgScore: null,
+      pendingReview: 0,
       milestones: [],
       weekLog: [],
+      tierB_blocked: true,
+      tierB_reason: 'jj-lesson-run-data-model',
       alerts: []
     }
   };
