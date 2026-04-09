@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v13">
+  <meta name="tbm-version" content="v14">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -28,10 +28,10 @@
 
     /* ─── Star Counter ─── */
     .star-counter {
-      position: fixed; top: 12px; right: 16px; z-index: 100;
+      position: fixed; top: 40px; right: 40px; z-index: 100;
       background: linear-gradient(135deg, #a855f7, #ec4899);
       color: #fff; border-radius: 30px;
-      padding: 8px 18px; font-size: 22px; font-weight: 800;
+      padding: 8px 18px; font-size: 32px; font-weight: 800;
       display: -webkit-flex; display: flex;
       -webkit-align-items: center; align-items: center;
       gap: 6px; box-shadow: 0 4px 16px rgba(168,85,247,0.5);
@@ -59,7 +59,7 @@
     /* ─── Buttons ─── */
     .btn-big {
       display: inline-block;
-      min-width: 64px; min-height: 64px;
+      min-width: 80px; min-height: 80px;
       padding: 16px 28px; margin: 8px;
       border: none; border-radius: 24px;
       font-family: 'Fredoka One', sans-serif;
@@ -109,7 +109,7 @@
       padding: 16px 20px; border: 3px solid rgba(255,255,255,0.2);
       border-radius: 20px; background: rgba(255,255,255,0.1);
       color: #fde68a; font-family: 'Fredoka One', sans-serif;
-      font-size: 36px; cursor: pointer;
+      font-size: 42px; cursor: pointer;
       -webkit-transition: all 0.2s; transition: all 0.2s;
       -webkit-appearance: none;
     }
@@ -121,8 +121,8 @@
       -webkit-animation: popCorrect 0.4s ease; animation: popCorrect 0.4s ease;
     }
     .option-btn.wrong {
-      background: rgba(239,68,68,0.3); border-color: #ef4444;
-      -webkit-animation: shake 0.4s ease; animation: shake 0.4s ease;
+      background: rgba(245,158,11,0.3); border-color: #f59e0b;
+      -webkit-animation: wobble 0.5s ease; animation: wobble 0.5s ease;
     }
     .option-btn.selected {
       border-color: #fde68a; background: rgba(253,230,138,0.2);
@@ -204,7 +204,7 @@
       display: -webkit-flex; display: flex;
       -webkit-align-items: center; align-items: center;
       -webkit-justify-content: center; justify-content: center;
-      font-size: 12px; color: #fff; font-weight: 700;
+      font-size: 32px; color: #fff; font-weight: 700;
     }
     .color-bin.selected-bin {
       border-color: #fde68a; box-shadow: 0 0 20px rgba(253,230,138,0.4);
@@ -218,7 +218,7 @@
       gap: 8px; margin: 16px 0;
     }
     .name-slot {
-      width: 56px; height: 64px; border-radius: 12px;
+      width: 80px; height: 80px; border-radius: 12px;
       border: 3px dashed rgba(255,255,255,0.3);
       display: -webkit-flex; display: flex;
       -webkit-align-items: center; align-items: center;
@@ -237,7 +237,7 @@
       gap: 10px; margin: 16px 0;
     }
     .letter-bank-btn {
-      width: 64px; height: 64px; border-radius: 16px;
+      width: 80px; height: 80px; border-radius: 16px;
       border: 2px solid rgba(255,255,255,0.2);
       background: rgba(168,85,247,0.2);
       color: #fde68a; font-family: 'Fredoka One', sans-serif;
@@ -293,8 +293,8 @@
     .word-card {
       background: rgba(236,72,153,0.15); border: 2px solid rgba(236,72,153,0.3);
       border-radius: 16px; padding: 14px 20px;
-      font-size: 22px; font-weight: 700; color: #fde68a;
-      cursor: pointer;
+      font-size: 32px; font-weight: 700; color: #fde68a;
+      cursor: pointer; min-height: 80px;
     }
     .word-card:active { -webkit-transform: scale(0.95); transform: scale(0.95); }
 
@@ -353,7 +353,7 @@
       margin-bottom: 10px;
     }
     .ready-subtitle {
-      font-size: 22px; color: #e0d4f5; margin-bottom: 30px;
+      font-size: 32px; color: #e0d4f5; margin-bottom: 30px;
     }
     .activity-preview {
       display: -webkit-flex; display: flex;
@@ -374,7 +374,7 @@
 
     /* ─── Instruction Text ─── */
     .instruction {
-      font-size: 24px; color: #e0d4f5;
+      font-size: 32px; color: #e0d4f5;
       margin: 12px 0 20px 0; line-height: 1.4;
     }
 
@@ -394,6 +394,20 @@
       0%,100% { transform: translateX(0); }
       25% { transform: translateX(-8px); }
       75% { transform: translateX(8px); }
+    }
+    @-webkit-keyframes wobble {
+      0%,100% { -webkit-transform: rotate(0deg); }
+      20% { -webkit-transform: rotate(-8deg); }
+      40% { -webkit-transform: rotate(8deg); }
+      60% { -webkit-transform: rotate(-4deg); }
+      80% { -webkit-transform: rotate(4deg); }
+    }
+    @keyframes wobble {
+      0%,100% { transform: rotate(0deg); }
+      20% { transform: rotate(-8deg); }
+      40% { transform: rotate(8deg); }
+      60% { transform: rotate(-4deg); }
+      80% { transform: rotate(4deg); }
     }
     @-webkit-keyframes countPop {
       0% { opacity: 0; -webkit-transform: translate(-50%,-50%) scale(0.3); }
@@ -481,7 +495,7 @@
         gap: 18px;
       }
       .btn-big {
-        min-width: 72px; min-height: 72px;
+        min-width: 80px; min-height: 80px;
         font-size: 30px; padding: 18px 32px;
       }
       .scatter-obj {
@@ -509,7 +523,7 @@
         gap: 20px;
       }
       .btn-big {
-        min-width: 68px; min-height: 68px;
+        min-width: 80px; min-height: 80px;
         font-size: 28px;
       }
     }
@@ -1774,7 +1788,12 @@ function handleLetterIntroDone() {
 function renderFindLetter(activity) {
   var mc = getMainContent();
   var target = activity.target || 'A';
-  var options = activity.options || ['A', 'B', 'C', 'D'];
+  var allOpts = activity.options ? activity.options.slice() : ['A', 'B', 'C', 'D'];
+  var distractors = [];
+  for (var di = 0; di < allOpts.length; di++) {
+    if (String(allOpts[di]).toUpperCase() !== String(target).toUpperCase()) { distractors.push(allOpts[di]); }
+  }
+  var options = shuffleArray([target, distractors[0] || 'B', distractors[1] || 'C']);
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Find the letter:</p>';
@@ -1805,7 +1824,12 @@ function checkFindLetter(el, chosen, target) {
 function renderFindNumber(activity) {
   var mc = getMainContent();
   var target = activity.target || '3';
-  var options = activity.options || ['1', '2', '3', '4'];
+  var allOpts = activity.options ? activity.options.slice() : ['1', '2', '3', '4'];
+  var distractors = [];
+  for (var di = 0; di < allOpts.length; di++) {
+    if (String(allOpts[di]) !== String(target)) { distractors.push(allOpts[di]); }
+  }
+  var options = shuffleArray([target, distractors[0] || '1', distractors[1] || '2']);
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Find the number:</p>';
@@ -2064,17 +2088,12 @@ function tapColorHunt(idx, color) {
 function renderShapeMatch(activity) {
   var mc = getMainContent();
   var target = activity.target || 'star';
-  var options = activity.options || ['circle', 'star', 'triangle', 'square'];
-
-  // Safety: ensure target is always among the tappable options
-  var hasTarget = false;
-  for (var k = 0; k < options.length; k++) {
-    if (options[k] === target) { hasTarget = true; break; }
+  var allOpts = activity.options ? activity.options.slice() : ['circle', 'star', 'triangle', 'square'];
+  var distractors = [];
+  for (var k = 0; k < allOpts.length; k++) {
+    if (allOpts[k] !== target) { distractors.push(allOpts[k]); }
   }
-  if (!hasTarget) {
-    if (options.length >= 4) { options[0] = target; } else { options.push(target); }
-    options = shuffleArray(options);
-  }
+  var options = shuffleArray([target, distractors[0] || 'circle', distractors[1] || 'square']);
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Find the shape:</p>';
@@ -2195,7 +2214,12 @@ function renderBeginningSound(activity) {
   var mc = getMainContent();
   var word = activity.word || 'Cat';
   var answer = activity.answer || 'C';
-  var options = activity.options || ['C', 'D', 'B', 'F'];
+  var allOpts = activity.options ? activity.options.slice() : ['C', 'D', 'B', 'S'];
+  var distractors = [];
+  for (var di = 0; di < allOpts.length; di++) {
+    if (String(allOpts[di]).toUpperCase() !== String(answer).toUpperCase()) { distractors.push(allOpts[di]); }
+  }
+  var options = shuffleArray([answer, distractors[0] || 'D', distractors[1] || 'B']);
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">What letter does this word start with?</p>';
