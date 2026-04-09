@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v10">
+<meta name="tbm-version" content="v11">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -112,7 +112,7 @@ body {
 .main-content {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px 16px 100px;
+  padding: 40px 40px 100px;
   position: relative;
   z-index: 10;
 }
@@ -384,15 +384,15 @@ body.jj-theme #app-header {
 }
 body.jj-theme .header-title {
   font-family: 'Fredoka One', cursive;
-  font-size: 18px;
+  font-size: 32px;
   background: none;
   -webkit-background-clip: initial;
-  -webkit-text-fill-color: #FF69B4;
+  -webkit-text-fill-color: #9C0050;
   letter-spacing: 0;
 }
 body.jj-theme .header-subtitle {
   font-family: 'Fredoka One', cursive;
-  color: #C490B8;
+  color: #6B2D6F;
   letter-spacing: 1px;
 }
 body.jj-theme .header-date {
@@ -405,13 +405,13 @@ body.jj-theme .header-date {
 body.jj-theme .greeting {
   color: #FF69B4;
   font-family: 'Fredoka One', cursive;
-  font-size: 22px;
+  font-size: 42px;
   font-weight: 400;
 }
 body.jj-theme .day-focus {
   font-family: 'Fredoka One', cursive;
-  color: #C490B8;
-  font-size: 13px;
+  color: #6B2D6F;
+  font-size: 24px;
 }
 
 /* JJ Mission Cards */
@@ -438,7 +438,7 @@ body.jj-theme .mission-number {
   border: 2px solid #FFD6E8;
   font-family: 'Fredoka One', cursive;
   font-size: 20px;
-  color: #FF69B4;
+  color: #9C0050;
 }
 body.jj-theme .mission-card.completed .mission-number {
   background: linear-gradient(135deg, #FFF8DC, #FFFACD);
@@ -447,43 +447,46 @@ body.jj-theme .mission-card.completed .mission-number {
 }
 body.jj-theme .mission-name {
   font-family: 'Fredoka One', cursive;
-  font-size: 17px;
+  font-size: 32px;
   font-weight: 400;
   color: #4A1942;
 }
 body.jj-theme .mission-card.completed .mission-name {
   text-decoration: line-through;
-  color: #C490B8;
+  color: #6B2D6F;
 }
 body.jj-theme .mission-meta { display: none; }
 .star-reward {
   display: none;
-  font-size: 13px;
+  font-size: 32px;
   color: #FFD700;
   font-family: 'Fredoka One', cursive;
 }
 body.jj-theme .star-reward {
   display: block;
   margin-top: 2px;
+  background: rgba(74,25,66,0.85);
+  border-radius: 10px;
+  padding: 2px 8px;
 }
 body.jj-theme .launch-btn {
   font-family: 'Fredoka One', cursive;
-  font-size: 13px;
-  background: linear-gradient(135deg, #FF69B4, #FF85C8);
-  border: 2px solid #FF69B4;
+  font-size: 32px;
+  background: linear-gradient(135deg, #9C0050, #B8004A);
+  border: 2px solid #9C0050;
   color: #FFFFFF;
   padding: 10px 18px;
   border-radius: 24px;
   letter-spacing: 0;
-  min-height: 44px;
-  min-width: 64px;
+  min-height: 80px;
+  min-width: 80px;
 }
 body.jj-theme .launch-btn:hover {
   box-shadow: 0 0 16px rgba(255,105,180,0.4);
 }
 body.jj-theme .check-btn {
-  width: 36px;
-  height: 36px;
+  width: 80px;
+  height: 80px;
   border-color: #FFD6E8;
   font-size: 18px;
 }
