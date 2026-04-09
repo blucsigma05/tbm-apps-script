@@ -162,18 +162,31 @@ function getSpellingWordsSafe(grade, weekNumber) {
 }
 ```
 
-**Tier-to-grade mapping:**
+**Tier-to-grade-and-week mapping (with 5th-grade crossover — Phase 1):**
 
-| Grade | Primary tier | Review tier |
-|-------|--------------|-------------|
-| 1–2 | `one_bee` | — |
-| 3 | `one_bee` | `one_bee` (prior weeks) |
-| 4 | `two_bee` | `one_bee` (stretch), prior weeks |
-| 5 | `two_bee` → `three_bee` (crossover around week 20) | `two_bee` |
-| 6+ | `three_bee` | `two_bee` |
+| Grade | Week range | Primary tier | Review tier |
+|-------|------------|--------------|-------------|
+| 1–2 | all | `one_bee` | — |
+| 3 | all | `one_bee` | `one_bee` (prior weeks) |
+| 4 | all | `two_bee` | `one_bee` (stretch), prior weeks |
+| 5 | weeks 1–18 | `two_bee` | `one_bee` (stretch), prior weeks |
+| 5 | weeks 19+ | `three_bee` | `two_bee` (just-finished tier for spaced review) |
+| 6+ | all | `three_bee` | `two_bee` |
 
-For Buggsy (currently 4th grade): primary tier `two_bee`, with `one_bee` review
-weeks used as stretch-down weeks to reinforce foundation words.
+**5th-grade crossover is built into Phase 1**, not deferred. Buggsy has ~4
+weeks of 4th grade remaining (as of 2026-04-09) and crosses to 5th grade in
+August 2026. Phase 1 must handle the grade-4-to-5 transition cleanly. The
+crossover point within 5th grade — week 19 — is a named constant
+`FIFTH_GRADE_CROSSOVER_WEEK` so the exact week can slide to match the Nance
+Elementary calendar.
+
+For Buggsy's immediate trajectory:
+- Weeks 1–4 of 4th grade (current, through May 2026): `vocabularyOverride` on
+  CurriculumSeed — hand-picked thematic vocab stays, catalog is dark
+- Weeks 5+ of 4th grade: `two_bee` primary from the catalog, no override
+- Weeks 1–18 of 5th grade (Aug 2026–Jan 2027): still `two_bee` primary
+- Weeks 19+ of 5th grade (Feb 2027 onward): `three_bee` primary, `two_bee`
+  review
 
 **Deterministic word selection:**
 
@@ -181,7 +194,7 @@ weeks used as stretch-down weeks to reinforce foundation words.
 function getSpellingWords_(grade, weekNumber) {
   var g = parseInt(grade, 10) || 4;
   var w = parseInt(weekNumber, 10) || 1;
-  var tier = _tierForGrade_(g);
+  var tier = _tierForGradeAndWeek_(g, w);
   var list = SPELLING_CATALOG[tier] || [];
 
   // 5 new words per week, starting from the offset for this week
@@ -472,17 +485,20 @@ addition to the script above.)
 ```js
 // Add to SpellingCatalog.js after the constant
 
-var _VOCAB_TIER_BY_GRADE = {
-  1: 'one_bee',
-  2: 'one_bee',
-  3: 'one_bee',
-  4: 'two_bee',
-  5: 'two_bee',
-  6: 'three_bee'
-};
+// Week number within 5th grade at which Buggsy crosses from two_bee to
+// three_bee as his primary tier. Slide if the Nance calendar changes.
+var FIFTH_GRADE_CROSSOVER_WEEK = 19;
 
-function _tierForGrade_(grade) {
-  return _VOCAB_TIER_BY_GRADE[grade] || 'two_bee';
+function _tierForGradeAndWeek_(grade, weekNumber) {
+  var g = parseInt(grade, 10) || 4;
+  var w = parseInt(weekNumber, 10) || 1;
+  if (g <= 3) return 'one_bee';
+  if (g === 4) return 'two_bee';
+  if (g === 5) {
+    return w >= FIFTH_GRADE_CROSSOVER_WEEK ? 'three_bee' : 'two_bee';
+  }
+  // Grade 6+
+  return 'three_bee';
 }
 
 function _weekIntroducedFromIndex_(idx, tier) {
@@ -508,7 +524,7 @@ function _annotate_(entry, tier, weekIntroduced) {
 function getSpellingWords_(grade, weekNumber) {
   var g = parseInt(grade, 10) || 4;
   var w = parseInt(weekNumber, 10) || 1;
-  var tier = _tierForGrade_(g);
+  var tier = _tierForGradeAndWeek_(g, w);
   var list = SPELLING_CATALOG[tier] || [];
   if (list.length === 0) return { grade: g, week: w, tierUsed: tier, newWords: [], reviewWords: [], allWords: [], version: getSpellingCatalogVersion() };
 
@@ -606,6 +622,9 @@ than catalog words that may or may not align with the week's theme. Remove
 - Add `generate-spelling-catalog.js` (Node script).
 - Run it once, commit `SpellingCatalog.js` (generated, 150KB, ~4100 lines).
 - Add `getSpellingWords_()` and `getSpellingWordsSafe()` to `SpellingCatalog.js`.
+- Add `_tierForGradeAndWeek_()` with `FIFTH_GRADE_CROSSOVER_WEEK = 19`
+  constant — supports Buggsy's 4→5th grade transition and the mid-5th-grade
+  two_bee→three_bee crossover in Phase 1 (not deferred).
 - Register the Safe wrapper in `Code.js serveData` whitelist (~line 407).
 - Register in `Tbmsmoketest.js` wiring check list.
 - Add `audit-source.sh` drift check (JSON hash vs JS hash).
@@ -672,6 +691,8 @@ bash audit-source.sh                                 → expected: no "SpellingC
 | 6 | Grade 4 uses two_bee | `getSpellingWords_(4, 1).tierUsed === 'two_bee'` |
 | 7 | Grade 6 uses three_bee | `getSpellingWords_(6, 1).tierUsed === 'three_bee'` |
 | 8 | Wraparound | `getSpellingWords_(4, 31).newWords[0].word === getSpellingWords_(4, 1).newWords[0].word` (30-week cycle) |
+| 8a | 5th-grade crossover | `getSpellingWords_(5, 18).tierUsed === 'two_bee'` AND `getSpellingWords_(5, 19).tierUsed === 'three_bee'` |
+| 8b | 4th-grade stable | `getSpellingWords_(4, 1).tierUsed === 'two_bee'` AND `getSpellingWords_(4, 40).tierUsed === 'two_bee'` (4th grade never crosses) |
 | 9 | Safe wrapper serializable | `JSON.parse(JSON.stringify(getSpellingWordsSafe(4, 1)))` does not throw |
 | 10 | CurriculumSeed migration preserved | All 4 Buggsy weeks have a non-empty `vocabulary` array after migration (Phase 2) |
 | 11 | `vocabularyOverride` respected | Setting `vocabularyOverride: [...]` on a week returns the override, not catalog words (Phase 2) |
@@ -699,11 +720,11 @@ bash audit-source.sh                                 → expected: no "SpellingC
    review words per current week). Deeper review (last 1/2/4/8 weeks) is more
    research-backed but feels crowded for a 4th-grader. Stick with 3 or go deeper?
 
-4. **Tier crossover for 5th grade.** The mapping treats 5th grade as `two_bee`
-   primary for most of the year with a crossover to `three_bee` around Week 20.
-   The crossover logic isn't in the helper yet — it'd need a `weeksInTier` or
-   `transitionWeek` argument. Build it now or defer until Buggsy is actually in
-   5th grade (next school year)?
+4. **Tier crossover for 5th grade. — RESOLVED 2026-04-09.** Build it now as
+   part of Phase 1 (not deferred). Buggsy has ~4 weeks of 4th grade left and
+   crosses to 5th in August 2026. `_tierForGradeAndWeek_(grade, weekNumber)`
+   handles the transition via `FIFTH_GRADE_CROSSOVER_WEEK = 19` constant.
+   The exact crossover week is tunable if the Nance calendar changes.
 
 5. **STAAR alignment.** The catalog doesn't currently tag words with STAAR
    frequency or tested-on-2024-STAAR flags. Should a Phase 3 add these tags to
