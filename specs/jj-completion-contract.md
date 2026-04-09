@@ -260,9 +260,31 @@ function completeLessonRunSafe(runId, final) { ... }
 ```
 
 `completeLessonRun_` is the single boundary with `kh_awardEducationPoints_`. It calls
-it once per run with `(child, sessionStars, source + '|' + runId.slice(0,8))` so the
-UID dedupe key still lives at kid/source/day granularity (current behavior) but the
-history row carries the runId fragment for traceability.
+it once per run with the **unchanged** `source` string (e.g. `'sparkle-learn'`), NOT
+`source + '|' + runId`. Reason: the ring-grant UID at `Kidshub.js:2768` is built as
+`'EDU_' + kid + '_' + source.replace(/\s+/g, '_') + '_' + today`. Appending a
+per-run suffix to `source` would make every run produce a unique UID, which is
+exactly the opposite of what the daily cap is supposed to do — replay runs would
+mint extra rings.
+
+The traceability between a `KH_History` education row and a `KH_LessonRuns` row is
+established the other direction: `KH_LessonRuns.Source` stores the same plain
+string, and the `DateKey + Child + Source` tuple correlates across both sheets.
+The runId only lives in `KH_LessonRuns`, not in the history row.
+
+`completeLessonRun_` captures the ring-grant outcome in the run record:
+
+```js
+var awardResult = JSON.parse(kh_awardEducationPoints_(child, sessionStars, source));
+// awardResult is { status:'ok', awarded: N } OR { status:'ok', duplicate: true }
+var ringsActuallyAwarded = awardResult.duplicate ? 0 : sessionStars;
+// write ringsActuallyAwarded + awardResult.duplicate into the KH_LessonRuns row
+// so the parent report can show "Play Again — 0 rings bonus (already earned today)"
+```
+
+**Codex review 2026-04-09 flagged the original wording as a P1 blocker.** Source:
+[Kidshub.js:2756](https://github.com/blucsigma05/tbm-apps-script/blob/main/Kidshub.js#L2756).
+Correction applied above.
 
 ### Client integration points
 
