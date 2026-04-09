@@ -4,7 +4,75 @@
 1. Read this file fully
 2. Run `clasp deployments` to confirm deployment ID
 3. Fetch PM Active Versions (Notion `2c8cea3cd9e8818eaf53df73cb5c2eee`) for current state
-4. Do NOT begin work until steps 1–3 are complete
+4. Check the TBM Operations Project board and the "Needs Decision" column for anything blocked on LT input
+5. Do NOT begin work until steps 1–4 are complete
+
+## Workflow — Issues, PRs, and the Project Board
+
+**The hierarchy:** Epic → Issue → PR. Every Issue has exactly one reason to exist. Every PR closes at least one Issue via `Closes #NNN`. Chat is transient. If it needs to survive the conversation, it becomes an Issue.
+
+**Object types — pick one when creating work:**
+
+| Type | Use when | GitHub form | Primary label |
+|------|----------|-------------|---------------|
+| Spec | A design decision that needs alignment before code | Issue + `specs/*.md` file | `kind:spec` |
+| Bug | Something is broken | Issue | `kind:bug` |
+| Task | Actionable work that isn't a spec or bug | Issue | `kind:task` |
+| Decision | A question requiring LT input | Issue | `kind:decision` + `needs:lt-decision` |
+| Epic | Long-running initiative spanning multiple issues | Issue | `kind:epic` |
+| Code change | Anything that modifies files | PR | inherits from the Issue it closes |
+
+**The rule that kills "where are we":** if an Issue/PR exists on the Project board, its status tells you where it is. Do not ask for status in chat — check the board. If the board is wrong, fix the labels.
+
+**Label families (six):**
+
+- `kind:` spec, bug, task, decision, epic — what the work IS
+- `severity:` blocker, critical, major, minor — how urgent (existing Codex label scheme)
+- `model:` opus, sonnet, codex, lt — who is working on it
+- `needs:` lt-decision, implementation, review, qa, spec — what's blocking progress
+- `area:` jj, buggsy, finance, infra, qa, education, shared — which part of the system
+- `status:` draft, approved, implementing, shipped — spec lifecycle (specs only)
+
+**Standard flow for any change:**
+
+1. Open an Issue with labels `kind:*`, `severity:*`, `area:*`, and `model:*` (or `needs:lt-decision` if blocked on LT). Card lands in Backlog.
+2. If it needs a spec first: open a `kind:spec` Issue first, spec PR lands, spec Issue closes with `status:approved`, implementation Issue opens linking to the approved spec.
+3. Implementation: open a branch, push code, open PR with `Closes #NNN` in the description. Card moves to In Progress.
+4. CI + Codex review. Card moves to In Review.
+5. PR merges. Issue auto-closes. Card moves to Done. Pushover notification fires.
+
+**Specs specifically:**
+
+- Spec text lives as `specs/<name>.md` in the repo (permanent reference)
+- The spec PR merges into main so the file is canonical
+- Decisions from spec review are recorded as PR comments before merge AND in the spec file under "Open questions — resolved"
+- A separate implementation Issue opens after the spec PR merges, linking to the spec file path
+- Implementation PRs close the implementation Issue, not the spec Issue
+
+**Decisions specifically:**
+
+- Never let an open question live as a bullet in chat. If LT needs to answer it, it is an Issue with `kind:decision` + `needs:lt-decision`.
+- LT's answer is the comment that closes the Issue.
+- If a decision is blocking 3 specs, the Issue has back-links in all 3 specs. The Issue is the single source of truth for why the decision was made.
+
+**Codex findings:**
+
+- In-PR review comments stay in the PR (that's the evidence)
+- For any blocking finding, Claude (or LT, during audit) **manually opens** a dedicated Issue with `kind:bug` + `severity:blocker` + a link to the PR comment. This is a process rule, NOT an automation — the Codex pipeline does NOT auto-create Issues today (it posts comments and applies `pipeline:*` labels only). The manual Issue exists so the finding survives PR close/merge. Future automation (Orchestration Loop Phase 3+, issue #111) may promote this to an automatic step; until then, if nobody files the Issue, the finding only lives in the PR thread and can be lost.
+
+**When LT says "PR" but means "Issue" (or vice versa):**
+
+- Claude MUST redirect and confirm: "You said PR — did you mean the Issue, or is this actually a code change?"
+- Do not silently create the wrong object.
+- One sentence, no back-and-forth. If it's ambiguous after one confirmation, default to Issue.
+
+**Forbidden patterns:**
+
+- Answering "where are we on X?" with a chat summary. Correct answer: "Check Issue #NNN" or "Check the Project board."
+- Opening a PR without a linked Issue (exception: trivial one-line fixes).
+- Handing Sonnet a prompt via chat copy-paste instead of an Issue body.
+- Letting a decision live in PR comments when it should be an Issue.
+- Using `needs:lt-decision` on a PR — those belong on Issues, then the PR picks up the decided answer.
 
 ## The Cardinal Rule
 Read source before writing assertions. Never claim a feature is missing, a value is correct, or a version is deployed without verifying. Confidence without verification is a hallucination.
