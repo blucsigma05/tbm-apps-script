@@ -718,8 +718,10 @@ panel canvas from its stored data URL and restore the replay buffer.
 - On `init()`, client calls `loadComicDraftSafe('buggsy')`. If response has a payload,
   show the resume prompt.
 - Resume prompt renders with two buttons: `▶ RESUME` (cyan, primary) and `✖ START FRESH`
-  (gray, secondary). Start Fresh wipes the draft (calls `saveComicDraftSafe` with an
-  empty object) and proceeds to normal init.
+  (gray, secondary). Start Fresh deletes the draft file from Drive (calls
+  `deleteComicDraftSafe(CHILD, getTodayDateKey())`) and proceeds to normal init. Writing
+  an empty object is NOT sufficient — `loadComicDraft_` returns non-null whenever the
+  file exists, so the resume card would reappear with an empty draft on the next reload.
 - Resume rehydrates all 4 panel canvases by loading each stored data URL into an `Image`,
   drawing it to the canvas, and restoring `captions[]`, `activeTool`, `activeColor`, and
   `replayBuffer`.
@@ -851,6 +853,52 @@ function saveComicDraft_(child, draftJson) {
 function saveComicDraftSafe(child, draftJson) {
   return withMonitor_('saveComicDraftSafe', function() {
     return JSON.parse(JSON.stringify(saveComicDraft_(child, draftJson)));
+  });
+}
+```
+
+**Server: `deleteComicDraft_(child, dateKey)`.**
+
+```js
+/**
+ * Delete today's comic draft file from Drive. Called by Start Fresh in the
+ * resume-card UI. Idempotent — deleting a non-existent file is a no-op.
+ *
+ * Using delete instead of overwriting with {} is required because
+ * loadComicDraft_ returns non-null whenever the file exists, regardless of
+ * content. An empty-object write would cause the resume card to reappear on
+ * the next page load with an empty (but non-null) draft.
+ *
+ * @param {string} child - 'buggsy'
+ * @param {string} dateKey - 'YYYY-MM-DD'
+ * @return {object} { status: 'ok', deleted: true|false } or { status: 'locked' }
+ */
+function deleteComicDraft_(child, dateKey) {
+  const lk = acquireLock_();
+  if (!lk.acquired) return { status: 'locked' };
+  try {
+    const childLower = String(child || 'buggsy').toLowerCase();
+    const key = dateKey || getTodayISO_();
+    const folder = ensureComicDraftsFolder_();
+    const fileName = childLower + '_' + key + '.json';
+    const files = folder.getFilesByName(fileName);
+    var deleted = false;
+    while (files.hasNext()) {
+      files.next().setTrashed(true);
+      deleted = true;
+    }
+    return { status: 'ok', deleted: deleted };
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('deleteComicDraft_', e);
+    return { status: 'error', message: String(e.message || e) };
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function deleteComicDraftSafe(child, dateKey) {
+  return withMonitor_('deleteComicDraftSafe', function() {
+    return JSON.parse(JSON.stringify(deleteComicDraft_(child, dateKey)));
   });
 }
 ```
@@ -1205,9 +1253,11 @@ the vocab callout.
 ```
 
 **Rings differential.** The ring cap is enforced client-side on `finishComic` (now
-renamed to `publishComic`): base 15, +10 for all panels captioned, +5 for ≥20 words, +10
-for vocab used, +15 mission completion bonus (mission only). Total caps at 55 for Mission,
-30 for Free. The ring cap is visible to the kid in both modes — under the publish button:
+renamed to `publishComic`): base 15 + 10 if all panels captioned + 5 if ≥20 words = 30
+max for Free Mode. Mission Mode adds +10 vocab bonus (curriculum-focused, not awarded in
+Free Mode) + 15 episode-illustrated bonus = 55 max. Both caps are also enforced
+server-side via `Math.min(rings, ringsCap)`. The ring cap is visible to the kid in
+both modes — under the publish button:
 
 - Mission: `+55 rings available if you nail the mission`
 - Free: `+30 rings available for free draws`
@@ -1427,11 +1477,17 @@ function publishComicToArchive_(child, meta, pngBase64) {
     const driveUrl = file.getUrl();
 
     // 2. Compute rings (server authoritative, cannot be client-spoofed)
-    let rings = 15; // base
+    // Free Mode: 15 base + 10 all-panels + 5 saved = 30 max (vocab bonus is Mission-only)
+    // Mission Mode: 15 base + 10 all-panels + 5 saved + 10 vocab + 15 episode = 55 max
+    const isMission = meta && meta.mode === 'mission';
+    let rings = 15; // base — all modes
     if (meta && meta.panelCount && meta.captions && meta.captions.filter(function(c) { return c && c.trim(); }).length === meta.panelCount) rings += 10;
     if (meta && meta.totalWords >= 20) rings += 5;
-    if (meta && meta.vocabUsed) rings += 10;
-    if (meta && meta.mode === 'mission') rings += 15;
+    if (isMission && meta.vocabUsed) rings += 10; // vocab bonus: Mission Mode only
+    if (isMission) rings += 15;                   // episode-illustrated bonus: Mission Mode only
+    // Belt-and-suspenders: enforce hard cap by mode so server can never over-award
+    const ringsCap = isMission ? 55 : 30;
+    rings = Math.min(rings, ringsCap);
 
     // 3. Award rings via existing KH pipeline
     try {
@@ -2173,10 +2229,11 @@ existing Buggsy/education entries:
 'getComicStudioContextSafe': getComicStudioContextSafe,
 'saveComicDraftSafe':        saveComicDraftSafe,
 'loadComicDraftSafe':        loadComicDraftSafe,
+'deleteComicDraftSafe':      deleteComicDraftSafe,
 'publishComicToArchiveSafe': publishComicToArchiveSafe,
 ```
 
-Additionally add the same 4 names to the diagnostic `fns` list near line 1363 (so
+Additionally add the same 5 names to the diagnostic `fns` list near line 1363 (so
 `listFunctions` stays honest):
 
 ```js
@@ -2184,6 +2241,7 @@ Additionally add the same 4 names to the diagnostic `fns` list near line 1363 (s
 'getComicStudioContext_', 'getComicStudioContextSafe',
 'saveComicDraft_', 'saveComicDraftSafe',
 'loadComicDraft_', 'loadComicDraftSafe',
+'deleteComicDraft_', 'deleteComicDraftSafe',
 'publishComicToArchive_', 'publishComicToArchiveSafe',
 ```
 
@@ -2197,11 +2255,12 @@ Add these to `CANONICAL_SAFE_FUNCTIONS` (line 42–62), any position in the arra
 'getComicStudioContextSafe',
 'saveComicDraftSafe',
 'loadComicDraftSafe',
+'deleteComicDraftSafe',
 'publishComicToArchiveSafe',
 ```
 
 After the push, run `tbmSmokeTest()` from the GAS editor. Category 1 (wiring) must show
-all 4 new functions as present. If any return as missing, the Safe wrapper is not defined
+all 5 new functions as present. If any return as missing, the Safe wrapper is not defined
 in Kidshub.js — fix the definition, re-push, re-run.
 
 ---
@@ -2243,15 +2302,19 @@ grep -n 'floodFill\|destination-out' ComicStudio.html
   → expected: ≥2 matches
 
 # Feature 3: Autosave + resume
-grep -n 'saveComicDraftSafe\|loadComicDraftSafe' ComicStudio.html
-  → expected: ≥2 matches
+grep -n 'saveComicDraftSafe\|loadComicDraftSafe\|deleteComicDraftSafe' ComicStudio.html
+  → expected: ≥3 matches
 grep -n "setInterval(autosaveDraft\|setInterval.*60" ComicStudio.html
   → expected: ≥1 match
 grep -n "beforeunload" ComicStudio.html
   → expected: ≥1 match
 grep -n 'RESUME\|START FRESH' ComicStudio.html
   → expected: ≥2 matches
-grep -n "function saveComicDraft_\|function loadComicDraft_" Kidshub.js
+grep -n "deleteComicDraftSafe" ComicStudio.html
+  → expected: ≥1 match (Start Fresh handler — NOT saveComicDraftSafe with empty object)
+grep -n "function saveComicDraft_\|function loadComicDraft_\|function deleteComicDraft_" Kidshub.js
+  → expected: 3 matches
+grep -n "function deleteComicDraft_\|function deleteComicDraftSafe" Kidshub.js
   → expected: 2 matches
 grep -n "ensureComicDraftsFolder_\|ensureComicArchiveRootFolder_" Kidshub.js
   → expected: ≥4 matches
@@ -2323,10 +2386,10 @@ grep -n "ComicStudio.html" audit-source.sh
 # API_WHITELIST + smoke test wiring
 grep -n "getComicStudioContextSafe.*:" Code.js
   → expected: 1 match (inside API_WHITELIST)
-grep -n "saveComicDraftSafe\|loadComicDraftSafe\|publishComicToArchiveSafe" Code.js
-  → expected: ≥6 matches (API_WHITELIST + fns list = 2 each = 6 total, minimum)
-grep -n "getComicStudioContextSafe\|saveComicDraftSafe\|loadComicDraftSafe\|publishComicToArchiveSafe" Tbmsmoketest.js
-  → expected: ≥4 matches (one per function in CANONICAL_SAFE_FUNCTIONS)
+grep -n "saveComicDraftSafe\|loadComicDraftSafe\|deleteComicDraftSafe\|publishComicToArchiveSafe" Code.js
+  → expected: ≥8 matches (API_WHITELIST + fns list = 2 each = 8 total, minimum)
+grep -n "getComicStudioContextSafe\|saveComicDraftSafe\|loadComicDraftSafe\|deleteComicDraftSafe\|publishComicToArchiveSafe" Tbmsmoketest.js
+  → expected: ≥5 matches (one per function in CANONICAL_SAFE_FUNCTIONS)
 ```
 
 ---
@@ -2378,8 +2441,11 @@ are cumulative — all prior verified items carry forward to every future ComicS
       triggers a resume prompt. The prompt text includes the word "RESUME" in all caps.
 - [ ] **VC-CS-15** — Tapping RESUME on the prompt restores all 4 panel canvases visually
       identical to pre-reload (diffable by pixel inspection).
-- [ ] **VC-CS-16** — Tapping START FRESH on the prompt clears the draft from Drive
-      (verified by checking that `loadComicDraftSafe` returns null on the next reload).
+- [ ] **VC-CS-16** — Tapping START FRESH on the prompt calls `deleteComicDraftSafe` and
+      deletes the draft file from Drive. Verified by reloading immediately after tapping
+      START FRESH: `loadComicDraftSafe('buggsy')` returns null and the resume card does
+      NOT appear. (Writing an empty object is not acceptable — file existence alone
+      triggers the resume card.)
 - [ ] **VC-CS-17** — The Drive folder `Wolfkid Comics/drafts/` exists after first
       autosave. The draft file is named `buggsy_<YYYY-MM-DD>.json` exactly.
 
@@ -2426,8 +2492,10 @@ are cumulative — all prior verified items carry forward to every future ComicS
       the client shows an error banner "Publish failed — try again" and the draft is
       still present on Drive.
 - [ ] **VC-CS-32** — Server-computed rings match the formula: 15 base + 10 if all panels
-      captioned + 5 if ≥20 words + 10 if vocab used + 15 if Mission Mode. Max 55 in
-      Mission, 30 in Free (enforced by omitting the +15 in Free).
+      captioned + 5 if ≥20 words (both modes) + 10 if vocab used (Mission Mode only) +
+      15 episode-illustrated bonus (Mission Mode only). Max 55 in Mission, 30 in Free.
+      Server enforces the cap via `Math.min(rings, ringsCap)` regardless of input, so
+      a well-captioned free draw cannot exceed 30 rings.
 
 ### Wolfdome theming + MTL + achievement sequence (Feature 6)
 
