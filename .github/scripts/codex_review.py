@@ -48,10 +48,10 @@ REPORT_JSON_START = "<!-- codex-review-report -->"
 REPORT_JSON_END = "<!-- /codex-review-report -->"
 
 # ── context limits ───────────────────────────────────────────────────
-MAX_DIFF_CHARS = 30000       # cap raw diff
-PER_FILE_CAP = 15000         # cap per changed file
-MAX_CONTEXT_CHARS = 80000    # cap changed-file context
-RELATED_CONTEXT_CAP = 30000  # additional budget for caller/consumer context
+MAX_DIFF_CHARS = 40000       # cap raw diff
+PER_FILE_CAP = 30000         # cap per changed file
+MAX_CONTEXT_CHARS = 140000   # cap changed-file context
+RELATED_CONTEXT_CAP = 40000  # additional budget for caller/consumer context
 
 # ── model config ─────────────────────────────────────────────────────
 MODEL = "gpt-4o"
@@ -237,6 +237,23 @@ def get_related_files(changed_files):
 
 # ── context builder ──────────────────────────────────────────────────
 
+def truncate_preserving_edges(text, limit, label):
+    """Preserve both the start and end of large blobs."""
+    if limit <= 0:
+        return "", False
+    if len(text) <= limit:
+        return text, False
+
+    marker = "\n[... %s truncated at %d chars ...]\n" % (label, limit)
+    if limit <= len(marker) + 40:
+        head = max(0, limit - len(marker))
+        return text[:head] + marker, True
+
+    remaining = limit - len(marker)
+    head = int(remaining * 0.7)
+    tail = remaining - head
+    return text[:head] + marker + text[-tail:], True
+
 def build_context(diff_text, changed_files, related_files=None):
     """Build review context from diff, changed files, and related files.
 
@@ -249,18 +266,16 @@ def build_context(diff_text, changed_files, related_files=None):
 
     # ---- diff ----
     parts.append("=== PR DIFF ===\n")
-    if len(diff_text) > MAX_DIFF_CHARS:
-        parts.append(diff_text[:MAX_DIFF_CHARS])
-        parts.append("\n[... diff truncated at %d chars ...]\n" % MAX_DIFF_CHARS)
+    diff_text, diff_truncated = truncate_preserving_edges(diff_text, MAX_DIFF_CHARS, "diff")
+    if diff_truncated:
         truncation_notes.append("diff truncated at %d chars" % MAX_DIFF_CHARS)
-    else:
-        parts.append(diff_text)
+    parts.append(diff_text)
 
     # ---- changed files ----
     current_len = sum(len(p) for p in parts)
-    remaining = MAX_CONTEXT_CHARS - current_len
+    remaining = max(0, MAX_CONTEXT_CHARS - current_len)
     file_count = len(changed_files) if changed_files else 1
-    per_file = max(5000, remaining // file_count)
+    per_file = max(8000, min(PER_FILE_CAP, remaining // file_count if file_count else PER_FILE_CAP))
 
     for fname in changed_files:
         if not os.path.isfile(fname):
@@ -272,21 +287,26 @@ def build_context(diff_text, changed_files, related_files=None):
             continue
 
         header = "\n=== FULL FILE: %s (%d chars) ===\n" % (fname, len(content))
-        if len(content) > per_file:
-            content = content[:per_file] + "\n[... file truncated at %d chars ...]\n" % per_file
+        content, file_truncated = truncate_preserving_edges(content, per_file, "file")
+        if file_truncated:
             truncation_notes.append("%s truncated" % fname)
 
         parts.append(header)
         parts.append(content)
 
     changed_context = "".join(parts)
-    if len(changed_context) > MAX_CONTEXT_CHARS:
-        changed_context = changed_context[:MAX_CONTEXT_CHARS]
+    changed_context, context_truncated = truncate_preserving_edges(
+        changed_context,
+        MAX_CONTEXT_CHARS,
+        "total context",
+    )
+    if context_truncated:
         truncation_notes.append("total context capped at %d chars" % MAX_CONTEXT_CHARS)
 
     # ---- related files (callers / consumers / siblings) ----
     # Truncation here is informational only — does NOT affect verdict.
     related_parts = []
+    related_text = ""
     if related_files:
         related_parts.append(
             "\n=== RELATED FILES (not changed — callers/consumers/siblings for cross-reference) ===\n"
@@ -304,17 +324,19 @@ def build_context(diff_text, changed_files, related_files=None):
                 continue
 
             header = "\n=== RELATED: %s (%d chars) ===\n" % (fname, len(content))
-            if len(content) > per_related:
-                content = content[:per_related] + "\n[... related file truncated ...]\n"
+            content, _ = truncate_preserving_edges(content, per_related, "related file")
 
             related_parts.append(header)
             related_parts.append(content)
 
         related_text = "".join(related_parts)
-        if len(related_text) > RELATED_CONTEXT_CAP:
-            related_text = related_text[:RELATED_CONTEXT_CAP]
+        related_text, _ = truncate_preserving_edges(
+            related_text,
+            RELATED_CONTEXT_CAP,
+            "related context",
+        )
 
-    context = changed_context + "".join(related_parts)
+    context = changed_context + related_text
     return context, truncation_notes
 
 
@@ -503,7 +525,7 @@ def format_comment(report, truncation_notes, error_info=None, effective_verdict=
     lines.append("## %s Codex PR Review: %s\n" % (icon, verdict))
 
     if truncation_notes:
-        lines.append("> \u26a0\ufe0f **Review is INCONCLUSIVE due to truncation.** Manual audit required.")
+        lines.append("> \u26a0\ufe0f **Review is INCONCLUSIVE due to truncation.** Manual audit recommended.")
         lines.append("> Context: %s\n" % "; ".join(truncation_notes))
 
     if report.get("summary"):
