@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v13">
+  <meta name="tbm-version" content="v14">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -1788,7 +1788,12 @@ function handleLetterIntroDone() {
 function renderFindLetter(activity) {
   var mc = getMainContent();
   var target = activity.target || 'A';
-  var options = (activity.options || ['A', 'B', 'C']).slice(0, 3);
+  var allOpts = activity.options ? activity.options.slice() : ['A', 'B', 'C', 'D'];
+  var distractors = [];
+  for (var di = 0; di < allOpts.length; di++) {
+    if (String(allOpts[di]).toUpperCase() !== String(target).toUpperCase()) { distractors.push(allOpts[di]); }
+  }
+  var options = shuffleArray([target, distractors[0] || 'B', distractors[1] || 'C']);
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Find the letter:</p>';
@@ -1819,7 +1824,12 @@ function checkFindLetter(el, chosen, target) {
 function renderFindNumber(activity) {
   var mc = getMainContent();
   var target = activity.target || '3';
-  var options = (activity.options || ['1', '2', '3']).slice(0, 3);
+  var allOpts = activity.options ? activity.options.slice() : ['1', '2', '3', '4'];
+  var distractors = [];
+  for (var di = 0; di < allOpts.length; di++) {
+    if (String(allOpts[di]) !== String(target)) { distractors.push(allOpts[di]); }
+  }
+  var options = shuffleArray([target, distractors[0] || '1', distractors[1] || '2']);
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Find the number:</p>';
@@ -2078,17 +2088,12 @@ function tapColorHunt(idx, color) {
 function renderShapeMatch(activity) {
   var mc = getMainContent();
   var target = activity.target || 'star';
-  var options = (activity.options || ['circle', 'star', 'triangle']).slice(0, 3);
-
-  // Safety: ensure target is always among the tappable options
-  var hasTarget = false;
-  for (var k = 0; k < options.length; k++) {
-    if (options[k] === target) { hasTarget = true; break; }
+  var allOpts = activity.options ? activity.options.slice() : ['circle', 'star', 'triangle', 'square'];
+  var distractors = [];
+  for (var k = 0; k < allOpts.length; k++) {
+    if (allOpts[k] !== target) { distractors.push(allOpts[k]); }
   }
-  if (!hasTarget) {
-    if (options.length >= 4) { options[0] = target; } else { options.push(target); }
-    options = shuffleArray(options);
-  }
+  var options = shuffleArray([target, distractors[0] || 'circle', distractors[1] || 'square']);
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Find the shape:</p>';
@@ -2209,7 +2214,12 @@ function renderBeginningSound(activity) {
   var mc = getMainContent();
   var word = activity.word || 'Cat';
   var answer = activity.answer || 'C';
-  var options = (activity.options || ['C', 'D', 'B']).slice(0, 3);
+  var allOpts = activity.options ? activity.options.slice() : ['C', 'D', 'B', 'S'];
+  var distractors = [];
+  for (var di = 0; di < allOpts.length; di++) {
+    if (String(allOpts[di]).toUpperCase() !== String(answer).toUpperCase()) { distractors.push(allOpts[di]); }
+  }
+  var options = shuffleArray([answer, distractors[0] || 'D', distractors[1] || 'B']);
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">What letter does this word start with?</p>';
