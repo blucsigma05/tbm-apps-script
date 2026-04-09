@@ -1,0 +1,734 @@
+# Vocab Catalog Integration — Wire 450 Words to Curriculum
+
+**Owner:** Opus (spec), Code (build), Codex (audit), LT (gate)
+**Priority:** P1 — biggest quality lever for Buggsy curriculum
+**Status:** Draft — Architecture Review
+**Scope:** Buggsy 4th-grade curriculum first. JJ tie-in deferred (pre-K vocab works differently — asset-first, see Task 2).
+
+---
+
+## Problem
+
+`spelling-catalog.json` at the repo root is 150KB, 4,058 lines, and contains **450
+hand-curated spelling words** organized into three difficulty tiers. Each entry
+has `{word, definition, kid_definition, origin, part_of_speech, pronunciation,
+sentence}`. Verified structure:
+
+| Tier key | Count | Typical level | Sample words |
+|----------|-------|---------------|--------------|
+| `one_bee` | 150 | ~3rd grade | acrobat, ahead, ahoy, ajar, answer, asleep, avocado, awkward |
+| `two_bee` | 150 | ~4th–5th grade | albatross, almanac, ancestral, anguish |
+| `three_bee` | 150 | ~6th–7th challenge | Adriatic, alfalfa, amicable, anonymously |
+| `extras` | 0 | — | (empty placeholder) |
+
+Total: 450 words. Memory note says 454 — slightly stale.
+
+**Reality check (verified by grep across `.gs`, `.html`, `.js`):**
+```
+$ grep -rn "spelling-catalog\|spellingCatalog\|SPELLING_CATALOG\|getSpellingWords" \
+    --include='*.js' --include='*.html' --include='*.gs' .
+# 0 matches
+```
+
+The only files that reference `spelling-catalog.json` are:
+- `specs/sparkle-visual-system.md` — the Task 2 spec I just shipped, mentioning it
+- `SKILL.md` — skill documentation
+- `.claude/commands/thompson-teacher.md` — skill reference
+- `.claspignore` — does NOT exclude it, but clasp doesn't push `.json` files anyway,
+  so the catalog never reaches GAS
+
+**The SKILL.md promise:**
+
+> "Words flow into: Story Factory bedtime stories, Wolfkid writing missions,
+> Tuesday warm-ups, Friday review, math/science word problems. Target: 4-5
+> exposures per word per week."
+
+**What actually happens today** (verified by reading source):
+
+1. **`CurriculumSeed.js:408`** — `BUGGSY_WEEK_1.vocabulary` is a hardcoded array
+   of 5 `{word, definition, sentence}` entries: `observe, signal, measure,
+   conclude, vanish`. These are pedagogically hand-picked for Week 1's science
+   theme (investigation verbs), not drawn from the catalog.
+2. **`CurriculumSeed.js:554, 700, 847`** — `BUGGSY_WEEK_2..4.vocabulary` same
+   pattern, 5 hardcoded words per week.
+3. **`CurriculumSeed.js:446, 592, 739, 886`** — per-day `vocabulary: ["observe",
+   "signal"]` subsets that pick 2 words from that week's 5 for the day's module.
+4. **`CurriculumSeed.js:453, 503, 746, 893`** — reading passages carry
+   `vocabWords: ["gorge", "carved", "layers"]` extracted from the passage text.
+   Passage-specific, not catalog-driven.
+5. **`ComicStudio.html:654`** — `FALLBACK_VOCAB` = 3 hardcoded words (`VALIANT,
+   LURKING, TRIUMPH`). `loadCurriculumVocab()` at line 1003 calls
+   `getTodayContentSafe(CHILD)` and maps `data.vocabulary` to its internal
+   format. Still catalog-free — it's re-reading the inline CurriculumSeed array.
+6. **`StoryFactory.js:1551`** — `STORY_INDEX` has one hand-authored story
+   (`week1-jj-garden-mystery.json`) whose `vocabulary_words: ["observe",
+   "signal", "measure", "conclude", "vanish"]` was manually typed to match
+   CurriculumSeed Week 1. Drift risk: change Week 1 vocab in CurriculumSeed and
+   the story's vocab stays stale.
+7. **`reading-module.html:567`** — uses per-passage `vocabWords` from
+   CurriculumSeed. Static UI text only; no catalog.
+8. **`WolfkidCER.html`, `writing-module.html`, `fact-sprint.html`** — zero vocab
+   consumption. The promise "use at least 3 vocabulary words from this week"
+   appears as a prompt string in `CurriculumSeed.js:541` but no code enforces or
+   even references which words they are.
+
+**No warm-up or Friday review vocab pattern exists.** `CurriculumSeed.js:332`
+contains the only string `"Warm up!"` in the repo, and it's JJ's name-builder
+audio prompt — not a Buggsy vocab warm-up. Friday module at
+`CurriculumSeed.js:519` has math and science questions but no vocab quiz.
+
+**Net:** 454 words live as documentation. The "4-5 exposures per week" target
+is aspirational — there's no measurement path and no code to hit it. Any vocab
+Buggsy encounters is hand-typed into CurriculumSeed week-by-week by LT, which
+is the exact bottleneck the catalog was meant to remove.
+
+## Design
+
+A shared catalog module, a scheduling helper, a fixed list of consumer
+integration points, and a per-word exposure tracker (which depends on Task 1).
+
+### Catalog as a server-side module
+
+**Ship path:** `spelling-catalog.json` stays as the repo source of truth.
+A new generator script `generate-spelling-catalog.js` (Node, like
+`generate-audio.js`) reads the JSON and writes `SpellingCatalog.js` as a GAS
+server module:
+
+```js
+// SpellingCatalog.js — v1 (generated from spelling-catalog.json)
+// Run `node generate-spelling-catalog.js` before clasp push.
+// Do NOT edit this file by hand; edit spelling-catalog.json and regenerate.
+
+var SPELLING_CATALOG = {
+  one_bee: [/* 150 entries */],
+  two_bee: [/* 150 entries */],
+  three_bee: [/* 150 entries */],
+  extras: []
+};
+
+function getSpellingCatalogVersion() { return 1; }
+function getSpellingCatalogSource() { return 'spelling-catalog.json v1 (generated 2026-04-09)'; }
+```
+
+**Why not read the JSON at runtime:** GAS server code cannot read files from the
+repo that aren't `.gs` / `.js` / `.html`. Options were (A) embed as a constant,
+(B) fetch from Drive, (C) store in ScriptProperties. (A) is synchronous, zero
+latency, and fits under the 400KB per-file GAS cap (150KB well under). (B)
+adds cold-start latency for every server call that needs vocab; the network
+round-trip negates the point of an in-memory catalog. (C) has a per-key 9KB
+limit requiring split-and-stitch logic.
+
+**Audit guard:** `audit-source.sh` adds a check that `SpellingCatalog.js`
+hash matches a hash computed from `spelling-catalog.json`. Drift between source
+and generated file fails the pre-push gate.
+
+### Scheduling helper
+
+Single entry point used by every consumer:
+
+```js
+// Kidshub.js (or SpellingCatalog.js — see Open Questions)
+// Returns the words for a given (grade, weekNumber) with new words +
+// spaced-repetition review words.
+function getSpellingWords_(grade, weekNumber) {
+  // ... see full signature below
+}
+function getSpellingWordsSafe(grade, weekNumber) {
+  return withMonitor_('getSpellingWordsSafe', function() {
+    return JSON.parse(JSON.stringify(getSpellingWords_(grade, weekNumber)));
+  });
+}
+```
+
+**Return shape:**
+
+```js
+{
+  grade: 4,
+  week: 1,
+  tierUsed: 'two_bee',
+  newWords: [
+    { word: 'albatross', definition: '...', kid_definition: '...', sentence: '...',
+      part_of_speech: 'noun', pronunciation: 'AL-buh-tross',
+      tier: 'two_bee', weekIntroduced: 1 },
+    // 4 more — 5 new words per week
+  ],
+  reviewWords: [
+    // 2–3 words from prior weeks for spaced repetition
+    // weekIntroduced is populated from the deterministic index
+  ],
+  allWords: [ /* newWords concat reviewWords */ ],
+  version: 1
+}
+```
+
+**Tier-to-grade mapping:**
+
+| Grade | Primary tier | Review tier |
+|-------|--------------|-------------|
+| 1–2 | `one_bee` | — |
+| 3 | `one_bee` | `one_bee` (prior weeks) |
+| 4 | `two_bee` | `one_bee` (stretch), prior weeks |
+| 5 | `two_bee` → `three_bee` (crossover around week 20) | `two_bee` |
+| 6+ | `three_bee` | `two_bee` |
+
+For Buggsy (currently 4th grade): primary tier `two_bee`, with `one_bee` review
+weeks used as stretch-down weeks to reinforce foundation words.
+
+**Deterministic word selection:**
+
+```js
+function getSpellingWords_(grade, weekNumber) {
+  var g = parseInt(grade, 10) || 4;
+  var w = parseInt(weekNumber, 10) || 1;
+  var tier = _tierForGrade_(g);
+  var list = SPELLING_CATALOG[tier] || [];
+
+  // 5 new words per week, starting from the offset for this week
+  // 150 words / 5 per week = 30 weeks of fresh content per tier
+  var newStart = ((w - 1) * 5) % list.length;
+  var newWords = [];
+  for (var i = 0; i < 5; i++) {
+    var entry = list[(newStart + i) % list.length];
+    newWords.push(_annotate_(entry, tier, _weekIntroducedFromIndex_((newStart + i), tier)));
+  }
+
+  // Spaced repetition: 3 review words from the last 3 weeks
+  // Week 1 has no review. Week 2+ reviews the previous week's last 3 words.
+  var reviewWords = [];
+  if (w > 1) {
+    var lookbacks = [1, 2, 3]; // weeks to look back
+    for (var j = 0; j < lookbacks.length; j++) {
+      var lookbackWeek = w - lookbacks[j];
+      if (lookbackWeek < 1) continue;
+      var lbStart = ((lookbackWeek - 1) * 5) % list.length;
+      // Pick the word at position (j % 5) from the lookback week
+      var entry = list[(lbStart + (j % 5)) % list.length];
+      reviewWords.push(_annotate_(entry, tier, lookbackWeek));
+    }
+  }
+
+  return {
+    grade: g,
+    week: w,
+    tierUsed: tier,
+    newWords: newWords,
+    reviewWords: reviewWords,
+    allWords: newWords.concat(reviewWords),
+    version: getSpellingCatalogVersion()
+  };
+}
+```
+
+**Properties of this scheduler:**
+
+- **Deterministic.** Same `(grade, week)` → same output every call. Idempotent.
+  Cachable at the client. No random seed needed.
+- **Covers the catalog exhaustively.** 150 words ÷ 5/week = 30 weeks of fresh
+  content before wrap-around. Matches the Nance Elementary school calendar
+  (~40 weeks) minus breaks and assessment weeks; wraparound during review
+  stretches is expected and desirable.
+- **Spaced repetition without DB.** The review selection is pure function of
+  `weekNumber`, so no history lookup is needed. Side effect: if LT changes the
+  tier at mid-year, the review words from prior weeks still resolve correctly.
+- **Testable.** Unit tests pin `getSpellingWords_(4, 1)` to a fixed expected
+  output and fail on any drift.
+
+### 4–5 exposures per week — the actual math
+
+The 4-5 exposures promise only works if multiple consumers share the week's
+word set. The target integration:
+
+| Day | Consumer | How the word gets in | Exposures |
+|-----|----------|----------------------|-----------|
+| Tue | reading-module Tue warm-up | New consumer: 3-word warm-up before cold passage — 2 from prior week + 1 new | +1 per shown word |
+| Tue | reading-module cold passage | Week's words appear in passage text (curriculum author's choice, Gemini-assisted generation later) | +1 if present in passage |
+| Wed | HomeworkModule science word problem | Curriculum author embeds vocab in problem text | +1 if present |
+| Thu | WolfkidCER / writing-module | Writing prompt constraint "use at least 3 of this week's words" | +1–3 per word if used |
+| Thu | ComicStudio | Daily vocab from rotation picks 1 of the week's 5 | +1 |
+| Fri | Friday Review quiz | New 2-question vocab section: definition match for 2 of the week's words | +1 per shown word |
+| Any night | StoryFactory bedtime story | Story generator uses the week's 5 as constraint | +1 per story, typically hits 3–5 of the 5 |
+
+With 5 new words per week and this integration, each word averages ~4 exposures
+per week (warm-up + cold passage + story + Friday review + occasional writing
+or comic use). The measurement path is Task 1's `activitiesJSON` — each
+activity that shows a word records it in `vocab_exposures`. Parent reporting
+aggregates per-word per-week counts from there.
+
+Spec dependency: **exposure tracking depends on Task 1 landing first.** Without
+Lesson Runs, the counter has nowhere to live. Until then, this spec ships the
+catalog wiring (replacing inline arrays) and the helper, and the 4-5/week target
+is qualitative ("is the content being read?") not quantitative.
+
+### Consumer call sites — exact migration targets
+
+Every file path and line number below is verified against the current
+`claude/opus-prek-architecture` branch.
+
+#### Mandatory migration (Phase 1)
+
+**`CurriculumSeed.js:408` — `BUGGSY_WEEK_1.vocabulary`**
+
+```diff
+- vocabulary: [
+-   { word: "observe", definition: "...", sentence: "..." },
+-   { word: "signal",  definition: "...", sentence: "..." },
+-   { word: "measure", definition: "...", sentence: "..." },
+-   { word: "conclude",definition: "...", sentence: "..." },
+-   { word: "vanish",  definition: "...", sentence: "..." }
+- ],
++ vocabulary: getSpellingWords_(4, 1).newWords,
+```
+
+**Issue:** the current CurriculumSeed vocab is hand-picked for Week 1's
+science theme (investigation verbs). Swapping to the catalog loses that
+thematic alignment — Week 1 would get `{albatross, almanac, ancestral, anguish,
+annex}` instead. This is a content decision. Options:
+
+- **Option A — full swap.** Accept that catalog words won't always be
+  thematically tied to the week's content. Theme lives in the module, not the
+  vocab. Ship this. Lose "observe is a science verb" tight coupling. Gain 450
+  curated words on a schedule.
+- **Option B — hybrid.** Keep 2-3 theme words per week hand-picked, fill the
+  rest from the catalog. `getSpellingWords_` accepts an `exclude` param and
+  returns catalog words that don't collide. More complex, less deterministic.
+- **Option C — catalog reordering.** Reorder the catalog per (grade, week) so
+  Week 1's `two_bee` offset starts with science-ish words. Requires manual
+  content work and a "curriculum-ordered" view of the catalog. Most flexible
+  but highest effort.
+
+**Recommended for Phase 1:** Option A, with the escape hatch that
+`CurriculumSeed.js` can still provide a per-week `vocabularyOverride: [...]`
+field that bypasses the helper for that specific week. New content shifts to
+the catalog by default; LT retains a manual override for the weeks where
+thematic tightness matters. This is the "flag gate at content level" pattern.
+
+**`CurriculumSeed.js:554, 700, 847` — `BUGGSY_WEEK_2..4.vocabulary`**
+Same as above. Migrate or add `vocabularyOverride`.
+
+**`CurriculumSeed.js:446, 592, 739, 886` — per-day `vocabulary: ["observe",
+"signal"]`**
+
+Currently a subset of the week's 5 words. Replace with:
+
+```diff
+- vocabulary: ["observe", "signal"]
++ vocabulary: _pickDayWords_(weekVocab, "Monday")
+```
+
+…where `weekVocab` is the result of `getSpellingWords_(4, weekNumber)` and
+`_pickDayWords_` picks 2 words from the 5 based on day-of-week (deterministic).
+
+**`ComicStudio.html:1003` — `loadCurriculumVocab()`**
+
+Currently calls `getTodayContentSafe(CHILD)` and reads `data.vocabulary`.
+That path still works post-migration — the `data.vocabulary` array is now
+populated from the helper. **No client-side change needed.** The migration is
+transparent to ComicStudio.
+
+**`ComicStudio.html:654` — `FALLBACK_VOCAB` constant**
+
+Keep it as a fallback for when `getTodayContentSafe` fails. Optionally update
+the 3 words to match real Week 1 content, but it's a fallback so stability
+matters more than freshness.
+
+**`StoryFactory.js:1551` — `STORY_INDEX` and new story generation**
+
+New stories authored post-Phase-1 pull their `vocabulary_words` array from
+`getSpellingWords_(grade, week).newWords`. Existing stories (currently 1 —
+`week1-jj-garden-mystery.json`) stay as-is; they were hand-authored and their
+vocab is embedded in the scene text. The story metadata index carries
+`curriculumWeek: 1` so parent reporting can correlate a story to the week's
+target vocab.
+
+When `runStoryFactory()` generates a new story via Gemini (existing pattern,
+separate spec), the Gemini prompt now includes the week's vocabulary constraint:
+
+```js
+var weekVocab = getSpellingWords_(4, currentWeek).newWords;
+var vocabList = weekVocab.map(function(w) { return w.word; }).join(', ');
+var prompt = 'Write a bedtime story that naturally uses these vocabulary words: '
+           + vocabList + '. Use each word at least once, in context.';
+```
+
+#### New integrations (Phase 2)
+
+**Tuesday reading-module warm-up** (new feature)
+
+Before the cold passage, render a 3-word warm-up block:
+- 2 words from last week (review)
+- 1 new word from this week
+
+```js
+// reading-module.html
+function renderVocabWarmUp(weekVocab) {
+  var words = weekVocab.reviewWords.slice(0, 2).concat(weekVocab.newWords.slice(0, 1));
+  // Render 3 cards: word, definition, read-aloud button
+}
+```
+
+**WolfkidCER / writing-module Thursday vocab constraint**
+
+Inject a "challenge: use at least 3 of these words" panel into the writing
+prompt, render the 5 new words as reference cards, grade Gemini-side
+post-submission by checking if the submitted text contains ≥3 of the words
+(case-insensitive substring match).
+
+**Friday Review quiz vocab section**
+
+Add 2 vocabulary questions to the Friday quiz:
+- Q1: Definition match — show a word, four definitions, pick the right one
+- Q2: Fill-in-blank — show a sentence with the word blanked, four word options
+
+Pull both from `getSpellingWords_(4, weekNumber).allWords`.
+
+### Exposure tracking (Phase 3 — depends on Task 1)
+
+Per the JJ Completion Contract spec, each lesson run persists an
+`activitiesJSON` blob. Adding a `vocab_exposures` field per activity entry is
+additive and backward-compatible:
+
+```json
+{
+  "idx": 2,
+  "type": "reading_passage",
+  "activityId": "tue-w1-cold-passage",
+  "vocab_exposures": ["gorge", "carved", "layers"],
+  "starsEarned": 3
+}
+```
+
+New helper: `recordVocabExposure_(child, word, source, runId)` — cheap wrapper
+that appends to the run's state blob and, optionally, writes to a new thin
+`KH_VocabExposures` sheet for reporting (denormalized view for parent
+dashboard). The sheet write is lazy and flushes on `completeLessonRun_`, so
+it doesn't hit the per-activity lock budget.
+
+Parent dashboard gains a "Words This Week" widget:
+
+```
+Week 1: Buggsy — 5 new words, 28 exposures
+  ✓ observe     6 exposures this week
+  ✓ signal      5 exposures this week
+  ✓ measure     4 exposures this week
+  ⚠ conclude    2 exposures (below target)
+  ✓ vanish      4 exposures this week
+  Review: gorge 3, carved 2, layers 2
+```
+
+This is the measurement path that proves the 4-5/week target is being hit.
+
+## Sample code
+
+### `generate-spelling-catalog.js` (new Node script)
+
+```js
+// Usage: node generate-spelling-catalog.js
+// Reads spelling-catalog.json → writes SpellingCatalog.js as a GAS server module.
+
+var fs = require('fs');
+var path = require('path');
+
+var src = JSON.parse(fs.readFileSync(path.join(__dirname, 'spelling-catalog.json'), 'utf8'));
+var count = (src.one_bee.length + src.two_bee.length + src.three_bee.length + (src.extras || []).length);
+var generatedAt = new Date().toISOString().slice(0, 10);
+
+var out = '// SpellingCatalog.js — v1 (generated from spelling-catalog.json)\n'
+        + '// DO NOT EDIT BY HAND. Edit spelling-catalog.json and run:\n'
+        + '//   node generate-spelling-catalog.js\n'
+        + '// Generated: ' + generatedAt + ' — ' + count + ' words\n\n'
+        + 'var SPELLING_CATALOG = ' + JSON.stringify(src, null, 2) + ';\n\n'
+        + 'function getSpellingCatalogVersion() { return 1; }\n'
+        + 'function getSpellingCatalogSource() {\n'
+        + '  return \'spelling-catalog.json v1 (generated ' + generatedAt + ', ' + count + ' words)\';\n'
+        + '}\n';
+
+fs.writeFileSync(path.join(__dirname, 'SpellingCatalog.js'), out);
+console.log('Wrote SpellingCatalog.js (' + count + ' words)');
+```
+
+### `audit-source.sh` check
+
+```bash
+# audit-source.sh — add alongside existing checks
+
+# Spelling catalog drift: SpellingCatalog.js must be regenerated from JSON
+if [ -f spelling-catalog.json ] && [ -f SpellingCatalog.js ]; then
+  JSON_HASH=$(sha1sum spelling-catalog.json | cut -d' ' -f1)
+  # The generator embeds the SHA1 in a comment at the top of the file
+  JS_HASH=$(grep -o 'SPELLING_CATALOG_SOURCE_HASH = "[a-f0-9]*"' SpellingCatalog.js | cut -d'"' -f2)
+  if [ "$JSON_HASH" != "$JS_HASH" ]; then
+    echo "FAIL: SpellingCatalog.js is out of date. Run: node generate-spelling-catalog.js"
+    exit 1
+  fi
+fi
+```
+
+(The generator would need to write the JSON hash into the output — easy one-line
+addition to the script above.)
+
+### `getSpellingWords_` helper signature + implementation
+
+```js
+// Add to SpellingCatalog.js after the constant
+
+var _VOCAB_TIER_BY_GRADE = {
+  1: 'one_bee',
+  2: 'one_bee',
+  3: 'one_bee',
+  4: 'two_bee',
+  5: 'two_bee',
+  6: 'three_bee'
+};
+
+function _tierForGrade_(grade) {
+  return _VOCAB_TIER_BY_GRADE[grade] || 'two_bee';
+}
+
+function _weekIntroducedFromIndex_(idx, tier) {
+  var list = SPELLING_CATALOG[tier] || [];
+  if (list.length === 0) return 0;
+  return Math.floor((idx % list.length) / 5) + 1;
+}
+
+function _annotate_(entry, tier, weekIntroduced) {
+  return {
+    word: entry.word,
+    definition: entry.definition,
+    kid_definition: entry.kid_definition || entry.definition,
+    sentence: entry.sentence,
+    part_of_speech: entry.part_of_speech || '',
+    pronunciation: entry.pronunciation || '',
+    origin: entry.origin || '',
+    tier: tier,
+    weekIntroduced: weekIntroduced
+  };
+}
+
+function getSpellingWords_(grade, weekNumber) {
+  var g = parseInt(grade, 10) || 4;
+  var w = parseInt(weekNumber, 10) || 1;
+  var tier = _tierForGrade_(g);
+  var list = SPELLING_CATALOG[tier] || [];
+  if (list.length === 0) return { grade: g, week: w, tierUsed: tier, newWords: [], reviewWords: [], allWords: [], version: getSpellingCatalogVersion() };
+
+  var newStart = ((w - 1) * 5) % list.length;
+  var newWords = [];
+  for (var i = 0; i < 5; i++) {
+    var idx = (newStart + i) % list.length;
+    newWords.push(_annotate_(list[idx], tier, _weekIntroducedFromIndex_(idx, tier)));
+  }
+
+  var reviewWords = [];
+  if (w > 1) {
+    for (var j = 1; j <= 3; j++) {
+      var lookback = w - j;
+      if (lookback < 1) break;
+      var lbStart = ((lookback - 1) * 5) % list.length;
+      var lbIdx = (lbStart + (j % 5)) % list.length;
+      reviewWords.push(_annotate_(list[lbIdx], tier, lookback));
+    }
+  }
+
+  return {
+    grade: g,
+    week: w,
+    tierUsed: tier,
+    newWords: newWords,
+    reviewWords: reviewWords,
+    allWords: newWords.concat(reviewWords),
+    version: getSpellingCatalogVersion()
+  };
+}
+
+function getSpellingWordsSafe(grade, weekNumber) {
+  return withMonitor_('getSpellingWordsSafe', function() {
+    return JSON.parse(JSON.stringify(getSpellingWords_(grade, weekNumber)));
+  });
+}
+```
+
+## Trade-offs considered
+
+### Alternative 1 — Random word selection with a PRNG seeded by week
+
+Instead of deterministic offset-based selection, use a seeded RNG to shuffle
+the tier and pick 5 per week.
+
+**Rejected because:**
+- The offset approach is fewer moving parts, trivially testable, and guaranteed
+  to cover the catalog without gaps.
+- Random selection with a seed looks clever but gives no guarantee of
+  exhaustive coverage. Some words could sit in the tier never chosen for 60
+  weeks by bad luck of the seed. Deterministic index gives strong coverage
+  guarantees: every word in `two_bee` gets used within 30 weeks of Week 1.
+- Any "pick 5 at random" algorithm invites future questions like "how do we
+  skip the ones LT marked offensive?" which a deterministic list handles with
+  a single `excludedWords` set.
+
+### Alternative 2 — Pull catalog from a Google Sheet tab
+
+Add a `Spelling_Catalog` sheet tab, populate from JSON once via a seed
+function, read from sheet at runtime.
+
+**Rejected because:**
+- Two sources of truth (JSON + sheet) immediately drift. LT edits one, forgets
+  the other.
+- Sheet-based reads are slower (~200ms vs 0ms for in-memory) and hit the
+  6-minute execution cap when called from multiple consumers per request.
+- A 450-row sheet is usable but not great — hard to diff, no version control,
+  no merge conflicts.
+- JSON stays as the source of truth; the `.js` constant is the deploy artifact.
+  Sheet remains available as a Phase 4 option if LT wants to edit in a
+  non-code environment.
+
+### Alternative 3 — Delete the catalog, keep hand-picked vocab only
+
+Accept that curriculum-tight vocab (observe, signal, measure, etc.) is better
+than catalog words that may or may not align with the week's theme. Remove
+`spelling-catalog.json` from the repo.
+
+**Rejected because:**
+- Curriculum-tight vocab caps Buggsy at ~200 unique words per school year
+  (5 words/week × 40 weeks). The catalog opens him up to the full Nance
+  spelling scope-and-sequence (450 words across 3 tiers).
+- The STAAR RLA vocabulary section tests high-frequency words, not
+  curriculum-theme words. Catalog alignment to the state standard is more
+  valuable than curriculum-theme coherence.
+- The escape hatch (`vocabularyOverride`) keeps the door open for LT to
+  hand-pick specific weeks where theme alignment matters (e.g., science fair
+  week, STAAR practice week).
+
+## Rollout plan
+
+### Phase 1 — Catalog plumbing, no consumer migration (1 PR)
+
+- Add `generate-spelling-catalog.js` (Node script).
+- Run it once, commit `SpellingCatalog.js` (generated, 150KB, ~4100 lines).
+- Add `getSpellingWords_()` and `getSpellingWordsSafe()` to `SpellingCatalog.js`.
+- Register the Safe wrapper in `Code.js serveData` whitelist (~line 407).
+- Register in `Tbmsmoketest.js` wiring check list.
+- Add `audit-source.sh` drift check (JSON hash vs JS hash).
+- No consumer changes. The helper is dark — nothing calls it yet.
+- Smoke + regression pass.
+
+### Phase 2 — Migrate CurriculumSeed + ComicStudio pull-through (1 PR)
+
+- Replace `BUGGSY_WEEK_1..4.vocabulary` hardcoded arrays with
+  `getSpellingWords_(4, N).newWords`.
+- Add `vocabularyOverride` optional field to preserve per-week escape hatch.
+- Verify `ComicStudio.html:1003` still works (it reads `data.vocabulary`, which
+  is now helper-populated). No client-side change required.
+- Smoke + regression pass.
+- LT reviews the first 4 weeks of catalog-sourced vocab on the actual device.
+  If the content feels wrong, flip to `vocabularyOverride` for those weeks and
+  iterate.
+
+### Phase 3 — New consumer integrations (2 PRs)
+
+- **PR 3a:** reading-module Tuesday warm-up + Friday Review vocab quiz.
+- **PR 3b:** WolfkidCER / writing-module Thursday constraint banner, with
+  post-submission Gemini check for ≥3 word usage.
+
+### Phase 4 — Exposure tracking (blocked on Task 1)
+
+- Requires Lesson Run data model.
+- Adds `vocab_exposures` field to per-activity entries in `activitiesJSON`.
+- Adds `KH_VocabExposures` thin sheet + parent dashboard widget.
+- Parent reporting exposes per-word weekly counts.
+
+### Phase 5 — LT-facing vocab editor (optional)
+
+- In-workspace UI for LT to add/edit catalog words without touching JSON.
+- A flag to "exclude" certain catalog words per child (e.g., skip words that
+  Buggsy already mastered in Nance spelling tests).
+- Not on the critical path.
+
+## Verification plan (Gate 4 manifest)
+
+```
+ls spelling-catalog.json                            → expected: file exists
+ls SpellingCatalog.js                               → expected: file exists after Phase 1
+grep -n "SPELLING_CATALOG" SpellingCatalog.js       → expected: constant definition
+grep -n "getSpellingWords_" SpellingCatalog.js      → expected: helper definition
+grep -n "getSpellingWordsSafe" Code.js              → expected: whitelist + wrapper
+grep -n "getSpellingWordsSafe" Tbmsmoketest.js      → expected: wiring check entry
+grep -n "getSpellingWords_" CurriculumSeed.js       → expected: ≥4 call sites (Phase 2)
+grep -n "vocabularyOverride" CurriculumSeed.js      → expected: escape hatch field
+grep -n "SPELLING_CATALOG_SOURCE_HASH" SpellingCatalog.js → expected: hash comment
+ls generate-spelling-catalog.js                     → expected: generator script exists
+bash audit-source.sh                                 → expected: no "SpellingCatalog.js out of date" error
+```
+
+## Gate 5 feature verification checklist
+
+| # | Check | Pass condition |
+|---|-------|----------------|
+| 1 | Catalog loads server-side | `SPELLING_CATALOG.one_bee.length === 150` in GAS editor console |
+| 2 | Helper returns 5 new words | `getSpellingWords_(4, 1).newWords.length === 5` |
+| 3 | Helper returns review words | `getSpellingWords_(4, 5).reviewWords.length === 3` |
+| 4 | Week 1 has no review | `getSpellingWords_(4, 1).reviewWords.length === 0` |
+| 5 | Deterministic | `JSON.stringify(getSpellingWords_(4,1)) === JSON.stringify(getSpellingWords_(4,1))` |
+| 6 | Grade 4 uses two_bee | `getSpellingWords_(4, 1).tierUsed === 'two_bee'` |
+| 7 | Grade 6 uses three_bee | `getSpellingWords_(6, 1).tierUsed === 'three_bee'` |
+| 8 | Wraparound | `getSpellingWords_(4, 31).newWords[0].word === getSpellingWords_(4, 1).newWords[0].word` (30-week cycle) |
+| 9 | Safe wrapper serializable | `JSON.parse(JSON.stringify(getSpellingWordsSafe(4, 1)))` does not throw |
+| 10 | CurriculumSeed migration preserved | All 4 Buggsy weeks have a non-empty `vocabulary` array after migration (Phase 2) |
+| 11 | `vocabularyOverride` respected | Setting `vocabularyOverride: [...]` on a week returns the override, not catalog words (Phase 2) |
+| 12 | ComicStudio still works | Loading ComicStudio with a migrated Week 1 renders the daily vocab word without JS errors (Phase 2) |
+| 13 | audit-source.sh guard | Editing `spelling-catalog.json` without regenerating fails `audit-source.sh` |
+| 14 | Catalog fits under GAS file cap | `SpellingCatalog.js` file size < 400KB |
+| 15 | No ES6 in server code | SpellingCatalog.js uses `var` throughout (V8 allows ES6 but matching existing style) |
+
+## Open questions for LT review
+
+1. **Home of the helper.** `getSpellingWords_` can live in `SpellingCatalog.js`
+   (same file as the catalog constant) or in `Kidshub.js` (alongside other
+   curriculum helpers). The former is cleaner (catalog + helper in one file);
+   the latter matches the existing pattern where `getTodayContent_` is in
+   Kidshub. Preference?
+
+2. **Content loss in migration.** Week 1's current vocab (`observe, signal,
+   measure, conclude, vanish`) is tightly tied to the science theme. Catalog
+   Week 1 would be `albatross, almanac, ancestral, anguish, annex`. Is that
+   acceptable, or should Phase 2 add a `vocabularyOverride: [...]` to Week 1
+   specifically to preserve the current hand-picked set while still proving the
+   plumbing works?
+
+3. **Spaced repetition depth.** Current design reviews last 1/2/3 weeks (3
+   review words per current week). Deeper review (last 1/2/4/8 weeks) is more
+   research-backed but feels crowded for a 4th-grader. Stick with 3 or go deeper?
+
+4. **Tier crossover for 5th grade.** The mapping treats 5th grade as `two_bee`
+   primary for most of the year with a crossover to `three_bee` around Week 20.
+   The crossover logic isn't in the helper yet — it'd need a `weeksInTier` or
+   `transitionWeek` argument. Build it now or defer until Buggsy is actually in
+   5th grade (next school year)?
+
+5. **STAAR alignment.** The catalog doesn't currently tag words with STAAR
+   frequency or tested-on-2024-STAAR flags. Should a Phase 3 add these tags to
+   prioritize the highest-leverage words for STAAR prep?
+
+6. **Exclude list.** How should LT flag words to skip ("albatross is too
+   obscure, move on")? Options:
+   - Per-child `excludedWords: []` in ScriptProperties
+   - A `skip: true` flag on the catalog entry itself
+   - A separate `skipped-words.json` file
+   Which interface is easiest for LT?
+
+7. **Phase 4 dependency.** Exposure tracking is blocked on Task 1 (Completion
+   Contract). Should this spec ship with only Phases 1-3 and defer Phase 4 to a
+   follow-up after Task 1 merges? Or wait and ship all phases together?
+
+---
+
+**Definition of done for implementation (future session):**
+
+- Phase 1 Gate 5 items 1-9 green
+- Phase 2 Gate 5 items 10-12 green after CurriculumSeed migration
+- Phase 3 integrations dogfooded by Buggsy on one school week (Monday-Friday)
+- Catalog drift guard in `audit-source.sh` fires on any desync
+- Existing `week1-jj-garden-mystery` story still loads and renders with its
+  hand-authored vocab (no migration for existing stories)
+- Parent-visible metric path exists (even if values are zero until Task 1's
+  Phase 4 tracking lands)
