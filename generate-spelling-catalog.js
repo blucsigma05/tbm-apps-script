@@ -1,0 +1,122 @@
+#!/usr/bin/env node
+// Usage: node generate-spelling-catalog.js
+// Reads spelling-catalog.json → writes SpellingCatalog.js as a GAS server module.
+// Embeds a SHA1 hash of the source JSON so future audit-source.sh checks can
+// detect drift between the JSON and the generated .js file.
+
+var fs = require('fs');
+var path = require('path');
+var crypto = require('crypto');
+
+var jsonPath = path.join(__dirname, 'spelling-catalog.json');
+var outPath = path.join(__dirname, 'SpellingCatalog.js');
+
+var rawJson = fs.readFileSync(jsonPath, 'utf8');
+var src = JSON.parse(rawJson);
+var hash = crypto.createHash('sha1').update(rawJson).digest('hex');
+var count = (src.one_bee || []).length + (src.two_bee || []).length + (src.three_bee || []).length + (src.extras || []).length;
+var generatedAt = new Date().toISOString().slice(0, 10);
+
+var out = '// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n'
+        + '// SpellingCatalog.js v1 \u2014 Spelling Catalog (Generated)\n'
+        + '// WRITES TO: (none \u2014 read-only helper)\n'
+        + '// READS FROM: (none \u2014 in-memory constant)\n'
+        + '// \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n'
+        + '// DO NOT EDIT BY HAND. Edit spelling-catalog.json and run:\n'
+        + '//   node generate-spelling-catalog.js\n'
+        + '// Generated: ' + generatedAt + ' \u2014 ' + count + ' words\n'
+        + '// Source hash: ' + hash + '\n'
+        + '\n'
+        + 'function getSpellingCatalogVersion() { return 1; }\n'
+        + '\n'
+        + 'var SPELLING_CATALOG_SOURCE_HASH = "' + hash + '";\n'
+        + '\n'
+        + 'function getSpellingCatalogSource() {\n'
+        + '  return "spelling-catalog.json v1 (generated ' + generatedAt + ', ' + count + ' words, hash " + SPELLING_CATALOG_SOURCE_HASH + ")";\n'
+        + '}\n'
+        + '\n'
+        + 'var SPELLING_CATALOG = ' + JSON.stringify(src, null, 2) + ';\n'
+        + '\n'
+        + '// Week number within 5th grade at which Buggsy crosses from two_bee\n'
+        + '// to three_bee as his primary tier. Slide if the Nance calendar changes.\n'
+        + 'var FIFTH_GRADE_CROSSOVER_WEEK = 19;\n'
+        + '\n'
+        + 'function _tierForGradeAndWeek_(grade, weekNumber) {\n'
+        + '  var g = parseInt(grade, 10) || 4;\n'
+        + '  var w = parseInt(weekNumber, 10) || 1;\n'
+        + '  if (g <= 3) return \'one_bee\';\n'
+        + '  if (g === 4) return \'two_bee\';\n'
+        + '  if (g === 5) {\n'
+        + '    return w >= FIFTH_GRADE_CROSSOVER_WEEK ? \'three_bee\' : \'two_bee\';\n'
+        + '  }\n'
+        + '  return \'three_bee\';\n'
+        + '}\n'
+        + '\n'
+        + 'function _weekIntroducedFromIndex_(idx, tier) {\n'
+        + '  var list = SPELLING_CATALOG[tier] || [];\n'
+        + '  if (list.length === 0) return 0;\n'
+        + '  return Math.floor((idx % list.length) / 5) + 1;\n'
+        + '}\n'
+        + '\n'
+        + 'function _annotate_(entry, tier, weekIntroduced) {\n'
+        + '  return {\n'
+        + '    word: entry.word,\n'
+        + '    definition: entry.definition,\n'
+        + '    kid_definition: entry.kid_definition || entry.definition,\n'
+        + '    sentence: entry.sentence || \'\',\n'
+        + '    part_of_speech: entry.part_of_speech || \'\',\n'
+        + '    pronunciation: entry.pronunciation || \'\',\n'
+        + '    origin: entry.origin || \'\',\n'
+        + '    tier: tier,\n'
+        + '    weekIntroduced: weekIntroduced\n'
+        + '  };\n'
+        + '}\n'
+        + '\n'
+        + 'function getSpellingWords_(grade, weekNumber) {\n'
+        + '  var g = parseInt(grade, 10) || 4;\n'
+        + '  var w = parseInt(weekNumber, 10) || 1;\n'
+        + '  var tier = _tierForGradeAndWeek_(g, w);\n'
+        + '  var list = SPELLING_CATALOG[tier] || [];\n'
+        + '  if (list.length === 0) {\n'
+        + '    return { grade: g, week: w, tierUsed: tier, newWords: [], reviewWords: [], allWords: [], version: getSpellingCatalogVersion() };\n'
+        + '  }\n'
+        + '  var newStart = ((w - 1) * 5) % list.length;\n'
+        + '  var newWords = [];\n'
+        + '  for (var i = 0; i < 5; i++) {\n'
+        + '    var idx = (newStart + i) % list.length;\n'
+        + '    newWords.push(_annotate_(list[idx], tier, _weekIntroducedFromIndex_(idx, tier)));\n'
+        + '  }\n'
+        + '  var reviewWords = [];\n'
+        + '  if (w > 1) {\n'
+        + '    for (var j = 1; j <= 3; j++) {\n'
+        + '      var lookback = w - j;\n'
+        + '      if (lookback < 1) break;\n'
+        + '      var lbStart = ((lookback - 1) * 5) % list.length;\n'
+        + '      var lbIdx = (lbStart + (j % 5)) % list.length;\n'
+        + '      reviewWords.push(_annotate_(list[lbIdx], tier, lookback));\n'
+        + '    }\n'
+        + '  }\n'
+        + '  return {\n'
+        + '    grade: g,\n'
+        + '    week: w,\n'
+        + '    tierUsed: tier,\n'
+        + '    newWords: newWords,\n'
+        + '    reviewWords: reviewWords,\n'
+        + '    allWords: newWords.concat(reviewWords),\n'
+        + '    version: getSpellingCatalogVersion()\n'
+        + '  };\n'
+        + '}\n'
+        + '\n'
+        + 'function getSpellingWordsSafe(grade, weekNumber) {\n'
+        + '  if (typeof withMonitor_ === \'function\') {\n'
+        + '    return withMonitor_(\'getSpellingWordsSafe\', function() {\n'
+        + '      return JSON.parse(JSON.stringify(getSpellingWords_(grade, weekNumber)));\n'
+        + '    });\n'
+        + '  }\n'
+        + '  return JSON.parse(JSON.stringify(getSpellingWords_(grade, weekNumber)));\n'
+        + '}\n'
+        + '\n'
+        + '// END OF FILE \u2014 SpellingCatalog.js v1\n';
+
+fs.writeFileSync(outPath, out);
+console.log('Wrote SpellingCatalog.js \u2014 ' + count + ' words, hash ' + hash);
