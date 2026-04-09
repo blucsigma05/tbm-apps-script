@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v58 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v59 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 58; }
+function getKidsHubVersion() { return 59; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3642,6 +3642,15 @@ function saveLessonRunState_(runId, state) {
     if (rowIdx < 0) {
       return JSON.stringify({ status: 'error', message: 'Unknown runId — call startLessonRun first' });
     }
+    var existingStatus = String(sheet.getRange(rowIdx, 10).getValue() || '');
+    if (existingStatus === 'completed' || existingStatus === 'abandoned') {
+      return JSON.stringify({
+        status: 'error',
+        message: 'Cannot save state — run is already ' + existingStatus,
+        runId: runId,
+        terminalStatus: existingStatus
+      });
+    }
     var lastSaved = new Date().toISOString();
     sheet.getRange(rowIdx, 8).setValue(lastSaved);                              // LastSavedAt
     sheet.getRange(rowIdx, 11).setValue(Number(state.activityIndex) || 0);      // ActivityIndex
@@ -3741,6 +3750,7 @@ function completeLessonRun_(runId, final) {
   var source = '';
   var sessionStars = 0;
   var alreadyCompleted = false;
+  var persistedReason = '';
 
   var lk = acquireLock_();
   if (!lk.acquired) return JSON.stringify({ status: 'locked' });
@@ -3761,6 +3771,7 @@ function completeLessonRun_(runId, final) {
       alreadyCompleted = true;
       completedAt = String(row[8] || '');
       sessionStars = Number(row[12]) || 0;
+      persistedReason = String(row[15] || '');
     } else {
       completedAt = new Date().toISOString();
       sheet.getRange(rowIdx, 8).setValue(completedAt);    // LastSavedAt
@@ -3786,7 +3797,7 @@ function completeLessonRun_(runId, final) {
       alreadyCompleted: true,
       completedAt: completedAt,
       sessionStars: sessionStars,
-      completionReason: completionReason
+      completionReason: persistedReason  // persisted from row col 16, NOT caller-provided
     });
   }
 
@@ -4403,5 +4414,5 @@ function getDailyMissionsInitSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v58
+// END OF FILE — KidsHub.gs v59
 // ════════════════════════════════════════════════════════════════════
