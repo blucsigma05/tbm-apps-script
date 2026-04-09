@@ -3605,25 +3605,29 @@ function submitHomework_(data) {
     lk.lock.releaseLock();
   }
 
-  // Phase 2: Push notification (no lock needed) — notify on ALL submissions
+  // Phase 2: Award rings AFTER lock release (acquires its own lock)
+  var ringsActuallyAwarded = 0;
+  if (isAutoGrade && rings > 0) {
+    try {
+      if (typeof kh_awardEducationPoints_ === 'function') {
+        var awardRaw = kh_awardEducationPoints_(childLower, rings, data.module + ' — ' + data.subject);
+        var awardResult = typeof awardRaw === 'string' ? JSON.parse(awardRaw) : awardRaw;
+        ringsActuallyAwarded = (awardResult && awardResult.duplicate) ? 0 : rings;
+      }
+    } catch(e) { if (typeof logError_ === 'function') logError_('submitHomework_:awardRings', e); }
+  }
+
+  // Phase 3: Push notification AFTER ring award so message reflects reality
   try {
     if (typeof sendPush_ === 'function') {
       var childDisplay = childLower.charAt(0).toUpperCase() + childLower.slice(1);
       var pushMsg = status === 'pending_review'
         ? 'Needs your review on Parent Dashboard'
-        : 'Auto-graded — ' + (rings > 0 ? rings + ' rings awarded' : 'complete');
+        : ringsActuallyAwarded > 0 ? 'Auto-graded — ' + ringsActuallyAwarded + ' rings awarded'
+        : 'Auto-graded — complete';
       sendPush_(childDisplay + ' submitted ' + (data.subject || 'homework'), pushMsg, 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL);
     }
   } catch(e) { /* non-blocking */ }
-
-  // Phase 3: Award rings AFTER lock release (acquires its own lock)
-  if (isAutoGrade && rings > 0) {
-    try {
-      if (typeof kh_awardEducationPoints_ === 'function') {
-        kh_awardEducationPoints_(childLower, rings, data.module + ' — ' + data.subject);
-      }
-    } catch(e) { if (typeof logError_ === 'function') logError_('submitHomework_:awardRings', e); }
-  }
 
   // Phase 4: Gemini review (outside lock, can take 5-30s)
   if (status === 'pending_review' && data.responseText && String(data.responseText).length > 20) {
