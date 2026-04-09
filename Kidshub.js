@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v53 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v55 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 53; }
+function getKidsHubVersion() { return 55; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3922,5 +3922,79 @@ function getDesignUnlockedSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v53
+// ══════════════════════════════════════════════════════════════
+// v55: SANDBOX — isolated test environment for kid workflows
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * Wipe all sandbox-* rows from KH tabs + seed sample tasks.
+ * Call from /parent?sandbox=1 or via /api?fn=resetSandboxSafe
+ */
+function resetSandbox_() {
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var tabs = ['KH_Chores', 'KH_History', 'KH_Rewards', 'KH_Grades', 'KH_Education',
+                'KH_Requests', 'KH_ScreenTime', 'KH_PowerScan', 'KH_MissionState'];
+    var removed = 0;
+    for (var t = 0; t < tabs.length; t++) {
+      var sheet = getKHSheet_(tabs[t]);
+      if (!sheet || sheet.getLastRow() < 2) continue;
+      var data = sheet.getDataRange().getValues();
+      var headers = data[0];
+      var childCol = -1;
+      for (var h = 0; h < headers.length; h++) {
+        if (String(headers[h]).toLowerCase().indexOf('child') !== -1) { childCol = h; break; }
+      }
+      if (childCol === -1) continue;
+      // Delete from bottom up to avoid index shift
+      for (var r = data.length - 1; r >= 1; r--) {
+        var val = String(data[r][childCol] || '').toLowerCase();
+        if (val.indexOf('sandbox-') === 0) {
+          sheet.deleteRow(r + 1);
+          removed++;
+        }
+      }
+    }
+    // Seed sample tasks for sandbox-buggsy
+    var choreSheet = getKHSheet_('KH_Chores');
+    if (choreSheet) {
+      var ch = choreSheet.getRange(1, 1, 1, choreSheet.getLastColumn()).getValues()[0];
+      var colMap = {};
+      for (var c = 0; c < ch.length; c++) colMap[ch[c]] = c;
+      var today = getTodayISO_();
+      var sampleTasks = [
+        { task: 'Sandbox: Make Bed', points: 2, freq: 'Daily', slot: '1-Morning' },
+        { task: 'Sandbox: Clean Room', points: 3, freq: 'Daily', slot: '2-Afternoon' },
+        { task: 'Sandbox: Read 15 Minutes', points: 5, freq: 'Daily', slot: '3-Evening' }
+      ];
+      for (var s = 0; s < sampleTasks.length; s++) {
+        var row = [];
+        for (var i = 0; i < ch.length; i++) row.push('');
+        var st = sampleTasks[s];
+        var taskID = 'SANDBOX_buggsy_' + today + '_' + s;
+        if (colMap['Child'] !== undefined) row[colMap['Child']] = 'sandbox-buggsy';
+        if (colMap['Task'] !== undefined) row[colMap['Task']] = st.task;
+        if (colMap['Points'] !== undefined) row[colMap['Points']] = st.points;
+        if (colMap['Frequency'] !== undefined) row[colMap['Frequency']] = st.freq;
+        if (colMap['Time_Slot'] !== undefined) row[colMap['Time_Slot']] = st.slot;
+        if (colMap['Active'] !== undefined) row[colMap['Active']] = 'YES';
+        if (colMap['Task_ID'] !== undefined) row[colMap['Task_ID']] = taskID;
+        choreSheet.appendRow(row);
+      }
+    }
+    stampKHHeartbeat_();
+    return JSON.stringify({ status: 'ok', removed: removed, seeded: 3 });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+function resetSandboxSafe() {
+  return withMonitor_('resetSandboxSafe', function() {
+    return JSON.parse(resetSandbox_());
+  });
+}
+
+// END OF FILE — KidsHub.gs v55
 // ════════════════════════════════════════════════════════════════════

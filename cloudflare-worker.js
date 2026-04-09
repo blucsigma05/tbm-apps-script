@@ -333,7 +333,9 @@ function getShimScript() {
 '    "checkDay1Safe",\n' +
 '    "saveDesignChoicesSafe",\n' +
 '    "getDesignChoicesSafe",\n' +
-'    "getDesignUnlockedSafe"\n' +
+'    "getDesignUnlockedSafe",\n' +
+'    "resetSandboxSafe",\n' +
+'    "getRecentTransactionsSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +

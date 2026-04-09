@@ -281,9 +281,10 @@ html,body{width:100%;height:100%;overflow-x:hidden;}
 
   // ── Launch story reader ──
   window.launchStory = function(storyKey) {
-    var base = window.location.href.split('?')[0];
-    // If we're in an iframe or GAS context, use google.script.run host
-    var url = base + '?page=story&story=' + encodeURIComponent(storyKey) +
+    // v4: Navigate to /story clean route — old query-param approach failed because
+    // CF route precedence keeps page=story-library when URL path is /story-library
+    var origin = window.location.origin || '';
+    var url = origin + '/story?story=' + encodeURIComponent(storyKey) +
               '&mode=' + encodeURIComponent(mode) +
               '&child=' + encodeURIComponent(child);
     window.location.href = url;

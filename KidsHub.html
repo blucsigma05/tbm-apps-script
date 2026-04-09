@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="tbm-version" content="KidsHub v40">
+<meta name="tbm-version" content="KidsHub v41">
 <title>Kids Hub v40</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -935,9 +935,25 @@ body { min-height: 100vh; }
 <!-- v1 TBM: Scriptlet injection via createTemplateFromFile (Code.gs v20) -->
 <!-- Fixes parent dashboard blank page bug — config is server-injected   -->
 <script>
-var TBM_VERSION = 'KidsHub v40';
+var TBM_VERSION = 'KidsHub v41';
 var INIT_CHILD = "<?= INIT_CHILD ?>";
 var INIT_VIEW  = "<?= INIT_VIEW ?>";
+var IS_SANDBOX = "<?= IS_SANDBOX ?>" === 'true';
+// v41: Sandbox mode — all writes go to sandbox-buggsy/sandbox-jj, production untouched
+if (IS_SANDBOX) {
+  document.addEventListener('DOMContentLoaded', function() {
+    var banner = document.createElement('div');
+    banner.id = 'sandboxBanner';
+    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#f59e0b;color:#000;text-align:center;padding:6px 0;font-weight:bold;font-size:14px;font-family:sans-serif;letter-spacing:1px;';
+    banner.textContent = '\u26a0 SANDBOX MODE \u2014 writes are isolated from production';
+    document.body.insertBefore(banner, document.body.firstChild);
+    // Shift app content down so banner doesn't overlap
+    var app = document.getElementById('app');
+    if (app) app.style.paddingTop = '36px';
+    var loading = document.getElementById('loading');
+    if (loading) loading.style.paddingTop = '36px';
+  });
+}
 </script>
 
 <div id="pinOverlay" style="display:none">

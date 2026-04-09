@@ -255,11 +255,15 @@ function servePage(page, e) {
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
     if (page === 'kidshub' || page === 'buggsy' || page === 'jj' || page === 'parent') {
-      var _childWhitelist = { buggsy: true, jj: true };
+      var _childWhitelist = { buggsy: true, jj: true, 'sandbox-buggsy': true, 'sandbox-jj': true };
       var child = (route && route.child) || (e && e.parameter && e.parameter.child) || 'buggsy';
       var view  = (route && route.view) || (e && e.parameter && e.parameter.view)  || 'kid';
+      // v74: Sandbox mode — prepend sandbox- to child name for isolated testing
+      var isSandbox = (e && e.parameter && e.parameter.sandbox === '1');
+      if (isSandbox && child.indexOf('sandbox-') !== 0) child = 'sandbox-' + child;
       var tmpl = HtmlService.createTemplateFromFile('KidsHub');
       tmpl.INIT_CHILD = _childWhitelist[child.toLowerCase()] ? child.toLowerCase() : '';
+      tmpl.IS_SANDBOX = isSandbox ? 'true' : 'false';
       tmpl.INIT_VIEW  = view.toLowerCase();
       var title = 'Kids Hub — Ring Quest';
       if (child.toLowerCase() === 'jj')   title = '⭐ JJ\'s Sparkle Stars';
@@ -331,11 +335,15 @@ function serveData(e) {
       try {
         var content;
         if (page === 'kidshub' || page === 'buggsy' || page === 'jj' || page === 'parent') {
-          var _childWhitelist2 = { buggsy: true, jj: true };
+          var _childWhitelist2 = { buggsy: true, jj: true, 'sandbox-buggsy': true, 'sandbox-jj': true };
           var tmpl = HtmlService.createTemplateFromFile('KidsHub');
           var _childParam = page === 'jj' ? 'jj' : (page === 'buggsy' ? 'buggsy' : (e.parameter.child || 'buggsy'));
+          // v74: Sandbox mode
+          var _isSandbox2 = e.parameter.sandbox === '1';
+          if (_isSandbox2 && _childParam.indexOf('sandbox-') !== 0) _childParam = 'sandbox-' + _childParam;
           tmpl.INIT_CHILD = _childWhitelist2[_childParam.toLowerCase()] ? _childParam.toLowerCase() : '';
           tmpl.INIT_VIEW  = page === 'parent' ? 'parent' : (e.parameter.view  || 'kid').toLowerCase();
+          tmpl.IS_SANDBOX = _isSandbox2 ? 'true' : 'false';
           content = tmpl.evaluate().getContent();
         } else if (page === 'vault') {
           var tmpl = HtmlService.createTemplateFromFile('Vault');
@@ -418,7 +426,8 @@ function serveData(e) {
         'getDesignChoicesSafe': getDesignChoicesSafe,
         'getDesignUnlockedSafe': getDesignUnlockedSafe,
         'seedAllCurriculumSafe': seedAllCurriculumSafe,
-        'getOpsHealthSafe': getOpsHealthSafe
+        'getOpsHealthSafe': getOpsHealthSafe,
+        'resetSandboxSafe': resetSandboxSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {

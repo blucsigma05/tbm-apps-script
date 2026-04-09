@@ -696,6 +696,16 @@ if (TBM_TEST_MODE) {
   document.body.style.paddingTop = '28px';
 }
 
+var TBM_SANDBOX = window.location.search.indexOf('sandbox=1') !== -1;
+var SANDBOX_CHILD = TBM_SANDBOX ? 'sandbox-buggsy' : 'buggsy';
+if (TBM_SANDBOX) {
+  var _sbanner = document.createElement('div');
+  _sbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f59e0b;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _sbanner.textContent = '\u26a0 SANDBOX MODE \u2014 writes isolated from production';
+  document.body.appendChild(_sbanner);
+  document.body.style.paddingTop = '28px';
+}
+
 // ── Audio System (Marco / ElevenLabs) ──
 var audioCache = {};
 function preloadBugsyAudio() {
@@ -854,7 +864,7 @@ function logScaffold(eventType, data) {
     google.script.run
       .withFailureHandler(function(err) { console.error('Scaffold log failed:', err); })
       .logScaffoldEventSafe({
-        child: 'buggsy',
+        child: SANDBOX_CHILD,
         module: MODULE_NAME || 'unknown',
         event: eventType,
         data: data || {}
@@ -1453,7 +1463,7 @@ function renderResults() {
         })
         .withFailureHandler(function(err) { console.error('Submit failed:', err); })
         .submitHomeworkSafe({
-          child: 'buggsy',
+          child: SANDBOX_CHILD,
           module: 'reading',
           subject: 'RLA',
           score: mcCorrect,
@@ -1470,7 +1480,7 @@ function renderResults() {
         .withSuccessHandler(function() { console.log('Reading completion logged'); })
         .withFailureHandler(function(err) { console.error('Log failed:', err.message); })
         .logHomeworkCompletionSafe({
-          child: 'buggsy',
+          child: SANDBOX_CHILD,
           title: 'Reading: ' + PASSAGE.title,
           subject: 'RLA',
           score: mcCorrect,
