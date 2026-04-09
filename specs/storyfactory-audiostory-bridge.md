@@ -11,7 +11,7 @@
 ## ES5 reminder — SparkleLearning.html is a Fully Kiosk / Fire TV WebView surface
 
 Any client-side code Sonnet writes into `SparkleLearning.html` MUST be ES5 only.
-The server-side `.js` modules (`ActivityStoryPacks.js`, `KidsHub.js`, `Code.js`) run on
+The server-side `.js` modules (`ActivityStoryPacks.js`, `Kidshub.js`, `Code.js`) run on
 V8 and CAN use modern JS, but this spec does not introduce any modern JS patterns —
 the whole file is ES5-clean for symmetry with the rest of the codebase.
 
@@ -176,7 +176,7 @@ state (JJ would see a blank panel while the story loads), an ES5-safe async patt
 existing `renderActivity` dispatcher doesn't have, and a second network round-trip during
 the critical "attention window" of a pre-K lesson.
 
-Instead, the `KidsHub.js` `getTodayContent_()` function (which `getTodayContentSafe` wraps)
+Instead, the `Kidshub.js` `getTodayContent_()` function (which `getTodayContentSafe` wraps)
 is extended to post-process the activities array: any activity with `type === 'audio_story'`
 and a `storyId` that maps to an entry in `ACTIVITY_STORY_PACKS` gets its `story`,
 `question`, `answer`, and `options` fields populated from the pack BEFORE the response
@@ -291,7 +291,7 @@ Every file Sonnet touches, with exact edits. No vague "update X to support Y" bu
 // READS FROM: (none — static constant)
 // ════════════════════════════════════════════════════════════════════
 // PURPOSE: Supply the story/question/answer/options fields for JJ's
-//   curriculum audio_story activities. Consumed by KidsHub.js
+//   curriculum audio_story activities. Consumed by Kidshub.js
 //   getTodayContent_() which mutates matching activities in place before
 //   returning to SparkleLearning.html.
 //
@@ -381,17 +381,18 @@ runtime-verifiable ping (`?action=api&fn=getActivityStoryPackSafe&args=["jj-kitc
 without going through the full curriculum fetch. This is also the function the Gate 5
 checklist below pings to prove the module loaded.
 
-### MODIFIED file: `KidsHub.js` — extend `getTodayContent_()` to inject story packs
+### MODIFIED file: `Kidshub.js` — extend `getTodayContent_()` to inject story packs
 
-**Location:** inside the existing `getTodayContent_` function (find via `grep -n "function getTodayContent_" KidsHub.js`).
+**Location:** inside the existing `getTodayContent_` function (find via `grep -n "function getTodayContent_" Kidshub.js`).
 
 **Change:** after the activity list is loaded from the curriculum sheet/fallback and
-just before the function returns the `content` object, add a post-processing loop that
-mutates any `audio_story` activity whose `storyId` maps to an `ACTIVITY_STORY_PACKS`
+just before the function returns, add a post-processing loop that mutates any
+`audio_story` activity in `dayContent` whose `storyId` maps to an `ACTIVITY_STORY_PACKS`
 entry.
 
-**The exact code to add** (place immediately before the `return` that ships the content
-object to callers):
+**The exact code to add** (place immediately before the `return { content: dayContent, ... }`
+line at the end of the `try` block — operate on the `dayContent` local variable, which is
+the object that holds the `.activities` array):
 
 ```js
 // v{NEW}: Inject ActivityStoryPacks content into audio_story activities.
@@ -400,9 +401,9 @@ object to callers):
 // SparkleLearning's renderAudioStory (line 2473) can read them off the
 // activity object without a second round-trip. See
 // specs/storyfactory-audiostory-bridge.md.
-if (content && content.activities && content.activities.length) {
-  for (var i = 0; i < content.activities.length; i++) {
-    var act = content.activities[i];
+if (dayContent && dayContent.activities && dayContent.activities.length) {
+  for (var i = 0; i < dayContent.activities.length; i++) {
+    var act = dayContent.activities[i];
     if (act && act.type === 'audio_story' && act.storyId) {
       // Reference ACTIVITY_STORY_PACKS via the getter to avoid a load-order
       // dependency on file parse order in GAS.
@@ -430,14 +431,41 @@ that MUST survive the injection. A rebuild would require copying them all. In-pl
 assignment of the four new fields preserves everything else exactly.
 
 **Why the `typeof === 'function'` guard:** GAS parses files alphabetically. `ActivityStoryPacks.js`
-sorts before `KidsHub.js` so the function should be defined at call time, but the guard
+sorts before `Kidshub.js` so the function should be defined at call time, but the guard
 makes the call resilient to future filename changes and gives a graceful degradation path
 (pack missing → activity falls through to bunny) instead of a hard reference error.
 
-**Version bump:** `KidsHub.js` version getter gets bumped. Find the current version via
-`grep -n "function getKidsHubVersion" KidsHub.js`. Bump all three locations (header,
+**Version bump:** `Kidshub.js` version getter gets bumped. Find the current version via
+`grep -n "function getKidsHubVersion" Kidshub.js`. Bump all three locations (header,
 getter, EOF comment) by +1. The version bump is required because `getTodayContent_`
 now mutates its return value shape in a way the release notes need to capture.
+
+**Function signature change (required for Gate 5 determinism):** The current signature
+is `getTodayContent_(child)`. Extend it to accept an optional second parameter:
+
+```js
+function getTodayContent_(child, _testDateOverride) {
+```
+
+Inside the function body, replace:
+
+```js
+var today = new Date();
+today.setHours(0, 0, 0, 0);
+```
+
+with:
+
+```js
+var today = _testDateOverride ? new Date(_testDateOverride) : new Date();
+today.setHours(0, 0, 0, 0);
+```
+
+This is a **test-only back door.** Production callers (`getTodayContentSafe`) always
+omit the second argument and get live-date behavior unchanged. Gate 5 items 9–11 pass
+a specific ISO date string so the function deterministically returns the correct week's
+content regardless of when the QA run occurs. Do NOT expose `_testDateOverride` through
+any Safe wrapper or API route — it is internal to `.gs` test harness calls only.
 
 ### MODIFIED file: `Code.js` — whitelist the new Safe wrapper
 
@@ -543,7 +571,7 @@ must match. `audit-source.sh` version consistency check enforces this.
 | File | Action | Header line | Getter function | EOF comment | Notes |
 |------|--------|-------------|------------------|-------------|-------|
 | `ActivityStoryPacks.js` | NEW | `ActivityStoryPacks.gs v1` (line 3) | `function getActivityStoryPacksVersion() { return 1; }` | `// END OF FILE — ActivityStoryPacks.gs v1` | N/A — brand new, starts at v1. See file template above. |
-| `KidsHub.js` | BUMP +1 | bump `KidsHub.gs v{N}` → `v{N+1}` | `function getKidsHubVersion() { return {N+1}; }` | bump EOF comment to `v{N+1}` | Look up current N with `grep -n "function getKidsHubVersion" KidsHub.js`. Sonnet must read the actual file — do NOT assume N. |
+| `Kidshub.js` | BUMP +1 | bump `KidsHub.gs v{N}` → `v{N+1}` | `function getKidsHubVersion() { return {N+1}; }` | bump EOF comment to `v{N+1}` | Look up current N with `grep -n "function getKidsHubVersion" Kidshub.js`. Sonnet must read the actual file — do NOT assume N. |
 | `Code.js` | BUMP 74 → 75 | line 3: `Code.gs v74` → `v75` | line 12: `return 74;` → `return 75;` | line 1987: `// END OF FILE — Code.gs v74` → `v75` | All three verified by read. |
 | `Tbmsmoketest.js` | BUMP 6 → 7 | line 2: `tbmSmokeTest.gs v6` → `v7` | line 40: `return 6;` → `return 7;` | last line: `v6` → `v7` | All three verified by read. |
 
@@ -565,9 +593,9 @@ grep -n "getActivityStoryPackSafe"          ActivityStoryPacks.js     → expect
 grep -n "getActivityStoryPacksVersion"      ActivityStoryPacks.js     → expected: 1 function definition
 grep -n "getActivityStoryPackSafe"          Code.js                   → expected: 1 whitelist entry
 grep -n "getActivityStoryPackSafe"          Tbmsmoketest.js           → expected: 1 CANONICAL_SAFE_FUNCTIONS entry
-grep -n "ACTIVITY_STORY_PACKS\|getActivityStoryPack_"  KidsHub.js     → expected: 1+ references (the injection loop)
-grep -n "audio_story"                       KidsHub.js                → expected: 1+ matches (injection loop type check)
-grep -n "function getKidsHubVersion"        KidsHub.js                → expected: matches after bump
+grep -n "ACTIVITY_STORY_PACKS\|getActivityStoryPack_"  Kidshub.js     → expected: 1+ references (the injection loop)
+grep -n "audio_story"                       Kidshub.js                → expected: 1+ matches (injection loop type check)
+grep -n "function getKidsHubVersion"        Kidshub.js                → expected: matches after bump
 grep -n "function getCodeVersion"           Code.js                   → expected: "return 75;"
 grep -n "function getSmokeTestVersion"      Tbmsmoketest.js           → expected: "return 7;"
 grep -c "w2th5.*audio_story.*jj-kitchen"           CurriculumSeed.js  → expected: 1 (unchanged)
@@ -594,9 +622,9 @@ grep output). "Looks correct" does NOT count.
 | 6 | Safe wrapper success shape | `getActivityStoryPackSafe('jj-kitchen')` returns `{ok:true, pack:{...}}` where `pack.story.indexOf("ice cream") !== -1` |
 | 7 | Safe wrapper miss shape | `getActivityStoryPackSafe('nope-unknown')` returns `{ok:false, error:'unknown_story_id', storyId:'nope-unknown'}` |
 | 8 | Safe wrapper null-input shape | `getActivityStoryPackSafe(null)` returns `{ok:false, error:'unknown_story_id', storyId:null}` (no throw) |
-| 9 | KidsHub injection — Week 2 | Call `getTodayContent_('jj', '2026-04-16')` (JJ Week 2 Thursday) and find the activity with `type === 'audio_story'`. Assert `activity.story.indexOf("JJ walks into the kitchen") === 0` AND `activity.question.indexOf("How many scoops") !== -1` AND `activity.answer === "Three"` AND `Array.isArray(activity.options)` AND `activity.options.length === 3` |
-| 10 | KidsHub injection — Week 3 | Same as #9 for date `2026-04-23` (W3 Thursday). Assert `activity.answer === "Five"` AND `activity.story.indexOf("treasure") !== -1` |
-| 11 | KidsHub injection — Week 4 | Same as #9 for date `2026-04-30` (W4 Thursday). Assert `activity.answer === "Green"` AND `activity.story.indexOf("blanket fort") !== -1` |
+| 9 | KidsHub injection — Week 2 | Call `getTodayContent_('jj', '2026-04-16')` — uses the `_testDateOverride` param (W2 Thursday) — and find the activity with `type === 'audio_story'`. Assert `activity.story.indexOf("JJ walks into the kitchen") === 0` AND `activity.question.indexOf("How many scoops") !== -1` AND `activity.answer === "Three"` AND `Array.isArray(activity.options)` AND `activity.options.length === 3` |
+| 10 | KidsHub injection — Week 3 | Same as #9 using `getTodayContent_('jj', '2026-04-23')` (W3 Thursday via `_testDateOverride`). Assert `activity.answer === "Five"` AND `activity.story.indexOf("treasure") !== -1` |
+| 11 | KidsHub injection — Week 4 | Same as #9 using `getTodayContent_('jj', '2026-04-30')` (W4 Thursday via `_testDateOverride`). Assert `activity.answer === "Green"` AND `activity.story.indexOf("blanket fort") !== -1` |
 | 12 | Curriculum metadata preserved | After injection, W2 Thursday audio_story activity still has `audioPrompt`, `audioCorrect`, `title`, `stars`, and `id === 'w2th5'` unchanged from `CurriculumSeed.js` line 222 |
 | 13 | Unknown storyId passthrough | If a test activity `{type:'audio_story', storyId:'ghost-story-xyz'}` is injected into `getTodayContent_`'s input path, the activity returned has NO `story`/`question`/`answer`/`options` fields set (fallback path intact) |
 | 14 | `renderAudioStory` reads real content | Load `/sparkle?debug_day=w2th5` (or manual nav to Week 2 Thursday) on a real Fire Kids tablet, verify the visible story text on screen starts with "JJ walks into the kitchen" NOT "Once upon a time, a little bunny" |
@@ -610,7 +638,7 @@ grep output). "Looks correct" does NOT count.
 | 22 | Code.js whitelist wiring | `grep -n "getActivityStoryPackSafe" Code.js` returns exactly 1 line (the whitelist entry) |
 | 23 | Tbmsmoketest wiring | Run `tbmSmokeTest()` from Script Editor; Category 1 (wiring) result for `getActivityStoryPackSafe` is `OK` |
 | 24 | Version consistency — ActivityStoryPacks.js | 3 locations match: header `v1`, getter returns `1`, EOF comment `v1` |
-| 25 | Version consistency — KidsHub.js | 3 locations match at the new bumped N+1 value |
+| 25 | Version consistency — Kidshub.js | 3 locations match at the new bumped N+1 value |
 | 26 | Version consistency — Code.js | 3 locations match at `75` |
 | 27 | Version consistency — Tbmsmoketest.js | 3 locations match at `7` |
 | 28 | ES5 compliance in diff | `audit-source.sh` passes with zero new ES5 violations on any changed `.html` file. Note: this spec touches NO `.html` files, so this check is trivially green, but run it anyway for discipline. |
@@ -752,7 +780,7 @@ what diverged.
 **Definition of done for implementation:**
 
 1. `ActivityStoryPacks.js` is pushed to GAS with all three packs and its Safe wrapper.
-2. `getTodayContent_` (KidsHub.js) mutates matching `audio_story` activities before
+2. `getTodayContent_` (Kidshub.js) mutates matching `audio_story` activities before
    return — verified by Script Editor call with debug date override.
 3. `getActivityStoryPackSafe` is whitelisted in `Code.js` and appears in
    `Tbmsmoketest.js CANONICAL_SAFE_FUNCTIONS`.
