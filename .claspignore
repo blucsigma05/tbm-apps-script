@@ -25,3 +25,5 @@ claude-md-baseline.json
 spelling-catalog.json
 QAHarness.gs
 !appsscript.json
+docs/**
+scripts/**
