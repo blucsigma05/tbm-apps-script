@@ -3,11 +3,11 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 15.3
+// Version: 15.4
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 15.3; }
+function getStoryFactoryVersion() { return 15.4; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -435,6 +435,11 @@ memoryBlock += '\nESTABLISHED CANON FACTS (weave these in naturally when relevan
 memoryBlock += canonFacts.join('\n') + '\n';
 }
 
+var titleTemplate;
+if (character === 'Both') titleTemplate = '"title": "Buggsy and JJ\'s [Something]"';
+else if (character === 'Whole Family') titleTemplate = '"title": "The Thompson Fam [Something]"';
+else titleTemplate = '"title": "' + character + ' and the [Something]"';
+
 var prompt = 'You are a children\'s bedtime story writer for a loving Black family.\n\n' +
 'CHARACTER REFERENCE:\n' + charContext + '\n' +
 memoryBlock + '\n' +
@@ -459,7 +464,7 @@ toneGuide +
 'MAIN CHARACTER(S): ' + character + '\n\n' +
 'Return ONLY valid JSON, NO markdown, NO backticks, NO preamble:\n' +
 '{\n' +
-'  "title": "' + character + ' and the [Something]",\n' +
+'  ' + titleTemplate + ',\n' +
 '  "character": "' + character + '",\n' +
 '  "scenes": [\n' +
 '    {\n' +
@@ -1852,5 +1857,5 @@ function sf_getFailureSummary_(days) {
   };
 }
 
-// END OF FILE — StoryFactory v15.3
+// END OF FILE — StoryFactory v15.4
 // ════════════════════════════════════════════════════════════════════
