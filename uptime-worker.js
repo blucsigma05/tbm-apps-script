@@ -17,7 +17,8 @@
 
 var PUSHOVER_API = 'https://api.pushover.net/1/messages.json';
 var THROTTLE_MS  = 60 * 60 * 1000; // 1 hour between persistent-DOWN reminders
-var FETCH_TIMEOUT_MS = 20000;       // 20-second timeout per check
+var FETCH_TIMEOUT_MS = 45000;       // 45-second timeout — GAS cold starts need headroom
+var QUIET_BEFORE_UTC = 14;          // Skip checks before 14:00 UTC (9:00 AM Central)
 
 // ── Scheduled entry point ────────────────────────────────────────────────────
 
@@ -43,6 +44,13 @@ addEventListener('fetch', function(event) {
 // ── Core logic ───────────────────────────────────────────────────────────────
 
 function runChecks(event) {
+  // Quiet window — no checks before 9 AM Central (14:00 UTC)
+  var hourUTC = new Date().getUTCHours();
+  if (hourUTC < QUIET_BEFORE_UTC) {
+    console.log('Quiet window (' + hourUTC + ':00 UTC < ' + QUIET_BEFORE_UTC + ':00 UTC) — skipping checks');
+    return Promise.resolve();
+  }
+
   var endpoints = parseEndpoints();
   if (!endpoints.length) {
     console.error('UPTIME_ENDPOINTS not configured');
