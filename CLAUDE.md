@@ -58,7 +58,7 @@
 **Codex findings:**
 
 - In-PR review comments stay in the PR (that's the evidence)
-- Blocking findings ALSO open an Issue with `kind:bug` + `severity:blocker` + a link to the PR comment. Keeps the finding alive if the PR is closed without fixing.
+- For any blocking finding, Claude (or LT, during audit) **manually opens** a dedicated Issue with `kind:bug` + `severity:blocker` + a link to the PR comment. This is a process rule, NOT an automation — the Codex pipeline does NOT auto-create Issues today (it posts comments and applies `pipeline:*` labels only). The manual Issue exists so the finding survives PR close/merge. Future automation (Orchestration Loop Phase 3+, issue #111) may promote this to an automatic step; until then, if nobody files the Issue, the finding only lives in the PR thread and can be lost.
 
 **When LT says "PR" but means "Issue" (or vice versa):**
 
