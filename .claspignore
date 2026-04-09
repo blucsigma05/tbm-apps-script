@@ -4,6 +4,7 @@ node_modules/**
 *.md
 *.jsx
 generate-audio.js
+generate-spelling-catalog.js
 cloudflare-worker.js
 uptime-worker.js
 wrangler.toml
