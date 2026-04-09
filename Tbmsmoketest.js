@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmSmokeTest.gs v6 — Pre-Deploy Structural Validation
+// tbmSmokeTest.gs v7 — Pre-Deploy Structural Validation
 // WRITES TO: (none — read-only checks)
 // READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
@@ -37,7 +37,7 @@
 // A PASS here means "safe to deploy" not "system works perfectly."
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 6; }
+function getSmokeTestVersion() { return 7; }
 
 var CANONICAL_SAFE_FUNCTIONS = [
   'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKHLastModifiedSafe', 'getKidsHubDataSafe',
@@ -58,7 +58,8 @@ var CANONICAL_SAFE_FUNCTIONS = [
   'logQuestionResultSafe', 'savePowerScanResultsSafe', 'getWeeklyProgressSafe',
   'updateMealPlanSafe', 'getStoryApiStatsSafe', 'khHealthCheckSafe',
   'getDeployedVersionsSafe', 'reconcileVeinPulse', 'runTestsSafe',
-  'seedStaarRlaSprintSafe', 'getDailyMissionsInitSafe'
+  'seedStaarRlaSprintSafe', 'getDailyMissionsInitSafe',
+  'startLessonRunSafe', 'saveLessonRunStateSafe', 'getLessonRunResumeSafe', 'completeLessonRunSafe'
 ];
 
 /**
@@ -703,4 +704,4 @@ function checkHTMLContracts_() {
 }
 
 
-// END OF FILE — tbmSmokeTest.gs v6
+// END OF FILE — tbmSmokeTest.gs v7

@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v59 — Kids Hub Server Backend (TBM Consolidated)
-// WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
+// KidsHub.gs v60 — Kids Hub Server Backend (TBM Consolidated)
+// WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 59; }
+function getKidsHubVersion() { return 60; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -137,6 +137,16 @@ var KH_SCHEMAS = {
   KH_Grades: {
     headers: ['Timestamp','Kid','Subject','Grade','Quarter','School_Year','Rings_Awarded','Cash_Awarded','Entered_By','Notes'],
     widths: [180,70,120,60,70,100,100,100,80,200]
+  },
+
+  KH_LessonRuns: {
+    headers: [
+      'RunId','Child','Module','Subject','Source','DateKey',
+      'StartedAt','LastSavedAt','CompletedAt','Status',
+      'ActivityIndex','ActivityCount','SessionStars',
+      'ActivitiesJSON','ClientMeta','CompletionReason'
+    ],
+    widths: [280,70,140,120,160,100,180,180,180,100,90,90,100,320,280,160]
   }
 };
 
@@ -3663,6 +3673,363 @@ function getMissionStateSafe(child, dateKey) {
 }
 
 // ════════════════════════════════════════════════════════════════════
+// v58: JJ LESSON RUN COMPLETION CONTRACT (spec/jj-completion-contract.md)
+// ════════════════════════════════════════════════════════════════════
+// Phase 1: dark, flag-gated, server-side only. No client integration.
+// Flag: Script Property 'LESSON_RUNS_ENABLED' = '1' to turn on.
+// When off, every public function early-returns { ok: true, flagged_off: true }.
+// Writes to: KH_LessonRuns (16-column atomic upserts keyed by RunId).
+// Integration: completeLessonRun_ calls kh_awardEducationPoints_ with the
+// PLAIN source string (never source + '|' + runId) to preserve the daily
+// ring dedupe at Kidshub.js:2768.
+// ════════════════════════════════════════════════════════════════════
+
+var KH_LESSON_RUNS_HEADERS = [
+  'RunId','Child','Module','Subject','Source','DateKey',
+  'StartedAt','LastSavedAt','CompletedAt','Status',
+  'ActivityIndex','ActivityCount','SessionStars',
+  'ActivitiesJSON','ClientMeta','CompletionReason'
+];
+
+function ensureKHLessonRunsTab_() {
+  var ss = getKHSS_();
+  var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_LessonRuns']) || 'KH_LessonRuns';
+  var sheet = ss.getSheetByName(tabName);
+  if (sheet) return sheet;
+  sheet = ss.insertSheet(tabName);
+  sheet.appendRow(KH_LESSON_RUNS_HEADERS);
+  sheet.setFrozenRows(1);
+  sheet.getRange('1:1').setFontWeight('bold');
+  return sheet;
+}
+
+// Scan RunIds from the bottom (most recent first) for faster hit on active runs.
+// Returns the 1-indexed sheet row (>=2) or -1 if not found.
+function _findRunRow_(sheet, runId) {
+  if (!sheet || !runId) return -1;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return -1;
+  var runIdCol = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  for (var i = runIdCol.length - 1; i >= 0; i--) {
+    if (String(runIdCol[i][0]) === runId) return i + 2;
+  }
+  return -1;
+}
+
+function _isValidRunId_(runId) {
+  if (!runId) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(runId));
+}
+
+function _parseJsonArraySafe_(raw) {
+  if (!raw) return [];
+  try {
+    var parsed = JSON.parse(String(raw));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) { return []; }
+}
+
+// Start or resume a run. Idempotent on runId — an existing row returns unchanged.
+// child: 'buggsy' | 'jj'
+// runId: RFC4122 v4 UUID (client-generated)
+// meta:  { module, subject, source, activityCount, clientMeta }
+function startLessonRun_(child, runId, meta) {
+  if (typeof isLessonRunsEnabled_ === 'function' && !isLessonRunsEnabled_()) {
+    return JSON.stringify({ status: 'ok', flagged_off: true });
+  }
+  child = String(child || '').toLowerCase();
+  if (child !== 'buggsy' && child !== 'jj') {
+    return JSON.stringify({ status: 'error', message: 'Invalid child: ' + child });
+  }
+  if (!_isValidRunId_(runId)) {
+    return JSON.stringify({ status: 'error', message: 'Invalid runId (expected UUID v4)' });
+  }
+  meta = meta || {};
+
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var sheet = ensureKHLessonRunsTab_();
+    var rowIdx = _findRunRow_(sheet, runId);
+    if (rowIdx > 0) {
+      var row = sheet.getRange(rowIdx, 1, 1, KH_LESSON_RUNS_HEADERS.length).getValues()[0];
+      return JSON.stringify({
+        status: 'ok',
+        runId: runId,
+        isNewRun: false,
+        startedAt: String(row[6] || ''),
+        activityIndex: Number(row[10]) || 0
+      });
+    }
+    var nowIso = new Date().toISOString();
+    var dateKey = getTodayISO_();
+    var clientMeta = meta.clientMeta || {};
+    sheet.appendRow([
+      runId,
+      child,
+      String(meta.module || ''),
+      String(meta.subject || ''),
+      String(meta.source || ''),
+      dateKey,
+      nowIso,           // StartedAt
+      nowIso,           // LastSavedAt
+      '',               // CompletedAt
+      'in_progress',    // Status
+      0,                // ActivityIndex
+      Number(meta.activityCount) || 0,
+      0,                // SessionStars
+      '[]',             // ActivitiesJSON
+      JSON.stringify(clientMeta),
+      ''                // CompletionReason
+    ]);
+    stampKHHeartbeat_();
+    return JSON.stringify({
+      status: 'ok',
+      runId: runId,
+      isNewRun: true,
+      startedAt: nowIso,
+      activityIndex: 0
+    });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+// Atomic upsert of run state. Writes LastSavedAt + ActivityIndex + SessionStars + ActivitiesJSON.
+// state: { activityIndex, sessionStars, activitiesJSON }
+function saveLessonRunState_(runId, state) {
+  if (typeof isLessonRunsEnabled_ === 'function' && !isLessonRunsEnabled_()) {
+    return JSON.stringify({ status: 'ok', flagged_off: true });
+  }
+  if (!_isValidRunId_(runId)) {
+    return JSON.stringify({ status: 'error', message: 'Invalid runId' });
+  }
+  state = state || {};
+
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var sheet = ensureKHLessonRunsTab_();
+    var rowIdx = _findRunRow_(sheet, runId);
+    if (rowIdx < 0) {
+      return JSON.stringify({ status: 'error', message: 'Unknown runId — call startLessonRun first' });
+    }
+    var existingStatus = String(sheet.getRange(rowIdx, 10).getValue() || '');
+    if (existingStatus === 'completed' || existingStatus === 'abandoned') {
+      return JSON.stringify({
+        status: 'error',
+        message: 'Cannot save state — run is already ' + existingStatus,
+        runId: runId,
+        terminalStatus: existingStatus
+      });
+    }
+    var lastSaved = new Date().toISOString();
+    sheet.getRange(rowIdx, 8).setValue(lastSaved);                              // LastSavedAt
+    sheet.getRange(rowIdx, 11).setValue(Number(state.activityIndex) || 0);      // ActivityIndex
+    sheet.getRange(rowIdx, 13).setValue(Number(state.sessionStars) || 0);       // SessionStars
+    sheet.getRange(rowIdx, 14).setValue(JSON.stringify(state.activitiesJSON || [])); // ActivitiesJSON
+    stampKHHeartbeat_();
+    return JSON.stringify({ status: 'ok', lastSavedAt: lastSaved });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+// Return the most recent in_progress run for this child+module with DateKey === today,
+// or null. Sweeps any in_progress runs older than 6 hours to abandoned/abandoned_timeout.
+function getLessonRunResume_(child, module) {
+  if (typeof isLessonRunsEnabled_ === 'function' && !isLessonRunsEnabled_()) {
+    return JSON.stringify({ status: 'ok', flagged_off: true, run: null });
+  }
+  child = String(child || '').toLowerCase();
+  module = String(module || '');
+
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var sheet = ensureKHLessonRunsTab_();
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return JSON.stringify({ status: 'ok', run: null });
+    var data = sheet.getRange(2, 1, lastRow - 1, KH_LESSON_RUNS_HEADERS.length).getValues();
+    var today = getTodayISO_();
+    var SIX_H_MS = 6 * 60 * 60 * 1000;
+    var nowMs = Date.now();
+    var found = null;
+    for (var i = data.length - 1; i >= 0; i--) {
+      var r = data[i];
+      var rChild = String(r[1] || '').toLowerCase();
+      var rModule = String(r[2] || '');
+      var rStatus = String(r[9] || '');
+      if (rChild !== child || rModule !== module) continue;
+      if (rStatus !== 'in_progress') continue;
+      var lastSavedMs = Date.parse(String(r[7] || ''));
+      if (!isNaN(lastSavedMs) && (nowMs - lastSavedMs) > SIX_H_MS) {
+        var stampedRow = i + 2;
+        var abandonedAt = new Date().toISOString();
+        sheet.getRange(stampedRow, 9).setValue(abandonedAt);    // CompletedAt
+        sheet.getRange(stampedRow, 10).setValue('abandoned');   // Status
+        sheet.getRange(stampedRow, 16).setValue('abandoned_timeout'); // CompletionReason
+        continue;
+      }
+      if (String(r[5] || '') === today && !found) {
+        found = r;
+      }
+    }
+    if (!found) return JSON.stringify({ status: 'ok', run: null });
+    return JSON.stringify({
+      status: 'ok',
+      run: {
+        runId: String(found[0]),
+        child: String(found[1]),
+        module: String(found[2]),
+        subject: String(found[3]),
+        source: String(found[4]),
+        dateKey: String(found[5]),
+        startedAt: String(found[6]),
+        lastSavedAt: String(found[7]),
+        status: String(found[9]),
+        activityIndex: Number(found[10]) || 0,
+        activityCount: Number(found[11]) || 0,
+        sessionStars: Number(found[12]) || 0,
+        activitiesJSON: _parseJsonArraySafe_(found[13])
+      }
+    });
+  } finally {
+    lk.lock.releaseLock();
+  }
+}
+
+// Finalize a run. Idempotent on runId — already-completed runs return existing state.
+// final: { completionReason, sessionStars, activitiesJSON, activityIndex }
+// Ring grant uses PLAIN source string, never source + '|' + runId, to preserve
+// the daily dedupe at kh_awardEducationPoints_ Kidshub.js:2768.
+function completeLessonRun_(runId, final) {
+  if (typeof isLessonRunsEnabled_ === 'function' && !isLessonRunsEnabled_()) {
+    return JSON.stringify({ status: 'ok', flagged_off: true });
+  }
+  if (!_isValidRunId_(runId)) {
+    return JSON.stringify({ status: 'error', message: 'Invalid runId' });
+  }
+  final = final || {};
+  var completionReason = String(final.completionReason || 'finished');
+  var allowedReasons = { finished: 1, play_again_replaced: 1, explicit_exit: 1, abandoned_timeout: 1 };
+  if (!allowedReasons[completionReason]) {
+    return JSON.stringify({ status: 'error', message: 'Invalid completionReason: ' + completionReason });
+  }
+
+  var completedAt = '';
+  var child = '';
+  var source = '';
+  var sessionStars = 0;
+  var alreadyCompleted = false;
+  var persistedReason = '';
+
+  var lk = acquireLock_();
+  if (!lk.acquired) return JSON.stringify({ status: 'locked' });
+  try {
+    var sheet = ensureKHLessonRunsTab_();
+    var rowIdx = _findRunRow_(sheet, runId);
+    if (rowIdx < 0) {
+      return JSON.stringify({ status: 'error', message: 'Unknown runId' });
+    }
+    var row = sheet.getRange(rowIdx, 1, 1, KH_LESSON_RUNS_HEADERS.length).getValues()[0];
+    var existingStatus = String(row[9] || '');
+    child = String(row[1] || '');
+    source = String(row[4] || '');
+    sessionStars = Number(final.sessionStars);
+    if (isNaN(sessionStars)) sessionStars = Number(row[12]) || 0;
+
+    if (existingStatus === 'completed') {
+      alreadyCompleted = true;
+      completedAt = String(row[8] || '');
+      sessionStars = Number(row[12]) || 0;
+      persistedReason = String(row[15] || '');
+    } else {
+      completedAt = new Date().toISOString();
+      sheet.getRange(rowIdx, 8).setValue(completedAt);    // LastSavedAt
+      sheet.getRange(rowIdx, 9).setValue(completedAt);    // CompletedAt
+      sheet.getRange(rowIdx, 10).setValue('completed');   // Status
+      if (typeof final.activityIndex === 'number') {
+        sheet.getRange(rowIdx, 11).setValue(final.activityIndex);
+      }
+      sheet.getRange(rowIdx, 13).setValue(sessionStars);  // SessionStars
+      if (final.activitiesJSON) {
+        sheet.getRange(rowIdx, 14).setValue(JSON.stringify(final.activitiesJSON));
+      }
+      sheet.getRange(rowIdx, 16).setValue(completionReason); // CompletionReason
+      stampKHHeartbeat_();
+    }
+  } finally {
+    lk.lock.releaseLock();
+  }
+
+  if (alreadyCompleted) {
+    return JSON.stringify({
+      status: 'ok',
+      alreadyCompleted: true,
+      completedAt: completedAt,
+      sessionStars: sessionStars,
+      completionReason: persistedReason  // persisted from row col 16, NOT caller-provided
+    });
+  }
+
+  // Ring grant runs OUTSIDE the run lock (award function acquires its own lock).
+  // completionReason === 'finished' is the only path that mints rings; 'play_again_replaced'
+  // and other terminal states do NOT grant additional rings (kh_awardEducationPoints_'s
+  // daily dedupe would swallow them anyway, but skipping the call avoids the noise).
+  var dedupedAward = false;
+  var ringsActuallyAwarded = 0;
+  if (sessionStars > 0 && completionReason === 'finished' && child && source) {
+    try {
+      var awardResultStr = kh_awardEducationPoints_(child, sessionStars, source);
+      var awardResult = JSON.parse(awardResultStr);
+      if (awardResult && awardResult.status === 'ok') {
+        if (awardResult.duplicate) {
+          dedupedAward = true;
+        } else {
+          ringsActuallyAwarded = Number(awardResult.awarded) || 0;
+        }
+      }
+    } catch (awardErr) {
+      if (typeof logError_ === 'function') logError_('completeLessonRun_.award', awardErr);
+    }
+  }
+
+  return JSON.stringify({
+    status: 'ok',
+    completedAt: completedAt,
+    sessionStars: sessionStars,
+    dedupedAward: dedupedAward,
+    ringsActuallyAwarded: ringsActuallyAwarded,
+    completionReason: completionReason
+  });
+}
+
+function startLessonRunSafe(child, runId, meta) {
+  return withMonitor_('startLessonRunSafe', function() {
+    return JSON.parse(startLessonRun_(child, runId, meta));
+  });
+}
+
+function saveLessonRunStateSafe(runId, state) {
+  return withMonitor_('saveLessonRunStateSafe', function() {
+    return JSON.parse(saveLessonRunState_(runId, state));
+  });
+}
+
+function getLessonRunResumeSafe(child, module) {
+  return withMonitor_('getLessonRunResumeSafe', function() {
+    return JSON.parse(getLessonRunResume_(child, module));
+  });
+}
+
+function completeLessonRunSafe(runId, final) {
+  return withMonitor_('completeLessonRunSafe', function() {
+    return JSON.parse(completeLessonRun_(runId, final));
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════
 // v41: Gemini grading + Audio audit
 // ════════════════════════════════════════════════════════════════════
 
@@ -4219,5 +4586,5 @@ function getDailyMissionsInitSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v59
+// END OF FILE — KidsHub.gs v60
 // ════════════════════════════════════════════════════════════════════
