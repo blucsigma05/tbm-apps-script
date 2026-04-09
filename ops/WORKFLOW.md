@@ -192,7 +192,7 @@ These are all symptoms of "work drifting back into chat." Don't do them:
 ## Integration with existing systems
 
 - **Pushover notifications:** fire on terminal PR states (ready/stalled) via orchestration loop Phase 1. Issues don't notify by default.
-- **Codex PR review:** runs on every PR, posts findings as comments + opens Issues for blockers
+- **Codex PR review:** runs on every PR, posts findings as comments and applies `pipeline:*` labels. Blocker Issues are **not** auto-created — finding comments must be triaged manually and filed as Issues when the PR closes without resolution. (Future: auto-open blocker Issues from `codex-finding-listener.yml`.)
 - **Branch hygiene:** `audit-source.sh` staleness gate catches PRs behind `origin/main` before push
 - **Pipeline labels:** `pipeline:ready` / `pipeline:fix-needed` / `pipeline:waiting` / `pipeline:stalled` are set by the orchestration loop, not by humans
 - **Notion:** project memory + thread handoffs stay in Notion as LT's long-form context. GitHub Issues are the operational layer.
