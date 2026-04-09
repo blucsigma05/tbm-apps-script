@@ -633,7 +633,7 @@ function _stopAllAudio(cb) {
     _activeClip = null;
   }
   _audioPlaying = false;
-  if (window.speechSynthesis && speechSynthesis.speaking) {
+  if (window.speechSynthesis && (speechSynthesis.speaking || speechSynthesis.pending)) {
     try { speechSynthesis.cancel(); } catch(e) {}
     setTimeout(function() { if (cb) cb(); }, 20);
     return;
