@@ -2018,6 +2018,16 @@ function renderShapeMatch(activity) {
   var target = activity.target || 'star';
   var options = activity.options || ['circle', 'star', 'triangle', 'square'];
 
+  // Safety: ensure target is always among the tappable options
+  var hasTarget = false;
+  for (var k = 0; k < options.length; k++) {
+    if (options[k] === target) { hasTarget = true; break; }
+  }
+  if (!hasTarget) {
+    if (options.length >= 4) { options[0] = target; } else { options.push(target); }
+    options = shuffleArray(options);
+  }
+
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Find the shape:</p>';
   html += '<div style="margin:16px 0;">' + renderShape(target, 'gold', 120) + '</div>';

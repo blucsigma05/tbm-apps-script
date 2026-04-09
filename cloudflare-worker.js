@@ -347,7 +347,8 @@ function getShimScript() {
 '    "getDesignChoicesSafe",\n' +
 '    "getDesignUnlockedSafe",\n' +
 '    "resetSandboxSafe",\n' +
-'    "getRecentTransactionsSafe"\n' +
+'    "getRecentTransactionsSafe",\n' +
+'    "getDailyMissionsInitSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +

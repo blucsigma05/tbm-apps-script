@@ -976,23 +976,30 @@ function init() {
   }
 
   // Try combined endpoint first (1 call instead of 4)
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    google.script.run
-      .withSuccessHandler(function(result) {
-        try {
-          var data = (typeof result === 'string') ? JSON.parse(result) : result;
-          if (data && typeof data.isDay1 !== 'undefined') {
-            applyInitData_(data);
-            return;
-          }
-        } catch(e) { /* fall through to legacy */ }
-        initLegacy_();
-      })
-      .withFailureHandler(function() {
-        initLegacy_();
-      })
-      .getDailyMissionsInitSafe(currentChild);
-  } else {
+  // Wrapped in try/catch because CF worker shim may not have this function yet
+  var combinedAvailable = false;
+  try {
+    if (typeof google !== 'undefined' && google.script && google.script.run &&
+        typeof google.script.run.getDailyMissionsInitSafe === 'function') {
+      combinedAvailable = true;
+      google.script.run
+        .withSuccessHandler(function(result) {
+          try {
+            var data = (typeof result === 'string') ? JSON.parse(result) : result;
+            if (data && typeof data.isDay1 !== 'undefined') {
+              applyInitData_(data);
+              return;
+            }
+          } catch(e) { /* fall through to legacy */ }
+          initLegacy_();
+        })
+        .withFailureHandler(function() {
+          initLegacy_();
+        })
+        .getDailyMissionsInitSafe(currentChild);
+    }
+  } catch(e) { /* function not on shim — fall through */ }
+  if (!combinedAvailable) {
     initLegacy_();
   }
 }
