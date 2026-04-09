@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="progress-report">
-<meta name="tbm-version" content="v3">
+<meta name="tbm-version" content="v4">
 <title>Weekly Progress Report</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -589,6 +589,14 @@ function buildAlert(icon, text, type) {
 }
 
 function buildDayRow(dayName, status, score) {
+  // 'none' = today or future day with no data yet — render dimmed empty cell
+  if (status === 'none') {
+    return '<div class="day-row">' +
+      '<div class="day-name">' + dayName + '</div>' +
+      '<div class="day-status" style="color:#475569;">--</div>' +
+      '<div class="day-score" style="color:#475569;">--</div>' +
+      '</div>';
+  }
   var statusClass = 'pending';
   var statusText = 'Pending';
   if (status === 'done') { statusClass = 'done'; statusText = 'Completed'; }
@@ -756,7 +764,7 @@ function renderOverview(data) {
   html += '<h3>BUGGSY</h3>';
   html += '<div class="overview-row"><span class="overview-label">Rings This Week</span><span class="overview-value">' + b.ringsThisWeek + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Total Rings</span><span class="overview-value">' + b.ringsTotal + '</span></div>';
-  html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + b.sessionsCompleted + '/' + b.sessionsTotal + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + (b.sessionsCompleted !== null && b.sessionsCompleted !== undefined ? b.sessionsCompleted + '/' + b.sessionsTotal : '--') + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Avg Score</span><span class="overview-value">' + (b.avgScore ? Math.round(b.avgScore) + '%' : '--') + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Streak</span><span class="overview-value">' + b.streak + ' days</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Time Spent</span><span class="overview-value">' + (b.timeSpent || 0) + ' min</span></div>';
@@ -766,7 +774,7 @@ function renderOverview(data) {
   html += '<h3>JJ (KINDLE)</h3>';
   html += '<div class="overview-row"><span class="overview-label">Stars This Week</span><span class="overview-value">' + j.starsThisWeek + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Total Stars</span><span class="overview-value">' + j.starsTotal + '</span></div>';
-  html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + j.sessionsCompleted + '/' + j.sessionsTotal + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + (j.sessionsCompleted !== null && j.sessionsCompleted !== undefined ? j.sessionsCompleted + '/' + j.sessionsTotal : 'Not yet tracked') + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Streak</span><span class="overview-value">' + j.streak + ' days</span></div>';
   html += '</div>';
 

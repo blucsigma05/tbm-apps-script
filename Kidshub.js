@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v58 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v59 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 58; }
+function getKidsHubVersion() { return 59; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3054,9 +3054,16 @@ function _aggregateKHEducation_(child, bounds, eduData) {
     weekLog: [],
     subjects: []
   };
-  // Initialize 5-day weekLog regardless of rows
+  // Initialize 5-day weekLog with position-aware default status:
+  //   past empty days → 'missed' (no activity recorded after the day passed)
+  //   today or future → 'none'  (not yet active; renderer shows dimmed/empty cell)
+  var todayIso = getTodayISO_();
+  var initDate = new Date(bounds.monday);
   for (var di = 0; di < 5; di++) {
-    out.weekLog.push({ day: _weekdayLabel_(di), status: 'none', score: null });
+    var dayIso = _isoDate_(initDate);
+    var defaultStatus = (dayIso < todayIso) ? 'missed' : 'none';
+    out.weekLog.push({ day: _weekdayLabel_(di), status: defaultStatus, score: null });
+    initDate.setDate(initDate.getDate() + 1);
   }
   if (!eduData || eduData.length < 2) return out;
 
@@ -4212,5 +4219,5 @@ function getDailyMissionsInitSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v58
+// END OF FILE — KidsHub.gs v59
 // ════════════════════════════════════════════════════════════════════
