@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v3.3 — thompsonfams.com — Front Door + PIN Gate
+// TBM Smart Proxy v3.4 — thompsonfams.com — Front Door + PIN Gate
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -213,6 +213,18 @@ async function handleApi(request, url) {
   try {
     var response = await fetch(target, { redirect: 'follow' });
     var data = await response.text();
+
+    // v3.4: Validate GAS returned a real JSON response, not an Access Denied HTML page
+    if (!response.ok) {
+      return jsonResponse({ error: 'GAS returned HTTP ' + response.status, fn: fn }, 502);
+    }
+
+    // Verify response is actually JSON — GAS auth failures return HTML with 200
+    try {
+      JSON.parse(data);
+    } catch(parseErr) {
+      return jsonResponse({ error: 'GAS returned non-JSON response', fn: fn, hint: 'Possible auth failure or deploy issue' }, 502);
+    }
 
     return new Response(data, {
       headers: {

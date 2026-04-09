@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v56 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v57 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 56; }
+function getKidsHubVersion() { return 57; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -1733,6 +1733,14 @@ function khSubmitGrade(params) {
     var today = getTodayISO_();
     var now = getNowISO_();
 
+    // v57: Dedup check BEFORE grade sheet write to prevent orphan rows
+    var histUID = kid.toLowerCase() + '_GRADE_' + subject.replace(/\s/g, '') + '_' + quarter + '_' + schoolYear.replace(/[^0-9]/g, '');
+    if (historyUIDExists_(histUID)) {
+      stampKHHeartbeat_();
+      return JSON.stringify({ status: 'ok', duplicate: true, kid: kid, subject: subject, grade: grade,
+        ringsAwarded: 0, cashAwarded: 0, message: 'Grade already recorded for this subject/quarter' });
+    }
+
     // 1. Append to KH_Grades
     var gradeSheet = getKHSheet_('KH_Grades');
     if (!gradeSheet) return JSON.stringify({ status: 'error', message: 'KH_Grades tab not found' });
@@ -1740,7 +1748,6 @@ function khSubmitGrade(params) {
 
     // 2. If rings > 0, append to KH_History as a bonus event
     if (reward.rings > 0) {
-      var histUID = kid.toLowerCase() + '_GRADE_' + subject.replace(/\s/g, '') + '_' + quarter + '_' + schoolYear.replace(/[^0-9]/g, '');
       appendHistory_(histUID, 'GRADE', kid, subject + ' Grade: ' + grade, reward.rings, reward.rings, 1, 'bonus', today, now);
     }
 
@@ -4001,5 +4008,5 @@ function resetSandboxSafe() {
   });
 }
 
-// END OF FILE — KidsHub.gs v56
+// END OF FILE — KidsHub.gs v57
 // ════════════════════════════════════════════════════════════════════

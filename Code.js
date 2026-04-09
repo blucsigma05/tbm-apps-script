@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v73 — Apps Script Router (TBM Consolidated)
+// Code.gs v74 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -9,7 +9,7 @@
 // All .gs files share GAS global scope, so DE's TAB_MAP is available here.
 // DO NOT redeclare var TAB_MAP in this file.
 
-function getCodeVersion() { return 73; }
+function getCodeVersion() { return 74; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -807,10 +807,10 @@ function _khDiag_(label, args, e) {
       Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss")]);
   } catch(e2) { Logger.log('_khDiag_ failed: ' + e2.message); }
 }
-function khCompleteTaskSafe(rowIndex) {
+function khCompleteTaskSafe(rowIndex, expectedTaskID) {
   return withMonitor_('khCompleteTaskSafe', function() {
-    try { return JSON.parse(khCompleteTask(rowIndex)); }
-    catch(e) { _khDiag_('khCompleteTaskSafe', {rowIndex: rowIndex}, e); throw e; }
+    try { return JSON.parse(khCompleteTask(rowIndex, expectedTaskID)); }
+    catch(e) { _khDiag_('khCompleteTaskSafe', {rowIndex: rowIndex, expectedTaskID: expectedTaskID}, e); throw e; }
   });
 }
 function khCompleteTaskWithBonusSafe(rowIndex, multiplier, expectedTaskID) {
@@ -819,10 +819,10 @@ function khCompleteTaskWithBonusSafe(rowIndex, multiplier, expectedTaskID) {
     catch(e) { _khDiag_('khCompleteTaskWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier, expectedTaskID: expectedTaskID}, e); throw e; }
   });
 }
-function khApproveTaskSafe(rowIndex) {
+function khApproveTaskSafe(rowIndex, expectedTaskID) {
   return withMonitor_('khApproveTaskSafe', function() {
-    try { return JSON.parse(khApproveTask(rowIndex)); }
-    catch(e) { _khDiag_('khApproveTaskSafe', {rowIndex: rowIndex}, e); throw e; }
+    try { return JSON.parse(khApproveTask(rowIndex, expectedTaskID)); }
+    catch(e) { _khDiag_('khApproveTaskSafe', {rowIndex: rowIndex, expectedTaskID: expectedTaskID}, e); throw e; }
   });
 }
 function khUncompleteTaskSafe(rowIndex) {
@@ -837,10 +837,10 @@ function khRejectTaskSafe(rowIndex) {
     catch(e) { _khDiag_('khRejectTaskSafe', {rowIndex: rowIndex}, e); throw e; }
   });
 }
-function khApproveWithBonusSafe(rowIndex, multiplier) {
+function khApproveWithBonusSafe(rowIndex, multiplier, expectedTaskID) {
   return withMonitor_('khApproveWithBonusSafe', function() {
-    try { return JSON.parse(khApproveWithBonus(rowIndex, multiplier)); }
-    catch(e) { _khDiag_('khApproveWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier}, e); throw e; }
+    try { return JSON.parse(khApproveWithBonus(rowIndex, multiplier, expectedTaskID)); }
+    catch(e) { _khDiag_('khApproveWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier, expectedTaskID: expectedTaskID}, e); throw e; }
   });
 }
 function khOverrideTaskSafe(rowIndex, expectedTaskID, multiplier) {
@@ -923,6 +923,15 @@ function getStoryApiStatsSafe() {
   });
 }
 function updateMealPlanSafe(meal, cook, notes, kidMeal) {
+  // v74: Handle object-form calls from ThePulse/TheVein ({meal, cook, notes})
+  // while preserving positional calls from KidsHub (meal, cook, notes, kidMeal)
+  if (meal && typeof meal === 'object' && meal.meal !== undefined) {
+    var obj = meal;
+    meal = obj.meal;
+    cook = obj.cook;
+    notes = obj.notes;
+    kidMeal = obj.kidMeal;
+  }
   return withMonitor_('updateMealPlanSafe', function() {
     try { return JSON.parse(updateMealPlan(meal, cook, notes, kidMeal)); }
     catch(e) { _khDiag_('updateMealPlanSafe', {meal: meal, cook: cook}, e); throw e; }
@@ -1063,8 +1072,11 @@ function logHomeworkCompletionSafe(data) {
         ? ' | Score: ' + data.score + (data.total ? '/' + data.total : '')
         : '');
 
+    // v74: Read DB ID from Script Properties — fail-closed if not set
+    var hwDbId = PropertiesService.getScriptProperties().getProperty('NOTION_HOMEWORK_DB_ID');
+    if (!hwDbId) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_HOMEWORK_DB_ID not set' }));
     var payload = {
-      parent: { database_id: '9164c6a594b448028426366ff62952b5' },
+      parent: { database_id: hwDbId },
       properties: {
         'Assignment': { title: [{ text: { content: String(data.title || data.assignment || 'Homework Entry') } }] },
         'Subject': { select: { name: notionSubject } },
@@ -1099,8 +1111,12 @@ function logSparkleProgressSafe(data) {
     var apiKey = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
     if (!apiKey) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_API_KEY not set' }));
 
+    // v74: Read DB ID from Script Properties — old hardcoded value was a PAGE, not a database
+    var sparkleDbId = PropertiesService.getScriptProperties().getProperty('NOTION_SPARKLE_DB_ID');
+    if (!sparkleDbId) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_SPARKLE_DB_ID not set' }));
+
     var payload = {
-      parent: { database_id: '331cea3cd9e8816aa07feec250328cf8' },
+      parent: { database_id: sparkleDbId },
       properties: {
         'Name': { title: [{ text: { content: String(data.activity || 'Sparkle Progress') } }] },
         'Child': { select: { name: 'jj' } },
@@ -1967,4 +1983,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v73
+// END OF FILE — Code.gs v74
