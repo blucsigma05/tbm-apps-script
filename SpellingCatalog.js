@@ -4130,9 +4130,12 @@ function getSpellingWords_(grade, weekNumber) {
     for (var j = 1; j <= 3; j++) {
       var lookback = w - j;
       if (lookback < 1) break;
-      var lbStart = ((lookback - 1) * 5) % list.length;
-      var lbIdx = (lbStart + (j % 5)) % list.length;
-      reviewWords.push(_annotate_(list[lbIdx], tier, lookback));
+      var lookbackTier = _tierForGradeAndWeek_(g, lookback);
+      var lookbackList = SPELLING_CATALOG[lookbackTier] || [];
+      if (lookbackList.length === 0) continue;
+      var lbStart = ((lookback - 1) * 5) % lookbackList.length;
+      var lbIdx = (lbStart + (j % 5)) % lookbackList.length;
+      reviewWords.push(_annotate_(lookbackList[lbIdx], lookbackTier, lookback));
     }
   }
   return {
