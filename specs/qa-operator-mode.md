@@ -360,22 +360,25 @@ scenario. No HTML surface.
 - Wiring check in `Tbmsmoketest.js`.
 - No HTML, no route. Backend is ready for the client.
 
-### PR 2 — QAOperator.html + route
+### PR 2 — QAOperator.html + route + QA badge bundle
+
+LT review decision 2026-04-09: PR 2 and the original PR 3 (QA badge on child
+surfaces) are collapsed into a single PR. Reason: shipping PR 2 without the
+badge would leave LT unable to tell QA mode from prod mode on launched
+surfaces — exact failure the spec exists to prevent.
 
 - Ship `QAOperator.html` (new file).
 - Add `'qa': { file: 'QAOperator', title: 'TBM QA Operator' }` to the
   `servePage()` route table at Code.js:245.
 - Server-side env guard: if `TBM_ENV.ENV !== 'qa'`, render a red guard page
   instead.
-- Client-side PIN gate, dashboard sections, launch buttons.
+- Client-side PIN gate (shared with ThePulse — same PIN), dashboard sections,
+  launch buttons, mobile-first layout (LT walks flows on S10 FE).
+- **Bundle the 10-line QA badge snippet into every surface template that the
+  Launch section can reach.** Affects ~15 HTML files, ~150 lines total of
+  boilerplate. All additive, zero behavior change when `?qa=1` is absent.
 - Smoke + regression pass.
 - CF Worker adds `/qa` route to the route list + hits 200 post-deploy.
-
-### PR 3 — QA badge on child surfaces
-
-- Add the 10-line QA badge snippet to every surface template that consumers
-  reach from the Launch section.
-- Pure visual, no behavior change.
 
 ### Phase 2 — Scenario editor
 
@@ -423,37 +426,30 @@ grep -n "/qa"                    cloudflare-worker.js → 1+ route entry
 | 14 | Cloudflare route | `thompsonfams.com/qa` returns 200 when in QA env |
 | 15 | Exit to prod | "Back to Prod" button switches `TBM_ENV=prod`, subsequent loads show guard |
 
-## Open questions for LT review
+## Open questions for LT review — ALL RESOLVED 2026-04-09
 
-1. **PIN source.** ThePulse/TheVein use a shared LT PIN. Should `/qa` use the
-   same PIN or have its own (less bleeding through if someone ever learns the
-   PIN)?
+1. **PIN source.** **RESOLVED: shared with ThePulse.** One PIN to remember.
 
-2. **`qaExitToProdSafe`.** Flipping `TBM_ENV` via a wrapper that any
-   authenticated client can call is a foot gun — you could exit QA via a
-   dashboard tap while someone else is mid-test. Should this be Script-Editor-
-   only, or guarded by "are you sure?" + a second PIN, or restricted to LT's
-   specific Google account?
+2. **`qaExitToProdSafe`.** **RESOLVED: client wrapper + hard confirm + PIN
+   challenge.** Accepts a dashboard tap but requires re-entering the PIN to
+   complete the exit. Prevents accidental prod-flips while keeping the
+   convenience.
 
-3. **Scenario visibility.** Does LT want the scenario list hardcoded in
-   `QA_SCENARIOS` (code changes require a deploy) or data-driven via a tab
-   (LT can edit live)?
+3. **Scenario visibility.** **RESOLVED: hardcoded in `QA_SCENARIOS` (current
+   behavior).** Data-driven editor is Phase 2. 5-min code edit + clasp push
+   is cheap enough for now.
 
-4. **QA badge on every surface.** PR 3 adds a visual badge. Any surface that
-   doesn't get the badge is invisible to LT when walking flows. Should PR 2
-   bundle the badge wiring so no surface is excluded?
+4. **QA badge on every surface.** **RESOLVED: bundle into PR 2.** See
+   Rollout plan above — PR 3 is removed, PR 2 includes the badge wiring.
 
-5. **Data export format.** `qaExportStateSafe` returns JSON. Should the UI
-   also expose a "download as CSV" button for when LT wants to eyeball a tab
-   in a spreadsheet?
+5. **Data export format.** **RESOLVED: JSON only.** No CSV. LT can open the
+   QA workbook directly if they want a spreadsheet view.
 
-6. **Multi-user safety.** If LT is running a scenario on one device and JT
-   opens `/qa` on another, they'd clobber each other's state. Need a "QA
-   session lock" (one LT at a time) or is this over-engineering for a
-   two-person team?
+6. **Multi-user safety.** **RESOLVED: no session lock.** Two-person team —
+   coordinate verbally, snapshot/restore covers recovery.
 
-7. **Mobile layout.** LT walks JJ flows on the S10 FE (1920×1200 portrait).
-   The mock layout assumes desktop. Mobile-first or desktop-first?
+7. **Mobile layout.** **RESOLVED: mobile-first.** LT walks JJ flows on the
+   S10 FE — the /qa dashboard needs to work on the device in their hand.
 
 ---
 
