@@ -22,6 +22,11 @@ permissions:
   pull-requests: write
 
 concurrency:
+  # Per-PR group cancels stale runs when a new push arrives (desirable — avoids
+  # reviewing an outdated commit). The primary 429 fix is exponential backoff in
+  # codex_review.py (15/30/60/120s) rather than workflow-level serialization,
+  # since a shared global group with cancel-in-progress: false still drops runs
+  # when GitHub's single pending-slot limit is hit under burst conditions.
   group: codex-pr-review-${{ github.event.pull_request.number || inputs.pr }}
   cancel-in-progress: true
 

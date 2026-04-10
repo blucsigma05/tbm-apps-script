@@ -461,8 +461,15 @@ def send_to_openai(context_text, api_key, cfg=None):
         "Authorization": "Bearer " + api_key,
     }
 
+    # Exponential backoff delays for 429 rate limits (seconds).
+    # OpenAI recommends backing off significantly — 2/4/8s is too short when
+    # multiple PRs burst simultaneously. Serialized concurrency (workflow) is
+    # the primary defense; this is the fallback for transient spikes.
+    RETRY_DELAYS_429 = [15, 30, 60, 120]
+    MAX_ATTEMPTS = len(RETRY_DELAYS_429) + 1  # 5 total
+
     last_error = None
-    for attempt in range(4):
+    for attempt in range(MAX_ATTEMPTS):
         try:
             req = urllib.request.Request(
                 "https://api.openai.com/v1/chat/completions",
@@ -474,9 +481,10 @@ def send_to_openai(context_text, api_key, cfg=None):
                 return json.load(resp)
         except urllib.error.HTTPError as exc:
             last_error = exc
-            if exc.code == 429 and attempt < 3:
-                wait = 2 ** (attempt + 1)
-                print("Rate limited (429), retrying in %ds..." % wait, file=sys.stderr)
+            if exc.code == 429 and attempt < len(RETRY_DELAYS_429):
+                wait = RETRY_DELAYS_429[attempt]
+                print("Rate limited (429), retrying in %ds... (attempt %d/%d)" % (
+                    wait, attempt + 1, MAX_ATTEMPTS - 1), file=sys.stderr)
                 time.sleep(wait)
             elif exc.code == 401:
                 print("OpenAI auth failed — check OPENAI_API_KEY.", file=sys.stderr)
@@ -486,7 +494,7 @@ def send_to_openai(context_text, api_key, cfg=None):
                 return {"error": str(exc)}
         except Exception as exc:
             last_error = exc
-            if attempt < 3:
+            if attempt < MAX_ATTEMPTS - 1:
                 time.sleep(2 ** (attempt + 1))
 
     return {"error": str(last_error)}
