@@ -739,7 +739,8 @@ function getBrushDef(id) {
 function pressureToWidth(pressure, brushDef) {
   const p = pressure || 0.5;
   const scalar = Math.pow(p, 1.6);
-  return brushDef.minW + (brushDef.maxW - brushDef.minW) * scalar;
+  const base = brushDef.minW + (brushDef.maxW - brushDef.minW) * scalar;
+  return base * (brushSize / 4);
 }
 
 function fireRingBurst(cx, cy) {
@@ -1302,20 +1303,11 @@ function autosave() {
   // Day 1: log only — Drive save wired on Day 3 (F3 complete)
   console.log('[ComicStudio] Autosave at', new Date().toISOString(), payload);
 
-  // Indicator flash
+  // Day 1: show DRAFT — no backend persistence yet. SAVING→SAVED flow wires on Day 3.
   const indicator = document.getElementById('autosave-indicator');
   if (indicator) {
-    indicator.classList.add('saving');
-    indicator.textContent = 'SAVING…';
-    setTimeout(() => {
-      indicator.classList.remove('saving');
-      indicator.classList.add('saved');
-      indicator.textContent = 'SAVED';
-      setTimeout(() => {
-        indicator.classList.remove('saved');
-        indicator.textContent = 'AUTOSAVE';
-      }, 1500);
-    }, 400);
+    indicator.textContent = 'DRAFT';
+    indicator.title = 'Draft — not yet saved to Drive (Day 3)';
   }
 }
 
