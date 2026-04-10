@@ -127,14 +127,129 @@ jobs:
             echo "empty_diff=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Send to OpenAI gpt-4o
+      - name: Triage review scope
         if: steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true'
+        id: triage
+        env:
+          DIFF_FILE: pr_diff.txt
+          CHANGED_FILES_FILE: changed_files.txt
+        run: python3 .github/scripts/triage_review.py
+
+      - name: Upload triage artifact
+        if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: triage-output
+          path: triage_output.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Post skip comment
+        if: steps.triage.outputs.mode == 'skip' && github.event_name == 'pull_request_target' && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const reason = '${{ steps.triage.outputs.reason }}';
+            const body = [
+              '<!-- codex-pr-review -->',
+              '## Codex PR Review \u2014 Skipped',
+              '',
+              '**Verdict:** SKIPPED',
+              '',
+              'Codex review was skipped because: ' + reason + '.',
+              '',
+              'No OpenAI API call was made. This PR does not contain code changes',
+              'that require automated code review.',
+              '',
+              '**Files Reviewed:** (none \u2014 triage-skipped)',
+              '',
+              '_If this skip is incorrect, add a code file to trigger a real review,',
+              'or remove the file from `.codex-review-skip`._',
+            ].join('\n');
+
+            const issueNumber = Number('${{ steps.pr.outputs.number }}');
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              per_page: 100,
+            });
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('<!-- codex-pr-review -->')
+            );
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body,
+              });
+            }
+
+      - name: Apply triage label
+        if: github.event_name == 'pull_request_target' && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true' && steps.triage.outputs.mode != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const mode = '${{ steps.triage.outputs.mode }}';
+            const labelMap = {
+              'skip':   'pipeline:triage-skipped',
+              'light':  'pipeline:triage-light',
+              'medium': 'pipeline:triage-medium',
+              'full':   'pipeline:triage-full',
+            };
+            const newLabel = labelMap[mode];
+            if (!newLabel) return;
+
+            const issueNumber = Number('${{ steps.pr.outputs.number }}');
+
+            // Remove any existing pipeline:triage-* label
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+            for (const label of currentLabels) {
+              if (label.name.startsWith('pipeline:triage-')) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issueNumber,
+                    name: label.name,
+                  });
+                } catch (e) {}
+              }
+            }
+
+            // Add the new triage label
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: [newLabel],
+              });
+            } catch (e) {
+              core.warning('Could not apply triage label: ' + e.message);
+            }
+
+      - name: Send to OpenAI gpt-4o
+        if: steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true' && steps.triage.outputs.mode != 'skip'
         id: review
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           DIFF_FILE: pr_diff.txt
           CHANGED_FILES_FILE: changed_files.txt
           EMPTY_DIFF: ${{ steps.diff.outputs.empty_diff }}
+          REVIEW_MODE: ${{ steps.triage.outputs.mode }}
         run: python3 .github/scripts/codex_review.py
 
       - name: Upload review report artifact
@@ -149,7 +264,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Post review comment on PR
-        if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true'
+        if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true' && steps.triage.outputs.mode != 'skip'
         uses: actions/github-script@v7
         with:
           script: |
@@ -184,7 +299,7 @@ jobs:
             }
 
       - name: Apply finding labels
-        if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true'
+        if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true' && steps.triage.outputs.mode != 'skip'
         uses: actions/github-script@v7
         with:
           script: |
@@ -238,7 +353,7 @@ jobs:
             }
 
       - name: Integrity check — detect rubber-stamped audits
-        if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true'
+        if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true' && steps.triage.outputs.mode != 'skip'
         uses: actions/github-script@v7
         with:
           script: |
