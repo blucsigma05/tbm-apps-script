@@ -60,7 +60,10 @@ var CANONICAL_SAFE_FUNCTIONS = [
   'updateMealPlanSafe', 'getStoryApiStatsSafe', 'khHealthCheckSafe',
   'getDeployedVersionsSafe', 'reconcileVeinPulse', 'runTestsSafe',
   'seedStaarRlaSprintSafe', 'getDailyMissionsInitSafe',
-  'startLessonRunSafe', 'saveLessonRunStateSafe', 'getLessonRunResumeSafe', 'completeLessonRunSafe'
+  'startLessonRunSafe', 'saveLessonRunStateSafe', 'getLessonRunResumeSafe', 'completeLessonRunSafe',
+  'qaGetEnvStatusSafe', 'qaListScenariosSafe', 'qaLoadScenarioSafe', 'qaSetClockSafe',
+  'qaClearClockSafe', 'qaSnapshotSafe', 'qaRestoreSafe', 'qaListSnapshotsSafe',
+  'qaRunPersistenceTestsSafe', 'qaClearTestDataSafe', 'qaResetDataSafe', 'qaExportStateSafe'
 ];
 
 /**

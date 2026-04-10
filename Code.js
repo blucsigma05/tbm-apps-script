@@ -443,7 +443,20 @@ function serveData(e) {
         'startLessonRunSafe': startLessonRunSafe,
         'saveLessonRunStateSafe': saveLessonRunStateSafe,
         'getLessonRunResumeSafe': getLessonRunResumeSafe,
-        'completeLessonRunSafe': completeLessonRunSafe
+        'completeLessonRunSafe': completeLessonRunSafe,
+        // QA Operator Mode — PR 1 (specs/qa-operator-mode.md)
+        'qaGetEnvStatusSafe': qaGetEnvStatusSafe,
+        'qaListScenariosSafe': qaListScenariosSafe,
+        'qaLoadScenarioSafe': qaLoadScenarioSafe,
+        'qaSetClockSafe': qaSetClockSafe,
+        'qaClearClockSafe': qaClearClockSafe,
+        'qaSnapshotSafe': qaSnapshotSafe,
+        'qaRestoreSafe': qaRestoreSafe,
+        'qaListSnapshotsSafe': qaListSnapshotsSafe,
+        'qaRunPersistenceTestsSafe': qaRunPersistenceTestsSafe,
+        'qaClearTestDataSafe': qaClearTestDataSafe,
+        'qaResetDataSafe': qaResetDataSafe,
+        'qaExportStateSafe': qaExportStateSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
