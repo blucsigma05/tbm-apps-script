@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v5">
+<meta name="tbm-version" content="v6">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -584,6 +584,121 @@ main {
   color: #22C55E;
   border-color: #22C55E;
 }
+#autosave-indicator.failed {
+  color: #EF4444;
+  border-color: #EF4444;
+}
+
+/* Resume overlay — F3 Day 2 */
+#resume-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11,15,26,0.97);
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#resume-overlay.hidden { display: none; }
+#resume-overlay .resume-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 16px;
+  padding: 28px 24px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  animation: fadeSlide 0.4s ease;
+}
+#resume-overlay h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  color: #F59E0B;
+  margin-bottom: 10px;
+}
+#resume-overlay p {
+  font-size: 13px;
+  color: #94A3B8;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+.resume-btn-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.resume-btn-row button {
+  flex: 1;
+  max-width: 180px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+}
+.btn-resume { background: #F59E0B; color: #0B0F1A; }
+.btn-resume:hover { background: #FBBF24; }
+.btn-fresh { background: #1E2A4A; color: #94A3B8; border: 1px solid #334155 !important; }
+.btn-fresh:hover { color: #E2E8F0; }
+
+/* Mode brief — F4 Day 2 */
+#mode-brief-wrap {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+#mode-brief-wrap.hidden { display: none; }
+.mode-brief-card {
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 12px;
+  animation: fadeSlide 0.4s ease;
+}
+.mode-brief-card.mission {
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.25);
+}
+.mode-brief-card.free {
+  background: rgba(59,130,246,0.08);
+  border: 1px solid rgba(59,130,246,0.25);
+}
+.mode-brief-card h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+}
+.mode-brief-card.mission h3 { color: #F59E0B; }
+.mode-brief-card.free h3 { color: #60A5FA; }
+.mode-brief-card p {
+  font-size: 13px;
+  color: #E2E8F0;
+  line-height: 1.5;
+}
+.mode-brief-card .cer-excerpt {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #94A3B8;
+  font-style: italic;
+  border-left: 2px solid #F59E0B;
+  padding-left: 8px;
+  line-height: 1.5;
+}
+
+/* Rings cap note */
+#rings-cap-note {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #64748B;
+  text-align: center;
+  margin-top: 8px;
+}
 </style>
 </head>
 <body>
@@ -614,7 +729,22 @@ main {
   <button class="nav-tab" onclick="switchTab('preview')">Preview</button>
 </div>
 
+<div id="mode-brief-wrap" class="hidden"></div>
+
 <main id="main-content">
+  <!-- Resume Draft overlay — F3 Day 2 -->
+  <div id="resume-overlay" class="hidden">
+    <div class="resume-card">
+      <div style="font-size:40px;margin-bottom:10px;">&#128194;</div>
+      <h2>DRAFT FOUND</h2>
+      <p id="resume-desc">You left off on a comic. Want to pick up where you stopped?</p>
+      <div class="resume-btn-row">
+        <button class="btn-resume" onclick="resumeDraft()">RESUME</button>
+        <button class="btn-fresh" onclick="startFresh()">START FRESH</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Plan Your Attack overlay -->
   <div id="plan-overlay">
     <div class="plan-card">
@@ -664,6 +794,7 @@ main {
     <div class="section-label">YOUR COMIC</div>
     <div id="preview-area"></div>
     <button class="btn-primary" id="finish-btn" onclick="finishComic()">FINISH &amp; EARN RINGS</button>
+    <div id="rings-cap-note"></div>
   </div>
 
   <!-- Completion -->
@@ -671,11 +802,11 @@ main {
 </main>
 
 <script>
-// ── ComicStudio v4 — Day 1: F1 Pointer Events + F2 6-Brush System + F3 Autosave scaffold
+// ── ComicStudio v4 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
 // ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
-// tbm-version: v4
+// tbm-version: v5
 
-const COMIC_STUDIO_VERSION = 5;
+const COMIC_STUDIO_VERSION = 6;
 
 // ── Test Mode Detection ──
 const TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
@@ -719,6 +850,22 @@ let activeTab = 'draw';
 // F3: stroke history for autosave payload
 const strokeHistory = [];  // [{panelIdx, type, color, size, points:[]}]
 let currentStroke = null;
+
+// F3 Day 2: Drive draft state
+let hasDrawnAnything = false;
+let currentMode = 'free';    // 'mission' | 'free'
+let ringsCap = 30;           // set by getComicStudioContextSafe
+let currentEpisodeId = null;
+let pendingDraft = null;     // draft loaded from Drive, awaiting context
+let studioCtx = null;        // full context from server
+
+// F3 Day 2: two-phase init gate (context + draft must both resolve before resume/fresh)
+let _initPending = 2;
+function _initReady() {
+  _initPending--;
+  if (_initPending > 0) return;
+  _onBothLoaded();
+}
 
 // ── F2: Brush definitions ──
 const BRUSHES = [
@@ -776,6 +923,40 @@ const LAYOUTS = [
   { count: 3, label: '3 Panels', icon: '|||' },
   { count: 4, label: '4 Panels', icon: '||||' }
 ];
+
+// ── F3 Day 2: serverCall Promise wrapper ──
+function serverCall(fn, ...args) {
+  return new Promise((resolve, reject) => {
+    if (typeof google === 'undefined' || !google.script || !google.script.run) {
+      reject(new Error('google.script.run unavailable'));
+      return;
+    }
+    google.script.run
+      .withSuccessHandler(resolve)
+      .withFailureHandler(reject)[fn](...args);
+  });
+}
+
+function getTodayDateKey() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${mm}-${dd}`;
+}
+
+function serializeDraft() {
+  return {
+    version: COMIC_STUDIO_VERSION,
+    timestamp: new Date().toISOString(),
+    panelCount,
+    captions: captions.slice(0, panelCount),
+    strokeHistory,
+    panels: panelCanvases.map((canvas, idx) => ({
+      idx,
+      dataUrl: canvas ? canvas.toDataURL('image/jpeg', 0.7) : null
+    }))
+  };
+}
 
 // ── Stars ──
 function createStars() {
@@ -976,6 +1157,12 @@ function attachPointerEvents(canvas, panelIdx) {
       size: brushSize,
       points: [{ x: pos.x, y: pos.y, pressure: e.pressure }]
     };
+
+    // F3 Day 2: start autosave timer on first stroke
+    if (!hasDrawnAnything) {
+      hasDrawnAnything = true;
+      startAutosaveTimer();
+    }
   });
 
   canvas.addEventListener('pointermove', (e) => {
@@ -1220,7 +1407,9 @@ function finishComic() {
   let rings = 15;
   if (captionedPanels === panelCount) rings += 10;
   if (totalWords >= 20) rings += 5;
-  if (checkVocabInCaptions()) rings += 10;
+  // Spec bug fix: vocab bonus (+10) is Mission-only — not awarded in Free mode.
+  if (currentMode === 'mission' && checkVocabInCaptions()) rings += 10;
+  rings = Math.min(rings, ringsCap);
   ringsEarned = rings;
 
   document.getElementById('tab-preview').classList.add('hidden');
@@ -1284,92 +1473,64 @@ function loadCurriculumVocab() {
     .getTodayContentSafe(CHILD);
 }
 
-// ── F3: Autosave scaffold ──
-// Day 1: persist to localStorage so a tab close doesn't lose work.
-// Day 3 will replace this with a Drive write; until then the indicator
-// stays honest about where the draft lives.
-const COMICSTUDIO_DRAFT_KEY = 'comicstudio:draft:v1';
-let isRestoring = false;
-let pendingRestoreCount = 0;
-
-function buildAutosavePayload() {
-  return {
-    version: COMIC_STUDIO_VERSION,
-    timestamp: new Date().toISOString(),
-    panelCount,
-    captions: captions.slice(0, panelCount),
-    strokeCount: strokeHistory.length,
-    strokeHistory: strokeHistory,
-    // panels: JPEG dataURLs to keep payload under the localStorage 5MB cap.
-    // Day 3 Drive save can switch back to PNG if it wants lossless storage.
-    panels: panelCanvases.map((canvas, idx) => ({
-      idx,
-      dataUrl: canvas ? canvas.toDataURL('image/jpeg', 0.7) : null
-    }))
-  };
-}
+// ── F3 Day 2: Drive-based autosave ──
+let _autosaveTimer = null;
 
 function setAutosaveIndicator(state) {
   const indicator = document.getElementById('autosave-indicator');
   if (!indicator) return;
   const labels = {
-    draft:    { text: 'DRAFT',         title: 'Draft — not yet saved to Drive (Day 3)' },
-    local:    { text: 'DRAFT (LOCAL)', title: 'Saved locally — Drive sync wires on Day 3' },
-    restored: { text: 'RESTORED',      title: 'Restored from local draft — keep working to update' },
-    full:     { text: 'LOCAL FULL',    title: 'Local storage full — export to free space' }
+    saving:   { text: 'SAVING…',  cls: 'saving' },
+    saved:    { text: 'SAVED',    cls: 'saved'   },
+    failed:   { text: 'SAVE ERR', cls: 'failed'  },
+    restored: { text: 'RESTORED', cls: 'saved'   }
   };
-  const conf = labels[state] || labels.draft;
+  const conf = labels[state] || { text: 'AUTOSAVE', cls: '' };
   indicator.textContent = conf.text;
-  indicator.title = conf.title;
+  indicator.className = conf.cls;
 }
 
-function autosave() {
-  // Don't overwrite the draft while restoration is still painting canvases
-  if (isRestoring) {
-    console.log('[ComicStudio] Autosave skipped: restoration in progress');
-    return;
-  }
-
-  const payload = buildAutosavePayload();
-  console.log('[ComicStudio] Autosave at', new Date().toISOString(), payload);
-
-  // Try to persist locally. Falls through to in-memory DRAFT if unavailable.
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(COMICSTUDIO_DRAFT_KEY, JSON.stringify(payload));
-      setAutosaveIndicator('local');
-      return;
-    }
-  } catch (e) {
-    if (e && e.name === 'QuotaExceededError') {
-      setAutosaveIndicator('full');
-      console.warn('[ComicStudio] localStorage quota exceeded; draft not persisted', e);
-      return;
-    }
-    console.warn('[ComicStudio] localStorage failed; draft kept in memory only', e);
-  }
-  setAutosaveIndicator('draft');
+function autosaveDraft() {
+  if (TBM_TEST_MODE || !hasDrawnAnything) return;
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  setAutosaveIndicator('saving');
+  const payload = serializeDraft();
+  google.script.run
+    .withSuccessHandler(() => setAutosaveIndicator('saved'))
+    .withFailureHandler(() => setAutosaveIndicator('failed'))
+    .saveComicDraftSafe(CHILD, JSON.stringify(payload));
 }
 
-function loadDraft() {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return null;
-    const raw = window.localStorage.getItem(COMICSTUDIO_DRAFT_KEY);
-    if (!raw) return null;
-    const draft = JSON.parse(raw);
-    if (!draft || draft.version !== COMIC_STUDIO_VERSION) return null;
-    return draft;
-  } catch (e) {
-    console.warn('[ComicStudio] Failed to load draft', e);
-    return null;
-  }
+function startAutosaveTimer() {
+  if (_autosaveTimer) return;
+  _autosaveTimer = setInterval(autosaveDraft, 60000);
+  window.addEventListener('beforeunload', autosaveDraft);
 }
 
-function restoreDraft(draft) {
-  if (!draft) return false;
+function rehydratePanels(draft) {
+  return new Promise(resolve => {
+    const validPanels = Array.isArray(draft.panels)
+      ? draft.panels.filter(p => p && typeof p.idx === 'number' && p.dataUrl)
+      : [];
+    if (validPanels.length === 0) { resolve(); return; }
+    let remaining = validPanels.length;
+    validPanels.forEach(p => {
+      const canvas = panelCanvases[p.idx];
+      const ctx = panelContexts[p.idx];
+      if (!canvas || !ctx) { remaining--; if (remaining === 0) resolve(); return; }
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        remaining--;
+        if (remaining === 0) resolve();
+      };
+      img.onerror = () => { remaining--; if (remaining === 0) resolve(); };
+      img.src = p.dataUrl;
+    });
+  });
+}
 
-  // Restore in-memory state BEFORE rebuilding the grid so the right
-  // number of canvases get created.
+function applyDraftState(draft) {
   if (typeof draft.panelCount === 'number' && draft.panelCount >= 1 && draft.panelCount <= 4) {
     panelCount = draft.panelCount;
   }
@@ -1380,58 +1541,104 @@ function restoreDraft(draft) {
   }
   if (Array.isArray(draft.strokeHistory)) {
     strokeHistory.length = 0;
-    for (let i = 0; i < draft.strokeHistory.length; i++) {
-      strokeHistory.push(draft.strokeHistory[i]);
-    }
+    draft.strokeHistory.forEach(s => strokeHistory.push(s));
   }
-
+  buildLayoutPicker();
   buildPanelGrid();
-
-  // Paint the saved bitmaps back onto each panel canvas.
-  // Image.onload is async, so guard autosave until all panels are loaded.
-  const validPanels = Array.isArray(draft.panels)
-    ? draft.panels.filter(p => p && typeof p.idx === 'number' && p.dataUrl)
-    : [];
-
-  if (validPanels.length > 0) {
-    isRestoring = true;
-    pendingRestoreCount = validPanels.length;
-    validPanels.forEach(p => {
-      const canvas = panelCanvases[p.idx];
-      const ctx = panelContexts[p.idx];
-      if (!canvas || !ctx) {
-        pendingRestoreCount--;
-        if (pendingRestoreCount <= 0) isRestoring = false;
-        return;
-      }
-      const img = new Image();
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        pendingRestoreCount--;
-        if (pendingRestoreCount <= 0) isRestoring = false;
-      };
-      img.onerror = () => {
-        console.warn('[ComicStudio] Failed to restore panel ' + p.idx);
-        pendingRestoreCount--;
-        if (pendingRestoreCount <= 0) isRestoring = false;
-      };
-      img.src = p.dataUrl;
-    });
-  }
-
   renderCaptions();
-  setAutosaveIndicator('restored');
-  return true;
 }
 
-// F3: 60-second autosave interval
-const AUTOSAVE_INTERVAL_MS = 60000;
-let autosaveTimer = setInterval(autosave, AUTOSAVE_INTERVAL_MS);
+function showResumePrompt(draft) {
+  const desc = document.getElementById('resume-desc');
+  if (desc && draft.timestamp) {
+    const d = new Date(draft.timestamp);
+    desc.textContent = `You left off on ${d.toLocaleDateString()}. Resume or start fresh?`;
+  }
+  document.getElementById('resume-overlay').classList.remove('hidden');
+}
 
-// F3: beforeunload autosave
-window.addEventListener('beforeunload', () => {
-  autosave();
-});
+function resumeDraft() {
+  document.getElementById('resume-overlay').classList.add('hidden');
+  applyDraftState(pendingDraft);
+  rehydratePanels(pendingDraft).then(() => {
+    setAutosaveIndicator('restored');
+    hasDrawnAnything = true;
+    startAutosaveTimer();
+  });
+}
+
+function startFresh() {
+  document.getElementById('resume-overlay').classList.add('hidden');
+  if (!TBM_TEST_MODE && typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(() => {})
+      .withFailureHandler(() => {})
+      .deleteComicDraftSafe(CHILD, getTodayDateKey());
+  }
+  buildPanelGrid();
+  renderCaptions();
+}
+
+// ── F4 Day 2: Mode brief rendering ──
+function renderMissionBrief(ctx) {
+  const title = ctx.episode ? (ctx.episode.title || 'Wolfkid Mission') : 'Wolfkid Mission';
+  let html = '<div class="mode-brief-card mission">';
+  html += '<h3>MISSION MODE</h3>';
+  html += `<p>${escapeHtml(title)}</p>`;
+  if (ctx.studentCER) {
+    const excerpt = String(ctx.studentCER).substring(0, 120);
+    html += `<div class="cer-excerpt">"${escapeHtml(excerpt)}${excerpt.length >= 120 ? '…' : ''}"</div>`;
+  }
+  html += '</div>';
+  document.getElementById('mode-brief-wrap').innerHTML = html;
+  document.getElementById('mode-brief-wrap').classList.remove('hidden');
+}
+
+function renderFreeBrief(ctx) {
+  const prompts = ctx && ctx.freePrompts ? ctx.freePrompts : [];
+  const picked = prompts.length
+    ? prompts[Math.floor(Math.random() * prompts.length)]
+    : { text: 'Draw your own Wolfkid story!' };
+  let html = '<div class="mode-brief-card free">';
+  html += '<h3>FREE CREATE</h3>';
+  html += `<p>${escapeHtml(picked.text)}</p>`;
+  html += '</div>';
+  document.getElementById('mode-brief-wrap').innerHTML = html;
+  document.getElementById('mode-brief-wrap').classList.remove('hidden');
+}
+
+function onContextLoaded(ctx) {
+  studioCtx = ctx;
+  if (ctx && ctx.mode === 'mission') {
+    currentMode = 'mission';
+    ringsCap = typeof ctx.ringsCap === 'number' ? ctx.ringsCap : 55;
+    if (ctx.vocab && ctx.vocab.length > 0) {
+      todayVocab = {
+        word: (ctx.vocab[0].word || '').toUpperCase(),
+        def: ctx.vocab[0].definition || ctx.vocab[0].def || '',
+        prompt: `Use "${ctx.vocab[0].word || ''}" in one of your comic captions!`
+      };
+      renderVocab();
+    }
+    renderMissionBrief(ctx);
+  } else {
+    currentMode = 'free';
+    ringsCap = ctx && typeof ctx.ringsCap === 'number' ? ctx.ringsCap : 30;
+    renderFreeBrief(ctx);
+  }
+  const note = document.getElementById('rings-cap-note');
+  if (note) note.textContent = `Up to ${ringsCap} rings this session`;
+  _initReady();
+}
+
+function _onBothLoaded() {
+  if (pendingDraft && !TBM_TEST_MODE) {
+    showResumePrompt(pendingDraft);
+  } else {
+    buildPanelGrid();
+    renderCaptions();
+  }
+}
 
 // ── Init ──
 function init() {
@@ -1439,19 +1646,21 @@ function init() {
   buildLayoutPicker();
   buildBrushSelector();
   buildToolbar();
-  // Try to restore a local draft first; restoreDraft() rebuilds the grid
-  // with the saved panelCount. Otherwise build a fresh grid.
-  const draft = loadDraft();
-  if (!restoreDraft(draft)) {
-    buildPanelGrid();
-    renderCaptions();
-  }
   renderVocab();
-  loadCurriculumVocab();
+  if (TBM_TEST_MODE) { buildPanelGrid(); renderCaptions(); return; }
+  serverCall('getComicStudioContextSafe', CHILD)
+    .then(ctx => { onContextLoaded(ctx); })
+    .catch(() => { onContextLoaded(null); });
+  serverCall('loadComicDraftSafe', CHILD)
+    .then(draft => {
+      if (draft && draft.version === COMIC_STUDIO_VERSION) { pendingDraft = draft; }
+      _initReady();
+    })
+    .catch(() => { _initReady(); });
 }
 
 init();
 </script>
 </body>
 </html>
-<!-- ComicStudio.html v5 -->
+<!-- ComicStudio.html v6 -->

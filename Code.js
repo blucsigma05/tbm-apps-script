@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v79 — Apps Script Router (TBM Consolidated)
+// Code.gs v80 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 79; }
+function getCodeVersion() { return 80; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -457,7 +457,12 @@ function serveData(e) {
         'qaClearTestDataSafe': qaClearTestDataSafe,
         'qaResetDataSafe': qaResetDataSafe,
         'qaExportStateSafe': qaExportStateSafe,
-        'getAssetRegistrySafe': getAssetRegistrySafe
+        'getAssetRegistrySafe': getAssetRegistrySafe,
+        // ComicStudio v4 Day 2 — Drive draft + mode aggregator
+        'saveComicDraftSafe': saveComicDraftSafe,
+        'loadComicDraftSafe': loadComicDraftSafe,
+        'deleteComicDraftSafe': deleteComicDraftSafe,
+        'getComicStudioContextSafe': getComicStudioContextSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
@@ -2025,4 +2030,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v79
+// END OF FILE — Code.gs v80

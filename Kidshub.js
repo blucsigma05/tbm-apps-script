@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v61 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v62 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 61; }
+function getKidsHubVersion() { return 62; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -45,6 +45,21 @@ var KH_GRADE_REWARDS = {
   'D': { rings: 0, cash: 0 },
   'F': { rings: 0, cash: 0 }
 };
+
+// v62: ComicStudio Free Mode prompts — shown when kid has no CER submitted for today's episode.
+var COMIC_STUDIO_FREE_PROMPTS = [
+  { id: 'mtl-vehicle',  text: "Draw Mach Turbo Light's newest vehicle. What does it do that no other ride can?" },
+  { id: 'pack-meeting', text: "Draw the Pack at their team meeting. Who's arguing? Who's laughing?" },
+  { id: 'new-villain',  text: "Draw a villain we haven't met yet. Give them a name and a weakness." },
+  { id: 'hq-day',       text: 'Draw a normal day at Pack HQ. Show what everyone is doing.' },
+  { id: 'training',     text: "Draw Wolfkid training for a dangerous mission. Show three skills he's practicing." },
+  { id: 'origin',       text: 'Draw how Wolfkid first met Mach Turbo Light. Where were they? What happened?' },
+  { id: 'disaster',     text: 'Draw the aftermath of a disaster — a flood, a storm, a fire. How does the Pack help?' },
+  { id: 'secret-base',  text: "Draw the Pack's secret underground base. Label three rooms." },
+  { id: 'crowd',        text: 'Draw the Pack getting thanked by a crowd. Who is cheering loudest? Why?' },
+  { id: 'future',       text: 'Draw Wolfkid 10 years from now. What does he look like? What job does he have?' }
+];
+
 var KH_SUBJECTS = ['Math', 'Reading', 'Science', 'Social Studies', 'Art', 'Music', 'PE', 'Other'];
 var KH_QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4', 'S1', 'S2', 'Final'];
 
@@ -4621,5 +4636,199 @@ function getDailyMissionsInitSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v61
+// ── v62: Comic Studio — Drive draft storage + mode aggregator ────────────────
+
+function ensureComicArchiveRootFolder_() {
+  var props = PropertiesService.getScriptProperties();
+  var cached = props.getProperty('COMIC_ARCHIVE_FOLDER_ID');
+  if (cached) {
+    try { return DriveApp.getFolderById(cached); } catch (_) {}
+  }
+  var root = DriveApp.getRootFolder();
+  var existing = root.getFoldersByName('Wolfkid Comics');
+  var folder = existing.hasNext() ? existing.next() : root.createFolder('Wolfkid Comics');
+  props.setProperty('COMIC_ARCHIVE_FOLDER_ID', folder.getId());
+  return folder;
+}
+
+function ensureComicDraftsFolder_() {
+  var props = PropertiesService.getScriptProperties();
+  var cached = props.getProperty('COMIC_DRAFTS_FOLDER_ID');
+  if (cached) {
+    try { return DriveApp.getFolderById(cached); } catch (_) {}
+  }
+  var root = ensureComicArchiveRootFolder_();
+  var sub = root.getFoldersByName('drafts');
+  var drafts = sub.hasNext() ? sub.next() : root.createFolder('drafts');
+  props.setProperty('COMIC_DRAFTS_FOLDER_ID', drafts.getId());
+  return drafts;
+}
+
+function saveComicDraft_(child, draftJson) {
+  try {
+    var childLower = String(child || 'buggsy').toLowerCase();
+    var dateKey = getTodayISO_();
+    var fileName = childLower + '_' + dateKey + '.json';
+    var folder = ensureComicDraftsFolder_();
+    var existing = folder.getFilesByName(fileName);
+    while (existing.hasNext()) { existing.next().setTrashed(true); }
+    var blob = Utilities.newBlob(draftJson, 'application/json', fileName);
+    var file = folder.createFile(blob);
+    return { success: true, fileId: file.getId(), bytes: draftJson.length };
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('saveComicDraft_', e);
+    return { success: false, error: String(e) };
+  }
+}
+
+function saveComicDraftSafe(child, draftJson) {
+  return withMonitor_('saveComicDraftSafe', function() {
+    return JSON.parse(JSON.stringify(saveComicDraft_(child, draftJson)));
+  });
+}
+
+function deleteComicDraft_(child, dateKey) {
+  try {
+    var childLower = String(child || 'buggsy').toLowerCase();
+    var key = dateKey || getTodayISO_();
+    var fileName = childLower + '_' + key + '.json';
+    var folder = ensureComicDraftsFolder_();
+    var files = folder.getFilesByName(fileName);
+    var count = 0;
+    while (files.hasNext()) {
+      files.next().setTrashed(true);
+      count++;
+    }
+    return { success: true, deleted: count };
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('deleteComicDraft_', e);
+    return { success: false, error: String(e) };
+  }
+}
+
+function deleteComicDraftSafe(child, dateKey) {
+  return withMonitor_('deleteComicDraftSafe', function() {
+    return JSON.parse(JSON.stringify(deleteComicDraft_(child, dateKey)));
+  });
+}
+
+function loadComicDraft_(child) {
+  try {
+    var childLower = String(child || 'buggsy').toLowerCase();
+    var dateKey = getTodayISO_();
+    var folder = ensureComicDraftsFolder_();
+    var fileName = childLower + '_' + dateKey + '.json';
+    var files = folder.getFilesByName(fileName);
+    if (!files.hasNext()) return null;
+    var file = files.next();
+    var text = file.getBlob().getDataAsString();
+    return JSON.parse(text);
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('loadComicDraft_', e);
+    return null;
+  }
+}
+
+function loadComicDraftSafe(child) {
+  return withMonitor_('loadComicDraftSafe', function() {
+    var result = loadComicDraft_(child);
+    return JSON.parse(JSON.stringify(result));
+  });
+}
+
+function slugifyEpisodeTitle_(title) {
+  return String(title || 'untitled')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/, '')
+    .substring(0, 30);
+}
+
+function getComicStudioContext_(child) {
+  var childLower = String(child || 'buggsy').toLowerCase();
+  var today = getTodayISO_();
+  var result = {
+    mode: 'free',
+    episodeId: null,
+    episode: null,
+    studentCER: null,
+    vocab: [],
+    freePrompts: [],
+    ringsCap: 30
+  };
+
+  var dayContent = null;
+  try {
+    var content = getTodayContent_(childLower);
+    dayContent = (content && content.content) || null;
+    if (dayContent && dayContent.vocabulary) {
+      result.vocab = dayContent.vocabulary.slice(0, 5);
+    }
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('getComicStudioContext_:content', e);
+  }
+
+  var studentCER = null;
+  try {
+    var sheet = ensureKHEducationTab_();
+    if (sheet.getLastRow() >= 2) {
+      var data = sheet.getDataRange().getValues();
+      for (var i = data.length - 1; i >= 1; i--) {
+        var row = data[i];
+        var ts = row[0];
+        var rowChild = String(row[1] || '').toLowerCase();
+        var module = String(row[2] || '').toLowerCase();
+        var subject = String(row[3] || '').toLowerCase();
+        var responseText = String(row[6] || '');
+        var status = String(row[7] || '');
+        var rings = Number(row[9]) || 0;
+        if (rowChild !== childLower) continue;
+        if (!(ts instanceof Date)) continue;
+        var rowDateKey = Utilities.formatDate(ts, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+        if (rowDateKey !== today) continue;
+        var isWolfkid = module.indexOf('wolfkid') !== -1 || subject.indexOf('wolfkid') !== -1;
+        if (!isWolfkid) continue;
+        if (!responseText) continue;
+        studentCER = {
+          submittedAt: ts.toISOString(),
+          claim: responseText.split(/[.!?]/)[0].trim() + '.',
+          responseText: responseText,
+          rings: rings,
+          status: status
+        };
+        break;
+      }
+    }
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('getComicStudioContext_:cer', e);
+  }
+
+  if (dayContent && dayContent.wolfkidEpisode && studentCER) {
+    result.mode = 'mission';
+    result.episodeId = slugifyEpisodeTitle_(dayContent.wolfkidEpisode.title);
+    result.episode = {
+      id: result.episodeId,
+      title: dayContent.wolfkidEpisode.title || '',
+      scenario: dayContent.wolfkidEpisode.scenario || '',
+      writingPrompt: dayContent.wolfkidEpisode.writingPrompt || '',
+      data: dayContent.wolfkidEpisode.data || {}
+    };
+    result.studentCER = studentCER;
+    result.ringsCap = 55;
+  } else {
+    result.mode = 'free';
+    result.freePrompts = COMIC_STUDIO_FREE_PROMPTS.slice();
+    result.ringsCap = 30;
+  }
+
+  return result;
+}
+
+function getComicStudioContextSafe(child) {
+  return withMonitor_('getComicStudioContextSafe', function() {
+    return JSON.parse(JSON.stringify(getComicStudioContext_(child)));
+  });
+}
+
+// END OF FILE — KidsHub.gs v62
 // ════════════════════════════════════════════════════════════════════
