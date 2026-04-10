@@ -2560,7 +2560,14 @@ function getTodayContent_(child, _testDateOverride) {
   var jsonCol = headers.indexOf('ContentJSON');
   var weekCol = headers.indexOf('WeekNumber');
   if (childCol === -1 || startCol === -1 || jsonCol === -1) return null;
-  var today = _testDateOverride ? new Date(_testDateOverride) : new Date();
+  var today;
+  if (_testDateOverride) {
+    // Parse YYYY-MM-DD as local calendar day to avoid UTC midnight offset in non-UTC zones.
+    var parts = String(_testDateOverride).split('-');
+    today = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  } else {
+    today = new Date();
+  }
   today.setHours(0, 0, 0, 0);
   var dayOfWeek = today.getDay();
   var dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
