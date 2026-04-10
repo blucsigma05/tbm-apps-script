@@ -234,6 +234,15 @@ def main():
         mode = "skip"
         reason = "binary-only PR: zero-byte diff with %d changed file(s)" % len(files)
 
+    # full: any HOT file touched — checked BEFORE docs-only and generated-only skip
+    # paths so that CLAUDE.md, audit-source.sh, and workflow files always get full
+    # review even if the rest of the PR looks like docs or generated content.
+    elif hot_files_touched:
+        mode = "full"
+        reason = "HOT file touched: %s" % ", ".join(hot_files_touched[:3])
+        if len(hot_files_touched) > 3:
+            reason += " (+%d more)" % (len(hot_files_touched) - 3)
+
     # skip (docs-only path): all files are docs/specs AND no code extensions present
     elif len(non_docs_files) == 0 and all_non_code and len(files) > 0:
         mode = "skip"
@@ -250,13 +259,6 @@ def main():
             ", ".join(generated_non_hot[:3])
             + (" (+%d more)" % (len(generated_non_hot) - 3) if len(generated_non_hot) > 3 else "")
         )
-
-    # full: any HOT file touched (overrides light)
-    elif hot_files_touched:
-        mode = "full"
-        reason = "HOT file touched: %s" % ", ".join(hot_files_touched[:3])
-        if len(hot_files_touched) > 3:
-            reason += " (+%d more)" % (len(hot_files_touched) - 3)
 
     # light: small diff, no hot files, at least one code file
     elif net_lines <= 30 and len(hot_files_touched) == 0 and len(code_files_present) >= 1:

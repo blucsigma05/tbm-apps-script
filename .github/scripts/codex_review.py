@@ -366,7 +366,7 @@ def build_context(diff_text, changed_files, related_files=None, cfg=None):
     current_len = sum(len(p) for p in parts)
     remaining = max(0, context_chars_cap - current_len)
     file_count = len(changed_files) if changed_files else 1
-    per_file = max(8000, min(per_file_cap, remaining // file_count if file_count else per_file_cap))
+    per_file = max(1000, min(per_file_cap, remaining // file_count if file_count else per_file_cap))
 
     for fname in changed_files:
         content = read_changed_file_content(fname)
