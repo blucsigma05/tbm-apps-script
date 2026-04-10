@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmSmokeTest.gs v10 — Pre-Deploy Structural Validation
+// tbmSmokeTest.gs v11 — Pre-Deploy Structural Validation
 // WRITES TO: (none — read-only checks)
 // READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
@@ -37,7 +37,7 @@
 // A PASS here means "safe to deploy" not "system works perfectly."
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 10; }
+function getSmokeTestVersion() { return 11; }
 
 var CANONICAL_SAFE_FUNCTIONS = [
   'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKHLastModifiedSafe', 'getKidsHubDataSafe',
@@ -597,6 +597,10 @@ function checkHTMLContracts_() {
     'executive-skills-components'
   ];
 
+  // Files exempt from ES6 checks — these run on Chrome/modern runtimes, not Fire Stick.
+  // See audit-source.sh ES6_EXEMPT_FILES and specs/comicstudio-v4.md §3.
+  var es6ExemptFiles = ['ComicStudio'];
+
   // Banned patterns: [regex, description, severity]
   var bannedPatterns = [
     [/\blet\s+\w/g, 'ES6: let declaration', 'FAIL'],
@@ -641,6 +645,7 @@ function checkHTMLContracts_() {
       var styleContent = styleBlocks.join('\n');
 
       // Scan script content for banned JS patterns
+      var isES6Exempt = es6ExemptFiles.indexOf(fileName) !== -1;
       for (var p = 0; p < bannedPatterns.length; p++) {
         var pattern = bannedPatterns[p][0];
         var desc = bannedPatterns[p][1];
@@ -648,6 +653,8 @@ function checkHTMLContracts_() {
 
         // Skip CSS-only patterns when scanning JS
         if (desc.indexOf('CSS:') === 0) continue;
+        // Skip ES6 patterns for exempt files (e.g. ComicStudio — Chrome only, not Fire Stick)
+        if (isES6Exempt && desc.indexOf('ES') === 0) continue;
 
         pattern.lastIndex = 0;
         var hits = [];
@@ -709,4 +716,4 @@ function checkHTMLContracts_() {
 }
 
 
-// END OF FILE — tbmSmokeTest.gs v10
+// END OF FILE — tbmSmokeTest.gs v11
