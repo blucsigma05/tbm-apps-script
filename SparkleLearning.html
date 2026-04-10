@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v14">
+  <meta name="tbm-version" content="v15">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -615,6 +615,9 @@ var countState = {};
 var traceState = {};
 var sortState = {};
 var nameState = {};
+
+/* ─── Asset Registry (fetched once at load, cached module-level) ─── */
+var _assetRegistry = null;
 
 /* ─── Escape HTML ─── */
 function escapeHtml(s) {
@@ -1289,22 +1292,25 @@ function init() {
     return;
   }
 
-  if (typeof google !== 'undefined' && google.script && google.script.run) {
-    google.script.run
-      .withSuccessHandler(function(progress) {
-        if (progress) {
-          totalStars = progress.stars || 0;
-          updateStarCounter();
-        }
-        loadContent();
-      })
-      .withFailureHandler(function() {
-        loadContent();
-      })
-      .loadProgressSafe('jj');
-  } else {
-    loadContent();
-  }
+  // Load asset registry first, then fetch progress + content in sequence
+  loadAssetRegistry(function() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(progress) {
+          if (progress) {
+            totalStars = progress.stars || 0;
+            updateStarCounter();
+          }
+          loadContent();
+        })
+        .withFailureHandler(function() {
+          loadContent();
+        })
+        .loadProgressSafe('jj');
+    } else {
+      loadContent();
+    }
+  });
 
 }
 
@@ -1563,6 +1569,62 @@ function runFreePlayRound() {
   mc.appendChild(backBtn);
 }
 
+/* ═══════════════════════════════════════════════════════════
+   ASSET REGISTRY — fetch once at load, resolve at render time
+   ═══════════════════════════════════════════════════════════ */
+
+/**
+ * Fetches ASSET_REGISTRY from server (12h CacheService TTL server-side).
+ * Stores result in module-level _assetRegistry. Calls cb() when ready.
+ * Safe to call multiple times — returns immediately if already loaded.
+ */
+function loadAssetRegistry(cb) {
+  if (_assetRegistry) { cb(); return; }
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    _assetRegistry = {};
+    cb();
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(r) { _assetRegistry = r || {}; cb(); })
+    .withFailureHandler(function() { _assetRegistry = {}; cb(); })
+    .getAssetRegistrySafe();
+}
+
+/**
+ * Resolves an asset ID to renderable HTML.
+ * Lookup order: exact key → plural/singular normalization → fallback circle.
+ * type:'emoji' → <span> with font-size
+ * type:'svg'   → renderShape() dispatch
+ * type:'image' → Phase 2 placeholder img tag (src filled lazily)
+ * Falls back to renderShape('circle', fallbackColor, size) on miss.
+ */
+function resolveAsset(assetId, size, fallbackColor) {
+  var reg = _assetRegistry || {};
+  var key = String(assetId || '').toLowerCase();
+  var entry = reg[key];
+  if (!entry) {
+    // Try plural-to-singular normalization (butterflies→butterfly, sparkles→sparkle)
+    var normalized = key.replace(/ies$/, 'y').replace(/s$/, '');
+    entry = reg[normalized];
+  }
+  if (!entry) {
+    if (typeof console !== 'undefined' && console.warn) { console.warn('asset miss:', assetId); }
+    return renderShape('circle', fallbackColor || 'pink', size || 64);
+  }
+  if (entry.type === 'emoji') {
+    return '<span class="asset-emoji" style="font-size:' + (size || 120) + 'px;line-height:1;display:inline-block;">' + entry.value + '</span>';
+  }
+  if (entry.type === 'svg') {
+    return renderShape(entry.value, entry.color || fallbackColor, size || 64);
+  }
+  if (entry.type === 'image') {
+    // Phase 2: lazy-load real src from getAssetImageSafe cache
+    return '<img class="asset-img" alt="' + escapeHtml(entry.name || '') + '" src="" data-asset-id="' + escapeHtml(assetId) + '" style="width:' + (size || 120) + 'px;height:auto;" />';
+  }
+  return renderShape('circle', fallbackColor || 'pink', size || 64);
+}
+
 function loadContent() {
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
@@ -1750,6 +1812,12 @@ function renderLetterIntro(activity) {
 
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Meet the letter:</p>';
+
+  // Render activity.image hero asset above the letter card when available
+  if (activity.image) {
+    html += '<div style="text-align:center;margin-bottom:8px;">' + resolveAsset(activity.image, 96, 'gold') + '</div>';
+  }
+
   html += '<div class="big-letter">' + letter.toUpperCase() + '</div>';
   html += '<p class="instruction" style="font-size:20px;">and lowercase: <span style="font-size:80px;color:#a855f7;">' + letter.toLowerCase() + '</span></p>';
   html += '<div class="word-cards">';
@@ -1877,7 +1945,7 @@ function renderCountWithMe(activity) {
     html += '<div class="scatter-obj" id="countObj' + i + '" ';
     html += 'style="left:' + positions[i].x + 'px;top:' + positions[i].y + 'px;" ';
     html += 'onclick="tapCountObject(' + i + ')">';
-    html += renderShape(shape, color, 56);
+    html += resolveAsset(shape, 56, color);
     html += '</div>';
   }
   html += '</div></div>';
@@ -2544,7 +2612,8 @@ function renderColorSort(activity) {
   for (var i = 0; i < items.length; i++) {
     html += '<div class="option-btn" id="sortItem' + i + '" style="padding:10px;min-width:70px;min-height:70px;" ';
     html += 'onclick="tapSortItem(' + i + ',\'' + items[i].color + '\')">';
-    html += renderShape(items[i].shape, items[i].color, 56);
+    // Use item name for registry lookup (resolveAsset) — falls back to circle if not registered
+    html += resolveAsset(items[i].name || items[i].shape, 56, items[i].color);
     html += '</div>';
   }
   html += '</div>';
