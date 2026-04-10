@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v77 — Apps Script Router (TBM Consolidated)
+// Code.gs v78 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 77; }
+function getCodeVersion() { return 78; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -2012,4 +2012,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v77
+// END OF FILE — Code.gs v78
