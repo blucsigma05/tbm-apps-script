@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v4">
+<meta name="tbm-version" content="v5">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -675,7 +675,7 @@ main {
 // ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
 // tbm-version: v4
 
-const COMIC_STUDIO_VERSION = 4;
+const COMIC_STUDIO_VERSION = 5;
 
 // ── Test Mode Detection ──
 const TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
@@ -1285,6 +1285,13 @@ function loadCurriculumVocab() {
 }
 
 // ── F3: Autosave scaffold ──
+// Day 1: persist to localStorage so a tab close doesn't lose work.
+// Day 3 will replace this with a Drive write; until then the indicator
+// stays honest about where the draft lives.
+const COMICSTUDIO_DRAFT_KEY = 'comicstudio:draft:v1';
+let isRestoring = false;
+let pendingRestoreCount = 0;
+
 function buildAutosavePayload() {
   return {
     version: COMIC_STUDIO_VERSION,
@@ -1292,25 +1299,129 @@ function buildAutosavePayload() {
     panelCount,
     captions: captions.slice(0, panelCount),
     strokeCount: strokeHistory.length,
-    // panels array: canvas data URLs for Day 3 Drive save
+    strokeHistory: strokeHistory,
+    // panels: JPEG dataURLs to keep payload under the localStorage 5MB cap.
+    // Day 3 Drive save can switch back to PNG if it wants lossless storage.
     panels: panelCanvases.map((canvas, idx) => ({
       idx,
-      dataUrl: canvas ? canvas.toDataURL('image/png') : null
+      dataUrl: canvas ? canvas.toDataURL('image/jpeg', 0.7) : null
     }))
   };
 }
 
+function setAutosaveIndicator(state) {
+  const indicator = document.getElementById('autosave-indicator');
+  if (!indicator) return;
+  const labels = {
+    draft:    { text: 'DRAFT',         title: 'Draft — not yet saved to Drive (Day 3)' },
+    local:    { text: 'DRAFT (LOCAL)', title: 'Saved locally — Drive sync wires on Day 3' },
+    restored: { text: 'RESTORED',      title: 'Restored from local draft — keep working to update' },
+    full:     { text: 'LOCAL FULL',    title: 'Local storage full — export to free space' }
+  };
+  const conf = labels[state] || labels.draft;
+  indicator.textContent = conf.text;
+  indicator.title = conf.title;
+}
+
 function autosave() {
+  // Don't overwrite the draft while restoration is still painting canvases
+  if (isRestoring) {
+    console.log('[ComicStudio] Autosave skipped: restoration in progress');
+    return;
+  }
+
   const payload = buildAutosavePayload();
-  // Day 1: log only — Drive save wired on Day 3 (F3 complete)
   console.log('[ComicStudio] Autosave at', new Date().toISOString(), payload);
 
-  // Day 1: show DRAFT — no backend persistence yet. SAVING→SAVED flow wires on Day 3.
-  const indicator = document.getElementById('autosave-indicator');
-  if (indicator) {
-    indicator.textContent = 'DRAFT';
-    indicator.title = 'Draft — not yet saved to Drive (Day 3)';
+  // Try to persist locally. Falls through to in-memory DRAFT if unavailable.
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(COMICSTUDIO_DRAFT_KEY, JSON.stringify(payload));
+      setAutosaveIndicator('local');
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'QuotaExceededError') {
+      setAutosaveIndicator('full');
+      console.warn('[ComicStudio] localStorage quota exceeded; draft not persisted', e);
+      return;
+    }
+    console.warn('[ComicStudio] localStorage failed; draft kept in memory only', e);
   }
+  setAutosaveIndicator('draft');
+}
+
+function loadDraft() {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    const raw = window.localStorage.getItem(COMICSTUDIO_DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw);
+    if (!draft || draft.version !== COMIC_STUDIO_VERSION) return null;
+    return draft;
+  } catch (e) {
+    console.warn('[ComicStudio] Failed to load draft', e);
+    return null;
+  }
+}
+
+function restoreDraft(draft) {
+  if (!draft) return false;
+
+  // Restore in-memory state BEFORE rebuilding the grid so the right
+  // number of canvases get created.
+  if (typeof draft.panelCount === 'number' && draft.panelCount >= 1 && draft.panelCount <= 4) {
+    panelCount = draft.panelCount;
+  }
+  if (Array.isArray(draft.captions)) {
+    for (let i = 0; i < draft.captions.length && i < captions.length; i++) {
+      captions[i] = String(draft.captions[i] || '');
+    }
+  }
+  if (Array.isArray(draft.strokeHistory)) {
+    strokeHistory.length = 0;
+    for (let i = 0; i < draft.strokeHistory.length; i++) {
+      strokeHistory.push(draft.strokeHistory[i]);
+    }
+  }
+
+  buildPanelGrid();
+
+  // Paint the saved bitmaps back onto each panel canvas.
+  // Image.onload is async, so guard autosave until all panels are loaded.
+  const validPanels = Array.isArray(draft.panels)
+    ? draft.panels.filter(p => p && typeof p.idx === 'number' && p.dataUrl)
+    : [];
+
+  if (validPanels.length > 0) {
+    isRestoring = true;
+    pendingRestoreCount = validPanels.length;
+    validPanels.forEach(p => {
+      const canvas = panelCanvases[p.idx];
+      const ctx = panelContexts[p.idx];
+      if (!canvas || !ctx) {
+        pendingRestoreCount--;
+        if (pendingRestoreCount <= 0) isRestoring = false;
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        pendingRestoreCount--;
+        if (pendingRestoreCount <= 0) isRestoring = false;
+      };
+      img.onerror = () => {
+        console.warn('[ComicStudio] Failed to restore panel ' + p.idx);
+        pendingRestoreCount--;
+        if (pendingRestoreCount <= 0) isRestoring = false;
+      };
+      img.src = p.dataUrl;
+    });
+  }
+
+  renderCaptions();
+  setAutosaveIndicator('restored');
+  return true;
 }
 
 // F3: 60-second autosave interval
@@ -1328,8 +1439,13 @@ function init() {
   buildLayoutPicker();
   buildBrushSelector();
   buildToolbar();
-  buildPanelGrid();
-  renderCaptions();
+  // Try to restore a local draft first; restoreDraft() rebuilds the grid
+  // with the saved panelCount. Otherwise build a fresh grid.
+  const draft = loadDraft();
+  if (!restoreDraft(draft)) {
+    buildPanelGrid();
+    renderCaptions();
+  }
   renderVocab();
   loadCurriculumVocab();
 }
@@ -1338,4 +1454,4 @@ init();
 </script>
 </body>
 </html>
-<!-- ComicStudio.html v4 -->
+<!-- ComicStudio.html v5 -->
