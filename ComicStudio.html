@@ -957,7 +957,9 @@ function attachPointerEvents(canvas, panelIdx) {
     // F2: Paint Bucket — flood fill on pointerdown
     if (brushDef.bucket) {
       const pos = getPos(e);
-      floodFill(panelIdx, Math.round(pos.x), Math.round(pos.y), activeColor);
+      const bx = Math.min(Math.floor(pos.x), canvas.width - 1);
+      const by = Math.min(Math.floor(pos.y), canvas.height - 1);
+      floodFill(panelIdx, bx, by, activeColor);
       return;
     }
 
