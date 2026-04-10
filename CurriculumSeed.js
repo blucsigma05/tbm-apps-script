@@ -1,8 +1,8 @@
-// CurriculumSeed.gs — v5
+// CurriculumSeed.gs — v6
 // Owned by: KidsHub team
 // PURPOSE: One-time seed of 4 weeks of curriculum for JJ and Buggsy
 // Run seedAllCurriculum() from the Script Editor to populate the Curriculum tab.
-// CurriculumSeed.gs — v5
+// CurriculumSeed.gs — v6
 
 // ════════════════════════════════════════════════════════════════════
 // JJ CURRICULUM — Pre-K (Age 4, KINDLE letter sequence: K,I,N,D,L,E,J,B)
@@ -992,10 +992,62 @@ var BUGGSY_WEEK_4 = {
 // MAIN SEED FUNCTION
 // ════════════════════════════════════════════════════════════════════
 
-function getCurriculumSeedVersion() { return 5; }
+function getCurriculumSeedVersion() { return 6; }
+
+/**
+ * v6: Validates that all asset references in JJ week content exist in ASSET_REGISTRY.
+ * Throws with actionable message if any asset is missing.
+ * Only validates JJ activities (image, items[].name, objects fields).
+ */
+function validateContentAgainstRegistry_(weekContent) {
+  if (typeof ASSET_REGISTRY === 'undefined') {
+    Logger.log('validateContentAgainstRegistry_: ASSET_REGISTRY not available — skipping');
+    return;
+  }
+  var missing = [];
+  var days = weekContent.days || {};
+  var dayKeys = Object.keys(days);
+  for (var d = 0; d < dayKeys.length; d++) {
+    var day = days[dayKeys[d]];
+    var activities = (day && day.activities) || [];
+    for (var a = 0; a < activities.length; a++) {
+      var act = activities[a];
+      // image field (letter_intro)
+      if (act.image && !ASSET_REGISTRY[act.image]) {
+        missing.push({ field: 'image', value: act.image, id: act.id });
+      }
+      // items[].name (color_sort)
+      if (act.items) {
+        for (var i = 0; i < act.items.length; i++) {
+          var itemName = act.items[i].name;
+          if (itemName && !ASSET_REGISTRY[itemName] && !ASSET_REGISTRY[itemName.toLowerCase()]) {
+            missing.push({ field: 'items[].name', value: itemName, id: act.id });
+          }
+        }
+      }
+      // objects field (count_with_me) — allow plural lookup
+      if (act.objects) {
+        var obj = String(act.objects).toLowerCase();
+        var singular = obj.replace(/ies$/, 'y').replace(/s$/, '');
+        if (!ASSET_REGISTRY[obj] && !ASSET_REGISTRY[singular]) {
+          missing.push({ field: 'objects', value: act.objects, id: act.id });
+        }
+      }
+    }
+  }
+  if (missing.length > 0) {
+    throw new Error('Missing assets in curriculum: ' + JSON.stringify(missing));
+  }
+}
 
 function seedAllCurriculum() {
   var sheet = ensureCurriculumTab_();
+
+  // Validate JJ weeks against asset registry before writing
+  validateContentAgainstRegistry_(JJ_WEEK_1);
+  validateContentAgainstRegistry_(JJ_WEEK_2);
+  validateContentAgainstRegistry_(JJ_WEEK_3);
+  validateContentAgainstRegistry_(JJ_WEEK_4);
 
   // Clear existing data (keep header row)
   if (sheet.getLastRow() > 1) {
@@ -1036,4 +1088,4 @@ function seedAllCurriculumSafe() {
   });
 }
 
-// CurriculumSeed.gs — v5
+// CurriculumSeed.gs — v6

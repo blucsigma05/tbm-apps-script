@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v78 — Apps Script Router (TBM Consolidated)
+// Code.gs v79 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 78; }
+function getCodeVersion() { return 79; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -456,7 +456,8 @@ function serveData(e) {
         'qaRunPersistenceTestsSafe': qaRunPersistenceTestsSafe,
         'qaClearTestDataSafe': qaClearTestDataSafe,
         'qaResetDataSafe': qaResetDataSafe,
-        'qaExportStateSafe': qaExportStateSafe
+        'qaExportStateSafe': qaExportStateSafe,
+        'getAssetRegistrySafe': getAssetRegistrySafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
@@ -1013,6 +1014,18 @@ function runStoryFactorySafe(topic, character, tone) {
 function getStoredStorySafe(storyKey) {
   return withMonitor_('getStoredStorySafe', function() {
     return getStoredStory(storyKey);
+  });
+}
+
+// v77: Asset Registry — returns full ASSET_REGISTRY with 12h CacheService TTL
+function getAssetRegistrySafe() {
+  return withMonitor_('getAssetRegistrySafe', function() {
+    var cache = CacheService.getScriptCache();
+    var cached = cache.get('asset_registry_v1');
+    if (cached) { return JSON.parse(cached); }
+    var reg = getAssetRegistry_();
+    try { cache.put('asset_registry_v1', JSON.stringify(reg), 43200); } catch (e) {}
+    return JSON.parse(JSON.stringify(reg));
   });
 }
 
@@ -2012,4 +2025,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v78
+// END OF FILE — Code.gs v79

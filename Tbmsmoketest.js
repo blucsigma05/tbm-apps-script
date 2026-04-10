@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmSmokeTest.gs v9 — Pre-Deploy Structural Validation
+// tbmSmokeTest.gs v10 — Pre-Deploy Structural Validation
 // WRITES TO: (none — read-only checks)
 // READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
@@ -37,7 +37,7 @@
 // A PASS here means "safe to deploy" not "system works perfectly."
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 9; }
+function getSmokeTestVersion() { return 10; }
 
 var CANONICAL_SAFE_FUNCTIONS = [
   'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKHLastModifiedSafe', 'getKidsHubDataSafe',
@@ -63,7 +63,8 @@ var CANONICAL_SAFE_FUNCTIONS = [
   'startLessonRunSafe', 'saveLessonRunStateSafe', 'getLessonRunResumeSafe', 'completeLessonRunSafe',
   'qaGetEnvStatusSafe', 'qaListScenariosSafe', 'qaLoadScenarioSafe', 'qaSetClockSafe',
   'qaClearClockSafe', 'qaSnapshotSafe', 'qaRestoreSafe', 'qaListSnapshotsSafe',
-  'qaRunPersistenceTestsSafe', 'qaClearTestDataSafe', 'qaResetDataSafe', 'qaExportStateSafe'
+  'qaRunPersistenceTestsSafe', 'qaClearTestDataSafe', 'qaResetDataSafe', 'qaExportStateSafe',
+  'getAssetRegistrySafe'
 ];
 
 /**
@@ -708,4 +709,4 @@ function checkHTMLContracts_() {
 }
 
 
-// END OF FILE — tbmSmokeTest.gs v9
+// END OF FILE — tbmSmokeTest.gs v10

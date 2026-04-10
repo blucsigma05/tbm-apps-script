@@ -377,6 +377,48 @@ fi
 
 echo ""
 
+# ── ASSET REGISTRY REGRESSION GUARDS ─────────────────────────
+echo "--- Asset Registry Regression Guards ---"
+
+# Guard: activity.image must be consumed in SparkleLearning.html (was 0 before PR 1)
+if [ -f "SparkleLearning.html" ]; then
+  IMG_COUNT=$(grep -c "activity\.image" SparkleLearning.html 2>/dev/null || echo 0)
+  if [ "$IMG_COUNT" -gt 0 ]; then
+    echo "  OK -- activity.image referenced in SparkleLearning.html ($IMG_COUNT occurrence(s))"
+  else
+    echo "  FAIL -- activity.image has 0 references in SparkleLearning.html (regression: renderLetterIntro must consume it)"
+    FAIL=1
+  fi
+else
+  echo "  SKIP -- SparkleLearning.html not found"
+fi
+
+# Guard: resolveAsset must have >= 3 call sites in SparkleLearning.html
+if [ -f "SparkleLearning.html" ]; then
+  RESOLVE_COUNT=$(grep -c "resolveAsset(" SparkleLearning.html 2>/dev/null || echo 0)
+  if [ "$RESOLVE_COUNT" -ge 3 ]; then
+    echo "  OK -- resolveAsset has $RESOLVE_COUNT call sites (>= 3 required)"
+  else
+    echo "  FAIL -- resolveAsset has only $RESOLVE_COUNT call site(s) in SparkleLearning.html (need >= 3)"
+    FAIL=1
+  fi
+fi
+
+# Guard: ASSET_REGISTRY must be defined in AssetRegistry.js
+if [ -f "AssetRegistry.js" ]; then
+  if grep -q "var ASSET_REGISTRY" AssetRegistry.js 2>/dev/null; then
+    echo "  OK -- ASSET_REGISTRY defined in AssetRegistry.js"
+  else
+    echo "  FAIL -- ASSET_REGISTRY not found in AssetRegistry.js"
+    FAIL=1
+  fi
+else
+  echo "  FAIL -- AssetRegistry.js missing"
+  FAIL=1
+fi
+
+echo ""
+
 # ── SUMMARY ───────────────────────────────────────────────────
 echo "=== SUMMARY ==="
 echo "Failures:  $FAIL"
