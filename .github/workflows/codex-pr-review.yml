@@ -22,12 +22,13 @@ permissions:
   pull-requests: write
 
 concurrency:
-  # Serialize all OpenAI review calls to one job at a time. cancel-in-progress: false
-  # ensures queued reviews run — not dropped. This prevents 429 burst when multiple
-  # PRs open or sync simultaneously. Per-PR group only runs if you need same-PR
-  # de-dup (which is handled by the override path already).
-  group: openai-pr-reviews
-  cancel-in-progress: false
+  # Per-PR group cancels stale runs when a new push arrives (desirable — avoids
+  # reviewing an outdated commit). The primary 429 fix is exponential backoff in
+  # codex_review.py (15/30/60/120s) rather than workflow-level serialization,
+  # since a shared global group with cancel-in-progress: false still drops runs
+  # when GitHub's single pending-slot limit is hit under burst conditions.
+  group: codex-pr-review-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
 
 jobs:
   # Fast gate: broken YAML → fail early, skip OpenAI call.
