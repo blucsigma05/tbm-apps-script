@@ -651,6 +651,7 @@ var countState = {};
 var traceState = {};
 var sortState = {};
 var nameState = {};
+var _wrongAnswerTimer = null;
 
 /* ─── Asset Registry (fetched once at load, cached module-level) ─── */
 var _assetRegistry = null;
@@ -1829,6 +1830,9 @@ function handleCorrectAnswer(activity, el) {
   if (activityLocked) { return; }
   activityLocked = true;
 
+  /* Cancel any pending wrong-answer audio so it can't play over the celebration */
+  if (_wrongAnswerTimer) { clearTimeout(_wrongAnswerTimer); _wrongAnswerTimer = null; }
+
   if (el) {
     el.className += ' correct';
     var rect = el.getBoundingClientRect();
@@ -1852,7 +1856,8 @@ function handleWrongAnswer(el) {
   var tryClips = ['jj_feedback_tryagain1.mp3','jj_feedback_tryagain2.mp3','jj_feedback_tryagain3.mp3','jj_feedback_tryagain4.mp3'];
   /* +100ms delay before Try Again audio — gives JJ a moment to process (P2 Fix 6) */
   var _clip = tryClips[Math.floor(Math.random() * tryClips.length)];
-  setTimeout(function() {
+  _wrongAnswerTimer = setTimeout(function() {
+    _wrongAnswerTimer = null;
     playAudioCached(_clip, 'Try again!');
   }, 100);
   setTimeout(function() {

@@ -1025,11 +1025,12 @@ function getStoredStorySafe(storyKey) {
 // v77: Asset Registry — returns full ASSET_REGISTRY with 12h CacheService TTL
 function getAssetRegistrySafe() {
   return withMonitor_('getAssetRegistrySafe', function() {
+    var cacheKey = 'asset_registry_v' + getAssetRegistryVersion();
     var cache = CacheService.getScriptCache();
-    var cached = cache.get('asset_registry_v1');
+    var cached = cache.get(cacheKey);
     if (cached) { return JSON.parse(cached); }
     var reg = getAssetRegistry_();
-    try { cache.put('asset_registry_v1', JSON.stringify(reg), 43200); } catch (e) {}
+    try { cache.put(cacheKey, JSON.stringify(reg), 43200); } catch (e) {}
     return JSON.parse(JSON.stringify(reg));
   });
 }
