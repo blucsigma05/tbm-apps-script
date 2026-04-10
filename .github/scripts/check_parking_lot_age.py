@@ -83,6 +83,14 @@ def main():
         text = extract_text(block)
         if not text.strip():
             continue
+        # Skip completed items — title contains COMPLETE or ✅
+        if 'COMPLETE' in text or '\u2705' in text:
+            continue
+        # child_page blocks: check title via block.child_page.title
+        if block.get('type') == 'child_page':
+            title = block.get('child_page', {}).get('title', '')
+            if 'COMPLETE' in title or '\u2705' in title:
+                continue
 
         ref_time = last_edited or created
         if not ref_time:
