@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v3">
+<meta name="tbm-version" content="v5">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -95,6 +95,11 @@ input:-ms-input-placeholder { color: #64748B; }
   font-family: 'Orbitron', sans-serif;
   letter-spacing: 2px;
 }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .progress-badge {
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
@@ -104,6 +109,19 @@ input:-ms-input-placeholder { color: #64748B; }
   border-radius: 8px;
   border: 1px solid #1E2A4A;
 }
+/* Pen detection badge — F1 */
+#pen-badge {
+  display: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0B0F1A;
+  background: #22C55E;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 1px;
+}
+#pen-badge.visible { display: inline-block; }
 
 .nav-bar {
   display: flex;
@@ -284,6 +302,36 @@ main {
   color: #FBBF24;
   background: rgba(245,158,11,0.1);
 }
+
+/* Brush selector — F2 */
+.brush-selector {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.brush-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #1E2A4A;
+  background: #171D30;
+  color: #94A3B8;
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.brush-btn.active {
+  border-color: #F59E0B;
+  color: #FBBF24;
+  background: rgba(245,158,11,0.1);
+}
+
 .color-swatch {
   width: 28px;
   height: 28px;
@@ -426,6 +474,7 @@ main {
   background: rgba(255,255,255,0.8);
   padding: 1px 4px;
   border-radius: 3px;
+  z-index: 2;
 }
 
 /* Completion */
@@ -516,6 +565,25 @@ main {
   60%{opacity:1}
   100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0.2)}
 }
+
+/* Autosave indicator — F3 */
+#autosave-indicator {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: #64748B;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #1E2A4A;
+  transition: color 0.3s, border-color 0.3s;
+}
+#autosave-indicator.saving {
+  color: #F59E0B;
+  border-color: #F59E0B;
+}
+#autosave-indicator.saved {
+  color: #22C55E;
+  border-color: #22C55E;
+}
 </style>
 </head>
 <body>
@@ -531,7 +599,11 @@ main {
         <div class="header-subtitle">WOLFKID CREATIVE</div>
       </div>
     </div>
-    <div class="progress-badge" id="ring-badge">0 Rings</div>
+    <div class="header-right">
+      <span id="pen-badge">PEN</span>
+      <span id="autosave-indicator">AUTOSAVE</span>
+      <div class="progress-badge" id="ring-badge">0 Rings</div>
+    </div>
   </div>
 </div>
 
@@ -565,6 +637,9 @@ main {
     <div class="section-label">PANEL LAYOUT</div>
     <div class="layout-picker" id="layout-picker"></div>
 
+    <div class="section-label">BRUSH</div>
+    <div class="brush-selector" id="brush-selector"></div>
+
     <div class="section-label">TOOLS</div>
     <div class="toolbar" id="toolbar"></div>
 
@@ -596,87 +671,123 @@ main {
 </main>
 
 <script>
+// ── ComicStudio v4 — Day 1: F1 Pointer Events + F2 6-Brush System + F3 Autosave scaffold
+// ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
+// tbm-version: v4
+
+const COMIC_STUDIO_VERSION = 5;
+
 // ── Test Mode Detection ──
-var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+const TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
 if (TBM_TEST_MODE) {
-  var _tbanner = document.createElement('div');
+  const _tbanner = document.createElement('div');
   _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
   _tbanner.textContent = 'TEST MODE — Nothing saves';
   document.body.appendChild(_tbanner);
   document.body.style.paddingTop = '28px';
 }
 
-var MODULE_NAME = 'comic-studio';
-var MODULE_VERSION = 'v1';
-var CHILD = 'buggsy';
+const MODULE_NAME = 'comic-studio';
+const MODULE_VERSION = 'v4';
+const CHILD = 'buggsy';
 
 function escapeHtml(s) {
-  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
-// State
-var panelCount = 2;
-var activePanel = 0;
-var activeTool = 'pen';
-var activeColor = '#000000';
-var brushSize = 4;
-var captions = ['', '', '', ''];
-var panelCanvases = [];
-var panelContexts = [];
-var isDrawing = false;
-var lastX = 0;
-var lastY = 0;
-var ringsEarned = 0;
-var isFinished = false;
+// ── State ──
+let panelCount = 2;
+let activePanel = 0;
+let activeBrush = 'pencil';  // F2: current brush
+let activeColor = '#000000';
+let brushSize = 4;
+let captions = ['', '', '', ''];
+let panelCanvases = [];
+let panelContexts = [];
+let isDrawing = false;
+let lastX = 0;
+let lastY = 0;
+let ringsEarned = 0;
+let isFinished = false;
+let activeTab = 'draw';
+
+// F3: stroke history for autosave payload
+const strokeHistory = [];  // [{panelIdx, type, color, size, points:[]}]
+let currentStroke = null;
+
+// ── F2: Brush definitions ──
+const BRUSHES = [
+  { id: 'pencil',  label: 'Pencil',  icon: '✏️', minW: 1, maxW: 4,  opacity: 1.0,  scatter: false, eraser: false, bucket: false },
+  { id: 'ink',     label: 'Ink',     icon: '🖊️', minW: 3, maxW: 8,  opacity: 1.0,  scatter: false, eraser: false, bucket: false },
+  { id: 'marker',  label: 'Marker',  icon: '🖍️', minW: 6, maxW: 16, opacity: 0.6,  scatter: false, eraser: false, bucket: false },
+  { id: 'chalk',   label: 'Chalk',   icon: '🩹', minW: 4, maxW: 14, opacity: 0.85, scatter: true,  eraser: false, bucket: false },
+  { id: 'eraser',  label: 'Eraser',  icon: '⬜', minW: 10, maxW: 30, opacity: 1.0,  scatter: false, eraser: true,  bucket: false },
+  { id: 'bucket',  label: 'Fill',    icon: '🪣', minW: 0,  maxW: 0,  opacity: 1.0,  scatter: false, eraser: false, bucket: true  }
+];
+
+function getBrushDef(id) {
+  return BRUSHES.find(b => b.id === id) || BRUSHES[0];
+}
+
+// ── F1: Pressure-to-width mapping ──
+// Exponential ease: Math.pow(pressure || 0.5, 1.6) → scalar
+function pressureToWidth(pressure, brushDef) {
+  const p = pressure || 0.5;
+  const scalar = Math.pow(p, 1.6);
+  const base = brushDef.minW + (brushDef.maxW - brushDef.minW) * scalar;
+  return base * (brushSize / 4);
+}
 
 function fireRingBurst(cx, cy) {
-  for (var i = 0; i < 12; i++) {
-    (function(idx) {
-      setTimeout(function() {
-        var r = document.createElement('div');
-        r.className = 'b-ring-particle';
-        var angle = (idx / 12) * Math.PI * 2;
-        var dist = 50 + Math.random() * 40;
-        r.style.left = cx + 'px';
-        r.style.top = cy + 'px';
-        r.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(0) + 'px');
-        r.style.setProperty('--ty', (Math.sin(angle) * dist).toFixed(0) + 'px');
-        document.body.appendChild(r);
-        setTimeout(function() { if (r.parentNode) r.parentNode.removeChild(r); }, 900);
-      }, idx * 40);
-    })(i);
+  for (let i = 0; i < 12; i++) {
+    setTimeout(() => {
+      const r = document.createElement('div');
+      r.className = 'b-ring-particle';
+      const angle = (i / 12) * Math.PI * 2;
+      const dist = 50 + Math.random() * 40;
+      r.style.left = cx + 'px';
+      r.style.top = cy + 'px';
+      r.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(0) + 'px');
+      r.style.setProperty('--ty', (Math.sin(angle) * dist).toFixed(0) + 'px');
+      document.body.appendChild(r);
+      setTimeout(() => { if (r.parentNode) r.parentNode.removeChild(r); }, 900);
+    }, i * 40);
   }
 }
-var activeTab = 'draw';
 
-var COLORS = ['#000000', '#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC4899', '#FFFFFF'];
+const COLORS = ['#000000', '#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC4899', '#FFFFFF'];
 
-var FALLBACK_VOCAB = [
+const FALLBACK_VOCAB = [
   { word: 'VALIANT', def: 'Showing courage or determination.', prompt: 'Use "valiant" in one of your captions to describe Wolfkid!' },
   { word: 'LURKING', def: 'Waiting in hiding, ready to attack.', prompt: 'Use "lurking" to describe a villain or danger in your comic!' },
   { word: 'TRIUMPH', def: 'A great victory or achievement.', prompt: 'Use "triumph" in a caption about Wolfkid winning!' },
   { word: 'PERILOUS', def: 'Full of danger or risk.', prompt: 'Use "perilous" to describe the setting or mission!' },
   { word: 'CUNNING', def: 'Having skill in achieving goals by deceit or cleverness.', prompt: 'Use "cunning" to describe a plan or a character!' }
 ];
-var todayVocab = FALLBACK_VOCAB[new Date().getDay() % FALLBACK_VOCAB.length];
+let todayVocab = FALLBACK_VOCAB[new Date().getDay() % FALLBACK_VOCAB.length];
 
-var LAYOUTS = [
+const LAYOUTS = [
   { count: 2, label: '2 Panels', icon: '||' },
   { count: 3, label: '3 Panels', icon: '|||' },
   { count: 4, label: '4 Panels', icon: '||||' }
 ];
 
-// Stars
+// ── Stars ──
 function createStars() {
-  var el = document.getElementById('starfield');
-  var html = '';
-  for (var i = 0; i < 60; i++) {
-    var size = Math.floor(Math.random() * 3) + 1;
-    var x = Math.floor(Math.random() * 100);
-    var y = Math.floor(Math.random() * 100);
-    var dur = (Math.random() * 4 + 2).toFixed(1);
-    var delay = (Math.random() * 3).toFixed(1);
-    html += '<div class="star" style="width:' + size + 'px;height:' + size + 'px;left:' + x + '%;top:' + y + '%;animation:twinkle ' + dur + 's ' + delay + 's infinite"></div>';
+  const el = document.getElementById('starfield');
+  let html = '';
+  for (let i = 0; i < 60; i++) {
+    const size = Math.floor(Math.random() * 3) + 1;
+    const x = Math.floor(Math.random() * 100);
+    const y = Math.floor(Math.random() * 100);
+    const dur = (Math.random() * 4 + 2).toFixed(1);
+    const delay = (Math.random() * 3).toFixed(1);
+    html += `<div class="star" style="width:${size}px;height:${size}px;left:${x}%;top:${y}%;animation:twinkle ${dur}s ${delay}s infinite"></div>`;
   }
   el.innerHTML = html;
 }
@@ -685,21 +796,18 @@ function dismissPlan() {
   document.getElementById('plan-overlay').style.display = 'none';
 }
 
-// Tab switching
+// ── Tab switching ──
 function switchTab(tab) {
   activeTab = tab;
-  var tabs = ['draw', 'caption', 'vocab', 'preview'];
-  var btns = document.getElementById('nav-bar').getElementsByTagName('button');
-  for (var i = 0; i < tabs.length; i++) {
-    var el = document.getElementById('tab-' + tabs[i]);
+  const tabs = ['draw', 'caption', 'vocab', 'preview'];
+  const btns = document.getElementById('nav-bar').getElementsByTagName('button');
+  for (let i = 0; i < tabs.length; i++) {
+    const el = document.getElementById(`tab-${tabs[i]}`);
     if (el) {
       if (tabs[i] === tab) {
-        el.className = el.className.replace(' hidden', '');
-        if (el.className.indexOf('hidden') === -1) { /* already visible */ }
+        el.classList.remove('hidden');
       } else {
-        if (el.className.indexOf('hidden') === -1) {
-          el.className = el.className + ' hidden';
-        }
+        el.classList.add('hidden');
       }
     }
     if (btns[i]) {
@@ -710,13 +818,12 @@ function switchTab(tab) {
   if (tab === 'caption') { renderCaptions(); }
 }
 
-// Layout picker
+// ── Layout picker ──
 function buildLayoutPicker() {
-  var html = '';
-  for (var i = 0; i < LAYOUTS.length; i++) {
-    var l = LAYOUTS[i];
-    var cls = l.count === panelCount ? 'layout-btn active' : 'layout-btn';
-    html += '<button class="' + cls + '" onclick="setLayout(' + l.count + ')">' + l.icon + ' ' + l.label + '</button>';
+  let html = '';
+  for (const l of LAYOUTS) {
+    const cls = l.count === panelCount ? 'layout-btn active' : 'layout-btn';
+    html += `<button class="${cls}" onclick="setLayout(${l.count})">${l.icon} ${l.label}</button>`;
   }
   document.getElementById('layout-picker').innerHTML = html;
 }
@@ -729,36 +836,43 @@ function setLayout(count) {
   renderCaptions();
 }
 
-// Toolbar
-function buildToolbar() {
-  var html = '';
-  var tools = [
-    { id: 'pen', icon: '&#9998;' },
-    { id: 'eraser', icon: '&#9114;' }
-  ];
-  for (var i = 0; i < tools.length; i++) {
-    var t = tools[i];
-    var cls = t.id === activeTool ? 'tool-btn active' : 'tool-btn';
-    html += '<button class="' + cls + '" onclick="setTool(\'' + t.id + '\')">' + t.icon + '</button>';
+// ── F2: Brush selector UI ──
+function buildBrushSelector() {
+  let html = '';
+  for (const b of BRUSHES) {
+    const cls = b.id === activeBrush ? 'brush-btn active' : 'brush-btn';
+    html += `<button class="${cls}" onclick="setBrush('${b.id}')" title="${b.label}">${b.icon} ${b.label}</button>`;
   }
-  html += '<input type="range" class="size-slider" min="1" max="20" value="' + brushSize + '" onchange="setBrushSize(this.value)">';
-  for (var c = 0; c < COLORS.length; c++) {
-    var col = COLORS[c];
-    var ccls = col === activeColor ? 'color-swatch active' : 'color-swatch';
-    html += '<div class="' + ccls + '" style="background:' + col + ';' + (col === '#FFFFFF' ? 'border:1px solid #CBD5E1;' : '') + '" onclick="setColor(\'' + col + '\')"></div>';
-  }
-  html += '<button class="tool-btn" onclick="clearPanel()" title="Clear Panel">&#128465;</button>';
-  document.getElementById('toolbar').innerHTML = html;
+  document.getElementById('brush-selector').innerHTML = html;
 }
 
-function setTool(tool) {
-  activeTool = tool;
+function setBrush(brushId) {
+  activeBrush = brushId;
+  buildBrushSelector();
   buildToolbar();
+}
+
+// ── Toolbar (color + size + clear) ──
+function buildToolbar() {
+  let html = '';
+  // Size slider — hidden for bucket
+  if (activeBrush !== 'bucket') {
+    html += `<input type="range" class="size-slider" min="1" max="20" value="${brushSize}" onchange="setBrushSize(this.value)">`;
+  }
+  // Color swatches — hidden for eraser and bucket
+  if (activeBrush !== 'eraser' && activeBrush !== 'bucket') {
+    for (const col of COLORS) {
+      const ccls = col === activeColor ? 'color-swatch active' : 'color-swatch';
+      const border = col === '#FFFFFF' ? 'border:1px solid #CBD5E1;' : '';
+      html += `<div class="${ccls}" style="background:${col};${border}" onclick="setColor('${col}')"></div>`;
+    }
+  }
+  html += `<button class="tool-btn" onclick="clearPanel()" title="Clear Panel">🗑️</button>`;
+  document.getElementById('toolbar').innerHTML = html;
 }
 
 function setColor(color) {
   activeColor = color;
-  activeTool = 'pen';
   buildToolbar();
 }
 
@@ -768,115 +882,263 @@ function setBrushSize(val) {
 
 function clearPanel() {
   if (panelContexts[activePanel]) {
-    var c = panelCanvases[activePanel];
+    const c = panelCanvases[activePanel];
     panelContexts[activePanel].clearRect(0, 0, c.width, c.height);
     panelContexts[activePanel].fillStyle = '#FFFFFF';
     panelContexts[activePanel].fillRect(0, 0, c.width, c.height);
   }
 }
 
-// Panel grid
+// ── Panel grid ──
 function buildPanelGrid() {
-  var grid = document.getElementById('panel-grid');
-  grid.className = 'panel-grid layout-' + panelCount;
-  var html = '';
-  for (var i = 0; i < panelCount; i++) {
-    html += '<div class="panel-slot' + (i === activePanel ? ' active' : '') + '" data-panel="' + i + '" onclick="selectPanel(' + i + ')">';
-    html += '<div class="panel-label">Panel ' + (i + 1) + '</div>';
-    html += '<canvas id="canvas-' + i + '" width="400" height="400"></canvas>';
+  const grid = document.getElementById('panel-grid');
+  grid.className = `panel-grid layout-${panelCount}`;
+  let html = '';
+  for (let i = 0; i < panelCount; i++) {
+    const cls = i === activePanel ? 'panel-slot active' : 'panel-slot';
+    html += `<div class="${cls}" data-panel="${i}" onclick="selectPanel(${i})">`;
+    html += `<div class="panel-label">Panel ${i + 1}</div>`;
+    html += `<canvas id="canvas-${i}" width="400" height="400"></canvas>`;
     html += '</div>';
   }
   grid.innerHTML = html;
 
   panelCanvases = [];
   panelContexts = [];
-  for (var j = 0; j < panelCount; j++) {
-    var canvas = document.getElementById('canvas-' + j);
-    var ctx = canvas.getContext('2d');
+  for (let j = 0; j < panelCount; j++) {
+    const canvas = document.getElementById(`canvas-${j}`);
+    const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     panelCanvases.push(canvas);
     panelContexts.push(ctx);
-    attachDrawEvents(canvas, j);
+    attachPointerEvents(canvas, j);  // F1: use pointer events
   }
 }
 
 function selectPanel(idx) {
   activePanel = idx;
-  var slots = document.getElementById('panel-grid').getElementsByClassName('panel-slot');
-  for (var i = 0; i < slots.length; i++) {
+  const slots = document.getElementById('panel-grid').getElementsByClassName('panel-slot');
+  for (let i = 0; i < slots.length; i++) {
     slots[i].className = i === idx ? 'panel-slot active' : 'panel-slot';
   }
 }
 
-function attachDrawEvents(canvas, panelIdx) {
+// ── F1: Pointer Events drawing engine ──
+function attachPointerEvents(canvas, panelIdx) {
   function getPos(e) {
-    var rect = canvas.getBoundingClientRect();
-    var scaleX = canvas.width / rect.width;
-    var scaleY = canvas.height / rect.height;
-    var clientX, clientY;
-    if (e.touches && e.touches.length > 0) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
     return {
-      x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
     };
   }
 
-  function startDraw(e) {
+  canvas.addEventListener('pointerdown', (e) => {
     e.preventDefault();
+
+    // F1: pen detection badge
+    if (e.pointerType === 'pen') {
+      document.getElementById('pen-badge').classList.add('visible');
+    } else {
+      document.getElementById('pen-badge').classList.remove('visible');
+    }
+
+    // F1: pointer capture for fast strokes
+    canvas.setPointerCapture(e.pointerId);
+
     activePanel = panelIdx;
     selectPanel(panelIdx);
+
+    const brushDef = getBrushDef(activeBrush);
+
+    // F2: Paint Bucket — flood fill on pointerdown
+    if (brushDef.bucket) {
+      const pos = getPos(e);
+      const bx = Math.min(Math.floor(pos.x), canvas.width - 1);
+      const by = Math.min(Math.floor(pos.y), canvas.height - 1);
+      floodFill(panelIdx, bx, by, activeColor);
+      return;
+    }
+
     isDrawing = true;
-    var pos = getPos(e);
+    const pos = getPos(e);
     lastX = pos.x;
     lastY = pos.y;
-  }
 
-  function moveDraw(e) {
+    // F3: start tracking stroke
+    currentStroke = {
+      panelIdx,
+      brushId: activeBrush,
+      color: activeBrush === 'eraser' ? null : activeColor,
+      size: brushSize,
+      points: [{ x: pos.x, y: pos.y, pressure: e.pressure }]
+    };
+  });
+
+  canvas.addEventListener('pointermove', (e) => {
     if (!isDrawing) return;
     e.preventDefault();
-    var ctx = panelContexts[panelIdx];
-    var pos = getPos(e);
+
+    const ctx = panelContexts[panelIdx];
+    const pos = getPos(e);
+    const brushDef = getBrushDef(activeBrush);
+
+    // F1: pressure-to-width mapping
+    const lineW = pressureToWidth(e.pressure, brushDef);
+
+    // F2: apply brush-specific rendering
+    applyBrushStroke(ctx, brushDef, pos, lineW, e.pressure);
+
+    // F3: record point
+    if (currentStroke) {
+      currentStroke.points.push({ x: pos.x, y: pos.y, pressure: e.pressure });
+    }
+
+    lastX = pos.x;
+    lastY = pos.y;
+  });
+
+  canvas.addEventListener('pointerup', (e) => {
+    if (!isDrawing) return;
+    isDrawing = false;
+
+    // F3: commit stroke to history
+    if (currentStroke) {
+      strokeHistory.push(currentStroke);
+      currentStroke = null;
+    }
+  });
+
+  canvas.addEventListener('pointercancel', () => {
+    isDrawing = false;
+    currentStroke = null;
+  });
+}
+
+// ── F2: Brush stroke rendering ──
+function applyBrushStroke(ctx, brushDef, pos, lineW, pressure) {
+  if (brushDef.eraser) {
+    // Eraser: destination-out compositing
+    const prevOp = ctx.globalCompositeOperation;
+    ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
     ctx.moveTo(lastX, lastY);
     ctx.lineTo(pos.x, pos.y);
-    ctx.strokeStyle = activeTool === 'eraser' ? '#FFFFFF' : activeColor;
-    ctx.lineWidth = activeTool === 'eraser' ? brushSize * 3 : brushSize;
+    ctx.lineWidth = lineW;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    ctx.strokeStyle = 'rgba(0,0,0,1)';
     ctx.stroke();
-    lastX = pos.x;
-    lastY = pos.y;
+    ctx.globalCompositeOperation = prevOp;
+    return;
   }
 
-  function endDraw(e) {
-    isDrawing = false;
+  if (brushDef.scatter) {
+    // Chalk: particle scatter — 8–12 dots per move event
+    const count = 8 + Math.floor(Math.random() * 5);
+    const radius = lineW * 0.8;
+    const prevAlpha = ctx.globalAlpha;
+    ctx.globalAlpha = brushDef.opacity * (0.3 + Math.random() * 0.4);
+    ctx.fillStyle = activeColor;
+    for (let i = 0; i < count; i++) {
+      const dx = (Math.random() - 0.5) * radius * 2;
+      const dy = (Math.random() - 0.5) * radius * 2;
+      const dotR = 0.5 + Math.random() * 1.5;
+      ctx.beginPath();
+      ctx.arc(pos.x + dx, pos.y + dy, dotR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = prevAlpha;
+    return;
   }
 
-  canvas.addEventListener('mousedown', startDraw);
-  canvas.addEventListener('mousemove', moveDraw);
-  canvas.addEventListener('mouseup', endDraw);
-  canvas.addEventListener('mouseleave', endDraw);
-  canvas.addEventListener('touchstart', startDraw);
-  canvas.addEventListener('touchmove', moveDraw);
-  canvas.addEventListener('touchend', endDraw);
-  canvas.addEventListener('touchcancel', endDraw);
+  // Standard stroke (pencil, ink, marker)
+  const prevAlpha = ctx.globalAlpha;
+  ctx.globalAlpha = brushDef.opacity;
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(pos.x, pos.y);
+  ctx.strokeStyle = activeColor;
+  ctx.lineWidth = lineW;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+  ctx.globalAlpha = prevAlpha;
 }
 
-// Captions
+// ── F2: Flood fill (Paint Bucket) ──
+function floodFill(panelIdx, startX, startY, fillColorHex) {
+  const canvas = panelCanvases[panelIdx];
+  const ctx = panelContexts[panelIdx];
+  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imgData.data;
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // Parse fill color
+  const fillR = parseInt(fillColorHex.slice(1, 3), 16);
+  const fillG = parseInt(fillColorHex.slice(3, 5), 16);
+  const fillB = parseInt(fillColorHex.slice(5, 7), 16);
+  const fillA = 255;
+
+  // Get target color at start pixel
+  const startIdx = (startY * w + startX) * 4;
+  const targetR = data[startIdx];
+  const targetG = data[startIdx + 1];
+  const targetB = data[startIdx + 2];
+  const targetA = data[startIdx + 3];
+
+  // Already the fill color — nothing to do
+  if (targetR === fillR && targetG === fillG && targetB === fillB && targetA === fillA) return;
+
+  function colorsMatch(idx) {
+    return data[idx] === targetR &&
+           data[idx + 1] === targetG &&
+           data[idx + 2] === targetB &&
+           data[idx + 3] === targetA;
+  }
+
+  function setPixel(idx) {
+    data[idx]     = fillR;
+    data[idx + 1] = fillG;
+    data[idx + 2] = fillB;
+    data[idx + 3] = fillA;
+  }
+
+  // Scanline flood fill
+  const stack = [[startX, startY]];
+  const visited = new Uint8Array(w * h);
+
+  while (stack.length > 0) {
+    const [x, y] = stack.pop();
+    if (x < 0 || x >= w || y < 0 || y >= h) continue;
+    const idx = (y * w + x) * 4;
+    if (visited[y * w + x]) continue;
+    if (!colorsMatch(idx)) continue;
+
+    visited[y * w + x] = 1;
+    setPixel(idx);
+
+    stack.push([x - 1, y]);
+    stack.push([x + 1, y]);
+    stack.push([x, y - 1]);
+    stack.push([x, y + 1]);
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+}
+
+// ── Captions ──
 function renderCaptions() {
-  var html = '';
-  for (var i = 0; i < panelCount; i++) {
+  let html = '';
+  for (let i = 0; i < panelCount; i++) {
     html += '<div class="caption-editor">';
-    html += '<h3>PANEL ' + (i + 1) + ' CAPTION</h3>';
-    html += '<textarea class="caption-input" id="caption-' + i + '" placeholder="Write what happens in this panel..." oninput="updateCaption(' + i + ', this.value)">' + (captions[i] || '') + '</textarea>';
-    html += '<div class="word-count" id="wc-' + i + '">' + countWords(captions[i] || '') + ' words</div>';
+    html += `<h3>PANEL ${i + 1} CAPTION</h3>`;
+    html += `<textarea class="caption-input" id="caption-${i}" placeholder="Write what happens in this panel..." oninput="updateCaption(${i}, this.value)">${escapeHtml(captions[i] || '')}</textarea>`;
+    html += `<div class="word-count" id="wc-${i}">${countWords(captions[i] || '')} words</div>`;
     html += '</div>';
   }
   document.getElementById('caption-list').innerHTML = html;
@@ -884,24 +1146,24 @@ function renderCaptions() {
 
 function updateCaption(idx, val) {
   captions[idx] = val;
-  var wc = document.getElementById('wc-' + idx);
+  const wc = document.getElementById(`wc-${idx}`);
   if (wc) wc.textContent = countWords(val) + ' words';
   checkVocabUsage();
 }
 
 function countWords(str) {
-  var trimmed = str.replace(/^\s+|\s+$/g, '');
+  const trimmed = str.replace(/^\s+|\s+$/g, '');
   if (trimmed === '') return 0;
   return trimmed.split(/\s+/).length;
 }
 
-// Vocab
+// ── Vocab ──
 function renderVocab() {
-  var used = checkVocabInCaptions();
-  var html = '<h3>BONUS VOCABULARY CHALLENGE</h3>';
-  html += '<div class="vocab-word">' + todayVocab.word + '</div>';
-  html += '<div class="vocab-def">' + todayVocab.def + '</div>';
-  html += '<div class="vocab-prompt">' + todayVocab.prompt + '</div>';
+  const used = checkVocabInCaptions();
+  let html = '<h3>BONUS VOCABULARY CHALLENGE</h3>';
+  html += `<div class="vocab-word">${escapeHtml(todayVocab.word)}</div>`;
+  html += `<div class="vocab-def">${escapeHtml(todayVocab.def)}</div>`;
+  html += `<div class="vocab-prompt">${escapeHtml(todayVocab.prompt)}</div>`;
   if (used) {
     html += '<div class="vocab-status used">&#10003; Used in captions! +10 bonus rings</div>';
   } else {
@@ -911,8 +1173,8 @@ function renderVocab() {
 }
 
 function checkVocabInCaptions() {
-  var word = todayVocab.word.toLowerCase();
-  for (var i = 0; i < panelCount; i++) {
+  const word = todayVocab.word.toLowerCase();
+  for (let i = 0; i < panelCount; i++) {
     if ((captions[i] || '').toLowerCase().indexOf(word) !== -1) {
       return true;
     }
@@ -926,14 +1188,14 @@ function checkVocabUsage() {
   }
 }
 
-// Preview
+// ── Preview ──
 function renderPreview() {
-  var html = '<div style="background:#FFFFFF;border-radius:12px;padding:16px;display:flex;gap:8px;flex-wrap:wrap;">';
-  for (var i = 0; i < panelCount; i++) {
-    var dataUrl = panelCanvases[i] ? panelCanvases[i].toDataURL('image/png') : '';
-    var w = panelCount <= 2 ? '48%' : '48%';
-    html += '<div style="flex:0 0 ' + w + ';border:2px solid #1E2A4A;border-radius:6px;overflow:hidden;">';
-    html += '<img src="' + dataUrl + '" style="width:100%;display:block;">';
+  let html = '<div style="background:#FFFFFF;border-radius:12px;padding:16px;display:flex;gap:8px;flex-wrap:wrap;">';
+  for (let i = 0; i < panelCount; i++) {
+    const dataUrl = panelCanvases[i] ? panelCanvases[i].toDataURL('image/png') : '';
+    const w = '48%';
+    html += `<div style="flex:0 0 ${w};border:2px solid #1E2A4A;border-radius:6px;overflow:hidden;">`;
+    html += `<img src="${dataUrl}" style="width:100%;display:block;">`;
     html += '<div style="background:#0B0F1A;color:#E2E8F0;padding:8px;font-size:12px;min-height:40px;">';
     html += captions[i] ? escapeHtml(captions[i]) : '<span style="color:#64748B;font-style:italic;">No caption</span>';
     html += '</div></div>';
@@ -942,49 +1204,49 @@ function renderPreview() {
   document.getElementById('preview-area').innerHTML = html;
 }
 
-// Finish
+// ── Finish ──
 function finishComic() {
   if (isFinished) return;
   isFinished = true;
 
-  var totalWords = 0;
-  var captionedPanels = 0;
-  for (var i = 0; i < panelCount; i++) {
-    var wc = countWords(captions[i] || '');
+  let totalWords = 0;
+  let captionedPanels = 0;
+  for (let i = 0; i < panelCount; i++) {
+    const wc = countWords(captions[i] || '');
     totalWords += wc;
     if (wc > 0) captionedPanels++;
   }
 
-  var rings = 15;
+  let rings = 15;
   if (captionedPanels === panelCount) rings += 10;
   if (totalWords >= 20) rings += 5;
   if (checkVocabInCaptions()) rings += 10;
   ringsEarned = rings;
 
-  document.getElementById('tab-preview').className = document.getElementById('tab-preview').className + ' hidden';
+  document.getElementById('tab-preview').classList.add('hidden');
   document.getElementById('nav-bar').style.display = 'none';
 
-  var comp = document.getElementById('completion-area');
+  const comp = document.getElementById('completion-area');
   comp.className = '';
-  var html = '<div class="completion-card">';
+  let html = '<div class="completion-card">';
   html += '<div class="trophy">&#127942;</div>';
   html += '<h2>COMIC COMPLETE!</h2>';
-  html += '<div class="ring-award"><span>+' + rings + '</span> Rings Earned!</div>';
-  html += '<p>' + panelCount + ' panels drawn';
+  html += `<div class="ring-award"><span>+${rings}</span> Rings Earned!</div>`;
+  html += `<p>${panelCount} panels drawn`;
   if (captionedPanels === panelCount) html += ' &bull; All panels captioned';
-  if (checkVocabInCaptions()) html += ' &bull; Vocab word "' + todayVocab.word + '" used!';
+  if (checkVocabInCaptions()) html += ` &bull; Vocab word "${escapeHtml(todayVocab.word)}" used!`;
   html += '</p>';
-  html += '<p style="margin-top:12px;color:#64748B;font-size:12px;">Total words written: ' + totalWords + '</p>';
+  html += `<p style="margin-top:12px;color:#64748B;font-size:12px;">Total words written: ${totalWords}</p>`;
   html += '<button style="margin-top:20px;padding:12px 28px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=\'/daily-missions\'">Back to Missions</button>';
   html += '</div>';
   comp.innerHTML = html;
 
-  setTimeout(function() {
-    var cx = window.innerWidth / 2;
-    var cy = window.innerHeight / 3;
+  setTimeout(() => {
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 3;
     fireRingBurst(cx, cy);
-    setTimeout(function() { fireRingBurst(cx - 60, cy + 40); }, 250);
-    setTimeout(function() { fireRingBurst(cx + 60, cy + 40); }, 500);
+    setTimeout(() => { fireRingBurst(cx - 60, cy + 40); }, 250);
+    setTimeout(() => { fireRingBurst(cx + 60, cy + 40); }, 500);
   }, 300);
 
   document.getElementById('ring-badge').textContent = rings + ' Rings';
@@ -1005,18 +1267,14 @@ function loadCurriculumVocab() {
   google.script.run
     .withSuccessHandler(function(result) {
       try {
-        var data = (typeof result === 'string') ? JSON.parse(result) : result;
-        var vocabArr = data && data.vocabulary;
+        const data = (typeof result === 'string') ? JSON.parse(result) : result;
+        const vocabArr = data && data.vocabulary;
         if (vocabArr && vocabArr.length > 0) {
-          var mapped = [];
-          for (var i = 0; i < vocabArr.length; i++) {
-            var v = vocabArr[i];
-            mapped.push({
-              word: (v.word || '').toUpperCase(),
-              def: v.definition || v.def || '',
-              prompt: 'Use "' + (v.word || '') + '" in one of your comic captions!'
-            });
-          }
+          const mapped = vocabArr.map(v => ({
+            word: (v.word || '').toUpperCase(),
+            def: v.definition || v.def || '',
+            prompt: `Use "${v.word || ''}" in one of your comic captions!`
+          }));
           todayVocab = mapped[new Date().getDay() % mapped.length];
           renderVocab();
         }
@@ -1026,13 +1284,168 @@ function loadCurriculumVocab() {
     .getTodayContentSafe(CHILD);
 }
 
-// Init
+// ── F3: Autosave scaffold ──
+// Day 1: persist to localStorage so a tab close doesn't lose work.
+// Day 3 will replace this with a Drive write; until then the indicator
+// stays honest about where the draft lives.
+const COMICSTUDIO_DRAFT_KEY = 'comicstudio:draft:v1';
+let isRestoring = false;
+let pendingRestoreCount = 0;
+
+function buildAutosavePayload() {
+  return {
+    version: COMIC_STUDIO_VERSION,
+    timestamp: new Date().toISOString(),
+    panelCount,
+    captions: captions.slice(0, panelCount),
+    strokeCount: strokeHistory.length,
+    strokeHistory: strokeHistory,
+    // panels: JPEG dataURLs to keep payload under the localStorage 5MB cap.
+    // Day 3 Drive save can switch back to PNG if it wants lossless storage.
+    panels: panelCanvases.map((canvas, idx) => ({
+      idx,
+      dataUrl: canvas ? canvas.toDataURL('image/jpeg', 0.7) : null
+    }))
+  };
+}
+
+function setAutosaveIndicator(state) {
+  const indicator = document.getElementById('autosave-indicator');
+  if (!indicator) return;
+  const labels = {
+    draft:    { text: 'DRAFT',         title: 'Draft — not yet saved to Drive (Day 3)' },
+    local:    { text: 'DRAFT (LOCAL)', title: 'Saved locally — Drive sync wires on Day 3' },
+    restored: { text: 'RESTORED',      title: 'Restored from local draft — keep working to update' },
+    full:     { text: 'LOCAL FULL',    title: 'Local storage full — export to free space' }
+  };
+  const conf = labels[state] || labels.draft;
+  indicator.textContent = conf.text;
+  indicator.title = conf.title;
+}
+
+function autosave() {
+  // Don't overwrite the draft while restoration is still painting canvases
+  if (isRestoring) {
+    console.log('[ComicStudio] Autosave skipped: restoration in progress');
+    return;
+  }
+
+  const payload = buildAutosavePayload();
+  console.log('[ComicStudio] Autosave at', new Date().toISOString(), payload);
+
+  // Try to persist locally. Falls through to in-memory DRAFT if unavailable.
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(COMICSTUDIO_DRAFT_KEY, JSON.stringify(payload));
+      setAutosaveIndicator('local');
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'QuotaExceededError') {
+      setAutosaveIndicator('full');
+      console.warn('[ComicStudio] localStorage quota exceeded; draft not persisted', e);
+      return;
+    }
+    console.warn('[ComicStudio] localStorage failed; draft kept in memory only', e);
+  }
+  setAutosaveIndicator('draft');
+}
+
+function loadDraft() {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return null;
+    const raw = window.localStorage.getItem(COMICSTUDIO_DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw);
+    if (!draft || draft.version !== COMIC_STUDIO_VERSION) return null;
+    return draft;
+  } catch (e) {
+    console.warn('[ComicStudio] Failed to load draft', e);
+    return null;
+  }
+}
+
+function restoreDraft(draft) {
+  if (!draft) return false;
+
+  // Restore in-memory state BEFORE rebuilding the grid so the right
+  // number of canvases get created.
+  if (typeof draft.panelCount === 'number' && draft.panelCount >= 1 && draft.panelCount <= 4) {
+    panelCount = draft.panelCount;
+  }
+  if (Array.isArray(draft.captions)) {
+    for (let i = 0; i < draft.captions.length && i < captions.length; i++) {
+      captions[i] = String(draft.captions[i] || '');
+    }
+  }
+  if (Array.isArray(draft.strokeHistory)) {
+    strokeHistory.length = 0;
+    for (let i = 0; i < draft.strokeHistory.length; i++) {
+      strokeHistory.push(draft.strokeHistory[i]);
+    }
+  }
+
+  buildPanelGrid();
+
+  // Paint the saved bitmaps back onto each panel canvas.
+  // Image.onload is async, so guard autosave until all panels are loaded.
+  const validPanels = Array.isArray(draft.panels)
+    ? draft.panels.filter(p => p && typeof p.idx === 'number' && p.dataUrl)
+    : [];
+
+  if (validPanels.length > 0) {
+    isRestoring = true;
+    pendingRestoreCount = validPanels.length;
+    validPanels.forEach(p => {
+      const canvas = panelCanvases[p.idx];
+      const ctx = panelContexts[p.idx];
+      if (!canvas || !ctx) {
+        pendingRestoreCount--;
+        if (pendingRestoreCount <= 0) isRestoring = false;
+        return;
+      }
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        pendingRestoreCount--;
+        if (pendingRestoreCount <= 0) isRestoring = false;
+      };
+      img.onerror = () => {
+        console.warn('[ComicStudio] Failed to restore panel ' + p.idx);
+        pendingRestoreCount--;
+        if (pendingRestoreCount <= 0) isRestoring = false;
+      };
+      img.src = p.dataUrl;
+    });
+  }
+
+  renderCaptions();
+  setAutosaveIndicator('restored');
+  return true;
+}
+
+// F3: 60-second autosave interval
+const AUTOSAVE_INTERVAL_MS = 60000;
+let autosaveTimer = setInterval(autosave, AUTOSAVE_INTERVAL_MS);
+
+// F3: beforeunload autosave
+window.addEventListener('beforeunload', () => {
+  autosave();
+});
+
+// ── Init ──
 function init() {
   createStars();
   buildLayoutPicker();
+  buildBrushSelector();
   buildToolbar();
-  buildPanelGrid();
-  renderCaptions();
+  // Try to restore a local draft first; restoreDraft() rebuilds the grid
+  // with the saved panelCount. Otherwise build a fresh grid.
+  const draft = loadDraft();
+  if (!restoreDraft(draft)) {
+    buildPanelGrid();
+    renderCaptions();
+  }
   renderVocab();
   loadCurriculumVocab();
 }
@@ -1041,3 +1454,4 @@ init();
 </script>
 </body>
 </html>
+<!-- ComicStudio.html v5 -->

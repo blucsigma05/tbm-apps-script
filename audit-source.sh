@@ -30,11 +30,14 @@ echo "--- ES5 Compliance ---"
 
 ES5_FAIL=0
 
+# ComicStudio.html: ES6 exempt — Surface Pro 5 Chrome, see specs/comicstudio-v4.md §3
+ES5_EXCLUDE="--exclude=ComicStudio.html"
+
 # Only scan <script> blocks — skip HTML content, comments, CSS
 # Each check uses targeted grep to minimize false positives
 
 # let/const as variable declarations (not inside strings or comments)
-LC=$(grep -rn "^\s*\(var\|if\|for\|else\|}\)\?" *.html 2>/dev/null | grep -v "<!--" | grep "\blet \b\|\bconst \b" | grep -v "//.*\blet \|\bconst " | head -10)
+LC=$(grep -rn $ES5_EXCLUDE "^\s*\(var\|if\|for\|else\|}\)\?" *.html 2>/dev/null | grep -v "<!--" | grep "\blet \b\|\bconst \b" | grep -v "//.*\blet \|\bconst " | head -10)
 if [ -n "$LC" ]; then
   echo "  X BANNED: let/const declarations"
   echo "$LC" | sed 's/^/      /'
@@ -42,7 +45,7 @@ if [ -n "$LC" ]; then
 fi
 
 # Arrow functions: => preceded by ) or identifier (not => in HTML attributes or URLs)
-AR=$(grep -rn "=>" *.html 2>/dev/null | grep -v "<!--" | grep -v "http" | grep -v "\.css" | grep -v "placeholder=" | grep -v "textContent=" | grep -v "innerHTML=" | grep -v "'.*=>.*'" | grep -v '".*=>.*"' | head -10)
+AR=$(grep -rn $ES5_EXCLUDE "=>" *.html 2>/dev/null | grep -v "<!--" | grep -v "http" | grep -v "\.css" | grep -v "placeholder=" | grep -v "textContent=" | grep -v "innerHTML=" | grep -v "'.*=>.*'" | grep -v '".*=>.*"' | head -10)
 if [ -n "$AR" ]; then
   # Further filter: only flag lines that look like JS arrow functions
   AR2=$(echo "$AR" | grep "[)a-zA-Z_] *=>" | head -10)
@@ -54,7 +57,7 @@ if [ -n "$AR" ]; then
 fi
 
 # Template literals (backtick)
-TL=$(grep -rn '`' *.html 2>/dev/null | grep -v "<!--" | head -10)
+TL=$(grep -rn $ES5_EXCLUDE '`' *.html 2>/dev/null | grep -v "<!--" | head -10)
 if [ -n "$TL" ]; then
   echo "  X BANNED: template literals (backtick)"
   echo "$TL" | sed 's/^/      /'
@@ -62,7 +65,7 @@ if [ -n "$TL" ]; then
 fi
 
 # Nullish coalescing (??) — use fixed-string grep to avoid regex issues
-NC=$(grep -rn -F '??' *.html 2>/dev/null | grep -v "<!--" | grep -v "http" | head -10)
+NC=$(grep -rn $ES5_EXCLUDE -F '??' *.html 2>/dev/null | grep -v "<!--" | grep -v "http" | head -10)
 if [ -n "$NC" ]; then
   echo "  X BANNED: nullish coalescing (??)"
   echo "$NC" | sed 's/^/      /'
@@ -70,7 +73,7 @@ if [ -n "$NC" ]; then
 fi
 
 # Optional chaining (?.) — use fixed string then filter
-OC=$(grep -rn -F '?.' *.html 2>/dev/null | grep -v "<!--" | grep -v "http" | grep -v "<meta" | grep -v "\.css" | grep -v "content=" | head -10)
+OC=$(grep -rn $ES5_EXCLUDE -F '?.' *.html 2>/dev/null | grep -v "<!--" | grep -v "http" | grep -v "<meta" | grep -v "\.css" | grep -v "content=" | head -10)
 if [ -n "$OC" ]; then
   # Only flag lines where ?. appears after an identifier (JS optional chaining pattern)
   OC2=$(echo "$OC" | grep '[a-zA-Z_\])\?]\?\.' | grep -v "style=" | grep -v "class=" | head -10)
@@ -82,7 +85,7 @@ if [ -n "$OC" ]; then
 fi
 
 # .includes( on arrays/strings in JS context
-INC=$(grep -rn "\.includes(" *.html 2>/dev/null | grep -v "<!--" | grep -v "\.css" | head -10)
+INC=$(grep -rn $ES5_EXCLUDE "\.includes(" *.html 2>/dev/null | grep -v "<!--" | grep -v "\.css" | head -10)
 if [ -n "$INC" ]; then
   echo "  X BANNED: .includes()"
   echo "$INC" | sed 's/^/      /'
@@ -90,7 +93,7 @@ if [ -n "$INC" ]; then
 fi
 
 # URLSearchParams
-USP=$(grep -rn "new URLSearchParams\|URLSearchParams(" *.html 2>/dev/null | grep -v "<!--" | grep -v "//" | head -10)
+USP=$(grep -rn $ES5_EXCLUDE "new URLSearchParams\|URLSearchParams(" *.html 2>/dev/null | grep -v "<!--" | grep -v "//" | head -10)
 if [ -n "$USP" ]; then
   echo "  X BANNED: URLSearchParams"
   echo "$USP" | sed 's/^/      /'
@@ -98,7 +101,7 @@ if [ -n "$USP" ]; then
 fi
 
 # Object.entries/Object.values
-OBJ=$(grep -rn "Object\.entries(\|Object\.values(" *.html 2>/dev/null | grep -v "<!--" | head -10)
+OBJ=$(grep -rn $ES5_EXCLUDE "Object\.entries(\|Object\.values(" *.html 2>/dev/null | grep -v "<!--" | head -10)
 if [ -n "$OBJ" ]; then
   echo "  X BANNED: Object.entries/Object.values"
   echo "$OBJ" | sed 's/^/      /'
@@ -106,7 +109,7 @@ if [ -n "$OBJ" ]; then
 fi
 
 # async/await as keywords (not in strings or comments)
-AW=$(grep -rn "\basync function\b\|\bawait \b" *.html 2>/dev/null | grep -v "<!--" | grep -v "//" | grep -v "'[^']*async[^']*'" | grep -v '"[^"]*async[^"]*"' | head -10)
+AW=$(grep -rn $ES5_EXCLUDE "\basync function\b\|\bawait \b" *.html 2>/dev/null | grep -v "<!--" | grep -v "//" | grep -v "'[^']*async[^']*'" | grep -v '"[^"]*async[^"]*"' | head -10)
 if [ -n "$AW" ]; then
   echo "  X BANNED: async/await"
   echo "$AW" | sed 's/^/      /'
@@ -115,7 +118,7 @@ fi
 
 # Spread operator (...) as JS syntax (not in strings)
 # Look for ...identifier or ...[  but not inside quotes
-SPR=$(grep -rn '\.\.\.[a-zA-Z_\[]' *.html 2>/dev/null | grep -v "<!--" | grep -v "placeholder" | grep -v "textContent" | grep -v "innerHTML" | grep -v "'[^']*\.\.\.[^']*'" | grep -v '"[^"]*\.\.\.[^"]*"' | head -10)
+SPR=$(grep -rn $ES5_EXCLUDE '\.\.\.[a-zA-Z_\[]' *.html 2>/dev/null | grep -v "<!--" | grep -v "placeholder" | grep -v "textContent" | grep -v "innerHTML" | grep -v "'[^']*\.\.\.[^']*'" | grep -v '"[^"]*\.\.\.[^"]*"' | head -10)
 if [ -n "$SPR" ]; then
   echo "  X BANNED: spread operator (...)"
   echo "$SPR" | sed 's/^/      /'
@@ -123,7 +126,7 @@ if [ -n "$SPR" ]; then
 fi
 
 # backdrop-filter CSS check
-BF=$(grep -rn "backdrop-filter" *.html 2>/dev/null | head -5)
+BF=$(grep -rn $ES5_EXCLUDE "backdrop-filter" *.html 2>/dev/null | head -5)
 if [ -n "$BF" ]; then
   echo "  X BANNED CSS: backdrop-filter"
   echo "$BF" | sed 's/^/      /'
