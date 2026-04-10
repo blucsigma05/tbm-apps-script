@@ -1297,7 +1297,7 @@ var Diag = (function() {
         .withSuccessHandler(function() {})
         .withFailureHandler(function(err) { console.error('QuestionLog failed:', err); })
         .logQuestionResultSafe({
-          child: IS_SPARKLE ? 'jj' : 'buggsy',
+          child: CHILD,
           subject: q.section || 'General',
           teksCode: q.teks || '',
           questionType: q.type || 'mc',

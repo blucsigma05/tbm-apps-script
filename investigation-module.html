@@ -1567,13 +1567,13 @@ function showCompletionScreen() {
 
 // ─── INVESTIGATION JOURNAL SUBMIT (Monday) ───
 function submitInvestigationJournal() {
-  clearDraft_();
   var text = document.getElementById('investigation-journal').value;
   if (!text || text.trim().length < 5) {
     document.getElementById('investigation-journal').style.borderColor = '#ffc107';
     document.getElementById('investigation-journal').placeholder = 'Write at least one sentence...';
     return;
   }
+  clearDraft_(); // Clear draft only after validation passes (#162 Codex fix)
   ExecSkills._journalData = {
     type: 'investigation-reflection',
     hypothesis: sectionData.hypothesis,

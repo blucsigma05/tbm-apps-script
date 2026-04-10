@@ -1557,7 +1557,8 @@ function submitAnswer(qId) {
   answers[key].correct = correct;
 
   // Log per-question result to QuestionLog for mastery tracking (#161)
-  if (!TBM_TEST_MODE && !_usingFallback && typeof google !== 'undefined' && google.script && google.script.run) {
+  // Only log MC (auto-graded) questions — open-ended have correct=true hardcoded which inflates accuracy
+  if (isMC && !TBM_TEST_MODE && !_usingFallback && typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function() {})
       .withFailureHandler(function(err) { console.error('QuestionLog failed:', err); })
@@ -1565,7 +1566,7 @@ function submitAnswer(qId) {
         child: SANDBOX_CHILD,
         subject: q.strand || 'General',
         teksCode: q.teks || '',
-        questionType: isMC ? 'MC' : 'open_ended',
+        questionType: 'MC',
         difficulty: q.difficulty || 'standard',
         correct: correct,
         timeSpentSeconds: 0,
