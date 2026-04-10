@@ -1,4 +1,4 @@
-// AssetRegistry.gs — v1
+// AssetRegistry.gs — v2
 // ════════════════════════════════════════════════════════════════════
 // Shared asset catalog for SparkleLearning, CurriculumSeed, and validators.
 // V8 server-side — modern JS OK here.
@@ -6,7 +6,7 @@
 // READS FROM: (in-memory constant — no sheet reads)
 // ════════════════════════════════════════════════════════════════════
 
-function getAssetRegistryVersion() { return 1; }
+function getAssetRegistryVersion() { return 2; }
 
 var ASSET_REGISTRY = {
   // ── Letter intro hero images — concepts tied to letters in CurriculumSeed ──
@@ -34,7 +34,10 @@ var ASSET_REGISTRY = {
   'butterfly':  { id: 'butterfly',  type: 'svg',   value: 'butterfly',    name: 'butterfly',  plural: 'butterflies', color: 'pink',   category: 'animal' },
   'sparkle':    { id: 'sparkle',    type: 'emoji', value: '\u2728',        name: 'sparkle',    plural: 'sparkles',    color: 'gold',   category: 'effect' },
   'heart':      { id: 'heart',      type: 'svg',   value: 'heart',        name: 'heart',      plural: 'hearts',      color: 'pink',   category: 'shape' },
-  'moon':       { id: 'moon',       type: 'svg',   value: 'moon',         name: 'moon',       plural: 'moons',       color: 'purple', category: 'shape' }
+  'moon':       { id: 'moon',       type: 'svg',   value: 'moon',         name: 'moon',       plural: 'moons',       color: 'purple', category: 'shape' },
+  'flowers':    { id: 'flowers',    type: 'emoji', value: '\uD83C\uDF38', name: 'flower',     plural: 'flowers',     color: 'pink',   category: 'nature' },
+  'rainbows':   { id: 'rainbows',   type: 'emoji', value: '\uD83C\uDF08', name: 'rainbow',    plural: 'rainbows',    color: 'purple', category: 'nature' },
+  'gems':       { id: 'gems',       type: 'emoji', value: '\uD83D\uDC8E', name: 'gem',        plural: 'gems',        color: 'blue',   category: 'object' }
 };
 
 // ── Plural index — O(1) lookup by plural, singular, or display name ──
@@ -58,4 +61,4 @@ function getAssetRegistry_() {
   return ASSET_REGISTRY;
 }
 
-// END OF FILE — AssetRegistry.gs v1
+// END OF FILE — AssetRegistry.gs v2
