@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// QAOperatorSafe.gs v1 — Safe Wrappers for QA Operator Mode
+// QAOperatorSafe.gs v2 — Safe Wrappers for QA Operator Mode
 // WRITES TO: Script Properties (clock override, active scenario, snapshots)
 // READS FROM: QAHarness.gs, Resettesting.js, TBMConfig.gs, TAB_MAP
 // ════════════════════════════════════════════════════════════════════
@@ -13,7 +13,7 @@
 // SPEC: specs/qa-operator-mode.md — PR 1 scope
 // ════════════════════════════════════════════════════════════════════
 
-function getQAOperatorSafeVersion() { return 1; }
+function getQAOperatorSafeVersion() { return 2; }
 
 // ── QA STATUS ──────────────────────────────────────────────────────
 
@@ -109,7 +109,10 @@ function qaRestoreSafe(name) {
 }
 
 /**
- * Lists all saved snapshot names by scanning Script Properties for QA_SNAP_* keys.
+ * Lists all saved snapshot names.
+ * Scans Script Properties for QA_SNAP_* keys, then also checks the
+ * QA_Snapshots fallback sheet (col 1 = name) for large snapshots that
+ * exceeded the 9KB property limit and were written there instead.
  */
 function qaListSnapshotsSafe() {
   return withMonitor_('qaListSnapshotsSafe', function() {
@@ -121,6 +124,22 @@ function qaListSnapshotsSafe() {
         names.push(props[i].substring(8));
       }
     }
+    // Also collect names from the fallback sheet (written when snapshot > 9KB)
+    try {
+      var ss = SpreadsheetApp.openById(SSID);
+      var snapSheet = ss.getSheetByName('QA_Snapshots');
+      if (snapSheet && snapSheet.getLastRow() > 0) {
+        var data = snapSheet.getRange(1, 1, snapSheet.getLastRow(), 1).getValues();
+        for (var r = 0; r < data.length; r++) {
+          var sheetName = String(data[r][0]);
+          if (sheetName && names.indexOf(sheetName) === -1) {
+            names.push(sheetName);
+          }
+        }
+      }
+    } catch (e) {
+      Logger.log('qaListSnapshotsSafe: could not read QA_Snapshots sheet — ' + e.message);
+    }
     return { snapshots: names };
   });
 }
@@ -130,11 +149,14 @@ function qaListSnapshotsSafe() {
 /**
  * Runs the full Q7 persistence test suite.
  * Returns structured results with pass/fail per test case.
+ * Note: runPersistenceTests() returns a JSON string — parse it before returning
+ * so callers receive a plain object, not a double-encoded string.
  */
 function qaRunPersistenceTestsSafe() {
   return withMonitor_('qaRunPersistenceTestsSafe', function() {
     tbm_requireQA_('qaRunPersistenceTestsSafe');
-    return runPersistenceTests();
+    var raw = runPersistenceTests();
+    return JSON.parse(raw);
   });
 }
 
@@ -187,4 +209,4 @@ function qaExportStateSafe() {
 }
 
 // Version history tracked in Notion deploy page. Do not add version comments here.
-// QAOperatorSafe.gs v1 — EOF
+// QAOperatorSafe.gs v2 — EOF
