@@ -1376,6 +1376,23 @@ function handleAnswer(idx) {
     btns[idx].className = 'answer-btn wrong';
   }
 
+  // Log per-question result to QuestionLog for mastery tracking (#161)
+  if (!TBM_TEST_MODE && !_usingFallback && typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function() {})
+      .withFailureHandler(function(err) { console.error('QuestionLog failed:', err); })
+      .logQuestionResultSafe({
+        child: CHILD,
+        subject: 'Math Facts',
+        teksCode: q.teks || '',
+        questionType: 'MC',
+        difficulty: q.difficulty || 'standard',
+        correct: isCorrect,
+        timeSpentSeconds: 0,
+        sessionModule: 'fact-sprint'
+      });
+  }
+
   // Flash the question card
   var qCard = document.getElementById('question-card');
   if (isCorrect) {
@@ -1545,10 +1562,7 @@ function finishSprint() {
         rings: rings
       });
 
-    google.script.run
-      .withSuccessHandler(function() {})
-      .withFailureHandler(function(err) { console.error('Ring award failed:', err); })
-      .awardRingsSafe(CHILD, rings, 'fact-sprint');
+    // Client-side awardRingsSafe() removed — server-side submitHomework_() handles ring awards (#160).
   }
 
   // Persist PBs to server

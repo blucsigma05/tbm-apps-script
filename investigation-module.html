@@ -1567,6 +1567,7 @@ function showCompletionScreen() {
 
 // ─── INVESTIGATION JOURNAL SUBMIT (Monday) ───
 function submitInvestigationJournal() {
+  clearDraft_();
   var text = document.getElementById('investigation-journal').value;
   if (!text || text.trim().length < 5) {
     document.getElementById('investigation-journal').style.borderColor = '#ffc107';
@@ -1733,8 +1734,51 @@ function loadCurriculumContent() {
 }
 
 // ─── INIT ───
+// ─── Draft Auto-Save (#162) ───
+var _DRAFT_LS_KEY = 'tbm_investigation_draft_' + new Date().toISOString().slice(0, 10);
+var _DRAFT_FIELDS = ['hypothesis-text', 'prediction-text', 'conclusion-text'];
+
+function saveDraft_() {
+  try {
+    var parts = {};
+    var hasContent = false;
+    for (var i = 0; i < _DRAFT_FIELDS.length; i++) {
+      var el = document.getElementById(_DRAFT_FIELDS[i]);
+      var val = el ? el.value : '';
+      parts[_DRAFT_FIELDS[i]] = val;
+      if (val.replace(/^\s+|\s+$/g, '').length > 0) hasContent = true;
+    }
+    if (!hasContent) return;
+    localStorage.setItem(_DRAFT_LS_KEY, JSON.stringify({ parts: parts, savedAt: new Date().toISOString() }));
+  } catch (e) {}
+}
+
+function loadDraft_() {
+  try {
+    var raw = localStorage.getItem(_DRAFT_LS_KEY);
+    if (!raw) return;
+    var draft = JSON.parse(raw);
+    if (!draft || !draft.parts) return;
+    setTimeout(function() {
+      for (var i = 0; i < _DRAFT_FIELDS.length; i++) {
+        var el = document.getElementById(_DRAFT_FIELDS[i]);
+        if (el && draft.parts[_DRAFT_FIELDS[i]]) el.value = draft.parts[_DRAFT_FIELDS[i]];
+      }
+      console.log('Draft restored from ' + draft.savedAt);
+    }, 300);
+  } catch (e) {}
+}
+
+function clearDraft_() {
+  try { localStorage.removeItem(_DRAFT_LS_KEY); } catch (e) {}
+}
+
 function init() {
   buildStarField();
+  // Auto-save every 30 seconds + on unload
+  setInterval(saveDraft_, 30000);
+  window.addEventListener('beforeunload', saveDraft_);
+  loadDraft_();
 
   // Render prompt
   document.getElementById('prompt-text').textContent = 'Intel Report: ' + INVESTIGATION.prompt;

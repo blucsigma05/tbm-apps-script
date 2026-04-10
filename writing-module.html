@@ -1085,6 +1085,7 @@ function init() {
   buildStarField();
   currentFormat = getWeekFormat();
   highlightFormatTab(currentFormat);
+  initDraftAutoSave_();
   // #171 — ExecSkills Plan Your Attack (shows before plan view)
   var fmt = FORMATS[currentFormat];
   ExecSkills.showPlanYourAttack({
@@ -1101,6 +1102,66 @@ function init() {
     }
   });
 }
+
+// ─── Draft Auto-Save (#162) ───
+var _DRAFT_LS_KEY = 'tbm_writing_draft_' + new Date().toISOString().slice(0, 10);
+var _draftInterval = null;
+
+function saveDraft_() {
+  if (submitted) return;
+  try {
+    var data = getAllText();
+    if (!data || !data.parts) return;
+    var hasContent = false;
+    var keys = Object.keys(data.parts);
+    for (var i = 0; i < keys.length; i++) {
+      if (data.parts[keys[i]] && data.parts[keys[i]].replace(/^\s+|\s+$/g, '').length > 0) {
+        hasContent = true;
+        break;
+      }
+    }
+    if (!hasContent) return;
+    localStorage.setItem(_DRAFT_LS_KEY, JSON.stringify({
+      format: currentFormat,
+      parts: data.parts,
+      savedAt: new Date().toISOString()
+    }));
+  } catch (e) { /* localStorage may be unavailable */ }
+}
+
+function loadDraft_() {
+  try {
+    var raw = localStorage.getItem(_DRAFT_LS_KEY);
+    if (!raw) return;
+    var draft = JSON.parse(raw);
+    if (!draft || !draft.parts) return;
+    if (draft.format !== currentFormat) return;
+    // Restore after a short delay to let DOM render
+    setTimeout(function() {
+      var keys = Object.keys(draft.parts);
+      for (var i = 0; i < keys.length; i++) {
+        var el = document.getElementById('textarea-' + keys[i]);
+        if (el && draft.parts[keys[i]]) {
+          el.value = draft.parts[keys[i]];
+        }
+      }
+      updateCounts();
+      console.log('Draft restored from ' + draft.savedAt);
+    }, 300);
+  } catch (e) { /* ignore parse errors */ }
+}
+
+function clearDraft_() {
+  try { localStorage.removeItem(_DRAFT_LS_KEY); } catch (e) {}
+}
+
+function initDraftAutoSave_() {
+  // Auto-save every 30 seconds
+  _draftInterval = setInterval(saveDraft_, 30000);
+  // Save on page unload
+  window.addEventListener('beforeunload', saveDraft_);
+  // Restore any saved draft after rendering
+  loadDraft_();
 
 // ─── Star Field ───
 function buildStarField() {
@@ -1458,6 +1519,7 @@ function getSessionTimeString() {
 function handleSubmit() {
   if (submitted) return;
   submitted = true;
+  clearDraft_();
 
   stopWritingTimer();
   if (sessionInterval) {

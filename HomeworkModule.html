@@ -1556,6 +1556,23 @@ function submitAnswer(qId) {
   answers[key].submitted = true;
   answers[key].correct = correct;
 
+  // Log per-question result to QuestionLog for mastery tracking (#161)
+  if (!TBM_TEST_MODE && !_usingFallback && typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function() {})
+      .withFailureHandler(function(err) { console.error('QuestionLog failed:', err); })
+      .logQuestionResultSafe({
+        child: SANDBOX_CHILD,
+        subject: q.strand || 'General',
+        teksCode: q.teks || '',
+        questionType: isMC ? 'MC' : 'open_ended',
+        difficulty: q.difficulty || 'standard',
+        correct: correct,
+        timeSpentSeconds: 0,
+        sessionModule: 'homework'
+      });
+  }
+
   if (isMC) {
     if (correct) { playBugsyCorrect(); } else { playBugsyWrong(); }
     // #171 — track missed questions for Error Journal
@@ -1881,14 +1898,11 @@ function renderResults() {
             rings: ringsEarned
           });
 
-        // Only award MC rings immediately if no open-ended questions pending review.
-        // If open-ended exists, all rings (MC + review) come on parent approval to prevent double award.
-        if (allOpenEnded.length === 0 && ringsEarned > 0) {
-          google.script.run
-            .withSuccessHandler(function() { console.log('Rings awarded: ' + ringsEarned); })
-            .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })
-            .awardRingsSafe(SANDBOX_CHILD, ringsEarned, 'homework-module');
-        } else if (allOpenEnded.length > 0) {
+        // Ring awards handled server-side by submitHomework_() auto-award path.
+        // When auto-graded (no open-ended): server awards rings immediately.
+        // When pending_review (has open-ended): server defers to approveHomework_().
+        // Client-side awardRingsSafe() removed to prevent double-award (#160).
+        if (allOpenEnded.length > 0) {
           console.log('Rings deferred — ' + allOpenEnded.length + ' open-ended question(s) pending parent review');
         }
 

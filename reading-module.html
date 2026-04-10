@@ -1520,6 +1520,23 @@ function lockInMC(qId) {
   ans.submitted = true;
   ans.correct = (ans.selected === q.answer);
 
+  // Log per-question result to QuestionLog for mastery tracking (#161)
+  if (!TBM_TEST_MODE && !_usingFallback && typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function() {})
+      .withFailureHandler(function(err) { console.error('QuestionLog failed:', err); })
+      .logQuestionResultSafe({
+        child: SANDBOX_CHILD,
+        subject: q.label || 'RLA',
+        teksCode: q.teks || '',
+        questionType: q.type || 'MC',
+        difficulty: q.difficulty || 'standard',
+        correct: ans.correct,
+        timeSpentSeconds: 0,
+        sessionModule: 'reading'
+      });
+  }
+
   if (!ans.correct) {
     missedQuestions.push({
       question: q.question,
@@ -1781,10 +1798,7 @@ function renderResults() {
           rings: earnedRings
         });
 
-      google.script.run
-        .withSuccessHandler(function() { console.log('Rings awarded: ' + earnedRings); })
-        .withFailureHandler(function(err) { console.error('Ring award failed:', err.message); })
-        .awardRingsSafe(SANDBOX_CHILD, earnedRings, 'reading-module');
+      // Client-side awardRingsSafe() removed — server-side submitHomework_() handles ring awards (#160).
 
       google.script.run
         .withSuccessHandler(function() { console.log('Reading completion logged'); })
