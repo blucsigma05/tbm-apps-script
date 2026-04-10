@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v6">
+<meta name="tbm-version" content="v7">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -804,9 +804,9 @@ main {
 <script>
 // ── ComicStudio v4 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
 // ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
-// tbm-version: v5
+// tbm-version: v7
 
-const COMIC_STUDIO_VERSION = 6;
+const COMIC_STUDIO_VERSION = 7;
 
 // ── Test Mode Detection ──
 const TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
@@ -1336,6 +1336,7 @@ function updateCaption(idx, val) {
   const wc = document.getElementById(`wc-${idx}`);
   if (wc) wc.textContent = countWords(val) + ' words';
   checkVocabUsage();
+  if (val && !hasDrawnAnything) { hasDrawnAnything = true; startAutosaveTimer(); }
 }
 
 function countWords(str) {
@@ -1496,8 +1497,8 @@ function autosaveDraft() {
   setAutosaveIndicator('saving');
   const payload = serializeDraft();
   google.script.run
-    .withSuccessHandler(() => setAutosaveIndicator('saved'))
-    .withFailureHandler(() => setAutosaveIndicator('failed'))
+    .withSuccessHandler(function(result) { if (result && result.success === false) { setAutosaveIndicator('failed'); } else { setAutosaveIndicator('saved'); } })
+    .withFailureHandler(function() { setAutosaveIndicator('failed'); })
     .saveComicDraftSafe(CHILD, JSON.stringify(payload));
 }
 
@@ -1586,7 +1587,8 @@ function renderMissionBrief(ctx) {
   html += '<h3>MISSION MODE</h3>';
   html += `<p>${escapeHtml(title)}</p>`;
   if (ctx.studentCER) {
-    const excerpt = String(ctx.studentCER).substring(0, 120);
+    const cerText = ctx.studentCER.responseText || ctx.studentCER.claim || '';
+    const excerpt = cerText.substring(0, 120);
     html += `<div class="cer-excerpt">"${escapeHtml(excerpt)}${excerpt.length >= 120 ? '…' : ''}"</div>`;
   }
   html += '</div>';
@@ -1663,4 +1665,4 @@ init();
 </script>
 </body>
 </html>
-<!-- ComicStudio.html v6 -->
+<!-- ComicStudio.html v7 -->
