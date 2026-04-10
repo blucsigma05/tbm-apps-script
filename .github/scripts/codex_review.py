@@ -59,6 +59,52 @@ MODEL = "gpt-4o"
 MAX_TOKENS = 4000
 TEMPERATURE = 0
 
+# ---------------------------------------------------------------------------
+# Review mode — set by triage_review.py via REVIEW_MODE env var
+# ---------------------------------------------------------------------------
+REVIEW_MODE = os.environ.get("REVIEW_MODE", "medium")
+
+MODE_CONFIG = {
+    "light": {
+        "model":            "gpt-4o-mini",
+        "max_tokens":       1500,
+        "max_diff_chars":   5000,
+        "per_file_cap":     3000,
+        "max_context_chars": 15000,
+        "include_related":  False,
+        "system_prompt_override": (
+            "You are a code reviewer for a Google Apps Script project. "
+            "Review this small diff for correctness, ES5 compliance (no arrow functions, "
+            "let/const, template literals, or other ES6+ syntax in .html files), and "
+            "correct TAB_MAP usage (no hardcoded sheet names). "
+            "Be concise. Only flag actual problems."
+        ),
+    },
+    "medium": {
+        "model":            MODEL,           # gpt-4o (or post-#129 default)
+        "max_tokens":       4096,
+        "max_diff_chars":   MAX_DIFF_CHARS,
+        "per_file_cap":     PER_FILE_CAP,
+        "max_context_chars": MAX_CONTEXT_CHARS,
+        "include_related":  True,
+        "system_prompt_override": None,      # use existing system prompt
+    },
+    "full": {
+        "model":            MODEL,
+        "max_tokens":       4096,
+        "max_diff_chars":   MAX_DIFF_CHARS,
+        "per_file_cap":     PER_FILE_CAP,
+        "max_context_chars": MAX_CONTEXT_CHARS,
+        "include_related":  True,
+        "system_prompt_override": None,      # same as medium; reserved for Phase 5
+    },
+}
+
+
+def get_mode_config():
+    """Return the config dict for the current REVIEW_MODE."""
+    return MODE_CONFIG.get(REVIEW_MODE, MODE_CONFIG["medium"])
+
 # ── system prompt ────────────────────────────────────────────────────
 SYSTEM_PROMPT = (
     "You are a senior code reviewer for TBM (TillerBudgetMaster), a Google Apps Script "
@@ -289,28 +335,38 @@ def read_changed_file_content(fname):
     except Exception:
         return None
 
-def build_context(diff_text, changed_files, related_files=None):
+def build_context(diff_text, changed_files, related_files=None, cfg=None):
     """Build review context from diff, changed files, and related files.
 
     Returns (context_string, truncation_notes_list).
     truncation_notes only covers changed content (affects verdict).
     Related-file truncation is informational and does NOT force INCONCLUSIVE.
+
+    cfg: mode config dict from get_mode_config(). Defaults to medium constants.
     """
+    if cfg is None:
+        cfg = MODE_CONFIG["medium"]
+
+    diff_chars_cap = cfg["max_diff_chars"]
+    context_chars_cap = cfg["max_context_chars"]
+    per_file_cap = cfg["per_file_cap"]
+    include_related = cfg["include_related"]
+
     parts = []
     truncation_notes = []
 
     # ---- diff ----
     parts.append("=== PR DIFF ===\n")
-    diff_text, diff_truncated = truncate_preserving_edges(diff_text, MAX_DIFF_CHARS, "diff")
+    diff_text, diff_truncated = truncate_preserving_edges(diff_text, diff_chars_cap, "diff")
     if diff_truncated:
-        truncation_notes.append("diff truncated at %d chars" % MAX_DIFF_CHARS)
+        truncation_notes.append("diff truncated at %d chars" % diff_chars_cap)
     parts.append(diff_text)
 
     # ---- changed files ----
     current_len = sum(len(p) for p in parts)
-    remaining = max(0, MAX_CONTEXT_CHARS - current_len)
+    remaining = max(0, context_chars_cap - current_len)
     file_count = len(changed_files) if changed_files else 1
-    per_file = max(8000, min(PER_FILE_CAP, remaining // file_count if file_count else PER_FILE_CAP))
+    per_file = max(8000, min(per_file_cap, remaining // file_count if file_count else per_file_cap))
 
     for fname in changed_files:
         content = read_changed_file_content(fname)
@@ -328,17 +384,18 @@ def build_context(diff_text, changed_files, related_files=None):
     changed_context = "".join(parts)
     changed_context, context_truncated = truncate_preserving_edges(
         changed_context,
-        MAX_CONTEXT_CHARS,
+        context_chars_cap,
         "total context",
     )
     if context_truncated:
-        truncation_notes.append("total context capped at %d chars" % MAX_CONTEXT_CHARS)
+        truncation_notes.append("total context capped at %d chars" % context_chars_cap)
 
     # ---- related files (callers / consumers / siblings) ----
     # Truncation here is informational only — does NOT affect verdict.
+    # In light mode, related files are skipped entirely (include_related=False).
     related_parts = []
     related_text = ""
-    if related_files:
+    if include_related and related_files:
         related_parts.append(
             "\n=== RELATED FILES (not changed — callers/consumers/siblings for cross-reference) ===\n"
         )
@@ -373,15 +430,28 @@ def build_context(diff_text, changed_files, related_files=None):
 
 # ── OpenAI call ──────────────────────────────────────────────────────
 
-def send_to_openai(context_text, api_key):
-    """Send context to OpenAI gpt-4o with JSON mode. Returns parsed response dict."""
+def send_to_openai(context_text, api_key, cfg=None):
+    """Send context to OpenAI with JSON mode. Returns parsed response dict.
+
+    cfg: mode config dict from get_mode_config(). Controls model, max_tokens,
+    and system prompt. Defaults to medium (gpt-4o, 4096 tokens, full prompt).
+    """
+    if cfg is None:
+        cfg = MODE_CONFIG["medium"]
+
+    model_to_use = cfg["model"]
+    max_tokens_to_use = cfg["max_tokens"]
+    system_prompt_to_use = cfg.get("system_prompt_override") or SYSTEM_PROMPT
+
+    print("Using model: %s (mode=%s, max_tokens=%d)" % (model_to_use, REVIEW_MODE, max_tokens_to_use))
+
     payload = {
-        "model": MODEL,
+        "model": model_to_use,
         "messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": system_prompt_to_use},
             {"role": "user", "content": context_text},
         ],
-        "max_tokens": MAX_TOKENS,
+        "max_tokens": max_tokens_to_use,
         "temperature": TEMPERATURE,
         "response_format": {"type": "json_object"},
     }
@@ -684,16 +754,22 @@ def main():
     except FileNotFoundError:
         pass  # no file list — just use the diff
 
+    # ---- get mode config ----
+    cfg = get_mode_config()
+    print("Review mode: %s (model=%s)" % (REVIEW_MODE, cfg["model"]))
+
     # ---- discover related files ----
     related_files = get_related_files(changed_files)
-    if related_files:
+    if related_files and cfg["include_related"]:
         print("Related files for cross-reference: %s" % ", ".join(related_files))
+    elif related_files and not cfg["include_related"]:
+        print("Related files skipped in %s mode." % REVIEW_MODE)
 
     # ---- build context ----
-    context, truncation_notes = build_context(diff_text, changed_files, related_files)
+    context, truncation_notes = build_context(diff_text, changed_files, related_files, cfg=cfg)
 
     # ---- send to OpenAI ----
-    data = send_to_openai(context, api_key)
+    data = send_to_openai(context, api_key, cfg=cfg)
 
     # save raw response for debugging
     with open("codex_response.json", "w") as fh:
