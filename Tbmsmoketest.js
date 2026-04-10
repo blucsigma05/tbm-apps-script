@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmSmokeTest.gs v8 — Pre-Deploy Structural Validation
+// tbmSmokeTest.gs v9 — Pre-Deploy Structural Validation
 // WRITES TO: (none — read-only checks)
 // READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
@@ -37,7 +37,7 @@
 // A PASS here means "safe to deploy" not "system works perfectly."
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 8; }
+function getSmokeTestVersion() { return 9; }
 
 var CANONICAL_SAFE_FUNCTIONS = [
   'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKHLastModifiedSafe', 'getKidsHubDataSafe',
@@ -52,7 +52,7 @@ var CANONICAL_SAFE_FUNCTIONS = [
   'getCashFlowForecastSafe', 'getCloseHistoryDataSafe', 'getMERGateStatusSafe',
   'getSubscriptionDataSafe', 'getSystemHealthSafe', 'khAddBonusTaskSafe', 'khDebitScreenTimeSafe',
   'khSetBankOpeningSafe', 'runMERGatesSafe', 'stampCloseMonthSafe', 'updateFamilyNoteSafe',
-  'listStoredStoriesSafe', 'getStoredStorySafe',
+  'listStoredStoriesSafe', 'getStoredStorySafe', 'getActivityStoryPackSafe',
   'awardRingsSafe', 'getTodayContentSafe', 'seedWeek1CurriculumSafe', 'submitFeedbackSafe',
   'getAudioBatchSafe', 'logHomeworkCompletionSafe', 'logSparkleProgressSafe',
   'logQuestionResultSafe', 'savePowerScanResultsSafe', 'getWeeklyProgressSafe',
@@ -705,4 +705,4 @@ function checkHTMLContracts_() {
 }
 
 
-// END OF FILE — tbmSmokeTest.gs v8
+// END OF FILE — tbmSmokeTest.gs v9

@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v60 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v61 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 60; }
+function getKidsHubVersion() { return 61; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2550,7 +2550,7 @@ function ensureCurriculumTab_() {
 
 // Reads today's curriculum content for a child.
 // Returns { content, fullWeek, day, week, child } or null if no data.
-function getTodayContent_(child) {
+function getTodayContent_(child, _testDateOverride) {
   var sheet = ensureCurriculumTab_();
   if (sheet.getLastRow() < 2) return null;
   var data = sheet.getDataRange().getValues();
@@ -2560,7 +2560,7 @@ function getTodayContent_(child) {
   var jsonCol = headers.indexOf('ContentJSON');
   var weekCol = headers.indexOf('WeekNumber');
   if (childCol === -1 || startCol === -1 || jsonCol === -1) return null;
-  var today = new Date();
+  var today = _testDateOverride ? new Date(_testDateOverride) : new Date();
   today.setHours(0, 0, 0, 0);
   var dayOfWeek = today.getDay();
   var dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
@@ -2591,6 +2591,34 @@ function getTodayContent_(child) {
       if (weekContent.vocabulary) dayContent.vocabulary = weekContent.vocabulary;
       if (weekContent.focusLetters) dayContent.focusLetters = weekContent.focusLetters;
       if (weekContent.focusNumbers) dayContent.focusNumbers = weekContent.focusNumbers;
+    }
+    // v61: Inject ActivityStoryPacks content into audio_story activities.
+    // CurriculumSeed ships audio_story entries with storyId only — the story
+    // text, question, answer, and options live in ActivityStoryPacks.js so
+    // SparkleLearning's renderAudioStory (line 2473) can read them off the
+    // activity object without a second round-trip. See
+    // specs/storyfactory-audiostory-bridge.md.
+    if (dayContent && dayContent.activities && dayContent.activities.length) {
+      for (var i = 0; i < dayContent.activities.length; i++) {
+        var act = dayContent.activities[i];
+        if (act && act.type === 'audio_story' && act.storyId) {
+          // Reference ACTIVITY_STORY_PACKS via the getter to avoid a load-order
+          // dependency on file parse order in GAS.
+          var pack = (typeof getActivityStoryPack_ === 'function')
+            ? getActivityStoryPack_(act.storyId)
+            : null;
+          if (pack) {
+            act.story = pack.story;
+            act.question = pack.question;
+            act.answer = pack.answer;
+            act.options = pack.options;
+            // Preserve existing audioPrompt / audioCorrect / title from the
+            // curriculum — do not overwrite.
+          }
+          // Unknown storyId → leave activity unchanged; renderAudioStory falls
+          // back to the hardcoded bunny placeholder (same as today).
+        }
+      }
     }
     return { content: dayContent, fullWeek: weekContent, day: todayName, week: bestRow[weekCol] || 0, child: childLower };
   } catch (e) {
@@ -4586,5 +4614,5 @@ function getDailyMissionsInitSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v60
+// END OF FILE — KidsHub.gs v61
 // ════════════════════════════════════════════════════════════════════

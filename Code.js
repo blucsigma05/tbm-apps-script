@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v76 — Apps Script Router (TBM Consolidated)
+// Code.gs v77 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 76; }
+function getCodeVersion() { return 77; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -409,7 +409,7 @@ function serveData(e) {
         'updateFamilyNoteSafe': updateFamilyNoteSafe, 'addKidsEventSafe': addKidsEventSafe,
         'runMERGatesSafe': runMERGatesSafe, 'stampCloseMonthSafe': stampCloseMonthSafe,
         'getVaultDataSafe': getVaultDataSafe, 'runStoryFactorySafe': runStoryFactorySafe,
-        'listStoredStoriesSafe': listStoredStoriesSafe, 'getStoredStorySafe': getStoredStorySafe,
+        'listStoredStoriesSafe': listStoredStoriesSafe, 'getStoredStorySafe': getStoredStorySafe, 'getActivityStoryPackSafe': getActivityStoryPackSafe,
         'getTodayContentSafe': getTodayContentSafe, 'seedWeek1CurriculumSafe': seedWeek1CurriculumSafe, 'seedStaarRlaSprintSafe': seedStaarRlaSprintSafe,
         'reconcileVeinPulse': reconcileVeinPulse, 'getScriptUrlSafe': getScriptUrlSafe,
         'submitFeedbackSafe': submitFeedbackSafe, 'getAudioBatchSafe': getAudioBatchSafe,
@@ -1999,4 +1999,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v76
+// END OF FILE — Code.gs v77
