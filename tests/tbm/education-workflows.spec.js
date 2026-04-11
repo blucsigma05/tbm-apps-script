@@ -24,8 +24,6 @@ var DEVICES = {
   s10fe: { width: 1920, height: 1200 }
 };
 
-test.describe.configure({ mode: 'serial' });
-
 test.beforeEach(function() {
   test.skip(!BASE_URL, 'Set TBM_BASE_URL to a staging or local deployment before running education workflow tests.');
 });
