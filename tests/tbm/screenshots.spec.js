@@ -80,9 +80,21 @@ var SURFACES = [
 var SENTINEL_TIMEOUT = 45000;
 
 // ── DIFF-AWARE FILTERING ────────────────────────────────────────
+// SCREENSHOT_ROUTES env var: explicit route list for on-demand dispatch runs.
+//   Comma-separated route paths (e.g. "/pulse,/buggsy") or "all".
+//   Takes precedence over CHANGED_FILES when set.
 // CHANGED_FILES env var: comma-separated list of changed filenames from git diff.
-// Set by the workflow step. If empty/unset, capture ALL routes (local QA mode).
+//   Set by the workflow step. If empty/unset, capture ALL routes (local QA mode).
 function getActiveRoutes() {
+  // On-demand mode: explicit route list overrides file-diff logic
+  var requestedRoutes = process.env.SCREENSHOT_ROUTES || '';
+  if (requestedRoutes) {
+    if (requestedRoutes === 'all') {
+      return null; // all routes
+    }
+    return requestedRoutes.split(',').map(function(r) { return r.trim(); });
+  }
+
   var changedFiles = process.env.CHANGED_FILES || '';
   if (!changedFiles) {
     // No filter — local run or explicit "capture all"
@@ -128,12 +140,21 @@ function shouldCapture(routePath) {
 test.beforeAll(function() {
   fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
+  var requestedRoutes = process.env.SCREENSHOT_ROUTES || '';
   if (ACTIVE_ROUTES === 'none') {
     console.log('No UI files changed — skipping all screenshots.');
   } else if (ACTIVE_ROUTES === null) {
-    console.log('Capturing all routes (local run or global file changed).');
+    if (requestedRoutes === 'all') {
+      console.log('On-demand run — capturing all routes.');
+    } else {
+      console.log('Capturing all routes (local run or global file changed).');
+    }
   } else {
-    console.log('Capturing routes for changed files: ' + ACTIVE_ROUTES.join(', '));
+    if (requestedRoutes) {
+      console.log('On-demand run — capturing routes: ' + ACTIVE_ROUTES.join(', '));
+    } else {
+      console.log('Capturing routes for changed files: ' + ACTIVE_ROUTES.join(', '));
+    }
   }
 });
 

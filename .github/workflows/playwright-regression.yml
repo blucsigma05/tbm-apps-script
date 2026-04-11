@@ -9,6 +9,17 @@ on:
     branches: [main]
     types: [opened, reopened, synchronize, ready_for_review]
   workflow_dispatch:
+    inputs:
+      routes:
+        description: 'Routes to screenshot (comma-separated, e.g. /pulse,/buggsy — or "all")'
+        required: false
+        default: 'all'
+        type: string
+      pr_number:
+        description: 'PR number to post screenshot summary to (optional)'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -72,13 +83,18 @@ jobs:
       - name: Detect changed UI files
         id: changed
         run: |
-          git fetch origin main --depth=1
-          CHANGED=$(git diff origin/main...HEAD --name-only -- '*.html' '*.js' | tr '\n' ',')
-          echo "files=$CHANGED" >> "$GITHUB_OUTPUT"
-          if [ -z "$CHANGED" ]; then
-            echo "No UI files changed — screenshots will be skipped."
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "On-demand dispatch — skipping git diff, using route input."
+            echo "files=" >> "$GITHUB_OUTPUT"
           else
-            echo "Changed files: $CHANGED"
+            git fetch origin main --depth=1
+            CHANGED=$(git diff origin/main...HEAD --name-only -- '*.html' '*.js' | tr '\n' ',')
+            echo "files=$CHANGED" >> "$GITHUB_OUTPUT"
+            if [ -z "$CHANGED" ]; then
+              echo "No UI files changed — screenshots will be skipped."
+            else
+              echo "Changed files: $CHANGED"
+            fi
           fi
 
       - name: Capture viewport screenshots
@@ -88,6 +104,7 @@ jobs:
           TBM_BASE_URL: https://thompsonfams.com
           TBM_PIN: ${{ secrets.TBM_PIN }}
           CHANGED_FILES: ${{ steps.changed.outputs.files }}
+          SCREENSHOT_ROUTES: ${{ inputs.routes }}
         run: |
           SCREENSHOT_SPEC="tests/tbm/screenshots.spec.js"
           if [ ! -f "$SCREENSHOT_SPEC" ]; then
@@ -118,6 +135,28 @@ jobs:
           path: test-results/
           retention-days: 7
           if-no-files-found: ignore
+
+      - name: Post on-demand screenshot summary to PR
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.pr_number != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const routes = '${{ inputs.routes }}' || 'all';
+            const runUrl = `https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            const body = [
+              '## Playwright Screenshots (On-Demand)',
+              '',
+              `**Routes:** \`${routes}\``,
+              `**Artifacts:** [viewport-screenshots-${{ github.run_id }}](${runUrl})`,
+              '',
+              'Screenshots uploaded — download the artifact from the link above.',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt('${{ inputs.pr_number }}', 10),
+              body,
+            });
 
       - name: Post results comment on PR
         if: always() && github.event_name == 'pull_request'
