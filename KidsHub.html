@@ -966,6 +966,14 @@ if (IS_SANDBOX) {
   </div>
 </div>
 <div id="loading"><img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson Family Crest" style="width:280px;height:280px;object-fit:contain;margin-bottom:20px;opacity:0.85;filter:drop-shadow(0 8px 24px rgba(212,168,67,0.3))" onerror="this.remove()"><div class="load-ring"></div><div class="load-text" id="loadText">Loading...</div></div>
+<!-- Clear generic loading content early for routes that build their own screen,
+     preventing a flash of the default crest+spinner before window.onload fires. -->
+<script>
+if (typeof INIT_VIEW !== 'undefined' && INIT_VIEW === 'parent') {
+  var _l = document.getElementById('loading');
+  if (_l) _l.innerHTML = '';
+}
+</script>
 <div id="app" style="display:none"></div>
 <div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 

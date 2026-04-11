@@ -1653,19 +1653,20 @@ function renderWeekend(container) {
     html += '<div class="weekend-text">No missions today! Enjoy your weekend, Wolfkid.</div>';
   }
 
-  // Bonus challenge card
+  // Free play card
   html += '<div class="bonus-card">';
   if (isJJ()) {
-    html += '<div class="bonus-title">\u2728 SPARKLE BONUS \u2728</div>';
-    html += '<div class="bonus-desc">Want to play a learning game for extra stars?</div>';
-    html += '<div style="margin-top:12px">';
-    html += '<button class="launch-btn" onclick="launchMission(\'/sparkle?activity=challenge&child=jj\',\'bonus_jj\',\'Sparkle Bonus\')">Play!</button>';
+    html += '<div class="bonus-title">\uD83C\uDF08 FREE PLAY \uD83C\uDF08</div>';
+    html += '<div class="bonus-desc">Pick any game you want, JJ!</div>';
+    html += '<div style="margin-top:12px;display:-webkit-flex;display:flex;gap:10px;-webkit-justify-content:center;justify-content:center;-webkit-flex-wrap:wrap;flex-wrap:wrap">';
+    html += '<button class="launch-btn" onclick="launchMission(\'/sparkle-free\',\'freeplay_jj\',\'Sparkle Free Play\')">Sparkle Kingdom \u2728</button>';
     html += '</div>';
   } else {
-    html += '<div class="bonus-title">\u26A1 WOLFKID BONUS MISSION \u26A1</div>';
-    html += '<div class="bonus-desc">Wolfkid never stops training. Run a bonus homework round for +5 Rings.</div>';
-    html += '<div style="margin-top:12px">';
-    html += '<button class="launch-btn" onclick="launchMission(\'/homework\',\'bonus_buggsy\',\'Bonus Mission\')">ACCEPT MISSION</button>';
+    html += '<div class="bonus-title">\uD83C\uDFAE FREE TIME \uD83C\uDFAE</div>';
+    html += '<div class="bonus-desc">No missions today. Pick what you want to do.</div>';
+    html += '<div style="margin-top:12px;display:-webkit-flex;display:flex;gap:10px;-webkit-justify-content:center;justify-content:center;-webkit-flex-wrap:wrap;flex-wrap:wrap">';
+    html += '<button class="launch-btn" onclick="launchMission(\'/facts\',\'bonus_facts\',\'Fact Sprint\')">Fact Sprint \u26A1</button>';
+    html += '<button class="launch-btn" onclick="launchMission(\'/comic-studio\',\'freeplay_comic\',\'Comic Studio\')">Comic Studio \uD83C\uDFA8</button>';
     html += '</div>';
   }
   html += '</div>';

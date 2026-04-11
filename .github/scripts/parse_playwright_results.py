@@ -6,10 +6,11 @@ Called by: .github/workflows/playwright-regression.yml
 Env vars expected:
   PW_EXIT          — Playwright exit code (default: "1")
   PW_OUTPUT_FILE   — path to raw Playwright stdout capture (default: playwright-output.txt)
+  COMMENT_FILE     — output markdown filename (default: playwright-comment.md)
   GITHUB_OUTPUT    — GitHub Actions output file path
 
 Outputs:
-  playwright-comment.md — formatted PR comment
+  <COMMENT_FILE> — formatted PR comment (default: playwright-comment.md)
   GITHUB_OUTPUT: verdict=PASS|FAIL|SKIP
 """
 
@@ -125,7 +126,8 @@ def main():
     json_data = parse_json_from_output(output_text)
     comment, verdict = format_comment(json_data, pw_exit, output_text)
 
-    with open("playwright-comment.md", "w") as f:
+    comment_file = os.environ.get("COMMENT_FILE", "playwright-comment.md")
+    with open(comment_file, "w") as f:
         f.write(comment)
 
     write_github_output("verdict", verdict)
