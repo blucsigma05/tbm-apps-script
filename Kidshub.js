@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v62 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v63 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 62; }
+function getKidsHubVersion() { return 63; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3313,10 +3313,19 @@ function _buildChildReport_(child, bounds, histData, eduData, flags) {
 }
 
 
-// v37: getTodayContentSafe — thin wrapper around getTodayContent_
+// v63: getTodayContentSafe — CacheService layer (300s TTL) around getTodayContent_
+// Cache key includes date so stale-day content never bleeds into the next school day.
 function getTodayContentSafe(child) {
   return withMonitor_('getTodayContentSafe', function() {
-    return getTodayContent_(child);
+    var today = getTodayISO_();
+    var cacheKey = 'edu_today_content_' + String(child).toLowerCase() + '_' + today;
+    var cached = (typeof getCachedPayload_ === 'function') ? getCachedPayload_(cacheKey) : null;
+    if (cached !== null) return cached;
+    var result = getTodayContent_(child);
+    if (result !== null && typeof setCachedPayload_ === 'function') {
+      setCachedPayload_(cacheKey, result, 300);
+    }
+    return result;
   });
 }
 
@@ -4900,5 +4909,5 @@ function getComicStudioContextSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v62
+// END OF FILE — KidsHub.gs v63
 // ════════════════════════════════════════════════════════════════════

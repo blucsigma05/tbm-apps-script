@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # required for gh release create
 
 jobs:
   deploy:
@@ -126,6 +126,29 @@ jobs:
             echo "::error::Structured assertion failed: overall=$OVERALL smoke.overall=$SMOKE_OVERALL"
             exit 1
           fi
+
+      - name: Create GitHub release
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CODE_VERSION: ${{ steps.smoke.outputs.code_version }}
+        run: |
+          if [ -z "$CODE_VERSION" ] || [ "$CODE_VERSION" = "?" ]; then
+            echo "Version unknown — skipping release creation."
+            exit 0
+          fi
+          TAG="v${CODE_VERSION}"
+          # Skip if tag already exists (re-run protection)
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists — skipping."
+            exit 0
+          fi
+          SHA_SHORT="${GITHUB_SHA:0:7}"
+          gh release create "$TAG" \
+            --title "TBM ${TAG}" \
+            --notes "Deployed from commit ${SHA_SHORT}. Smoke test: PASS." \
+            --target "$GITHUB_SHA"
+          echo "✅ Release $TAG created at ${SHA_SHORT}."
 
       - name: Pushover — deploy success
         if: success()
