@@ -161,42 +161,66 @@ test.describe('Homework: wrong answer shows purple not red', function() {
   });
 });
 
+// Shared helper: submit one MC answer in a section and wait for feedback to confirm processing.
+// Uses selector-state transitions instead of fixed timeouts to avoid CI timing fragility.
+async function submitOneAnswer(page, section) {
+  // Wait for an unanswered option — brain break overlay may be covering the screen
+  var option = page.locator('#section-' + section + ' .q-option:not(.correct-answer):not(.wrong-answer)').first();
+  await option.waitFor({ state: 'visible', timeout: 12000 });
+  await option.click();
+  // Wait for lock-btn to become enabled (class .disabled removed after selection)
+  var lockBtn = page.locator('#section-' + section + ' .lock-btn:not(.disabled)').first();
+  await lockBtn.waitFor({ state: 'visible', timeout: 8000 });
+  await lockBtn.click();
+  // Wait for feedback to confirm answer was processed before moving on
+  var feedback = page.locator('#section-' + section + ' .es-feedback').first();
+  await feedback.waitFor({ state: 'visible', timeout: 8000 }).catch(function() {});
+}
+
+// Shared helper: dismiss brain break overlay if it is currently visible.
+async function dismissBrainBreakIfVisible(page) {
+  var bb = page.locator('#brain-break-overlay');
+  var isShowing = await page.evaluate(function() {
+    var el = document.getElementById('brain-break-overlay');
+    return el ? (el.style.display !== 'none' && el.style.display !== '') : false;
+  }).catch(function() { return false; });
+  if (isShowing) {
+    await bb.locator('button').first().click();
+    await page.waitForTimeout(500);
+  }
+}
+
 test.describe('Homework: brain break fires after 4 answers', function() {
-  // TODO(#177): stabilize homework question-answering loop against production shim
-  test.fixme('brain-break overlay appears after answering 4 questions', async function({ page }) {
+  test('brain-break overlay appears after answering 4 questions', async function({ page }) {
     test.setTimeout(90000);
     var errors = collectErrors(page);
     await page.setViewportSize(DEVICES.a9);
     await shimGAS(page, FIXTURES);
 
     await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForTimeout(6000);
-
+    // Wait for Plan Your Attack to render (replaces fixed 6s timeout)
+    await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
     await page.locator('.es-ready-btn').click();
-    await page.waitForTimeout(2000);
+    await page.locator('.es-session-timer').waitFor({ state: 'visible', timeout: 10000 });
 
-    // Navigate into Science question section
     await page.locator('#tab-science').click();
-    await page.waitForTimeout(1000);
+    // Wait for first question option to be present before starting loop
+    await page.locator('#section-science .q-option').first().waitFor({ state: 'visible', timeout: 10000 });
 
-    // Answer 4 questions — :not(.correct-answer):not(.wrong-answer) skips already-submitted options.
-    // After each option click, LOCK IN (submitAnswer) is required — that increments
-    // _questionsSinceBrainBreak. Brain break fires when the counter reaches 4.
+    // Answer 4 questions — each submitOneAnswer waits for feedback before returning.
+    // _questionsSinceBrainBreak increments on each submitAnswer() call in HomeworkModule.
+    // Brain break fires when counter reaches _brainBreakAfter (default: 4).
     for (var i = 0; i < 4; i++) {
-      var option = page.locator('#section-science .q-option:not(.correct-answer):not(.wrong-answer)').first();
-      await expect(option).toBeVisible({ timeout: 10000 });
-      await option.click();
-      await page.waitForTimeout(500);
-      var lockBtnBB = page.locator('#section-science .lock-btn:not(.disabled)').first();
-      var hasLockBB = await lockBtnBB.isVisible({ timeout: 2000 }).catch(function() { return false; });
-      if (hasLockBB) {
-        await lockBtnBB.click();
-        await page.waitForTimeout(2000);
-      }
+      await submitOneAnswer(page, 'science');
     }
 
-    // Brain break overlay should appear after the 4th submission
-    await expect(page.locator('#brain-break-overlay')).toBeVisible({ timeout: 10000 });
+    // Brain break overlay is shown via overlay.style.display = 'block' (not a CSS class).
+    // Playwright toBeVisible() checks computed visibility including display:none, so
+    // we evaluate display directly to avoid false-negative from hidden→block race.
+    await page.waitForFunction(function() {
+      var el = document.getElementById('brain-break-overlay');
+      return el && el.style.display === 'block';
+    }, { timeout: 10000 });
     await snap(page, '03-homework-brain-break-overlay');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
@@ -204,8 +228,7 @@ test.describe('Homework: brain break fires after 4 answers', function() {
 });
 
 test.describe('Homework: Monday Error Journal appears', function() {
-  // TODO(#177): stabilize homework question-answering loop against production shim
-  test.fixme('error journal renders when clock is set to Monday', async function({ page }) {
+  test('error journal renders when clock is set to Monday', async function({ page }) {
     test.setTimeout(90000);
     var errors = collectErrors(page);
     await page.setViewportSize(DEVICES.a9);
@@ -215,42 +238,29 @@ test.describe('Homework: Monday Error Journal appears', function() {
     await shimGAS(page, FIXTURES);
 
     await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForTimeout(6000);
-
-    // Start and complete the module (answer all 6 questions quickly)
+    await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
     await page.locator('.es-ready-btn').click();
-    await page.waitForTimeout(2000);
+    await page.locator('.es-session-timer').waitFor({ state: 'visible', timeout: 10000 });
 
     // Answer all questions in both tabs to trigger completion.
-    // :not(.correct-answer):not(.wrong-answer) targets only unsubmitted options.
-    // LOCK IN (submitAnswer) is required to score each answer.
-    // Brain break fires after 4 total submissions — dismiss it and continue.
-    for (var tab of ['science', 'math']) {
+    // Brain break fires after 4 total submissions — dismiss and continue.
+    var tabs = ['science', 'math'];
+    for (var t = 0; t < tabs.length; t++) {
+      var tab = tabs[t];
       await page.locator('#tab-' + tab).click();
-      await page.waitForTimeout(1000);
+      await page.locator('#section-' + tab + ' .q-option').first().waitFor({ state: 'visible', timeout: 10000 });
 
       for (var i = 0; i < 8; i++) {
-        // Dismiss brain break if it fired mid-loop
-        var bbMon = await page.locator('#brain-break-overlay').isVisible({ timeout: 500 }).catch(function() { return false; });
-        if (bbMon) {
-          await page.locator('#brain-break-overlay button').click();
-          await page.waitForTimeout(1000);
-        }
-        var option = page.locator('#section-' + tab + ' .q-option:not(.correct-answer):not(.wrong-answer)').first();
-        var optionVisible = await option.isVisible({ timeout: 3000 }).catch(function() { return false; });
-        if (!optionVisible) break;
-        await option.click();
-        await page.waitForTimeout(500);
-        var lockBtnMon = page.locator('#section-' + tab + ' .lock-btn:not(.disabled)').first();
-        var hasLockMon = await lockBtnMon.isVisible({ timeout: 2000 }).catch(function() { return false; });
-        if (hasLockMon) {
-          await lockBtnMon.click();
-          await page.waitForTimeout(1500);
-        }
+        await dismissBrainBreakIfVisible(page);
+        // Check if any unanswered options remain in this section
+        var optionCount = await page.locator('#section-' + tab + ' .q-option:not(.correct-answer):not(.wrong-answer)').count();
+        if (optionCount === 0) break;
+        await submitOneAnswer(page, tab);
       }
     }
 
-    // Monday Error Journal should appear after completion
+    // Monday Error Journal should appear after completion (fixture answer:1 means option 0 is wrong,
+    // so missedQuestions will be populated and the error journal will render)
     await expect(page.locator('.es-error-journal')).toBeVisible({ timeout: 15000 });
     await snap(page, '04-homework-monday-error-journal');
 
@@ -259,8 +269,7 @@ test.describe('Homework: Monday Error Journal appears', function() {
 });
 
 test.describe('Homework: Friday Reflection appears', function() {
-  // TODO(#177): stabilize homework question-answering loop against production shim
-  test.fixme('reflection panel renders when clock is set to Friday', async function({ page }) {
+  test('reflection panel renders when clock is set to Friday', async function({ page }) {
     test.setTimeout(90000);
     var errors = collectErrors(page);
     await page.setViewportSize(DEVICES.a9);
@@ -270,35 +279,22 @@ test.describe('Homework: Friday Reflection appears', function() {
     await shimGAS(page, FIXTURES);
 
     await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForTimeout(6000);
-
+    await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
     await page.locator('.es-ready-btn').click();
-    await page.waitForTimeout(2000);
+    await page.locator('.es-session-timer').waitFor({ state: 'visible', timeout: 10000 });
 
-    // Answer all questions in both tabs to trigger completion.
-    // Same pattern as Monday test: :not(.correct-answer):not(.wrong-answer) + LOCK IN + brain break handling.
-    for (var tab of ['science', 'math']) {
+    // Same completion loop as Monday test — dismiss brain break, answer all questions in both tabs.
+    var tabs = ['science', 'math'];
+    for (var t = 0; t < tabs.length; t++) {
+      var tab = tabs[t];
       await page.locator('#tab-' + tab).click();
-      await page.waitForTimeout(1000);
+      await page.locator('#section-' + tab + ' .q-option').first().waitFor({ state: 'visible', timeout: 10000 });
 
       for (var i = 0; i < 8; i++) {
-        // Dismiss brain break if it fired mid-loop
-        var bbFri = await page.locator('#brain-break-overlay').isVisible({ timeout: 500 }).catch(function() { return false; });
-        if (bbFri) {
-          await page.locator('#brain-break-overlay button').click();
-          await page.waitForTimeout(1000);
-        }
-        var option = page.locator('#section-' + tab + ' .q-option:not(.correct-answer):not(.wrong-answer)').first();
-        var optionVisible = await option.isVisible({ timeout: 3000 }).catch(function() { return false; });
-        if (!optionVisible) break;
-        await option.click();
-        await page.waitForTimeout(500);
-        var lockBtnFri = page.locator('#section-' + tab + ' .lock-btn:not(.disabled)').first();
-        var hasLockFri = await lockBtnFri.isVisible({ timeout: 2000 }).catch(function() { return false; });
-        if (hasLockFri) {
-          await lockBtnFri.click();
-          await page.waitForTimeout(1500);
-        }
+        await dismissBrainBreakIfVisible(page);
+        var optionCount = await page.locator('#section-' + tab + ' .q-option:not(.correct-answer):not(.wrong-answer)').count();
+        if (optionCount === 0) break;
+        await submitOneAnswer(page, tab);
       }
     }
 
