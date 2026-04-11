@@ -24,8 +24,26 @@ var DEVICES = {
   s10fe: { width: 1920, height: 1200 }
 };
 
+// Screenshot helper — saves to test-results/screenshots/education/ so the
+// existing CI upload-artifact step picks them up automatically.
+var SCREENSHOT_DIR = 'test-results/screenshots/education';
+function snap(page, name) {
+  var fs = require('fs');
+  try { fs.mkdirSync(SCREENSHOT_DIR, { recursive: true }); } catch(e) {}
+  var safe = String(name).replace(/[^a-z0-9\-_]/gi, '-').toLowerCase();
+  return page.screenshot({ path: SCREENSHOT_DIR + '/' + safe + '.png', fullPage: false });
+}
+
 test.beforeEach(function() {
   test.skip(!BASE_URL, 'Set TBM_BASE_URL to a staging or local deployment before running education workflow tests.');
+});
+
+// On failure — always capture a full screenshot so CI artifacts show the broken state.
+test.afterEach(async function({ page }, testInfo) {
+  if (testInfo.status !== testInfo.expectedStatus) {
+    var safeName = testInfo.title.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    try { await snap(page, 'FAIL-' + safeName); } catch(e) {}
+  }
 });
 
 function collectErrors(page) {
@@ -87,6 +105,7 @@ test.describe('Homework: Plan Your Attack → answer flow → completion', funct
     // Feedback should be visible after submitting
     var feedback = page.locator('.feedback-box').first();
     await expect(feedback).toBeVisible({ timeout: 5000 });
+    await snap(page, '01-homework-plan-attack-feedback');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
   });
@@ -132,6 +151,7 @@ test.describe('Homework: wrong answer shows purple not red', function() {
     // Must contain purple (168, 85, 247) — NOT red (239, 68, 68)
     expect(bgColor).toContain('168, 85, 247');
     expect(bgColor).not.toContain('239, 68, 68');
+    await snap(page, '02-homework-wrong-answer-purple');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
   });
@@ -172,6 +192,7 @@ test.describe('Homework: brain break fires after 4 answers', function() {
 
     // Brain break overlay should appear after the 4th submission
     await expect(page.locator('#brain-break-overlay')).toBeVisible({ timeout: 10000 });
+    await snap(page, '03-homework-brain-break-overlay');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
   });
@@ -225,6 +246,7 @@ test.describe('Homework: Monday Error Journal appears', function() {
 
     // Monday Error Journal should appear after completion
     await expect(page.locator('.es-error-journal')).toBeVisible({ timeout: 15000 });
+    await snap(page, '04-homework-monday-error-journal');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
   });
@@ -275,6 +297,7 @@ test.describe('Homework: Friday Reflection appears', function() {
 
     // Friday Reflection should appear after completion
     await expect(page.locator('.es-reflection')).toBeVisible({ timeout: 15000 });
+    await snap(page, '05-homework-friday-reflection');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
   });
@@ -301,6 +324,7 @@ test.describe('Sparkle: session loads with star counter', function() {
     // Some activity content should have loaded
     var body = await page.locator('body').textContent();
     expect(body.length).toBeGreaterThan(100);
+    await snap(page, '06-sparkle-loaded');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
   });
@@ -330,6 +354,7 @@ test.describe('Sparkle: reload preserves star count', function() {
     var starsAfter = await starCounterAfter.textContent();
 
     expect(starsAfter).toBe(starsBefore);
+    await snap(page, '07-sparkle-reload-star-count');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
   });
@@ -376,6 +401,7 @@ test.describe('Daily Missions: JJ gets Sparkle theme', function() {
     var hasPurple = /purple|#[89a-f][0-9a-f]?[0-9a-f]?[5-9a-f][0-9a-f]?[fF]|128|168.*85.*247|147.*51.*234|rgba?\(\s*1[2-6]\d/i.test(allBg) ||
                     allBg.indexOf('gradient') !== -1;
     expect(hasPurple).toBe(true);
+    await snap(page, '08-daily-missions-jj-sparkle-theme');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
   });
@@ -405,6 +431,7 @@ test.describe('Daily Missions: Buggsy gets Wolfdome theme', function() {
                   /wolfdome|wolf|mission/i.test(bodyText.toLowerCase()) ||
                   bodyBg.indexOf('rgb(0') !== -1;
     expect(hasDark).toBe(true);
+    await snap(page, '09-daily-missions-buggsy-wolfdome-theme');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
   });
@@ -450,6 +477,7 @@ test.describe('Fact Sprint: timer counts UP not down', function() {
     expect(minutes).toBe(0);
     expect(seconds).toBeGreaterThan(0);
     expect(seconds).toBeLessThan(15);
+    await snap(page, '10-fact-sprint-timer-counting-up');
 
     expect(filterRealErrors(errors)).toHaveLength(0);
   });

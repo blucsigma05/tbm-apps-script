@@ -69,6 +69,32 @@ jobs:
 
           python3 .github/scripts/parse_playwright_results.py
 
+      - name: Run education workflow tests
+        id: education
+        env:
+          TBM_BASE_URL: https://thompsonfams.com
+        run: |
+          EDU_SPEC="tests/tbm/education-workflows.spec.js"
+          if [ ! -f "$EDU_SPEC" ]; then
+            echo "::warning::Education spec not found — skipping."
+            echo "edu_exit=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          npx playwright test "$EDU_SPEC" \
+            --project=chromium \
+            --reporter=json \
+            --output=test-results/education \
+            2>&1 | tee education-output.txt || true
+          EDU_EXIT=${PIPESTATUS[0]}
+          echo "edu_exit=$EDU_EXIT" >> "$GITHUB_OUTPUT"
+          # Parse education results and append to the main comment file
+          PW_EXIT=$EDU_EXIT PW_OUTPUT_FILE=education-output.txt \
+            python3 .github/scripts/parse_playwright_results.py > education-comment.md || true
+          # Rename section header and append
+          sed -i 's/## .* Playwright Regression:/## Education Workflow Tests:/' education-comment.md
+          printf '\n\n---\n\n' >> playwright-comment.md
+          cat education-comment.md >> playwright-comment.md
+
       - name: Detect changed UI files
         id: changed
         run: |
@@ -107,6 +133,15 @@ jobs:
         with:
           name: viewport-screenshots-${{ github.run_id }}
           path: test-results/screenshots/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload education screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: education-screenshots-${{ github.run_id }}
+          path: test-results/education/
           retention-days: 14
           if-no-files-found: ignore
 
@@ -157,4 +192,10 @@ jobs:
         if: steps.playwright.outputs.verdict == 'FAIL'
         run: |
           echo "Playwright found failures — merge blocked."
+          exit 1
+
+      - name: Fail check on education test failures
+        if: steps.education.outputs.edu_exit != '0'
+        run: |
+          echo "Education workflow tests failed — merge blocked."
           exit 1
