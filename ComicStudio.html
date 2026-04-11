@@ -1141,6 +1141,7 @@ function attachPointerEvents(canvas, panelIdx) {
       const bx = Math.min(Math.floor(pos.x), canvas.width - 1);
       const by = Math.min(Math.floor(pos.y), canvas.height - 1);
       floodFill(panelIdx, bx, by, activeColor);
+      if (!hasDrawnAnything) { hasDrawnAnything = true; startAutosaveTimer(); }
       return;
     }
 
