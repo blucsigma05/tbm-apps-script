@@ -551,15 +551,37 @@ def send_to_openai(context_text, api_key, cfg=None):
         "Authorization": "Bearer " + api_key,
     }
 
-    # Exponential backoff delays for 429 rate limits (seconds).
-    # OpenAI recommends backing off significantly — 2/4/8s is too short when
-    # multiple PRs burst simultaneously. Serialized concurrency (workflow) is
-    # the primary defense; this is the fallback for transient spikes.
-    RETRY_DELAYS_429 = [15, 30, 60, 120]
-    MAX_ATTEMPTS = len(RETRY_DELAYS_429) + 1  # 5 total
+    # Retry strategy for 429 rate limits:
+    #
+    # Phase 1 (attempts 1-2): Use the requested model (gpt-4o) with 15/30s backoff.
+    #   This handles transient spikes where a short wait is enough.
+    #
+    # Phase 2 (attempts 3-5): Fall back to gpt-4o-mini with 20/40/60s backoff.
+    #   gpt-4o-mini has higher rate limits and 10x lower cost. A degraded review
+    #   (less nuanced findings) is better than INCONCLUSIVE blocking the PR.
+    #
+    # Total max wait: 15+30+20+40+60 = 165s (~2.75 min), well within 10-min timeout.
+    RETRY_SCHEDULE = [
+        # (delay_seconds, model_override)
+        (15, None),          # attempt 2: same model, 15s wait
+        (30, None),          # attempt 3: same model, 30s wait
+        (20, "gpt-4o-mini"), # attempt 4: fallback model, 20s wait
+        (40, "gpt-4o-mini"), # attempt 5: fallback model, 40s wait
+        (60, "gpt-4o-mini"), # attempt 6: fallback model, 60s wait
+    ]
+    MAX_ATTEMPTS = len(RETRY_SCHEDULE) + 1  # 6 total
 
     last_error = None
+    fell_back = False
     for attempt in range(MAX_ATTEMPTS):
+        # On fallback attempts, swap the model in the payload
+        if attempt > 0 and attempt - 1 < len(RETRY_SCHEDULE):
+            _, model_override = RETRY_SCHEDULE[attempt - 1]
+            if model_override and model_override != payload["model"]:
+                print("429 fallback: switching from %s to %s" % (payload["model"], model_override))
+                payload["model"] = model_override
+                fell_back = True
+
         try:
             req = urllib.request.Request(
                 "https://api.openai.com/v1/chat/completions",
@@ -568,11 +590,16 @@ def send_to_openai(context_text, api_key, cfg=None):
                 method="POST",
             )
             with urllib.request.urlopen(req, timeout=90) as resp:
-                return json.load(resp)
+                result = json.load(resp)
+                if fell_back:
+                    # Tag the response so the caller knows the model was degraded
+                    result["_fallback_model"] = payload["model"]
+                    print("Review completed on fallback model: %s" % payload["model"])
+                return result
         except urllib.error.HTTPError as exc:
             last_error = exc
-            if exc.code == 429 and attempt < len(RETRY_DELAYS_429):
-                wait = RETRY_DELAYS_429[attempt]
+            if exc.code == 429 and attempt < len(RETRY_SCHEDULE):
+                wait, _ = RETRY_SCHEDULE[attempt]
                 print("Rate limited (429), retrying in %ds... (attempt %d/%d)" % (
                     wait, attempt + 1, MAX_ATTEMPTS - 1), file=sys.stderr)
                 time.sleep(wait)
@@ -587,7 +614,12 @@ def send_to_openai(context_text, api_key, cfg=None):
             if attempt < MAX_ATTEMPTS - 1:
                 time.sleep(2 ** (attempt + 1))
 
-    return {"error": str(last_error)}
+    # If we exhausted all retries due to 429, tag the error so the workflow
+    # can distinguish rate-limit INCONCLUSIVE from other failures.
+    error_str = str(last_error)
+    if "429" in error_str:
+        return {"error": error_str, "_rate_limited": True}
+    return {"error": error_str}
 
 
 # ── response parser ──────────────────────────────────────────────────
@@ -1016,7 +1048,18 @@ def main():
         fh.write(comment)
 
     write_github_output("verdict", verdict)
-    print("Codex verdict: %s" % verdict)
+
+    # Signal rate-limiting to the workflow so it can trigger a delayed requeue
+    rate_limited = data.get("_rate_limited", False)
+    write_github_output("rate_limited", "true" if rate_limited else "false")
+
+    # Signal fallback model usage for transparency
+    fallback_model = data.get("_fallback_model", "")
+    if fallback_model:
+        write_github_output("fallback_model", fallback_model)
+        print("Codex verdict: %s (via fallback model %s)" % (verdict, fallback_model))
+    else:
+        print("Codex verdict: %s" % verdict)
 
 
 if __name__ == "__main__":
