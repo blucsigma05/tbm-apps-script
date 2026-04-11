@@ -82,7 +82,7 @@ test.describe('Homework: Plan Your Attack → answer flow → completion', funct
     await page.waitForTimeout(1500);
 
     // Feedback should be visible after answering
-    var feedback = page.locator('.q-feedback, .es-feedback, [class*="feedback"]').first();
+    var feedback = page.locator('.feedback-box').first();
     await expect(feedback).toBeVisible({ timeout: 5000 });
 
     expect(filterRealErrors(errors)).toHaveLength(0);
