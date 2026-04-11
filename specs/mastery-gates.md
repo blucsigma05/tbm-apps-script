@@ -66,15 +66,15 @@ Output: {
   totalQuestions: 12,
   correctCount: 9,
   masteryPct: 75,
-  masteryLevel: "mastered",    // >= 70%
+  masteryLevel: "mastered",    // >= 75%
   currentDifficulty: "medium",
   trend: "improving",          // comparing last 5 vs previous 5
   lastAttempt: "2026-06-15"
 }
 ```
 
-**Mastery thresholds (per LT direction: 70%, not 80%):**
-- `>= 70%` = "mastered"
+**Mastery thresholds (per LT direction: 75% — "like the CPA exam"):**
+- `>= 75%` = "mastered"
 - `50-69%` = "in_progress"
 - `< 50%` = "needs_work"
 - `< 5 questions` = "not_assessed" (insufficient data)

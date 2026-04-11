@@ -21,7 +21,7 @@ issues go unnoticed and celebrations are missed.
 
 Implement an education-focused alert engine using the existing `sendPush_()`
 infrastructure in AlertEngine.gs. Maximum 2 education pushes per day to prevent
-alert fatigue. Recipient: JT (not LT) for education alerts.
+alert fatigue. Recipients: BOTH (JT and LT receive all education alerts).
 
 ---
 
@@ -84,7 +84,7 @@ Message: "Weekly Education Digest — [Child]
 or reaches a ring/star milestone.
 
 ```
-Check: On every QuestionLog write, check if mastery just crossed 70% threshold
+Check: On every QuestionLog write, check if mastery just crossed 75% threshold
 Frequency: Real-time (triggered on question completion)
 Priority: CHORE_APPROVAL (0, normal sound)
 Message: "[Child] just mastered [milestone]! [celebration emoji]
@@ -133,7 +133,7 @@ alert tier and fires on a fixed schedule).
 ### Existing Infrastructure
 - `sendPush_(recipient, title, message, priority)` in AlertEngine.gs
 - `PUSHOVER_PRIORITY.*` constants for priority levels
-- Recipients: `"JT"` for education alerts
+- Recipients: `"BOTH"` for all education alerts (JT and LT)
 - GAS time-based triggers for scheduled checks
 
 ### New Functions
@@ -163,7 +163,7 @@ function sendWeeklyDigest_() {
 
 function checkMilestones_(child, teksCode, newMasteryPct) {
   // Called after every QuestionLog write
-  // Check if mastery just crossed 70% threshold
+  // Check if mastery just crossed 75% threshold
   // If so, fire milestone alert (deduplicated)
 }
 ```
