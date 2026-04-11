@@ -1285,6 +1285,8 @@ function clearPanel() {
     panelContexts[activePanel].clearRect(0, 0, c.width, c.height);
     panelContexts[activePanel].fillStyle = '#FFFFFF';
     panelContexts[activePanel].fillRect(0, 0, c.width, c.height);
+    /* Prune replay history for this panel so replay matches final canvas */
+    replayBuffer = replayBuffer.filter(function(e) { return e.panelIdx !== activePanel; });
   }
 }
 
