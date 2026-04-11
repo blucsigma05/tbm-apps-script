@@ -1215,7 +1215,7 @@ function updateCounts() {
 function handleSubmit() {
   playBugsyAudio('buggsy_cer_submit.mp3');
   submitted = true;
-  clearDraft_();
+  /* clearDraft_ moved to submitHomeworkSafe success handler — prevents data loss if submit fails */
   // Stop writing timer
   if (timerRunning) {
     timerRunning = false;
@@ -1237,6 +1237,7 @@ function handleSubmit() {
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler(function(result) {
+            clearDraft_(); /* Only clear draft after server confirms success */
             console.log('Submitted: ' + (result && result.status ? result.status : 'unknown'));
           })
           .withFailureHandler(function(err) { console.error('Submit failed:', err); })

@@ -1573,7 +1573,7 @@ function submitInvestigationJournal() {
     document.getElementById('investigation-journal').placeholder = 'Write at least one sentence...';
     return;
   }
-  clearDraft_(); // Clear draft only after validation passes (#162 Codex fix)
+  /* Draft cleared in submitForReview success handler, not here — prevents data loss if submit fails */
   ExecSkills._journalData = {
     type: 'investigation-reflection',
     hypothesis: sectionData.hypothesis,
@@ -1673,6 +1673,7 @@ function submitForReview() {
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
           .withSuccessHandler(function() {
+            clearDraft_(); /* Only clear draft after server confirms success */
             btn.textContent = 'SUBMITTED';
             btn.style.background = '#22C55E';
             status.style.color = '#F59E0B';
@@ -1736,7 +1737,7 @@ function loadCurriculumContent() {
 // ─── INIT ───
 // ─── Draft Auto-Save (#162) ───
 var _DRAFT_LS_KEY = 'tbm_investigation_draft_' + new Date().toISOString().slice(0, 10);
-var _DRAFT_FIELDS = ['hypothesis-text', 'prediction-text', 'conclusion-text'];
+var _DRAFT_FIELDS = ['hypothesis-text', 'prediction-text', 'conclusion-text', 'investigation-journal'];
 
 function saveDraft_() {
   try {
@@ -1748,6 +1749,15 @@ function saveDraft_() {
       parts[_DRAFT_FIELDS[i]] = val;
       if (val.replace(/^\s+|\s+$/g, '').length > 0) hasContent = true;
     }
+    /* Also save procedure steps (dynamic inputs) */
+    var steps = [];
+    var stepEls = document.querySelectorAll('.step-input');
+    for (var s = 0; s < stepEls.length; s++) {
+      var sv = stepEls[s].value || '';
+      steps.push(sv);
+      if (sv.replace(/^\s+|\s+$/g, '').length > 0) hasContent = true;
+    }
+    parts['_procedure_steps'] = steps;
     if (!hasContent) return;
     localStorage.setItem(_DRAFT_LS_KEY, JSON.stringify({ parts: parts, savedAt: new Date().toISOString() }));
   } catch (e) {}
@@ -1763,6 +1773,14 @@ function loadDraft_() {
       for (var i = 0; i < _DRAFT_FIELDS.length; i++) {
         var el = document.getElementById(_DRAFT_FIELDS[i]);
         if (el && draft.parts[_DRAFT_FIELDS[i]]) el.value = draft.parts[_DRAFT_FIELDS[i]];
+      }
+      /* Restore procedure steps */
+      if (draft.parts['_procedure_steps']) {
+        var savedSteps = draft.parts['_procedure_steps'];
+        var stepEls = document.querySelectorAll('.step-input');
+        for (var s = 0; s < Math.min(savedSteps.length, stepEls.length); s++) {
+          if (savedSteps[s]) stepEls[s].value = savedSteps[s];
+        }
       }
       console.log('Draft restored from ' + draft.savedAt);
     }, 300);
