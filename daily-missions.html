@@ -383,6 +383,13 @@ body.jj-theme #starfield { display: none; }
   position: absolute;
   border-radius: 50%;
   opacity: 0.15;
+  animation: jjDotPulse var(--dot-dur, 3s) var(--dot-delay, 0s) ease-in-out infinite;
+}
+/* On dark bg, dots need more presence */
+body.jj-theme .jj-sparkle-dot { opacity: 0.35; }
+@keyframes jjDotPulse {
+  0%,100% { transform: translateY(0) scale(1); opacity: var(--dot-opacity, 0.35); }
+  50%     { transform: translateY(-6px) scale(1.2); opacity: calc(var(--dot-opacity, 0.35) * 1.6); }
 }
 
 /* JJ Header */
@@ -422,6 +429,10 @@ body.jj-theme .day-focus {
   font-size: 24px;
 }
 
+@keyframes jjCardIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 /* JJ Mission Cards */
 body.jj-theme .mission-card {
   background: rgba(255,255,255,0.1);
@@ -430,6 +441,7 @@ body.jj-theme .mission-card {
   padding: 16px;
   min-height: 80px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  animation: jjCardIn 0.4s ease-out both;
 }
 body.jj-theme .mission-card:hover {
   border-color: rgba(236,72,153,0.5);
@@ -1302,12 +1314,16 @@ function buildSparkles() {
     var x = Math.random() * 100;
     var y = Math.random() * 100;
     var c = colors[Math.floor(Math.random() * colors.length)];
+    var dur = (Math.random() * 3 + 2).toFixed(1);
+    var delay = (Math.random() * 4).toFixed(1);
     html += '<div class="jj-sparkle-dot" style="' +
       'width:' + size + 'px;' +
       'height:' + size + 'px;' +
       'left:' + x + '%;' +
       'top:' + y + '%;' +
       'background:' + c + ';' +
+      '--dot-dur:' + dur + 's;' +
+      '--dot-delay:' + delay + 's;' +
       '"></div>';
   }
   container.innerHTML = html;
