@@ -462,7 +462,12 @@ function serveData(e) {
         'saveComicDraftSafe': saveComicDraftSafe,
         'loadComicDraftSafe': loadComicDraftSafe,
         'deleteComicDraftSafe': deleteComicDraftSafe,
-        'getComicStudioContextSafe': getComicStudioContextSafe
+        'getComicStudioContextSafe': getComicStudioContextSafe,
+        // NotionEngine.js — Notion-specific wrappers (v2: renamed to avoid overriding Code.js handlers)
+        'notionLogHomeworkSafe': notionLogHomeworkSafe,
+        'notionLogSparkleProgressSafe': notionLogSparkleProgressSafe,
+        'notionApproveHomeworkSafe': notionApproveHomeworkSafe,
+        'getPendingReviewsSafe': getPendingReviewsSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {
@@ -1411,7 +1416,10 @@ function healthCheck() {
     'awardRingsSafe', 'getKHLastModifiedSafe', 'khBatchApproveSafe',
     'runTestsSafe', 'seedStaarRlaSprintSafe',
     'savePowerScanResultsSafe', 'logQuestionResultSafe',
-    'getWeeklyProgressSafe'
+    'getWeeklyProgressSafe',
+    // v174: NotionEngine.js — renamed to avoid overriding Code.js handlers
+    'notionLogHomeworkSafe', 'notionLogSparkleProgressSafe', 'notionApproveHomeworkSafe',
+    'getPendingReviewsSafe'
   ];
   var allOk = true;
   for (var fi = 0; fi < fns.length; fi++) {

@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// NotionEngine.gs v1 — Notion API Wrapper for Education Modules
+// NotionEngine.gs v2 — Notion API Wrapper for Education Modules
 // WRITES TO: Notion (Homework Tracker, Pre-K Prep, Story Factory)
 // READS FROM: Script Properties (NOTION_TOKEN)
 // ════════════════════════════════════════════════════════════════════
 
-function getNotionEngineVersion() { return 1; }
+function getNotionEngineVersion() { return 2; }
 
 // ── NOTION DB IDs ───────────────────────────────────────────────────
 const NOTION_DB = {
@@ -289,31 +289,34 @@ function queryPendingReviews_() {
 // ═══════════════════════════════════════════════════════════════
 
 /**
- * Safe wrapper for logHomeworkToNotion_. Called by modules via google.script.run.
+ * Notion-specific safe wrapper: creates a Homework Tracker page and returns pageId.
+ * Named distinctly from logHomeworkCompletionSafe in Code.js (which writes to Sheet).
+ * Called by modules that need a Notion page reference for later approval.
  * @param {object} data — homework completion data
- * @returns {string} JSON result
+ * @returns {string} JSON result with pageId
  */
-function logHomeworkCompletionSafe(data) {
+function notionLogHomeworkSafe(data) {
   try {
     const page = logHomeworkToNotion_(data);
     return JSON.stringify({ status: 'ok', pageId: page.id });
   } catch (e) {
-    if (typeof logError_ === 'function') logError_('logHomeworkCompletionSafe', e);
+    if (typeof logError_ === 'function') logError_('notionLogHomeworkSafe', e);
     return JSON.stringify({ status: 'error', message: e.message });
   }
 }
 
 /**
- * Safe wrapper for logSparkleToNotion_. Called by modules via google.script.run.
+ * Notion-specific safe wrapper: creates a Pre-K Prep page and returns pageId.
+ * Named distinctly from logSparkleProgressSafe in Code.js (which writes to Sheet).
  * @param {object} data — sparkle progress data
- * @returns {string} JSON result
+ * @returns {string} JSON result with pageId
  */
-function logSparkleProgressSafe(data) {
+function notionLogSparkleProgressSafe(data) {
   try {
     const page = logSparkleToNotion_(data);
     return JSON.stringify({ status: 'ok', pageId: page.id });
   } catch (e) {
-    if (typeof logError_ === 'function') logError_('logSparkleProgressSafe', e);
+    if (typeof logError_ === 'function') logError_('notionLogSparkleProgressSafe', e);
     return JSON.stringify({ status: 'error', message: e.message });
   }
 }
@@ -333,13 +336,15 @@ function getPendingReviewsSafe() {
 }
 
 /**
- * Safe wrapper for approving homework: updates Notion status + awards remaining rings.
+ * Notion-specific approval: updates a Notion page status + awards rings.
+ * Named distinctly from approveHomeworkSafe in KidsHub.js (rowIndex/action contract).
+ * Use this when the caller has a Notion page UUID (from notionLogHomeworkSafe).
  * @param {string} pageId — Notion page UUID
  * @param {number} grade — final grade
  * @param {string} notes — parent notes
  * @returns {string} JSON result
  */
-function approveHomeworkSafe(pageId, grade, notes) {
+function notionApproveHomeworkSafe(pageId, grade, notes) {
   try {
     // Update Notion page status to 'approved'
     updateHomeworkStatus_(pageId, 'approved', grade, notes);
@@ -352,9 +357,9 @@ function approveHomeworkSafe(pageId, grade, notes) {
 
     return JSON.stringify({ status: 'ok', pageId: pageId, approved: true });
   } catch (e) {
-    if (typeof logError_ === 'function') logError_('approveHomeworkSafe', e);
+    if (typeof logError_ === 'function') logError_('notionApproveHomeworkSafe', e);
     return JSON.stringify({ status: 'error', message: e.message });
   }
 }
 
-// EOF — NotionEngine.gs v1
+// EOF — NotionEngine.gs v2

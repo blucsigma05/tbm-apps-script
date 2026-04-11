@@ -82,6 +82,30 @@ var EDUCATION_FIXTURES = {
     ]
   },
 
+  // getDailyMissionsInitSafe — used by daily-missions.html on load
+  getDailyMissionsInitSafe: {
+    isDay1: false,
+    missionState: {},
+    designUnlocked: true,
+    dateKey: 'missions_2026-04-11',
+    schedule: {
+      blocks: [
+        { id: 'm1', title: 'Homework Sprint', type: 'homework', order: 1, completed: false, url: '?page=homework' },
+        { id: 'm2', title: 'Fact Sprint', type: 'facts', order: 2, completed: false, url: '?page=facts' },
+        { id: 'm3', title: 'Reading Log', type: 'reading', order: 3, completed: false, url: '?page=reading' }
+      ]
+    }
+  },
+
+  // getDailyScheduleSafe — used by daily-missions.html for curriculum-driven schedule
+  getDailyScheduleSafe: {
+    blocks: [
+      { id: 'm1', title: 'Homework Sprint', type: 'homework', order: 1, completed: false, url: '?page=homework' },
+      { id: 'm2', title: 'Fact Sprint', type: 'facts', order: 2, completed: false, url: '?page=facts' },
+      { id: 'm3', title: 'Reading Log', type: 'reading', order: 3, completed: false, url: '?page=reading' }
+    ]
+  },
+
   getSparkleProgressSafe: {
     stars: 12,
     lettersCompleted: ['K', 'I', 'N', 'D']
