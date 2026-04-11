@@ -148,7 +148,11 @@ test.describe('Homework: wrong answer shows purple not red', function() {
       return window.getComputedStyle(el).backgroundColor;
     });
 
-    // Must contain purple (168, 85, 247) — NOT red (239, 68, 68)
+    // HomeworkModule.html sets wrong-answer to purple since PR #173 (commit fa2aa33,
+    // merged 2026-04-11). Both main and this branch have:
+    //   .q-option.wrong-answer { background: rgba(168,85,247,0.20); border-color: #a855f7; }
+    // This assertion is correct against the deployed production code.
+    // rgba(168, 85, 247, 0.2) — getComputedStyle normalizes with spaces
     expect(bgColor).toContain('168, 85, 247');
     expect(bgColor).not.toContain('239, 68, 68');
     await snap(page, '02-homework-wrong-answer-purple');
