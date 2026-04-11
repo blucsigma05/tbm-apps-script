@@ -71,6 +71,10 @@ test.describe('Homework: Plan Your Attack → answer flow → completion', funct
     // Session timer should appear
     await expect(page.locator('.es-session-timer')).toBeVisible({ timeout: 10000 });
 
+    // Module opens on Overview tab — navigate into Science questions
+    await page.locator('#tab-science').click();
+    await page.waitForTimeout(1000);
+
     // Answer the first question by clicking the correct option
     var firstOption = page.locator('.q-option').first();
     await expect(firstOption).toBeVisible({ timeout: 10000 });
@@ -98,6 +102,10 @@ test.describe('Homework: wrong answer shows purple not red', function() {
     // Start the session
     await page.locator('.es-ready-btn').click();
     await page.waitForTimeout(2000);
+
+    // Navigate into Science question section
+    await page.locator('#tab-science').click();
+    await page.waitForTimeout(1000);
 
     // Find all options and click a wrong one.
     // The fixture q1 correct index is 1 (second option), so click the first option (index 0).
@@ -134,6 +142,10 @@ test.describe('Homework: brain break fires after 4 answers', function() {
 
     await page.locator('.es-ready-btn').click();
     await page.waitForTimeout(2000);
+
+    // Navigate into Science question section
+    await page.locator('#tab-science').click();
+    await page.waitForTimeout(1000);
 
     // Answer 4 questions in sequence
     for (var i = 0; i < 4; i++) {
@@ -175,18 +187,24 @@ test.describe('Homework: Monday Error Journal appears', function() {
     await page.locator('.es-ready-btn').click();
     await page.waitForTimeout(2000);
 
-    for (var i = 0; i < 6; i++) {
-      var option = page.locator('.q-option').first();
-      var optionVisible = await option.isVisible({ timeout: 5000 }).catch(function() { return false; });
-      if (!optionVisible) break;
-      await option.click();
-      await page.waitForTimeout(1500);
+    // Navigate through Science then Math to complete all questions
+    for (var tab of ['science', 'math']) {
+      await page.locator('#tab-' + tab).click();
+      await page.waitForTimeout(1000);
 
-      var nextBtn = page.locator('.es-next-btn, .q-next, [class*="next"]').first();
-      var hasNext = await nextBtn.isVisible({ timeout: 2000 }).catch(function() { return false; });
-      if (hasNext) {
-        await nextBtn.click();
+      for (var i = 0; i < 6; i++) {
+        var option = page.locator('#section-' + tab + ' .q-option').first();
+        var optionVisible = await option.isVisible({ timeout: 5000 }).catch(function() { return false; });
+        if (!optionVisible) break;
+        await option.click();
         await page.waitForTimeout(1500);
+
+        var nextBtn = page.locator('.es-next-btn, .q-next, [class*="next"]').first();
+        var hasNext = await nextBtn.isVisible({ timeout: 2000 }).catch(function() { return false; });
+        if (hasNext) {
+          await nextBtn.click();
+          await page.waitForTimeout(1500);
+        }
       }
     }
 
@@ -213,18 +231,24 @@ test.describe('Homework: Friday Reflection appears', function() {
     await page.locator('.es-ready-btn').click();
     await page.waitForTimeout(2000);
 
-    for (var i = 0; i < 6; i++) {
-      var option = page.locator('.q-option').first();
-      var optionVisible = await option.isVisible({ timeout: 5000 }).catch(function() { return false; });
-      if (!optionVisible) break;
-      await option.click();
-      await page.waitForTimeout(1500);
+    // Navigate through Science then Math to complete all questions
+    for (var tab of ['science', 'math']) {
+      await page.locator('#tab-' + tab).click();
+      await page.waitForTimeout(1000);
 
-      var nextBtn = page.locator('.es-next-btn, .q-next, [class*="next"]').first();
-      var hasNext = await nextBtn.isVisible({ timeout: 2000 }).catch(function() { return false; });
-      if (hasNext) {
-        await nextBtn.click();
+      for (var i = 0; i < 6; i++) {
+        var option = page.locator('#section-' + tab + ' .q-option').first();
+        var optionVisible = await option.isVisible({ timeout: 5000 }).catch(function() { return false; });
+        if (!optionVisible) break;
+        await option.click();
         await page.waitForTimeout(1500);
+
+        var nextBtn = page.locator('.es-next-btn, .q-next, [class*="next"]').first();
+        var hasNext = await nextBtn.isVisible({ timeout: 2000 }).catch(function() { return false; });
+        if (hasNext) {
+          await nextBtn.click();
+          await page.waitForTimeout(1500);
+        }
       }
     }
 
