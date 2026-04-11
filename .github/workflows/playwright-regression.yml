@@ -87,9 +87,11 @@ jobs:
             2>&1 | tee education-output.txt || true
           EDU_EXIT=${PIPESTATUS[0]}
           echo "edu_exit=$EDU_EXIT" >> "$GITHUB_OUTPUT"
-          # Parse education results and append to the main comment file
+          # Parse education results into a separate file (COMMENT_FILE prevents
+          # overwriting the main playwright-comment.md — see Finding 1 on PR #176)
           PW_EXIT=$EDU_EXIT PW_OUTPUT_FILE=education-output.txt \
-            python3 .github/scripts/parse_playwright_results.py > education-comment.md || true
+            COMMENT_FILE=education-comment.md \
+            python3 .github/scripts/parse_playwright_results.py || true
           # Rename section header and append
           sed -i 's/## .* Playwright Regression:/## Education Workflow Tests:/' education-comment.md
           printf '\n\n---\n\n' >> playwright-comment.md
@@ -141,7 +143,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: education-screenshots-${{ github.run_id }}
-          path: test-results/education/
+          path: test-results/screenshots/education/
           retention-days: 14
           if-no-files-found: ignore
 

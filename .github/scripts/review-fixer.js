@@ -154,6 +154,22 @@ function applyEs6IncludesFix(root, finding) {
 // Converts block-body arrow functions inside <script> tags to ES5.
 // Handles: (params) => { and identifier => {
 // Does NOT handle expression arrows (param => expr) — those need return injection.
+// Safety: skips any <script> block where an arrow line has `this` within 5 lines,
+// since converting arrow→function changes lexical `this` binding (PR #176 finding).
+function arrowBodyUsesThis(body) {
+  var lines = body.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    if (/=>\s*\{/.test(lines[i])) {
+      var start = Math.max(0, i);
+      var end = Math.min(lines.length - 1, i + 5);
+      for (var j = start; j <= end; j++) {
+        if (/\bthis\b/.test(lines[j])) return true;
+      }
+    }
+  }
+  return false;
+}
+
 function applyEs6ArrowFunctionFix(root, finding) {
   if (!finding || !finding.file) return false;
   var filePath = path.join(root, finding.file);
@@ -161,6 +177,8 @@ function applyEs6ArrowFunctionFix(root, finding) {
   var content = fs.readFileSync(filePath, 'utf8');
   var original = content;
   content = content.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, function(fullMatch, body) {
+    // If any arrow in this block uses `this`, skip — needs human review
+    if (arrowBodyUsesThis(body)) return fullMatch;
     // (params_no_nested_parens) => {
     var fixed = body.replace(/\(([^()]*)\)\s*=>\s*\{/g, 'function($1) {');
     // single_identifier => {
