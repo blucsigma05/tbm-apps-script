@@ -2879,17 +2879,707 @@ var BUGGSY_WEEK_12 = {
   }
 };
 
-// Weeks 13-16 placeholder — to be generated in next curriculum expansion
-// W13: Math 4.6-4.7 (geometry/angles) + Science 4.10 (adaptations/life) + RLA: poetry
-// W14: Math 4.8 (measurement) + Science 4.11 (fossils) + RLA: informational
-// W15: Math 4.9 (data analysis advanced) + Science 4.2 (inquiry) + RLA: grammar heavy
-// W16: Math 4.10 (financial literacy) + Science review + RLA: STAAR ECR practice
+var BUGGSY_WEEK_13 = {
+  child: "buggsy",
+  week: 13,
+  startDate: "2026-07-06",
+  vocabulary: [
+    { word: "parallel", definition: "Lines that run side by side and never cross", sentence: "Railroad tracks are parallel lines." },
+    { word: "perpendicular", definition: "Lines that meet at a right angle (90 degrees)", sentence: "The corner of a book shows perpendicular lines." },
+    { word: "stanza", definition: "A group of lines in a poem, like a paragraph", sentence: "The poem had four stanzas with different rhymes." },
+    { word: "migrate", definition: "To move from one place to another, usually with the seasons", sentence: "Many birds migrate south for the winter." },
+    { word: "acute", definition: "An angle smaller than 90 degrees", sentence: "A slice of pizza forms an acute angle at the point." }
+  ],
+  scaffoldConfig: {
+    timerMode: "count_up",
+    missionStructure: "sequential",
+    feedbackLevel: "on_tap",
+    hintLimit: 2,
+    retryOnWrong: true,
+    thursdayOverride: { timerMode: "hidden", feedbackLevel: "full" },
+    adhd: {
+      chunkSize: 3,
+      brainBreakAfter: 4,
+      brainBreakType: "movement",
+      brainBreakPrompt: "Stand up! March in place for 15 seconds, then freeze like a statue!",
+      visualCueMode: "progress_dots",
+      transitionAudio: true,
+      choiceOnFriday: true,
+      maxConsecutiveText: 2,
+      interleaveVisual: true,
+      feedbackDelay: 0,
+      celebrateStreak: 3,
+      readAloudOption: false
+    }
+  },
+  days: {
+    Monday: {
+      module: {
+        title: "Geometry & Life Cycles",
+        math: {
+          title: "Lines, Angles, and Triangles",
+          questions: [
+            { q: "Which angle is ACUTE?", type: "multiple_choice", choices: ["45 degrees", "90 degrees", "120 degrees", "180 degrees"], correct: 0, standard: "TEKS 4.7A", explanation: "An acute angle is less than 90 degrees. 45 < 90, so it is acute." },
+            { q: "What type of angle does the corner of a book form?", type: "multiple_choice", choices: ["Acute", "Right (90 degrees)", "Obtuse", "Straight"], correct: 1, standard: "TEKS 4.7A", explanation: "A book corner is a right angle = exactly 90 degrees." },
+            { q: "Two lines that never cross no matter how far they extend are called —", type: "multiple_choice", choices: ["Perpendicular", "Parallel", "Intersecting", "Diagonal"], correct: 1, standard: "TEKS 4.6A", explanation: "Parallel lines run side by side and never meet." },
+            { q: "A triangle with one right angle is called a —", type: "multiple_choice", choices: ["Equilateral triangle", "Right triangle", "Obtuse triangle", "Scalene triangle"], correct: 1, standard: "TEKS 4.6B", explanation: "A right triangle has exactly one 90-degree angle." },
+            { q: "A student says an angle of 100 degrees is acute. Is this correct?", type: "error_analysis", choices: ["Yes — any angle is acute", "No — 100 degrees is obtuse (greater than 90)", "No — 100 degrees is a right angle", "Yes — acute means large"], correct: 1, standard: "TEKS 4.7A", explanation: "Acute < 90. Right = 90. Obtuse > 90 and < 180. 100 > 90, so it is obtuse." }
+          ]
+        },
+        science: {
+          title: "Life Cycles",
+          questions: [
+            { q: "Which shows the correct life cycle of a butterfly?", type: "multiple_choice", choices: ["Egg → larva → pupa → adult", "Egg → pupa → larva → adult", "Larva → egg → adult → pupa", "Adult → egg → larva → pupa"], correct: 0, standard: "TEKS 4.10B", explanation: "Complete metamorphosis: egg → larva (caterpillar) → pupa (chrysalis) → adult." },
+            { q: "How is a frog's life cycle different from a butterfly's?", type: "multiple_choice", choices: ["Frogs don't have eggs", "Frogs go through incomplete metamorphosis with a tadpole stage", "Frogs skip the larva stage", "There is no difference"], correct: 1, standard: "TEKS 4.10B", explanation: "Frogs: egg → tadpole → tadpole with legs → adult frog. Tadpoles live in water; adults live on land." },
+            { q: "Which organism does NOT go through metamorphosis?", type: "multiple_choice", choices: ["Butterfly", "Frog", "Dog", "Beetle"], correct: 2, standard: "TEKS 4.10B", explanation: "Dogs are mammals — they grow larger but don't change body form. Insects and amphibians go through metamorphosis." }
+          ]
+        }
+      },
+      factSprint: { operation: "mixed", range: [6, 12], count: 20, timeLimit: 100 },
+      vocabulary: ["parallel", "perpendicular"]
+    },
+    Tuesday: {
+      cold_passage: {
+        title: "The Road Not Taken (adapted)",
+        passage: "Two roads diverged in a yellow wood,\nAnd sorry I could not travel both\nAnd be one traveler, long I stood\nAnd looked down one as far as I could\nTo where it bent in the undergrowth;\n\nThen took the other, as just as fair,\nAnd having perhaps the better claim,\nBecause it was grassy and wanted wear;\nThough as for that the passing there\nHad worn them really about the same,\n\nI shall be telling this with a sigh\nSomewhere ages and ages hence:\nTwo roads diverged in a wood, and I —\nI took the one less traveled by,\nAnd that has made all the difference.",
+        paragraphs: ["Two roads diverged in a yellow wood, / And sorry I could not travel both / And be one traveler, long I stood / And looked down one as far as I could / To where it bent in the undergrowth;", "Then took the other, as just as fair, / And having perhaps the better claim, / Because it was grassy and wanted wear; / Though as for that the passing there / Had worn them really about the same,", "I shall be telling this with a sigh / Somewhere ages and ages hence: / Two roads diverged in a wood, and I — / I took the one less traveled by, / And that has made all the difference."],
+        vocabWords: ["diverged", "undergrowth", "hence"],
+        passageVisibility: "full",
+        questions: [
+          { q: "What is the speaker's problem at the beginning?", type: "multiple_choice", choices: ["He is lost in the woods", "He must choose between two paths", "He is afraid of the dark", "He forgot which way to go"], correct: 1, standard: "TEKS 4.8A" },
+          { q: "What does 'diverged' mean?", type: "multiple_choice", choices: ["Came together", "Split apart", "Disappeared", "Grew taller"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "Why does the speaker choose the second road?", type: "multiple_choice", choices: ["It was shorter", "It was grassy and less worn", "Someone told him to", "It had a sign"], correct: 1, standard: "TEKS 4.6B" },
+          { q: "This poem is really about —", type: "multiple_choice", choices: ["A nature walk", "Making choices in life", "Getting lost in the forest", "Building a road"], correct: 1, standard: "TEKS 4.7A", explanation: "The roads are a metaphor for life choices. The speaker chose the less popular path and it 'made all the difference.'" },
+          { q: "Which poetic device is 'two roads diverged in a yellow wood'?", type: "multiple_choice", choices: ["Simile", "Personification", "Metaphor", "Alliteration"], correct: 2, standard: "TEKS 4.8A", explanation: "The roads are a metaphor for life's choices — the poet isn't literally talking about roads." },
+          { q: "What rhyme scheme does this poem follow?", type: "multiple_choice", choices: ["AABB", "ABAB", "ABAAB", "No rhyme"], correct: 2, standard: "TEKS 4.8A", explanation: "The stanzas follow ABAAB: wood/both/stood/could/undergrowth." }
+        ]
+      },
+      writing: {
+        prompt: "Write your own poem (at least 3 stanzas, 4 lines each) about a choice you had to make. Use at least one metaphor and one example of imagery (describing something you see, hear, or feel).",
+        standard: "TEKS 4.11A",
+        minSentences: 12,
+        skillFocus: "poetry writing"
+      }
+    },
+    Wednesday: {
+      module: {
+        title: "Symmetry & Inherited Traits",
+        math: {
+          title: "Symmetry and Geometric Patterns",
+          questions: [
+            { q: "How many lines of symmetry does a square have?", type: "multiple_choice", choices: ["1", "2", "4", "8"], correct: 2, standard: "TEKS 4.6D", explanation: "A square has 4 lines of symmetry: horizontal, vertical, and 2 diagonal." },
+            { q: "Which letter has exactly ONE line of symmetry?", type: "multiple_choice", choices: ["H", "A", "O", "X"], correct: 1, standard: "TEKS 4.6D", explanation: "A has one vertical line of symmetry. H has 2, O has many, X has 2." },
+            { q: "Spiral: Estimate 34 x 21.", type: "computation", choices: ["600", "700", "800", "500"], correct: 1, standard: "TEKS 4.4G", explanation: "34 rounds to 30, 21 rounds to 20. 30 x 20 = 600. More precisely: 34 x 21 = 714, so 700 is closest." },
+            { q: "Spiral: What is 5/6 - 2/6?", type: "computation", choices: ["3/6 = 1/2", "3/12", "7/6", "3/0"], correct: 0, standard: "TEKS 4.3E", explanation: "Same denominator: 5 - 2 = 3, so 3/6 = 1/2." }
+          ]
+        },
+        science: {
+          title: "Inherited Traits vs. Learned Behaviors",
+          questions: [
+            { q: "Which is an INHERITED trait?", type: "multiple_choice", choices: ["Speaking English", "Eye color", "Playing piano", "Riding a bike"], correct: 1, standard: "TEKS 4.10A", explanation: "Eye color is passed from parents through genes. Languages and skills are learned." },
+            { q: "A dog fetching a ball is an example of —", type: "multiple_choice", choices: ["An inherited trait", "A learned behavior", "A structural adaptation", "A life cycle stage"], correct: 1, standard: "TEKS 4.10A", explanation: "Fetching is taught — it's a learned behavior, not something dogs are born knowing." },
+            { q: "Spiral: What type of energy transfer happens when you touch a hot stove?", type: "multiple_choice", choices: ["Convection", "Radiation", "Conduction", "Evaporation"], correct: 2, standard: "TEKS 4.6A" }
+          ]
+        }
+      },
+      investigation: {
+        prompt: "Wolfkid's pack noticed that wolf pups from different parents have different fur colors. Design an investigation to compare inherited traits (fur color, eye color, ear shape) across 3 wolf families. Create a data table and look for patterns.",
+        teks: "TEKS 4.10A, 4.2A",
+        subject: "Science",
+        materials: ["photos of 3 wolf families (5 members each)", "data table", "colored pencils for coding"],
+        guideQuestions: ["Which traits appear in both parents AND pups?", "Which traits skip a generation?", "What patterns do you see across families?"]
+      }
+    },
+    Thursday: {
+      cold_passage: {
+        title: "The Last Passenger Pigeon",
+        passage: "Martha was a passenger pigeon, and she was the last of her kind. She lived her entire life at the Cincinnati Zoo, never knowing the sky the way her ancestors did. Just a century earlier, passenger pigeons were the most abundant bird in North America. Flocks so large they darkened the sky for hours would pass over cities and farms. Eyewitnesses described billions of birds stretching from horizon to horizon. But humans hunted them relentlessly. Professional hunters killed thousands at a time with nets and guns. Forests where the pigeons nested were cut down for farmland. By the 1890s, the once-countless flocks had dwindled to a handful of birds. On September 1, 1914, Martha died at the age of 29. With her death, the passenger pigeon was officially extinct. Her story remains a powerful reminder that even the most abundant species can disappear if we don't protect them.",
+        paragraphs: ["Martha was a passenger pigeon, and she was the last of her kind. She lived her entire life at the Cincinnati Zoo, never knowing the sky the way her ancestors did.", "Just a century earlier, passenger pigeons were the most abundant bird in North America. Flocks so large they darkened the sky for hours would pass over cities and farms. Eyewitnesses described billions of birds stretching from horizon to horizon.", "But humans hunted them relentlessly. Professional hunters killed thousands at a time with nets and guns. Forests where the pigeons nested were cut down for farmland.", "By the 1890s, the once-countless flocks had dwindled to a handful of birds. On September 1, 1914, Martha died at the age of 29.", "With her death, the passenger pigeon was officially extinct. Her story remains a powerful reminder that even the most abundant species can disappear if we don't protect them."],
+        vocabWords: ["abundant", "relentlessly", "dwindled"],
+        passageVisibility: "full",
+        questions: [
+          { q: "How many passenger pigeons existed before hunting began?", type: "multiple_choice", choices: ["Thousands", "Millions", "Billions", "Hundreds"], correct: 2, standard: "TEKS 4.6A" },
+          { q: "What does 'dwindled' mean?", type: "multiple_choice", choices: ["Grew rapidly", "Gradually decreased", "Flew away", "Changed color"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "What TWO factors caused the pigeons to go extinct?", type: "multiple_choice", choices: ["Disease and cold weather", "Hunting and habitat loss (deforestation)", "Pollution and drought", "Predators and storms"], correct: 1, standard: "TEKS 4.6C" },
+          { q: "What is the author's PURPOSE for writing this passage?", type: "multiple_choice", choices: ["To entertain with a bird story", "To inform and warn about extinction", "To persuade readers to visit zoos", "To describe what pigeons look like"], correct: 1, standard: "TEKS 4.10A" }
+        ]
+      },
+      grammarSprint: {
+        title: "Grammar Sprint: Complex Sentences",
+        standard: "TEKS 4.11D",
+        questions: [
+          { q: "Which is a COMPLEX sentence?", choices: ["The dog ran fast.", "The dog ran fast, and the cat hid.", "Because it rained, the game was canceled.", "The dog ran. The cat hid."], correct: 2, explanation: "A complex sentence has an independent clause and a dependent clause joined by a subordinating conjunction (because, although, when, if)." },
+          { q: "Choose the correct subordinating conjunction: ___ she studied hard, she passed the test.", choices: ["But", "Because", "And", "Or"], correct: 1, explanation: "'Because' shows cause and effect — studying led to passing." },
+          { q: "Which sentence uses a comma correctly with a dependent clause?", choices: ["After the movie we ate dinner.", "After the movie, we ate dinner.", "After, the movie we ate dinner.", "After the movie we, ate dinner."], correct: 1, explanation: "When a dependent clause comes FIRST, put a comma after it." },
+          { q: "Combine: 'It was cold outside. She wore a coat.'", choices: ["It was cold outside she wore a coat.", "Because it was cold outside, she wore a coat.", "It was cold outside, she wore a coat.", "Cold outside she wore a coat."], correct: 1, explanation: "Use 'because' to show the reason, with a comma after the dependent clause." },
+          { q: "Which word is a subordinating conjunction?", choices: ["And", "But", "Although", "Or"], correct: 2, explanation: "Although, because, when, if, since, unless, while — these start dependent clauses." }
+        ]
+      },
+      wolfkidEpisode: {
+        title: "Episode 13: The Angle of Approach",
+        scenario: "The pack needs to build a bridge across a ravine. Wolfkid must measure angles to determine if the support beams will hold. The bridge design requires all angles to sum to 180 degrees per triangle section.",
+        writingPrompt: "Write a CER paragraph: Based on the angle measurements, will the bridge design hold? If any triangle section doesn't sum to 180 degrees, identify the error.",
+        data: { sectionA: "60+60+60=180", sectionB: "45+90+45=180", sectionC: "50+80+60=190" }
+      }
+    },
+    Friday: {
+      module: {
+        title: "Friday Review — Geometry & Life Cycles",
+        math: {
+          title: "Week 13 Review",
+          questions: [
+            { q: "An angle of 135 degrees is —", type: "multiple_choice", choices: ["Acute", "Right", "Obtuse", "Straight"], correct: 2, standard: "TEKS 4.7A", explanation: "135 > 90 and < 180, so it is obtuse." },
+            { q: "Spiral: 36 x 24 = ?", type: "computation", choices: ["864", "844", "824", "884"], correct: 0, standard: "TEKS 4.4E", explanation: "36 x 24 = 36 x 20 + 36 x 4 = 720 + 144 = 864." },
+            { q: "How many lines of symmetry does an equilateral triangle have?", type: "multiple_choice", choices: ["0", "1", "2", "3"], correct: 3, standard: "TEKS 4.6D", explanation: "An equilateral triangle has 3 lines of symmetry (one through each vertex)." },
+            { q: "Spiral: A frequency table shows Cat=15, Dog=20, Fish=10. What fraction chose Fish?", type: "computation", choices: ["10/45", "10/35", "10/20", "15/45"], correct: 0, standard: "TEKS 4.8A" }
+          ]
+        },
+        science: {
+          title: "Weekly Science Review",
+          questions: [
+            { q: "Egg → larva → pupa → adult is the life cycle of —", type: "multiple_choice", choices: ["A frog", "A butterfly", "A dog", "A fish"], correct: 1, standard: "TEKS 4.10B" },
+            { q: "Spiral: Erosion is the ___ of weathered material.", type: "multiple_choice", choices: ["Breaking down", "Movement", "Creation", "Melting"], correct: 1, standard: "TEKS 4.7B" }
+          ]
+        }
+      },
+      factSprint: { operation: "mixed", range: [7, 12], count: 25, timeLimit: 100 },
+      writing: {
+        prompt: "Write a poem (at least 2 stanzas) from the perspective of an animal going through metamorphosis. What does the butterfly feel inside the chrysalis? What does the tadpole think as it grows legs?",
+        standard: "TEKS 4.11A",
+        minSentences: 8,
+        skillFocus: "creative poetry"
+      }
+    }
+  }
+};
+
+var BUGGSY_WEEK_14 = {
+  child: "buggsy",
+  week: 14,
+  startDate: "2026-07-13",
+  vocabulary: [
+    { word: "convert", definition: "To change from one form or unit to another", sentence: "You can convert inches to centimeters using a formula." },
+    { word: "fossil", definition: "The preserved remains of an ancient living thing", sentence: "Scientists found a dinosaur fossil buried in the rock." },
+    { word: "cite", definition: "To reference a source as evidence for a claim", sentence: "In your essay, cite the text to support your answer." },
+    { word: "excavate", definition: "To dig out carefully from the ground", sentence: "Archaeologists excavate ancient ruins layer by layer." },
+    { word: "capacity", definition: "The maximum amount a container can hold", sentence: "The capacity of the bathtub is 40 gallons." }
+  ],
+  scaffoldConfig: {
+    timerMode: "count_up",
+    missionStructure: "sequential",
+    feedbackLevel: "on_tap",
+    hintLimit: 2,
+    retryOnWrong: true,
+    thursdayOverride: { timerMode: "hidden", feedbackLevel: "full" },
+    adhd: {
+      chunkSize: 3,
+      brainBreakAfter: 4,
+      brainBreakType: "choice",
+      brainBreakPrompt: "Brain break! Pick: wall push-ups (10), balance on one foot (20 seconds), or desk drumming (15 seconds).",
+      visualCueMode: "progress_dots",
+      transitionAudio: true,
+      choiceOnFriday: true,
+      maxConsecutiveText: 2,
+      interleaveVisual: true,
+      feedbackDelay: 0,
+      celebrateStreak: 3,
+      readAloudOption: false
+    }
+  },
+  days: {
+    Monday: {
+      module: {
+        title: "Measurement Conversion & Fossils",
+        math: {
+          title: "Customary & Metric Measurement",
+          questions: [
+            { q: "How many inches are in 3 feet?", type: "computation", choices: ["24", "30", "36", "48"], correct: 2, standard: "TEKS 4.8A", explanation: "1 foot = 12 inches. 3 x 12 = 36 inches." },
+            { q: "Which is longer: 1 meter or 1 yard?", type: "multiple_choice", choices: ["1 meter (it's about 39 inches)", "1 yard (it's 36 inches)", "They are equal", "Cannot compare"], correct: 0, standard: "TEKS 4.8B", explanation: "1 meter ≈ 39.37 inches. 1 yard = 36 inches. A meter is slightly longer." },
+            { q: "A recipe calls for 2 cups of milk. How many fluid ounces is that?", type: "computation", choices: ["8 fl oz", "12 fl oz", "16 fl oz", "32 fl oz"], correct: 2, standard: "TEKS 4.8A", explanation: "1 cup = 8 fluid ounces. 2 cups = 16 fl oz." },
+            { q: "Convert 5,000 grams to kilograms.", type: "computation", choices: ["5 kg", "50 kg", "500 kg", "0.5 kg"], correct: 0, standard: "TEKS 4.8B", explanation: "1 kilogram = 1,000 grams. 5,000 / 1,000 = 5 kg." },
+            { q: "A student says 2 miles = 2,000 feet. Is this correct?", type: "error_analysis", choices: ["Yes, correct", "No — 2 miles = 10,560 feet", "No — 2 miles = 5,280 feet", "No — 2 miles = 3,000 feet"], correct: 1, standard: "TEKS 4.8A", explanation: "1 mile = 5,280 feet. 2 miles = 10,560 feet. The student's answer is way off." }
+          ]
+        },
+        science: {
+          title: "Fossils & Earth's History",
+          questions: [
+            { q: "Fossils are usually found in which type of rock?", type: "multiple_choice", choices: ["Igneous", "Sedimentary", "Metamorphic", "Volcanic"], correct: 1, standard: "TEKS 4.7A", explanation: "Fossils form in sedimentary rock because layers of sediment slowly bury and preserve organisms." },
+            { q: "What can fossils tell scientists?", type: "multiple_choice", choices: ["What the weather is today", "What organisms lived long ago and what the environment was like", "How to make new species", "Nothing useful"], correct: 1, standard: "TEKS 4.7A", explanation: "Fossils are evidence of past life and ancient environments." },
+            { q: "If you find a fossil of a fish in a desert, what can you conclude?", type: "multiple_choice", choices: ["Fish can live in deserts", "That area was once covered by water", "The fossil is fake", "Fish evolved into lizards"], correct: 1, standard: "TEKS 4.7A", explanation: "A fish fossil in a desert means that area was once an ocean, lake, or sea." }
+          ]
+        }
+      },
+      factSprint: { operation: "divide", range: [6, 12], count: 20, timeLimit: 100 },
+      vocabulary: ["convert", "fossil"]
+    },
+    Tuesday: {
+      cold_passage: {
+        title: "The Deep-Sea Discovery",
+        passage: "In 1977, scientists aboard the research submarine Alvin made one of the most surprising discoveries in the history of biology. Two and a half miles below the surface of the Pacific Ocean, where no sunlight could reach, they found thriving communities of strange creatures living near volcanic vents on the ocean floor. These hydrothermal vents spew superheated water — as hot as 700 degrees Fahrenheit — rich in chemicals from deep within the Earth. Giant tube worms up to six feet long, eyeless shrimp, and ghostly white crabs clustered around the vents. The scientists were stunned. Until then, all known food chains depended on sunlight and photosynthesis. But these creatures survived through chemosynthesis — using chemical energy from the vents instead of sunlight. The discovery changed our understanding of where life can exist. If life can thrive in such extreme conditions on Earth, some scientists believe it might also exist on other planets or moons with similar environments.",
+        paragraphs: ["In 1977, scientists aboard the research submarine Alvin made one of the most surprising discoveries in the history of biology.", "Two and a half miles below the surface of the Pacific Ocean, where no sunlight could reach, they found thriving communities of strange creatures living near volcanic vents on the ocean floor.", "These hydrothermal vents spew superheated water — as hot as 700 degrees Fahrenheit — rich in chemicals from deep within the Earth. Giant tube worms up to six feet long, eyeless shrimp, and ghostly white crabs clustered around the vents.", "The scientists were stunned. Until then, all known food chains depended on sunlight and photosynthesis. But these creatures survived through chemosynthesis — using chemical energy from the vents instead of sunlight.", "The discovery changed our understanding of where life can exist. If life can thrive in such extreme conditions on Earth, some scientists believe it might also exist on other planets or moons with similar environments."],
+        vocabWords: ["hydrothermal", "chemosynthesis", "thriving"],
+        passageVisibility: "full",
+        questions: [
+          { q: "Where were the deep-sea creatures discovered?", type: "multiple_choice", choices: ["On the beach", "Near volcanic vents 2.5 miles deep", "In a lake", "In the Arctic Ocean"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "How do these creatures get energy without sunlight?", type: "multiple_choice", choices: ["Photosynthesis", "Chemosynthesis — using chemical energy", "They eat sunlight that sinks", "They don't need energy"], correct: 1, standard: "TEKS 4.6B" },
+          { q: "What does 'thriving' mean?", type: "multiple_choice", choices: ["Barely surviving", "Growing and doing well", "Moving quickly", "Shrinking"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "Why did this discovery change scientists' understanding?", type: "multiple_choice", choices: ["It proved sunlight isn't needed for all life", "It showed oceans are warm", "It found new continents", "It proved fish can fly"], correct: 0, standard: "TEKS 4.6D" },
+          { q: "What is the MAIN idea of this passage?", type: "multiple_choice", choices: ["Submarines are useful tools", "Life can exist in unexpected places without sunlight", "The Pacific Ocean is very deep", "Tube worms are interesting animals"], correct: 1, standard: "TEKS 4.7A" },
+          { q: "How is the passage organized?", type: "multiple_choice", choices: ["Compare and contrast", "Problem and solution", "Chronological + cause and effect", "Persuasive argument"], correct: 2, standard: "TEKS 4.9D", explanation: "The passage tells the story chronologically (1977 discovery) and explains cause/effect (why this matters)." }
+        ]
+      },
+      writing: {
+        prompt: "Write an informational paragraph about a scientific discovery that interests you. Cite at least 2 specific facts (you can use facts from the passage or make up realistic ones). Include a topic sentence, supporting details, and a concluding sentence.",
+        standard: "TEKS 4.11B",
+        minSentences: 7,
+        skillFocus: "informational writing"
+      }
+    },
+    Wednesday: {
+      module: {
+        title: "Elapsed Time & Fossil Layers",
+        math: {
+          title: "Elapsed Time & Unit Conversion",
+          questions: [
+            { q: "A movie starts at 2:45 PM and ends at 5:10 PM. How long is the movie?", type: "word_problem", choices: ["2 hours 15 minutes", "2 hours 25 minutes", "3 hours 25 minutes", "2 hours 35 minutes"], correct: 1, standard: "TEKS 4.8C", explanation: "2:45 to 5:10 = 2 hours 25 minutes." },
+            { q: "How many minutes are in 3 hours and 15 minutes?", type: "computation", choices: ["180", "195", "315", "215"], correct: 1, standard: "TEKS 4.8A", explanation: "3 hours = 180 minutes + 15 = 195 minutes." },
+            { q: "Spiral: What is the perimeter of a rectangle that is 18 cm by 11 cm?", type: "computation", choices: ["29 cm", "58 cm", "198 cm", "56 cm"], correct: 1, standard: "TEKS 4.5D", explanation: "P = 2(18) + 2(11) = 36 + 22 = 58 cm." },
+            { q: "Spiral: Round 45,672 to the nearest thousand.", type: "computation", choices: ["45,000", "46,000", "45,700", "50,000"], correct: 1, standard: "TEKS 4.2B", explanation: "The hundreds digit is 6 (5+), so round up to 46,000." }
+          ]
+        },
+        science: {
+          title: "Fossil Layers — Relative Age",
+          questions: [
+            { q: "In undisturbed rock layers, the oldest fossils are found —", type: "multiple_choice", choices: ["At the top", "In the middle", "At the bottom", "Scattered randomly"], correct: 2, standard: "TEKS 4.7A", explanation: "In undisturbed layers, the bottom layers were deposited first and are the oldest." },
+            { q: "Scientist finds Layer A (trilobite fossils) below Layer B (dinosaur fossils). Which is older?", type: "multiple_choice", choices: ["Layer A (trilobites)", "Layer B (dinosaurs)", "They are the same age", "Cannot determine"], correct: 0, standard: "TEKS 4.7A", explanation: "Lower layers are older. Trilobites lived before dinosaurs." },
+            { q: "Spiral: Which material is a good insulator?", type: "multiple_choice", choices: ["Copper wire", "Wooden spoon", "Aluminum foil", "Iron nail"], correct: 1, standard: "TEKS 4.6A" }
+          ]
+        }
+      },
+      investigation: {
+        prompt: "Wolfkid's pack found a cliff with 5 visible rock layers. Each layer contains different fossils. Create a model of the layers, label each fossil type, and determine which layer is oldest and which is youngest. Explain your reasoning.",
+        teks: "TEKS 4.7A, 4.2B",
+        subject: "Science",
+        materials: ["5 colors of clay/paper", "fossil stickers or drawings", "cross-section diagram template"],
+        guideQuestions: ["Which layer was deposited first?", "If you found a fish fossil in layer 3 and a plant fossil in layer 1, what can you conclude?", "What would happen to the order if the layers were disturbed by an earthquake?"]
+      }
+    },
+    Thursday: {
+      cold_passage: {
+        title: "How a Seed Becomes a Forest",
+        passage: "It begins with a single seed, no bigger than your fingernail. Inside that tiny package is everything needed to grow a tree that could live for hundreds of years. When conditions are right — enough water, warmth, and light — the seed cracks open and sends a tiny root downward into the soil. Next, a small green shoot pushes upward toward the light. This baby tree, called a seedling, is incredibly fragile. A single footstep could crush it. But if the seedling survives, it will slowly grow into a sapling — a young tree with a thin trunk and a few branches. Over decades, the sapling thickens, grows taller, and develops a canopy of leaves. A mature oak tree can produce up to 70,000 acorns in a single year. Each acorn is a new seed. Most will be eaten by squirrels or fail to sprout, but a few will take root and begin the cycle again. One tree can give rise to an entire forest over centuries.",
+        paragraphs: ["It begins with a single seed, no bigger than your fingernail. Inside that tiny package is everything needed to grow a tree that could live for hundreds of years.", "When conditions are right — enough water, warmth, and light — the seed cracks open and sends a tiny root downward into the soil. Next, a small green shoot pushes upward toward the light.", "This baby tree, called a seedling, is incredibly fragile. A single footstep could crush it. But if the seedling survives, it will slowly grow into a sapling — a young tree with a thin trunk and a few branches.", "Over decades, the sapling thickens, grows taller, and develops a canopy of leaves. A mature oak tree can produce up to 70,000 acorns in a single year.", "Each acorn is a new seed. Most will be eaten by squirrels or fail to sprout, but a few will take root and begin the cycle again. One tree can give rise to an entire forest over centuries."],
+        vocabWords: ["sapling", "canopy", "fragile"],
+        passageVisibility: "full",
+        questions: [
+          { q: "What is the correct order of a tree's growth?", type: "multiple_choice", choices: ["Seed → sapling → seedling → tree", "Seed → seedling → sapling → mature tree", "Seedling → seed → tree → sapling", "Tree → seed → seedling → sapling"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "What does 'fragile' mean?", type: "multiple_choice", choices: ["Very strong", "Easily broken or damaged", "Fast growing", "Brightly colored"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "How many acorns can a mature oak produce in one year?", type: "multiple_choice", choices: ["700", "7,000", "70,000", "700,000"], correct: 2, standard: "TEKS 4.6A" },
+          { q: "How is this passage organized?", type: "multiple_choice", choices: ["Compare and contrast", "Sequential/chronological order", "Problem and solution", "Persuasive argument"], correct: 1, standard: "TEKS 4.9D" }
+        ]
+      },
+      grammarSprint: {
+        title: "Grammar Sprint: Prepositional Phrases",
+        standard: "TEKS 4.11D",
+        questions: [
+          { q: "What is the prepositional phrase in: 'The cat slept under the table.'?", choices: ["The cat", "slept under", "under the table", "the table"], correct: 2, explanation: "A prepositional phrase starts with a preposition (under) and ends with its object (table)." },
+          { q: "Which word is a preposition?", choices: ["Run", "Beautiful", "Between", "Quickly"], correct: 2, explanation: "Between is a preposition. Others: run (verb), beautiful (adjective), quickly (adverb)." },
+          { q: "Choose the sentence with a prepositional phrase:", choices: ["She ran quickly.", "The book is interesting.", "The bird flew over the fence.", "He laughed loudly."], correct: 2, explanation: "'Over the fence' is a prepositional phrase (preposition + object)." },
+          { q: "How many prepositional phrases: 'The dog ran through the park and jumped over the log.'?", choices: ["1", "2", "3", "0"], correct: 1, explanation: "Two: 'through the park' and 'over the log'." },
+          { q: "Add a prepositional phrase: 'The flowers bloomed ___.'", choices: ["beautifully", "in the garden", "yesterday", "quickly"], correct: 1, explanation: "'In the garden' tells WHERE the flowers bloomed — it's a prepositional phrase." }
+        ]
+      },
+      wolfkidEpisode: {
+        title: "Episode 14: The Fossil Record",
+        scenario: "The pack found fossils at two different sites. Site A has marine fossils (fish, shells). Site B, 50 miles away on a mountain, has the SAME marine fossils. Wolfkid must explain how marine fossils ended up on a mountaintop.",
+        writingPrompt: "Write a CER paragraph: How did fish fossils get to the top of a mountain? Use evidence about rock layers, tectonic plates, and fossil formation.",
+        data: { siteA: "sea level, limestone, fish + shell fossils", siteB: "5,000 ft elevation, same limestone, identical fossils" }
+      }
+    },
+    Friday: {
+      module: {
+        title: "Friday Review — Measurement & Fossils",
+        math: {
+          title: "Week 14 Review",
+          questions: [
+            { q: "How many cups are in 1 gallon?", type: "computation", choices: ["8", "12", "16", "4"], correct: 2, standard: "TEKS 4.8A", explanation: "1 gallon = 4 quarts = 8 pints = 16 cups." },
+            { q: "A basketball game starts at 7:30 PM and lasts 2 hours 15 minutes. What time does it end?", type: "word_problem", choices: ["9:30 PM", "9:45 PM", "10:00 PM", "9:15 PM"], correct: 1, standard: "TEKS 4.8C", explanation: "7:30 + 2 hours = 9:30 + 15 minutes = 9:45 PM." },
+            { q: "Spiral: 468 / 6 = ?", type: "computation", choices: ["76", "78", "80", "74"], correct: 1, standard: "TEKS 4.4F", explanation: "468 / 6 = 78." },
+            { q: "Spiral: Which is greater: 3/4 or 5/8?", type: "multiple_choice", choices: ["3/4", "5/8", "They are equal"], correct: 0, standard: "TEKS 4.3D", explanation: "3/4 = 6/8. Since 6/8 > 5/8, 3/4 is greater." }
+          ]
+        },
+        science: {
+          title: "Weekly Science Review",
+          questions: [
+            { q: "Fossils help scientists understand —", type: "multiple_choice", choices: ["Future weather", "What life was like long ago", "How to build rockets", "Current animal behavior"], correct: 1, standard: "TEKS 4.7A" },
+            { q: "Spiral: Complete metamorphosis stages:", type: "multiple_choice", choices: ["Egg → adult", "Egg → larva → pupa → adult", "Egg → pupa → adult", "Egg → tadpole → adult"], correct: 1, standard: "TEKS 4.10B" }
+          ]
+        }
+      },
+      factSprint: { operation: "mixed", range: [4, 12], count: 25, timeLimit: 100 },
+      writing: {
+        prompt: "Free Write Friday! Imagine you are an archaeologist who just discovered a fossil of an animal no one has ever seen before. Describe the fossil, what the animal might have looked like when alive, and what its environment might have been.",
+        standard: "TEKS 4.11A",
+        minSentences: 10,
+        skillFocus: "creative/informational"
+      }
+    }
+  }
+};
+
+var BUGGSY_WEEK_15 = {
+  child: "buggsy",
+  week: 15,
+  startDate: "2026-07-20",
+  vocabulary: [
+    { word: "hypothesis", definition: "An educated guess that can be tested with an experiment", sentence: "My hypothesis is that plants grow faster in sunlight than in shade." },
+    { word: "variable", definition: "Something that can change or be changed in an experiment", sentence: "The variable we changed was the amount of water each plant received." },
+    { word: "reliable", definition: "Can be trusted to be accurate or correct", sentence: "We ran the experiment three times to make sure our results were reliable." },
+    { word: "data", definition: "Facts, numbers, or information collected during an experiment", sentence: "We recorded all the data in a table so we could find patterns." },
+    { word: "conclusion", definition: "The final decision based on evidence and data", sentence: "Our conclusion is that salt water freezes at a lower temperature." }
+  ],
+  scaffoldConfig: {
+    timerMode: "count_up",
+    missionStructure: "sequential",
+    feedbackLevel: "on_tap",
+    hintLimit: 2,
+    retryOnWrong: true,
+    thursdayOverride: { timerMode: "hidden", feedbackLevel: "full" },
+    adhd: {
+      chunkSize: 3,
+      brainBreakAfter: 4,
+      brainBreakType: "movement",
+      brainBreakPrompt: "Movement time! Do the robot dance for 15 seconds, then do 5 slow deep breaths.",
+      visualCueMode: "progress_dots",
+      transitionAudio: true,
+      choiceOnFriday: true,
+      maxConsecutiveText: 2,
+      interleaveVisual: true,
+      feedbackDelay: 0,
+      celebrateStreak: 3,
+      readAloudOption: false
+    }
+  },
+  days: {
+    Monday: {
+      module: {
+        title: "Advanced Data & Scientific Inquiry",
+        math: {
+          title: "Stem-and-Leaf Plots & Mean",
+          questions: [
+            { q: "In a stem-and-leaf plot, the stems are 2,3,4 and the leaves for stem 3 are 1,5,7,9. What numbers does stem 3 represent?", type: "multiple_choice", choices: ["3,1,5,7,9", "31,35,37,39", "21,25,27,29", "13,15,17,19"], correct: 1, standard: "TEKS 4.8C", explanation: "Stem 3 with leaves 1,5,7,9 = 31, 35, 37, 39." },
+            { q: "Find the mean (average) of: 10, 20, 30, 40, 50", type: "computation", choices: ["25", "30", "35", "40"], correct: 1, standard: "TEKS 4.8C", explanation: "Sum = 150. Count = 5. Mean = 150/5 = 30." },
+            { q: "A dot plot shows: 5(2 dots), 6(4 dots), 7(3 dots), 8(1 dot). What is the median?", type: "computation", choices: ["5", "6", "7", "6.5"], correct: 1, standard: "TEKS 4.8C", explanation: "10 values sorted: 5,5,6,6,6,6,7,7,7,8. Middle = 5th and 6th = both 6. Median = 6." },
+            { q: "Spiral: A store sells items for $4.75 each. You buy 8. How much total?", type: "word_problem", choices: ["$36.00", "$38.00", "$32.00", "$40.00"], correct: 1, standard: "TEKS 4.4B", explanation: "$4.75 x 8 = $38.00." },
+            { q: "A student finds the mean of {12, 18, 24} and gets 24. Is this correct?", type: "error_analysis", choices: ["Yes", "No — the mean is 18", "No — the mean is 12", "No — the mean is 54"], correct: 1, standard: "TEKS 4.8C", explanation: "Sum = 54. Count = 3. Mean = 54/3 = 18. The student used the max, not the average." }
+          ]
+        },
+        science: {
+          title: "Scientific Inquiry — Designing Fair Tests",
+          questions: [
+            { q: "In an experiment, the variable you CHANGE on purpose is called —", type: "multiple_choice", choices: ["Dependent variable", "Independent variable", "Control variable", "Constant"], correct: 1, standard: "TEKS 4.2A", explanation: "The independent variable is what you change. The dependent variable is what you measure." },
+            { q: "Why do scientists repeat experiments multiple times?", type: "multiple_choice", choices: ["Because they forgot the first time", "To make reliable results that can be trusted", "Because teachers require it", "To use more materials"], correct: 1, standard: "TEKS 4.2B", explanation: "Repeating experiments confirms that results are reliable, not just a fluke." },
+            { q: "In a plant growth experiment, you change the amount of water. What should stay the SAME?", type: "multiple_choice", choices: ["The type of plant, sunlight, and soil", "Nothing — change everything", "Only the pot size", "The water amount"], correct: 0, standard: "TEKS 4.2A", explanation: "Constants (things kept the same) ensure a fair test. Only change ONE variable." }
+          ]
+        }
+      },
+      factSprint: { operation: "mixed", range: [8, 12], count: 20, timeLimit: 90 },
+      vocabulary: ["hypothesis", "variable"]
+    },
+    Tuesday: {
+      cold_passage: {
+        title: "The Invention of the Telephone",
+        passage: "On March 10, 1876, Alexander Graham Bell spoke the first words ever transmitted by telephone: 'Mr. Watson, come here. I want to see you.' His assistant, Thomas Watson, heard the message clearly from another room. Years of experimentation had led to this moment. Bell, a teacher of the deaf, understood how sound waves traveled through air. He believed that if sound could vibrate a thin metal disc, those vibrations could be converted to electrical signals, sent through a wire, and then converted back to sound. The path to invention was not smooth. Bell filed his patent just hours before another inventor, Elisha Gray, filed his own telephone design. Many historians still debate whether Bell or Gray should receive credit for the invention. What is certain is that the telephone transformed human communication forever. Within 50 years of Bell's first call, telephones connected millions of people across the country.",
+        paragraphs: ["On March 10, 1876, Alexander Graham Bell spoke the first words ever transmitted by telephone: 'Mr. Watson, come here. I want to see you.' His assistant, Thomas Watson, heard the message clearly from another room.", "Years of experimentation had led to this moment. Bell, a teacher of the deaf, understood how sound waves traveled through air.", "He believed that if sound could vibrate a thin metal disc, those vibrations could be converted to electrical signals, sent through a wire, and then converted back to sound.", "The path to invention was not smooth. Bell filed his patent just hours before another inventor, Elisha Gray, filed his own telephone design. Many historians still debate whether Bell or Gray should receive credit for the invention.", "What is certain is that the telephone transformed human communication forever. Within 50 years of Bell's first call, telephones connected millions of people across the country."],
+        vocabWords: ["transmitted", "patent", "vibrations"],
+        passageVisibility: "full",
+        questions: [
+          { q: "When did Bell make the first telephone call?", type: "multiple_choice", choices: ["1776", "1876", "1976", "1826"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "What was Bell's day job?", type: "multiple_choice", choices: ["Electrician", "Teacher of the deaf", "Doctor", "Musician"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "What does 'transmitted' mean?", type: "multiple_choice", choices: ["Destroyed", "Sent from one place to another", "Created", "Written down"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "Why do historians debate who invented the telephone?", type: "multiple_choice", choices: ["No one remembers", "Bell and Gray filed patents hours apart", "Watson actually invented it", "It was invented in another country"], correct: 1, standard: "TEKS 4.6B" },
+          { q: "Which statement BEST summarizes this passage?", type: "multiple_choice", choices: ["Bell invented the telephone in 1876 after years of work, though another inventor nearly beat him to it", "Alexander Graham Bell was a teacher who liked electricity", "The telephone was invented by Thomas Watson", "Many people helped invent the telephone over 50 years"], correct: 0, standard: "TEKS 4.7B" },
+          { q: "What is the author's purpose?", type: "multiple_choice", choices: ["To persuade readers to use telephones", "To inform readers about the invention of the telephone", "To entertain with a fictional story", "To compare phones and radios"], correct: 1, standard: "TEKS 4.10A" }
+        ]
+      },
+      writing: {
+        prompt: "Write a well-organized paragraph about an invention that changed the world. State your opinion about which invention is MOST important and support it with at least 2 reasons. Cite specific facts.",
+        standard: "TEKS 4.11B",
+        minSentences: 7,
+        skillFocus: "opinion + evidence"
+      }
+    },
+    Wednesday: {
+      module: {
+        title: "Perimeter & Area Review + Controls",
+        math: {
+          title: "Perimeter, Area, and Mixed Review",
+          questions: [
+            { q: "A garden is 12 m long and 8 m wide. What is the area?", type: "computation", choices: ["40 sq m", "96 sq m", "20 sq m", "48 sq m"], correct: 1, standard: "TEKS 4.5C", explanation: "Area = 12 x 8 = 96 square meters." },
+            { q: "Same garden — what is the perimeter?", type: "computation", choices: ["20 m", "40 m", "96 m", "48 m"], correct: 1, standard: "TEKS 4.5D", explanation: "P = 2(12) + 2(8) = 24 + 16 = 40 meters." },
+            { q: "Spiral: Find the mean of {8, 12, 16, 20}.", type: "computation", choices: ["12", "14", "16", "13"], correct: 1, standard: "TEKS 4.8C", explanation: "Sum = 56. Count = 4. Mean = 56/4 = 14." },
+            { q: "Spiral: 3/5 + 4/5 = ?", type: "computation", choices: ["7/10", "7/5 = 1 2/5", "1/5", "12/5"], correct: 1, standard: "TEKS 4.3E", explanation: "Same denominator: 3 + 4 = 7, so 7/5 = 1 2/5." }
+          ]
+        },
+        science: {
+          title: "Control Groups & Fair Testing",
+          questions: [
+            { q: "In an experiment testing if fertilizer helps plants grow, the plant WITHOUT fertilizer is called —", type: "multiple_choice", choices: ["The hypothesis", "The control group", "The variable", "The conclusion"], correct: 1, standard: "TEKS 4.2A", explanation: "The control group is the baseline — it receives no treatment so you can compare results." },
+            { q: "A student tests if music helps plants grow. She plays music to Plant A but not Plant B. Plant B is the —", type: "multiple_choice", choices: ["Independent variable", "Control", "Dependent variable", "Hypothesis"], correct: 1, standard: "TEKS 4.2A", explanation: "Plant B (no music) is the control — the standard for comparison." },
+            { q: "Spiral: A fish fossil in a desert tells us the area was once —", type: "multiple_choice", choices: ["A forest", "Covered by water", "A desert for millions of years", "Very hot"], correct: 1, standard: "TEKS 4.7A" }
+          ]
+        }
+      },
+      investigation: {
+        prompt: "Design a FAIR TEST to answer: Does the color of light affect how fast a plant grows? You have 4 plants, colored cellophane (red, blue, green), and a clear wrap. Include your hypothesis, variables (independent, dependent, controlled), procedure, and how you will record data.",
+        teks: "TEKS 4.2A, 4.2B, 4.3A",
+        subject: "Science",
+        materials: ["4 identical plants", "red, blue, green cellophane", "clear wrap (control)", "ruler", "data table", "lamp"],
+        guideQuestions: ["What is your independent variable?", "What is your dependent variable?", "What are your constants?", "Why do you need the clear-wrap plant?"]
+      }
+    },
+    Thursday: {
+      cold_passage: {
+        title: "Fireflies: Nature's Light Show",
+        passage: "On warm summer evenings, fireflies put on one of nature's most magical shows. These tiny beetles produce light through a chemical reaction called bioluminescence. Inside their abdomens, a substance called luciferin combines with oxygen and an enzyme called luciferase to create a glow with almost no heat — scientists call it 'cold light.' Each species of firefly has its own unique flash pattern. Males fly through the air flashing a specific rhythm, and females on the ground respond with their own pattern. It is a conversation written in light. But not all firefly signals are friendly. Some female fireflies of the genus Photuris have learned to mimic the flash patterns of other species. When a male approaches, expecting a mate, the Photuris female captures and eats him. Scientists call them 'femme fatale fireflies.' Sadly, firefly populations are declining worldwide due to light pollution, habitat loss, and pesticide use. The very light that humans add to the night sky makes it harder for fireflies to see each other's signals.",
+        paragraphs: ["On warm summer evenings, fireflies put on one of nature's most magical shows. These tiny beetles produce light through a chemical reaction called bioluminescence.", "Inside their abdomens, a substance called luciferin combines with oxygen and an enzyme called luciferase to create a glow with almost no heat — scientists call it 'cold light.'", "Each species of firefly has its own unique flash pattern. Males fly through the air flashing a specific rhythm, and females on the ground respond with their own pattern. It is a conversation written in light.", "But not all firefly signals are friendly. Some female fireflies of the genus Photuris have learned to mimic the flash patterns of other species. When a male approaches, expecting a mate, the Photuris female captures and eats him.", "Sadly, firefly populations are declining worldwide due to light pollution, habitat loss, and pesticide use. The very light that humans add to the night sky makes it harder for fireflies to see each other's signals."],
+        vocabWords: ["bioluminescence", "mimic", "declining"],
+        passageVisibility: "full",
+        questions: [
+          { q: "How do fireflies produce light?", type: "multiple_choice", choices: ["Electricity", "A chemical reaction (bioluminescence)", "Sunlight stored in their bodies", "Friction"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "What does 'mimic' mean?", type: "multiple_choice", choices: ["To create something new", "To copy or imitate", "To destroy", "To ignore"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "Why are 'femme fatale fireflies' dangerous to other fireflies?", type: "multiple_choice", choices: ["They are poisonous", "They mimic flash patterns to lure and eat males", "They are very fast", "They carry diseases"], correct: 1, standard: "TEKS 4.6B" },
+          { q: "What threatens firefly populations?", type: "multiple_choice", choices: ["Cold weather only", "Light pollution, habitat loss, and pesticides", "Other insects", "Too much rain"], correct: 1, standard: "TEKS 4.6C" }
+        ]
+      },
+      grammarSprint: {
+        title: "Grammar Sprint: Verb Tenses",
+        standard: "TEKS 4.11D",
+        questions: [
+          { q: "Which sentence is in PAST tense?", choices: ["She walks to school.", "She walked to school.", "She will walk to school.", "She is walking to school."], correct: 1, explanation: "'Walked' is past tense (-ed ending)." },
+          { q: "Change to future tense: 'The dog runs in the park.'", choices: ["The dog ran in the park.", "The dog will run in the park.", "The dog running in the park.", "The dog has run in the park."], correct: 1, explanation: "'Will run' is future tense (will + base verb)." },
+          { q: "Which sentence has CONSISTENT verb tense?", choices: ["She opened the door and walks inside.", "She opened the door and walked inside.", "She opens the door and walked inside.", "She will open the door and walks inside."], correct: 1, explanation: "Both verbs are past tense: opened, walked. Consistent!" },
+          { q: "What tense is: 'Scientists have discovered a new species.'?", choices: ["Past", "Present", "Present perfect", "Future"], correct: 2, explanation: "'Have discovered' is present perfect — it describes a past action with present relevance." },
+          { q: "Fix: 'Yesterday, I eat a sandwich and drank milk.'", choices: ["Yesterday, I ate a sandwich and drank milk.", "Yesterday, I eat a sandwich and drink milk.", "Yesterday, I eating a sandwich and drinking milk.", "Yesterday, I will eat a sandwich and drink milk."], correct: 0, explanation: "'Ate' is the past tense of 'eat' — both verbs should match (past tense)." }
+        ]
+      },
+      wolfkidEpisode: {
+        title: "Episode 15: The Experiment",
+        scenario: "Wolfkid must design an experiment to test which type of soil (clay, sand, or loam) retains the most water. The pack needs this data to choose the best location for a new garden.",
+        writingPrompt: "Write a full lab report: Hypothesis, Materials, Procedure (numbered steps), Data Table (predicted), and Expected Conclusion. Make sure you identify your independent and dependent variables.",
+        data: { soilTypes: ["clay", "sand", "loam"], waterAmount: "200mL per sample", measurementTool: "graduated cylinder" }
+      }
+    },
+    Friday: {
+      module: {
+        title: "Friday Review — Data & Inquiry",
+        math: {
+          title: "Week 15 Review",
+          questions: [
+            { q: "Find the median of {3, 7, 9, 12, 15}.", type: "computation", choices: ["7", "9", "12", "10"], correct: 1, standard: "TEKS 4.8C", explanation: "Already sorted. Middle (3rd) value = 9." },
+            { q: "Spiral: A rectangle has area 84 sq cm and width 7 cm. Length?", type: "computation", choices: ["11 cm", "12 cm", "13 cm", "14 cm"], correct: 1, standard: "TEKS 4.5C", explanation: "A = l x w. 84 = l x 7. l = 12 cm." },
+            { q: "In a stem-and-leaf plot, stem 5 has leaves 0,2,2,8. What is the mode?", type: "computation", choices: ["50", "52", "58", "55"], correct: 1, standard: "TEKS 4.8C", explanation: "52 appears twice (most frequent) — it is the mode." },
+            { q: "Spiral: How many inches in 5 feet?", type: "computation", choices: ["50", "55", "60", "48"], correct: 2, standard: "TEKS 4.8A", explanation: "5 x 12 = 60 inches." }
+          ]
+        },
+        science: {
+          title: "Weekly Science Review",
+          questions: [
+            { q: "The independent variable is what you —", type: "multiple_choice", choices: ["Measure", "Keep the same", "Change on purpose", "Observe"], correct: 2, standard: "TEKS 4.2A" },
+            { q: "Spiral: Older fossils are found in ___ rock layers.", type: "multiple_choice", choices: ["Upper", "Middle", "Lower", "Any"], correct: 2, standard: "TEKS 4.7A" }
+          ]
+        }
+      },
+      factSprint: { operation: "mixed", range: [6, 12], count: 30, timeLimit: 100 },
+      writing: {
+        prompt: "ECR Practice: A classmate says 'You only need to do an experiment once to prove your hypothesis.' Do you agree or disagree? Write a CER paragraph explaining why scientists repeat experiments and why a single trial is not enough.",
+        standard: "TEKS 4.11A",
+        minSentences: 6,
+        skillFocus: "argumentative/CER"
+      }
+    }
+  }
+};
+
+var BUGGSY_WEEK_16 = {
+  child: "buggsy",
+  week: 16,
+  startDate: "2026-07-27",
+  vocabulary: [
+    { word: "budget", definition: "A plan for how to spend and save money", sentence: "Our family budget helps us decide what to buy each month." },
+    { word: "income", definition: "Money earned from working or other sources", sentence: "Dad's income comes from his job at the office." },
+    { word: "expense", definition: "Money spent on things you need or want", sentence: "Rent and groceries are our biggest expenses." },
+    { word: "profit", definition: "Money earned after subtracting all costs", sentence: "If you sell lemonade for $50 and your supplies cost $15, your profit is $35." },
+    { word: "consumer", definition: "A person who buys and uses goods or services", sentence: "As a consumer, you have the right to return defective products." }
+  ],
+  scaffoldConfig: {
+    timerMode: "count_up",
+    missionStructure: "assessment",
+    feedbackLevel: "delayed",
+    hintLimit: 0,
+    retryOnWrong: false,
+    thursdayOverride: { timerMode: "count_up", feedbackLevel: "delayed" },
+    adhd: {
+      chunkSize: 3,
+      brainBreakAfter: 4,
+      brainBreakType: "choice",
+      brainBreakPrompt: "Assessment break! Pick: stretch, water, or close your eyes for 15 seconds.",
+      visualCueMode: "progress_dots",
+      transitionAudio: true,
+      choiceOnFriday: false,
+      maxConsecutiveText: 2,
+      interleaveVisual: true,
+      feedbackDelay: 0,
+      celebrateStreak: 3,
+      readAloudOption: false
+    }
+  },
+  days: {
+    Monday: {
+      module: {
+        title: "Financial Literacy & Science Review",
+        math: {
+          title: "Financial Literacy — Budgets & Expenses",
+          questions: [
+            { q: "Marcus earns $12 per hour and works 8 hours. After spending $45 on supplies, how much does he have left?", type: "word_problem", choices: ["$51", "$41", "$61", "$49"], correct: 0, standard: "TEKS 4.10A", explanation: "$12 x 8 = $96. $96 - $45 = $51." },
+            { q: "Which is a VARIABLE expense (changes each month)?", type: "multiple_choice", choices: ["Rent ($1,200/month)", "Grocery bill", "Car payment ($350/month)", "Insurance ($200/month)"], correct: 1, standard: "TEKS 4.10B", explanation: "Grocery spending varies month to month. Rent, car payment, and insurance are fixed." },
+            { q: "You have $50 to spend. You buy a book for $12.99 and lunch for $8.75. How much is left?", type: "word_problem", choices: ["$28.26", "$29.26", "$27.26", "$30.26"], correct: 0, standard: "TEKS 4.10A", explanation: "$50 - $12.99 - $8.75 = $28.26." },
+            { q: "A lemonade stand earns $65 in sales. Supplies cost $20. What is the profit?", type: "word_problem", choices: ["$85", "$45", "$35", "$55"], correct: 1, standard: "TEKS 4.10A", explanation: "Profit = Revenue - Cost = $65 - $20 = $45." },
+            { q: "Why is saving money important?", type: "multiple_choice", choices: ["It's not important", "To have money for emergencies and future goals", "To make banks happy", "Because the government requires it"], correct: 1, standard: "TEKS 4.10A", explanation: "Saving builds a safety net for unexpected expenses and helps reach long-term goals." }
+          ]
+        },
+        science: {
+          title: "ASSESSMENT: Cumulative Science Review (Weeks 9-15)",
+          questions: [
+            { q: "Which is NOT a method to separate a mixture?", type: "multiple_choice", choices: ["Evaporation", "Magnetism", "Filtering", "Photosynthesis"], correct: 3, standard: "TEKS 4.5B" },
+            { q: "Heat transfers through direct contact is called —", type: "multiple_choice", choices: ["Convection", "Conduction", "Radiation", "Insulation"], correct: 1, standard: "TEKS 4.6A" },
+            { q: "The independent variable is what you —", type: "multiple_choice", choices: ["Observe", "Change on purpose", "Keep the same", "Predict"], correct: 1, standard: "TEKS 4.2A" }
+          ]
+        }
+      },
+      factSprint: { operation: "mixed", range: [2, 12], count: 30, timeLimit: 120 },
+      vocabulary: ["budget", "income"]
+    },
+    Tuesday: {
+      cold_passage: {
+        title: "ASSESSMENT: Extended Constructed Response",
+        passage: "Climate change is one of the biggest challenges facing our planet today. Earth's average temperature has risen about 2 degrees Fahrenheit since the late 1800s. While 2 degrees might not sound like much, it has enormous effects. Glaciers are melting, sea levels are rising, and weather patterns are becoming more extreme. The main cause is the burning of fossil fuels like coal, oil, and natural gas. When these fuels burn, they release carbon dioxide and other greenhouse gases into the atmosphere. These gases trap heat from the sun, warming the planet like a blanket. Scientists around the world agree that human activities are the primary driver of recent climate change. Many solutions exist: renewable energy from solar panels and wind turbines, electric vehicles, energy-efficient buildings, and protecting forests that absorb carbon dioxide. Some countries have already made significant progress, while others are just beginning.",
+        paragraphs: ["Climate change is one of the biggest challenges facing our planet today. Earth's average temperature has risen about 2 degrees Fahrenheit since the late 1800s.", "While 2 degrees might not sound like much, it has enormous effects. Glaciers are melting, sea levels are rising, and weather patterns are becoming more extreme.", "The main cause is the burning of fossil fuels like coal, oil, and natural gas. When these fuels burn, they release carbon dioxide and other greenhouse gases into the atmosphere.", "These gases trap heat from the sun, warming the planet like a blanket. Scientists around the world agree that human activities are the primary driver of recent climate change.", "Many solutions exist: renewable energy from solar panels and wind turbines, electric vehicles, energy-efficient buildings, and protecting forests that absorb carbon dioxide. Some countries have already made significant progress, while others are just beginning."],
+        vocabWords: ["atmosphere", "renewable", "efficient"],
+        passageVisibility: "full",
+        questions: [
+          { q: "How much has Earth's average temperature risen since the late 1800s?", type: "multiple_choice", choices: ["10 degrees", "2 degrees Fahrenheit", "100 degrees", "0.2 degrees"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "What causes greenhouse gases to increase?", type: "multiple_choice", choices: ["Planting trees", "Burning fossil fuels", "Using solar panels", "Recycling"], correct: 1, standard: "TEKS 4.6B" },
+          { q: "What does 'renewable' mean in this context?", type: "multiple_choice", choices: ["Can be used once", "Can be replaced naturally and used again", "Is very expensive", "Comes from underground"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "What is the MAIN idea?", type: "multiple_choice", choices: ["Solar panels are expensive", "Climate change is caused primarily by human activities, but solutions exist", "The temperature rose 2 degrees", "Some countries are doing well"], correct: 1, standard: "TEKS 4.7A" },
+          { q: "The author compares greenhouse gases to a blanket. This is an example of —", type: "multiple_choice", choices: ["Simile", "Metaphor", "Personification", "Alliteration"], correct: 0, standard: "TEKS 4.8A", explanation: "Uses 'like a blanket' — the word 'like' makes it a simile." },
+          { q: "Which text structure does the author use MOST?", type: "multiple_choice", choices: ["Chronological order", "Compare and contrast", "Cause and effect + problem and solution", "Description only"], correct: 2, standard: "TEKS 4.9D", explanation: "The passage explains what causes climate change (cause/effect) and what solutions exist (problem/solution)." }
+        ]
+      },
+      writing: {
+        prompt: "STAAR ECR Practice: Based on the passage, explain how greenhouse gases cause climate change AND describe two solutions mentioned in the text. Use specific evidence from the passage. Write at least 3 paragraphs (intro, body, conclusion).",
+        standard: "TEKS 4.11A, 4.11B",
+        minSentences: 15,
+        skillFocus: "STAAR ECR format"
+      }
+    },
+    Wednesday: {
+      module: {
+        title: "ASSESSMENT: Cumulative Math (Weeks 9-15)",
+        math: {
+          title: "Cumulative Math Assessment",
+          questions: [
+            { q: "Round 78,345 to the nearest thousand.", type: "computation", choices: ["78,000", "78,300", "79,000", "80,000"], correct: 0, standard: "TEKS 4.2B" },
+            { q: "567 / 9 = ?", type: "computation", choices: ["61", "62", "63", "64"], correct: 2, standard: "TEKS 4.4F" },
+            { q: "What type of angle is 90 degrees?", type: "multiple_choice", choices: ["Acute", "Right", "Obtuse", "Straight"], correct: 1, standard: "TEKS 4.7A" },
+            { q: "A garden is 15m x 9m. What is the area?", type: "computation", choices: ["24 sq m", "48 sq m", "135 sq m", "120 sq m"], correct: 2, standard: "TEKS 4.5C" }
+          ]
+        },
+        science: {
+          title: "Cumulative Science Assessment",
+          questions: [
+            { q: "Weathering → Erosion → ___", type: "multiple_choice", choices: ["Condensation", "Deposition", "Evaporation", "Photosynthesis"], correct: 1, standard: "TEKS 4.7B" },
+            { q: "Why is a control group important in an experiment?", type: "multiple_choice", choices: ["It makes the experiment longer", "It provides a baseline for comparison", "It is required by law", "It uses more materials"], correct: 1, standard: "TEKS 4.2A" },
+            { q: "Which rock type forms from layers of pressed sediment?", type: "multiple_choice", choices: ["Igneous", "Metamorphic", "Sedimentary", "Mineral"], correct: 2, standard: "TEKS 4.7A" }
+          ]
+        }
+      },
+      investigation: {
+        prompt: "ASSESSMENT: Design a complete investigation to answer: Does the temperature of water affect how fast sugar dissolves? Write your hypothesis, list all variables, write a step-by-step procedure, create a data table, and state your expected conclusion.",
+        teks: "TEKS 4.2A, 4.2B, 4.5A",
+        subject: "Science",
+        materials: ["3 cups of water (cold, room temp, hot)", "sugar", "spoon", "timer", "thermometer"],
+        guideQuestions: ["What is your independent variable?", "What will you measure?", "How many trials will you run? Why?"]
+      }
+    },
+    Thursday: {
+      cold_passage: {
+        title: "ASSESSMENT: Reading Analysis",
+        passage: "In the small town of Millbrook, the old library was falling apart. The roof leaked, the shelves were warped, and the heating system had broken years ago. Every winter, the librarian, Ms. Chen, wore two coats while she helped visitors find books. The town council said there was no money for repairs. Then twelve-year-old Anika had an idea. She organized a read-a-thon, where students collected pledges for every book they read in a month. She printed flyers, spoke at a town meeting, and posted on the community bulletin board. Her classmates thought she was crazy — who would pay kids to read? But Anika believed in the power of a good story. By the end of the month, 87 students had participated. They read a combined 412 books and raised $14,350. The town council, inspired by the students' effort, matched the funds. Six months later, Millbrook had a beautifully renovated library with a new roof, heating system, and a children's reading corner named 'Anika's Nook.'",
+        paragraphs: ["In the small town of Millbrook, the old library was falling apart. The roof leaked, the shelves were warped, and the heating system had broken years ago.", "Every winter, the librarian, Ms. Chen, wore two coats while she helped visitors find books. The town council said there was no money for repairs.", "Then twelve-year-old Anika had an idea. She organized a read-a-thon, where students collected pledges for every book they read in a month.", "She printed flyers, spoke at a town meeting, and posted on the community bulletin board. Her classmates thought she was crazy — who would pay kids to read? But Anika believed in the power of a good story.", "By the end of the month, 87 students had participated. They read a combined 412 books and raised $14,350. The town council, inspired by the students' effort, matched the funds.", "Six months later, Millbrook had a beautifully renovated library with a new roof, heating system, and a children's reading corner named 'Anika's Nook.'"],
+        vocabWords: ["renovated", "pledges", "participated"],
+        passageVisibility: "full",
+        questions: [
+          { q: "What was the MAIN problem in the story?", type: "multiple_choice", choices: ["Kids didn't want to read", "The library was falling apart and there was no money to fix it", "Ms. Chen was cold", "Anika needed a school project"], correct: 1, standard: "TEKS 4.6A" },
+          { q: "What does 'renovated' mean?", type: "multiple_choice", choices: ["Torn down", "Restored and made like new", "Moved to a new location", "Painted a different color"], correct: 1, standard: "TEKS 4.2B" },
+          { q: "What can you INFER about Anika's character?", type: "multiple_choice", choices: ["She gives up easily", "She is determined, creative, and a natural leader", "She doesn't like reading", "She does what her friends tell her"], correct: 1, standard: "TEKS 4.6D" },
+          { q: "What is the THEME of this story?", type: "multiple_choice", choices: ["Libraries are boring", "One person's initiative can inspire a whole community", "Reading is hard work", "Town councils always help"], correct: 1, standard: "TEKS 4.7A" }
+        ]
+      },
+      grammarSprint: {
+        title: "ASSESSMENT: Grammar Cumulative (Weeks 9-15)",
+        standard: "TEKS 4.11D",
+        questions: [
+          { q: "Which is a complex sentence?", choices: ["She ran and jumped.", "Although it rained, we played outside.", "The dog barked.", "He ate lunch."], correct: 1, explanation: "Has a dependent clause (Although it rained) + independent clause." },
+          { q: "Choose the correct verb: The group of scientists ___ excited.", choices: ["are", "is", "were being", "be"], correct: 1, explanation: "'Group' is singular (collective noun) → 'is'." },
+          { q: "Fix: 'Their going to they're house over there.'", choices: ["They're going to their house over there.", "There going to their house over they're.", "Their going to there house over they're.", "They're going to they're house over their."], correct: 0, explanation: "They're = they are. Their = possessive. There = location." },
+          { q: "Find the prepositional phrase: 'The bird sang in the tall tree.'", choices: ["The bird", "sang in", "in the tall tree", "the tall tree"], correct: 2, explanation: "'In the tall tree' starts with preposition 'in' and ends with object 'tree'." },
+          { q: "What tense: 'By next year, she will have graduated.'?", choices: ["Past", "Present", "Future", "Future perfect"], correct: 3, explanation: "'Will have graduated' = future perfect tense (completed action in the future)." }
+        ]
+      },
+      wolfkidEpisode: {
+        title: "Episode 16: The Final Report",
+        scenario: "Wolfkid presents the pack's semester findings to the Council of Elders. The report must cover investigations from weeks 9-15, with data, conclusions, and recommendations for next semester.",
+        writingPrompt: "Write a 4-paragraph summary report for the Council. Paragraph 1: Best investigation and why. Paragraph 2: Most surprising finding. Paragraph 3: What the pack should study next. Paragraph 4: What YOU learned about being a scientist.",
+        data: { investigations: "Mixtures, erosion, insulation, inherited traits, fossil layers, fair testing, soil water retention" }
+      }
+    },
+    Friday: {
+      module: {
+        title: "ASSESSMENT: Cumulative Review (All Standards)",
+        math: {
+          title: "Semester Assessment",
+          questions: [
+            { q: "4/7 + 2/7 = ?", type: "computation", choices: ["6/14", "6/7", "2/7", "8/7"], correct: 1, standard: "TEKS 4.3E" },
+            { q: "Estimate 67 x 31.", type: "computation", choices: ["1,800", "2,100", "1,500", "2,400"], correct: 1, standard: "TEKS 4.4G", explanation: "67 rounds to 70, 31 rounds to 30. 70 x 30 = 2,100." },
+            { q: "A rectangle: perimeter=56 cm, width=12 cm. What is the length?", type: "word_problem", choices: ["14 cm", "16 cm", "18 cm", "20 cm"], correct: 1, standard: "TEKS 4.5D", explanation: "P = 2l + 2w. 56 = 2l + 24. 2l = 32. l = 16 cm." },
+            { q: "Which is a fixed expense?", type: "multiple_choice", choices: ["Movie tickets", "Monthly rent", "New shoes", "Vacation spending"], correct: 1, standard: "TEKS 4.10B" }
+          ]
+        },
+        science: {
+          title: "Semester Science Assessment",
+          questions: [
+            { q: "Metal is a good conductor because it —", type: "multiple_choice", choices: ["Is shiny", "Transfers heat quickly", "Is heavy", "Is magnetic"], correct: 1, standard: "TEKS 4.6A" },
+            { q: "The CONTROL group in an experiment is —", type: "multiple_choice", choices: ["The group you change", "The group that stays normal for comparison", "The hypothesis", "The conclusion"], correct: 1, standard: "TEKS 4.2A" }
+          ]
+        }
+      },
+      factSprint: { operation: "mixed", range: [2, 12], count: 30, timeLimit: 120 },
+      writing: {
+        prompt: "SEMESTER REFLECTION: Write 3 paragraphs. (1) What subject are you strongest in and why? Give specific examples. (2) What was your biggest challenge and how did you work through it? (3) What are your goals for next semester?",
+        standard: "TEKS 4.11A",
+        minSentences: 15,
+        skillFocus: "reflection + goal setting"
+      }
+    }
+  }
+};
 
 // ════════════════════════════════════════════════════════════════════
 // MAIN SEED FUNCTION
 // ════════════════════════════════════════════════════════════════════
 
-function getCurriculumSeedVersion() { return 7; }
+function getCurriculumSeedVersion() { return 8; }
 
 /**
  * v6: Validates that all asset references in JJ week content exist in ASSET_REGISTRY.
@@ -2977,11 +3667,15 @@ function seedAllCurriculum() {
   rows.push([7, 'buggsy', BUGGSY_WEEK_7.startDate, JSON.stringify(BUGGSY_WEEK_7)]);
   rows.push([8, 'buggsy', BUGGSY_WEEK_8.startDate, JSON.stringify(BUGGSY_WEEK_8)]);
 
-  // Buggsy Weeks 9-12 (v7)
+  // Buggsy Weeks 9-16 (v8)
   rows.push([9, 'buggsy', BUGGSY_WEEK_9.startDate, JSON.stringify(BUGGSY_WEEK_9)]);
   rows.push([10, 'buggsy', BUGGSY_WEEK_10.startDate, JSON.stringify(BUGGSY_WEEK_10)]);
   rows.push([11, 'buggsy', BUGGSY_WEEK_11.startDate, JSON.stringify(BUGGSY_WEEK_11)]);
   rows.push([12, 'buggsy', BUGGSY_WEEK_12.startDate, JSON.stringify(BUGGSY_WEEK_12)]);
+  rows.push([13, 'buggsy', BUGGSY_WEEK_13.startDate, JSON.stringify(BUGGSY_WEEK_13)]);
+  rows.push([14, 'buggsy', BUGGSY_WEEK_14.startDate, JSON.stringify(BUGGSY_WEEK_14)]);
+  rows.push([15, 'buggsy', BUGGSY_WEEK_15.startDate, JSON.stringify(BUGGSY_WEEK_15)]);
+  rows.push([16, 'buggsy', BUGGSY_WEEK_16.startDate, JSON.stringify(BUGGSY_WEEK_16)]);
 
   // Write all rows at once
   sheet.getRange(2, 1, rows.length, 4).setValues(rows);
