@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="tbm-version" content="KidsHub v43">
+<meta name="tbm-version" content="KidsHub v44">
 <title>Kids Hub v40</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -160,6 +160,12 @@ body { min-height: 100vh; }
 .jj-body .load-text { font-family: 'Fredoka One', cursive; font-size: 18px; color: #f9a8d4; letter-spacing: 1px; }
 .jj-wrap { max-width: 720px; margin: 0 auto; padding: 0 14px; position: relative; z-index: 1; }
 .jj-hdr { text-align: center; padding: 28px 14px 20px; position: relative; }
+/* ── #183 Skeleton parity: sticky header matching .b-hdr structure ── */
+.jj-stickybar { position: sticky; top: 0; z-index: 100; background: linear-gradient(180deg,#2d0a5e 0%,#1a0533 100%); border-bottom: 2px solid rgba(236,72,153,0.25); padding: 12px 14px 10px; box-shadow: 0 4px 24px rgba(0,0,0,0.5); }
+.jj-hdr-top { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: space-between; justify-content: space-between; margin-bottom: 10px; }
+.jj-hdr-left { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; }
+.jj-hdr-name { font-family: 'Fredoka One', cursive; font-size: 20px; color: #f9a8d4; line-height: 1.1; background: linear-gradient(135deg,#fde68a,#f9a8d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.jj-hdr-sub { font-size: 11px; font-weight: 800; color: rgba(249,168,212,0.65); letter-spacing: 0.5px; margin-top: 2px; }
 .jj-crown { font-size: 36px; display: block; margin-bottom: 4px; animation: crown-bob 2s ease-in-out infinite; }
 @keyframes crown-bob { 0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)} }
 .jj-title { font-family: 'Fredoka One', cursive; font-size: clamp(32px,8vw,46px); line-height: 1.1; background: linear-gradient(135deg,#fde68a,#f9a8d4,#c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -2722,8 +2728,21 @@ function renderJJ() { document.getElementById('app').innerHTML = buildJJUI(); up
 
 function buildJJUI() {
   return '<div class="jj-pin-overlay" id="jjPinOverlay" style="display:none"><div class="jj-pin-box"><div class="jj-pin-title">🔐 Parent Access</div><input class="jj-pin-input" type="password" maxlength="6" id="jjPinInput" placeholder="••••"><button class="jj-pin-submit" onclick="jjSubmitPin()">Let Me In! ✨</button><button class="jj-pin-cancel" onclick="jjCancelPin()">never mind</button><div class="jj-pin-error" id="jjPinError" style="display:none">Hmm, try again! 💕</div></div></div>'+
-  '<div class="jj-wrap"><div class="jj-hdr"><div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="jj-parent-btn" id="jjParentBtn" onclick="jjToggleParent()">⚙ Parent</button></div><img src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" class="char-avatar" style="width:48px;height:48px;border-radius:50%;object-fit:cover;margin-bottom:4px"><span class="jj-crown">👑</span><div class="jj-title">JJ\'s Sparkle Stars</div><div class="jj-sub">Little Diva Helper Board ✨</div></div>'+
-  '<div style="display:flex;align-items:center;gap:10px;margin:0 14px 16px"><div class="jj-stat-pills" style="flex:1;margin:0"><div class="jj-stat-pill"><div class="jj-stat-pill-icon">⭐</div><div class="jj-stat-pill-val" id="jjStars">0</div><div class="jj-stat-pill-lbl">Stars</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">📺</div><div class="jj-stat-pill-val" id="jjTV">0m</div><div class="jj-stat-pill-lbl">TV</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">🍪</div><div class="jj-stat-pill-val" id="jjSnack">0</div><div class="jj-stat-pill-lbl">Snacks</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">💵</div><div class="jj-stat-pill-val" id="jjEarned" style="color:#22c55e">$0</div><div class="jj-stat-pill-lbl">Earned</div></div></div><img src="https://i.ibb.co/5h2hYsNp/1773982672701.png" class="char-stat-img" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0"><div class="jj-refresh-star" id="jjRefreshStar" onclick="jjRefresh()" style="position:static;flex-shrink:0">✨</div></div>'+
+  '<div class="jj-wrap">'+
+  '<div class="jj-stickybar">'+
+    '<div class="jj-hdr-top">'+
+      '<div class="jj-hdr-left">'+
+        '<img src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" class="char-avatar" style="width:40px;height:40px;border-radius:50%;object-fit:cover;margin-right:10px;">'+
+        '<div><div class="jj-hdr-name">JJ\'s Sparkle Stars 👑</div><div class="jj-hdr-sub">Little Diva Helper Board ✨</div></div>'+
+      '</div>'+
+      '<button class="jj-parent-btn" id="jjParentBtn" onclick="jjToggleParent()">⚙ Parent</button>'+
+    '</div>'+
+    '<div style="display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;gap:10px;">'+
+      '<div class="jj-stat-pills" style="flex:1;margin:0;"><div class="jj-stat-pill"><div class="jj-stat-pill-icon">⭐</div><div class="jj-stat-pill-val" id="jjStars">0</div><div class="jj-stat-pill-lbl">Stars</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">📺</div><div class="jj-stat-pill-val" id="jjTV">0m</div><div class="jj-stat-pill-lbl">TV</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">🍪</div><div class="jj-stat-pill-val" id="jjSnack">0</div><div class="jj-stat-pill-lbl">Snacks</div></div><div class="jj-stat-pill"><div class="jj-stat-pill-icon">💵</div><div class="jj-stat-pill-val" id="jjEarned" style="color:#22c55e">$0</div><div class="jj-stat-pill-lbl">Earned</div></div></div>'+
+      '<img src="https://i.ibb.co/5h2hYsNp/1773982672701.png" class="char-stat-img" style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;">'+
+      '<div class="jj-refresh-star" id="jjRefreshStar" onclick="jjRefresh()" style="position:static;flex-shrink:0;">✨</div>'+
+    '</div>'+
+  '</div>'+
   '<div style="margin:0 14px 12px;text-align:center"><div id="jjLevelChip" style="display:inline-block;padding:6px 14px;border-radius:999px;background:rgba(255,255,255,0.12);border:2px solid rgba(255,255,255,0.22);font-size:13px;font-weight:800;color:#fde68a;letter-spacing:1px;text-transform:uppercase">LEVEL 1 \u00B7 SPROUT</div><div id="jjMasteryRank" style="display:none;margin-top:4px;font-size:11px;font-weight:800;color:#f9a8d4;letter-spacing:0.5px"></div><div id="jjStreakDisplay" style="display:none;margin-top:4px;font-size:18px;text-align:center"></div></div>'+
   '<div class="jj-progress-wrap"><div class="jj-prog-label">Next reward unlocks at <span id="jjNextCost">10</span> ⭐<span id="jjProgNums">0 / 10</span></div><div class="jj-prog-track"><div class="jj-prog-fill" id="jjProgBar" style="width:0%"></div></div></div>'+
   '<div class="edu-nav jj-edu-nav"><span style="font-size:13px;font-weight:800;color:#f9a8d4;font-family:\'Fredoka One\',cursive">Learning:</span><a onclick="eduGo(\'sparkle\')">Sparkle Games</a><a onclick="eduGo(\'story-library\')">Stories</a><a onclick="eduGoChild(\'daily-missions\',\'jj\')">Missions</a></div>'+

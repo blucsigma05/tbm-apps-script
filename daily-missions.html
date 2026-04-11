@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v14">
+<meta name="tbm-version" content="v15">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -603,6 +603,36 @@ body.jj-theme .launch-btn {
 #launch-overlay .ov-text { color: #fff; font-size: 26px; font-weight: 800; letter-spacing: 3px; }
 #launch-overlay .ov-sub  { color: rgba(255,255,255,0.45); font-size: 15px; margin-top: 14px; }
 
+/* ─── JJ Theme: Brain Break Overlay (#185) ─── */
+body.jj-theme #brain-break-overlay {
+  background: linear-gradient(135deg, rgba(26,5,51,0.98) 0%, rgba(74,16,112,0.98) 60%, rgba(44,10,80,0.98) 100%) !important;
+}
+body.jj-theme #brain-break-overlay .bb-icon { font-size: 56px; }
+body.jj-theme #bb-prompt { color: #f0d4ff !important; }
+body.jj-theme #bb-timer {
+  color: #ff80ee !important;
+  text-shadow: 0 0 20px rgba(255,128,238,0.5);
+}
+body.jj-theme #brain-break-overlay button {
+  background: linear-gradient(135deg, #a855f7, #ec4899) !important;
+  font-family: 'Fredoka One', cursive !important;
+  letter-spacing: 2px;
+  box-shadow: 0 0 20px rgba(236,72,153,0.4);
+}
+
+/* ─── JJ Theme: Launch Overlay (#185) ─── */
+body.jj-theme #launch-overlay {
+  background: linear-gradient(135deg, #1a0533 0%, #2d0a5e 60%, #4a0e8f 100%) !important;
+}
+body.jj-theme #launch-overlay .ov-text {
+  font-family: 'Fredoka One', cursive !important;
+  font-size: 32px !important;
+  letter-spacing: 2px !important;
+  color: #f9a8d4 !important;
+  text-shadow: 0 0 20px rgba(236,72,153,0.5);
+}
+body.jj-theme #launch-overlay .ov-sub { color: rgba(255,200,240,0.55) !important; }
+
 /* ─── ExecSkills Styles (inlined #171) ─── */
 .es-plan-attack{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;margin:16px 0;text-align:center;}
 .es-plan-attack h2{font-size:20px;color:#f0f0f0;margin:0 0 8px 0;font-family:'Orbitron','Segoe UI',sans-serif;letter-spacing:1px;}
@@ -1087,7 +1117,16 @@ function showBrainBreak() {
   if (!overlay) return;
   var promptEl = document.getElementById('bb-prompt');
   var timerEl = document.getElementById('bb-timer');
-  if (promptEl) promptEl.textContent = _brainBreakPrompt;
+  /* #185 — swap icon and header for JJ Sparkle Kingdom theme */
+  var bbIcon = overlay.querySelector('[style*="font-size:56px"]');
+  var bbHeader = overlay.querySelector('[style*="BRAIN BREAK"], [style*="color:#a855f7"]');
+  if (isJJ()) {
+    if (bbIcon) { bbIcon.textContent = '\uD83C\uDF1F'; }
+    if (bbHeader) { bbHeader.textContent = 'SPARKLE BREAK!'; }
+    if (promptEl) { promptEl.textContent = _brainBreakPrompt || 'Stand up and spin around 5 times!'; }
+  } else {
+    if (promptEl) { promptEl.textContent = _brainBreakPrompt; }
+  }
   overlay.style.display = 'block';
   var remaining = 30;
   if (timerEl) timerEl.textContent = remaining;
@@ -1446,6 +1485,15 @@ function launchMission(url, missionId, missionName) {
       overlay.style.display = 'block';
       var nameEl = document.getElementById('overlay-mission-name');
       if (nameEl) { nameEl.innerHTML = missionName || ''; }
+      var iconEl = overlay.querySelector('.ov-icon');
+      var textEl = overlay.querySelector('.ov-text');
+      if (isJJ()) {
+        if (iconEl) { iconEl.textContent = '\u2728\uD83C\uDF1F\u2728'; }
+        if (textEl) { textEl.textContent = 'Here we go!'; }
+      } else {
+        if (iconEl) { iconEl.innerHTML = '&#128640;'; }
+        if (textEl) { textEl.textContent = 'LOADING...'; }
+      }
     }
     setTimeout(function() { window.location.href = url; }, 280);
   }

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="tbm-version" content="v62">
-<title>The Pulse v62 — Thompson Household</title>
+<meta name="tbm-version" content="v63">
+<title>The Pulse v63 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -475,6 +475,16 @@ button,.kids-approve-btn,.kids-ask-btn,.refresh-btn{min-height:44px;min-width:44
 .h-eyebrow{font-size:9px}
 .kids-link-btn{padding:10px 14px;font-size:12px}
 }
+/* v63: Surface Pro 9 (1368px) — expand layout to fill tablet width */
+@media (min-width:1280px){
+.app{max-width:1160px}
+.sec{margin:0 36px 20px}
+.header{padding:54px 44px 38px}
+.h-title{font-size:36px}
+.card{padding:30px}
+.cf-eq-headline{font-size:34px}
+.des-stats{grid-template-columns:repeat(4,1fr)}
+}
 /* v55: Surface Pro 9 — wider content at 1440px+ */
 @media (min-width:1440px){
 .app{max-width:1200px}
@@ -538,7 +548,7 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
 <div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 
 <script>
-var TBM_VERSION = 'v62';
+var TBM_VERSION = 'v63';
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 var _lastFetchTime = null;
 var _lastGoodSim = null;
@@ -796,6 +806,10 @@ function render(){
   html+='<div class="kids-widget-header">';
   html+='<div class="kids-widget-title"><div class="kids-widget-title-dot"></div>Kids Hub</div>';
   html+='<div id="kidsAlertBadge" style="display:none" class="kids-alert-badge">— pending</div>';
+  html+='<div style="display:flex;gap:4px;align-items:center;">';
+  html+='<img src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" alt="Buggsy" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(212,168,83,0.5);box-shadow:0 1px 4px rgba(0,0,0,0.12);">';
+  html+='<img src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" alt="JJ" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(212,168,83,0.35);box-shadow:0 1px 4px rgba(0,0,0,0.12);">';
+  html+='</div>';
   html+='</div>';
   html+='<div id="kidsWidgetBody"><div class="kids-loading">Loading kids data...</div></div>';
   html+='</div></div>';
@@ -809,6 +823,14 @@ function render(){
   html+='<div style="flex:0 0 80px;"><div style="font-size:10px;color:#94a3b8;margin-bottom:2px;">Cook</div><select id="dinnerCook" style="width:100%;height:36px;padding:4px 8px;border-radius:8px;border:1px solid #e8e4dc;font-family:DM Sans,sans-serif;font-size:13px;"><option value="JT">JT</option><option value="LT">LT</option></select></div>';
   html+='<div style="flex:2;min-width:100px;"><div style="font-size:10px;color:#94a3b8;margin-bottom:2px;">Notes</div><input type="text" id="dinnerNotes" placeholder="Optional" maxlength="300" style="width:100%;height:36px;padding:6px 10px;border-radius:8px;border:1px solid #e8e4dc;font-family:DM Sans,sans-serif;font-size:13px;"></div>';
   html+='<button id="dinnerSaveBtn" onclick="saveDinnerPulse()" style="height:36px;padding:0 16px;border-radius:8px;border:none;background:var(--green,#6B9D7D);color:white;font-weight:700;font-size:13px;cursor:pointer;font-family:DM Sans,sans-serif;">Save</button>';
+  html+='</div>';
+  html+='<div style="margin-top:8px;">';
+  html+='<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:#64748b;">';
+  html+='<input type="checkbox" id="dinnerKidsToggle" onchange="toggleKidsMealPulse()" style="width:14px;height:14px;cursor:pointer;">';
+  html+='Kids eating something different?</label>';
+  html+='<div id="dinnerKidsRow" style="display:none;margin-top:6px;"><div style="font-size:10px;color:#94a3b8;margin-bottom:2px;">Kids Meal</div>';
+  html+='<input type="text" id="dinnerKidsMeal" placeholder="What are the kids having?" maxlength="200" style="width:100%;height:36px;padding:6px 10px;border-radius:8px;border:1px solid #e8e4dc;font-family:DM Sans,sans-serif;font-size:13px;">';
+  html+='</div>';
   html+='</div>';
   html+='<div id="dinnerStatus" style="font-size:11px;margin-top:6px;color:#94a3b8;min-height:16px;"></div>';
   html+='</div></div>';
@@ -1156,15 +1178,24 @@ function _initKidsWidgetCore() {
 }
 
 // v58: Dinner plan save handler
+function toggleKidsMealPulse() {
+  var cb = document.getElementById('dinnerKidsToggle');
+  var row = document.getElementById('dinnerKidsRow');
+  if (!cb || !row) return;
+  row.style.display = cb.checked ? 'block' : 'none';
+}
 function saveDinnerPulse() {
   var mealEl = document.getElementById('dinnerMeal');
   var cookEl = document.getElementById('dinnerCook');
   var notesEl = document.getElementById('dinnerNotes');
+  var kidsEl = document.getElementById('dinnerKidsMeal');
+  var kidsToggle = document.getElementById('dinnerKidsToggle');
   var btn = document.getElementById('dinnerSaveBtn');
   var status = document.getElementById('dinnerStatus');
   if (!mealEl || !btn) return;
   var meal = mealEl.value.trim();
   if (!meal) { if (status) status.textContent = 'Enter a meal name'; return; }
+  var kidMeal = (kidsToggle && kidsToggle.checked && kidsEl) ? kidsEl.value.trim() : '';
   btn.textContent = 'Saving...';
   btn.disabled = true;
   google.script.run
@@ -1183,7 +1214,7 @@ function saveDinnerPulse() {
       btn.textContent = 'Save';
       if (status) { status.textContent = 'Failed \u2014 try again'; status.style.color = '#d97706'; }
     })
-    .updateMealPlanSafe({ meal: meal, cook: cookEl.value, notes: notesEl.value.trim() });
+    .updateMealPlanSafe({ meal: meal, cook: cookEl.value, notes: notesEl.value.trim(), kidMeal: kidMeal });
 }
 
 function _kidsGatePeriod(req) {

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v16">
+  <meta name="tbm-version" content="v17">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -884,45 +884,69 @@ function playAudioCached(name, fallbackText) {
 function renderShape(shape, color, size) {
   var c = COLOR_MAP[color] || color || '#ec4899';
   var s = size || 48;
-  var half = s / 2;
   var sh = String(shape || 'circle').toLowerCase().replace(/s$/, '');
+  /* Every shape: base fill + rim light + highlight spot for glossy 3D effect */
 
   switch (sh) {
     case 'circle':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
-        '<circle cx="50" cy="50" r="45" fill="' + c + '"/></svg>';
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<circle cx="50" cy="50" r="45" fill="' + c + '"/>' +
+        '<circle cx="50" cy="50" r="43" fill="rgba(255,255,255,0.10)"/>' +
+        '<ellipse cx="36" cy="33" rx="13" ry="9" fill="rgba(255,255,255,0.48)"/>' +
+        '</svg>';
 
     case 'square':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
-        '<rect x="10" y="10" width="80" height="80" rx="8" fill="' + c + '"/></svg>';
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<rect x="10" y="10" width="80" height="80" rx="10" fill="' + c + '"/>' +
+        '<rect x="14" y="14" width="72" height="20" rx="6" fill="rgba(255,255,255,0.26)"/>' +
+        '<circle cx="30" cy="30" r="7" fill="rgba(255,255,255,0.40)"/>' +
+        '</svg>';
 
     case 'triangle':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
-        '<polygon points="50,8 95,92 5,92" fill="' + c + '"/></svg>';
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<polygon points="50,8 95,92 5,92" fill="' + c + '"/>' +
+        '<polygon points="50,22 74,68 26,68" fill="rgba(255,255,255,0.16)"/>' +
+        '<circle cx="42" cy="38" r="8" fill="rgba(255,255,255,0.46)"/>' +
+        '</svg>';
 
     case 'star':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
-        '<polygon points="50,5 63,35 95,35 69,57 79,90 50,70 21,90 31,57 5,35 37,35" fill="' + c + '"/></svg>';
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<polygon points="50,5 63,35 95,35 69,57 79,90 50,70 21,90 31,57 5,35 37,35" fill="' + c + '"/>' +
+        '<polygon points="50,18 59,40 82,40 63,54 70,76 50,63 30,76 37,54 18,40 41,40" fill="rgba(255,255,255,0.18)"/>' +
+        '<circle cx="40" cy="31" r="7" fill="rgba(255,255,255,0.52)"/>' +
+        '</svg>';
 
     case 'heart':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
-        '<path d="M50 88 C25 65 5 50 5 30 C5 15 18 5 32 5 C40 5 47 9 50 15 C53 9 60 5 68 5 C82 5 95 15 95 30 C95 50 75 65 50 88Z" fill="' + c + '"/></svg>';
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<path d="M50 88 C25 65 5 50 5 30 C5 15 18 5 32 5 C40 5 47 9 50 15 C53 9 60 5 68 5 C82 5 95 15 95 30 C95 50 75 65 50 88Z" fill="' + c + '"/>' +
+        '<ellipse cx="30" cy="26" rx="11" ry="8" fill="rgba(255,255,255,0.42)"/>' +
+        '</svg>';
 
     case 'rectangle':
-      return '<svg width="' + s + '" height="' + Math.round(s * 0.6) + '" viewBox="0 0 100 60">' +
-        '<rect x="5" y="5" width="90" height="50" rx="6" fill="' + c + '"/></svg>';
+      return '<svg width="' + s + '" height="' + Math.round(s * 0.6) + '" viewBox="0 0 100 60" style="display:inline-block;vertical-align:middle;">' +
+        '<rect x="5" y="5" width="90" height="50" rx="8" fill="' + c + '"/>' +
+        '<rect x="8" y="8" width="84" height="14" rx="5" fill="rgba(255,255,255,0.24)"/>' +
+        '<circle cx="22" cy="20" r="6" fill="rgba(255,255,255,0.40)"/>' +
+        '</svg>';
 
     case 'diamond':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
-        '<polygon points="50,5 95,50 50,95 5,50" fill="' + c + '"/></svg>';
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<polygon points="50,5 95,50 50,95 5,50" fill="' + c + '"/>' +
+        '<polygon points="50,5 95,50 50,44 5,50" fill="rgba(255,255,255,0.22)"/>' +
+        '<circle cx="37" cy="30" r="8" fill="rgba(255,255,255,0.48)"/>' +
+        '</svg>';
 
     case 'moon':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
-        '<path d="M60 10 C35 15 20 38 20 55 C20 78 40 95 60 95 C45 85 38 70 38 55 C38 35 48 18 60 10Z" fill="' + c + '"/></svg>';
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<path d="M60 10 C35 15 20 38 20 55 C20 78 40 95 60 95 C45 85 38 70 38 55 C38 35 48 18 60 10Z" fill="' + c + '"/>' +
+        '<circle cx="34" cy="34" r="8" fill="rgba(255,255,255,0.42)"/>' +
+        '</svg>';
 
     case 'sun':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
         '<circle cx="50" cy="50" r="25" fill="' + c + '"/>' +
+        '<circle cx="50" cy="50" r="22" fill="rgba(255,255,255,0.12)"/>' +
+        '<circle cx="43" cy="43" r="7" fill="rgba(255,255,255,0.52)"/>' +
         '<g stroke="' + c + '" stroke-width="4" stroke-linecap="round">' +
         '<line x1="50" y1="5" x2="50" y2="18"/>' +
         '<line x1="50" y1="82" x2="50" y2="95"/>' +
@@ -935,39 +959,57 @@ function renderShape(shape, color, size) {
         '</g></svg>';
 
     case 'butterfly':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
-        '<ellipse cx="30" cy="40" rx="25" ry="20" fill="' + c + '" opacity="0.8"/>' +
-        '<ellipse cx="70" cy="40" rx="25" ry="20" fill="' + c + '" opacity="0.8"/>' +
-        '<ellipse cx="35" cy="65" rx="18" ry="15" fill="' + c + '" opacity="0.6"/>' +
-        '<ellipse cx="65" cy="65" rx="18" ry="15" fill="' + c + '" opacity="0.6"/>' +
-        '<line x1="50" y1="30" x2="50" y2="80" stroke="#1f0e35" stroke-width="3"/></svg>';
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<ellipse cx="30" cy="40" rx="25" ry="20" fill="' + c + '" opacity="0.88"/>' +
+        '<ellipse cx="70" cy="40" rx="25" ry="20" fill="' + c + '" opacity="0.88"/>' +
+        '<ellipse cx="35" cy="65" rx="18" ry="15" fill="' + c + '" opacity="0.68"/>' +
+        '<ellipse cx="65" cy="65" rx="18" ry="15" fill="' + c + '" opacity="0.68"/>' +
+        '<ellipse cx="21" cy="32" rx="8" ry="6" fill="rgba(255,255,255,0.44)"/>' +
+        '<ellipse cx="79" cy="32" rx="8" ry="6" fill="rgba(255,255,255,0.44)"/>' +
+        '<line x1="50" y1="30" x2="50" y2="80" stroke="#1f0e35" stroke-width="3"/>' +
+        '</svg>';
 
     case 'flower':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
-        '<circle cx="50" cy="30" r="18" fill="' + c + '" opacity="0.8"/>' +
-        '<circle cx="30" cy="48" r="18" fill="' + c + '" opacity="0.8"/>' +
-        '<circle cx="70" cy="48" r="18" fill="' + c + '" opacity="0.8"/>' +
-        '<circle cx="35" cy="70" r="18" fill="' + c + '" opacity="0.8"/>' +
-        '<circle cx="65" cy="70" r="18" fill="' + c + '" opacity="0.8"/>' +
-        '<circle cx="50" cy="52" r="12" fill="#fbbf24"/></svg>';
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<circle cx="50" cy="30" r="18" fill="' + c + '" opacity="0.88"/>' +
+        '<circle cx="30" cy="48" r="18" fill="' + c + '" opacity="0.88"/>' +
+        '<circle cx="70" cy="48" r="18" fill="' + c + '" opacity="0.88"/>' +
+        '<circle cx="35" cy="70" r="18" fill="' + c + '" opacity="0.88"/>' +
+        '<circle cx="65" cy="70" r="18" fill="' + c + '" opacity="0.88"/>' +
+        '<circle cx="50" cy="52" r="13" fill="#fbbf24"/>' +
+        '<circle cx="45" cy="47" r="4" fill="rgba(255,255,255,0.46)"/>' +
+        '</svg>';
 
     case 'gem':
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
         '<polygon points="50,5 85,35 50,95 15,35" fill="' + c + '"/>' +
-        '<polygon points="50,5 85,35 50,35" fill="rgba(255,255,255,0.25)"/></svg>';
+        '<polygon points="50,5 85,35 50,35" fill="rgba(255,255,255,0.28)"/>' +
+        '<circle cx="36" cy="21" r="7" fill="rgba(255,255,255,0.52)"/>' +
+        '</svg>';
 
     case 'rainbow':
-      return '<svg width="' + s + '" height="' + Math.round(s * 0.6) + '" viewBox="0 0 100 60">' +
+      return '<svg width="' + s + '" height="' + Math.round(s * 0.6) + '" viewBox="0 0 100 60" style="display:inline-block;vertical-align:middle;">' +
         '<path d="M10 55 A40 40 0 0 1 90 55" fill="none" stroke="#ef4444" stroke-width="6"/>' +
         '<path d="M16 55 A34 34 0 0 1 84 55" fill="none" stroke="#f97316" stroke-width="6"/>' +
         '<path d="M22 55 A28 28 0 0 1 78 55" fill="none" stroke="#fbbf24" stroke-width="6"/>' +
         '<path d="M28 55 A22 22 0 0 1 72 55" fill="none" stroke="#10b981" stroke-width="6"/>' +
         '<path d="M34 55 A16 16 0 0 1 66 55" fill="none" stroke="#3b82f6" stroke-width="6"/>' +
-        '<path d="M40 55 A10 10 0 0 1 60 55" fill="none" stroke="#a855f7" stroke-width="6"/></svg>';
+        '<path d="M40 55 A10 10 0 0 1 60 55" fill="none" stroke="#a855f7" stroke-width="6"/>' +
+        '</svg>';
+
+    case 'sparkle':
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<polygon points="50,4 56,44 96,50 56,56 50,96 44,56 4,50 44,44" fill="' + c + '"/>' +
+        '<polygon points="50,18 53,47 82,50 53,53 50,82 47,53 18,50 47,47" fill="rgba(255,255,255,0.22)"/>' +
+        '<circle cx="41" cy="37" r="7" fill="rgba(255,255,255,0.56)"/>' +
+        '</svg>';
 
     default:
-      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
-        '<circle cx="50" cy="50" r="45" fill="' + c + '"/></svg>';
+      return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100" style="display:inline-block;vertical-align:middle;">' +
+        '<circle cx="50" cy="50" r="45" fill="' + c + '"/>' +
+        '<circle cx="50" cy="50" r="43" fill="rgba(255,255,255,0.10)"/>' +
+        '<ellipse cx="36" cy="33" rx="13" ry="9" fill="rgba(255,255,255,0.48)"/>' +
+        '</svg>';
   }
 }
 

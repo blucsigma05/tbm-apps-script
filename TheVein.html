@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="tbm-version" content="v64">
-<title>The Vein v64 — Household Command Center</title>
-<!-- TheVein v64 — Version history tracked in Notion deploy page. No changelogs in this file. -->
+<meta name="tbm-version" content="v65">
+<title>The Vein v65 — Household Command Center</title>
+<!-- TheVein v65 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -426,6 +426,15 @@ h1{font-size:22px;} .cval{font-size:22px;}
 @media(max-height:500px) and (orientation:landscape){
 .g3{grid-template-columns:1fr 1fr 1fr;}
 }
+/* v65: Fold 7 unfolded portrait (1812px wide) — expand layout */
+@media(min-width:1600px){
+.page{max-width:1560px;padding:32px 48px 80px;}
+.g3{grid-template-columns:1fr 1fr 1fr;}
+.g2{grid-template-columns:1fr 1fr;}
+.g21{grid-template-columns:1.4fr 1fr;}
+.trend-grid{grid-template-columns:1fr 1fr 1fr;}
+.debt-row,.debt-grid-hd{grid-template-columns:24px 1fr 90px 70px 80px 90px;gap:8px;}
+}
 
 /* ═══ Kids Hub Widget (TheVein blue theme) ═══ */
 .kids-widget{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px;box-shadow:var(--shadow);animation:fadeUp .5s .5s both}
@@ -699,6 +708,16 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
     </div>
     <button class="fnote-save" id="dinnerSave" onclick="saveDinner()" style="height:36px;">Save</button>
   </div>
+  <div style="margin-top:8px;">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-muted);">
+      <input type="checkbox" id="dinnerKidsToggle" onchange="toggleKidsMealVein()" style="width:14px;height:14px;cursor:pointer;">
+      Kids eating something different?
+    </label>
+    <div id="dinnerKidsRow" style="display:none;margin-top:6px;">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Kids Meal</div>
+      <input type="text" id="dinnerKidsMeal" class="fnote-input" placeholder="What are the kids having?" maxlength="200" style="width:100%;height:36px;padding:6px 10px;">
+    </div>
+  </div>
 </div>
 
 <!-- ═══ Kids Hub Widget ═══ -->
@@ -833,8 +852,11 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
 
 </div>
 <div class="card" style="display:flex;flex-direction:column;justify-content:center;">
-<div class="clbl">Cash on Hand</div>
-<div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:600;color:var(--positive);margin-bottom:16px;" id="cashTotalD">—</div>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">
+  <div class="clbl" style="margin-bottom:0;">Cash on Hand</div>
+  <button onclick="toggleCashList()" id="cashToggleBtn" style="background:none;border:none;cursor:pointer;padding:2px 4px;color:var(--text-muted);font-size:14px;line-height:1;" title="Toggle account list">&#x25BC;</button>
+</div>
+<div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:600;color:var(--positive);margin-top:8px;margin-bottom:16px;" id="cashTotalD">—</div>
 <div id="cashList" style="display:grid;gap:6px;">
 <div style="text-align:center;color:var(--text-muted);font-size:11px;">Loading…</div>
 </div>
@@ -984,7 +1006,7 @@ REFRESH_MINS: 0,
 var IS_EMBEDDED=(function(){try{var g=google;return!!g.script.run;}catch(e){return false;}})();
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 // v62: Confidence Rail + Graceful Degradation
-var TBM_VERSION = 'v64';
+var TBM_VERSION = 'v65';
 var _veinLastFetch = null;
 var _veinLastGoodEngine = null;
 function markVeinFresh() {
@@ -1134,6 +1156,15 @@ function toggleBucketDetail(id) {
     el.style.display = isHidden ? 'block' : 'none';
     if (arrow) arrow.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
   }
+}
+var _cashListOpen = true;
+function toggleCashList() {
+  var list = document.getElementById('cashList');
+  var btn = document.getElementById('cashToggleBtn');
+  if (!list) return;
+  _cashListOpen = !_cashListOpen;
+  list.style.display = _cashListOpen ? 'grid' : 'none';
+  if (btn) btn.innerHTML = _cashListOpen ? '&#x25BC;' : '&#x25B6;';
 }
 /* ——— POPULATE ——— */
 function populate(d,debts,live,periodOverride){
@@ -2048,15 +2079,24 @@ function saveFamilyNote() {
 }
 
 // v61: Dinner Plan save handler
+function toggleKidsMealVein() {
+  var cb = document.getElementById('dinnerKidsToggle');
+  var row = document.getElementById('dinnerKidsRow');
+  if (!cb || !row) return;
+  row.style.display = cb.checked ? 'block' : 'none';
+}
 function saveDinner() {
   var mealEl = document.getElementById('dinnerMeal');
   var cookEl = document.getElementById('dinnerCook');
   var notesEl = document.getElementById('dinnerNotes');
+  var kidsEl = document.getElementById('dinnerKidsMeal');
+  var kidsToggle = document.getElementById('dinnerKidsToggle');
   var btn = document.getElementById('dinnerSave');
   var status = document.getElementById('dinnerStatus');
   if (!mealEl || !btn) return;
   var meal = mealEl.value.trim();
   if (!meal) { status.textContent = 'Enter a meal name'; status.className = 'fnote-status show'; return; }
+  var kidMeal = (kidsToggle && kidsToggle.checked && kidsEl) ? kidsEl.value.trim() : '';
   btn.textContent = 'Saving...';
   btn.disabled = true;
   google.script.run
@@ -2079,7 +2119,7 @@ function saveDinner() {
       status.textContent = 'Failed \u2014 try again';
       status.className = 'fnote-status show';
     })
-    .updateMealPlanSafe({ meal: meal, cook: cookEl.value, notes: notesEl.value.trim() });
+    .updateMealPlanSafe({ meal: meal, cook: cookEl.value, notes: notesEl.value.trim(), kidMeal: kidMeal });
 }
 
 /* ——— TREND CHARTS ——— */

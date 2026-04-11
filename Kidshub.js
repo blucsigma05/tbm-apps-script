@@ -5,7 +5,7 @@
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 63; }
+function getKidsHubVersion() { return 64; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2888,7 +2888,7 @@ function installDailyReset() {
 // v29: AUDIO BATCH LOADER + PROGRESS REPORT
 // ════════════════════════════════════════════════════════════════════
 
-var AUDIO_FOLDER_ID = '1BnwRW4zT5y2rAqU2S9vbMWvUl6GxESX_';
+var AUDIO_FOLDER_ID = '1mKRtvjEPzx1L8LNks7QOL3rvH5RvF5tT';
 var AUDIO_FOLDER_BUGGSY = '1gaC6zWoAf8kVmrPVpA59ODaOXNzY_DFD';
 
 /**
