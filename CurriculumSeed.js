@@ -1,8 +1,8 @@
-// CurriculumSeed.gs — v6
+// CurriculumSeed.gs — v8
 // Owned by: KidsHub team
-// PURPOSE: One-time seed of 4 weeks of curriculum for JJ and Buggsy
+// PURPOSE: One-time seed of curriculum for JJ (8 weeks) and Buggsy (16 weeks).
 // Run seedAllCurriculum() from the Script Editor to populate the Curriculum tab.
-// CurriculumSeed.gs — v6
+// CurriculumSeed.gs — v8
 
 // ════════════════════════════════════════════════════════════════════
 // JJ CURRICULUM — Pre-K (Age 4, KINDLE letter sequence: K,I,N,D,L,E,J,B)
@@ -3697,4 +3697,4 @@ function seedAllCurriculumSafe() {
   });
 }
 
-// CurriculumSeed.gs — v6
+// CurriculumSeed.gs — v8

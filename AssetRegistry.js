@@ -71,4 +71,4 @@ function getAssetRegistry_() {
   return ASSET_REGISTRY;
 }
 
-// END OF FILE — AssetRegistry.gs v2
+// END OF FILE — AssetRegistry.gs v3
