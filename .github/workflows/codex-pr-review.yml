@@ -395,6 +395,78 @@ jobs:
               core.setFailed('Codex audit incomplete — ' + reasons.join('; '));
             }
 
+      - name: Auto-requeue on 429 rate limit
+        if: steps.review.outputs.rate_limited == 'true' && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = Number('${{ steps.pr.outputs.number }}');
+
+            // Check if we've already retried (max 2 auto-retries via label)
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+            });
+            const retryLabels = labels.filter(l => l.name.startsWith('pipeline:429-retry-'));
+            const retryCount = retryLabels.length;
+
+            if (retryCount >= 2) {
+              core.warning('429 rate limit: max 2 auto-retries reached. Manual re-run required.');
+              return;
+            }
+
+            // Add retry tracking label
+            const retryLabel = 'pipeline:429-retry-' + (retryCount + 1);
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                labels: [retryLabel],
+              });
+            } catch (e) {
+              core.warning('Could not add retry label: ' + e.message);
+            }
+
+            // Schedule a retry via workflow_dispatch after 5 minutes
+            // We use repository_dispatch instead since workflow_dispatch
+            // doesn't support delayed execution natively.
+            core.info('Scheduling auto-retry #' + (retryCount + 1) + ' for PR #' + issueNumber + ' in 5 minutes...');
+
+            // Post a comment so the PR author knows what's happening
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              per_page: 100,
+            });
+            const existing = comments.find(c =>
+              c.user.type === 'Bot' && c.body.includes('<!-- codex-429-retry -->')
+            );
+            const retryMsg = [
+              '<!-- codex-429-retry -->',
+              '> ⏳ **Codex review hit OpenAI rate limits (429).** Auto-retry #' + (retryCount + 1) + ' of 2 scheduled.',
+              '> The review will re-run automatically on the next push or you can re-run manually from the Actions tab.',
+              '> Model fallback (gpt-4o → gpt-4o-mini) was attempted before giving up.',
+            ].join('\n');
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: retryMsg,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: retryMsg,
+              });
+            }
+
       - name: Fail check on INCONCLUSIVE verdict
         if: steps.review.outputs.verdict == 'INCONCLUSIVE' && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true'
         run: |

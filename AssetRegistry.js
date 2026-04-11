@@ -1,4 +1,4 @@
-// AssetRegistry.gs — v2
+// AssetRegistry.gs — v3
 // ════════════════════════════════════════════════════════════════════
 // Shared asset catalog for SparkleLearning, CurriculumSeed, and validators.
 // V8 server-side — modern JS OK here.
@@ -6,7 +6,7 @@
 // READS FROM: (in-memory constant — no sheet reads)
 // ════════════════════════════════════════════════════════════════════
 
-function getAssetRegistryVersion() { return 2; }
+function getAssetRegistryVersion() { return 3; }
 
 var ASSET_REGISTRY = {
   // ── Letter intro hero images — concepts tied to letters in CurriculumSeed ──
@@ -37,7 +37,17 @@ var ASSET_REGISTRY = {
   'moon':       { id: 'moon',       type: 'svg',   value: 'moon',         name: 'moon',       plural: 'moons',       color: 'purple', category: 'shape' },
   'flowers':    { id: 'flowers',    type: 'emoji', value: '\uD83C\uDF38', name: 'flower',     plural: 'flowers',     color: 'pink',   category: 'nature' },
   'rainbows':   { id: 'rainbows',   type: 'emoji', value: '\uD83C\uDF08', name: 'rainbow',    plural: 'rainbows',    color: 'purple', category: 'nature' },
-  'gems':       { id: 'gems',       type: 'emoji', value: '\uD83D\uDC8E', name: 'gem',        plural: 'gems',        color: 'blue',   category: 'object' }
+  'gems':       { id: 'gems',       type: 'emoji', value: '\uD83D\uDC8E', name: 'gem',        plural: 'gems',        color: 'blue',   category: 'object' },
+
+  // ── Phase 2 letter intro images — JJ weeks 5-8 ──
+  'tiger':      { id: 'tiger',      type: 'emoji', value: '\uD83D\uDC2F', name: 'tiger',      plural: 'tigers',      color: 'orange', category: 'animal' },
+  'orange':     { id: 'orange',     type: 'emoji', value: '\uD83C\uDF4A', name: 'orange',     plural: 'oranges',     color: 'orange', category: 'food' },
+  'cat':        { id: 'cat',        type: 'emoji', value: '\uD83D\uDC31', name: 'cat',        plural: 'cats',        color: 'gray',   category: 'animal' },
+
+  // ── Shape assets for color_sort items[].name — validates against registry ──
+  'circle':     { id: 'circle',     type: 'svg',   value: 'circle',       name: 'circle',     plural: 'circles',     color: 'blue',   category: 'shape' },
+  'square':     { id: 'square',     type: 'svg',   value: 'square',       name: 'square',     plural: 'squares',     color: 'green',  category: 'shape' },
+  'triangle':   { id: 'triangle',   type: 'svg',   value: 'triangle',     name: 'triangle',   plural: 'triangles',   color: 'yellow', category: 'shape' }
 };
 
 // ── Plural index — O(1) lookup by plural, singular, or display name ──
@@ -61,4 +71,4 @@ function getAssetRegistry_() {
   return ASSET_REGISTRY;
 }
 
-// END OF FILE — AssetRegistry.gs v2
+// END OF FILE — AssetRegistry.gs v3

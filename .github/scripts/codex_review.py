@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
-Codex PR Review v2 — structured review with full file context.
+Codex PR Review v3 — structured review with hunk-context strategy.
+
+Changes from v2:
+  - Hunk-context: sends diff hunks + ±50 lines instead of full files
+  - Truncation suppresses findings entirely (no false positives)
+  - Pre-publish validator cross-checks syntax findings against actual files
 
 Changes from v1:
   - Sends full diff + full changed file contents (not truncated 12k diff)
@@ -335,12 +340,89 @@ def read_changed_file_content(fname):
     except Exception:
         return None
 
+def extract_hunk_context(fname, diff_text, window=50):
+    """Extract changed-line regions from a file with surrounding context.
+
+    Parses the unified diff to find which lines changed in `fname`, then
+    reads those regions plus `window` lines above/below from the actual file.
+    Returns a string with labeled context windows, or None if no hunks found.
+
+    This replaces the old "send full file" strategy to keep context under
+    limits even for 3000+ line files.
+    """
+    content = read_changed_file_content(fname)
+    if content is None:
+        return None
+
+    lines = content.splitlines(True)  # keep line endings
+    total_lines = len(lines)
+
+    # Parse diff to find hunk ranges for this file
+    # Look for: --- a/fname or +++ b/fname followed by @@ -N,M +N,M @@
+    diff_fname = fname.replace("\\", "/")
+    changed_ranges = []
+    in_file = False
+
+    for diff_line in diff_text.splitlines():
+        if diff_line.startswith("+++ b/"):
+            in_file = diff_line[6:].strip() == diff_fname
+        elif diff_line.startswith("diff --git"):
+            in_file = False  # reset for next file
+        elif in_file and diff_line.startswith("@@"):
+            # Parse @@ -old_start,old_count +new_start,new_count @@
+            match = _re.search(r"\+(\d+)(?:,(\d+))?", diff_line)
+            if match:
+                start = int(match.group(1))
+                count = int(match.group(2)) if match.group(2) else 1
+                changed_ranges.append((start, start + count - 1))
+
+    if not changed_ranges:
+        # No hunks found — fall back to full file (small files only)
+        if total_lines <= 200:
+            return content
+        return None
+
+    # Merge overlapping/adjacent ranges with window expansion
+    expanded = []
+    for start, end in changed_ranges:
+        exp_start = max(1, start - window)
+        exp_end = min(total_lines, end + window)
+        expanded.append((exp_start, exp_end))
+
+    # Merge overlapping expanded ranges
+    expanded.sort()
+    merged = [expanded[0]]
+    for s, e in expanded[1:]:
+        if s <= merged[-1][1] + 1:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], e))
+        else:
+            merged.append((s, e))
+
+    # Build context string with line numbers
+    parts = []
+    parts.append("(%d total lines, showing %d region(s) around changes)\n" % (total_lines, len(merged)))
+    for region_start, region_end in merged:
+        if region_start > 1:
+            parts.append("[... lines 1-%d omitted ...]\n" % (region_start - 1))
+        for i in range(region_start - 1, min(region_end, total_lines)):
+            parts.append("%d\t%s" % (i + 1, lines[i] if lines[i].endswith("\n") else lines[i] + "\n"))
+    if merged[-1][1] < total_lines:
+        parts.append("[... lines %d-%d omitted ...]\n" % (merged[-1][1] + 1, total_lines))
+
+    return "".join(parts)
+
+
 def build_context(diff_text, changed_files, related_files=None, cfg=None):
     """Build review context from diff, changed files, and related files.
 
     Returns (context_string, truncation_notes_list).
     truncation_notes only covers changed content (affects verdict).
     Related-file truncation is informational and does NOT force INCONCLUSIVE.
+
+    For changed files, uses hunk-context strategy: instead of sending the
+    full file, extracts only the regions around changed lines (±50 lines).
+    This keeps context well under limits even for 3000+ line files.
+    Falls back to full file for small files (≤200 lines).
 
     cfg: mode config dict from get_mode_config(). Defaults to medium constants.
     """
@@ -357,23 +439,31 @@ def build_context(diff_text, changed_files, related_files=None, cfg=None):
 
     # ---- diff ----
     parts.append("=== PR DIFF ===\n")
-    diff_text, diff_truncated = truncate_preserving_edges(diff_text, diff_chars_cap, "diff")
+    diff_text_capped, diff_truncated = truncate_preserving_edges(diff_text, diff_chars_cap, "diff")
     if diff_truncated:
         truncation_notes.append("diff truncated at %d chars" % diff_chars_cap)
-    parts.append(diff_text)
+    parts.append(diff_text_capped)
 
-    # ---- changed files ----
+    # ---- changed files (hunk-context strategy) ----
     current_len = sum(len(p) for p in parts)
     remaining = max(0, context_chars_cap - current_len)
     file_count = len(changed_files) if changed_files else 1
     per_file = max(1000, min(per_file_cap, remaining // file_count if file_count else per_file_cap))
 
     for fname in changed_files:
-        content = read_changed_file_content(fname)
-        if content is None:
-            continue
+        # Try hunk-context first (efficient for large files)
+        hunk_ctx = extract_hunk_context(fname, diff_text, window=50)
+        if hunk_ctx is not None:
+            header = "\n=== FILE CONTEXT: %s " % fname
+            content = hunk_ctx
+        else:
+            # Fall back to full file read (file not in diff or read failed)
+            content = read_changed_file_content(fname)
+            if content is None:
+                continue
+            header = "\n=== FULL FILE: %s (%d chars) " % (fname, len(content))
 
-        header = "\n=== FULL FILE: %s (%d chars) ===\n" % (fname, len(content))
+        header += "===\n"
         content, file_truncated = truncate_preserving_edges(content, per_file, "file")
         if file_truncated:
             truncation_notes.append("%s truncated" % fname)
@@ -461,15 +551,37 @@ def send_to_openai(context_text, api_key, cfg=None):
         "Authorization": "Bearer " + api_key,
     }
 
-    # Exponential backoff delays for 429 rate limits (seconds).
-    # OpenAI recommends backing off significantly — 2/4/8s is too short when
-    # multiple PRs burst simultaneously. Serialized concurrency (workflow) is
-    # the primary defense; this is the fallback for transient spikes.
-    RETRY_DELAYS_429 = [15, 30, 60, 120]
-    MAX_ATTEMPTS = len(RETRY_DELAYS_429) + 1  # 5 total
+    # Retry strategy for 429 rate limits:
+    #
+    # Phase 1 (attempts 1-2): Use the requested model (gpt-4o) with 15/30s backoff.
+    #   This handles transient spikes where a short wait is enough.
+    #
+    # Phase 2 (attempts 3-5): Fall back to gpt-4o-mini with 20/40/60s backoff.
+    #   gpt-4o-mini has higher rate limits and 10x lower cost. A degraded review
+    #   (less nuanced findings) is better than INCONCLUSIVE blocking the PR.
+    #
+    # Total max wait: 15+30+20+40+60 = 165s (~2.75 min), well within 10-min timeout.
+    RETRY_SCHEDULE = [
+        # (delay_seconds, model_override)
+        (15, None),          # attempt 2: same model, 15s wait
+        (30, None),          # attempt 3: same model, 30s wait
+        (20, "gpt-4o-mini"), # attempt 4: fallback model, 20s wait
+        (40, "gpt-4o-mini"), # attempt 5: fallback model, 40s wait
+        (60, "gpt-4o-mini"), # attempt 6: fallback model, 60s wait
+    ]
+    MAX_ATTEMPTS = len(RETRY_SCHEDULE) + 1  # 6 total
 
     last_error = None
+    fell_back = False
     for attempt in range(MAX_ATTEMPTS):
+        # On fallback attempts, swap the model in the payload
+        if attempt > 0 and attempt - 1 < len(RETRY_SCHEDULE):
+            _, model_override = RETRY_SCHEDULE[attempt - 1]
+            if model_override and model_override != payload["model"]:
+                print("429 fallback: switching from %s to %s" % (payload["model"], model_override))
+                payload["model"] = model_override
+                fell_back = True
+
         try:
             req = urllib.request.Request(
                 "https://api.openai.com/v1/chat/completions",
@@ -478,11 +590,16 @@ def send_to_openai(context_text, api_key, cfg=None):
                 method="POST",
             )
             with urllib.request.urlopen(req, timeout=90) as resp:
-                return json.load(resp)
+                result = json.load(resp)
+                if fell_back:
+                    # Tag the response so the caller knows the model was degraded
+                    result["_fallback_model"] = payload["model"]
+                    print("Review completed on fallback model: %s" % payload["model"])
+                return result
         except urllib.error.HTTPError as exc:
             last_error = exc
-            if exc.code == 429 and attempt < len(RETRY_DELAYS_429):
-                wait = RETRY_DELAYS_429[attempt]
+            if exc.code == 429 and attempt < len(RETRY_SCHEDULE):
+                wait, _ = RETRY_SCHEDULE[attempt]
                 print("Rate limited (429), retrying in %ds... (attempt %d/%d)" % (
                     wait, attempt + 1, MAX_ATTEMPTS - 1), file=sys.stderr)
                 time.sleep(wait)
@@ -497,7 +614,12 @@ def send_to_openai(context_text, api_key, cfg=None):
             if attempt < MAX_ATTEMPTS - 1:
                 time.sleep(2 ** (attempt + 1))
 
-    return {"error": str(last_error)}
+    # If we exhausted all retries due to 429, tag the error so the workflow
+    # can distinguish rate-limit INCONCLUSIVE from other failures.
+    error_str = str(last_error)
+    if "429" in error_str:
+        return {"error": error_str, "_rate_limited": True}
+    return {"error": error_str}
 
 
 # ── response parser ──────────────────────────────────────────────────
@@ -583,17 +705,100 @@ def extract_verdict(report, has_api_error=False, truncation_notes=None):
     return report["verdict"]
 
 
+# ── finding validator ────────────────────────────────────────────────
+
+# Patterns whose presence in a finding title/evidence implies a syntax claim
+# that can be cross-checked against the actual file contents.
+_SYNTAX_CHECKS = [
+    # (keyword in finding title/evidence, regex that MUST match in file for finding to be valid)
+    ("arrow function",  r"=>"),
+    ("template literal", r"`"),
+    ("let ",            r"\blet\s"),
+    ("const ",          r"\bconst\s"),
+    ("async ",          r"\basync\s"),
+    ("await ",          r"\bawait\s"),
+    ("optional chaining", r"\?\.\w"),
+    ("nullish coalescing", r"\?\?"),
+    (".includes(",      r"\.includes\s*\("),
+]
+
+
+def validate_findings(findings, changed_files):
+    """Drop findings whose flagged pattern cannot exist in the actual file.
+
+    For each finding that makes a syntax claim (e.g. "ES6 arrow function"),
+    check whether the pattern actually appears in the file. If the file passes
+    the check, the finding is a false positive from model hallucination or
+    incomplete context — drop it silently.
+
+    Only applies to .html files (where ES5 enforcement matters).
+    """
+    if not findings or not changed_files:
+        return findings
+
+    # Cache file contents for repeated lookups
+    file_cache = {}
+    for fname in changed_files:
+        content = read_changed_file_content(fname)
+        if content is not None:
+            file_cache[fname.replace("\\", "/")] = content
+
+    validated = []
+    for f in findings:
+        title = str(f.get("title", "")).lower()
+        evidence = str(f.get("evidence", "")).lower()
+        finding_file = str(f.get("file", "")).replace("\\", "/")
+        search_text = title + " " + evidence
+
+        # Only cross-check syntax claims on .html files
+        if not finding_file.endswith(".html"):
+            validated.append(f)
+            continue
+
+        content = file_cache.get(finding_file)
+        if content is None:
+            # Can't verify — keep the finding (conservative)
+            validated.append(f)
+            continue
+
+        dropped = False
+        for keyword, pattern in _SYNTAX_CHECKS:
+            if keyword in search_text:
+                if not _re.search(pattern, content):
+                    # Pattern does NOT exist in file — false positive
+                    print("Validator: dropped finding '%s' on %s — pattern '%s' not found in file"
+                          % (f.get("title", "?"), finding_file, keyword.strip()))
+                    dropped = True
+                    break
+
+        if not dropped:
+            validated.append(f)
+
+    if len(validated) < len(findings):
+        print("Validator: %d of %d findings dropped as false positives"
+              % (len(findings) - len(validated), len(findings)))
+
+    return validated
+
+
 # ── comment generation ───────────────────────────────────────────────
 
 SEVERITY_ICONS = {"blocker": "\U0001f534", "critical": "\U0001f7e0", "major": "\U0001f7e1", "minor": "\u26aa"}
 
 
-def format_comment(report, truncation_notes, error_info=None, effective_verdict=None):
+def format_comment(report, truncation_notes, error_info=None, effective_verdict=None,
+                    changed_files_list=None):
     """Generate human-readable PR comment with embedded JSON report.
 
     effective_verdict overrides report["verdict"] when truncation or other
     safety guards force INCONCLUSIVE. The comment header, icon, and embedded
     JSON all reflect the effective verdict, not the raw model output.
+
+    When truncation_notes is non-empty, findings are suppressed entirely to
+    prevent false positives from partial context.
+
+    changed_files_list is used by validate_findings() to cross-check that
+    flagged patterns actually exist in the file.
     """
 
     if error_info:
@@ -636,6 +841,33 @@ def format_comment(report, truncation_notes, error_info=None, effective_verdict=
     if truncation_notes:
         lines.append("> \u26a0\ufe0f **Review is INCONCLUSIVE due to truncation.** Manual audit required.")
         lines.append("> Context: %s\n" % "; ".join(truncation_notes))
+        # Truncated context produces unreliable findings — suppress everything
+        # except the file list so reviewers know what was attempted.
+        lines.append("Findings from partial context are **suppressed** to prevent false positives.")
+        lines.append("")
+        lines.append("**Files in PR:** %s" % ", ".join(report.get("files_reviewed", [])))
+        lines.append("")
+        # Emit a minimal embedded report with no findings for fix-agent consumption
+        suppressed_report = {
+            "verdict": verdict,
+            "findings": [],
+            "files_reviewed": report.get("files_reviewed", []),
+            "confidence": "none",
+            "suppressed_reason": "context_truncated",
+        }
+        lines.append("<details>")
+        lines.append("<summary>\U0001f4cb Structured report (for fix agent)</summary>")
+        lines.append("")
+        lines.append(REPORT_JSON_START)
+        lines.append("")
+        lines.append("```json")
+        lines.append(json.dumps(suppressed_report, indent=2))
+        lines.append("```")
+        lines.append("")
+        lines.append(REPORT_JSON_END)
+        lines.append("")
+        lines.append("</details>")
+        return "\n".join(lines)
 
     if report.get("summary"):
         lines.append(report["summary"])
@@ -655,7 +887,8 @@ def format_comment(report, truncation_notes, error_info=None, effective_verdict=
         lines.append("| " + " | ".join(stats) + " |")
         lines.append("")
 
-    # findings list
+    # findings list — validated before display
+    findings = validate_findings(findings, changed_files_list) if changed_files_list else findings
     if findings:
         lines.append("### Findings\n")
         for f in findings:
@@ -687,6 +920,7 @@ def format_comment(report, truncation_notes, error_info=None, effective_verdict=
     # Use effective verdict in the embedded report, not the raw model output.
     embedded_report = dict(report)
     embedded_report["verdict"] = verdict
+    embedded_report["findings"] = findings  # use validated findings
     lines.append("<details>")
     lines.append("<summary>\U0001f4cb Structured report (for fix agent)</summary>")
     lines.append("")
@@ -808,12 +1042,24 @@ def main():
         json.dump(report_out, fh, indent=2)
 
     # ---- write human comment ----
-    comment = format_comment(report, truncation_notes, error_info, effective_verdict=verdict)
+    comment = format_comment(report, truncation_notes, error_info, effective_verdict=verdict,
+                             changed_files_list=changed_files)
     with open("review_comment.md", "w") as fh:
         fh.write(comment)
 
     write_github_output("verdict", verdict)
-    print("Codex verdict: %s" % verdict)
+
+    # Signal rate-limiting to the workflow so it can trigger a delayed requeue
+    rate_limited = data.get("_rate_limited", False)
+    write_github_output("rate_limited", "true" if rate_limited else "false")
+
+    # Signal fallback model usage for transparency
+    fallback_model = data.get("_fallback_model", "")
+    if fallback_model:
+        write_github_output("fallback_model", fallback_model)
+        print("Codex verdict: %s (via fallback model %s)" % (verdict, fallback_model))
+    else:
+        print("Codex verdict: %s" % verdict)
 
 
 if __name__ == "__main__":
