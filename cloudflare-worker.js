@@ -173,12 +173,21 @@ async function servePage(request, url) {
       html = html.replace('</body>', shim + '\n</body>');
     }
 
-    return new Response(html, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache'
-      }
-    });
+    var pageName = params.get('page');
+    var cacheControl = 'no-cache';
+    var headers = {
+      'Content-Type': 'text/html; charset=utf-8'
+    };
+
+    if (pageName === 'soul' || pageName === 'spine') {
+      // Ambient surfaces: cache 60s — they auto-refresh on a client timer
+      cacheControl = 'public, max-age=60';
+      headers['CDN-Cache-Control'] = 'public, max-age=60';
+    }
+
+    headers['Cache-Control'] = cacheControl;
+
+    return new Response(html, { headers: headers });
   } catch(err) {
     return errorPage('Fetch failed: ' + err.message);
   }
