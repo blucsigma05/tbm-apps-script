@@ -4731,6 +4731,8 @@ function ensureComicDraftsFolder_() {
 }
 
 function saveComicDraft_(child, draftJson) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
   try {
     var childLower = String(child || 'buggsy').toLowerCase();
     var dateKey = getTodayISO_();
@@ -4744,6 +4746,8 @@ function saveComicDraft_(child, draftJson) {
   } catch (e) {
     if (typeof logError_ === 'function') logError_('saveComicDraft_', e);
     return { success: false, error: String(e) };
+  } finally {
+    lock.releaseLock();
   }
 }
 

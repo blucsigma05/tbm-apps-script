@@ -10,6 +10,7 @@ Env vars:  NOTION_API_KEY         Notion integration token (required)
 
 import json
 import os
+import re
 import sys
 import urllib.request
 import urllib.error
@@ -83,6 +84,15 @@ def main():
         text = extract_text(block)
         if not text.strip():
             continue
+        # Skip completed items — title contains whole-word COMPLETE or ✅
+        # Uses \b word boundary so INCOMPLETE is not matched
+        if re.search(r'\bCOMPLETE\b', text) or '\u2705' in text:
+            continue
+        # child_page blocks: check title via block.child_page.title
+        if block.get('type') == 'child_page':
+            title = block.get('child_page', {}).get('title', '')
+            if re.search(r'\bCOMPLETE\b', title) or '\u2705' in title:
+                continue
 
         ref_time = last_edited or created
         if not ref_time:

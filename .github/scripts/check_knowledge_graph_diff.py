@@ -32,9 +32,10 @@ KNOWLEDGE_PATTERNS = [
     'ops/',
     'specs/',
     '.claude/CLAUDE.md',
+    'phrases.json',   # audio clip definitions — source of truth
 ]
 
-JSON_PATTERNS = ['.json']
+JSON_PATTERNS = []  # no wildcard *.json — too broad (triggers on appsscript.json, etc.)
 
 
 def set_output(key, value):

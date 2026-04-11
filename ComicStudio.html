@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v7">
+<meta name="tbm-version" content="v8">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -699,6 +699,54 @@ main {
   text-align: center;
   margin-top: 8px;
 }
+
+/* ── F7: Replay modal ── */
+#replay-modal {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(11,15,26,0.96); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+#replay-modal.hidden { display: none; }
+.replay-inner {
+  background: #1E293B; border-radius: 20px; padding: 20px;
+  max-width: 640px; width: 95%;
+  box-shadow: 0 0 40px rgba(0,240,255,0.15);
+}
+.replay-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+.replay-title {
+  font-family: 'Orbitron', sans-serif; font-size: 16px;
+  color: #00F0FF; letter-spacing: 2px;
+}
+.replay-close {
+  background: none; border: none; color: #94A3B8;
+  font-size: 22px; cursor: pointer; line-height: 1;
+}
+#replay-canvas {
+  display: block; width: 100%; border-radius: 10px;
+  border: 2px solid #334155; background: #fff;
+}
+.replay-progress-wrap {
+  height: 6px; background: #0F172A; border-radius: 3px;
+  margin: 10px 0; overflow: hidden;
+}
+#replay-progress {
+  height: 100%; background: #00F0FF; width: 0%;
+  border-radius: 3px; transition: width 0.1s linear;
+}
+.replay-controls {
+  display: flex; gap: 10px; justify-content: center; margin-top: 12px;
+}
+.replay-controls button {
+  padding: 10px 20px; border-radius: 10px; border: none;
+  font-family: 'Orbitron', sans-serif; font-size: 12px;
+  font-weight: 700; cursor: pointer;
+  background: #334155; color: #E2E8F0;
+}
+.replay-controls button:first-child { background: #3B82F6; color: #fff; }
+.replay-controls button:disabled { opacity: 0.4; cursor: default; }
 </style>
 </head>
 <body>
@@ -799,14 +847,32 @@ main {
 
   <!-- Completion -->
   <div id="completion-area" class="hidden"></div>
+
+  <!-- F7: Replay modal -->
+  <div id="replay-modal" class="hidden">
+    <div class="replay-inner">
+      <div class="replay-header">
+        <span class="replay-title">&#9654; REPLAY</span>
+        <button class="replay-close" onclick="closeReplayModal()">&#215;</button>
+      </div>
+      <canvas id="replay-canvas" width="600" height="450"></canvas>
+      <div class="replay-progress-wrap">
+        <div id="replay-progress"></div>
+      </div>
+      <div class="replay-controls" id="replay-controls">
+        <button onclick="playReplay()">&#9654; REPLAY AGAIN</button>
+        <button disabled title="Coming soon in v5">SHARE REPLAY (coming soon)</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script>
 // ── ComicStudio v4 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
 // ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
-// tbm-version: v7
+// tbm-version: v8
 
-const COMIC_STUDIO_VERSION = 7;
+const COMIC_STUDIO_VERSION = 8;
 
 // ── Test Mode Detection ──
 const TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
@@ -850,6 +916,44 @@ let activeTab = 'draw';
 // F3: stroke history for autosave payload
 const strokeHistory = [];  // [{panelIdx, type, color, size, points:[]}]
 let currentStroke = null;
+
+// F7: replay buffer (richer format — includes timing for time-lapse playback)
+var replayBuffer = [];
+var _replayCurrentId = null;
+
+function _newReplayId(prefix) {
+  return (prefix || 'stroke') + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+}
+function recordStrokeStart(panelIdx, id, pos, pressure) {
+  replayBuffer.push({
+    strokeId: id, type: 'stroke', panel: panelIdx,
+    brush: activeBrush, color: activeBrush === 'eraser' ? '#ffffff' : activeColor,
+    startedAt: Date.now(), endedAt: 0,
+    points: [{ x: pos.x, y: pos.y, p: pressure, t: Date.now() }]
+  });
+  _replayCurrentId = id;
+  if (replayBuffer.length > 500) { replayBuffer = replayBuffer.slice(-500); }
+}
+function recordStrokePoint(id, pos, pressure) {
+  var e = replayBuffer[replayBuffer.length - 1];
+  if (!e || e.strokeId !== id) return;
+  e.points.push({ x: pos.x, y: pos.y, p: pressure, t: Date.now() });
+}
+function recordStrokeEnd(id) {
+  var e = replayBuffer[replayBuffer.length - 1];
+  if (!e || e.strokeId !== id) return;
+  e.endedAt = Date.now();
+  _replayCurrentId = null;
+}
+function recordFill(panelIdx, x, y, colorHex) {
+  replayBuffer.push({
+    strokeId: _newReplayId('fill'), type: 'fill', panel: panelIdx,
+    brush: 'fill', color: colorHex,
+    startedAt: Date.now(), endedAt: Date.now(),
+    points: [{ x: x, y: y, p: 0, t: Date.now() }]
+  });
+  if (replayBuffer.length > 500) { replayBuffer = replayBuffer.slice(-500); }
+}
 
 // F3 Day 2: Drive draft state
 let hasDrawnAnything = false;
@@ -907,6 +1011,119 @@ function fireRingBurst(cx, cy) {
   }
 }
 
+// ── F7: Replay playback engine ──
+function playReplay() {
+  var modal = document.getElementById('replay-modal');
+  var canvas = document.getElementById('replay-canvas');
+  var ctx = canvas.getContext('2d');
+  canvas.width = 600;
+  canvas.height = 450;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  modal.classList.remove('hidden');
+
+  var controls = document.getElementById('replay-controls');
+  controls.style.display = 'none';
+
+  var strokes = replayBuffer;
+  if (strokes.length === 0) {
+    ctx.fillStyle = '#64748B';
+    ctx.font = '16px Nunito, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Nothing to replay yet — draw something first!', 300, 225);
+    controls.style.display = 'flex';
+    return;
+  }
+
+  var totalDurationMs = 12000;
+  var perStroke = Math.max(300, Math.floor(totalDurationMs / strokes.length));
+
+  // 2×2 panel grid inside 600×450 canvas
+  var PANEL_W = 285, PANEL_H = 215;
+  var PANELS = [
+    { x: 5,   y: 5   },
+    { x: 300, y: 5   },
+    { x: 5,   y: 230 },
+    { x: 300, y: 230 }
+  ];
+  for (var f = 0; f < 4; f++) {
+    ctx.strokeStyle = '#cccccc';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(PANELS[f].x, PANELS[f].y, PANEL_W, PANEL_H);
+  }
+
+  var strokeIdx = 0;
+  var progressBar = document.getElementById('replay-progress');
+  progressBar.style.width = '0%';
+
+  function playOneStroke() {
+    if (strokeIdx >= strokes.length) {
+      progressBar.style.width = '100%';
+      showReplayDoneControls();
+      return;
+    }
+    var stroke = strokes[strokeIdx];
+    var panel = PANELS[stroke.panel] || PANELS[0];
+    var scaleX = PANEL_W / 400;
+    var scaleY = PANEL_H / 400;
+
+    if (stroke.type === 'fill') {
+      ctx.fillStyle = stroke.color;
+      ctx.fillRect(panel.x, panel.y, PANEL_W, PANEL_H);
+    } else {
+      var segCount = Math.max(1, stroke.points.length - 1);
+      var perSeg = perStroke / segCount;
+      var segIdx = 0;
+      var isEraser = (stroke.brush === 'eraser');
+
+      function drawSeg() {
+        if (segIdx >= segCount) return;
+        var p0 = stroke.points[segIdx];
+        var p1 = stroke.points[segIdx + 1];
+        var pressure = p1 ? (p1.p || 0.5) : 0.5;
+        var width = Math.max(1, 2 + pressure * 6) * Math.min(scaleX, scaleY);
+        var x0 = panel.x + p0.x * scaleX;
+        var y0 = panel.y + p0.y * scaleY;
+        var x1 = panel.x + (p1 ? p1.x : p0.x) * scaleX;
+        var y1 = panel.y + (p1 ? p1.y : p0.y) * scaleY;
+        ctx.save();
+        if (isEraser) {
+          ctx.globalCompositeOperation = 'destination-out';
+          ctx.strokeStyle = 'rgba(0,0,0,1)';
+        } else {
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.strokeStyle = stroke.color || '#000000';
+        }
+        ctx.lineWidth = width;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
+        ctx.restore();
+        segIdx++;
+        setTimeout(drawSeg, perSeg);
+      }
+      drawSeg();
+    }
+
+    strokeIdx++;
+    progressBar.style.width = ((strokeIdx / strokes.length) * 100).toFixed(1) + '%';
+    setTimeout(playOneStroke, perStroke);
+  }
+
+  playOneStroke();
+}
+
+function showReplayDoneControls() {
+  document.getElementById('replay-controls').style.display = 'flex';
+}
+
+function closeReplayModal() {
+  document.getElementById('replay-modal').classList.add('hidden');
+}
+
 const COLORS = ['#000000', '#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC4899', '#FFFFFF'];
 
 const FALLBACK_VOCAB = [
@@ -951,6 +1168,7 @@ function serializeDraft() {
     panelCount,
     captions: captions.slice(0, panelCount),
     strokeHistory,
+    replayBuffer,
     panels: panelCanvases.map((canvas, idx) => ({
       idx,
       dataUrl: canvas ? canvas.toDataURL('image/jpeg', 0.7) : null
@@ -1067,6 +1285,8 @@ function clearPanel() {
     panelContexts[activePanel].clearRect(0, 0, c.width, c.height);
     panelContexts[activePanel].fillStyle = '#FFFFFF';
     panelContexts[activePanel].fillRect(0, 0, c.width, c.height);
+    /* Prune replay history for this panel so replay matches final canvas */
+    replayBuffer = replayBuffer.filter(function(e) { return e.panel !== activePanel; });
   }
 }
 
@@ -1159,6 +1379,11 @@ function attachPointerEvents(canvas, panelIdx) {
       points: [{ x: pos.x, y: pos.y, pressure: e.pressure }]
     };
 
+    // F7: record stroke start in replay buffer
+    var sid = _newReplayId('stroke');
+    currentStroke._replayId = sid;
+    recordStrokeStart(panelIdx, sid, pos, e.pressure);
+
     // F3 Day 2: start autosave timer on first stroke
     if (!hasDrawnAnything) {
       hasDrawnAnything = true;
@@ -1185,6 +1410,11 @@ function attachPointerEvents(canvas, panelIdx) {
       currentStroke.points.push({ x: pos.x, y: pos.y, pressure: e.pressure });
     }
 
+    // F7: record point in replay buffer
+    if (currentStroke && currentStroke._replayId) {
+      recordStrokePoint(currentStroke._replayId, pos, e.pressure);
+    }
+
     lastX = pos.x;
     lastY = pos.y;
   });
@@ -1196,12 +1426,15 @@ function attachPointerEvents(canvas, panelIdx) {
     // F3: commit stroke to history
     if (currentStroke) {
       strokeHistory.push(currentStroke);
+      // F7: finalize replay entry
+      if (currentStroke._replayId) { recordStrokeEnd(currentStroke._replayId); }
       currentStroke = null;
     }
   });
 
   canvas.addEventListener('pointercancel', () => {
     isDrawing = false;
+    if (currentStroke && currentStroke._replayId) { recordStrokeEnd(currentStroke._replayId); }
     currentStroke = null;
   });
 }
@@ -1317,6 +1550,10 @@ function floodFill(panelIdx, startX, startY, fillColorHex) {
   }
 
   ctx.putImageData(imgData, 0, 0);
+
+  // F7: record fill in replay buffer
+  recordFill(panelIdx, startX, startY, fillColorHex);
+  if (!hasDrawnAnything) { hasDrawnAnything = true; startAutosaveTimer(); }
 }
 
 // ── Captions ──
@@ -1428,7 +1665,10 @@ function finishComic() {
   if (checkVocabInCaptions()) html += ` &bull; Vocab word "${escapeHtml(todayVocab.word)}" used!`;
   html += '</p>';
   html += `<p style="margin-top:12px;color:#64748B;font-size:12px;">Total words written: ${totalWords}</p>`;
-  html += '<button style="margin-top:20px;padding:12px 28px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=\'/daily-missions\'">Back to Missions</button>';
+  html += '<div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">';
+  html += '<button style="padding:12px 28px;background:#00F0FF;color:#0B0F1A;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Orbitron,sans-serif" onclick="playReplay()">&#9654; REPLAY</button>';
+  html += '<button style="padding:12px 28px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=\'/daily-missions\'">Back to Missions</button>';
+  html += '</div>';
   html += '</div>';
   comp.innerHTML = html;
 
@@ -1545,6 +1785,9 @@ function applyDraftState(draft) {
   if (Array.isArray(draft.strokeHistory)) {
     strokeHistory.length = 0;
     draft.strokeHistory.forEach(s => strokeHistory.push(s));
+  }
+  if (Array.isArray(draft.replayBuffer)) {
+    replayBuffer = draft.replayBuffer.slice();
   }
   buildLayoutPicker();
   buildPanelGrid();
@@ -1667,4 +1910,4 @@ init();
 </script>
 </body>
 </html>
-<!-- ComicStudio.html v7 -->
+<!-- ComicStudio.html v8 -->
