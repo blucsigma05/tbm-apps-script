@@ -147,8 +147,8 @@ jobs:
           gh release create "$TAG" \
             --title "TBM ${TAG}" \
             --notes "Deployed from commit ${SHA_SHORT}. Smoke test: PASS." \
-            --target main
-          echo "✅ Release $TAG created."
+            --target "$GITHUB_SHA"
+          echo "✅ Release $TAG created at ${SHA_SHORT}."
 
       - name: Pushover — deploy success
         if: success()
