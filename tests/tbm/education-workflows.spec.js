@@ -73,13 +73,18 @@ test.describe('Homework: Plan Your Attack → answer flow → completion', funct
     await page.locator('#tab-science').click();
     await page.waitForTimeout(1000);
 
-    // Answer the first question by clicking the correct option
-    var firstOption = page.locator('.q-option').first();
+    // Answer the first question: select an option then LOCK IN to submit
+    var firstOption = page.locator('#section-science .q-option').first();
     await expect(firstOption).toBeVisible({ timeout: 10000 });
     await firstOption.click();
+    await page.waitForTimeout(500);
+    // LOCK IN submits the answer and renders feedback
+    var lockBtn = page.locator('#section-science .lock-btn:not(.disabled)').first();
+    await expect(lockBtn).toBeVisible({ timeout: 5000 });
+    await lockBtn.click();
     await page.waitForTimeout(1500);
 
-    // Feedback should be visible after answering
+    // Feedback should be visible after submitting
     var feedback = page.locator('.feedback-box').first();
     await expect(feedback).toBeVisible({ timeout: 5000 });
 
@@ -105,11 +110,15 @@ test.describe('Homework: wrong answer shows purple not red', function() {
     await page.locator('#tab-science').click();
     await page.waitForTimeout(1000);
 
-    // Find all options and click a wrong one.
-    // The fixture q1 correct index is 1 (second option), so click the first option (index 0).
-    var options = page.locator('.q-option');
+    // Click a wrong option: fixture answer is index 1, so option 0 is wrong.
+    var options = page.locator('#section-science .q-option');
     await expect(options.first()).toBeVisible({ timeout: 10000 });
     await options.nth(0).click();
+    await page.waitForTimeout(500);
+    // LOCK IN to submit — wrong-answer class is only added after submission
+    var lockBtn2 = page.locator('#section-science .lock-btn:not(.disabled)').first();
+    await expect(lockBtn2).toBeVisible({ timeout: 5000 });
+    await lockBtn2.click();
     await page.waitForTimeout(1500);
 
     // Check the wrong-answer element's background color
@@ -145,23 +154,23 @@ test.describe('Homework: brain break fires after 4 answers', function() {
     await page.locator('#tab-science').click();
     await page.waitForTimeout(1000);
 
-    // Answer 4 questions in sequence
+    // Answer 4 questions — [style*="cursor:pointer"] skips already-submitted options.
+    // After each option click, LOCK IN (submitAnswer) is required — that increments
+    // _questionsSinceBrainBreak. Brain break fires when the counter reaches 4.
     for (var i = 0; i < 4; i++) {
-      var option = page.locator('.q-option').first();
+      var option = page.locator('#section-science .q-option[style*="cursor:pointer"]').first();
       await expect(option).toBeVisible({ timeout: 10000 });
       await option.click();
-      await page.waitForTimeout(2000);
-
-      // If there is a next-question button, click it
-      var nextBtn = page.locator('.es-next-btn, .q-next, [class*="next"]').first();
-      var hasNext = await nextBtn.isVisible({ timeout: 2000 }).catch(function() { return false; });
-      if (hasNext) {
-        await nextBtn.click();
-        await page.waitForTimeout(1500);
+      await page.waitForTimeout(500);
+      var lockBtnBB = page.locator('#section-science .lock-btn:not(.disabled)').first();
+      var hasLockBB = await lockBtnBB.isVisible({ timeout: 2000 }).catch(function() { return false; });
+      if (hasLockBB) {
+        await lockBtnBB.click();
+        await page.waitForTimeout(2000);
       }
     }
 
-    // Brain break overlay should appear
+    // Brain break overlay should appear after the 4th submission
     await expect(page.locator('#brain-break-overlay')).toBeVisible({ timeout: 10000 });
 
     expect(filterRealErrors(errors)).toHaveLength(0);
@@ -185,22 +194,30 @@ test.describe('Homework: Monday Error Journal appears', function() {
     await page.locator('.es-ready-btn').click();
     await page.waitForTimeout(2000);
 
-    // Navigate through Science then Math to complete all questions
+    // Answer all questions in both tabs to trigger completion.
+    // [style*="cursor:pointer"] targets only unsubmitted options (submitted ones
+    // get cursor:default). LOCK IN (submitAnswer) is required to score each answer.
+    // Brain break fires after 4 total submissions — dismiss it and continue.
     for (var tab of ['science', 'math']) {
       await page.locator('#tab-' + tab).click();
       await page.waitForTimeout(1000);
 
-      for (var i = 0; i < 6; i++) {
-        var option = page.locator('#section-' + tab + ' .q-option').first();
-        var optionVisible = await option.isVisible({ timeout: 5000 }).catch(function() { return false; });
+      for (var i = 0; i < 8; i++) {
+        // Dismiss brain break if it fired mid-loop
+        var bbMon = await page.locator('#brain-break-overlay').isVisible({ timeout: 500 }).catch(function() { return false; });
+        if (bbMon) {
+          await page.locator('#brain-break-overlay button').click();
+          await page.waitForTimeout(1000);
+        }
+        var option = page.locator('#section-' + tab + ' .q-option[style*="cursor:pointer"]').first();
+        var optionVisible = await option.isVisible({ timeout: 3000 }).catch(function() { return false; });
         if (!optionVisible) break;
         await option.click();
-        await page.waitForTimeout(1500);
-
-        var nextBtn = page.locator('.es-next-btn, .q-next, [class*="next"]').first();
-        var hasNext = await nextBtn.isVisible({ timeout: 2000 }).catch(function() { return false; });
-        if (hasNext) {
-          await nextBtn.click();
+        await page.waitForTimeout(500);
+        var lockBtnMon = page.locator('#section-' + tab + ' .lock-btn:not(.disabled)').first();
+        var hasLockMon = await lockBtnMon.isVisible({ timeout: 2000 }).catch(function() { return false; });
+        if (hasLockMon) {
+          await lockBtnMon.click();
           await page.waitForTimeout(1500);
         }
       }
@@ -229,22 +246,28 @@ test.describe('Homework: Friday Reflection appears', function() {
     await page.locator('.es-ready-btn').click();
     await page.waitForTimeout(2000);
 
-    // Navigate through Science then Math to complete all questions
+    // Answer all questions in both tabs to trigger completion.
+    // Same pattern as Monday test: [style*="cursor:pointer"] + LOCK IN + brain break handling.
     for (var tab of ['science', 'math']) {
       await page.locator('#tab-' + tab).click();
       await page.waitForTimeout(1000);
 
-      for (var i = 0; i < 6; i++) {
-        var option = page.locator('#section-' + tab + ' .q-option').first();
-        var optionVisible = await option.isVisible({ timeout: 5000 }).catch(function() { return false; });
+      for (var i = 0; i < 8; i++) {
+        // Dismiss brain break if it fired mid-loop
+        var bbFri = await page.locator('#brain-break-overlay').isVisible({ timeout: 500 }).catch(function() { return false; });
+        if (bbFri) {
+          await page.locator('#brain-break-overlay button').click();
+          await page.waitForTimeout(1000);
+        }
+        var option = page.locator('#section-' + tab + ' .q-option[style*="cursor:pointer"]').first();
+        var optionVisible = await option.isVisible({ timeout: 3000 }).catch(function() { return false; });
         if (!optionVisible) break;
         await option.click();
-        await page.waitForTimeout(1500);
-
-        var nextBtn = page.locator('.es-next-btn, .q-next, [class*="next"]').first();
-        var hasNext = await nextBtn.isVisible({ timeout: 2000 }).catch(function() { return false; });
-        if (hasNext) {
-          await nextBtn.click();
+        await page.waitForTimeout(500);
+        var lockBtnFri = page.locator('#section-' + tab + ' .lock-btn:not(.disabled)').first();
+        var hasLockFri = await lockBtnFri.isVisible({ timeout: 2000 }).catch(function() { return false; });
+        if (hasLockFri) {
+          await lockBtnFri.click();
           await page.waitForTimeout(1500);
         }
       }
@@ -323,7 +346,10 @@ test.describe('Daily Missions: JJ gets Sparkle theme', function() {
     await page.setViewportSize(DEVICES.a9);
     await shimGAS(page, FIXTURES);
 
-    await page.goto(BASE_URL + '/daily-adventures', { waitUntil: 'domcontentloaded', timeout: 60000 });
+    // Use ?child=jj so window.location.search contains 'child=jj' and JJ theme applies.
+    // /daily-adventures proxies child=jj server-side but the browser URL has no query
+    // string, so parseChildParam() never sets currentChild = 'jj' in that case.
+    await page.goto(BASE_URL + '/daily-missions?child=jj', { waitUntil: 'domcontentloaded', timeout: 60000 });
     await page.waitForTimeout(6000);
 
     // Verify purple gradient background (Sparkle Kingdom theming)
@@ -404,8 +430,10 @@ test.describe('Fact Sprint: timer counts UP not down', function() {
     await startBtn.click();
     await page.waitForTimeout(2500);
 
-    // Read the timer value
-    var timer = page.locator('[class*="timer"], [class*="stopwatch"], [id*="timer"], .es-session-timer').first();
+    // Use .es-session-timer specifically — it's the ExecSkills counting-up timer.
+    // Broad selectors like [id*="timer"] match the hidden #bb-timer (brain break
+    // countdown inside display:none overlay) which Playwright rightly reports as hidden.
+    var timer = page.locator('.es-session-timer');
     await expect(timer).toBeVisible({ timeout: 5000 });
 
     var timerText = await timer.textContent();
