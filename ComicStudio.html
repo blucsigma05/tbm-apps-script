@@ -1504,6 +1504,7 @@ function autosaveDraft() {
 
 function startAutosaveTimer() {
   if (_autosaveTimer) return;
+  autosaveDraft(); /* Immediate first save — child may close tab within first 60s */
   _autosaveTimer = setInterval(autosaveDraft, 60000);
   window.addEventListener('beforeunload', autosaveDraft);
 }
@@ -1574,7 +1575,7 @@ function startFresh() {
     google.script.run
       .withSuccessHandler(() => {})
       .withFailureHandler(() => {})
-      .deleteComicDraftSafe(CHILD, getTodayDateKey());
+      .deleteComicDraftSafe(CHILD, null); /* Server derives date via getTodayISO_() — avoids client/server timezone mismatch */
   }
   buildPanelGrid();
   renderCaptions();
