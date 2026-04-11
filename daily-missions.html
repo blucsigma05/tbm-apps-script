@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v12">
+<meta name="tbm-version" content="v13">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -602,9 +602,39 @@ body.jj-theme .launch-btn {
 #launch-overlay .ov-icon { font-size: 72px; margin-bottom: 20px; }
 #launch-overlay .ov-text { color: #fff; font-size: 26px; font-weight: 800; letter-spacing: 3px; }
 #launch-overlay .ov-sub  { color: rgba(255,255,255,0.45); font-size: 15px; margin-top: 14px; }
+
+/* ─── ExecSkills Styles (inlined #171) ─── */
+.es-plan-attack{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;margin:16px 0;text-align:center;}
+.es-plan-attack h2{font-size:20px;color:#f0f0f0;margin:0 0 8px 0;font-family:'Orbitron','Segoe UI',sans-serif;letter-spacing:1px;}
+.es-plan-attack .es-subtitle{font-size:13px;color:#8b8fa3;margin:0 0 20px 0;}
+.es-plan-overview{display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:8px;-webkit-justify-content:center;justify-content:center;margin:16px 0;}
+.es-plan-pill{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:8px 16px;font-size:13px;color:#c0c4d6;}
+.es-plan-pill .es-pill-type{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6c63ff;display:block;margin-bottom:2px;}
+.es-time-estimate{display:-webkit-inline-flex;display:inline-flex;-webkit-align-items:center;align-items:center;gap:6px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:6px 14px;font-size:13px;color:#a5b4fc;margin:12px 0;}
+.es-ready-btn{background:linear-gradient(135deg,#6c63ff 0%,#8b5cf6 100%);color:#fff;border:none;border-radius:12px;padding:14px 40px;font-size:16px;font-weight:700;cursor:pointer;margin-top:20px;}
+.es-session-timer{position:fixed;top:12px;right:12px;background:rgba(15,15,30,0.85);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:6px 14px;font-size:13px;color:#a5b4fc;font-family:'JetBrains Mono',monospace;z-index:100;}
+/* ExecSkills plan overlay */
+#es-plan-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,26,0.97);z-index:200;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:24px;}
+#es-plan-inner{max-width:520px;width:100%;}
 </style>
 </head>
 <body>
+
+<!-- ExecSkills Plan Overlay (#171) — hidden until render() shows it -->
+<div id="es-plan-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,26,0.97);z-index:200;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:24px;">
+  <div id="es-plan-inner" style="max-width:520px;width:100%;"></div>
+</div>
+
+<!-- Brain Break Overlay (#170) -->
+<div id="brain-break-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,26,0.97);z-index:9000;">
+  <div style="position:absolute;top:50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);text-align:center;padding:0 24px;width:100%;max-width:480px;">
+    <div style="font-size:56px;margin-bottom:16px;">&#x1F9E0;</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;color:#a855f7;letter-spacing:2px;margin-bottom:12px;">BRAIN BREAK</div>
+    <div id="bb-prompt" style="font-size:16px;color:#E2E8F0;margin-bottom:28px;line-height:1.6;"></div>
+    <div id="bb-timer" style="font-family:'JetBrains Mono',monospace;font-size:56px;font-weight:700;color:#a855f7;margin-bottom:28px;">30</div>
+    <button onclick="endBrainBreak()" style="background:#a855f7;color:#fff;border:none;border-radius:12px;padding:14px 36px;font-size:16px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;cursor:pointer;">I'M DONE</button>
+  </div>
+</div>
 
 <div id="launch-overlay">
   <div class="ov-icon">&#128640;</div>
@@ -969,6 +999,108 @@ function isDay1(callback) {
 }
 
 // ============================================================
+// ExecSkills IIFE — ES5 ONLY (#171)
+// ============================================================
+var ExecSkills = (function() {
+  'use strict';
+  var _sessionStartTime = null;
+  var _sessionTimerInterval = null;
+  var _planAttackCallback = null;
+  var _isSparkle = false;
+
+  function showPlanYourAttack(options) {
+    _isSparkle = (options.child === 'jj' || options.child === 'kindle');
+    _planAttackCallback = options.onReady;
+    var title = _isSparkle ? 'Let\'s Get Ready!' : 'PLAN YOUR ATTACK';
+    var subtitle = _isSparkle ? 'Here\'s what we\'re doing today!' : 'Here are today\'s missions. Know what you\'re walking into.';
+    var btnText = _isSparkle ? 'Let\'s Go!' : 'I\'m Ready \u2014 Show My Missions';
+    var pills = '';
+    for (var i = 0; i < options.questions.length; i++) {
+      var q = options.questions[i];
+      pills += '<div class="es-plan-pill"><span class="es-pill-type">' + (q.type || 'Mission ' + (i + 1)) + '</span>' + (q.topic || 'Mission ' + (i + 1)) + '</div>';
+    }
+    var html = '<div class="es-plan-attack">' +
+      '<h2>' + title + '</h2>' +
+      '<p class="es-subtitle">' + subtitle + '</p>' +
+      '<div class="es-time-estimate">&#9202; Estimated time: ~' + (options.timeEstimate || 30) + ' min</div>' +
+      '<div class="es-plan-overview">' + pills + '</div>' +
+      '<button class="es-ready-btn" onclick="ExecSkills._onPlanReady()">' + btnText + '</button>' +
+    '</div>';
+    var overlay = document.getElementById('es-plan-overlay');
+    var container = document.getElementById(options.container);
+    if (container) container.innerHTML = html;
+    if (overlay) overlay.style.display = '-webkit-flex';
+    if (overlay) overlay.style.display = 'flex';
+  }
+
+  function _onPlanReady() {
+    startSessionTimer(_isSparkle);
+    if (_planAttackCallback) _planAttackCallback();
+  }
+
+  function startSessionTimer(isSparkle) {
+    _sessionStartTime = Date.now();
+    var timerEl = document.createElement('div');
+    timerEl.id = 'es-session-timer';
+    timerEl.className = 'es-session-timer' + (isSparkle ? ' sparkle' : '');
+    timerEl.innerHTML = '0:00';
+    document.body.appendChild(timerEl);
+    _sessionTimerInterval = setInterval(function() {
+      var elapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+      var min = Math.floor(elapsed / 60);
+      var sec = elapsed % 60;
+      timerEl.innerHTML = min + ':' + (sec < 10 ? '0' : '') + sec;
+    }, 1000);
+  }
+
+  function stopSessionTimer() {
+    if (_sessionTimerInterval) { clearInterval(_sessionTimerInterval); _sessionTimerInterval = null; }
+    return _sessionStartTime ? Math.floor((Date.now() - _sessionStartTime) / 1000) : 0;
+  }
+
+  return {
+    showPlanYourAttack: showPlanYourAttack, startSessionTimer: startSessionTimer,
+    stopSessionTimer: stopSessionTimer, _onPlanReady: _onPlanReady
+  };
+})();
+
+// ─── BRAIN BREAK (#170) ───
+var _brainBreakAfter = 4;
+var _brainBreakPrompt = 'Stand up and do 10 jumping jacks!';
+var _missionsSinceBrainBreak = 0;
+var _brainBreakTimerInterval = null;
+
+function checkBrainBreak() {
+  _missionsSinceBrainBreak++;
+  if (_brainBreakAfter > 0 && _missionsSinceBrainBreak >= _brainBreakAfter) {
+    showBrainBreak();
+    _missionsSinceBrainBreak = 0;
+  }
+}
+
+function showBrainBreak() {
+  var overlay = document.getElementById('brain-break-overlay');
+  if (!overlay) return;
+  var promptEl = document.getElementById('bb-prompt');
+  var timerEl = document.getElementById('bb-timer');
+  if (promptEl) promptEl.textContent = _brainBreakPrompt;
+  overlay.style.display = 'block';
+  var remaining = 30;
+  if (timerEl) timerEl.textContent = remaining;
+  _brainBreakTimerInterval = setInterval(function() {
+    remaining--;
+    if (timerEl) timerEl.textContent = remaining;
+    if (remaining <= 0) { endBrainBreak(); }
+  }, 1000);
+}
+
+function endBrainBreak() {
+  if (_brainBreakTimerInterval) { clearInterval(_brainBreakTimerInterval); _brainBreakTimerInterval = null; }
+  var overlay = document.getElementById('brain-break-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+// ============================================================
 // INIT — v10 perf: single combined server call replaces 4 sequential
 // ============================================================
 function init() {
@@ -1298,6 +1430,7 @@ function launchMission(url, missionId, missionName) {
     launched[missionId] = true;
     localStorage.setItem(launchedKey, JSON.stringify(launched));
   } catch(e) {}
+  checkBrainBreak(); // #170 — brain break after N missions launched
   var overlay = document.getElementById('launch-overlay');
   if (overlay) {
     overlay.style.display = 'block';
@@ -1463,6 +1596,24 @@ function render() {
   html += '</div>';
 
   container.innerHTML = html;
+
+  // #171 — ExecSkills plan screen (Buggsy only, first visit before any missions started)
+  if (!isJJ() && doneCount === 0) {
+    var missionPills = [];
+    for (var mp = 0; mp < blocks.length; mp++) {
+      missionPills.push({ type: blocks[mp].subject || 'Mission', topic: blocks[mp].name || ('Mission ' + (mp + 1)) });
+    }
+    ExecSkills.showPlanYourAttack({
+      container: 'es-plan-inner',
+      child: currentChild,
+      timeEstimate: totalTime || 30,
+      questions: missionPills,
+      onReady: function() {
+        var overlay = document.getElementById('es-plan-overlay');
+        if (overlay) overlay.style.display = 'none';
+      }
+    });
+  }
 
   // Ring burst + XP pop on completion (Buggsy only)
   if (allDone && !isJJ()) {

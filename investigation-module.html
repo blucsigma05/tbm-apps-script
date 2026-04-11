@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="investigation-module">
-<meta name="tbm-version" content="v3">
+<meta name="tbm-version" content="v4">
 <title>Wolfkid Investigation Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -714,9 +714,21 @@ body::after {
   pointer-events: none;
   z-index: 0;
 }
+/* Brain break overlay (#170) — no CSS needed beyond inline styles */
 </style>
 </head>
 <body>
+
+<!-- Brain Break Overlay (#170) -->
+<div id="brain-break-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,26,0.97);z-index:9000;">
+  <div style="position:absolute;top:50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);text-align:center;padding:0 24px;width:100%;max-width:480px;">
+    <div style="font-size:56px;margin-bottom:16px;">&#x1F9E0;</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;color:#a855f7;letter-spacing:2px;margin-bottom:12px;">BRAIN BREAK</div>
+    <div id="bb-prompt" style="font-size:16px;color:#E2E8F0;margin-bottom:28px;line-height:1.6;"></div>
+    <div id="bb-timer" style="font-family:'JetBrains Mono',monospace;font-size:56px;font-weight:700;color:#a855f7;margin-bottom:28px;">30</div>
+    <button onclick="endBrainBreak()" style="background:#a855f7;color:#fff;border:none;border-radius:12px;padding:14px 36px;font-size:16px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;cursor:pointer;">I'M DONE</button>
+  </div>
+</div>
 
 <!-- Star field -->
 <div id="starfield"></div>
@@ -876,6 +888,42 @@ function playBugsyAudio(name) { if (audioCache[name]) { try { audioCache[name].c
 function playBugsyCorrect() { var c = ['buggsy_feedback_correct1.mp3','buggsy_feedback_correct2.mp3','buggsy_feedback_correct3.mp3','buggsy_feedback_correct4.mp3','buggsy_feedback_correct5.mp3','buggsy_feedback_correct6.mp3','buggsy_feedback_correct7.mp3','buggsy_feedback_correct8.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
 function playBugsyWrong() { var c = ['buggsy_feedback_wrong1.mp3','buggsy_feedback_wrong2.mp3','buggsy_feedback_wrong3.mp3','buggsy_feedback_wrong4.mp3','buggsy_feedback_wrong5.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
 function playBugsyComplete() { var c = ['buggsy_feedback_complete1.mp3','buggsy_feedback_complete2.mp3']; playBugsyAudio(c[Math.floor(Math.random() * c.length)]); }
+
+// ─── BRAIN BREAK (#170) ───
+var _brainBreakAfter = 4;
+var _brainBreakPrompt = 'Stand up and do 10 jumping jacks!';
+var _questionsSinceBrainBreak = 0;
+var _brainBreakTimerInterval = null;
+
+function checkBrainBreak() {
+  _questionsSinceBrainBreak++;
+  if (_brainBreakAfter > 0 && _questionsSinceBrainBreak >= _brainBreakAfter) {
+    showBrainBreak();
+    _questionsSinceBrainBreak = 0;
+  }
+}
+
+function showBrainBreak() {
+  var overlay = document.getElementById('brain-break-overlay');
+  if (!overlay) return;
+  var promptEl = document.getElementById('bb-prompt');
+  var timerEl = document.getElementById('bb-timer');
+  if (promptEl) promptEl.textContent = _brainBreakPrompt;
+  overlay.style.display = 'block';
+  var remaining = 30;
+  if (timerEl) timerEl.textContent = remaining;
+  _brainBreakTimerInterval = setInterval(function() {
+    remaining--;
+    if (timerEl) timerEl.textContent = remaining;
+    if (remaining <= 0) { endBrainBreak(); }
+  }, 1000);
+}
+
+function endBrainBreak() {
+  if (_brainBreakTimerInterval) { clearInterval(_brainBreakTimerInterval); _brainBreakTimerInterval = null; }
+  var overlay = document.getElementById('brain-break-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
 
 // ============================================================
 // ExecSkills IIFE — ES5 ONLY
@@ -1179,7 +1227,7 @@ var ExecSkills = (function() {
    TEKS-Aligned. STAAR-Ready. Executive Skills-Driven.
    ============================================================ */
 
-var MODULE_VERSION = 'v3';
+var MODULE_VERSION = 'v4';
 var CHILD = 'buggsy';
 var RINGS_BASE = 8;
 var MAX_STEPS = 8;
@@ -1360,6 +1408,7 @@ function lockSection(num) {
   completedSections++;
   currentSection = completedSections + 1;
   updateProgress();
+  checkBrainBreak(); // #170
 
   // Unlock next section
   if (num < 4) {
@@ -1617,6 +1666,12 @@ function loadCurriculumContent() {
   }
   google.script.run
     .withSuccessHandler(function(response) {
+      // #170 — read adhd scaffold config
+      if (response && response.scaffoldConfig && response.scaffoldConfig.adhd) {
+        var adhd = response.scaffoldConfig.adhd;
+        if (adhd.brainBreakAfter) { _brainBreakAfter = adhd.brainBreakAfter; }
+        if (adhd.brainBreakPrompt) { _brainBreakPrompt = adhd.brainBreakPrompt; }
+      }
       if (response && response.content && response.content.investigation) {
         INVESTIGATION = response.content.investigation;
         init();

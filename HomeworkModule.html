@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v7">
+<meta name="tbm-version" content="v9">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -161,6 +161,39 @@ main {
   position: relative;
   z-index: 10;
 }
+
+/* ─── ExecSkills Component Styles (inlined from executive-skills-components.html) ─── */
+.es-plan-attack{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:24px;margin:16px 0;text-align:center;}
+.es-plan-attack h2{font-size:20px;color:#f0f0f0;margin:0 0 8px 0;font-family:'Orbitron','Segoe UI',sans-serif;letter-spacing:1px;}
+.es-plan-attack .es-subtitle{font-size:13px;color:#8b8fa3;margin:0 0 20px 0;}
+.es-plan-overview{display:-webkit-flex;display:flex;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:8px;-webkit-justify-content:center;justify-content:center;margin:16px 0;}
+.es-plan-pill{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:20px;padding:8px 16px;font-size:13px;color:#c0c4d6;}
+.es-plan-pill .es-pill-type{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6c63ff;display:block;margin-bottom:2px;}
+.es-time-estimate{display:-webkit-inline-flex;display:inline-flex;-webkit-align-items:center;align-items:center;gap:6px;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:6px 14px;font-size:13px;color:#a5b4fc;margin:12px 0;}
+.es-ready-btn{background:linear-gradient(135deg,#6c63ff 0%,#8b5cf6 100%);color:#fff;border:none;border-radius:12px;padding:14px 40px;font-size:16px;font-weight:700;cursor:pointer;margin-top:20px;}
+.es-session-timer{position:fixed;top:12px;right:12px;background:rgba(15,15,30,0.85);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:6px 14px;font-size:13px;color:#a5b4fc;font-family:'JetBrains Mono',monospace;z-index:100;}
+.es-error-journal{background:linear-gradient(135deg,#1a1a2e 0%,#1e1e3a 100%);border:1px solid rgba(255,193,7,0.2);border-radius:16px;padding:24px;margin:16px 0;}
+.es-error-journal h3{color:#ffc107;font-size:16px;margin:0 0 4px 0;}
+.es-error-journal .es-ej-subtitle{color:#8b8fa3;font-size:13px;margin:0 0 16px 0;}
+.es-missed-q{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;margin:8px 0;cursor:pointer;}
+.es-missed-q.selected{border-color:#ffc107;background:rgba(255,193,7,0.06);}
+.es-missed-q .es-mq-label{font-size:12px;color:#a855f7;margin-bottom:4px;}
+.es-missed-q .es-mq-text{font-size:14px;color:#e0e0e0;}
+.es-journal-textarea{width:100%;min-height:80px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:12px;color:#e0e0e0;font-size:14px;font-family:inherit;resize:vertical;margin-top:12px;box-sizing:border-box;}
+.es-journal-prompt{color:#ffc107;font-size:13px;font-weight:600;margin:16px 0 6px 0;}
+.es-reflection{background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%);border:1px solid rgba(139,92,246,0.2);border-radius:16px;padding:24px;margin:16px 0;}
+.es-reflection h3{color:#a78bfa;font-size:16px;margin:0 0 4px 0;}
+.es-reflection .es-ref-subtitle{color:#8b8fa3;font-size:13px;margin:0 0 16px 0;}
+.es-ref-prompt{color:#c4b5fd;font-size:14px;font-weight:600;margin:14px 0 6px 0;}
+.es-ref-textarea{width:100%;min-height:60px;background:rgba(255,255,255,0.04);border:1px solid rgba(139,92,246,0.2);border-radius:10px;padding:12px;color:#e0e0e0;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;}
+.es-feedback{border-radius:12px;padding:16px;margin:8px 0;}
+.es-feedback.correct{background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);}
+.es-feedback.wrong{background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);}
+.es-feedback .es-fb-icon{font-size:18px;font-weight:700;margin-bottom:4px;}
+.es-feedback.correct .es-fb-icon{color:#22c55e;}
+.es-feedback.wrong .es-fb-icon{color:#fbbf24;}
+.es-feedback .es-fb-text{font-size:14px;color:#d0d0d0;line-height:1.5;}
+@keyframes esFeedbackSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
 /* Plan Your Attack overlay */
 #plan-overlay {
@@ -336,8 +369,8 @@ main {
   border-color: #22C55E;
 }
 .q-option.wrong-answer {
-  background: rgba(239,68,68,0.12);
-  border-color: #EF4444;
+  background: rgba(168,85,247,0.20);
+  border-color: #a855f7;
 }
 .q-textarea {
   width: 100%;
@@ -386,8 +419,8 @@ main {
   border: 1px solid rgba(34,197,94,0.3);
 }
 .feedback-wrong {
-  background: rgba(239,68,68,0.08);
-  border: 1px solid rgba(239,68,68,0.3);
+  background: rgba(168,85,247,0.08);
+  border: 1px solid rgba(168,85,247,0.3);
 }
 .feedback-review {
   background: rgba(59,130,246,0.08);
@@ -527,6 +560,17 @@ main {
   <div id="section-math" style="padding-top:16px;display:none;"></div>
   <div id="section-results" style="padding-top:16px;display:none;"></div>
 </main>
+
+<!-- Brain Break Overlay (#170) -->
+<div id="brain-break-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,26,0.97);z-index:9000;">
+  <div style="position:absolute;top:50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);text-align:center;padding:0 24px;width:100%;max-width:480px;">
+    <div style="font-size:56px;margin-bottom:16px;">&#x1F9E0;</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;color:#a855f7;letter-spacing:2px;margin-bottom:12px;">BRAIN BREAK</div>
+    <div id="bb-prompt" style="font-size:16px;color:#E2E8F0;margin-bottom:28px;line-height:1.6;"></div>
+    <div id="bb-timer" style="font-family:'JetBrains Mono',monospace;font-size:56px;font-weight:700;color:#a855f7;margin-bottom:28px;">30</div>
+    <button onclick="endBrainBreak()" style="background:#a855f7;color:#fff;border:none;border-radius:12px;padding:14px 36px;font-size:16px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;cursor:pointer;">I'M DONE</button>
+  </div>
+</div>
 
 <!-- Footer -->
 <div id="app-footer">
@@ -740,6 +784,213 @@ function playBugsyComplete() {
   playBugsyAudio(clips[Math.floor(Math.random() * clips.length)]);
 }
 
+// ============================================================
+// ExecSkills IIFE — ES5 ONLY (inlined from executive-skills-components.html)
+// #171: Wire plan, timer, feedback, completion, error journal, reflection
+// ============================================================
+var ExecSkills = (function() {
+  'use strict';
+  var _sessionStartTime = null;
+  var _sessionTimerInterval = null;
+  var _planAttackCallback = null;
+  var _isSparkle = false;
+
+  function showPlanYourAttack(options) {
+    _isSparkle = (options.child === 'jj' || options.child === 'kindle');
+    _planAttackCallback = options.onReady;
+    var themeClass = _isSparkle ? ' sparkle' : '';
+    var title = _isSparkle ? 'Let\'s Get Ready!' : 'PLAN YOUR ATTACK';
+    var subtitle = _isSparkle ? 'Here\'s what we\'re playing today!' : 'Scan the mission. Know what you\'re walking into.';
+    var btnText = _isSparkle ? 'Let\'s Go!' : 'I\'m Ready \u2014 Start Mission';
+    var pills = '';
+    for (var i = 0; i < options.questions.length; i++) {
+      var q = options.questions[i];
+      pills += '<div class="es-plan-pill"><span class="es-pill-type">' + (q.type || 'Question ' + (i + 1)) + '</span>' + (q.topic || q.subject || 'Q' + (i + 1)) + '</div>';
+    }
+    var html = '<div class="es-plan-attack' + themeClass + '">' +
+      '<h2>' + title + '</h2>' +
+      '<p class="es-subtitle">' + subtitle + '</p>' +
+      '<div class="es-time-estimate">&#9202; Estimated time: ~' + (options.timeEstimate || 12) + ' min</div>' +
+      '<div class="es-plan-overview">' + pills + '</div>' +
+      '<button class="es-ready-btn" onclick="ExecSkills._onPlanReady()">' + btnText + '</button>' +
+    '</div>';
+    var container = document.getElementById(options.container);
+    if (container) container.innerHTML = html;
+  }
+
+  function _onPlanReady() {
+    startSessionTimer(_isSparkle);
+    if (_planAttackCallback) _planAttackCallback();
+  }
+
+  function startSessionTimer(isSparkle) {
+    _sessionStartTime = Date.now();
+    var timerEl = document.createElement('div');
+    timerEl.id = 'es-session-timer';
+    timerEl.className = 'es-session-timer' + (isSparkle ? ' sparkle' : '');
+    timerEl.innerHTML = '0:00';
+    document.body.appendChild(timerEl);
+    _sessionTimerInterval = setInterval(function() {
+      var elapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+      var min = Math.floor(elapsed / 60);
+      var sec = elapsed % 60;
+      timerEl.innerHTML = min + ':' + (sec < 10 ? '0' : '') + sec;
+    }, 1000);
+  }
+
+  function stopSessionTimer() {
+    if (_sessionTimerInterval) { clearInterval(_sessionTimerInterval); _sessionTimerInterval = null; }
+    return _sessionStartTime ? Math.floor((Date.now() - _sessionStartTime) / 1000) : 0;
+  }
+
+  function getSessionMinutes() {
+    return _sessionStartTime ? Math.floor((Date.now() - _sessionStartTime) / 60000) : 0;
+  }
+
+  function showFeedback(container, isCorrect, options) {
+    var el = document.getElementById(container);
+    if (!el) return;
+    var html = isCorrect
+      ? '<div class="es-feedback correct"><div class="es-fb-icon">&#9989; Nice work!</div>' + (options && options.explanation ? '<div class="es-fb-text">' + options.explanation + '</div>' : '') + '</div>'
+      : '<div class="es-feedback wrong"><div class="es-fb-icon">Not quite!</div><div class="es-fb-text">The answer is: ' + (options && options.answer || '') + '</div>' + (options && options.explanation ? '<div class="es-fb-text" style="color:#9ca3af;font-style:italic;">' + options.explanation + '</div>' : '') + '</div>';
+    el.innerHTML = html;
+  }
+
+  function showErrorJournal(container, missedQsArr) {
+    if (!missedQsArr || missedQsArr.length === 0) {
+      var el = document.getElementById(container);
+      if (el) el.innerHTML = '<div class="es-error-journal"><h3>&#127942; Perfect Score \u2014 No Errors!</h3><p class="es-ej-subtitle">Nothing to journal today. Keep it up!</p></div>';
+      return;
+    }
+    var qCards = '';
+    for (var i = 0; i < missedQsArr.length; i++) {
+      var mq = missedQsArr[i];
+      qCards += '<div class="es-missed-q" onclick="ExecSkills._selectMissedQ(' + i + ')" id="es-mq-' + i + '"><div class="es-mq-label">&#10060; Missed</div><div class="es-mq-text">' + escapeHtml(mq.question) + '</div><div style="font-size:12px;color:#6b7280;margin-top:4px;">Your answer: ' + escapeHtml(mq.userAnswer) + ' | Correct: ' + escapeHtml(mq.correctAnswer) + '</div></div>';
+    }
+    var html = '<div class="es-error-journal"><h3>&#128221; Error Journal</h3><p class="es-ej-subtitle">Pick one question you missed. Tap it, then explain WHY you got it wrong.</p>' + qCards + '<div class="es-journal-prompt" id="es-ej-prompt" style="display:none;">WHY did you get this wrong? (Not "what\'s the right answer" \u2014 WHY did you pick the wrong one?)</div><textarea class="es-journal-textarea" id="es-ej-textarea" style="display:none;" placeholder="I got this wrong because..."></textarea><div id="es-ej-submit" style="display:none;text-align:center;margin-top:12px;"><button class="es-ready-btn" onclick="ExecSkills._submitErrorJournal()" style="font-size:14px;padding:10px 30px;">Log It &#128220;</button></div></div>';
+    var el = document.getElementById(container);
+    if (el) el.innerHTML = html;
+  }
+
+  var _selectedMissedQ = -1;
+  function _selectMissedQ(index) {
+    _selectedMissedQ = index;
+    var all = document.querySelectorAll('.es-missed-q');
+    for (var i = 0; i < all.length; i++) { all[i].className = 'es-missed-q'; }
+    var el = document.getElementById('es-mq-' + index);
+    if (el) el.className = 'es-missed-q selected';
+    var prompt = document.getElementById('es-ej-prompt');
+    var textarea = document.getElementById('es-ej-textarea');
+    var submit = document.getElementById('es-ej-submit');
+    if (prompt) prompt.style.display = 'block';
+    if (textarea) { textarea.style.display = 'block'; textarea.focus(); }
+    if (submit) submit.style.display = 'block';
+  }
+
+  function _submitErrorJournal() {
+    var textarea = document.getElementById('es-ej-textarea');
+    var text = textarea ? textarea.value : '';
+    if (!text || text.replace(/^\s+|\s+$/g, '').length < 5) {
+      if (textarea) { textarea.style.borderColor = '#ffc107'; textarea.placeholder = 'Write at least one sentence about WHY...'; }
+      return;
+    }
+    ExecSkills._journalData = { questionIndex: _selectedMissedQ, reflection: text.replace(/^\s+|\s+$/g, ''), timestamp: new Date().toISOString() };
+    var prompt = document.getElementById('es-ej-prompt');
+    if (prompt) prompt.innerHTML = '&#9989; Logged! Understanding WHY you miss something is how you stop missing it.';
+    if (textarea) textarea.style.display = 'none';
+    var submit = document.getElementById('es-ej-submit');
+    if (submit) submit.style.display = 'none';
+  }
+
+  function showFridayReflection(container) {
+    var html = '<div class="es-reflection"><h3>&#128588; Weekly Debrief</h3><p class="es-ref-subtitle">Quick reflection \u2014 just two sentences.</p><div class="es-ref-prompt">What was the hardest thing this week?</div><textarea class="es-ref-textarea" id="es-ref-hard" placeholder="The hardest thing was..."></textarea><div class="es-ref-prompt">What are you proud of?</div><textarea class="es-ref-textarea" id="es-ref-proud" placeholder="I\'m proud that I..."></textarea><div style="text-align:center;margin-top:16px;"><button class="es-ready-btn" onclick="ExecSkills._submitReflection()" style="font-size:14px;padding:10px 30px;background:linear-gradient(135deg,#7c3aed,#a78bfa);">Submit Reflection &#127775;</button></div></div>';
+    var el = document.getElementById(container);
+    if (el) el.innerHTML = html;
+  }
+
+  function _submitReflection() {
+    var hard = document.getElementById('es-ref-hard');
+    var proud = document.getElementById('es-ref-proud');
+    var hardVal = hard ? hard.value.replace(/^\s+|\s+$/g, '') : '';
+    var proudVal = proud ? proud.value.replace(/^\s+|\s+$/g, '') : '';
+    if (hardVal.length < 3 || proudVal.length < 3) {
+      if (hard && hardVal.length < 3) hard.style.borderColor = '#a78bfa';
+      if (proud && proudVal.length < 3) proud.style.borderColor = '#a78bfa';
+      return;
+    }
+    ExecSkills._reflectionData = { hardest: hardVal, proudOf: proudVal, timestamp: new Date().toISOString() };
+    var parent = hard ? hard.parentNode : null;
+    if (parent) parent.innerHTML = '<div class="es-reflection"><h3>&#127775; Reflection Logged!</h3><p class="es-ref-subtitle">Great week. Come back Monday ready to level up.</p></div>';
+  }
+
+  function showCompletion(container, options) {
+    var elapsed = stopSessionTimer();
+    var min = Math.floor(elapsed / 60);
+    var sec = elapsed % 60;
+    var timeStr = min + ':' + (sec < 10 ? '0' : '') + sec;
+    var pct = options.total > 0 ? Math.round((options.score / options.total) * 100) : 0;
+    var skillsEarned = [];
+    skillsEarned.push('&#127919; Sustained Attention \u2014 ' + timeStr + ' focused');
+    skillsEarned.push('&#128203; Planning \u2014 scanned before starting');
+    if (pct >= 80) skillsEarned.push('&#127942; Goal-Directed Persistence \u2014 80%+ accuracy');
+    if (options.dayOfWeek === 'Monday') skillsEarned.push('&#128221; Metacognition \u2014 Error Journal');
+    if (options.dayOfWeek === 'Friday') skillsEarned.push('&#129518; Self-Reflection \u2014 Weekly Debrief');
+    var skillsList = '';
+    for (var i = 0; i < skillsEarned.length; i++) {
+      skillsList += '<div style="font-size:13px;color:#a5b4fc;padding:4px 0;">' + skillsEarned[i] + '</div>';
+    }
+    var html = '<div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;margin:16px 0;text-align:left;"><div style="font-size:11px;color:#6c63ff;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Executive Skills Built Today</div>' + skillsList + '</div>';
+    var el = document.getElementById(container);
+    if (el) el.innerHTML = html;
+  }
+
+  return {
+    showPlanYourAttack: showPlanYourAttack, startSessionTimer: startSessionTimer,
+    stopSessionTimer: stopSessionTimer, getSessionMinutes: getSessionMinutes,
+    showFeedback: showFeedback, showErrorJournal: showErrorJournal,
+    showFridayReflection: showFridayReflection, showCompletion: showCompletion,
+    _onPlanReady: _onPlanReady, _selectMissedQ: _selectMissedQ,
+    _submitErrorJournal: _submitErrorJournal, _submitReflection: _submitReflection,
+    _journalData: null, _reflectionData: null
+  };
+})();
+
+// ─── BRAIN BREAK (#170) ───
+var _brainBreakAfter = 4;
+var _brainBreakPrompt = 'Stand up and do 10 jumping jacks!';
+var _questionsSinceBrainBreak = 0;
+var _brainBreakTimerInterval = null;
+
+function checkBrainBreak() {
+  _questionsSinceBrainBreak++;
+  if (_brainBreakAfter > 0 && _questionsSinceBrainBreak >= _brainBreakAfter) {
+    showBrainBreak();
+    _questionsSinceBrainBreak = 0;
+  }
+}
+
+function showBrainBreak() {
+  var overlay = document.getElementById('brain-break-overlay');
+  if (!overlay) return;
+  var promptEl = document.getElementById('bb-prompt');
+  var timerEl = document.getElementById('bb-timer');
+  if (promptEl) promptEl.textContent = _brainBreakPrompt;
+  overlay.style.display = 'block';
+  var remaining = 30;
+  if (timerEl) timerEl.textContent = remaining;
+  _brainBreakTimerInterval = setInterval(function() {
+    remaining--;
+    if (timerEl) timerEl.textContent = remaining;
+    if (remaining <= 0) { endBrainBreak(); }
+  }, 1000);
+}
+
+function endBrainBreak() {
+  if (_brainBreakTimerInterval) { clearInterval(_brainBreakTimerInterval); _brainBreakTimerInterval = null; }
+  var overlay = document.getElementById('brain-break-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
 // ─── KNOWN QUESTION TYPES (validation) ───
 var KNOWN_QUESTION_TYPES = [
   'multiple_choice', 'computation', 'word_problem', 'error_analysis', 'multi_step',
@@ -919,7 +1170,7 @@ var C = {
   blueLight: "#60A5FA",
   blueGlow: "#93C5FD",
   orange: "#F97316",
-  red: "#EF4444",
+  red: "#a855f7",
   green: "#22C55E",
   greenBg: "rgba(34,197,94,0.08)",
   yellow: "#EAB308",
@@ -938,6 +1189,9 @@ var sessionStartTime = null;
 var timerInterval = null;
 var moduleStarted = false;
 var completionLogged = false;
+// #170/#171 state
+var missedQuestions = [];
+var _dayOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
 
 function logScaffold(eventType, data) {
   if (TBM_TEST_MODE) {
@@ -1114,8 +1368,41 @@ function showCompletion() {
     setTimeout(function() { fireRingBurst(cx - 80, cy + 30); }, 300);
     setTimeout(function() { fireRingBurst(cx + 80, cy + 30); }, 600);
   }
-  // Lazy load complete clips, then play
   loadAudioForPhase('complete', function() { playBugsyComplete(); });
+
+  // #171 — ExecSkills completion + day-specific hooks
+  var compFeedback = document.getElementById('comp-feedback');
+  if (compFeedback) {
+    // Append exec skills summary BELOW the existing feedback content
+    var esDiv = document.createElement('div');
+    esDiv.id = 'es-completion-block';
+    compFeedback.parentNode.insertBefore(esDiv, compFeedback.nextSibling);
+    ExecSkills.showCompletion('es-completion-block', {
+      score: mcCorrect, total: totalMC, rings: 16, dayOfWeek: _dayOfWeek
+    });
+  }
+
+  // #171 — Error Journal on Monday if missed questions
+  if (_dayOfWeek === 'Monday' && missedQuestions.length > 0) {
+    setTimeout(function() {
+      var ejDiv = document.createElement('div');
+      ejDiv.id = 'es-error-journal-block';
+      var compCard = document.querySelector('#completion-overlay .comp-card');
+      if (compCard) compCard.appendChild(ejDiv);
+      ExecSkills.showErrorJournal('es-error-journal-block', missedQuestions);
+    }, 500);
+  }
+
+  // #171 — Friday Reflection
+  if (_dayOfWeek === 'Friday') {
+    setTimeout(function() {
+      var refDiv = document.createElement('div');
+      refDiv.id = 'es-reflection-block';
+      var compCard = document.querySelector('#completion-overlay .comp-card');
+      if (compCard) compCard.appendChild(refDiv);
+      ExecSkills.showFridayReflection('es-reflection-block');
+    }, 500);
+  }
 }
 
 function closeCompletion() {
@@ -1230,7 +1517,18 @@ function submitAnswer(qId) {
 
   if (isMC) {
     if (correct) { playBugsyCorrect(); } else { playBugsyWrong(); }
+    // #171 — track missed questions for Error Journal
+    if (!correct && q.options) {
+      missedQuestions.push({
+        question: q.question,
+        correctAnswer: q.options[q.answer] || '',
+        userAnswer: q.options[answers[key].selected] || ''
+      });
+    }
   }
+
+  // #170 — check brain break threshold
+  checkBrainBreak();
 
   updateProgress();
 
@@ -1639,6 +1937,12 @@ function loadCurriculumContent() {
   }
   google.script.run
     .withSuccessHandler(function(response) {
+      // #170 — Read ADHD scaffold config for brain breaks
+      if (response && response.scaffoldConfig && response.scaffoldConfig.adhd) {
+        var adhd = response.scaffoldConfig.adhd;
+        if (adhd.brainBreakAfter) { _brainBreakAfter = adhd.brainBreakAfter; }
+        if (adhd.brainBreakPrompt) { _brainBreakPrompt = adhd.brainBreakPrompt; }
+      }
       if (response && response.content) {
         var c = response.content;
         if (c.module && c.module.questions && c.module.questions.length > 0) {
@@ -1688,8 +1992,24 @@ function init() {
   renderMath();
   renderResults();
   updateProgress();
-  // Lazy load MC feedback clips now that questions are ready
   loadAudioForPhase('mc');
+
+  // #171 — Plan Your Attack via ExecSkills
+  var planQs = [];
+  if (MODULE.science) planQs.push({ type: 'Science', topic: MODULE.science.strand || 'Science Questions' });
+  if (MODULE.math) planQs.push({ type: 'Math', topic: MODULE.math.strand || 'Math Questions' });
+  if (planQs.length === 0) planQs.push({ type: 'Mission', topic: 'Complete all questions' });
+  ExecSkills.showPlanYourAttack({
+    container: 'plan-overlay',
+    child: SANDBOX_CHILD,
+    timeEstimate: Math.ceil(allQs.length * 1.5),
+    questions: planQs,
+    onReady: function() {
+      document.getElementById('plan-overlay').style.display = 'none';
+      moduleStarted = true;
+      startTimer();
+    }
+  });
 }
 
 loadCurriculumContent();
