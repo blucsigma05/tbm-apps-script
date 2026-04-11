@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v13">
+<meta name="tbm-version" content="v14">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -1069,13 +1069,17 @@ var _brainBreakAfter = 4;
 var _brainBreakPrompt = 'Stand up and do 10 jumping jacks!';
 var _missionsSinceBrainBreak = 0;
 var _brainBreakTimerInterval = null;
+var _pendingLaunchUrl = null;
 
-function checkBrainBreak() {
+function checkBrainBreak(pendingUrl) {
   _missionsSinceBrainBreak++;
   if (_brainBreakAfter > 0 && _missionsSinceBrainBreak >= _brainBreakAfter) {
+    _pendingLaunchUrl = pendingUrl || null;
     showBrainBreak();
     _missionsSinceBrainBreak = 0;
+    return true;
   }
+  return false;
 }
 
 function showBrainBreak() {
@@ -1098,6 +1102,11 @@ function endBrainBreak() {
   if (_brainBreakTimerInterval) { clearInterval(_brainBreakTimerInterval); _brainBreakTimerInterval = null; }
   var overlay = document.getElementById('brain-break-overlay');
   if (overlay) overlay.style.display = 'none';
+  if (_pendingLaunchUrl) {
+    var url = _pendingLaunchUrl;
+    _pendingLaunchUrl = null;
+    window.location.href = url;
+  }
 }
 
 // ============================================================
@@ -1430,14 +1439,16 @@ function launchMission(url, missionId, missionName) {
     launched[missionId] = true;
     localStorage.setItem(launchedKey, JSON.stringify(launched));
   } catch(e) {}
-  checkBrainBreak(); // #170 — brain break after N missions launched
-  var overlay = document.getElementById('launch-overlay');
-  if (overlay) {
-    overlay.style.display = 'block';
-    var nameEl = document.getElementById('overlay-mission-name');
-    if (nameEl) { nameEl.innerHTML = missionName || ''; }
+  var brainBreaking = checkBrainBreak(url); // #170 — pass url so endBrainBreak() navigates after break
+  if (!brainBreaking) {
+    var overlay = document.getElementById('launch-overlay');
+    if (overlay) {
+      overlay.style.display = 'block';
+      var nameEl = document.getElementById('overlay-mission-name');
+      if (nameEl) { nameEl.innerHTML = missionName || ''; }
+    }
+    setTimeout(function() { window.location.href = url; }, 280);
   }
-  setTimeout(function() { window.location.href = url; }, 280);
 }
 
 // ============================================================

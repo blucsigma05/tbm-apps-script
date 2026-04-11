@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="fact-sprint">
-<meta name="tbm-version" content="v6">
+<meta name="tbm-version" content="v7">
 <title>Wolfkid Fact Sprint</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -876,7 +876,7 @@ function endBrainBreak() {
 
 var _dayOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
 
-var MODULE_VERSION = 'v6';
+var MODULE_VERSION = 'v7';
 var CHILD = 'buggsy';
 var TOTAL_QUESTIONS = 20;
 var _usingFallback = false;
@@ -1663,9 +1663,10 @@ function loadFactSprintContent() {
         if (response && response.content && response.content.fact_sprint && response.content.fact_sprint.questions) {
           var fs = response.content.fact_sprint;
           if (fs.timeLimit) { _countdownFrom = fs.timeLimit; }
-          // Respect scaffoldConfig.adhd.timerMode from curriculum data (#169)
-          if (fs.scaffoldConfig && fs.scaffoldConfig.adhd && fs.scaffoldConfig.adhd.timerMode) {
-            initTimerMode({ timerMode: fs.scaffoldConfig.adhd.timerMode, timeLimit: fs.timeLimit || 0 });
+          // Respect scaffoldConfig.adhd.timerMode from session config (#169)
+          // adhd is read from response.scaffoldConfig.adhd above — fs.scaffoldConfig does not exist
+          if (adhd && adhd.timerMode) {
+            initTimerMode({ timerMode: adhd.timerMode, timeLimit: fs.timeLimit || 0 });
           }
           initWithQuestions(fs.questions);
         } else {
