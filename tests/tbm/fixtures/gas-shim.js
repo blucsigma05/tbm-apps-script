@@ -178,43 +178,51 @@ async function shimGAS(page, fixtures) {
       set: function(g) {
         _googleVal = g;
         if (!g || !g.script) return;
-        var runDesc = Object.getOwnPropertyDescriptor(g.script, 'run');
-        if (!runDesc || !runDesc.get) return;
-        var _origGet = runDesc.get;
-        Object.defineProperty(g.script, 'run', {
-          configurable: true,
-          get: function() {
-            var r = _origGet();
-            for (var i = 0; i < names.length; i++) {
-              var name = names[i];
-              if (typeof r[name] !== 'function') {
-                (function(fn) {
-                  r[fn] = function() {
-                    var self = this;
-                    var args = [];
-                    for (var j = 0; j < arguments.length; j++) args.push(arguments[j]);
-                    fetch('/api?fn=' + encodeURIComponent(fn), {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ args: args })
-                    })
-                    .then(function(resp) { return resp.text(); })
-                    .then(function(text) {
-                      var parsed;
-                      try { parsed = JSON.parse(text); } catch(e) { parsed = text; }
-                      try { self._ok && self._ok(parsed); } catch(e) {}
-                    })
-                    .catch(function(err) {
-                      try { self._err && self._err({ message: String(err) }); } catch(e) {}
-                    });
-                    return self;
-                  };
-                })(name);
-              }
-            }
-            return r;
+        // Get the run instance via the existing (non-configurable) getter.
+        // We must NOT call Object.defineProperty on 'run' — the Cloudflare shim
+        // defines it without configurable:true, so attempting to redefine it
+        // throws "Cannot redefine property: run". Instead we patch the prototype
+        // of whatever R class the getter returns, so every future call inherits
+        // the missing functions automatically.
+        try {
+          var runDesc = Object.getOwnPropertyDescriptor(g.script, 'run');
+          if (!runDesc || !runDesc.get) return;
+          var rInstance = runDesc.get();
+          if (!rInstance) return;
+          var proto = Object.getPrototypeOf(rInstance);
+          // Patch the prototype once — idempotent guard prevents double-injection.
+          if (proto.__shimPatched) return;
+          proto.__shimPatched = true;
+          for (var i = 0; i < names.length; i++) {
+            (function(fn) {
+              // Only add if not already provided by the deployed Cloudflare FNS.
+              if (typeof proto[fn] === 'function') return;
+              proto[fn] = function() {
+                var self = this;
+                var args = [];
+                for (var j = 0; j < arguments.length; j++) args.push(arguments[j]);
+                fetch('/api?fn=' + encodeURIComponent(fn), {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ args: args })
+                })
+                .then(function(resp) { return resp.text(); })
+                .then(function(text) {
+                  var parsed;
+                  try { parsed = JSON.parse(text); } catch(e) { parsed = text; }
+                  try { self._ok && self._ok(parsed); } catch(e) {}
+                })
+                .catch(function(err) {
+                  try { self._err && self._err({ message: String(err) }); } catch(e) {}
+                });
+                return self;
+              };
+            })(names[i]);
           }
-        });
+        } catch(e) {
+          // Swallow — if patching fails the /api route intercept still handles
+          // requests for functions that ARE in the Cloudflare FNS list.
+        }
       }
     });
   }, fnNames);
