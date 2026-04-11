@@ -462,7 +462,7 @@ var JJ_WEEK_5 = {
       audioIntro: "Today we learn YELLOW and TRIANGLES! Yellow like the sun! Triangles have THREE sides!",
       activities: [
         { id: "w5w01", type: "color_hunt", targetColor: "yellow", count: 3, stars: 1, audioPrompt: "Find 3 YELLOW things! Yellow like sunshine!", audioCorrect: "Yellow! Bright like the sun!" },
-        { id: "w5w02", type: "shape_match", targetShape: "triangle", stars: 1, audioPrompt: "Find the triangle! It has 3 sides and 3 pointy corners!", audioCorrect: "Triangle! Three sides!", audioWrong: "A triangle has THREE sides. Count the sides!" },
+        { id: "w5w02", type: "shape_match", target: "triangle", stars: 1, audioPrompt: "Find the triangle! It has 3 sides and 3 pointy corners!", audioCorrect: "Triangle! Three sides!", audioWrong: "A triangle has THREE sides. Count the sides!" },
         { id: "w5w03", type: "color_sort", items: [{ name: "star", color: "yellow" }, { name: "heart", color: "red" }, { name: "circle", color: "yellow" }, { name: "square", color: "blue" }], bins: ["yellow", "red", "blue"], stars: 2, audioPrompt: "Sort by color! Put each shape in the right color bin!", audioCorrect: "Great sorting!" },
         { id: "w5w04", type: "pattern_next", pattern: ["triangle", "circle", "triangle", "circle"], answer: "triangle", stars: 1, audioPrompt: "What comes next? Triangle, circle, triangle, circle...", audioCorrect: "Triangle! The pattern repeats!", audioWrong: "Look at the pattern. It goes back and forth." },
         { id: "w5w05", type: "color_hunt", targetColor: "yellow", count: 4, stars: 1, audioPrompt: "Find 4 yellow things this time! More yellow!", audioCorrect: "Four yellows! Sunshine everywhere!" },
@@ -499,7 +499,7 @@ var JJ_WEEK_5 = {
         { id: "w5f03", type: "find_the_number", target: 7, options: [4, 7, 1], stars: 1, audioPrompt: "Find 7!", audioCorrect: "Seven!" },
         { id: "w5f04", type: "count_with_me", targetNumber: 6, objects: "gems", stars: 1, audioPrompt: "Count 6 gems!", audioCorrect: "Six gems!" },
         { id: "w5f05", type: "color_hunt", targetColor: "yellow", count: 3, stars: 1, audioPrompt: "Find 3 yellow!", audioCorrect: "Yellow sunshine!" },
-        { id: "w5f06", type: "shape_match", targetShape: "triangle", stars: 1, audioPrompt: "Find the triangle!", audioCorrect: "Three sides!" },
+        { id: "w5f06", type: "shape_match", target: "triangle", stars: 1, audioPrompt: "Find the triangle!", audioCorrect: "Three sides!" },
         { id: "w5f07", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 3, audioPrompt: "Spell KINDLE! You know all these letters!", audioCorrect: "K-I-N-D-L-E! Your name!" },
         { id: "w5f08", type: "sparkle_challenge", stars: 3, questions: [{ prompt: "A is for...", options: ["Apple", "Ball", "Cat"], answer: 0 }, { prompt: "How many sides does a triangle have?", options: ["2", "3", "4"], answer: 1 }, { prompt: "Which number is bigger: 6 or 4?", options: ["6", "4"], answer: 0 }], audioPrompt: "Sparkle Challenge!", audioCorrect: "CHAMPION!" },
         { id: "w5f09", type: "star_celebration", stars: 5, message: "Phase 2, Week 1 COMPLETE! You know 10 letters: K, I, N, D, L, E, J, B, A, and M! INCREDIBLE!" }
@@ -567,7 +567,7 @@ var JJ_WEEK_6 = {
       audioIntro: "NEW color: PURPLE! And NEW shape: STARS! Purple stars are magical!",
       activities: [
         { id: "w6w01", type: "color_hunt", targetColor: "purple", count: 3, stars: 1, audioPrompt: "Find 3 PURPLE things!", audioCorrect: "Purple! Like a magical gem!" },
-        { id: "w6w02", type: "shape_match", targetShape: "star", stars: 1, audioPrompt: "Find the star! It has 5 pointy tips!", audioCorrect: "Star! Five points!", audioWrong: "A star has 5 pointy tips. Count them!" },
+        { id: "w6w02", type: "shape_match", target: "star", stars: 1, audioPrompt: "Find the star! It has 5 pointy tips!", audioCorrect: "Star! Five points!", audioWrong: "A star has 5 pointy tips. Count them!" },
         { id: "w6w03", type: "color_sort", items: [{ name: "star", color: "purple" }, { name: "heart", color: "red" }, { name: "moon", color: "yellow" }, { name: "circle", color: "purple" }], bins: ["purple", "red", "yellow"], stars: 2, audioPrompt: "Sort by color!", audioCorrect: "Great sorting!" },
         { id: "w6w04", type: "pattern_next", pattern: ["star", "triangle", "star", "triangle"], answer: "star", stars: 1, audioPrompt: "Star, triangle, star, triangle... what's next?", audioCorrect: "Star! The pattern repeats!" },
         { id: "w6w05", type: "color_hunt", targetColor: "purple", count: 4, stars: 1, audioPrompt: "Find 4 purple things!", audioCorrect: "Purple power!" },
@@ -671,7 +671,7 @@ var JJ_WEEK_7 = {
       audioIntro: "New color: ORANGE! New shape: HEARTS! Orange is warm and hearts mean LOVE!",
       activities: [
         { id: "w7w01", type: "color_hunt", targetColor: "orange", count: 3, stars: 1, audioPrompt: "Find 3 ORANGE things!", audioCorrect: "Orange! Warm like a sunset!" },
-        { id: "w7w02", type: "shape_match", targetShape: "heart", stars: 1, audioPrompt: "Find the heart! It has a bumpy top and pointy bottom!", audioCorrect: "Heart! Love!", audioWrong: "A heart has two bumps on top and a point at the bottom." },
+        { id: "w7w02", type: "shape_match", target: "heart", stars: 1, audioPrompt: "Find the heart! It has a bumpy top and pointy bottom!", audioCorrect: "Heart! Love!", audioWrong: "A heart has two bumps on top and a point at the bottom." },
         { id: "w7w03", type: "color_sort", items: [{ name: "heart", color: "orange" }, { name: "star", color: "purple" }, { name: "circle", color: "orange" }, { name: "triangle", color: "green" }], bins: ["orange", "purple", "green"], stars: 2, audioPrompt: "Sort by color!", audioCorrect: "Sorted!" },
         { id: "w7w04", type: "pattern_next", pattern: ["heart", "star", "heart", "star"], answer: "heart", stars: 1, audioPrompt: "Heart, star, heart, star... what's next?", audioCorrect: "Heart!" },
         { id: "w7w05", type: "count_with_me", targetNumber: 4, objects: "hearts", stars: 1, audioPrompt: "Count the hearts!", audioCorrect: "Four hearts full of love!" },
@@ -781,10 +781,10 @@ var JJ_WEEK_8 = {
         { id: "w8w03", type: "color_hunt", targetColor: "green", count: 2, stars: 1, audioPrompt: "Find 2 GREEN things!", audioCorrect: "Green!" },
         { id: "w8w04", type: "color_hunt", targetColor: "yellow", count: 2, stars: 1, audioPrompt: "Find 2 YELLOW things!", audioCorrect: "Yellow!" },
         { id: "w8w05", type: "color_hunt", targetColor: "purple", count: 2, stars: 1, audioPrompt: "Find 2 PURPLE things!", audioCorrect: "Purple!" },
-        { id: "w8w06", type: "shape_match", targetShape: "circle", stars: 1, audioPrompt: "Find the circle!", audioCorrect: "Round circle!" },
-        { id: "w8w07", type: "shape_match", targetShape: "square", stars: 1, audioPrompt: "Find the square!", audioCorrect: "Four equal sides!" },
-        { id: "w8w08", type: "shape_match", targetShape: "triangle", stars: 1, audioPrompt: "Find the triangle!", audioCorrect: "Three sides!" },
-        { id: "w8w09", type: "shape_match", targetShape: "star", stars: 1, audioPrompt: "Find the star!", audioCorrect: "Five points!" },
+        { id: "w8w06", type: "shape_match", target: "circle", stars: 1, audioPrompt: "Find the circle!", audioCorrect: "Round circle!" },
+        { id: "w8w07", type: "shape_match", target: "square", stars: 1, audioPrompt: "Find the square!", audioCorrect: "Four equal sides!" },
+        { id: "w8w08", type: "shape_match", target: "triangle", stars: 1, audioPrompt: "Find the triangle!", audioCorrect: "Three sides!" },
+        { id: "w8w09", type: "shape_match", target: "star", stars: 1, audioPrompt: "Find the star!", audioCorrect: "Five points!" },
         { id: "w8w10", type: "color_sort", items: [{ name: "heart", color: "red" }, { name: "star", color: "yellow" }, { name: "circle", color: "blue" }, { name: "triangle", color: "green" }, { name: "square", color: "purple" }], bins: ["red", "yellow", "blue", "green", "purple"], stars: 3, audioPrompt: "Sort ALL the colors!", audioCorrect: "ALL COLORS SORTED!" },
         { id: "w8w11", type: "star_celebration", stars: 5, message: "5 COLORS! 4 SHAPES! COLOR AND SHAPE CHAMPION!" }
       ]
@@ -2967,11 +2967,15 @@ function seedAllCurriculum() {
   rows.push([7, 'jj', JJ_WEEK_7.startDate, JSON.stringify(JJ_WEEK_7)]);
   rows.push([8, 'jj', JJ_WEEK_8.startDate, JSON.stringify(JJ_WEEK_8)]);
 
-  // Buggsy Weeks 1-4
+  // Buggsy Weeks 1-8
   rows.push([1, 'buggsy', BUGGSY_WEEK_1.startDate, JSON.stringify(BUGGSY_WEEK_1)]);
   rows.push([2, 'buggsy', BUGGSY_WEEK_2.startDate, JSON.stringify(BUGGSY_WEEK_2)]);
   rows.push([3, 'buggsy', BUGGSY_WEEK_3.startDate, JSON.stringify(BUGGSY_WEEK_3)]);
   rows.push([4, 'buggsy', BUGGSY_WEEK_4.startDate, JSON.stringify(BUGGSY_WEEK_4)]);
+  rows.push([5, 'buggsy', BUGGSY_WEEK_5.startDate, JSON.stringify(BUGGSY_WEEK_5)]);
+  rows.push([6, 'buggsy', BUGGSY_WEEK_6.startDate, JSON.stringify(BUGGSY_WEEK_6)]);
+  rows.push([7, 'buggsy', BUGGSY_WEEK_7.startDate, JSON.stringify(BUGGSY_WEEK_7)]);
+  rows.push([8, 'buggsy', BUGGSY_WEEK_8.startDate, JSON.stringify(BUGGSY_WEEK_8)]);
 
   // Buggsy Weeks 9-12 (v7)
   rows.push([9, 'buggsy', BUGGSY_WEEK_9.startDate, JSON.stringify(BUGGSY_WEEK_9)]);
