@@ -1291,6 +1291,23 @@ var Diag = (function() {
     var isCorrect = (selectedIdx === q.correct);
     answers[currentIndex].isCorrect = isCorrect;
 
+    // Log per-question result to QuestionLog for mastery tracking (#161)
+    if (!TBM_TEST_MODE && typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function() {})
+        .withFailureHandler(function(err) { console.error('QuestionLog failed:', err); })
+        .logQuestionResultSafe({
+          child: CHILD,
+          subject: q.section || 'General',
+          teksCode: q.teks || '',
+          questionType: q.type || 'mc',
+          difficulty: 'diagnostic',
+          correct: isCorrect,
+          timeSpentSeconds: 0,
+          sessionModule: 'baseline-diagnostic'
+        });
+    }
+
     // Highlight options
     var btns = document.querySelectorAll('.mc-option');
     for (var i = 0; i < btns.length; i++) {

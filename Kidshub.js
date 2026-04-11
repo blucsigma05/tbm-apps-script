@@ -3212,6 +3212,39 @@ function _aggregateKHEducation_(child, bounds, eduData) {
   return out;
 }
 
+// v65: QuestionLog-based accuracy — real correct/total from per-question data (#164)
+function _computeQuestionLogAccuracy_(child, bounds) {
+  var result = { correct: 0, total: 0, accuracy: null, bySubject: {} };
+  try {
+    var ss = getKHSS_();
+    var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['QuestionLog']) || 'QuestionLog';
+    var sheet = ss.getSheetByName(tabName);
+    if (!sheet || sheet.getLastRow() < 2) return result;
+    var data = sheet.getDataRange().getValues();
+    // Headers: Question_UID, Child, Date, Day_Of_Week, Subject, TEKS_Code,
+    //          Question_Type, Distractor_Level, Difficulty, Correct, Time_Spent_Seconds, Session_Module, Timestamp
+    for (var i = 1; i < data.length; i++) {
+      var rowChild = String(data[i][1] || '').toLowerCase();
+      if (rowChild !== child) continue;
+      var rowDate = String(data[i][2] || '');
+      if (rowDate < bounds.startISO || rowDate > bounds.endISO) continue;
+      result.total++;
+      var correct = data[i][9] === true || String(data[i][9]).toLowerCase() === 'true';
+      if (correct) result.correct++;
+      var subj = String(data[i][4] || 'Other');
+      if (!result.bySubject[subj]) result.bySubject[subj] = { correct: 0, total: 0 };
+      result.bySubject[subj].total++;
+      if (correct) result.bySubject[subj].correct++;
+    }
+    if (result.total > 0) {
+      result.accuracy = Math.round((result.correct / result.total) * 100);
+    }
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('_computeQuestionLogAccuracy_', e);
+  }
+  return result;
+}
+
 function _buildChildReport_(child, bounds, histData, eduData, flags) {
   var isJJ = (child === 'jj');
   var histAgg = _sumRingsThisWeek_(child, bounds, histData);
@@ -3259,6 +3292,17 @@ function _buildChildReport_(child, bounds, histData, eduData, flags) {
     base.pendingReview = eduAgg.pendingReview;
     base.weekLog = eduAgg.weekLog;
     base.subjects = eduAgg.subjects;
+  }
+
+  // v65: Real accuracy from QuestionLog (#164) — replaces avgScore when data exists
+  var qlAccuracy = _computeQuestionLogAccuracy_(child, bounds);
+  if (qlAccuracy.total > 0) {
+    base.avgScore = qlAccuracy.accuracy;
+    base.questionLogStats = {
+      correct: qlAccuracy.correct,
+      total: qlAccuracy.total,
+      bySubject: qlAccuracy.bySubject
+    };
   }
 
   // Phase 2 (#133 lands KH_LessonRuns): merge in JJ data from lesson runs.
@@ -4485,16 +4529,20 @@ function getDesignChoicesSafe(child) {
 }
 
 // ── HOMEWORK GATE — Design unlocked after any education submission today ──
+// v65: Also checks KH_PowerScan — savePowerScanResultsSafe writes there,
+// not KH_Education, so PowerScan-only days were silently failing (#163).
 function getDesignUnlocked_(child) {
   var childLower = String(child || '').toLowerCase();
   if (childLower !== 'buggsy' && childLower !== 'jj') return false;
-  var sheet = ensureKHEducationTab_();
-  if (sheet.getLastRow() < 2) return false;
-  var data = sheet.getDataRange().getValues();
   var today = getTodayISO_();
-  for (var i = 1; i < data.length; i++) {
-    var rowChild = String(data[i][1] || '').toLowerCase();
-    var rowDate = data[i][0];
+
+  // Check KH_Education (submitHomeworkSafe writes here)
+  var sheet = ensureKHEducationTab_();
+  if (sheet.getLastRow() >= 2) {
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      var rowChild = String(data[i][1] || '').toLowerCase();
+      var rowDate = data[i][0];
     var rowDateStr = '';
     if (rowDate instanceof Date) {
       var y = rowDate.getFullYear();
@@ -4507,6 +4555,24 @@ function getDesignUnlocked_(child) {
       return true;
     }
   }
+  }
+
+  // Check KH_PowerScan (savePowerScanResultsSafe writes here)
+  // Columns: 0=Date (ISO string), 1=Child
+  var ss = getKHSS_();
+  var psTabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_PowerScan']) || 'KH_PowerScan';
+  var psSheet = ss.getSheetByName(psTabName);
+  if (psSheet && psSheet.getLastRow() >= 2) {
+    var psData = psSheet.getDataRange().getValues();
+    for (var j = 1; j < psData.length; j++) {
+      var psDateVal = String(psData[j][0] || '');
+      var psChild = String(psData[j][1] || '').toLowerCase();
+      if (psChild === childLower && psDateVal === today) {
+        return true;
+      }
+    }
+  }
+
   return false;
 }
 
