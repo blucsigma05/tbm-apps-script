@@ -165,7 +165,7 @@ Week 5: "Stretch time! Reach for the ceiling, then touch your toes. Do it 3 time
 | Medium difficulty | Yellow badge | "I need to focus" |
 | Hard difficulty | Orange badge | "Challenge mode" |
 | Correct feedback | Green (#22C55E) | Instant reward |
-| Wrong feedback | Soft purple (#a855f7 at 20% opacity) | Gentle, not shaming |
+| Wrong feedback | Amber (#fbbf24 — matches `.es-feedback.wrong` in exec-skills-components.html) | Gentle, not shaming |
 | Active/selected | Gold (#fde68a) border | Clear selection state |
 | Timer/progress | Muted gray (#94A3B8) | Background, not distracting |
 
@@ -173,7 +173,7 @@ Week 5: "Stretch time! Reach for the ceiling, then touch your toes. Do it 3 time
 
 ## Anti-Patterns (NEVER Do This)
 
-1. **NEVER use red for wrong answers** — red = danger/shame. Use soft purple or warm amber.
+1. **NEVER use red for wrong answers** — red = danger/shame. Use warm amber (#fbbf24 Buggsy) or orchid (#da70d6 JJ/sparkle) — both implemented in `exec-skills-components.html`.
 2. **NEVER use countdown timers** on homework (anxiety trigger). Count-up only.
 3. **NEVER show all questions at once** — progressive disclosure, one at a time.
 4. **NEVER punish with lost progress** — if app crashes, auto-save recovers everything.
@@ -188,7 +188,9 @@ Week 5: "Stretch time! Reach for the ceiling, then touch your toes. Do it 3 time
 
 ## scaffoldConfig.adhd Reference
 
-Every week's curriculum data includes an `adhd` config block consumed by the module renderer:
+> **ASPIRATIONAL SPEC — not yet implemented in full.** Only `brainBreakAfter`, `brainBreakPrompt`, and `timerMode` are currently consumed by modules (PR #173). The remaining fields describe the intended contract for future curriculum-data-driven configuration. Do not grep for these fields expecting to find them — they don't exist in the codebase yet.
+
+When the full contract ships, curriculum data will include an `adhd` config block consumed by the module renderer:
 
 ```javascript
 scaffoldConfig: {

@@ -186,7 +186,7 @@ All → Homework Tracker DB (Notion) | Parent review → Rings/Stars awarded
 ### 8. Ring/Star Economy
 | Activity | Buggsy Rings | JJ Stars |
 |----------|-------------|----------|
-| Daily module | 8 | 2 |
+| Daily module | 5 | 2 |
 | Perfect sprint | +2 | — |
 | Writing quality | +3 | — |
 | Wolfkid Episode | 10-13 | — |
@@ -238,7 +238,7 @@ All → Homework Tracker DB (Notion) | Parent review → Rings/Stars awarded
 | Text Structure | ELA 4.9D | Medium |
 | Vocabulary | ELA 4.3B | Medium |
 | Poetry/Literary | ELA 4.4 | Light |
-| Extended Response | ELA 4.12 | 10 points (CER/ECR) |
+| Extended Response | ELAR 4.9A | 10 points (CER/ECR) |
 
 ### Art — Nance Elementary Syllabi
 **4th Grade Sem 1:** Ruler/compass, elements review, drawing media (pencils/pastels/charcoal/marker/pen), observation drawing, sculpture, weaving vocabulary
@@ -296,12 +296,17 @@ Full list: Drive > Kids & Family > Homework > Correct Tier list for spelling wor
 - **Calendar:** Drive > Kids & Family > Homework > 2026-2027 calendar PDF
 
 ## Reference Files
-- `references/teks-science-grade4-5.md` — 4th + 5th grade science standards, 36-week scope & sequence
+
+**Exist on disk — read these:**
+- `references/teks-science-grade4.md` — 4th grade science standards (5 strands, 4.1–4.13)
 - `references/teks-math-grade4.md` — 7 math strands, question rotation, fact sprint format, 5th grade preview
-- `references/teks-rla-grade4.md` — Reading comprehension, grammar/editing, writing, cold passage rules
 - `references/prek-milestones.md` — Pre-K → Kindergarten → 1st grade progression (5 phases)
-- `references/school-data.md` — Nance TAPR data, Art/Music syllabi (K/4/5), DOWK quiz format, Drive paths
-- `references/spelling-catalog.md` — Full 454-word catalog with definitions, origins, sentences (table format)
+- `references/nance-school-data.md` — Nance TAPR data, Art/Music syllabi (K/4/5), DOWK quiz format, Drive paths
+
+**Planned — not yet created (do not attempt to read):**
+- `references/teks-science-grade4-5.md` — 4th + 5th combined science, 36-week scope & sequence
+- `references/teks-rla-grade4.md` — Reading comprehension, grammar/editing, writing, cold passage rules
+- `references/spelling-catalog.md` — Full 454-word catalog with definitions, origins, sentences
 - `references/spelling-catalog.json` — Structured data version for programmatic use
 - `references/vocabulary-integration.md` — Story Factory bedtime story wiring + Wolfkid writing missions
 
