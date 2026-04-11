@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="reading-module">
-<meta name="tbm-version" content="v5">
+<meta name="tbm-version" content="v6">
 <title>Wolfkid Reading Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -935,6 +935,46 @@ var ExecSkills = (function() {
   };
 })();
 
+// ─── EXECSKILLS DATA PERSISTENCE (#173-fix2) ───
+(function() {
+  var origJournal = ExecSkills._submitErrorJournal;
+  if (origJournal) {
+    ExecSkills._submitErrorJournal = function() {
+      origJournal();
+      setTimeout(function() {
+        if (!ExecSkills._journalData || !ExecSkills._journalData.reflection) return;
+        google.script.run
+          .withSuccessHandler(function() {})
+          .withFailureHandler(function(e) { console.error('Journal log failed:', e.message); })
+          .logHomeworkCompletionSafe({
+            child: CHILD,
+            title: '[Error Journal] ' + ExecSkills._journalData.reflection.substring(0, 100),
+            subject: 'ExecSkills',
+            score: null, total: null
+          });
+      }, 200);
+    };
+  }
+  var origReflection = ExecSkills._submitReflection;
+  if (origReflection) {
+    ExecSkills._submitReflection = function() {
+      origReflection();
+      setTimeout(function() {
+        if (!ExecSkills._reflectionData) return;
+        google.script.run
+          .withSuccessHandler(function() {})
+          .withFailureHandler(function(e) { console.error('Reflection log failed:', e.message); })
+          .logHomeworkCompletionSafe({
+            child: CHILD,
+            title: '[Reflection] Hard: ' + ExecSkills._reflectionData.hardest.substring(0, 50) + ' | Proud: ' + ExecSkills._reflectionData.proudOf.substring(0, 50),
+            subject: 'ExecSkills',
+            score: null, total: null
+          });
+      }, 200);
+    };
+  }
+})();
+
 // ─── BRAIN BREAK (#170) ───
 var _brainBreakAfter = 4;
 var _brainBreakPrompt = 'Stand up and do 10 jumping jacks!';
@@ -973,7 +1013,7 @@ function endBrainBreak() {
 
 var _dayOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
 
-var MODULE_VERSION = 'v5';
+var MODULE_VERSION = 'v6';
 var CHILD = 'buggsy';
 var _usingFallback = false;
 
@@ -1889,7 +1929,7 @@ function init() {
     onReady: function() {
       document.getElementById('plan-overlay').style.display = 'none';
       moduleStarted = true;
-      startTimer();
+      sessionStartTime = Date.now(); // ExecSkills owns the floating timer; set for elapsed-time display at completion
     }
   });
 }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="fact-sprint">
-<meta name="tbm-version" content="v5">
+<meta name="tbm-version" content="v6">
 <title>Wolfkid Fact Sprint</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -876,7 +876,7 @@ function endBrainBreak() {
 
 var _dayOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
 
-var MODULE_VERSION = 'v5';
+var MODULE_VERSION = 'v6';
 var CHILD = 'buggsy';
 var TOTAL_QUESTIONS = 20;
 var _usingFallback = false;
@@ -892,7 +892,7 @@ var timerInterval = null;
 var isAnswering = false;
 
 // Scaffold timer mode state
-var _timerMode = 'count_up'; // default = ADHD-friendly, no time pressure
+var _timerMode = 'countdown'; // default = sprint mechanic; override via scaffoldConfig.adhd.timerMode
 var _showTimer = true;
 var _trackTime = true;
 var _startTime = 0;
@@ -1148,7 +1148,7 @@ function generateSprint() {
 // ============================================================
 function initTimerMode(config) {
   if (!config || !config.timerMode) {
-    _timerMode = 'count_up';
+    _timerMode = 'countdown'; // sprint default — ADHD override available via scaffoldConfig.adhd.timerMode
     _showTimer = true;
     _trackTime = true;
     return;
