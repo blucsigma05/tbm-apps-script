@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="fact-sprint">
-<meta name="tbm-version" content="v7">
+<meta name="tbm-version" content="v8">
 <title>Wolfkid Fact Sprint</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -57,7 +57,7 @@ body {
   100% { background: transparent; }
 }
 @keyframes wrongFlash {
-  0% { background: #EF4444; }
+  0% { background: #a855f7; }
   100% { background: transparent; }
 }
 @keyframes streakFire {
@@ -343,8 +343,8 @@ main {
   color: #fff;
 }
 .answer-btn.wrong {
-  background: #EF4444;
-  border-color: #EF4444;
+  background: #a855f7;
+  border-color: #a855f7;
   color: #fff;
 }
 .answer-btn.disabled {
@@ -398,7 +398,7 @@ main {
 .stat-value.gold { color: #F59E0B; }
 .stat-value.green { color: #22C55E; }
 .stat-value.time { color: #94A3B8; }
-.stat-value.red { color: #EF4444; }
+.stat-value.red { color: #a855f7; }
 .stat-label {
   font-size: 12px;
   color: #64748B;
@@ -876,7 +876,7 @@ function endBrainBreak() {
 
 var _dayOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
 
-var MODULE_VERSION = 'v7';
+var MODULE_VERSION = 'v8';
 var CHILD = 'buggsy';
 var TOTAL_QUESTIONS = 20;
 var _usingFallback = false;
