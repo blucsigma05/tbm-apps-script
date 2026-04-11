@@ -4,13 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v15">
+  <meta name="tbm-version" content="v16">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* ═══════════════════════════════════════════════════
        SparkleLearn v2 — CSS
        ═══════════════════════════════════════════════════ */
+
+    /* ─── Font CDN Fallback (P3 Fix 10) ─── */
+    /* local() sources load instantly if font is cached on device;
+       browser falls through to the <link> Google Fonts stylesheet otherwise */
+    @font-face {
+      font-family: 'Fredoka One';
+      font-style: normal;
+      font-weight: 400;
+      src: local('Fredoka One'), local('FredokaOne-Regular');
+    }
+
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
     body {
@@ -23,7 +34,7 @@
     }
 
     h1, h2, h3, .heading-text {
-      font-family: 'Fredoka One', 'Arial Rounded MT Bold', sans-serif;
+      font-family: 'Fredoka One', 'Comic Sans MS', 'Arial Rounded MT Bold', sans-serif;
     }
 
     /* ─── Star Counter ─── */
@@ -121,8 +132,8 @@
       -webkit-animation: popCorrect 0.4s ease; animation: popCorrect 0.4s ease;
     }
     .option-btn.wrong {
-      background: rgba(245,158,11,0.3); border-color: #f59e0b;
-      -webkit-animation: wobble 0.5s ease; animation: wobble 0.5s ease;
+      background: rgba(168,85,247,0.2); border-color: rgba(168,85,247,0.6);
+      -webkit-animation: gentlePulse 0.6s ease; animation: gentlePulse 0.6s ease;
     }
     .option-btn.selected {
       border-color: #fde68a; background: rgba(253,230,138,0.2);
@@ -198,13 +209,12 @@
       gap: 12px; margin-top: 16px;
     }
     .color-bin {
-      width: 80px; height: 80px; border-radius: 16px;
-      border: 3px solid rgba(255,255,255,0.3);
+      width: 100px; height: 120px; border-radius: 18px;
+      border: 6px solid rgba(255,255,255,0.7);
       cursor: pointer; -webkit-transition: all 0.2s; transition: all 0.2s;
       display: -webkit-flex; display: flex;
       -webkit-align-items: center; align-items: center;
       -webkit-justify-content: center; justify-content: center;
-      font-size: 32px; color: #fff; font-weight: 700;
     }
     .color-bin.selected-bin {
       border-color: #fde68a; box-shadow: 0 0 20px rgba(253,230,138,0.4);
@@ -275,11 +285,11 @@
     }
     .pattern-mystery {
       width: 64px; height: 64px; border-radius: 14px;
-      border: 3px dashed #fde68a; background: rgba(253,230,138,0.1);
+      border: 3px solid #fde68a; background: rgba(253,230,138,0.25);
       display: -webkit-flex; display: flex;
       -webkit-align-items: center; align-items: center;
       -webkit-justify-content: center; justify-content: center;
-      font-family: 'Fredoka One', sans-serif; font-size: 36px;
+      font-family: 'Fredoka One', 'Comic Sans MS', sans-serif; font-size: 36px;
       color: #fde68a;
     }
 
@@ -314,8 +324,8 @@
       animation: feedbackPop 1s ease forwards;
     }
     .feedback-text.wrong-fb {
-      color: #f59e0b; font-size: 40px;
-      text-shadow: 0 0 30px rgba(245,158,11,0.6);
+      color: #f472b6; font-size: 40px;
+      text-shadow: 0 0 30px rgba(244,114,182,0.6);
     }
 
     /* ─── Celebration ─── */
@@ -545,6 +555,32 @@
     @keyframes skLoadShimmer { 0%,100% { opacity: 0.7; color: #ffaaee; } 50% { opacity: 1; color: #ffe0ff; } }
     @keyframes skLoadDot { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-16px) scale(1.3); } }
     @keyframes skLoadFloat { 0% { opacity: 0; transform: translateY(0) scale(0.5); } 20% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-320px) rotate(40deg) scale(1.2); } }
+
+    /* ─── Wrong Answer: gentle purple pulse (P2 Fix 6) ─── */
+    @-webkit-keyframes gentlePulse {
+      0%, 100% { -webkit-transform: scale(1); }
+      50% { -webkit-transform: scale(1.04); }
+    }
+    @keyframes gentlePulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+    }
+
+    /* ─── Name Builder: pulsing gold slot cue (P2 Fix 8) ─── */
+    @-webkit-keyframes pulseSlot {
+      0%, 100% { border-color: #fde68a; box-shadow: 0 0 0 rgba(253,230,138,0); }
+      50% { border-color: #fde68a; box-shadow: 0 0 14px rgba(253,230,138,0.7); }
+    }
+    @keyframes pulseSlot {
+      0%, 100% { border-color: #fde68a; box-shadow: 0 0 0 rgba(253,230,138,0); }
+      50% { border-color: #fde68a; box-shadow: 0 0 14px rgba(253,230,138,0.7); }
+    }
+    .name-slot.next-slot {
+      border-style: solid;
+      border-color: #fde68a;
+      -webkit-animation: pulseSlot 1.2s ease-in-out infinite;
+      animation: pulseSlot 1.2s ease-in-out infinite;
+    }
   </style>
 </head>
 <body style="background:#1a0533;">
@@ -615,6 +651,7 @@ var countState = {};
 var traceState = {};
 var sortState = {};
 var nameState = {};
+var _wrongAnswerTimer = null;
 
 /* ─── Asset Registry (fetched once at load, cached module-level) ─── */
 var _assetRegistry = null;
@@ -930,6 +967,15 @@ function renderShape(shape, color, size) {
       return '<svg width="' + s + '" height="' + s + '" viewBox="0 0 100 100">' +
         '<circle cx="50" cy="50" r="45" fill="' + c + '"/></svg>';
   }
+}
+
+/* ─── SVG Dot renderer — 40px orb with highlight (P2 Fix 4) ─── */
+function renderSvgDot(colorHex) {
+  var c = colorHex || '#a855f7';
+  return '<svg width="40" height="40" viewBox="0 0 40 40" style="display:inline-block;vertical-align:middle;margin:3px">' +
+    '<circle cx="20" cy="20" r="18" fill="' + c + '"/>' +
+    '<circle cx="13" cy="13" r="6" fill="rgba(255,255,255,0.45)"/>' +
+    '</svg>';
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1619,8 +1665,19 @@ function resolveAsset(assetId, size, fallbackColor) {
     return renderShape(entry.value, entry.color || fallbackColor, size || 64);
   }
   if (entry.type === 'image') {
-    // Phase 2: lazy-load real src from getAssetImageSafe cache
-    return '<img class="asset-img" alt="' + escapeHtml(entry.name || '') + '" src="" data-asset-id="' + escapeHtml(assetId) + '" style="width:' + (size || 120) + 'px;height:auto;" />';
+    // Phase 2 lazy-load never shipped — fall back to emoji if entry has one,
+    // otherwise render a colored SVG circle with the first letter of the asset name.
+    if (entry.emoji) {
+      return '<span class="asset-emoji" style="font-size:' + (size || 120) + 'px;line-height:1;display:inline-block;">' + entry.emoji + '</span>';
+    }
+    var _fc = (entry.name || assetId || '?').charAt(0).toUpperCase();
+    var _bgCol = entry.color ? (COLOR_MAP[entry.color] || entry.color) : '#a855f7';
+    var _sz = size || 120;
+    return '<svg width="' + _sz + '" height="' + _sz + '" viewBox="0 0 120 120">' +
+      '<circle cx="60" cy="60" r="56" fill="' + _bgCol + '"/>' +
+      '<circle cx="42" cy="42" r="16" fill="rgba(255,255,255,0.35)"/>' +
+      '<text x="60" y="82" text-anchor="middle" font-family="Fredoka One,Comic Sans MS,sans-serif" font-size="58" fill="white">' + escapeHtml(_fc) + '</text>' +
+      '</svg>';
   }
   return renderShape('circle', fallbackColor || 'pink', size || 64);
 }
@@ -1773,6 +1830,9 @@ function handleCorrectAnswer(activity, el) {
   if (activityLocked) { return; }
   activityLocked = true;
 
+  /* Cancel any pending wrong-answer audio so it can't play over the celebration */
+  if (_wrongAnswerTimer) { clearTimeout(_wrongAnswerTimer); _wrongAnswerTimer = null; }
+
   if (el) {
     el.className += ' correct';
     var rect = el.getBoundingClientRect();
@@ -1794,12 +1854,17 @@ function handleWrongAnswer(el) {
   if (activityLocked) { return; }
   if (el) { el.className += ' wrong'; }
   var tryClips = ['jj_feedback_tryagain1.mp3','jj_feedback_tryagain2.mp3','jj_feedback_tryagain3.mp3','jj_feedback_tryagain4.mp3'];
-  playAudioCached(tryClips[Math.floor(Math.random() * tryClips.length)], 'Try again!');
+  /* +100ms delay before Try Again audio — gives JJ a moment to process (P2 Fix 6) */
+  var _clip = tryClips[Math.floor(Math.random() * tryClips.length)];
+  _wrongAnswerTimer = setTimeout(function() {
+    _wrongAnswerTimer = null;
+    playAudioCached(_clip, 'Try again!');
+  }, 100);
   setTimeout(function() {
     if (el) {
       el.className = el.className.replace(' wrong', '');
     }
-  }, 600);
+  }, 700);
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1813,9 +1878,15 @@ function renderLetterIntro(activity) {
   var html = '<div class="activity-card">';
   html += '<p class="instruction">Meet the letter:</p>';
 
-  // Render activity.image hero asset above the letter card when available
+  // Render activity.image hero asset above the letter card when available (P2 Fix 5)
   if (activity.image) {
-    html += '<div style="text-align:center;margin-bottom:8px;">' + resolveAsset(activity.image, 96, 'gold') + '</div>';
+    html += '<div style="text-align:center;margin-bottom:12px;">' + resolveAsset(activity.image, 120, 'gold') + '</div>';
+  } else {
+    /* No image — render the focus letter as a large decorative element with gradient circle */
+    html += '<div style="text-align:center;margin-bottom:12px;">';
+    html += '<div style="display:inline-flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#ec4899);">';
+    html += '<span style="font-family:\'Fredoka One\',\'Comic Sans MS\',sans-serif;font-size:80px;color:#fde68a;text-shadow:0 0 20px rgba(253,230,138,0.5);">' + escapeHtml(letter.toUpperCase()) + '</span>';
+    html += '</div></div>';
   }
 
   html += '<div class="big-letter">' + letter.toUpperCase() + '</div>';
@@ -2005,10 +2076,11 @@ function renderQuantityMatch(activity) {
   html += '<p style="font-size:18px;color:#e0d4f5;margin-bottom:8px;">Dots</p>';
   var shuffledG = shuffleArray(groups);
   for (var i = 0; i < shuffledG.length; i++) {
-    html += '<button class="option-btn" id="qmDots' + i + '" style="display:block;margin:8px auto;min-width:100px;font-size:18px;" ';
+    html += '<button class="option-btn" id="qmDots' + i + '" style="display:block;margin:8px auto;min-width:100px;" ';
     html += 'onclick="tapQmDots(' + i + ',' + shuffledG[i].dots + ')">';
+    /* SVG gradient circles — 40px orbs with highlight (P2 Fix 4) */
     for (var d = 0; d < shuffledG[i].dots; d++) {
-      html += '&#9679; ';
+      html += renderSvgDot('#a855f7');
     }
     html += '</button>';
   }
@@ -2562,13 +2634,17 @@ function renderAudioStory(activity) {
   mc.innerHTML = html;
 
   speak(story, function() {
+    /* 2000ms pause after story — JJ processes what she heard (P2 Fix 7) */
     setTimeout(function() {
       var qEl = document.getElementById('storyQuestion');
       if (qEl) { qEl.style.display = 'block'; }
       speak(question, function() {
-        speakOptions(options, 0);
+        /* 1000ms pause after question before reading options (P2 Fix 7) */
+        setTimeout(function() {
+          speakOptions(options, 0);
+        }, 1000);
       });
-    }, 500);
+    }, 2000);
   });
 }
 
@@ -2600,7 +2676,7 @@ function renderColorSort(activity) {
     { shape: 'triangle', color: 'red' },
     { shape: 'diamond', color: 'blue' }
   ];
-  var bins = activity.bins || ['red', 'blue'];
+  var bins = activity.bins || activity.colors || ['red', 'blue'];
 
   sortState = { selectedItem: null, remaining: items.length, items: items };
 
@@ -2618,13 +2694,14 @@ function renderColorSort(activity) {
   }
   html += '</div>';
 
-  /* Bins */
+  /* Bins — large filled color rectangles, no text label (P1 Fix 2) */
   html += '<div class="bin-row" id="sortBins">';
   for (var b = 0; b < bins.length; b++) {
+    var _binHex = COLOR_MAP[bins[b]] || bins[b];
     html += '<div class="color-bin" id="sortBin' + b + '" ';
-    html += 'style="background:' + (COLOR_MAP[bins[b]] || bins[b]) + ';" ';
+    html += 'style="background:' + _binHex + ';border-color:' + _binHex + ';" ';
     html += 'onclick="tapSortBin(' + b + ',\'' + bins[b] + '\')">';
-    html += escapeHtml(bins[b]);
+    /* No text — pure color rectangle so a 4-year-old reads the color visually */
     html += '</div>';
   }
   html += '</div></div>';
@@ -2781,6 +2858,10 @@ function renderNameBuilder(activity) {
   html += '</div></div>';
   mc.innerHTML = html;
 
+  /* Pulse the first empty slot so JJ knows where to start (P2 Fix 8) */
+  var _firstSlot = document.getElementById('nameSlot0');
+  if (_firstSlot) { _firstSlot.className += ' next-slot'; }
+
   var spellKey = target === 'JJ' ? 'jj_spell_jj.mp3' : (target === 'KINDLE' ? 'jj_spell_kindle.mp3' : null);
   speak("Build the name " + target + "! Tap the letters in order. First, find " + target.charAt(0) + "!", spellKey);
 }
@@ -2798,6 +2879,7 @@ function tapNameLetter(bankIdx, letter) {
     var slot = document.getElementById('nameSlot' + nextIdx);
     if (slot) {
       slot.textContent = letter;
+      slot.className = slot.className.replace(' next-slot', '').replace(' next-slot', '');
       slot.className += ' filled';
     }
 
@@ -2814,6 +2896,9 @@ function tapNameLetter(bankIdx, letter) {
         handleCorrectAnswer(todayContent.activities[currentActivityIndex], null);
       }, 500);
     } else {
+      /* Pulse the next empty slot (P2 Fix 8) */
+      var nextSlotEl = document.getElementById('nameSlot' + nameState.progress.length);
+      if (nextSlotEl) { nextSlotEl.className += ' next-slot'; }
       var nextExpected = nameState.target.charAt(nameState.progress.length);
       setTimeout(function() {
         speak("Now find " + nextExpected + "!");
