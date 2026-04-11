@@ -800,8 +800,8 @@ function autoMatchAudio(text) {
   var traceMatch = t.match(/trace the letter ([a-z])/);
   if (traceMatch) { return 'jj_trace_' + traceMatch[1].toUpperCase() + '.mp3'; }
 
-  // Single letter call: "K!" or just "K"
-  if (t.length <= 2 && t.match(/^[a-z]$/)) {
+  // Single letter call: "K!" or just "K" (case-insensitive — options arrive uppercase)
+  if (t.length <= 2 && t.match(/^[a-zA-Z]$/)) {
     return 'jj_letter_name_' + t.toUpperCase() + '.mp3';
   }
 
