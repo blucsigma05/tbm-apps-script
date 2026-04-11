@@ -174,11 +174,11 @@ test.describe('Homework: brain break fires after 4 answers', function() {
     await page.locator('#tab-science').click();
     await page.waitForTimeout(1000);
 
-    // Answer 4 questions — [style*="cursor:pointer"] skips already-submitted options.
+    // Answer 4 questions — :not(.correct-answer):not(.wrong-answer) skips already-submitted options.
     // After each option click, LOCK IN (submitAnswer) is required — that increments
     // _questionsSinceBrainBreak. Brain break fires when the counter reaches 4.
     for (var i = 0; i < 4; i++) {
-      var option = page.locator('#section-science .q-option[style*="cursor:pointer"]').first();
+      var option = page.locator('#section-science .q-option:not(.correct-answer):not(.wrong-answer)').first();
       await expect(option).toBeVisible({ timeout: 10000 });
       await option.click();
       await page.waitForTimeout(500);
@@ -216,8 +216,8 @@ test.describe('Homework: Monday Error Journal appears', function() {
     await page.waitForTimeout(2000);
 
     // Answer all questions in both tabs to trigger completion.
-    // [style*="cursor:pointer"] targets only unsubmitted options (submitted ones
-    // get cursor:default). LOCK IN (submitAnswer) is required to score each answer.
+    // :not(.correct-answer):not(.wrong-answer) targets only unsubmitted options.
+    // LOCK IN (submitAnswer) is required to score each answer.
     // Brain break fires after 4 total submissions — dismiss it and continue.
     for (var tab of ['science', 'math']) {
       await page.locator('#tab-' + tab).click();
@@ -230,7 +230,7 @@ test.describe('Homework: Monday Error Journal appears', function() {
           await page.locator('#brain-break-overlay button').click();
           await page.waitForTimeout(1000);
         }
-        var option = page.locator('#section-' + tab + ' .q-option[style*="cursor:pointer"]').first();
+        var option = page.locator('#section-' + tab + ' .q-option:not(.correct-answer):not(.wrong-answer)').first();
         var optionVisible = await option.isVisible({ timeout: 3000 }).catch(function() { return false; });
         if (!optionVisible) break;
         await option.click();
@@ -269,7 +269,7 @@ test.describe('Homework: Friday Reflection appears', function() {
     await page.waitForTimeout(2000);
 
     // Answer all questions in both tabs to trigger completion.
-    // Same pattern as Monday test: [style*="cursor:pointer"] + LOCK IN + brain break handling.
+    // Same pattern as Monday test: :not(.correct-answer):not(.wrong-answer) + LOCK IN + brain break handling.
     for (var tab of ['science', 'math']) {
       await page.locator('#tab-' + tab).click();
       await page.waitForTimeout(1000);
@@ -281,7 +281,7 @@ test.describe('Homework: Friday Reflection appears', function() {
           await page.locator('#brain-break-overlay button').click();
           await page.waitForTimeout(1000);
         }
-        var option = page.locator('#section-' + tab + ' .q-option[style*="cursor:pointer"]').first();
+        var option = page.locator('#section-' + tab + ' .q-option:not(.correct-answer):not(.wrong-answer)').first();
         var optionVisible = await option.isVisible({ timeout: 3000 }).catch(function() { return false; });
         if (!optionVisible) break;
         await option.click();

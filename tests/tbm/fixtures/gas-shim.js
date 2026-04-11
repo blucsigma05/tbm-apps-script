@@ -144,12 +144,19 @@ var EDUCATION_FIXTURES = {
     ]
   },
 
-  getSparkleProgressSafe: {
+  // SparkleLearning.html calls loadProgressSafe (not getSparkleProgressSafe)
+  loadProgressSafe: {
     stars: 12,
     lettersCompleted: ['K', 'I', 'N', 'D']
   },
 
   logSparkleProgressSafe: { success: true },
+  saveProgressSafe: { success: true },
+
+  // Stubs for calls that don't need real data but must not hit the backend
+  submitHomeworkSafe: { status: 'ok' },
+  logScaffoldEventSafe: { success: true },
+  getAudioBatchSafe: {},
 
   // getAssetRegistrySafe: not yet in Cloudflare FNS list — shimGAS injects it
   // so SparkleLearning.html doesn't throw "is not a function".
