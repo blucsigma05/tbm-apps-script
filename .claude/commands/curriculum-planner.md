@@ -140,7 +140,7 @@ Each 8-week cycle covers all major strands with increasing difficulty:
 
 | Day | Structure | Minimum Requirements |
 |-----|-----------|---------------------|
-| Monday | Math module (5Q) + Science module (3Q) + Fact Sprint | 1 error analysis Q, 1 visual/diagram Q |
+| Monday | Math module (5Q) + Fact Sprint | 1 error analysis Q, 1 visual/diagram Q |
 | Tuesday | Cold passage (4-6Q) + Writing prompt | 1 author's purpose OR text structure Q, passage type rotates (informational/fiction/poetry) |
 | Wednesday | Math module (4Q) + Science module (3Q) + Investigation | Investigation includes data analysis + conclusion writing |
 | Thursday | Cold passage (4-5Q) + Grammar Sprint (5Q) + Wolfkid Episode | Grammar focus rotates: sentences, agreement, possessives, editing, complex sentences, revision |

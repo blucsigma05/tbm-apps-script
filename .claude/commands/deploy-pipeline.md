@@ -41,6 +41,12 @@ If no spec exists, create it first before writing code.
    - Keep the implementation traceable to the spec.
    - Update docs if contracts, routes, or operator behavior changed.
 
+2a. Bump version in ALL 3 locations for every changed `.gs` file.
+   - Line 3 header comment: `// FileName.gs — vN`
+   - `get*Version()` return value: `function getFileNameVersion() { return N; }`
+   - EOF comment: `// END OF FILE — FileName.gs vN`
+   - All three MUST match. Grep to verify before pushing.
+
 3. Run the mandatory pre-push gates.
    - `bash audit-source.sh`
    - HTML ES5 checks for touched `.html` files
@@ -67,9 +73,19 @@ If no spec exists, create it first before writing code.
    - LT approval should be the final human action.
 
 7. Update tracking systems.
-   - Update the relevant Notion records and thread handoff.
+   - Update **PM Active Versions DB** (`2c8cea3cd9e8818eaf53df73cb5c2eee`) with new version numbers.
+   - Write thread handoff to **Thread Handoff Archive** (`322cea3cd9e881bb8afcd560fe772481`).
+   - Update deploy page title only (version number — NOT icon, to avoid double-emoji bug).
    - If relay secrets are available, POST `deploy_complete` after PR creation.
    - Include repo, PR URL, commit SHA, and a short summary in the relay payload.
+
+7a. Verify all Cloudflare proxy routes after deploy.
+   - `curl` every route in the CF Worker route list (CLAUDE.md → Cloudflare Worker Routes).
+   - All must return HTTP 200. Any non-200 = stop and investigate before declaring done.
+
+7b. Create the GitHub release.
+   - `gh release create v<version> --notes "<one-line summary of what changed>"`
+   - Ties the deploy to a permanent git tag. Required for every production deploy.
 
 8. Close out with evidence.
    - Record what was verified directly.

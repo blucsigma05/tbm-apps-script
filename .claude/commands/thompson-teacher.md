@@ -186,7 +186,7 @@ All → Homework Tracker DB (Notion) | Parent review → Rings/Stars awarded
 ### 8. Ring/Star Economy
 | Activity | Buggsy Rings | JJ Stars |
 |----------|-------------|----------|
-| Daily module | 8 | 2 |
+| Daily module | 5 | 2 |
 | Perfect sprint | +2 | — |
 | Writing quality | +3 | — |
 | Wolfkid Episode | 10-13 | — |
@@ -238,7 +238,7 @@ All → Homework Tracker DB (Notion) | Parent review → Rings/Stars awarded
 | Text Structure | ELA 4.9D | Medium |
 | Vocabulary | ELA 4.3B | Medium |
 | Poetry/Literary | ELA 4.4 | Light |
-| Extended Response | ELA 4.12 | 10 points (CER/ECR) |
+| Extended Response | ELAR 4.9A | 10 points (CER/ECR) |
 
 ### Art — Nance Elementary Syllabi
 **4th Grade Sem 1:** Ruler/compass, elements review, drawing media (pencils/pastels/charcoal/marker/pen), observation drawing, sculpture, weaving vocabulary
