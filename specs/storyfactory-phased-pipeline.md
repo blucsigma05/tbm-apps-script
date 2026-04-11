@@ -78,7 +78,7 @@ These must be added to the Story DB (`a899ee9786024ece8d09ae8432642b2a`) in Noti
 | Property name | Type | Purpose |
 |---------------|------|---------|
 | `Story Data` | Rich text (or child page content) | Persisted story JSON from Phase 1 |
-| `Drive Folder` | URL | Drive folder ID where images are saved |
+| `Drive Folder` | Rich text | Full Drive URL for the image folder: `https://drive.google.com/drive/folders/<folderId>` |
 | `Images Generated` | Rich text | `"3/4"` format — tracks per-image progress |
 | `Failed Phase` | Select (Write, Illustrate, Assemble) | Which phase set Status to Failed |
 
@@ -99,25 +99,64 @@ These must be added to the Story DB (`a899ee9786024ece8d09ae8432642b2a`) in Noti
 Replace single-status query with multi-status query, then dispatch:
 
 ```javascript
-// NEW: query for any actionable status
+// NEW: query for any actionable status — includes stale-claim recovery
+var STALE_CLAIM_MS = 15 * 60 * 1000; // 15 minutes
+var staleCutoff = new Date(Date.now() - STALE_CLAIM_MS).toISOString();
+
 var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
   filter: {
     or: [
+      // Normal actionable statuses
       { property: 'Status', select: { equals: 'Idea' } },
       { property: 'Status', select: { equals: 'Written' } },
-      { property: 'Status', select: { equals: 'Illustrated' } }
+      { property: 'Status', select: { equals: 'Illustrated' } },
+      // Stale-claim recovery: rows stuck in a claim status > 15 min
+      // (GAS timeout/crash after claiming but before completing phase work)
+      { and: [
+          { property: 'Status', select: { equals: 'Writing' } },
+          { property: 'Last edited time', date: { before: staleCutoff } }
+        ]
+      },
+      { and: [
+          { property: 'Status', select: { equals: 'Illustrating' } },
+          { property: 'Last edited time', date: { before: staleCutoff } }
+        ]
+      },
+      { and: [
+          { property: 'Status', select: { equals: 'Assembling' } },
+          { property: 'Last edited time', date: { before: staleCutoff } }
+        ]
+      }
     ]
   },
   sorts: [{ timestamp: 'created_time', direction: 'ascending' }],  // oldest first
   page_size: 1
 });
 
-// Dispatch
+// Dispatch — stale claim statuses revert to their recoverable predecessor
 var status = page.properties['Status'].select.name;
-if (status === 'Idea')        { runWritePhase_(pageId, topic, character, tone); }
-else if (status === 'Written')   { runIllustratePhase_(pageId); }
-else if (status === 'Illustrated') { runAssemblePhase_(pageId); }
+if (status === 'Idea')           { runWritePhase_(pageId, topic, character, tone); }
+else if (status === 'Written')      { runIllustratePhase_(pageId); }
+else if (status === 'Illustrated')  { runAssemblePhase_(pageId); }
+// Stale-claim recovery paths:
+else if (status === 'Writing')      {
+  // Phase 1 crashed — no story data saved yet. Revert to Idea to retry from scratch.
+  Logger.log('Stale claim recovery: Writing → Idea for ' + pageId);
+  updateNotionRow(pageId, null, 'Idea');
+}
+else if (status === 'Illustrating') {
+  // Phase 2 crashed — story text IS saved. Revert to Written so Phase 2 retries.
+  Logger.log('Stale claim recovery: Illustrating → Written for ' + pageId);
+  updateNotionRow(pageId, null, 'Written');
+}
+else if (status === 'Assembling') {
+  // Phase 3 crashed — story + images ARE saved. Revert to Illustrated so Phase 3 retries.
+  Logger.log('Stale claim recovery: Assembling → Illustrated for ' + pageId);
+  updateNotionRow(pageId, null, 'Illustrated');
+}
 ```
+
+**Stale-claim threshold:** 15 minutes is a conservative ceiling above the GAS 6-minute hard limit. A row in `Writing`/`Illustrating`/`Assembling` for >15 min is definitionally orphaned — no live execution holds it. The `Last edited time` timestamp is set by Notion automatically on every `updateNotionRow()` call, so the revert itself resets the clock.
 
 **Circuit breaker:** Replace global circuit breaker with per-phase counters:
 `SF_WRITE_FAILS`, `SF_ILLUS_FAILS`, `SF_ASSEM_FAILS` — each trips independently with their own `SF_*_PAUSED_UNTIL` key. Remove `SF_CONSECUTIVE_FAILS` and `SF_PAUSED_UNTIL` from global scope (migrate via: if old key exists, delete it on first poll after deploy).
@@ -186,13 +225,13 @@ CATCH: updateNotionRow(pageId, null, 'Failed'), sf_setFailedPhase_(pageId, 'Asse
 |----------|---------|
 | `sf_saveStoryData_(pageId, json)` | Write story JSON to Notion `Story Data` property. If > 1800 chars: split into child page blocks. |
 | `sf_loadStoryData_(pageId)` | Read + parse story JSON from Notion page. Reads child page if `Story Data` starts with `CHILD:`. |
-| `sf_getOrCreateImageFolder_(pageId)` | Create/get Drive subfolder in `CONFIG.STORY_FOLDER_ID` named `StoryImages_<pageId_short>`. Save folder ID to Notion `Drive Folder` property. |
+| `sf_getOrCreateImageFolder_(pageId)` | Create/get Drive subfolder in `CONFIG.STORY_FOLDER_ID` named `StoryImages_<pageId_short>`. Save full Drive URL (`https://drive.google.com/drive/folders/<id>`) to Notion `Drive Folder` rich_text property. |
 | `sf_listExistingImages_(folderId)` | Return array of scene numbers already saved in Drive folder. |
 | `sf_saveImageToFolder_(folderId, filename, blob)` | Save a single image blob to Drive folder. |
 | `sf_loadImagesFromFolder_(folderId)` | Return ordered array of image blobs matching CONFIG.IMAGE_SCENES order. Missing = null. |
 | `sf_updateImagesProgress_(pageId, progress)` | Write `"3/4"` string to Notion `Images Generated` property. |
 | `sf_setFailedPhase_(pageId, phase)` | Write `phase` to Notion `Failed Phase` select property. |
-| `sf_getDriveFolderForStory_(pageId)` | Read `Drive Folder` URL from Notion, extract folder ID. |
+| `sf_getDriveFolderForStory_(pageId)` | Read `Drive Folder` rich_text from Notion (full Drive URL), extract folder ID from path: `url.split('/folders/')[1]`. |
 
 ---
 
@@ -268,6 +307,8 @@ Run from GAS editor after deploy, verify Logger output:
 - [ ] Phase 1 Gemini failure: Status → `Failed`, `Failed Phase = Write`
 - [ ] Phase 2 all images fail: Status → `Failed`, `Failed Phase = Illustrate`
 - [ ] Per-phase circuit breaker: after 3 Write fails, Write is paused but Illustrated rows still proceed through Assemble
+- [ ] Stale-claim recovery: manually set a row to `Writing` then wait 16 min — `pollForNewStories()` should revert it to `Idea` (Logger: "Stale claim recovery: Writing → Idea")
+- [ ] Drive Folder property stores full URL format: verify `Drive Folder` value starts with `https://drive.google.com/drive/folders/`
 
 ---
 
@@ -276,7 +317,8 @@ Run from GAS editor after deploy, verify Logger output:
 | Question | Resolution |
 |----------|-----------|
 | Story JSON size — fits in Notion rich_text? | No. ~3-5KB exceeds 2000-char limit. Use child page blocks via `appendNotionBlocks_`. `sf_saveStoryData_` writes `CHILD:<blockId>` to the `Story Data` property as a pointer. |
-| Drive folder per-story or shared? | Per-story, named `StoryImages_<pageId[:8]>` inside `CONFIG.STORY_FOLDER_ID`. Folder ID stored in Notion `Drive Folder` property. |
+| Drive folder per-story or shared? | Per-story, named `StoryImages_<pageId[:8]>` inside `CONFIG.STORY_FOLDER_ID`. Full Drive URL (`https://drive.google.com/drive/folders/<id>`) stored in Notion `Drive Folder` rich_text property — NOT a URL field type (raw IDs fail Notion URL validation). Folder ID extracted via `url.split('/folders/')[1]`. |
 | What happens to old `Generating` rows on deploy? | They are NOT in the new poll filter — they sit idle. LT resets them to `Idea` manually. |
+| What if a row gets stuck in `Writing`/`Illustrating`/`Assembling`? | Stale-claim recovery: poll query includes those statuses filtered by `Last edited time < 15 min ago`. Reverts to the recoverable predecessor status (`Writing → Idea`, `Illustrating → Written`, `Assembling → Illustrated`). GAS 6-min limit means anything >15 min is definitionally orphaned. |
 | Circuit breaker — per-phase or remove? | Per-phase. Three independent counters. Write fails shouldn't block Assemble from succeeding. |
 | `runStoryFactory()` — delete or keep? | Keep as test-only entry point (not called by poll). Preserves manual trigger path during transition. |
