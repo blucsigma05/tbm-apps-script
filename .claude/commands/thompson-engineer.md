@@ -25,13 +25,11 @@ description: >
 - Creating new module templates (Quiz, Sprint, Reading, Writing, Investigation, Sparkle)
 
 ## Cardinal Rule
-> Inherit ALL constraints from the `tbm-build` skill. Education modules run in the same
-> GAS HtmlService / Fully Kiosk Browser / Cloudflare environment. ES5 is the law.
-> Full file replacements only. Code conforms to data.
+> ES5. Single file. Code conforms to data. Verify before asserting.
 
 ---
 
-## ES5 — The Law (Inherited from tbm-build)
+## ES5 — The Law
 
 Zero tolerance in ANY `.html` file:
 - **NO** `let` or `const` → use `var`
@@ -410,27 +408,28 @@ Reflection: Hard: "fractions" / Proud: "got 100% on science" [Friday only]
 
 ## File Inventory — Education Modules
 
-### Existing (Need JSX → HTML Conversion)
-| # | JSX Prototype | Converts to | Priority |
-|---|---------------|-------------|----------|
-| 1 | `design-dashboard.jsx` | `DesignDashboard.html` | High — first touch |
-| 2 | `kindle-theme-picker.jsx` | `KindleThemePicker.html` | High — first touch |
-| 3 | `baseline-diagnostic.jsx` | `BaselineDiagnostic.html` | High — establishes baseline |
-| 4 | `wolfkid-cer.jsx` | `WolfkidCER.html` | High — proven engagement |
-| 5 | `sparkle-learn.jsx` | `SparkleLearning.html` | High — JJ's daily driver |
-| 6 | `sparkle-intro.jsx` | `SparkleIntro.html` | High — JJ baseline |
-| 7 | `homework-module.jsx` | `HomeworkModule.html` | High — daily missions |
+### Built (Active — verify before editing)
+| File | Surface | Route |
+|------|---------|-------|
+| `HomeworkModule.html` | Buggsy daily homework | `?page=homework` |
+| `SparkleLearning.html` | JJ daily learning games | `?page=sparkle` |
+| `WolfkidCER.html` | Buggsy CER writing | `?page=wolfkid` |
+| `reading-module.html` | Cold reading practice | `?page=reading` |
+| `writing-module.html` | Multi-format writing | `?page=writing` |
+| `fact-sprint.html` | Timed fact drills | `?page=facts` |
+| `investigation-module.html` | Science investigation | `?page=investigation` |
+| `daily-missions.html` | Daily mission rotation | `?page=daily-missions` |
+| `BaselineDiagnostic.html` | Baseline diagnostic | `?page=baseline` |
+| `ComicStudio.html` | Comic creation | `?page=comic-studio` |
+| `DesignDashboard.html` | Ring Quest designer | `?page=dashboard` |
+| `ProgressReport.html` | Parent weekly report | `?page=progress` |
+| `StoryLibrary.html` | Family story library | `?page=story-library` |
+| `StoryReader.html` | Bedtime story reader | `?page=story` |
 
-### Needed (New Builds)
-| # | Module | Purpose |
-|---|--------|---------|
-| 8 | `fact-sprint.html` | Timed math fact / vocabulary / grammar drills |
-| 9 | `reading-module.html` | Cold passage viewer + comprehension questions |
-| 10 | `writing-module.html` | Multi-format writing (CER, persuasive, journal, edit) |
-| 11 | `investigation-module.html` | Open-ended science reasoning |
-| 12 | `comic-studio.html` | Creative module with drawing prompts and reference images |
-| 13 | `daily-missions.html` | Landing page showing today's assignments |
-| 14 | `progress-report.html` | Parent-facing weekly summary (for JT) |
+### Shared Component (inline into every module)
+| File | Purpose |
+|------|---------|
+| `executive-skills-components.html` | CSS + ES5 JS IIFE (`ExecSkills`). Inline into every module. |
 
 ### Shared Component
 | File | Purpose |
@@ -439,7 +438,7 @@ Reflection: Hard: "fractions" / Proud: "got 100% on science" [Friday only]
 
 ---
 
-## Deploy Gate (Inherited from tbm-build)
+## Deploy Gate
 
 Both must PASS before any education module deploy:
 1. `tbmSmokeTest()` — primary pre-deploy check

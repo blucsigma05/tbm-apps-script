@@ -188,7 +188,9 @@ Week 5: "Stretch time! Reach for the ceiling, then touch your toes. Do it 3 time
 
 ## scaffoldConfig.adhd Reference
 
-Every week's curriculum data includes an `adhd` config block consumed by the module renderer:
+> **ASPIRATIONAL SPEC — not yet implemented in full.** Only `brainBreakAfter`, `brainBreakPrompt`, and `timerMode` are currently consumed by modules (PR #173). The remaining fields describe the intended contract for future curriculum-data-driven configuration. Do not grep for these fields expecting to find them — they don't exist in the codebase yet.
+
+When the full contract ships, curriculum data will include an `adhd` config block consumed by the module renderer:
 
 ```javascript
 scaffoldConfig: {
