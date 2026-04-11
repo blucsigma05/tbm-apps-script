@@ -1,0 +1,65 @@
+# .github/workflows/pr-linked-issue.yml
+# Enforces that every PR body contains a linked issue keyword.
+# Blocks merge if no "Closes #NNN", "Fixes #NNN", or "Resolves #NNN" is found.
+# Exempt: PRs whose title starts with "chore" or "docs" or has the "skip-issue-link" label.
+
+name: PR Linked Issue Check
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  check-linked-issue:
+    name: Require linked issue
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body for linked issue
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, sys, re, json
+
+          body  = os.environ.get('PR_BODY', '') or ''
+          title = os.environ.get('PR_TITLE', '') or ''
+          labels_raw = os.environ.get('PR_LABELS', '[]')
+
+          try:
+              labels = json.loads(labels_raw)
+          except Exception:
+              labels = []
+
+          # Exempt: skip-issue-link label present
+          if 'skip-issue-link' in labels:
+              print("ℹ️  skip-issue-link label present — check skipped.")
+              sys.exit(0)
+
+          # Exempt: chore or docs PRs (dependency bumps, pure docs)
+          title_lower = title.lower().strip()
+          if title_lower.startswith('chore') or title_lower.startswith('docs'):
+              print("ℹ️  chore/docs PR — issue link not required.")
+              sys.exit(0)
+
+          # Check body for closing keywords
+          pattern = r'(?i)(closes?|fixes?|resolves?)\s+#\d+'
+          if re.search(pattern, body):
+              print("✅ Linked issue found.")
+              sys.exit(0)
+
+          print("❌ No linked issue found in PR body.")
+          print("")
+          print("   Every PR must include a closing keyword, e.g.:")
+          print("     Closes #123")
+          print("     Fixes #42")
+          print("     Resolves #99")
+          print("")
+          print("   If this PR has no Issue (e.g. trivial fix), add the")
+          print("   'skip-issue-link' label to bypass this check.")
+          sys.exit(1)
+          PYEOF

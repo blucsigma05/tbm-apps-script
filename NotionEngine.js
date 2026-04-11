@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// NotionEngine.gs v2 — Notion API Wrapper for Education Modules
+// NotionEngine.gs v3 — Notion API Wrapper for Education Modules
 // WRITES TO: Notion (Homework Tracker, Pre-K Prep, Story Factory)
 // READS FROM: Script Properties (NOTION_TOKEN)
 // ════════════════════════════════════════════════════════════════════
 
-function getNotionEngineVersion() { return 2; }
+function getNotionEngineVersion() { return 3; }
 
 // ── NOTION DB IDs ───────────────────────────────────────────────────
 const NOTION_DB = {
@@ -326,9 +326,19 @@ function notionLogSparkleProgressSafe(data) {
  * @returns {string} JSON array of pending review items
  */
 function getPendingReviewsSafe() {
+  var CACHE_KEY = 'edu_pending_reviews';
+  var CACHE_TTL = 120; // 2 min — Notion API is slow; stale-ish is fine for parent dashboard polling
   try {
-    const items = queryPendingReviews_();
-    return JSON.stringify({ status: 'ok', items: items, count: items.length });
+    if (typeof getCachedPayload_ === 'function') {
+      var cached = getCachedPayload_(CACHE_KEY);
+      if (cached !== null) return JSON.stringify(cached);
+    }
+    var items = queryPendingReviews_();
+    var result = { status: 'ok', items: items, count: items.length };
+    if (typeof setCachedPayload_ === 'function') {
+      setCachedPayload_(CACHE_KEY, result, CACHE_TTL);
+    }
+    return JSON.stringify(result);
   } catch (e) {
     if (typeof logError_ === 'function') logError_('getPendingReviewsSafe', e);
     return JSON.stringify({ status: 'error', message: e.message, items: [] });
@@ -362,4 +372,4 @@ function notionApproveHomeworkSafe(pageId, grade, notes) {
   }
 }
 
-// EOF — NotionEngine.gs v2
+// EOF — NotionEngine.gs v3

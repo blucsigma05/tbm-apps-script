@@ -1,0 +1,25 @@
+#!/bin/bash
+# TBM pre-commit hook — runs audit-source.sh before every commit.
+# Install once per clone: git config core.hooksPath .githooks
+# Or run: bash scripts/setup-hooks.sh
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+if [ ! -f "$REPO_ROOT/audit-source.sh" ]; then
+  echo "⚠️  audit-source.sh not found — skipping pre-commit audit"
+  exit 0
+fi
+
+echo "Running TBM pre-commit audit..."
+bash "$REPO_ROOT/audit-source.sh"
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -ne 0 ]; then
+  echo ""
+  echo "❌ Pre-commit audit FAILED — commit blocked."
+  echo "   Fix the issues above, then re-commit."
+  echo "   To skip (emergency only): git commit --no-verify"
+  exit 1
+fi
+
+exit 0
