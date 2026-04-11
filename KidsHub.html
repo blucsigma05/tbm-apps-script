@@ -981,10 +981,15 @@ if (IS_SANDBOX) {
 .jj-wrap{max-width:720px}
 .b-two-col,.jj-two-col{gap:16px}
 }
-/* ── Fallback to single column ONLY on very small phones ── */
+/* ── Stack JJ to single column on phones (≤540px); Buggsy stays two-col ── */
+@media(max-width:540px){
+.jj-two-col{display:block}
+.jj-col-pending{margin-top:16px}
+}
+/* ── Fallback: Buggsy single column on very small phones ── */
 @media(max-width:359px){
-.b-two-col,.jj-two-col{display:block}
-.b-col-pending,.jj-col-pending{margin-top:12px}
+.b-two-col{display:block}
+.b-col-pending{margin-top:12px}
 }
 /* ── Board watermarks (Thompson Family Crest) ── */
 .buggsy-body::before, .jj-body::before {
@@ -2879,7 +2884,7 @@ function updateJJ() {
     var jpl = document.getElementById('jjPendList');
     if (jpl) {
       if (pendingTasks.length === 0) {
-        jpl.innerHTML = '<div style="text-align:center;padding:16px 8px;position:relative"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:280px;height:280px;background:url(https://i.ibb.co/FLDTT6QH/1774020751171.png) center/contain no-repeat;opacity:0.06;pointer-events:none"></div><img src="https://i.ibb.co/9md3x6zp/1773982606233.png" alt="JJ celebrating" style="width:180px;height:180px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 6px 16px rgba(236,72,153,0.3))" onerror="this.style.display=\'none\'"><div style="font-size:20px;color:rgba(255,255,255,0.7);font-weight:800;text-shadow:0 0 12px rgba(236,72,153,0.3)">All done! Nothing waiting! \u{1F495}</div></div>';
+        jpl.innerHTML = '<div style="text-align:center;padding:16px 8px;position:relative"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:280px;height:280px;background:url(https://i.ibb.co/FLDTT6QH/1774020751171.png) center/contain no-repeat;opacity:0.06;pointer-events:none"></div><img src="https://i.ibb.co/9md3x6zp/1773982606233.png" alt="JJ celebrating" style="width:120px;height:120px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 6px 16px rgba(236,72,153,0.3))" onerror="this.style.display=\'none\'"><div style="font-size:20px;color:rgba(255,255,255,0.7);font-weight:800;text-shadow:0 0 12px rgba(236,72,153,0.3)">All done! Nothing waiting! \u{1F495}</div></div>';
       } else {
         var jPendStars = pendingTasks.reduce(function(s,t){return s+t.points;},0);
         var jPendHtml = '<div class="jj-pending-jar" id="jjJar"><span class="jar-icon">\u2728</span><span class="jar-label">Sparkle Jar</span><span class="jar-badge" id="jjJarBadge">' + pendingTasks.length + ' \u00B7 ' + jPendStars + ' stars</span></div>';

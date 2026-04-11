@@ -1328,12 +1328,25 @@ function init() {
   buildSparkleLoadingScreen();
   buildSparkleKingdomBg();
 
-  // Free play mode — skip curriculum, show game picker (no bulk preload)
+  // Free play mode — skip curriculum bulk preload, but fetch the menu audio clip first
   var isFreePlay = getParam('mode') === 'freeplay' || window.location.pathname.indexOf('sparkle-free') !== -1;
   if (isFreePlay) {
     setTimeout(function() {
       hideSparkleLoading();
-      renderFreePlayMenu();
+      var menuClip = 'jj_instruction_pick_game.mp3';
+      if (!audioCache[menuClip] && typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run
+          .withSuccessHandler(function(batch) {
+            if (batch && batch[menuClip]) {
+              try { audioCache[menuClip] = new Audio('data:audio/mp3;base64,' + batch[menuClip]); } catch(e) {}
+            }
+            renderFreePlayMenu();
+          })
+          .withFailureHandler(function() { renderFreePlayMenu(); })
+          .getAudioBatchSafe([menuClip]);
+      } else {
+        renderFreePlayMenu();
+      }
     }, 1200);
     return;
   }
