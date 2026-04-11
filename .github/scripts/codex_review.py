@@ -152,6 +152,18 @@ SYSTEM_PROMPT = (
     "9. Error logging not using logError_() pattern\n"
     "10. Sheet-writing functions missing waitLock()\n\n"
 
+    "EDUCATION MODULE RULES (apply when .html education files are changed):\n"
+    "11. ExecSkills wiring: education modules must call ExecSkills.showPlanYourAttack() "
+    "before questions start, ExecSkills.showCompletion() at end. Check for presence.\n"
+    "12. Wrong-answer color: must use soft purple (#a855f7) or amber (#fbbf24), "
+    "NEVER red (#EF4444, #ff4444, rgb(239,68,68)). Flag any red in wrong-answer CSS.\n"
+    "13. Timer direction: homework/education timers must count UP (elapsed time), "
+    "not countdown, unless it is explicitly a speed game (fact-sprint).\n"
+    "14. TEKS tagging: generated questions should include TEKS code tags like [TEKS 4.3D]. "
+    "Flag education content without TEKS references if the module is TEKS-aligned.\n"
+    "15. Ring/Star award: verify awardRings/awardStars calls have a withFailureHandler. "
+    "Award calls without error handling silently lose earned rewards.\n\n"
+
     "DATA FLOW TRACING (critical — this catches real bugs):\n"
     "- Trace newly introduced values from source to sink. If a variable is set\n"
     "  in one place and consumed in another, verify the value is valid at both.\n"
