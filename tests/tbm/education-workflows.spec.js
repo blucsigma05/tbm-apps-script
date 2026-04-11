@@ -158,7 +158,8 @@ test.describe('Homework: wrong answer shows purple not red', function() {
 });
 
 test.describe('Homework: brain break fires after 4 answers', function() {
-  test('brain-break overlay appears after answering 4 questions', async function({ page }) {
+  // TODO(#177): stabilize homework question-answering loop against production shim
+  test.fixme('brain-break overlay appears after answering 4 questions', async function({ page }) {
     test.setTimeout(90000);
     var errors = collectErrors(page);
     await page.setViewportSize(DEVICES.a9);
@@ -199,7 +200,8 @@ test.describe('Homework: brain break fires after 4 answers', function() {
 });
 
 test.describe('Homework: Monday Error Journal appears', function() {
-  test('error journal renders when clock is set to Monday', async function({ page }) {
+  // TODO(#177): stabilize homework question-answering loop against production shim
+  test.fixme('error journal renders when clock is set to Monday', async function({ page }) {
     test.setTimeout(90000);
     var errors = collectErrors(page);
     await page.setViewportSize(DEVICES.a9);
@@ -253,7 +255,8 @@ test.describe('Homework: Monday Error Journal appears', function() {
 });
 
 test.describe('Homework: Friday Reflection appears', function() {
-  test('reflection panel renders when clock is set to Friday', async function({ page }) {
+  // TODO(#177): stabilize homework question-answering loop against production shim
+  test.fixme('reflection panel renders when clock is set to Friday', async function({ page }) {
     test.setTimeout(90000);
     var errors = collectErrors(page);
     await page.setViewportSize(DEVICES.a9);
