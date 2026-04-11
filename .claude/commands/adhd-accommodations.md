@@ -165,7 +165,7 @@ Week 5: "Stretch time! Reach for the ceiling, then touch your toes. Do it 3 time
 | Medium difficulty | Yellow badge | "I need to focus" |
 | Hard difficulty | Orange badge | "Challenge mode" |
 | Correct feedback | Green (#22C55E) | Instant reward |
-| Wrong feedback | Soft purple (#a855f7 at 20% opacity) | Gentle, not shaming |
+| Wrong feedback | Amber (#fbbf24 — matches `.es-feedback.wrong` in exec-skills-components.html) | Gentle, not shaming |
 | Active/selected | Gold (#fde68a) border | Clear selection state |
 | Timer/progress | Muted gray (#94A3B8) | Background, not distracting |
 
@@ -173,7 +173,7 @@ Week 5: "Stretch time! Reach for the ceiling, then touch your toes. Do it 3 time
 
 ## Anti-Patterns (NEVER Do This)
 
-1. **NEVER use red for wrong answers** — red = danger/shame. Use soft purple or warm amber.
+1. **NEVER use red for wrong answers** — red = danger/shame. Use warm amber (#fbbf24 Buggsy) or orchid (#da70d6 JJ/sparkle) — both implemented in `exec-skills-components.html`.
 2. **NEVER use countdown timers** on homework (anxiety trigger). Count-up only.
 3. **NEVER show all questions at once** — progressive disclosure, one at a time.
 4. **NEVER punish with lost progress** — if app crashes, auto-save recovers everything.

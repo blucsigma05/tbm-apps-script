@@ -51,7 +51,7 @@ is the promise. The game is the product. They must match.
   click feedback with flash effect, tech sounds
 - **Characters**: Mach Turbo Light (red hedgehog) as mission commander
 - **Typography**: Monospace for data, bold sans-serif for headers
-- **Wrong answer**: Soft purple highlight (`#a855f7` at 20% opacity), gentle shake, "RETRY" text, supportive audio — never red (see adhd-accommodations.md)
+- **Wrong answer**: Amber highlight (`#fbbf24` at 6% bg, 15% border — matches `.es-feedback.wrong` in exec-skills-components.html), gentle shake, "RETRY" text, supportive audio — never red (see adhd-accommodations.md)
 - **Right answer**: XP burst, ring counter increment, achievement unlock feel
 
 ---
