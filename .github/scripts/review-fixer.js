@@ -150,13 +150,36 @@ function applyEs6IncludesFix(root, finding) {
   return true;
 }
 
+// ── Phase 2: arrow function fix ─────────────────────────────────────
+// Converts block-body arrow functions inside <script> tags to ES5.
+// Handles: (params) => { and identifier => {
+// Does NOT handle expression arrows (param => expr) — those need return injection.
+function applyEs6ArrowFunctionFix(root, finding) {
+  if (!finding || !finding.file) return false;
+  var filePath = path.join(root, finding.file);
+  if (!fs.existsSync(filePath)) return false;
+  var content = fs.readFileSync(filePath, 'utf8');
+  var original = content;
+  content = content.replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, function(fullMatch, body) {
+    // (params_no_nested_parens) => {
+    var fixed = body.replace(/\(([^()]*)\)\s*=>\s*\{/g, 'function($1) {');
+    // single_identifier => {
+    fixed = fixed.replace(/\b([a-zA-Z_$][\w$]*)\s*=>\s*\{/g, 'function($1) {');
+    return fullMatch.replace(body, fixed);
+  });
+  if (content === original) return false;
+  fs.writeFileSync(filePath, content, 'utf8');
+  return true;
+}
+
 const RULES = {
   tbm_ops_errorlog_tab: { needsDeploy: true, apply: applyErrorLogFix },
   tbm_ops_tiller_hours: { needsDeploy: true, apply: applyTillerHoursFix },
   tbm_soul_ticker_special: { needsDeploy: true, apply: applySoulTickerFix },
   es6_let_const: { needsDeploy: true, apply: applyEs6LetConstFix },
   missing_failure_handler: { needsDeploy: true, apply: applyMissingFailureHandlerFix },
-  es6_includes: { needsDeploy: true, apply: applyEs6IncludesFix }
+  es6_includes: { needsDeploy: true, apply: applyEs6IncludesFix },
+  es6_arrow_function: { needsDeploy: true, apply: applyEs6ArrowFunctionFix }
 };
 
 // ── Structured report consumption ───────────────────────────────────
@@ -203,6 +226,9 @@ function classifyFinding(finding) {
     }
     if (combined.indexOf('.includes(') !== -1) {
       return 'es6_includes';
+    }
+    if (combined.indexOf('arrow') !== -1 || combined.indexOf('=>') !== -1) {
+      return 'es6_arrow_function';
     }
   }
   if (combined.indexOf('failurehandler') !== -1 || combined.indexOf('failure handler') !== -1 ||
@@ -498,6 +524,8 @@ async function prepare() {
     hasStructuredReport: !!structuredReport,
     reportFindings: reportFindings
   };
+
+  setOutput('pr_number', String(prNumber));
 
   if (nextCycle >= 4) {
     writeJson(RESULT_PATH, Object.assign({}, base, { status: 'stopped' }));

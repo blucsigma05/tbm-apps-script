@@ -13,6 +13,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  actions: write
 
 concurrency:
   group: pipeline-review-fixer-${{ github.event.pull_request.number || inputs.pr }}
@@ -156,6 +157,22 @@ jobs:
             git remote set-url origin "https://x-access-token:${PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           fi
           git push origin "HEAD:${HEAD_REF}"
+
+      - name: Retrigger Codex review after fix push
+        if: success() && steps.prepare.outputs.status == 'applied' && steps.prepare.outputs.pr_number != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.PIPELINE_BOT_TOKEN || github.token }}
+          PR_NUMBER: ${{ steps.prepare.outputs.pr_number }}
+        shell: bash
+        run: |
+          echo "Dispatching codex-pr-review for PR #${PR_NUMBER} after fix push..."
+          curl -sS --fail-with-body -X POST \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/codex-pr-review.yml/dispatches" \
+            -d "{\"ref\":\"main\",\"inputs\":{\"pr\":\"${PR_NUMBER}\"}}"
+          echo "Codex re-review dispatch sent for PR #${PR_NUMBER}."
 
       - name: Finalize review fixes
         if: success() && steps.prepare.outputs.status == 'applied'
