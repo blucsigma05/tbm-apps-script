@@ -51,15 +51,14 @@ Before generating any content, build a complete inventory of standards:
 | Data Analysis | 4.9A-B | Light | 1-2/week |
 | Financial Literacy | 4.10A-E | Light | 1-2/week |
 
-**Science strands (6):**
+**Science strands (5) — aligned to `references/teks-science-grade4.md`:**
 | Strand | TEKS Codes | 5th Grade STAAR? | Priority |
 |--------|-----------|-----------------|----------|
 | Scientific Inquiry | 4.1-4.3 | Yes | High |
-| Matter & Energy | 4.6A-C | Yes | High |
-| Force & Motion | 4.6D, 4.7 | Yes | High |
-| Earth & Space | 4.7-4.8, 4.11 | Yes | Medium |
-| Organisms & Environment | 4.9-4.10 | Yes | Medium |
-| Weather & Water Cycle | 4.8A-B | Yes | Medium |
+| Matter & Properties | 4.6A-C | Yes | High |
+| Force, Motion & Energy | 4.7-4.8 | Yes | High |
+| Earth & Space | 4.9-4.11 | Yes | Medium |
+| Organisms & Environment | 4.12-4.13 | Yes | Medium |
 
 **RLA focus areas (7):**
 | Focus | TEKS | STAAR Weight | Frequency |
