@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v9">
+<meta name="tbm-version" content="v10">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -765,9 +765,11 @@ main {
   touch-action: none;
   user-select: none;
 }
-.speech-bubble[contenteditable="true"] {
+.speech-bubble .bubble-text {
+  display: block;
   cursor: text;
   outline: none;
+  background: transparent;
   color: #E2E8F0;
   font-family: 'Nunito', sans-serif;
   font-size: 12px;
@@ -951,9 +953,9 @@ main {
 <script>
 // ── ComicStudio v4 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
 // ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
-// tbm-version: v9
+// tbm-version: v10
 
-const COMIC_STUDIO_VERSION = 9; // v9: speech bubbles
+const COMIC_STUDIO_VERSION = 10; // v10: bubble text span fix + replay bubble composite
 
 // ── Test Mode Detection ──
 const TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
@@ -1048,6 +1050,7 @@ let studioCtx = null;        // full context from server
 // xPct/yPct = 0-100 percentage of panel-slot display area (center of bubble)
 // tail = 'bottom'|'top'|'right'|'left'
 let bubbles = [];
+let _replayBubbles = []; // Snapshot taken in finishComic() before bubbles is cleared.
 const BUBBLE_MAX_PER_PANEL = 3;
 const BUBBLE_TAILS = ['bottom', 'right', 'top', 'left'];
 let _bubbleIdSeq = 0;
@@ -1148,6 +1151,7 @@ function playReplay() {
   function playOneStroke() {
     if (strokeIdx >= strokes.length) {
       progressBar.style.width = '100%';
+      _compositeReplayBubbles_(ctx, PANELS, PANEL_W, PANEL_H);
       showReplayDoneControls();
       return;
     }
@@ -1397,11 +1401,11 @@ function addBubble() {
   const id = 'bubble-' + (++_bubbleIdSeq);
   bubbles.push({ id: id, panel: activePanel, xPct: 50, yPct: 40, text: '', tail: 'bottom' });
   renderBubbles();
-  // Focus the new bubble's contenteditable immediately
+  // Focus the contenteditable text span inside the new bubble immediately
   const el = document.getElementById(id);
   if (el) {
-    el.setAttribute('contenteditable', 'true');
-    el.focus();
+    const textSpan = el.querySelector('.bubble-text');
+    if (textSpan) textSpan.focus();
   }
   if (!hasDrawnAnything) { hasDrawnAnything = true; startAutosaveTimer(); }
 }
@@ -1422,21 +1426,26 @@ function renderBubbles() {
 }
 
 // Creates the DOM element for a single bubble state object.
+// contenteditable is placed on a child <span class="bubble-text"> so that
+// div.textContent never picks up the × and ↓ button glyphs on input events.
 function createBubbleElement(b) {
   const div = document.createElement('div');
   div.id = b.id;
   div.className = 'speech-bubble';
   div.setAttribute('data-tail', b.tail);
-  div.setAttribute('contenteditable', 'true');
   div.style.left = b.xPct + '%';
   div.style.top = b.yPct + '%';
-  div.textContent = b.text;
 
-  // Sync text back to state on input
-  div.addEventListener('input', function() {
+  // Text span — contenteditable lives here, not on the outer div.
+  const textSpan = document.createElement('span');
+  textSpan.className = 'bubble-text';
+  textSpan.setAttribute('contenteditable', 'true');
+  textSpan.textContent = b.text;
+  textSpan.addEventListener('input', function() {
     const found = bubbles.find(function(x) { return x.id === b.id; });
-    if (found) found.text = div.textContent || '';
+    if (found) found.text = textSpan.textContent || '';
   });
+  div.appendChild(textSpan);
 
   // Prevent drawing when tapping inside bubble
   div.addEventListener('pointerdown', function(e) {
@@ -1629,6 +1638,77 @@ function compositeBubblesOnPanels() {
     // Draw text
     ctx.fillStyle = '#E2E8F0';
     ctx.font = 'bold 18px Nunito, sans-serif';
+    ctx.textBaseline = 'top';
+    for (let li = 0; li < lines.length; li++) {
+      ctx.fillText(lines[li], bx + padX, by + padY + li * lineH);
+    }
+    ctx.restore();
+  }
+}
+
+// Composites the _replayBubbles snapshot onto a replay canvas using its panel coordinate system.
+// Called at the end of playReplay() so bubbles appear on the replay canvas as they did on screen.
+function _compositeReplayBubbles_(ctx, panels, panelW, panelH) {
+  if (!_replayBubbles || _replayBubbles.length === 0) return;
+  for (let i = 0; i < _replayBubbles.length; i++) {
+    const b = _replayBubbles[i];
+    if (b.panel >= panels.length) continue;
+    const panel = panels[b.panel];
+    const cx = panel.x + (b.xPct / 100) * panelW;
+    const cy = panel.y + (b.yPct / 100) * panelH;
+    ctx.font = 'bold 11px Nunito, sans-serif';
+    const text = b.text || '';
+    const words = text.split(' ');
+    const maxLineW = 75;
+    const lines = [];
+    let line = '';
+    for (let w = 0; w < words.length; w++) {
+      const test = line ? line + ' ' + words[w] : words[w];
+      if (ctx.measureText(test).width > maxLineW && line) { lines.push(line); line = words[w]; }
+      else { line = test; }
+    }
+    if (line) lines.push(line);
+    if (lines.length === 0) lines.push('');
+    const lineH = 13;
+    const padX = 6;
+    const padY = 4;
+    const boxW = Math.max(35, Math.min(95, maxLineW + padX * 2));
+    const boxH = lines.length * lineH + padY * 2;
+    const bx = cx - boxW / 2;
+    const by = cy - boxH / 2;
+    const r = 6;
+    ctx.save();
+    ctx.fillStyle = '#1a1a2e';
+    ctx.strokeStyle = '#00f0ff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(bx + r, by); ctx.lineTo(bx + boxW - r, by);
+    ctx.quadraticCurveTo(bx + boxW, by, bx + boxW, by + r);
+    ctx.lineTo(bx + boxW, by + boxH - r);
+    ctx.quadraticCurveTo(bx + boxW, by + boxH, bx + boxW - r, by + boxH);
+    ctx.lineTo(bx + r, by + boxH);
+    ctx.quadraticCurveTo(bx, by + boxH, bx, by + boxH - r);
+    ctx.lineTo(bx, by + r);
+    ctx.quadraticCurveTo(bx, by, bx + r, by);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    const tSize = 5;
+    ctx.fillStyle = '#00f0ff';
+    ctx.beginPath();
+    if (b.tail === 'bottom') {
+      ctx.moveTo(cx - tSize, by + boxH); ctx.lineTo(cx + tSize, by + boxH); ctx.lineTo(cx, by + boxH + tSize * 1.5);
+    } else if (b.tail === 'top') {
+      ctx.moveTo(cx - tSize, by); ctx.lineTo(cx + tSize, by); ctx.lineTo(cx, by - tSize * 1.5);
+    } else if (b.tail === 'right') {
+      ctx.moveTo(bx + boxW, cy - tSize); ctx.lineTo(bx + boxW, cy + tSize); ctx.lineTo(bx + boxW + tSize * 1.5, cy);
+    } else {
+      ctx.moveTo(bx, cy - tSize); ctx.lineTo(bx, cy + tSize); ctx.lineTo(bx - tSize * 1.5, cy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#E2E8F0';
+    ctx.font = 'bold 11px Nunito, sans-serif';
     ctx.textBaseline = 'top';
     for (let li = 0; li < lines.length; li++) {
       ctx.fillText(lines[li], bx + padX, by + padY + li * lineH);
@@ -1986,6 +2066,10 @@ function finishComic() {
   // v9: Bake speech bubbles onto panel canvases before scoring/export.
   // This ensures bubbles appear in the autosaved panel images and any replay.
   if (bubbles.length > 0) {
+    // Snapshot bubble state for replay before clearing.
+    _replayBubbles = bubbles.map(function(b) {
+      return { id: b.id, panel: b.panel, xPct: b.xPct, yPct: b.yPct, text: b.text, tail: b.tail };
+    });
     compositeBubblesOnPanels();
     // Remove DOM bubble overlays (now baked into canvas)
     const bEls = document.querySelectorAll('.speech-bubble');
@@ -2267,7 +2351,7 @@ function init() {
     .catch(() => { onContextLoaded(null); });
   serverCall('loadComicDraftSafe', CHILD)
     .then(draft => {
-      if (draft && draft.version >= 8) { pendingDraft = draft; } // v9: accept v8 drafts (bubbles default to [])
+      if (draft && draft.version >= 8) { pendingDraft = draft; } // v10: accept v8+ drafts (bubbles default to [])
       _initReady();
     })
     .catch(() => { _initReady(); });
@@ -2277,4 +2361,4 @@ init();
 </script>
 </body>
 </html>
-<!-- ComicStudio.html v9 -->
+<!-- ComicStudio.html v10 -->
