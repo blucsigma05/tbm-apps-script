@@ -3,7 +3,7 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 16.0
+// Version: 16.1
 // Pipeline (phased): Idea→Writing→Written→Illustrating→Illustrated→Assembling→Ready
 //   Phase 1 (Write):     Character Fetch → Memory Inject → Gemini Story → Canon Extract → persist JSON to Drive
 //   Phase 2 (Illustrate): Load story JSON → Gemini Images → persist blobs to Drive folder
@@ -11,7 +11,7 @@
 // Each phase runs in a separate poll cycle — any phase failure is isolated and retried independently.
 // ============================================================
 
-function getStoryFactoryVersion() { return 16.0; }
+function getStoryFactoryVersion() { return 16.1; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -1135,21 +1135,30 @@ if (extraProps) {
 try {
   notionPatch('pages/' + pageId, payload);
 } catch (e) {
-  // Gracefully drop any optional field not yet in the Notion DB schema, then retry.
-  var errStr = String(e);
+  // Gracefully drop optional fields not in the Notion DB schema. Strips exactly one
+  // field per attempt so multiple unknown fields (e.g. 'Images Saved' AND 'Failed Phase'
+  // both absent) are each removed before the next retry instead of aborting after one pass.
   var OPTIONAL_FIELDS = ['Resume Hint', 'Story Draft URL', 'Images Folder URL', 'Images Saved', 'Failed Phase'];
-  var stripped = false;
-  for (var fi = 0; fi < OPTIONAL_FIELDS.length; fi++) {
-    if (errStr.indexOf(OPTIONAL_FIELDS[fi]) !== -1 && payload.properties[OPTIONAL_FIELDS[fi]]) {
-      delete payload.properties[OPTIONAL_FIELDS[fi]];
-      stripped = true;
+  var lastError = e;
+  for (var attempt = 0; attempt < OPTIONAL_FIELDS.length; attempt++) {
+    var errStr = String(lastError);
+    var stripped = false;
+    for (var fi = 0; fi < OPTIONAL_FIELDS.length; fi++) {
+      if (errStr.indexOf(OPTIONAL_FIELDS[fi]) !== -1 && payload.properties[OPTIONAL_FIELDS[fi]]) {
+        delete payload.properties[OPTIONAL_FIELDS[fi]];
+        stripped = true;
+        break; // One field per attempt — loop will retry
+      }
+    }
+    if (!stripped) throw lastError; // Not an optional-field error — re-throw
+    try {
+      notionPatch('pages/' + pageId, payload);
+      return; // Succeeded after stripping
+    } catch (e2) {
+      lastError = e2; // Another field rejected — continue stripping
     }
   }
-  if (stripped) {
-    notionPatch('pages/' + pageId, payload);
-  } else {
-    throw e;
-  }
+  throw lastError; // All optional fields exhausted — give up
 }
 }
 
@@ -1191,11 +1200,16 @@ function sf_loadStoryDraft_(driveFileUrl) {
 
 // Saves scene image blobs to a per-story Drive folder. Returns { url, count }.
 // Files named 'scene-N.png'. Nulls in imageBlobs array are skipped.
+// Clears any existing files first so that illustration retries don't mix stale
+// scene-N.png files from a prior failed attempt with new ones.
 function sf_saveSceneImages_(pageId, imageBlobs) {
   var draftsFolder = sf_getDraftsFolder_();
   var folderName = 'images-' + pageId;
   var it = draftsFolder.getFoldersByName(folderName);
   var imgFolder = it.hasNext() ? it.next() : draftsFolder.createFolder(folderName);
+  // Trash stale files before writing so retry runs start with a clean folder.
+  var existing = imgFolder.getFiles();
+  while (existing.hasNext()) existing.next().setTrashed(true);
   var saved = 0;
   for (var i = 0; i < imageBlobs.length; i++) {
     if (!imageBlobs[i]) continue;
@@ -1531,6 +1545,43 @@ return { success: false, error: e.message, resumeHint: hint };
 
 // ── POLL NOTION FOR NEW REQUESTS ─────────────────────────────
 
+// ── STALE CLAIM RECOVERY ──────────────────────────────────────
+// Rows stuck in transitional statuses (Writing/Illustrating/Assembling) longer than
+// STALE_CLAIM_MS indicate a GAS crash/timeout mid-phase. This function resets them to
+// the previous stable status so the next poll cycle can safely retry.
+function sf_recoverStaleClaims_() {
+  var STALE_CLAIM_MS = 30 * 60 * 1000; // 30 minutes
+  var staleBefore = new Date(Date.now() - STALE_CLAIM_MS).toISOString();
+  var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
+    filter: {
+      and: [
+        {
+          or: [
+            { property: 'Status', select: { equals: 'Writing' } },
+            { property: 'Status', select: { equals: 'Illustrating' } },
+            { property: 'Status', select: { equals: 'Assembling' } }
+          ]
+        },
+        { timestamp: 'last_edited_time', last_edited_time: { before: staleBefore } }
+      ]
+    },
+    page_size: 10
+  });
+  if (!result.results || result.results.length === 0) return;
+  var REVERT_MAP = { 'Writing': 'Idea', 'Illustrating': 'Written', 'Assembling': 'Illustrated' };
+  for (var ri = 0; ri < result.results.length; ri++) {
+    var page = result.results[ri];
+    var stuck = page.properties['Status'] && page.properties['Status'].select
+      ? page.properties['Status'].select.name : null;
+    if (!stuck || !REVERT_MAP[stuck]) continue;
+    var revertTo = REVERT_MAP[stuck];
+    Logger.log('[StaleRecovery] Row ' + page.id + ' stuck in "' + stuck + '" >30 min — reverting to "' + revertTo + '".');
+    updateNotionRow(page.id, null, revertTo,
+      'Auto-recovered from stale "' + stuck + '" claim (GAS crash/timeout). Reverted to "' + revertTo + '" for retry.'
+    );
+  }
+}
+
 // v16: Three-phase poll — handles Idea (Write), Written (Illustrate), Illustrated (Assemble).
 // Phase failures are isolated: only the failing phase is retried on the next poll cycle.
 // Circuit breaker still operates per consecutive-fail count across all phases.
@@ -1570,6 +1621,8 @@ return;
 }
 
 try {
+// Recover any rows stuck in transitional statuses from a prior crash/timeout before polling.
+sf_recoverStaleClaims_();
 Logger.log('Polling for story work (Idea | Written | Illustrated)...');
 // Query all three actionable statuses, oldest first so the queue drains in order.
 var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
@@ -2159,5 +2212,5 @@ function sf_getFailureSummary_(days) {
   };
 }
 
-// END OF FILE — StoryFactory v16.0
+// END OF FILE — StoryFactory v16.1
 // ════════════════════════════════════════════════════════════════════
