@@ -148,11 +148,20 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload traces on failure
-        if: steps.playwright.outputs.pw_exit != '0'
+        if: steps.playwright.outputs.pw_exit != '0' || steps.education.outputs.edu_exit != '0'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-traces-${{ github.run_id }}
           path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Upload education failure artifacts
+        if: steps.education.outputs.edu_exit != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: education-traces-${{ github.run_id }}
+          path: test-results/education/
           retention-days: 7
           if-no-files-found: ignore
 
