@@ -59,7 +59,7 @@ Explicit table. No wildcards. Mirrors `PATH_ROUTES` in
 | `/qa/spine` | TheSpine | Yes | |
 | `/qa/soul` | TheSoul | Yes | |
 | `/qa/vault` | Vault | Yes | |
-| `/qa/` | QA Operator dashboard | Yes | |
+| `/qa/` | QA Operator dashboard | **No (Phase 2)** | No backing page exists yet. Requires QAOperator.html + route entry in Code.js. See OQ-4. |
 | `/qa/pulse` | ThePulse | **No** | Finance surface excluded |
 | `/qa/vein` | TheVein | **No** | Finance surface excluded |
 
@@ -173,6 +173,9 @@ At the `api` handler entry point:
 
 ```javascript
 if (e.parameter.env === 'qa') {
+  if (!validateQAToken_(e.parameter.qa_token)) {
+    return error('Invalid QA token', 403);
+  }
   var qaSSID = PropertiesService.getScriptProperties().getProperty('TBM_QA_SSID');
   if (!qaSSID) return error('QA workbook not configured');
   SSID = qaSSID;
@@ -180,7 +183,8 @@ if (e.parameter.env === 'qa') {
 }
 ```
 
-Safe because each GAS request runs in its own V8 isolate.
+Token validation is mandatory. `env=qa` without a valid signed token
+is rejected. Safe because each GAS request runs in its own V8 isolate.
 
 ### 5.2 TBMConfig.gs — No Changes
 
@@ -310,12 +314,42 @@ Injected by the QA shim on every `/qa/*` page:
 
 ## 10. Open Questions
 
-### OQ-1: GAS-Side Defense-in-Depth
+### Resolved: GAS-Side Signed Token (Required)
 
-Should GAS validate a per-request token beyond `env=qa`?
+GAS must validate a signed token on every `env=qa` request. The CF
+Worker generates an HMAC per-request; GAS validates before honoring
+the override. Without this, anyone with the GAS deployment URL could
+bypass the PIN gate and hit `?env=qa` directly.
 
-**Recommendation:** Accept risk Phase 1. GAS URL is already the security
-boundary for all prod data access. `env=qa` adds no incremental risk.
+**Token generation (CF Worker):**
+```
+timestamp = Date.now()
+payload = timestamp + ":qa"
+token = hex(SHA-256(payload + ":" + env.QA_HMAC_SECRET))
+```
+Appended as `&qa_token=<timestamp>:<token>` on every GAS request.
+
+**Token validation (GAS, in serveData):**
+```javascript
+function validateQAToken_(tokenParam) {
+  if (!tokenParam) return false;
+  var parts = tokenParam.split(':');
+  if (parts.length !== 2) return false;
+  var ts = parseInt(parts[0], 10);
+  if (isNaN(ts) || Math.abs(Date.now() - ts) > 300000) return false; // 5 min window
+  var secret = PropertiesService.getScriptProperties().getProperty('QA_HMAC_SECRET');
+  if (!secret) return false;
+  var expected = computeHmac_(ts + ':qa', secret);
+  return expected === parts[1];
+}
+```
+
+Reuses the shared-secret validation pattern at `Code.js:1634-1655`.
+Requires `QA_HMAC_SECRET` as both a CF environment variable and a
+GAS Script Property (same value).
+
+**If token is missing or invalid:** Return 403 `{"error":"Invalid QA token"}`.
+`env=qa` without a valid token is silently ignored (treated as prod).
 
 ### OQ-2: Cache Capacity
 
@@ -348,3 +382,10 @@ to accept per-request QA context in Phase 2.
 | `Code.js` | serveData env=qa dispatch, getEnvCacheKey_(), cache function scoping |
 | `TBMConfig.gs` | Unchanged (TBM_QA_SSID already exists) |
 | `Tbmsmoketest.js` | QA route allowlist parity check |
+| `wrangler.toml` | Add `QA_HMAC_SECRET` env var reference |
+
+### Prerequisites
+
+- `TBM_QA_SSID` Script Property set to QA workbook ID
+- `QA_HMAC_SECRET` set as both CF environment variable and GAS Script Property (same value)
+- QA workbook seeded via `seedQAWorkbook()`
