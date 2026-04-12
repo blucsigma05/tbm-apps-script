@@ -1415,29 +1415,46 @@ function pollForNewStories() {
     // v16.0: Multi-status query + stale-claim recovery (15 min threshold)
     var STALE_CLAIM_MS = 15 * 60 * 1000;
     var staleCutoff = new Date(Date.now() - STALE_CLAIM_MS).toISOString();
+    var nowMs = Date.now();
 
+    // FIX(P1): Build filter dynamically — exclude statuses for paused phases
+    // so a paused item at the head of the queue can't starve healthy phases behind it.
+    var isWritePaused = parseInt(props.getProperty('SF_WRITE_PAUSED_UNTIL') || '0') > nowMs;
+    var isIllusPaused = parseInt(props.getProperty('SF_ILLUS_PAUSED_UNTIL') || '0') > nowMs;
+    var isAssemPaused = parseInt(props.getProperty('SF_ASSEM_PAUSED_UNTIL') || '0') > nowMs;
+
+    var filterClauses = [];
+    if (!isWritePaused) {
+      filterClauses.push({ property: 'Status', select: { equals: 'Idea' } });
+      // FIX(P1): Notion built-in timestamps use 'timestamp' key, not 'property'
+      filterClauses.push({ and: [
+        { property: 'Status', select: { equals: 'Writing' } },
+        { timestamp: 'last_edited_time', last_edited_time: { before: staleCutoff } }
+      ]});
+    }
+    if (!isIllusPaused) {
+      filterClauses.push({ property: 'Status', select: { equals: 'Written' } });
+      filterClauses.push({ and: [
+        { property: 'Status', select: { equals: 'Illustrating' } },
+        { timestamp: 'last_edited_time', last_edited_time: { before: staleCutoff } }
+      ]});
+    }
+    if (!isAssemPaused) {
+      filterClauses.push({ property: 'Status', select: { equals: 'Illustrated' } });
+      filterClauses.push({ and: [
+        { property: 'Status', select: { equals: 'Assembling' } },
+        { timestamp: 'last_edited_time', last_edited_time: { before: staleCutoff } }
+      ]});
+    }
+
+    if (filterClauses.length === 0) {
+      Logger.log('All phases paused by circuit breakers. Skipping poll.');
+      return;
+    }
+
+    var queryFilter = filterClauses.length === 1 ? filterClauses[0] : { or: filterClauses };
     var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
-      filter: {
-        or: [
-          // Normal actionable statuses
-          { property: 'Status', select: { equals: 'Idea' } },
-          { property: 'Status', select: { equals: 'Written' } },
-          { property: 'Status', select: { equals: 'Illustrated' } },
-          // Stale-claim recovery: rows stuck in claim status > 15 min
-          { and: [
-            { property: 'Status', select: { equals: 'Writing' } },
-            { property: 'Last edited time', date: { before: staleCutoff } }
-          ]},
-          { and: [
-            { property: 'Status', select: { equals: 'Illustrating' } },
-            { property: 'Last edited time', date: { before: staleCutoff } }
-          ]},
-          { and: [
-            { property: 'Status', select: { equals: 'Assembling' } },
-            { property: 'Last edited time', date: { before: staleCutoff } }
-          ]}
-        ]
-      },
+      filter: queryFilter,
       sorts: [{ timestamp: 'created_time', direction: 'ascending' }],
       page_size: 1
     });
@@ -1452,20 +1469,11 @@ function pollForNewStories() {
     var status = page.properties['Status'].select.name;
     Logger.log('Found: pageId=' + pageId + ' status=' + status);
 
-    // Map status to phase key for circuit breaker
+    // Map status to phase key for circuit breaker tracking
     var phaseKey;
     if (status === 'Idea' || status === 'Writing') phaseKey = 'WRITE';
     else if (status === 'Written' || status === 'Illustrating') phaseKey = 'ILLUS';
     else if (status === 'Illustrated' || status === 'Assembling') phaseKey = 'ASSEM';
-
-    // Check per-phase circuit breaker
-    if (phaseKey) {
-      var cbPaused = parseInt(props.getProperty('SF_' + phaseKey + '_PAUSED_UNTIL') || '0');
-      if (cbPaused > 0 && Date.now() < cbPaused) {
-        Logger.log('Circuit breaker OPEN for ' + phaseKey + ' — skipping.');
-        return;
-      }
-    }
 
     // Dispatch based on status
     var r;
@@ -1988,12 +1996,46 @@ function sf_getFailureSummary_(days) {
 // ── PHASED PIPELINE: HELPERS (v16.0) ────────────────────────────────
 
 /**
+ * FIX(P2): Delete any existing code blocks on a page (cleanup for retry safety).
+ * Without this, retrying sf_saveStoryData_ on the same row accumulates stale JSON fragments.
+ */
+function sf_clearStoryDataBlocks_(pageId) {
+  try {
+    var existing = notionGet_('blocks/' + pageId + '/children?page_size=100');
+    var blocks = existing.results || [];
+    for (var d = 0; d < blocks.length; d++) {
+      if (blocks[d].type === 'code') {
+        UrlFetchApp.fetch('https://api.notion.com/v1/blocks/' + blocks[d].id, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': 'Bearer ' + CONFIG.NOTION_TOKEN,
+            'Notion-Version': CONFIG.NOTION_VERSION
+          },
+          muteHttpExceptions: true
+        });
+      }
+    }
+    if (blocks.length > 0) {
+      var deleted = 0;
+      for (var c = 0; c < blocks.length; c++) { if (blocks[c].type === 'code') deleted++; }
+      if (deleted > 0) Logger.log('sf_clearStoryDataBlocks_: deleted ' + deleted + ' stale code blocks');
+    }
+  } catch(e) {
+    Logger.log('sf_clearStoryDataBlocks_: cleanup failed (non-critical): ' + e.message);
+  }
+}
+
+/**
  * Save story JSON to Notion 'Story Data' property on the trigger row.
  * If JSON <= 1800 chars: stored inline in rich_text property.
  * If JSON > 1800 chars: stored as code blocks on the page, property set to 'CHILD_BLOCKS' marker.
  */
 function sf_saveStoryData_(pageId, json) {
   var jsonStr = typeof json === 'string' ? json : JSON.stringify(json);
+
+  // FIX(P2): Clear any existing code blocks from prior saves before writing new data.
+  // Without this, retries on the same row accumulate stale + new JSON fragments.
+  sf_clearStoryDataBlocks_(pageId);
 
   if (jsonStr.length <= 1800) {
     notionPatch('pages/' + pageId, {
