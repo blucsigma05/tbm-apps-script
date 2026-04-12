@@ -18,3 +18,8 @@ namespace_id = "1001"
 [ratelimits.simple]
 limit = 2
 period = 10
+
+# QA Route Isolation secrets (issue #219)
+# Set via: wrangler secret put QA_HMAC_SECRET
+# Must match GAS Script Property QA_HMAC_SECRET (same value, both sides)
+# Prerequisite: TBM_QA_SSID Script Property set in GAS to QA workbook ID

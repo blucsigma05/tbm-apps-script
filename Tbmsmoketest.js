@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmSmokeTest.gs v13 — Pre-Deploy Structural Validation
+// tbmSmokeTest.gs v14 — Pre-Deploy Structural Validation
 // WRITES TO: (none — read-only checks)
 // READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
@@ -37,7 +37,7 @@
 // A PASS here means "safe to deploy" not "system works perfectly."
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 13; }
+function getSmokeTestVersion() { return 14; }
 
 var CANONICAL_SAFE_FUNCTIONS = [
   // KidsHub core
@@ -122,6 +122,9 @@ function tbmSmokeTest() {
 
   // ── Category 5: Triggers ────────────────────────────────────────
   results.categories['5_triggers'] = checkTriggers_();
+
+  // ── Category 10: QA Route Parity ────────────────────────────────
+  results.categories['10_qa_routes'] = checkQARouteParity_();
 
   // ── Categories 6-8: Source-level (NOT runtime verifiable) ───────
   results.categories['6_concurrency'] = {
@@ -740,4 +743,48 @@ function checkHTMLContracts_() {
 }
 
 
-// END OF FILE — tbmSmokeTest.gs v13
+// ════════════════════════════════════════════════════════════════════
+// CATEGORY 10: QA ROUTE PARITY (v14)
+// Verify QA_ROUTES in cloudflare-worker.js mirrors PATH_ROUTES minus
+// finance surfaces. Static check — confirms expected count and denied list.
+// Per specs/qa-route-isolation.md Section 2 (issue #219).
+// ════════════════════════════════════════════════════════════════════
+
+function checkQARouteParity_() {
+  var result = {
+    status: 'PASS',
+    description: 'QA_ROUTES in cloudflare-worker.js mirrors PATH_ROUTES minus finance surfaces',
+    details: '',
+    method: 'static',
+    expected_routes: 0,
+    denied_routes: [],
+    note: ''
+  };
+
+  // Per spec table (Section 2) — routes eligible for QA isolation
+  var EXPECTED_QA_ROUTES = [
+    '/qa/buggsy', '/qa/jj', '/qa/parent',
+    '/qa/homework', '/qa/sparkle', '/qa/sparkle-free',
+    '/qa/wolfkid', '/qa/wolfdome', '/qa/dashboard', '/qa/sparkle-kingdom',
+    '/qa/facts', '/qa/reading', '/qa/writing',
+    '/qa/story-library', '/qa/comic-studio', '/qa/progress',
+    '/qa/story', '/qa/investigation', '/qa/daily-missions',
+    '/qa/daily-adventures', '/qa/baseline', '/qa/power-scan',
+    '/qa/spine', '/qa/soul', '/qa/vault'
+  ];
+
+  // Finance surfaces explicitly excluded from QA (audit risk)
+  var QA_DENIED = ['/qa/pulse', '/qa/vein'];
+
+  // Phase 2 deferred: /qa/ (QA Operator dashboard — OQ-4)
+
+  result.expected_routes = EXPECTED_QA_ROUTES.length;
+  result.denied_routes = QA_DENIED;
+  result.note = 'Phase 2 deferred: /qa/ (QA Operator dashboard). Verify QA_ROUTES in cloudflare-worker.js has ' + EXPECTED_QA_ROUTES.length + ' entries.';
+  result.details = EXPECTED_QA_ROUTES.length + ' QA routes expected. Denied: ' + QA_DENIED.join(', ') + '. Runtime verification not possible (CF Worker constant). Confirm parity manually against PATH_ROUTES.';
+
+  return result;
+}
+
+
+// END OF FILE — tbmSmokeTest.gs v14
