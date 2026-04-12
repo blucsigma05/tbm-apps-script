@@ -258,7 +258,7 @@ test.describe('Homework: Monday Error Journal appears', function() {
       for (var i = 0; i < 8; i++) {
         await dismissBrainBreakIfVisible(page);
         // Check if any unanswered options remain in this section
-        var optionCount = await page.locator('#section-' + tab + ' .q-option:not(.correct-answer):not(.wrong-answer)').count();
+        var optionCount = await page.locator('#section-' + tab + ' .q-card:not(:has(.feedback-box)):not(:has(.es-feedback)) .q-option').count();
         if (optionCount === 0) break;
         await submitOneAnswer(page, tab);
       }
@@ -297,7 +297,7 @@ test.describe('Homework: Friday Reflection appears', function() {
 
       for (var i = 0; i < 8; i++) {
         await dismissBrainBreakIfVisible(page);
-        var optionCount = await page.locator('#section-' + tab + ' .q-option:not(.correct-answer):not(.wrong-answer)').count();
+        var optionCount = await page.locator('#section-' + tab + ' .q-card:not(:has(.feedback-box)):not(:has(.es-feedback)) .q-option').count();
         if (optionCount === 0) break;
         await submitOneAnswer(page, tab);
       }
