@@ -97,11 +97,11 @@ def main():
                 'file': filename,
                 'source': source_ver,
                 'deployed': deployed_num,
-                'delta': source_ver - deployed_int,
+                'delta': source_ver - deployed_num,
             })
-            print('DRIFT ' + key + ': source=v' + str(source_ver) + ' deployed=v' + str(deployed_int))
+            print('DRIFT ' + key + ': source=v' + str(source_ver) + ' deployed=v' + str(deployed_num))
         else:
-            print('OK    ' + key + ': v' + str(deployed_int))
+            print('OK    ' + key + ': v' + str(deployed_num))
 
     has_findings = len(drifted) > 0
     set_output('has_findings', 'true' if has_findings else 'false')

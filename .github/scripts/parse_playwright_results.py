@@ -87,18 +87,32 @@ def format_comment(json_data, pw_exit, output_text):
         if failed > 0:
             lines.append("")
             lines.append("### Failures")
-            for suite in json_data.get("suites", []):
-                for spec in suite.get("specs", []):
-                    for test in spec.get("tests", []):
-                        if test.get("status") != "expected":
-                            title = spec.get("title", "?")
-                            status = test.get("status", "?")
-                            lines.append("- **%s**: %s" % (title, status))
-                            for result in test.get("results", []):
-                                err = result.get("error", {})
-                                msg = err.get("message", "")
-                                if msg:
-                                    lines.append("  `%s`" % msg[:200])
+            failure_entries = []
+
+            def collect_failures(suites, prefix=""):
+                for suite in suites:
+                    suite_title = suite.get("title", "")
+                    path = (prefix + " > " + suite_title) if prefix else suite_title
+                    for spec in suite.get("specs", []):
+                        spec_title = spec.get("title", "?")
+                        full_title = path + " > " + spec_title if path else spec_title
+                        for test in spec.get("tests", []):
+                            if test.get("status") != "expected":
+                                status = test.get("status", "?")
+                                entry = "- **%s**: %s" % (full_title, status)
+                                failure_entries.append(entry)
+                                for result in test.get("results", []):
+                                    err = result.get("error", {})
+                                    msg = err.get("message", "")
+                                    if msg:
+                                        failure_entries.append("  `%s`" % msg[:200])
+                    collect_failures(suite.get("suites", []), path)
+
+            collect_failures(json_data.get("suites", []))
+            if failure_entries:
+                lines.extend(failure_entries)
+            else:
+                lines.append("- _(reporter counted %d failure(s) but no matching entries found — check raw JSON)_" % failed)
 
         return "\n".join(lines), verdict
     else:
