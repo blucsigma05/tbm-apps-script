@@ -40,32 +40,55 @@
 function getSmokeTestVersion() { return 13; }
 
 var CANONICAL_SAFE_FUNCTIONS = [
-  'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKHLastModifiedSafe', 'getKidsHubDataSafe',
-  'khAddDeductionSafe', 'khApproveRequestSafe', 'khApproveTaskSafe', 'khApproveWithBonusSafe',
-  'khBatchApproveSafe', 'khCompleteTaskSafe', 'khCompleteTaskWithBonusSafe', 'khDenyRequestSafe',
-  'khGetGradeHistorySafe', 'khOverrideTaskSafe', 'khRedeemRewardSafe', 'khRejectTaskSafe',
-  'khResetTasksSafe', 'khSubmitGradeSafe', 'khSubmitRequestSafe', 'khUncompleteTaskSafe',
-  'khVerifyPinSafe', 'runStoryFactorySafe',
-  'getCategoryTransactionsSafe', 'getDataSafe', 'getKidsHubWidgetDataSafe', 'getMonthsSafe',
-  'getReconcileStatusSafe', 'getScriptUrlSafe', 'getSimulatorDataSafe', 'getWeeklyTrackerDataSafe',
-  'getBoardDataSafe', 'getSpineHeartbeatSafe',
-  'getCashFlowForecastSafe', 'getCloseHistoryDataSafe', 'getMERGateStatusSafe',
-  'getSubscriptionDataSafe', 'getSystemHealthSafe', 'khAddBonusTaskSafe', 'khDebitScreenTimeSafe',
-  'khSetBankOpeningSafe', 'runMERGatesSafe', 'stampCloseMonthSafe', 'updateFamilyNoteSafe',
-  'listStoredStoriesSafe', 'getStoredStorySafe', 'getActivityStoryPackSafe',
-  'awardRingsSafe', 'getTodayContentSafe', 'seedWeek1CurriculumSafe', 'submitFeedbackSafe',
-  'getAudioBatchSafe', 'logHomeworkCompletionSafe', 'logSparkleProgressSafe',
-  'logQuestionResultSafe', 'savePowerScanResultsSafe', 'getWeeklyProgressSafe',
-  'getSpellingWordsSafe',
-  'recordVocabExposuresSafe',
-  'updateMealPlanSafe', 'getStoryApiStatsSafe', 'khHealthCheckSafe',
-  'getDeployedVersionsSafe', 'reconcileVeinPulse',
-  'seedStaarRlaSprintSafe', 'getDailyMissionsInitSafe',
+  // KidsHub core
+  'addKidsEventSafe', 'getKHAppUrlsSafe', 'getKHLastModified', 'getKHLastModifiedSafe',
+  'getKidsHubDataSafe', 'getKidsHubWidgetDataSafe',
+  'khAddBonusTaskSafe', 'khAddDeductionSafe', 'khApproveRequestSafe', 'khApproveTaskSafe',
+  'khApproveWithBonusSafe', 'khBatchApproveSafe', 'khCompleteTaskSafe',
+  'khCompleteTaskWithBonusSafe', 'khDebitScreenTimeSafe', 'khDenyRequestSafe',
+  'khGetGradeHistorySafe', 'khHealthCheckSafe', 'khOverrideTaskSafe', 'khRedeemRewardSafe',
+  'khRejectTaskSafe', 'khResetTasksSafe', 'khSetBankOpeningSafe', 'khSubmitGradeSafe',
+  'khSubmitRequestSafe', 'khUncompleteTaskSafe', 'khVerifyPinSafe',
+  // Finance
+  'getCashFlowForecastSafe', 'getCategoryTransactionsSafe', 'getCloseHistoryDataSafe',
+  'getDataSafe', 'getMonthsSafe', 'getReconcileStatusSafe', 'getSimulatorDataSafe',
+  'getSubscriptionDataSafe', 'getWeeklyTrackerDataSafe',
+  'reconcileVeinPulse', 'reconcileVeinPulseSafe',
+  'runMERGatesSafe', 'stampCloseMonthSafe',
+  // Dashboards
+  'getBoardDataSafe', 'getMERGateStatusSafe', 'getOpsHealthSafe',
+  'getSpineHeartbeatSafe', 'getSystemHealthSafe', 'getVaultDataSafe',
+  // Education
+  'approveHomeworkSafe', 'checkDay1Safe', 'getEducationQueueSafe',
+  'getDailyMissionsInitSafe', 'getDailyScheduleSafe',
+  'getDesignChoicesSafe', 'getDesignUnlockedSafe',
+  'getMissionStateSafe', 'getWeekProgressSafe', 'getWeeklyProgressSafe',
+  'loadProgressSafe', 'logHomeworkCompletionSafe', 'logQuestionResultSafe',
+  'logScaffoldEventSafe', 'logSparkleProgressSafe',
+  'saveDesignChoicesSafe', 'saveMissionStateSafe', 'saveProgressSafe',
+  'savePowerScanResultsSafe', 'submitHomeworkSafe',
+  'seedAllCurriculumSafe', 'seedWeek1CurriculumSafe', 'seedStaarRlaSprintSafe',
+  'getSpellingWordsSafe', 'recordVocabExposuresSafe', 'resetSandboxSafe',
+  // Lesson runs
   'startLessonRunSafe', 'saveLessonRunStateSafe', 'getLessonRunResumeSafe', 'completeLessonRunSafe',
+  // Stories + content
+  'awardRingsSafe', 'getActivityStoryPackSafe', 'getAudioBatchSafe',
+  'getStoryApiStatsSafe', 'getStoryForReaderSafe', 'getStoryImagesSafe',
+  'getStoredStorySafe', 'getTodayContentSafe', 'listStoredStoriesSafe',
+  'runStoryFactorySafe', 'submitFeedbackSafe',
+  // ComicStudio
+  'deleteComicDraftSafe', 'getComicStudioContextSafe',
+  'loadComicDraftSafe', 'saveComicDraftSafe',
+  // Notion
+  'notionApproveHomeworkSafe', 'notionLogHomeworkSafe',
+  'notionLogSparkleProgressSafe', 'getPendingReviewsSafe',
+  // Misc
+  'getAssetRegistrySafe', 'getDeployedVersionsSafe', 'getScriptUrlSafe',
+  'updateFamilyNoteSafe', 'updateMealPlanSafe',
+  // QA Operator
   'qaGetEnvStatusSafe', 'qaListScenariosSafe', 'qaLoadScenarioSafe', 'qaSetClockSafe',
   'qaClearClockSafe', 'qaSnapshotSafe', 'qaRestoreSafe', 'qaListSnapshotsSafe',
-  'qaRunPersistenceTestsSafe', 'qaClearTestDataSafe', 'qaResetDataSafe', 'qaExportStateSafe',
-  'getAssetRegistrySafe'
+  'qaRunPersistenceTestsSafe', 'qaClearTestDataSafe', 'qaResetDataSafe', 'qaExportStateSafe'
 ];
 
 /**
