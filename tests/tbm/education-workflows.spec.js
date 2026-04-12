@@ -172,9 +172,10 @@ async function submitOneAnswer(page, section) {
   var lockBtn = page.locator('#section-' + section + ' .lock-btn:not(.disabled)').first();
   await lockBtn.waitFor({ state: 'visible', timeout: 8000 });
   await lockBtn.click();
-  // Wait for feedback to confirm answer was processed before moving on
-  var feedback = page.locator('#section-' + section + ' .es-feedback').first();
-  await feedback.waitFor({ state: 'visible', timeout: 8000 }).catch(function() {});
+  // Wait for feedback to confirm answer was processed before moving on.
+  // HomeworkModule has two feedback paths: .feedback-box (MC inline) and .es-feedback (exec skills).
+  var feedback = page.locator('#section-' + section + ' .feedback-box, #section-' + section + ' .es-feedback').first();
+  await feedback.waitFor({ state: 'visible', timeout: 8000 });
 }
 
 // Shared helper: dismiss brain break overlay if it is currently visible.
