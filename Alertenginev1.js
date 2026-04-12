@@ -537,7 +537,7 @@ function dailyHealthCheck() {
 
   // 2. Check ErrorLog for entries in last 24h
   try {
-    var errSheet = ss.getSheetByName('\uD83D\uDCBB ErrorLog');
+    var errSheet = ss.getSheetByName(TAB_MAP['ErrorLog']);
     if (errSheet && errSheet.getLastRow() > 1) {
       var errData = errSheet.getDataRange().getValues();
       var cutoff = new Date(Date.now() - 86400000).toISOString();

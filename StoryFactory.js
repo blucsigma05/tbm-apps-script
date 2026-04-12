@@ -1615,7 +1615,9 @@ return;
 }
 
 var sfLock = LockService.getScriptLock();
-if (!sfLock.tryLock(1000)) {
+try {
+sfLock.waitLock(30000);
+} catch (e) {
 Logger.log('Another pollForNewStories invocation is already running. Skipping this trigger fire.');
 return;
 }

@@ -45,7 +45,7 @@ function parseMonthRange_(monthLabel) {
 }
 
 function loadMonthTransactions_(startDate, endDate) {
-  var txSheet = me_getSS_().getSheetByName('Transactions');
+  var txSheet = me_getSS_().getSheetByName(TAB_MAP['Transactions']);
   if (!txSheet) throw new Error('MonitorEngine: Transactions sheet not found');
   var txData = txSheet.getDataRange().getValues();
   // v8: Header map instead of hardcoded column indices
@@ -86,7 +86,7 @@ function stampCloseMonth(monthLabel) {
   var displayMonth = MN[mi] + ' ' + yr;
   Logger.log('Target: "' + displayMonth + '"');
 
-  var dmSheet = me_getSS_().getSheetByName('💻🧮 DebtModel');
+  var dmSheet = me_getSS_().getSheetByName(TAB_MAP['DebtModel']);
   if (!dmSheet) throw new Error('stampCloseMonth: 💻🧮 DebtModel not found');
   var dmNames = dmSheet.getRange('O8:O30').getValues();
   var debtAccounts = [];
@@ -97,7 +97,7 @@ function stampCloseMonth(monthLabel) {
   Logger.log('Debt accounts: ' + debtAccounts.length);
 
   // BH: Col B(1)=Date, Col D(3)=Account, Col I(8)=Balance
-  var bhSheet = me_getSS_().getSheetByName('Balance History');
+  var bhSheet = me_getSS_().getSheetByName(TAB_MAP['Balance History']);
   if (!bhSheet) throw new Error('stampCloseMonth: Balance History not found');
   var bhData = bhSheet.getDataRange().getValues();
   var latest = {};
@@ -120,7 +120,7 @@ function stampCloseMonth(monthLabel) {
   });
   Logger.log('debtCurrent: $' + debtCurrent.toFixed(2) + ' (' + matched + '/' + debtAccounts.length + ')');
 
-  var chSheet = me_getSS_().getSheetByName('💻🧮 Close History');
+  var chSheet = me_getSS_().getSheetByName(TAB_MAP['Close History']);
   if (!chSheet) throw new Error('stampCloseMonth: 💻🧮 Close History not found');
   var chData = chSheet.getDataRange().getValues();
   var targetRow = -1;
@@ -193,11 +193,11 @@ function listLargeTransactions(monthLabel) {
 // ══════════════════════════════════════════════════════
 function checkRefiGhosts() {
   Logger.log('═══ checkRefiGhosts() ═══');
-  var dmSheet = me_getSS_().getSheetByName('💻🧮 DebtModel');
+  var dmSheet = me_getSS_().getSheetByName(TAB_MAP['DebtModel']);
   if (!dmSheet) throw new Error('checkRefiGhosts: 💻🧮 DebtModel not found');
   var dmData = dmSheet.getRange('A8:P30').getValues();
 
-  var bhSheet = me_getSS_().getSheetByName('Balance History');
+  var bhSheet = me_getSS_().getSheetByName(TAB_MAP['Balance History']);
   if (!bhSheet) throw new Error('checkRefiGhosts: Balance History not found');
   var bhData = bhSheet.getDataRange().getValues();
   var latestBH = {};
@@ -368,7 +368,7 @@ function runMERGates(monthLabel) {
 //  PROMO CLIFF SCANNER — multi-row header detection
 // ══════════════════════════════════════════════════════
 function checkPromoCliffs_() {
-  var deSheet = me_getSS_().getSheetByName('💻🧮 Debt_Export');
+  var deSheet = me_getSS_().getSheetByName(TAB_MAP['Debt_Export']);
   if (!deSheet) return { unreadable: true, reason: 'Sheet not found', alerts: [] };
   var data = deSheet.getDataRange().getValues();
   if (data.length < 2) return { unreadable: true, reason: 'Sheet has < 2 rows', alerts: [] };
@@ -424,7 +424,7 @@ function checkPromoCliffs_() {
 //  KNOWN ACCOUNTS — BH-based orphan detection
 // ══════════════════════════════════════════════════════
 function getKnownAccounts_() {
-  var sh = me_getSS_().getSheetByName('Balance History');
+  var sh = me_getSS_().getSheetByName(TAB_MAP['Balance History']);
   if (!sh) return [];
   var data = sh.getDataRange().getValues();
   if (data.length < 2) return [];
@@ -525,7 +525,7 @@ function hyg10MonthCloseGate_() {
   var prevYr = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
   var displayMonth = MN[prevMo] + ' ' + prevYr;
 
-  var chSheet = me_getSS_().getSheetByName('💻🧮 Close History');
+  var chSheet = me_getSS_().getSheetByName(TAB_MAP['Close History']);
   if (!chSheet) { return; }
   var chData = chSheet.getDataRange().getValues();
   for (var i = 1; i < chData.length; i++) {

@@ -228,6 +228,11 @@ var TAB_MAP = {
   'QuestionLog':      '💻 QuestionLog',
   'Feedback':         '💻 Feedback',
   'MealPlan':         '💻 MealPlan',
+  // 💻 Operational / Logging
+  'ErrorLog':         '💻 ErrorLog',
+  'PerfLog':          '💻 PerfLog',
+  'Snapshots':        '💻 Snapshots',
+  'QA_Snapshots':     '💻 QA_Snapshots',
   // 📋 Board Config
   'Board_Config':     '📋 Board_Config'
 };
@@ -3274,7 +3279,7 @@ function de_openMeteoIcon_(code) {
 
 function setupBoardConfig() {
   var ss = getDESS_();
-  var existing = ss.getSheetByName('📋 Board_Config');
+  var existing = ss.getSheetByName(TAB_MAP['Board_Config']);
   if (existing) {
     Logger.log('📋 Board_Config already exists — no action taken.');
     return;

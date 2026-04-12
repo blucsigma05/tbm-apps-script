@@ -127,7 +127,7 @@ function qaListSnapshotsSafe() {
     // Also collect names from the fallback sheet (written when snapshot > 9KB)
     try {
       var ss = SpreadsheetApp.openById(SSID);
-      var snapSheet = ss.getSheetByName('QA_Snapshots');
+      var snapSheet = ss.getSheetByName(TAB_MAP['QA_Snapshots']);
       if (snapSheet && snapSheet.getLastRow() > 0) {
         var data = snapSheet.getRange(1, 1, snapSheet.getLastRow(), 1).getValues();
         for (var r = 0; r < data.length; r++) {
