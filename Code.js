@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v80 — Apps Script Router (TBM Consolidated)
+// Code.gs v81 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -2040,4 +2040,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v80
+// END OF FILE — Code.gs v81

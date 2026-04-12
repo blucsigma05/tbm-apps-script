@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v63 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v65 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
@@ -3836,6 +3836,21 @@ function ensureKHVocabExposuresTab_() {
   return sheet;
 }
 
+/**
+ * One-time provisioning: creates KH_LessonRuns and KH_VocabExposures tabs
+ * if they don't already exist. Run from the GAS editor after deploy to
+ * clear the smoke-test WARN for missing education tabs.
+ */
+function provisionEducationTabs() {
+  var results = [];
+  var lr = ensureKHLessonRunsTab_();
+  results.push('KH_LessonRuns: ' + (lr ? 'OK (' + lr.getName() + ')' : 'FAILED'));
+  var ve = ensureKHVocabExposuresTab_();
+  results.push('KH_VocabExposures: ' + (ve ? 'OK (' + ve.getName() + ')' : 'FAILED'));
+  Logger.log('provisionEducationTabs → ' + results.join(', '));
+  return results;
+}
+
 function recordVocabExposure_(child, wordEntry, source, runId) {
   if (!child || !wordEntry || !wordEntry.word) return;
   var dateKey = getTodayISO_();
@@ -5004,5 +5019,5 @@ function getComicStudioContextSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v63
+// END OF FILE — KidsHub.gs v65
 // ════════════════════════════════════════════════════════════════════
