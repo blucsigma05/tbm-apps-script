@@ -187,6 +187,20 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 | CodeSnapshot.gs | Snapshot code to Google Drive | — (Drive only) |
 | tbmSmokeTest.gs | Pre-deploy health checks | — |
 | tbmRegressionSuite.gs | Regression tests | — |
+| ActivityStoryPacks.gs | Pre-authored story packs for SparkleLearning | — (read-only) |
+| AssetRegistry.gs | Shared asset catalog for SparkleLearning + validators | — (read-only) |
+| AuditTrigger.gs | Scheduled audit trigger coordinator | — |
+| ContentEngine.gs | Gemini-powered grading + content generation | — |
+| CurriculumSeed.gs | Curriculum seed data for JJ (8 wk) + Buggsy (16 wk) | Curriculum |
+| DeployGate.gs | Pre-deploy schema + function validation | — (read-only) |
+| EducationAlerts.gs | Education-specific Pushover alerts | — |
+| FormulaAudit.gs | Workbook formula forensics | — (read-only) |
+| NotionBridge.gs | Push TBM health data to Notion for agents | — |
+| NotionEngine.gs | Notion API wrapper for education modules | — |
+| QAOperatorSafe.gs | Safe wrappers for QA Operator Mode | QA_Snapshots |
+| Resettesting.gs | QA sandbox reset + seed tooling | — |
+| SpellingCatalog.gs | 450-word spelling catalog (generated) | — (read-only) |
+| Utility.gs | Run-once utility functions | — |
 
 ### Client-side (.html)
 | File | Surface | Route (`?page=`) |
@@ -206,11 +220,13 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 | daily-missions.html | Daily mission rotation | `daily-missions` |
 | BaselineDiagnostic.html | Baseline diagnostic assessment | `baseline` |
 | ComicStudio.html | Comic creation tool | `comic-studio` |
-| DesignDashboard.html | Ring Quest dashboard designer | `dashboard` |
+| DesignDashboard.html | Ring Quest dashboard designer | `wolfdome` / `dashboard` |
 | ProgressReport.html | Weekly progress report (parent) | `progress` |
 | StoryLibrary.html | Family story library | `story-library` |
 | StoryReader.html | Bedtime story reader | `story` |
 | Vault.html | LT watch collection vault | `vault` |
+| JJHome.html | JJ Sparkle Kingdom hub | `sparkle-kingdom` |
+| wolfkid-power-scan.html | Wolfkid power scan assessment | `power-scan` |
 | executive-skills-components.html | Shared exec skills component (inlined) | — (not routed) |
 
 ### Utility files (NOT pushed to GAS)
@@ -218,8 +234,12 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 |------|---------|
 | phrases.json | Audio clip definitions (source of truth) |
 | generate-audio.js | ElevenLabs batch audio generator (Node.js) |
+| generate-spelling-catalog.js | Reads spelling-catalog.json → writes SpellingCatalog.js |
 | audit-source.sh | Static source audit (pre-push gate) |
 | audit-wiring.sh | Wiring verification (post-new-call gate) |
+| cloudflare-worker.js | CF Worker: smart proxy, PIN gate, Tiller freshness |
+| uptime-worker.js | CF Worker: uptime monitoring |
+| playwright.config.js | Playwright test configuration |
 | CLAUDE.md | This file |
 
 ### CI/CD scripts (.github/scripts/)
@@ -228,6 +248,20 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 | `codex_review.py` | codex-pr-review.yml | Send PR diff to OpenAI gpt-4o, format review comment |
 | `parse_test_results.py` | ci.yml | Parse GAS smoke+regression JSON into PR comment |
 | `parse_playwright_results.py` | playwright-regression.yml | Parse Playwright JSON into PR comment |
+| `parse_finding_comment.py` | codex-pr-review.yml | Parse PR comment for finding markers, apply labels |
+| `triage_review.py` | codex-pr-review.yml | Classify PR into skip/light/medium/full before review |
+| `check_version_drift.py` | hygiene.yml | Compare deployed GAS versions against source constants |
+| `check_claude_md.py` | hygiene.yml | Detect CLAUDE.md bloat, dead refs, duplicate phrases |
+| `check_dead_workflows.py` | hygiene.yml | Flag workflows with no recent runs |
+| `check_integration_map_drift.py` | hygiene.yml | Flag Notion Integration Map entries past review date |
+| `check_knowledge_graph_diff.py` | hygiene.yml | Diff knowledge files across push range |
+| `check_orphaned_prs.py` | hygiene.yml | Find open PRs with no activity past threshold |
+| `check_parking_lot_age.py` | hygiene.yml | Flag stale Notion Parking Lot items |
+| `check_secrets_audit.py` | hygiene.yml | List GH secrets, flag orphaned or stale |
+| `check_stale_branches.py` | hygiene.yml | Find branches with no open PR past threshold |
+| `check_trust_backlog_age.py` | hygiene.yml | Flag stale Trust Backlog sprint items |
+| `review-fixer.js` | review-fixer.yml | Auto-apply deterministic fixes from PR review threads |
+| `review-watcher.js` | review-watcher.yml | Watch PR review status and update pipeline markers |
 
 Each script is runnable standalone for local testing. Each reads env vars — no positional args.
 
@@ -263,7 +297,9 @@ thompsonfams.com/power-scan       → ?page=power-scan
 
 #### Tools & Dashboards
 ```
-thompsonfams.com/dashboard        → ?page=dashboard
+thompsonfams.com/wolfdome         → ?page=wolfdome        (Buggsy dashboard)
+thompsonfams.com/sparkle-kingdom  → ?page=sparkle-kingdom (JJ dashboard)
+thompsonfams.com/dashboard        → ?page=wolfdome        (alias)
 thompsonfams.com/progress         → ?page=progress
 thompsonfams.com/comic-studio     → ?page=comic-studio
 thompsonfams.com/story-library    → ?page=story-library

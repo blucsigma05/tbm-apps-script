@@ -1148,16 +1148,30 @@ function getSpineHeartbeatSafe() {
 function getDeployedVersions() {
   var v = {};
   var checks = [
-    ['DataEngine',    'getDataEngineVersion'],
-    ['Code',          'getCodeVersion'],
-    ['CascadeEngine', 'getCascadeEngineVersion'],
-    ['KidsHub',       'getKidsHubVersion'],
-    ['GASHardening',  'getGASHardeningVersion'],
-    ['MonitorEngine', 'getMonitorEngineVersion'],
-    ['CalendarSync',  'getCalendarSyncVersion'],
-    ['AlertEngine',   'getAlertEngineVersion'],
-    ['StoryFactory',  'getStoryFactoryVersion'],
-    ['CurriculumSeed', 'getCurriculumSeedVersion']
+    ['DataEngine',        'getDataEngineVersion'],
+    ['Code',              'getCodeVersion'],
+    ['CascadeEngine',     'getCascadeEngineVersion'],
+    ['KidsHub',           'getKidsHubVersion'],
+    ['GASHardening',      'getGASHardeningVersion'],
+    ['MonitorEngine',     'getMonitorEngineVersion'],
+    ['CalendarSync',      'getCalendarSyncVersion'],
+    ['AlertEngine',       'getAlertEngineVersion'],
+    ['StoryFactory',      'getStoryFactoryVersion'],
+    ['CurriculumSeed',    'getCurriculumSeedVersion'],
+    ['ActivityStoryPacks', 'getActivityStoryPacksVersion'],
+    ['AssetRegistry',     'getAssetRegistryVersion'],
+    ['CodeSnapshot',      'getCodeSnapshotVersion'],
+    ['ContentEngine',     'getContentEngineVersion'],
+    ['EducationAlerts',   'getEducationAlertsVersion'],
+    ['FormulaAudit',      'getFormulaAuditVersion'],
+    ['NotionBridge',      'getNotionBridgeVersion'],
+    ['NotionEngine',      'getNotionEngineVersion'],
+    ['QAOperatorSafe',    'getQAOperatorSafeVersion'],
+    ['ResetTesting',      'getResetTestingVersion'],
+    ['SpellingCatalog',   'getSpellingCatalogVersion'],
+    ['SmokeTest',         'getSmokeTestVersion'],
+    ['RegressionSuite',   'getRegressionSuiteVersion'],
+    ['Utility',           'getUtilityVersion']
   ];
   for (var i = 0; i < checks.length; i++) {
     var label = checks[i][0];
