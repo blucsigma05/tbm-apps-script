@@ -97,6 +97,17 @@ jobs:
           printf '\n\n---\n\n' >> playwright-comment.md
           cat education-comment.md >> playwright-comment.md
 
+      # Upload education failure artifacts BEFORE the screenshot step so the screenshot
+      # Playwright run (--output=test-results) cannot overwrite test-results/education/.
+      - name: Upload education failure artifacts
+        if: steps.education.outputs.edu_exit != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: education-traces-${{ github.run_id }}
+          path: test-results/education/
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Detect changed UI files
         id: changed
         run: |
@@ -153,15 +164,6 @@ jobs:
         with:
           name: playwright-traces-${{ github.run_id }}
           path: test-results/
-          retention-days: 7
-          if-no-files-found: ignore
-
-      - name: Upload education failure artifacts
-        if: steps.education.outputs.edu_exit != '0'
-        uses: actions/upload-artifact@v4
-        with:
-          name: education-traces-${{ github.run_id }}
-          path: test-results/education/
           retention-days: 7
           if-no-files-found: ignore
 
