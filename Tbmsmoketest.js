@@ -59,7 +59,7 @@ var CANONICAL_SAFE_FUNCTIONS = [
   'getSpellingWordsSafe',
   'recordVocabExposuresSafe',
   'updateMealPlanSafe', 'getStoryApiStatsSafe', 'khHealthCheckSafe',
-  'getDeployedVersionsSafe', 'reconcileVeinPulse', 'runTestsSafe',
+  'getDeployedVersionsSafe', 'reconcileVeinPulse',
   'seedStaarRlaSprintSafe', 'getDailyMissionsInitSafe',
   'startLessonRunSafe', 'saveLessonRunStateSafe', 'getLessonRunResumeSafe', 'completeLessonRunSafe',
   'qaGetEnvStatusSafe', 'qaListScenariosSafe', 'qaLoadScenarioSafe', 'qaSetClockSafe',
