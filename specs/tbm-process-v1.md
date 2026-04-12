@@ -112,14 +112,14 @@ No stale finding may be restated as active without re-proof on current head.
 
 These stay small, stable, and sacred. Each must have Playwright coverage.
 
-| Journey | Surfaces | Key assertions |
-|---------|----------|---------------|
-| Homework completion | HomeworkModule | MC + open-ended submit, brain break, Monday Error Journal, Friday Reflection |
-| JJ Sparkle completion | SparkleLearning | Activity load, progress save/load, star award |
-| Daily Missions routing | daily-missions | Buggsy default, JJ `?child=jj` theme, launch links |
-| StoryFactory queue | Notion + Drive | Idea -> Written -> Illustrated -> Ready, no starvation, backoff works |
-| Parent review | KidsHub parent | Pending review appears, approval persists, no early corruption |
-| Finance surfaces | ThePulse, TheVein | PIN gate, data loads, display-only (no client-side calc) |
+| Journey | Surfaces | Key assertions | Playwright status |
+|---------|----------|---------------|-------------------|
+| Homework completion | HomeworkModule | MC + open-ended submit, brain break, Monday Error Journal, Friday Reflection | **Covered** (education-workflows.spec.js) |
+| JJ Sparkle completion | SparkleLearning | Activity load, progress save/load, star award | Partial (load + basic nav only) |
+| Daily Missions routing | daily-missions | Buggsy default, JJ `?child=jj` theme, launch links | **Covered** (education-workflows.spec.js) |
+| StoryFactory queue | Notion + Drive | Idea -> Written -> Illustrated -> Ready, no starvation, backoff works | **Not covered** (server-side only, no browser test) |
+| Parent review | KidsHub parent | Pending review appears, approval persists, no early corruption | **Not covered** (needs E2E test) |
+| Finance surfaces | ThePulse, TheVein | PIN gate, data loads | Partial (route/load checks, no data validation) |
 
 ---
 
@@ -148,7 +148,7 @@ These stay small, stable, and sacred. Each must have Playwright coverage.
 ## 10. `main` Branch Standard
 
 - `main` needs its own truth lane, not only PR truth.
-- Post-merge or nightly golden-path Playwright pack on main.
+- **Target state:** Post-merge or nightly golden-path Playwright pack on main. _(Not yet implemented — current Playwright workflow triggers on `pull_request` and `workflow_dispatch` only.)_
 - Audit recent merges by risk, not by volume.
 - Verify current main against: live CI state, latest merges, touched workflows, touched persistence, touched fixtures, touched UI.
 - Reclassify chronic-red lanes so they stop poisoning trust.
@@ -181,13 +181,19 @@ Audit as a state machine, never as isolated helpers.
 
 ## 13. QA Operator Mode Standard
 
+**What's built today:**
 - QA workbook exists (separate from production data).
-- `TBM_ENV=qa` gates all QA operations.
-- Snapshot/restore preserves and restores full workbook state.
-- Clock override enables day-dependent testing (Monday Error Journal, Friday Reflection, month-end).
-- Per-child persona simulation available (Buggsy, JJ).
-- Scenario library covers: happy path, edge cases, failure recovery, concurrent access.
-- Goal: full A-to-Z user journey testing without touching production data.
+- `TBM_ENV=qa` gates all QA operations (currently requires manual Script Property toggle).
+- Snapshot/restore saves and restores tab-level data via Script Properties (with sheet fallback for large payloads). Does not capture formulas, formatting, or cross-sheet references.
+- Clock override (`qaSetClockSafe`) enables day-dependent testing.
+- 5 pre-built scenarios: Fresh Morning, Pending Approvals, All Clear, Week Rollover, Education Pending Review.
+- Persistence test suite validates chore, approval, dinner, education, and reset flows.
+
+**Target state (not yet implemented):**
+- Automated QA route switching via `/qa/*` URL namespace (PIN-gated, no manual toggle). Requires: signed QA token, QA-aware API shim, env-scoped CacheService keys, prefix-preserving navigation.
+- Per-child persona simulation with automated journey orchestration.
+- Scenario library expanded to cover concurrent access and failure recovery.
+- Full A-to-Z user journey testing without touching production data.
 
 ---
 
