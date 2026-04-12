@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v3.5 — thompsonfams.com — Front Door + PIN Gate + QA Route Isolation
+// TBM Smart Proxy v3.6 — thompsonfams.com — Front Door + PIN Gate + QA Route Isolation
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -121,7 +121,7 @@ export default {
       if (QA_ROUTES[url.pathname]) {
         if (!isValidQACookie(request, env)) {
           return Response.redirect(
-            url.origin + '/?gate=qa&returnTo=' + encodeURIComponent(url.pathname), 302
+            url.origin + '/?gate=qa&returnTo=' + encodeURIComponent(url.pathname + url.search), 302
           );
         }
         return serveQAPage(request, url, env);
@@ -281,8 +281,11 @@ async function handleApi(request, url, env, envOverride) {
   var target = GAS_URL + '?action=api&fn=' + encodeURIComponent(fn)
     + '&args=' + encodeURIComponent(args);
 
-  // v3.5: QA env override — append env=qa + per-request HMAC token
-  if (envOverride === 'qa' && env && env.QA_HMAC_SECRET) {
+  // v3.6: QA env override — append env=qa + per-request HMAC token; fail closed if secret missing
+  if (envOverride === 'qa') {
+    if (!env || !env.QA_HMAC_SECRET) {
+      return jsonResponse({ error: 'QA_HMAC_SECRET not configured' }, 503);
+    }
     var ts = Date.now();
     var hmac = await computeQAHmac_(ts + ':qa', env.QA_HMAC_SECRET);
     target += '&env=qa&qa_token=' + encodeURIComponent(ts + ':' + hmac);
@@ -710,7 +713,7 @@ async function handleVerifyPin(request, env, gateType) {
     if (isQA) {
       // v3.5: QA gate — validate returnTo (must start with /qa/), set tbm_qa cookie
       var returnTo = String(body.returnTo || '');
-      if (!returnTo || returnTo.indexOf('/qa/') !== 0) returnTo = '/qa/';
+      if (!returnTo || returnTo.indexOf('/qa/') !== 0) returnTo = '/qa/homework';
       return new Response(JSON.stringify({ ok: true, redirectTo: returnTo }), {
         status: 200,
         headers: {
@@ -764,12 +767,13 @@ async function serveQAPage(request, url, env) {
   params.set('action', 'htmlSource');
   params.set('env', 'qa');
 
-  // Generate per-request HMAC token so GAS can validate the env=qa override
-  if (env.QA_HMAC_SECRET) {
-    var ts = Date.now();
-    var hmac = await computeQAHmac_(ts + ':qa', env.QA_HMAC_SECRET);
-    params.set('qa_token', ts + ':' + hmac);
+  // Generate per-request HMAC token so GAS can validate the env=qa override; fail closed if secret missing
+  if (!env || !env.QA_HMAC_SECRET) {
+    return jsonResponse({ error: 'QA_HMAC_SECRET not configured' }, 503);
   }
+  var ts = Date.now();
+  var hmac = await computeQAHmac_(ts + ':qa', env.QA_HMAC_SECRET);
+  params.set('qa_token', ts + ':' + hmac);
 
   var qaRoute = QA_ROUTES[url.pathname];
   if (qaRoute) {

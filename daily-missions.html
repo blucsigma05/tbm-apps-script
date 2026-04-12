@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v16">
+<meta name="tbm-version" content="v17">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -1003,6 +1003,8 @@ var _serverStateLoaded = false;
 var _cachedMissionState = {};
 var dynamicSchedule = null;
 var _designUnlocked = false;
+// QA prefix — non-empty when served under /qa/* so nav stays in QA namespace
+var _qaPrefix = (window.location.pathname.indexOf('/qa/') === 0) ? '/qa' : '';
 
 function isJJ() { return currentChild === 'jj' || currentChild === 'sandbox-jj'; }
 
@@ -1603,7 +1605,7 @@ function render() {
       html += '<div class="mission-number" style="background:linear-gradient(135deg,#003311,#001a0a);border-color:#00ff88;color:#00ff88;">\uD83C\uDF89</div>';
       html += '<div class="mission-info"><div class="mission-name">' + block.name + '</div>';
       html += '<div class="mission-meta"><span class="mission-time">Take as long as you want. No timer.</span></div></div>';
-      html += '<div class="mission-actions"><button class="launch-btn" onclick="window.location.href=\'/wolfdome?customize=1\'" style="border-color:#00ff88;color:#00ff88;box-shadow:0 0 10px rgba(0,255,136,0.3);">ENTER \u2192</button></div>';
+      html += '<div class="mission-actions"><button class="launch-btn" onclick="window.location.href=_qaPrefix+\'/wolfdome?customize=1\'" style="border-color:#00ff88;color:#00ff88;box-shadow:0 0 10px rgba(0,255,136,0.3);">ENTER \u2192</button></div>';
       html += '</div>';
     } else {
       // Normal card
@@ -1735,14 +1737,14 @@ function renderWeekend(container) {
     html += '<div class="bonus-title">\uD83C\uDF08 FREE PLAY \uD83C\uDF08</div>';
     html += '<div class="bonus-desc">Pick any game you want, JJ!</div>';
     html += '<div style="margin-top:12px;display:-webkit-flex;display:flex;gap:10px;-webkit-justify-content:center;justify-content:center;-webkit-flex-wrap:wrap;flex-wrap:wrap">';
-    html += '<button class="launch-btn" onclick="launchMission(\'/sparkle-free\',\'freeplay_jj\',\'Sparkle Free Play\')">Sparkle Kingdom \u2728</button>';
+    html += '<button class="launch-btn" onclick="launchMission(_qaPrefix+\'/sparkle-free\',\'freeplay_jj\',\'Sparkle Free Play\')">Sparkle Kingdom \u2728</button>';
     html += '</div>';
   } else {
     html += '<div class="bonus-title">\uD83C\uDFAE FREE TIME \uD83C\uDFAE</div>';
     html += '<div class="bonus-desc">No missions today. Pick what you want to do.</div>';
     html += '<div style="margin-top:12px;display:-webkit-flex;display:flex;gap:10px;-webkit-justify-content:center;justify-content:center;-webkit-flex-wrap:wrap;flex-wrap:wrap">';
-    html += '<button class="launch-btn" onclick="launchMission(\'/facts\',\'bonus_facts\',\'Fact Sprint\')">Fact Sprint \u26A1</button>';
-    html += '<button class="launch-btn" onclick="launchMission(\'/comic-studio\',\'freeplay_comic\',\'Comic Studio\')">Comic Studio \uD83C\uDFA8</button>';
+    html += '<button class="launch-btn" onclick="launchMission(_qaPrefix+\'/facts\',\'bonus_facts\',\'Fact Sprint\')">Fact Sprint \u26A1</button>';
+    html += '<button class="launch-btn" onclick="launchMission(_qaPrefix+\'/comic-studio\',\'freeplay_comic\',\'Comic Studio\')">Comic Studio \uD83C\uDFA8</button>';
     html += '</div>';
   }
   html += '</div>';
