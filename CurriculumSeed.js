@@ -85,73 +85,65 @@ var JJ_WEEK_2 = {
   child: "jj",
   week: 2,
   phase: "Phase 1",
-  startDate: "2026-04-13",
+  startDate: "2026-04-20",
   focusLetters: ["N", "D"],
   focusNumbers: [1, 2, 3, 4],
   focusColors: ["blue"],
   focusShapes: ["square", "triangle"],
-  reviewLetters: ["K", "I"],
+  reviewLetters: ["K"],
   days: {
     Monday: {
       theme: "Letters N and D",
       title: "N is for Nathan!",
-      audioIntro: "Today we review K, then learn two new letters — N and D!",
+      audioIntro: "Good morning, JJ! Two new letters today — N and D! N is for your uncle Nathan, and D is for Daddy!",
       activities: [
-        { id: "w2m1", type: "find_the_letter", target: "K", options: ["K", "M", "R"], stars: 1, audioPrompt: "Let's start with a review! Find the letter K!", audioCorrect: "K! You remembered from last week!", audioWrong: "That's not K. K has two diagonal lines." },
-        { id: "w2m2", type: "letter_intro", letter: "N", stars: 1, word: "Nathan", image: "boy", audioPrompt: "This is the letter N! N is for Nathan! Your uncle Nathan!" },
-        { id: "w2m3", type: "find_the_letter", target: "N", options: ["N", "M", "H"], stars: 1, audioPrompt: "Can you find the letter N?", audioCorrect: "You found N!", audioWrong: "N has two tall lines with one diagonal line between them." },
-        { id: "w2m4", type: "letter_intro", letter: "D", stars: 1, word: "Daddy", image: "dad", audioPrompt: "This is the letter D! D is for Daddy! Look — the big belly is on the RIGHT side!" },
-        { id: "w2m5", type: "find_the_letter", target: "D", options: ["B", "P", "D", "Q"], stars: 2, audioPrompt: "Can you find the letter D? Remember — big belly on the RIGHT!", audioCorrect: "You found D! Belly on the right — that's Daddy!", audioWrong: "Look carefully — D has the big round belly on the RIGHT side." },
-        { id: "w2m6", type: "name_builder", name: "JJ", letters: ["J", "J"], stars: 3, audioPrompt: "Build your name! Spell JJ!", audioCorrect: "J-J! That's your name!" }
+        { id: "w2m01", type: "letter_intro", letter: "N", stars: 1, word: "Nathan", image: "boy", audioPrompt: "This is the letter N! N says nuh. N is for Nathan — your uncle Nathan!", audioCorrect: "You know N! Nuh!" },
+        { id: "w2m02", type: "find_letter", target: "N", options: ["N", "M", "H"], stars: 1, audioPrompt: "Can you find the letter N? N has two tall lines with a diagonal between them!", audioCorrect: "You found N! Great job!", audioWrong: "N has two tall lines with a diagonal line in the middle." },
+        { id: "w2m03", type: "letter_intro", letter: "D", stars: 2, word: "Daddy", image: "dad", audioPrompt: "This is the letter D! D says duh. D is for Daddy! The big belly is on the RIGHT side!", audioCorrect: "D for Daddy! Duh!" }
       ]
     },
     Tuesday: {
-      theme: "Numbers to 4",
-      title: "Counting Higher!",
-      audioIntro: "Today we count up to 4! Let's go!",
+      theme: "Number 4",
+      title: "Counting to Four!",
+      audioIntro: "Good morning! Today we learn the number 4! Four is like the number after three!",
       activities: [
-        { id: "w2t1", type: "count_with_me", targetNumber: 3, objects: "sparkles", stars: 1, audioPrompt: "Count the sparkles! One... two... three!", audioCorrect: "Three sparkles!" },
-        { id: "w2t2", type: "count_with_me", targetNumber: 4, objects: "moons", stars: 1, audioPrompt: "Count the moons! One... two... three... four!", audioCorrect: "Four moons! You counted to 4!" },
-        { id: "w2t3", type: "find_the_number", target: 4, options: [2, 4, 6], stars: 1, audioPrompt: "Can you find the number 4?", audioCorrect: "That's 4!", audioWrong: "4 looks like a flag on a pole." },
-        { id: "w2t4", type: "find_the_number", target: 2, options: [1, 2, 3], stars: 1, audioPrompt: "Can you find the number 2?", audioCorrect: "That's 2!", audioWrong: "2 has a curve at the top and a flat line at the bottom." },
-        { id: "w2t5", type: "quantity_match", numbers: [2, 4, 1], stars: 1, audioPrompt: "Match each number to the right group!", audioCorrect: "Perfect matching!", audioWrong: "Count the objects in each group carefully." }
+        { id: "w2t01", type: "count_with_me", targetNumber: 4, objects: "moons", stars: 1, audioPrompt: "Count the moons! Tap each one. One... two... three... four!", audioCorrect: "Four moons! You counted to four!" },
+        { id: "w2t02", type: "find_number", target: 4, options: [2, 4, 6], stars: 1, audioPrompt: "Can you find the number 4? It looks like a flag on a pole!", audioCorrect: "That is 4! Four!", audioWrong: "4 looks like a flag on a pole with a line going across." },
+        { id: "w2t03", type: "quantity_match", numbers: [2, 4, 1], stars: 2, audioPrompt: "Match each number to the right group! Count the dots carefully — 1, 2, and 4!", audioCorrect: "Perfect matching! You counted each group!", audioWrong: "Count the dots in each group, then match to the number." }
       ]
     },
     Wednesday: {
       theme: "Blue and Shapes",
       title: "Blue Shapes Day!",
-      audioIntro: "Today we explore the color blue and practice shapes!",
+      audioIntro: "Good morning! Today we explore the color blue and find squares and triangles! Three fun activities!",
       activities: [
-        { id: "w2w1", type: "color_hunt", targetColor: "blue", count: 3, stars: 1, audioPrompt: "Find 3 blue things! Blue like the sky!", audioCorrect: "You found blue!", audioWrong: "That's not blue — look for the color of the sky." },
-        { id: "w2w2", type: "shape_match", target: "square", options: ["circle", "square", "triangle"], stars: 1, audioPrompt: "Which one is a square?", audioCorrect: "That's a square!", audioWrong: "A square has 4 equal sides and 4 corners." },
-        { id: "w2w3", type: "shape_match", target: "triangle", options: ["circle", "square", "triangle"], stars: 1, audioPrompt: "Which one is a triangle? A triangle has 3 sides!", audioCorrect: "That's a triangle! Three sides!", audioWrong: "A triangle has 3 sides and 3 points." },
-        { id: "w2w4", type: "color_hunt", targetColor: "red", count: 2, stars: 1, audioPrompt: "Review time! Find 2 red things!", audioCorrect: "Red! You remember from last week!" },
-        { id: "w2w5", type: "pattern_next", pattern: [{shape:"circle",color:"red"},{shape:"square",color:"blue"},{shape:"circle",color:"red"},{shape:"square",color:"blue"}], answer: {shape:"circle",color:"red"}, options: [{shape:"circle",color:"red"},{shape:"square",color:"blue"},{shape:"triangle",color:"green"}], stars: 2, audioPrompt: "Circle, square, circle, square... what comes next?", audioCorrect: "Circle! You see the pattern!", audioWrong: "Look at the pattern: circle, square, circle, square..." }
+        { id: "w2w01", type: "color_hunt", targetColor: "blue", count: 3, stars: 1, audioPrompt: "Find 3 blue things! Blue is the color of the sky and the ocean!", audioCorrect: "You found blue! Beautiful!", audioWrong: "That is not blue — look for the color of the sky!" },
+        { id: "w2w02", type: "shape_match", target: "square", options: ["circle", "square", "triangle"], stars: 1, audioPrompt: "Which one is a square? A square has 4 equal sides — all the same length!", audioCorrect: "That is a square! Four equal sides!", audioWrong: "A square has 4 sides all the same length and 4 corners." },
+        { id: "w2w03", type: "pattern_next", pattern: [{shape:"circle",color:"red"},{shape:"square",color:"blue"},{shape:"circle",color:"red"},{shape:"square",color:"blue"}], answer: {shape:"circle",color:"red"}, options: [{shape:"circle",color:"red"},{shape:"square",color:"blue"},{shape:"triangle",color:"green"}], stars: 2, audioPrompt: "Circle, square, circle, square... what comes next? Look at the pattern!", audioCorrect: "Circle! Red circle! You see the pattern!", audioWrong: "Look again: circle, square, circle, square... what always comes after a square?" }
       ]
     },
     Thursday: {
-      theme: "Letter Sounds N and D",
-      title: "Sound Safari!",
-      audioIntro: "Today we listen to the sounds that N and D make!",
+      theme: "Letter D Review",
+      title: "Trace Letter D!",
+      audioIntro: "Good morning! Today we practice the letter D — Daddy's letter! We will trace it today!",
       activities: [
-        { id: "w2th1", type: "letter_sound", letter: "N", stars: 1, audioPrompt: "N says nuh. Nuh, nuh, Nathan! N is for Nathan!", audioCorrect: "That's right! N says nuh!" },
-        { id: "w2th2", type: "letter_sound", letter: "D", stars: 1, audioPrompt: "D says duh. Duh, duh, Daddy! D is for Daddy!", audioCorrect: "That's right! D says duh!" },
-        { id: "w2th3", type: "beginning_sound", answer: "D", word: "Daddy", options: ["D", "M", "K"], stars: 1, audioPrompt: "Which word starts with D? Duh...", audioCorrect: "Daddy starts with D!", audioWrong: "Listen for the duh sound at the beginning." },
-        { id: "w2th4", type: "letter_trace", letter: "N", stars: 2, uppercase: true, audioPrompt: "Trace the letter N! Two tall lines with a diagonal between them.", audioCorrect: "Beautiful N!" },
-        { id: "w2th5", type: "audio_story", title: "JJ's Kitchen", stars: 2, storyId: "jj-kitchen", audioPrompt: "Story time! In this story JJ gets 3 scoops of ice cream!", audioCorrect: "Great listening! How many scoops did JJ get? Three!" }
+        { id: "w2th01", type: "find_letter", target: "D", options: ["B", "D", "P"], stars: 1, audioPrompt: "Find the letter D! Remember — D has a big belly on the RIGHT side!", audioCorrect: "D! Belly on the right! That is Daddy's letter!", audioWrong: "D has a big round belly on the RIGHT side. B has two bumps. P has one bump up top." },
+        { id: "w2th02", type: "letter_trace", letter: "D", stars: 1, audioPrompt: "Trace the letter D! One straight line down, then a big curve to the right!", audioCorrect: "Beautiful D! Daddy would be so proud!" },
+        { id: "w2th03", type: "audio_story", stars: 2, story: "Nathan had a big blue ball. He threw it up, up, up! It came back down. Nathan caught it and said wow!", question: "What color was Nathan's ball?", answer: "Blue", options: ["Blue", "Red", "Yellow"], audioPrompt: "Story time! Listen carefully to the story about Nathan!", audioCorrect: "Blue! Nathan's ball was blue! Great listening!", audioWrong: "Listen again — Nathan's ball was blue, the same color we learned today!" }
       ]
     },
     Friday: {
-      theme: "Week 2 Review",
+      theme: "Sparkle Free Play",
       title: "Sparkle Friday!",
-      audioIntro: "It's Friday! Let's show what we learned!",
+      audioIntro: "HAPPY FRIDAY! Great week, JJ! A quick challenge, then drawing and a big celebration!",
       activities: [
-        { id: "w2f1", type: "find_the_letter", target: "D", options: ["B", "P", "D", "Q"], stars: 2, audioPrompt: "Find the letter D! Remember — belly on the RIGHT!", audioCorrect: "D! Belly on the right!", audioWrong: "D has the round part on the right side." },
-        { id: "w2f2", type: "find_the_number", target: 4, options: [3, 4, 5], stars: 1, audioPrompt: "Find the number 4!", audioCorrect: "That's 4!", audioWrong: "4 looks like a flag on a pole." },
-        { id: "w2f3", type: "color_hunt", targetColor: "blue", count: 3, stars: 1, audioPrompt: "Find 3 blue things!", audioCorrect: "Blue! Like the sky!" },
-        { id: "w2f4", type: "shape_match", target: "triangle", options: ["circle", "square", "triangle"], stars: 1, audioPrompt: "Find the triangle!", audioCorrect: "Triangle! Three sides!" },
-        { id: "w2f5", type: "name_builder", name: "JJ", letters: ["J", "J"], stars: 3, audioPrompt: "Build your name!", audioCorrect: "J-J! That's you!" },
-        { id: "w2f6", type: "star_celebration", stars: 3, message: "Week 2 done! You know K, I, N, and D! That's four letters of KINDLE!" }
+        { id: "w2f01", type: "sparkle_challenge", stars: 2, questions: [
+          { prompt: "Find the letter N!", answer: "N", options: ["N", "M", "H"] },
+          { prompt: "Find the number 4!", answer: "4", options: ["2", "4", "6"] },
+          { prompt: "Which one is blue?", answer: "blue", options: ["blue", "red", "yellow"] }
+        ], audioPrompt: "Three quick questions — you know all of these! Let's go!" },
+        { id: "w2f02", type: "free_draw", stars: 1, audioPrompt: "Drawing time! Draw something blue — maybe a square, or Nathan, or anything you want!" },
+        { id: "w2f03", type: "star_celebration", stars: 3, message: "Week 2 done! You learned N and D! That is 3 letters of KINDLE — K, N, D!" }
       ]
     }
   }
@@ -161,72 +153,65 @@ var JJ_WEEK_3 = {
   child: "jj",
   week: 3,
   phase: "Phase 1",
-  startDate: "2026-04-20",
+  startDate: "2026-04-27",
   focusLetters: ["L", "E"],
   focusNumbers: [1, 2, 3, 4, 5],
   focusColors: ["yellow"],
   focusShapes: ["rectangle", "star"],
-  reviewLetters: ["K", "I", "N", "D"],
+  reviewLetters: ["K", "N", "D"],
   days: {
     Monday: {
       theme: "Letters L and E — KINDLE complete!",
-      title: "L is for LeShawd!",
-      audioIntro: "Today is a BIG day! We learn L and E — and then we can spell KINDLE!",
+      title: "Two new letters — then spell KINDLE!",
+      audioIntro: "Good morning, JJ! TODAY is a HUGE day! We learn L and E — and then we can spell your whole name KINDLE! Let us go!",
       activities: [
-        { id: "w3m1", type: "find_the_letter", target: "K", options: ["K", "R", "X"], stars: 1, audioPrompt: "Quick review! Find the letter K!", audioCorrect: "K! First letter of KINDLE!", audioWrong: "K has two diagonal lines." },
-        { id: "w3m2", type: "letter_intro", letter: "L", stars: 1, word: "LeShawd", image: "boy", audioPrompt: "This is the letter L! L is for LeShawd! Your uncle LeShawd!" },
-        { id: "w3m3", type: "find_the_letter", target: "L", options: ["L", "I", "T"], stars: 1, audioPrompt: "Can you find the letter L?", audioCorrect: "You found L!", audioWrong: "L is a tall line with a short line at the bottom going right." },
-        { id: "w3m4", type: "letter_intro", letter: "E", stars: 1, word: "Excellent", image: "star", audioPrompt: "This is the letter E! E is for Excellent! E is the LAST letter of KINDLE!" },
-        { id: "w3m5", type: "find_the_letter", target: "E", options: ["E", "F", "3"], stars: 2, audioPrompt: "Can you find the letter E? Be careful — E and 3 look similar!", audioCorrect: "You found E! Not the number 3!", audioWrong: "E has three horizontal lines pointing RIGHT. The number 3 has bumps pointing left." },
-        { id: "w3m6", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 5, audioPrompt: "THE BIG MOMENT! Let's spell KINDLE! K... I... N... D... L... E!", audioCorrect: "K-I-N-D-L-E! KINDLE! You spelled KINDLE! This is AMAZING!" }
+        { id: "w3m01", type: "letter_intro", letter: "L", stars: 1, word: "LeShawd", image: "boy", audioPrompt: "This is the letter L! L says luh. L is for LeShawd — your uncle LeShawd!", audioCorrect: "L for LeShawd! Luh!" },
+        { id: "w3m02", type: "find_letter", target: "L", options: ["L", "I", "T"], stars: 1, audioPrompt: "Find the letter L! L is a tall line with a short foot at the bottom!", audioCorrect: "You found L!", audioWrong: "L is tall with a short line at the bottom going to the right." },
+        { id: "w3m03", type: "letter_intro", letter: "E", stars: 2, word: "Excellent", image: "star", audioPrompt: "This is the letter E! E says eh. E is the LAST letter of KINDLE! E for Excellent — and YOU are excellent!", audioCorrect: "E! The last letter of your name KINDLE!" }
       ]
     },
     Tuesday: {
-      theme: "Numbers to 5",
-      title: "Counting to Five!",
-      audioIntro: "Today we count up to 5! That's a whole hand of fingers!",
+      theme: "Number 5",
+      title: "Five — a Whole Hand!",
+      audioIntro: "Good morning! Today is all about the number 5 — that is a whole hand of fingers!",
       activities: [
-        { id: "w3t1", type: "count_with_me", targetNumber: 4, objects: "butterflies", stars: 1, audioPrompt: "Count the butterflies! One... two... three... four!", audioCorrect: "Four butterflies!" },
-        { id: "w3t2", type: "count_with_me", targetNumber: 5, objects: "flowers", stars: 1, audioPrompt: "Count the flowers! One... two... three... four... FIVE!", audioCorrect: "Five flowers! That's a whole hand!" },
-        { id: "w3t3", type: "find_the_number", target: 5, options: [3, 5, 2], stars: 1, audioPrompt: "Can you find the number 5?", audioCorrect: "That's 5!", audioWrong: "5 has a flat top and a round belly at the bottom." },
-        { id: "w3t4", type: "quantity_match", numbers: [3, 5, 1, 4], stars: 2, audioPrompt: "Match each number to the right group of objects!", audioCorrect: "Perfect matching!", audioWrong: "Count each group carefully." }
+        { id: "w3t01", type: "count_with_me", targetNumber: 5, objects: "flowers", stars: 1, audioPrompt: "Count the flowers! One... two... three... four... FIVE! That is a whole hand!", audioCorrect: "Five flowers! Five is a whole hand of fingers!" },
+        { id: "w3t02", type: "find_number", target: 5, options: [3, 5, 2], stars: 1, audioPrompt: "Find the number 5! Five has a flat top and a round belly at the bottom!", audioCorrect: "That is 5! Five!", audioWrong: "5 has a flat top, then curves into a round belly at the bottom." },
+        { id: "w3t03", type: "quantity_match", numbers: [3, 5, 1], stars: 2, audioPrompt: "Match 1, 3, and 5 to the right groups! Count carefully!", audioCorrect: "Perfect! You matched 1, 3, and 5!", audioWrong: "Count the dots in each group carefully, then match to the number." }
       ]
     },
     Wednesday: {
       theme: "Yellow and New Shapes",
-      title: "Yellow Shapes Day!",
-      audioIntro: "Today we explore the color yellow and learn rectangle and star!",
+      title: "Yellow Sunshine Day!",
+      audioIntro: "Good morning! Today we find yellow things and learn two new shapes — rectangle and star!",
       activities: [
-        { id: "w3w1", type: "color_hunt", targetColor: "yellow", count: 3, stars: 1, audioPrompt: "Find 3 yellow things! Yellow like the sun!", audioCorrect: "You found yellow!", audioWrong: "That's not yellow — look for the color of the sun." },
-        { id: "w3w2", type: "shape_match", target: "rectangle", options: ["square", "rectangle", "circle"], stars: 1, audioPrompt: "Which one is a rectangle? A rectangle is like a stretched-out square!", audioCorrect: "That's a rectangle!", audioWrong: "A rectangle has 4 sides but two sides are longer than the other two." },
-        { id: "w3w3", type: "shape_match", target: "star", options: ["star", "diamond", "circle"], stars: 1, audioPrompt: "Which one is a star? Stars have points!", audioCorrect: "That's a star! It has 5 points!", audioWrong: "A star has 5 points sticking out." },
-        { id: "w3w4", type: "color_sort", colors: ["red", "blue", "yellow"], items: [{ name: "apple", color: "red" }, { name: "sky", color: "blue" }, { name: "sun", color: "yellow" }, { name: "truck", color: "red" }, { name: "ocean", color: "blue" }, { name: "banana", color: "yellow" }], stars: 2, audioPrompt: "Sort these into red, blue, and yellow groups!", audioCorrect: "Perfect sorting!", audioWrong: "Look at the color of each thing carefully." },
-        { id: "w3w5", type: "pattern_next", pattern: [{shape:"circle",color:"red"},{shape:"circle",color:"blue"},{shape:"circle",color:"yellow"},{shape:"circle",color:"red"},{shape:"circle",color:"blue"}], answer: {shape:"circle",color:"yellow"}, options: [{shape:"circle",color:"yellow"},{shape:"circle",color:"red"},{shape:"circle",color:"blue"}], stars: 2, audioPrompt: "Red, blue, yellow, red, blue... what comes next?", audioCorrect: "Yellow! You see the pattern!", audioWrong: "The pattern is red, blue, yellow, red, blue..." }
+        { id: "w3w01", type: "color_hunt", targetColor: "yellow", count: 3, stars: 1, audioPrompt: "Find 3 yellow things! Yellow like the sun and bananas!", audioCorrect: "Yellow! Bright like sunshine!", audioWrong: "That is not yellow — look for the warm bright color of the sun." },
+        { id: "w3w02", type: "shape_match", target: "rectangle", options: ["square", "rectangle", "circle"], stars: 1, audioPrompt: "Which one is a rectangle? A rectangle is like a stretched-out square — two long sides and two short sides!", audioCorrect: "That is a rectangle! Long sides and short sides!", audioWrong: "A rectangle has 4 sides but two sides are longer. A square has all 4 sides the same." },
+        { id: "w3w03", type: "pattern_next", pattern: [{shape:"circle",color:"red"},{shape:"circle",color:"blue"},{shape:"circle",color:"yellow"},{shape:"circle",color:"red"},{shape:"circle",color:"blue"}], answer: {shape:"circle",color:"yellow"}, options: [{shape:"circle",color:"yellow"},{shape:"circle",color:"red"},{shape:"circle",color:"blue"}], stars: 2, audioPrompt: "Red, blue, yellow, red, blue... what comes next?", audioCorrect: "Yellow! You see the three-color pattern!", audioWrong: "The pattern is red, blue, yellow, then it repeats. What comes after red and blue?" }
       ]
     },
     Thursday: {
-      theme: "Letter Sounds L and E",
-      title: "Sound Explorer!",
-      audioIntro: "Today we listen to the sounds L and E make!",
+      theme: "Spell KINDLE! + Trace E",
+      title: "KINDLE Moment!",
+      audioIntro: "Good morning! Today is the BIG day — you know all 6 letters of KINDLE! We are going to trace E and then spell your whole name!",
       activities: [
-        { id: "w3th1", type: "letter_sound", letter: "L", stars: 1, audioPrompt: "L says luh. Luh, luh, LeShawd! L is for LeShawd!", audioCorrect: "That's right! L says luh!" },
-        { id: "w3th2", type: "letter_sound", letter: "E", stars: 1, audioPrompt: "E says eh. Eh, eh, elephant! E is for elephant!", audioCorrect: "That's right! E says eh!" },
-        { id: "w3th3", type: "beginning_sound", answer: "L", word: "lion", options: ["L", "T", "B"], stars: 1, audioPrompt: "Which word starts with L? Luh...", audioCorrect: "Lion starts with L!", audioWrong: "Listen for the luh sound at the beginning." },
-        { id: "w3th4", type: "letter_trace", letter: "E", stars: 2, uppercase: true, audioPrompt: "Trace the letter E! One tall line and three short lines going right.", audioCorrect: "Beautiful E!" },
-        { id: "w3th5", type: "audio_story", title: "JJ and Buggsy's Treasure Hunt", stars: 2, storyId: "jj-buggsy-treasure", audioPrompt: "Story time! JJ and Buggsy find 5 treasures on their adventure!", audioCorrect: "Great listening! They found 5 treasures!" }
+        { id: "w3th01", type: "find_letter", target: "E", options: ["E", "F", "3"], stars: 1, audioPrompt: "Find the letter E! Be careful — E has three lines pointing RIGHT. The number 3 has bumps pointing left!", audioCorrect: "E! Three lines pointing right! That is not the number 3!", audioWrong: "E has three horizontal lines pointing to the RIGHT. The number 3 has bumps." },
+        { id: "w3th02", type: "letter_trace", letter: "E", stars: 1, audioPrompt: "Trace the letter E! One tall line down, then three short lines going to the right — top, middle, bottom!", audioCorrect: "Beautiful E! The last letter of KINDLE!" },
+        { id: "w3th03", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 3, audioPrompt: "THE BIG MOMENT! You know all 6 letters! Tap K, I, N, D, L, E to spell KINDLE — YOUR NAME!", audioCorrect: "K-I-N-D-L-E! KINDLE! YOU SPELLED YOUR NAME! This is INCREDIBLE!" }
       ]
     },
     Friday: {
       theme: "KINDLE Celebration!",
       title: "KINDLE CELEBRATION!",
-      audioIntro: "It's KINDLE celebration day! You can spell the whole word! Let's celebrate!",
+      audioIntro: "HAPPY FRIDAY and HAPPY KINDLE CELEBRATION! You can spell your whole name! Let us celebrate!",
       activities: [
-        { id: "w3f1", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 5, audioPrompt: "Spell KINDLE one more time! You know all six letters!", audioCorrect: "K-I-N-D-L-E! KINDLE! You are INCREDIBLE!" },
-        { id: "w3f2", type: "find_the_number", target: 5, options: [3, 5, 7], stars: 1, audioPrompt: "Find the number 5!", audioCorrect: "That's 5! A whole hand!" },
-        { id: "w3f3", type: "color_hunt", targetColor: "yellow", count: 3, stars: 1, audioPrompt: "Find 3 yellow things!", audioCorrect: "You found yellow!" },
-        { id: "w3f4", type: "shape_match", target: "star", options: ["circle", "star", "square"], stars: 1, audioPrompt: "Find the star!", audioCorrect: "Star! You're a star!" },
-        { id: "w3f5", type: "pattern_next", pattern: [{shape:"star",color:"gold"},{shape:"heart",color:"pink"},{shape:"star",color:"gold"},{shape:"heart",color:"pink"}], answer: {shape:"star",color:"gold"}, options: [{shape:"star",color:"gold"},{shape:"heart",color:"pink"},{shape:"moon",color:"purple"}], stars: 2, audioPrompt: "Star, heart, star, heart... what comes next?", audioCorrect: "Star! You see the pattern!" },
-        { id: "w3f6", type: "star_celebration", stars: 5, message: "KINDLE CELEBRATION! You can spell KINDLE! K-I-N-D-L-E! You are a SUPERSTAR!" }
+        { id: "w3f01", type: "sparkle_challenge", stars: 2, questions: [
+          { prompt: "Spell the first letter of KINDLE!", answer: "K", options: ["K", "L", "E"] },
+          { prompt: "Find the number 5!", answer: "5", options: ["3", "5", "2"] },
+          { prompt: "Which one is yellow?", answer: "yellow", options: ["yellow", "blue", "red"] }
+        ], audioPrompt: "Three quick questions — then a big celebration!" },
+        { id: "w3f02", type: "free_draw", stars: 1, audioPrompt: "Draw something yellow! Maybe the sun, a banana, or your favorite yellow thing!" },
+        { id: "w3f03", type: "star_celebration", stars: 5, message: "KINDLE CELEBRATION! You can spell K-I-N-D-L-E! Your whole name! You are a SUPERSTAR!" }
       ]
     }
   }
@@ -236,7 +221,7 @@ var JJ_WEEK_4 = {
   child: "jj",
   week: 4,
   phase: "Phase 1",
-  startDate: "2026-04-27",
+  startDate: "2026-05-04",
   focusLetters: ["J", "B"],
   focusNumbers: [1, 2, 3, 4, 5],
   focusColors: ["green"],
@@ -244,65 +229,57 @@ var JJ_WEEK_4 = {
   reviewLetters: ["K", "I", "N", "D", "L", "E"],
   days: {
     Monday: {
-      theme: "Letters J and B",
-      title: "J is for Jennifer! and JJ!",
-      audioIntro: "Today we start with KINDLE, then learn two special letters — J and B!",
+      theme: "Letters J and B — Family letters!",
+      title: "J is for JJ and Jennifer!",
+      audioIntro: "Good morning, JJ! Two very special letters today — J is for YOU and for Mommy Jennifer! And B is for Buggsy your big brother!",
       activities: [
-        { id: "w4m1", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 3, audioPrompt: "Warm up! Spell KINDLE!", audioCorrect: "K-I-N-D-L-E! Perfect warm-up!" },
-        { id: "w4m2", type: "letter_intro", letter: "J", stars: 1, word: "Jennifer", image: "girl", audioPrompt: "This is the letter J! J is for Jennifer — your Mommy! And J is for JJ — that's YOU!" },
-        { id: "w4m3", type: "find_the_letter", target: "J", options: ["J", "L", "I"], stars: 1, audioPrompt: "Can you find the letter J?", audioCorrect: "You found J! The first letter of YOUR name!", audioWrong: "J has a hook at the bottom." },
-        { id: "w4m4", type: "letter_intro", letter: "B", stars: 1, word: "Buggsy", image: "boy", audioPrompt: "This is the letter B! B is for Buggsy — your big brother! B has TWO bumps on the right side!" },
-        { id: "w4m5", type: "find_the_letter", target: "B", options: ["D", "B", "P", "R"], stars: 2, audioPrompt: "Can you find the letter B? Remember — TWO bumps!", audioCorrect: "You found B! Two bumps — that's Buggsy!", audioWrong: "B has TWO bumps on the right. D only has ONE big belly." },
-        { id: "w4m6", type: "name_builder", name: "JJ", letters: ["J", "J"], stars: 3, audioPrompt: "Now build YOUR name with the REAL letter J! J-J!", audioCorrect: "J-J! That's YOUR name with YOUR letter!" }
+        { id: "w4m01", type: "letter_intro", letter: "J", stars: 1, word: "Jennifer", image: "girl", audioPrompt: "This is the letter J! J says juh. J is for Jennifer — your Mommy! And J is for JJ — that is YOUR letter!", audioCorrect: "J! That is YOUR letter, JJ!" },
+        { id: "w4m02", type: "find_letter", target: "J", options: ["J", "L", "I"], stars: 1, audioPrompt: "Find the letter J! J has a hook at the bottom like a candy cane!", audioCorrect: "J! The first letter of YOUR name!", audioWrong: "J has a straight line that curves into a hook at the bottom." },
+        { id: "w4m03", type: "letter_intro", letter: "B", stars: 2, word: "Buggsy", image: "boy", audioPrompt: "This is B! B says buh. B is for Buggsy — your big brother! B has TWO bumps on the right side!", audioCorrect: "B for Buggsy! Buh! Two bumps!" }
       ]
     },
     Tuesday: {
-      theme: "Counting and Comparing",
-      title: "More or Less!",
-      audioIntro: "Today we count to 5 and learn about more and less!",
+      theme: "More and Less",
+      title: "Which Has More?",
+      audioIntro: "Good morning! Today we practice counting and learn which group has MORE and which has LESS!",
       activities: [
-        { id: "w4t1", type: "count_with_me", targetNumber: 5, objects: "rainbows", stars: 1, audioPrompt: "Count the rainbows! One... two... three... four... five!", audioCorrect: "Five rainbows! Beautiful!" },
-        { id: "w4t2", type: "more_or_less", groupA: 3, groupB: 5, stars: 1, audioPrompt: "Which group has MORE? 3 or 5?", audioCorrect: "5 is more than 3! Great job!", audioWrong: "Count each group. The bigger number has MORE." },
-        { id: "w4t3", type: "more_or_less", groupA: 4, groupB: 2, stars: 1, audioPrompt: "Which group has MORE? 4 or 2?", audioCorrect: "4 is more than 2!", audioWrong: "Count each group carefully." },
-        { id: "w4t4", type: "find_the_number", target: 4, options: [3, 4, 5], stars: 1, audioPrompt: "What number comes AFTER 3?", audioCorrect: "4 comes after 3!", audioWrong: "Count: 1, 2, 3... what's next?" },
-        { id: "w4t5", type: "quantity_match", numbers: [5, 2, 4, 1], stars: 2, audioPrompt: "Match each number to the right group!", audioCorrect: "Perfect matching!", audioWrong: "Count the objects in each group." }
+        { id: "w4t01", type: "count_with_me", targetNumber: 5, objects: "rainbows", stars: 1, audioPrompt: "Count the rainbows! One... two... three... four... five! Five beautiful rainbows!", audioCorrect: "Five rainbows! You counted them all!" },
+        { id: "w4t02", type: "more_or_less", groupA: 3, groupB: 5, stars: 1, audioPrompt: "Which group has MORE? Count both groups — which one has more?", audioCorrect: "5 is more than 3! The bigger number has more!", audioWrong: "Count each group carefully. The group with more things is the bigger number." },
+        { id: "w4t03", type: "quantity_match", numbers: [5, 2, 4], stars: 2, audioPrompt: "Match 2, 4, and 5 to the right groups! Count the dots in each group!", audioCorrect: "Perfect matching! You counted each group!", audioWrong: "Count the dots in each group, then find the matching number." }
       ]
     },
     Wednesday: {
-      theme: "Green and Shapes",
-      title: "Green Hearts and Diamonds!",
-      audioIntro: "Today we explore green and learn heart and diamond shapes!",
+      theme: "Green and Hearts",
+      title: "Green Hearts Day!",
+      audioIntro: "Good morning! Today we find green things and learn about heart and diamond shapes!",
       activities: [
-        { id: "w4w1", type: "color_hunt", targetColor: "green", count: 3, stars: 1, audioPrompt: "Find 3 green things! Green like grass and trees!", audioCorrect: "You found green!", audioWrong: "That's not green — look for the color of grass." },
-        { id: "w4w2", type: "shape_match", target: "heart", options: ["circle", "heart", "star"], stars: 1, audioPrompt: "Which one is a heart? Hearts mean love!", audioCorrect: "That's a heart!", audioWrong: "A heart has a point at the bottom and two bumps at the top." },
-        { id: "w4w3", type: "shape_match", target: "diamond", options: ["square", "diamond", "triangle"], stars: 1, audioPrompt: "Which one is a diamond? A diamond is like a tilted square!", audioCorrect: "That's a diamond!", audioWrong: "A diamond looks like a square standing on one corner." },
-        { id: "w4w4", type: "color_sort", colors: ["red", "blue", "yellow", "green"], items: [{ name: "apple", color: "red" }, { name: "sky", color: "blue" }, { name: "sun", color: "yellow" }, { name: "leaf", color: "green" }, { name: "fire truck", color: "red" }, { name: "frog", color: "green" }], stars: 2, audioPrompt: "Sort these into color groups!", audioCorrect: "Perfect color sorting!", audioWrong: "Look at each thing's color carefully." },
-        { id: "w4w5", type: "pattern_next", pattern: [{shape:"circle",color:"blue"},{shape:"circle",color:"blue"},{shape:"star",color:"gold"},{shape:"circle",color:"blue"},{shape:"circle",color:"blue"}], answer: {shape:"star",color:"gold"}, options: [{shape:"circle",color:"blue"},{shape:"star",color:"gold"},{shape:"heart",color:"pink"}], stars: 2, audioPrompt: "Circle, circle, star, circle, circle... what comes next?", audioCorrect: "Star! That's an AAB pattern!", audioWrong: "Look: circle, circle, star, circle, circle... the star comes every third spot." }
+        { id: "w4w01", type: "color_hunt", targetColor: "green", count: 3, stars: 1, audioPrompt: "Find 3 green things! Green is the color of grass and leaves and frogs!", audioCorrect: "Green! Like a frog or a leaf!", audioWrong: "That is not green — look for the color of grass and trees." },
+        { id: "w4w02", type: "shape_match", target: "heart", options: ["circle", "heart", "star"], stars: 1, audioPrompt: "Which one is a heart? Hearts have two bumps on top and a point at the bottom!", audioCorrect: "That is a heart! Hearts mean love!", audioWrong: "A heart has two bumps at the top and a pointy bottom." },
+        { id: "w4w03", type: "pattern_next", pattern: [{shape:"circle",color:"blue"},{shape:"circle",color:"blue"},{shape:"star",color:"gold"},{shape:"circle",color:"blue"},{shape:"circle",color:"blue"}], answer: {shape:"star",color:"gold"}, options: [{shape:"circle",color:"blue"},{shape:"star",color:"gold"},{shape:"heart",color:"pink"}], stars: 2, audioPrompt: "Circle, circle, star, circle, circle... what comes next? Look at the pattern carefully!", audioCorrect: "Star! Circle, circle, star — the star comes every third spot!", audioWrong: "Count: circle, circle, star... circle, circle... what comes after two circles?" }
       ]
     },
     Thursday: {
-      theme: "Letter Sounds J and B",
-      title: "J and B Sounds!",
-      audioIntro: "Today we hear the sounds J and B make!",
+      theme: "Trace Letter J",
+      title: "Trace Your Letter!",
+      audioIntro: "Good morning! Today we trace the letter J — YOUR letter! And we will find B and hear a story!",
       activities: [
-        { id: "w4th1", type: "letter_sound", letter: "J", stars: 1, audioPrompt: "J says juh. Juh, juh, JJ! Juh, juh, Jennifer! J is for JJ and Jennifer!", audioCorrect: "That's right! J says juh!" },
-        { id: "w4th2", type: "letter_sound", letter: "B", stars: 1, audioPrompt: "B says buh. Buh, buh, Buggsy! B is for Buggsy!", audioCorrect: "That's right! B says buh!" },
-        { id: "w4th3", type: "beginning_sound", answer: "B", word: "Buggsy", options: ["B", "D", "M"], stars: 1, audioPrompt: "Which name starts with B? Buh...", audioCorrect: "Buggsy starts with B!", audioWrong: "Listen for the buh sound at the beginning." },
-        { id: "w4th4", type: "letter_trace", letter: "J", stars: 2, uppercase: true, audioPrompt: "Trace the letter J! Straight down with a hook at the bottom.", audioCorrect: "Beautiful J!" },
-        { id: "w4th5", type: "audio_story", title: "JJ and Buggsy's Rainy Day", stars: 2, storyId: "jj-buggsy-rainy", audioPrompt: "Story time! JJ and Buggsy build a green blanket fort on a rainy day!", audioCorrect: "Great listening! What color was the blanket fort? Green!" }
+        { id: "w4th01", type: "find_letter", target: "B", options: ["D", "B", "P"], stars: 1, audioPrompt: "Find the letter B! Remember — B has TWO bumps on the right side!", audioCorrect: "B! Two bumps — that is Buggsy's letter!", audioWrong: "B has TWO bumps on the right. D has ONE big belly. P has one bump up top." },
+        { id: "w4th02", type: "letter_trace", letter: "J", stars: 1, audioPrompt: "Now trace YOUR letter J! Straight line down, then curve into a hook at the bottom!", audioCorrect: "Beautiful J! That is YOUR letter!" },
+        { id: "w4th03", type: "audio_story", stars: 2, story: "JJ and Buggsy built a fort with green blankets. It was big and cozy. They sat inside and counted to five!", question: "What color were the blankets?", answer: "Green", options: ["Green", "Blue", "Red"], audioPrompt: "Story time! Listen to the story about JJ and Buggsy!", audioCorrect: "Green! The blankets were green! You are a great listener!", audioWrong: "Listen again — the blankets were green, just like the color we learned this week!" }
       ]
     },
     Friday: {
-      theme: "ONE MONTH CHAMPION!",
+      theme: "One Month Champion!",
       title: "ONE MONTH CHAMPION!",
-      audioIntro: "You did it! A whole MONTH of learning! You know KINDLE, J, and B! This is your celebration!",
+      audioIntro: "HAPPY FRIDAY and HAPPY ONE MONTH! You have been learning for four whole weeks! Let us celebrate everything you know!",
       activities: [
-        { id: "w4f1", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 5, audioPrompt: "Spell KINDLE one last time this month!", audioCorrect: "K-I-N-D-L-E! KINDLE MASTER!" },
-        { id: "w4f2", type: "find_the_letter", target: "B", options: ["D", "B", "P", "R"], stars: 2, audioPrompt: "Find the letter B! Two bumps!", audioCorrect: "B for Buggsy!" },
-        { id: "w4f3", type: "count_with_me", targetNumber: 5, objects: "gems", stars: 1, audioPrompt: "Count your gems! One... two... three... four... five!", audioCorrect: "Five gems! A whole hand!" },
-        { id: "w4f4", type: "color_hunt", targetColor: "green", count: 3, stars: 1, audioPrompt: "Find 3 green things!", audioCorrect: "Green! Like grass!" },
-        { id: "w4f5", type: "more_or_less", groupA: 2, groupB: 4, stars: 1, audioPrompt: "Which group has MORE? 2 or 4?", audioCorrect: "4 is more than 2!", audioWrong: "Count each group." },
-        { id: "w4f6", type: "star_celebration", stars: 5, message: "ONE MONTH CHAMPION! You know K, I, N, D, L, E, J, and B! You can spell KINDLE! You are INCREDIBLE!" }
+        { id: "w4f01", type: "sparkle_challenge", stars: 3, questions: [
+          { prompt: "Find the letter J!", answer: "J", options: ["J", "L", "I"] },
+          { prompt: "Which group has MORE? 3 or 5?", answer: "5", options: ["3", "5"] },
+          { prompt: "Which one is green?", answer: "green", options: ["green", "blue", "yellow"] }
+        ], audioPrompt: "One month challenge! Three questions — you know all of these!" },
+        { id: "w4f02", type: "free_draw", stars: 1, audioPrompt: "Drawing time! Draw something green — or draw yourself, JJ! You are one month stronger!" },
+        { id: "w4f03", type: "star_celebration", stars: 5, message: "ONE MONTH CHAMPION! You know K, I, N, D, L, E, J, and B! You can spell KINDLE! You are INCREDIBLE!" }
       ]
     }
   }
@@ -335,93 +312,57 @@ var JJ_WEEK_5 = {
   focusShapes: ["triangle"],
   days: {
     Monday: {
-      theme: "Letters A and M",
-      title: "A is for Amazing!",
-      audioIntro: "Welcome back, KINDLE! Phase 2 starts today! We have TWO new letters — A and M! Let's go!",
+      theme: "Letters A and M — Phase 2 begins!",
+      title: "A is for Apple!",
+      audioIntro: "WELCOME BACK, JJ! Phase 2 starts today! Two brand new letters — A and M! A is for Apple and M is for Mama!",
       activities: [
-        { id: "w5m01", type: "letter_intro", letter: "A", stars: 1, word: "Apple", image: "apple", audioPrompt: "This is the letter A! A says ah. A is for Apple! Crunch!", audioCorrect: "You know A!" },
-        { id: "w5m02", type: "find_the_letter", target: "A", options: ["A", "H", "N"], stars: 1, audioPrompt: "Can you find the letter A? It looks like a tent!", audioCorrect: "You found A!", audioWrong: "A looks like a tent with a line across the middle." },
-        { id: "w5m03", type: "beginning_sound", answer: "A", word: "Ant", options: ["A", "E", "O"], stars: 1, audioPrompt: "Which letter makes the ah sound? Ah... Ant!", audioCorrect: "Ant starts with A! Ah — Ant!", audioWrong: "Listen for ah. Ah... Ant!" },
-        { id: "w5m04", type: "letter_intro", letter: "M", stars: 1, word: "Moon", image: "moon", audioPrompt: "This is the letter M! M says mmm. M is for Moon! Look at the big round moon!", audioCorrect: "You know M!" },
-        { id: "w5m05", type: "find_the_letter", target: "M", options: ["M", "N", "W"], stars: 1, audioPrompt: "Can you find M? It has two humps like mountains!", audioCorrect: "You found M!", audioWrong: "M has two humps going up. N only has one." },
-        { id: "w5m06", type: "beginning_sound", answer: "M", word: "Monkey", options: ["M", "N", "B"], stars: 1, audioPrompt: "Which letter starts mmm? Mmm... Monkey!", audioCorrect: "Monkey starts with M!", audioWrong: "Mmm... Monkey! M has two humps." },
-        { id: "w5m07", type: "letter_intro", letter: "A", stars: 1, word: "Astronaut", image: "star", audioPrompt: "A is also for Astronaut! They fly to space! Ah... Astronaut!", audioCorrect: "A for Astronaut!" },
-        { id: "w5m08", type: "find_the_letter", target: "A", options: ["A", "R", "K"], stars: 1, audioPrompt: "Find A again! These letters are trickier!", audioCorrect: "You found A! Superstar!", audioWrong: "A looks like a tent. K has arms reaching out." },
-        { id: "w5m09", type: "letter_trace", letter: "A", stars: 2, audioPrompt: "Now let's trace the letter A! Start at the top, go down left, down right, then a line across.", audioCorrect: "Beautiful A!" },
-        { id: "w5m10", type: "letter_intro", letter: "M", stars: 1, word: "Mama", image: "heart", audioPrompt: "M is also for Mama! Mmm... Mama! You love your Mama!", audioCorrect: "M for Mama!" },
-        { id: "w5m11", type: "find_the_letter", target: "M", options: ["M", "W", "H"], stars: 1, audioPrompt: "Find M! Don't mix it up with W — W is upside-down M!", audioCorrect: "You found M! Not W!", audioWrong: "M has humps going UP. W has humps going DOWN." },
-        { id: "w5m12", type: "letter_trace", letter: "M", stars: 2, audioPrompt: "Trace the letter M! Down, up, down, up — like mountains!", audioCorrect: "Mountain M! Amazing!" },
-        { id: "w5m13", type: "find_the_letter", target: "K", options: ["K", "A", "M"], stars: 1, audioPrompt: "Review time! Find K — the FIRST letter of KINDLE!", audioCorrect: "K for KINDLE! You remember!", audioWrong: "K has two arms reaching out. It starts YOUR name!" },
-        { id: "w5m14", type: "sparkle_challenge", stars: 3, questions: [{ prompt: "Which letter says ah?", options: ["A", "M", "K"], answer: 0 }, { prompt: "Which letter has two humps?", options: ["A", "N", "M"], answer: 2 }], audioPrompt: "Sparkle Challenge! Two quick questions!", audioCorrect: "SPARKLE CHAMPION!" },
-        { id: "w5m15", type: "star_celebration", stars: 3, message: "You learned A and M today! A is for Apple and Astronaut! M is for Moon and Mama!" }
+        { id: "w5m01", type: "letter_intro", letter: "A", stars: 1, word: "Apple", image: "apple", audioPrompt: "This is the letter A! A says ah. A is for Apple — crunch! A looks like a tent with a line across the middle!", audioCorrect: "You know A! Ah!" },
+        { id: "w5m02", type: "find_letter", target: "A", options: ["A", "H", "N"], stars: 1, audioPrompt: "Find the letter A! It looks like a little tent — two slanted lines and a line across the middle!", audioCorrect: "You found A!", audioWrong: "A looks like a tent with a line across the middle." },
+        { id: "w5m03", type: "letter_intro", letter: "M", stars: 2, word: "Mama", image: "heart", audioPrompt: "This is the letter M! M says mmm. M is for Mama! M has TWO humps like two mountains!", audioCorrect: "M for Mama! Mmm!" }
       ]
     },
     Tuesday: {
       theme: "Numbers 6 and 7",
       title: "Counting Higher!",
-      audioIntro: "Today we count HIGHER! 6 and 7 — bigger numbers! You can do it!",
+      audioIntro: "Good morning! Today we count to 6 and 7 — bigger numbers! 6 has a curly tail and 7 looks like a flag!",
       activities: [
-        { id: "w5t01", type: "count_with_me", targetNumber: 6, objects: "stars", stars: 1, audioPrompt: "Let's count 6 stars! Tap each one!", audioCorrect: "Six stars! You counted them all!" },
-        { id: "w5t02", type: "find_the_number", target: 6, options: [5, 6, 9], stars: 1, audioPrompt: "Find the number 6! It has a curly tail!", audioCorrect: "That's 6!", audioWrong: "6 has a curly tail at the bottom. 9 has a curly tail at the top." },
-        { id: "w5t03", type: "quantity_match", numbers: [5, 6, 7], stars: 1, audioPrompt: "Match each number to the right group!", audioCorrect: "Perfect matching!" },
-        { id: "w5t04", type: "count_with_me", targetNumber: 7, objects: "hearts", stars: 1, audioPrompt: "Now count 7 hearts! One... two... all the way to seven!", audioCorrect: "Seven hearts!" },
-        { id: "w5t05", type: "find_the_number", target: 7, options: [1, 7, 4], stars: 1, audioPrompt: "Find the number 7! It looks like a flag!", audioCorrect: "That's 7!", audioWrong: "7 goes across then down — like a flag on a pole." },
-        { id: "w5t06", type: "number_trace", digit: 6, stars: 2, audioPrompt: "Trace the number 6! Start at the top, curve around to make a belly.", audioCorrect: "Nice curly 6!" },
-        { id: "w5t07", type: "number_trace", digit: 7, stars: 2, audioPrompt: "Trace the number 7! Go across, then slide down!", audioCorrect: "Great 7!" },
-        { id: "w5t08", type: "more_or_less", groupA: 6, groupB: 3, stars: 1, audioPrompt: "Which has MORE? 6 or 3?", audioCorrect: "6 is more than 3!", audioWrong: "Count each group. 6 is a bigger number!" },
-        { id: "w5t09", type: "count_with_me", targetNumber: 7, objects: "butterflies", stars: 1, audioPrompt: "Count all the butterflies! Seven!", audioCorrect: "Seven butterflies! Beautiful!" },
-        { id: "w5t10", type: "find_the_number", target: 6, options: [6, 8, 2], stars: 1, audioPrompt: "Quick — find 6!", audioCorrect: "Fast fingers! You found 6!" },
-        { id: "w5t11", type: "more_or_less", groupA: 4, groupB: 7, stars: 1, audioPrompt: "Which has MORE? 4 or 7?", audioCorrect: "7 is more!", audioWrong: "Count each group carefully." },
-        { id: "w5t12", type: "star_celebration", stars: 3, message: "You know 6 and 7 now! You can count all the way to 7!" }
+        { id: "w5t01", type: "count_with_me", targetNumber: 7, objects: "stars", stars: 1, audioPrompt: "Count 7 stars! One... two... three... four... five... six... SEVEN! Tap each one!", audioCorrect: "Seven stars! Amazing counting!" },
+        { id: "w5t02", type: "find_number", target: 6, options: [5, 6, 9], stars: 1, audioPrompt: "Find the number 6! Be careful — 6 has a curly tail at the BOTTOM. 9 has a curly tail at the TOP!", audioCorrect: "That is 6! Six!", audioWrong: "6 has a curly tail at the bottom. 9 has a curly tail at the top." },
+        { id: "w5t03", type: "quantity_match", numbers: [5, 6, 7], stars: 2, audioPrompt: "Match 5, 6, and 7 to the right groups! Count the dots carefully!", audioCorrect: "Perfect! You matched 5, 6, and 7!", audioWrong: "Count the dots in each group carefully, then match to the number." }
       ]
     },
     Wednesday: {
-      theme: "Colors and Shapes — Yellow Triangles",
+      theme: "Yellow and Triangles",
       title: "Yellow Triangle Day!",
-      audioIntro: "Today we learn YELLOW and TRIANGLES! Yellow like the sun! Triangles have THREE sides!",
+      audioIntro: "Good morning! Today we find yellow things and learn about triangles! Triangles have THREE sides!",
       activities: [
-        { id: "w5w01", type: "color_hunt", targetColor: "yellow", count: 3, stars: 1, audioPrompt: "Find 3 YELLOW things! Yellow like sunshine!", audioCorrect: "Yellow! Bright like the sun!" },
-        { id: "w5w02", type: "shape_match", target: "triangle", stars: 1, audioPrompt: "Find the triangle! It has 3 sides and 3 pointy corners!", audioCorrect: "Triangle! Three sides!", audioWrong: "A triangle has THREE sides. Count the sides!" },
-        { id: "w5w03", type: "color_sort", items: [{ name: "star", color: "yellow" }, { name: "heart", color: "red" }, { name: "circle", color: "yellow" }, { name: "square", color: "blue" }], bins: ["yellow", "red", "blue"], stars: 2, audioPrompt: "Sort by color! Put each shape in the right color bin!", audioCorrect: "Great sorting!" },
-        { id: "w5w04", type: "pattern_next", pattern: ["triangle", "circle", "triangle", "circle"], answer: "triangle", stars: 1, audioPrompt: "What comes next? Triangle, circle, triangle, circle...", audioCorrect: "Triangle! The pattern repeats!", audioWrong: "Look at the pattern. It goes back and forth." },
-        { id: "w5w05", type: "color_hunt", targetColor: "yellow", count: 4, stars: 1, audioPrompt: "Find 4 yellow things this time! More yellow!", audioCorrect: "Four yellows! Sunshine everywhere!" },
-        { id: "w5w06", type: "count_with_me", targetNumber: 3, objects: "triangles", stars: 1, audioPrompt: "Count the triangles! How many sides does EACH one have? THREE!", audioCorrect: "3 triangles, each with 3 sides!" },
-        { id: "w5w07", type: "find_the_letter", target: "I", options: ["I", "L", "A"], stars: 1, audioPrompt: "Review! Find the letter I from KINDLE!", audioCorrect: "I! The second letter of KINDLE!", audioWrong: "I is a straight line with bars on top and bottom." },
-        { id: "w5w08", type: "find_the_number", target: 5, options: [3, 5, 7], stars: 1, audioPrompt: "Review! Find number 5!", audioCorrect: "Five! A whole hand!", audioWrong: "5 has a flat top and a round belly." },
-        { id: "w5w09", type: "star_celebration", stars: 3, message: "Yellow and triangles! You are learning so many new things!" }
+        { id: "w5w01", type: "color_hunt", targetColor: "yellow", count: 3, stars: 1, audioPrompt: "Find 3 YELLOW things! Yellow is the color of sunshine, bananas, and daffodils!", audioCorrect: "Yellow! Bright like the sun!", audioWrong: "That is not yellow — look for the warm bright color of the sun." },
+        { id: "w5w02", type: "shape_match", target: "triangle", options: ["circle", "square", "triangle"], stars: 1, audioPrompt: "Find the triangle! A triangle has 3 sides and 3 pointy corners!", audioCorrect: "Triangle! Three sides, three corners!", audioWrong: "A triangle has THREE sides and THREE pointy corners." },
+        { id: "w5w03", type: "pattern_next", pattern: [{shape:"triangle",color:"yellow"},{shape:"circle",color:"red"},{shape:"triangle",color:"yellow"},{shape:"circle",color:"red"}], answer: {shape:"triangle",color:"yellow"}, options: [{shape:"triangle",color:"yellow"},{shape:"circle",color:"red"},{shape:"moon",color:"purple"}], stars: 2, audioPrompt: "Triangle, circle, triangle, circle... what comes next?", audioCorrect: "Triangle! You see the pattern!", audioWrong: "Triangle, circle, triangle, circle... what always comes after a circle?" }
       ]
     },
     Thursday: {
-      theme: "Letter Sound Practice — A and M",
-      title: "Sound Detective!",
-      audioIntro: "Today you are a SOUND DETECTIVE! Listen carefully for A and M sounds!",
+      theme: "Letter A and M Trace",
+      title: "Trace A and M!",
+      audioIntro: "Good morning! Today we trace the letters A and M and listen to a short story!",
       activities: [
-        { id: "w5th01", type: "letter_sound", letter: "A", stars: 1, words: ["Apple", "Ant", "Astronaut"], audioPrompt: "A says ah! Listen: ah... Apple! ah... Ant! ah... Astronaut!", audioCorrect: "A says ah!" },
-        { id: "w5th02", type: "beginning_sound", answer: "A", word: "Acorn", options: ["A", "M", "K"], stars: 1, audioPrompt: "What sound do you hear at the beginning? Ah... Acorn!", audioCorrect: "Acorn starts with A!", audioWrong: "Ah... Acorn! A says ah." },
-        { id: "w5th03", type: "letter_sound", letter: "M", stars: 1, words: ["Moon", "Mama", "Monkey"], audioPrompt: "M says mmm! Listen: mmm... Moon! mmm... Mama! mmm... Monkey!", audioCorrect: "M says mmm!" },
-        { id: "w5th04", type: "beginning_sound", answer: "M", word: "Mouse", options: ["M", "N", "A"], stars: 1, audioPrompt: "What sound starts Mouse? Mmm...", audioCorrect: "Mouse starts with M!", audioWrong: "Mmm... Mouse! M has two humps." },
-        { id: "w5th05", type: "beginning_sound", answer: "A", word: "Alligator", options: ["A", "M", "E"], stars: 1, audioPrompt: "Listen carefully: Ah... Alligator! Which letter?", audioCorrect: "Alligator starts with A! Great ears!", audioWrong: "Ah... Alligator! A says ah." },
-        { id: "w5th06", type: "beginning_sound", answer: "M", word: "Milk", options: ["M", "B", "N"], stars: 1, audioPrompt: "Mmm... Milk! What letter?", audioCorrect: "Milk starts with M!", audioWrong: "Mmm... Milk! M says mmm." },
-        { id: "w5th07", type: "letter_trace", letter: "A", stars: 2, audioPrompt: "Trace A! Down-left, down-right, line across!", audioCorrect: "A for Amazing!" },
-        { id: "w5th08", type: "letter_trace", letter: "M", stars: 2, audioPrompt: "Trace M! Down, up, down, up — mountains!", audioCorrect: "M for Marvelous!" },
-        { id: "w5th09", type: "find_the_letter", target: "D", options: ["D", "B", "A"], stars: 1, audioPrompt: "Review! Find D — from KINDLE!", audioCorrect: "D! The fourth letter of KINDLE!" },
-        { id: "w5th10", type: "star_celebration", stars: 3, message: "Sound Detective SUCCESS! You know the sounds of A and M!" }
+        { id: "w5th01", type: "find_letter", target: "M", options: ["M", "N", "W"], stars: 1, audioPrompt: "Find the letter M! M has two humps going UP. W has humps going DOWN. Find M!", audioCorrect: "M! Two mountains going up! That is Mama's letter!", audioWrong: "M has humps going UP like mountains. W is upside-down M." },
+        { id: "w5th02", type: "letter_trace", letter: "A", stars: 1, audioPrompt: "Trace the letter A! Down to the left, down to the right, then a little line across the middle!", audioCorrect: "Beautiful A for Apple!" },
+        { id: "w5th03", type: "audio_story", stars: 2, story: "A little ant found an apple under a tree. The apple was big and yellow. The ant said mmm and ate a tiny bite!", question: "What color was the apple?", answer: "Yellow", options: ["Yellow", "Red", "Green"], audioPrompt: "Story time! Listen carefully to the story about an ant!", audioCorrect: "Yellow! The apple was yellow! Wonderful listening!", audioWrong: "Listen again — the apple was yellow, just like the color we learned this week!" }
       ]
     },
     Friday: {
-      theme: "Review & Celebration",
-      title: "Phase 2 Week 1 Celebration!",
-      audioIntro: "It's FRIDAY! Let's review everything from this week and CELEBRATE!",
+      theme: "Phase 2 Week 1 Celebration!",
+      title: "Phase 2 Week 1 Done!",
+      audioIntro: "HAPPY FRIDAY! Phase 2 Week 1 is complete! You know A and M now — plus all your KINDLE letters! Let us celebrate!",
       activities: [
-        { id: "w5f01", type: "find_the_letter", target: "A", options: ["A", "M", "K", "I"], stars: 1, audioPrompt: "Find A!", audioCorrect: "A!" },
-        { id: "w5f02", type: "find_the_letter", target: "M", options: ["M", "N", "W", "A"], stars: 1, audioPrompt: "Find M!", audioCorrect: "M!" },
-        { id: "w5f03", type: "find_the_number", target: 7, options: [4, 7, 1], stars: 1, audioPrompt: "Find 7!", audioCorrect: "Seven!" },
-        { id: "w5f04", type: "count_with_me", targetNumber: 6, objects: "gems", stars: 1, audioPrompt: "Count 6 gems!", audioCorrect: "Six gems!" },
-        { id: "w5f05", type: "color_hunt", targetColor: "yellow", count: 3, stars: 1, audioPrompt: "Find 3 yellow!", audioCorrect: "Yellow sunshine!" },
-        { id: "w5f06", type: "shape_match", target: "triangle", stars: 1, audioPrompt: "Find the triangle!", audioCorrect: "Three sides!" },
-        { id: "w5f07", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 3, audioPrompt: "Spell KINDLE! You know all these letters!", audioCorrect: "K-I-N-D-L-E! Your name!" },
-        { id: "w5f08", type: "sparkle_challenge", stars: 3, questions: [{ prompt: "A is for...", options: ["Apple", "Ball", "Cat"], answer: 0 }, { prompt: "How many sides does a triangle have?", options: ["2", "3", "4"], answer: 1 }, { prompt: "Which number is bigger: 6 or 4?", options: ["6", "4"], answer: 0 }], audioPrompt: "Sparkle Challenge!", audioCorrect: "CHAMPION!" },
-        { id: "w5f09", type: "star_celebration", stars: 5, message: "Phase 2, Week 1 COMPLETE! You know 10 letters: K, I, N, D, L, E, J, B, A, and M! INCREDIBLE!" }
+        { id: "w5f01", type: "sparkle_challenge", stars: 2, questions: [
+          { prompt: "Find the letter A!", answer: "A", options: ["A", "H", "N"] },
+          { prompt: "How many sides does a triangle have?", answer: "3", options: ["2", "3", "4"] },
+          { prompt: "Which number has a curly tail at the bottom?", answer: "6", options: ["6", "9", "5"] }
+        ], audioPrompt: "Three questions from this week — you know all of these!" },
+        { id: "w5f02", type: "free_draw", stars: 1, audioPrompt: "Drawing time! Draw an apple, a triangle, or anything you want! Be creative!" },
+        { id: "w5f03", type: "star_celebration", stars: 5, message: "Phase 2 Week 1 done! 10 letters: K, I, N, D, L, E, J, B, A, M! INCREDIBLE!" }
       ]
     }
   }
@@ -448,83 +389,55 @@ var JJ_WEEK_6 = {
     Monday: {
       theme: "Letters S and T",
       title: "S is for Sparkle!",
-      audioIntro: "Two more letters today — S and T! S is for SPARKLE! That's YOUR kingdom!",
+      audioIntro: "Good morning! Two new letters today — S and T! S is for SPARKLE — your kingdom! And T is for Tiger! Roar!",
       activities: [
-        { id: "w6m01", type: "letter_intro", letter: "S", stars: 1, word: "Sparkle", image: "star", audioPrompt: "This is S! S says sss like a snake! S is for SPARKLE — your kingdom!", audioCorrect: "S for Sparkle!" },
-        { id: "w6m02", type: "find_the_letter", target: "S", options: ["S", "Z", "C"], stars: 1, audioPrompt: "Find S! It curves like a snake!", audioCorrect: "You found S!", audioWrong: "S curves one way, then the other — like a snake." },
-        { id: "w6m03", type: "beginning_sound", answer: "S", word: "Sun", options: ["S", "Z", "T"], stars: 1, audioPrompt: "Sss... Sun! Which letter?", audioCorrect: "Sun starts with S!", audioWrong: "Sss... Sun! S says sss." },
-        { id: "w6m04", type: "letter_intro", letter: "T", stars: 1, word: "Tiger", image: "tiger", audioPrompt: "This is T! T says tuh. T is for Tiger! Roar!", audioCorrect: "T for Tiger!" },
-        { id: "w6m05", type: "find_the_letter", target: "T", options: ["T", "I", "L"], stars: 1, audioPrompt: "Find T! It has a line across the top!", audioCorrect: "You found T!", audioWrong: "T has a line across the top, like a table." },
-        { id: "w6m06", type: "beginning_sound", answer: "T", word: "Turtle", options: ["T", "D", "S"], stars: 1, audioPrompt: "Tuh... Turtle! Which letter?", audioCorrect: "Turtle starts with T!", audioWrong: "Tuh... Turtle! T says tuh." },
-        { id: "w6m07", type: "letter_trace", letter: "S", stars: 2, audioPrompt: "Trace S! Curve up, then curve down — like a snake!", audioCorrect: "Sss... beautiful S!" },
-        { id: "w6m08", type: "letter_trace", letter: "T", stars: 2, audioPrompt: "Trace T! One line down, one line across the top!", audioCorrect: "Perfect T!" },
-        { id: "w6m09", type: "find_the_letter", target: "A", options: ["A", "S", "T"], stars: 1, audioPrompt: "Review! Find A from last week!", audioCorrect: "A! You remember!" },
-        { id: "w6m10", type: "find_the_letter", target: "M", options: ["M", "N", "S"], stars: 1, audioPrompt: "Find M!", audioCorrect: "M with two humps!" },
-        { id: "w6m11", type: "sparkle_challenge", stars: 3, questions: [{ prompt: "Which letter says sss?", options: ["T", "S", "M"], answer: 1 }, { prompt: "Which letter looks like a table?", options: ["T", "I", "L"], answer: 0 }], audioPrompt: "Sparkle Challenge!", audioCorrect: "SPARKLE STAR!" },
-        { id: "w6m12", type: "star_celebration", stars: 3, message: "S and T! S for SPARKLE, T for Tiger! You know 12 letters now!" }
+        { id: "w6m01", type: "letter_intro", letter: "S", stars: 1, word: "Sparkle", image: "star", audioPrompt: "This is S! S says sss like a snake. S is for SPARKLE — that is YOUR kingdom!", audioCorrect: "S for Sparkle! Sss!" },
+        { id: "w6m02", type: "find_letter", target: "S", options: ["S", "Z", "C"], stars: 1, audioPrompt: "Find the letter S! S curves like a snake — one way then the other!", audioCorrect: "You found S! It curves like a snake!", audioWrong: "S curves up then down — like a snake wiggling." },
+        { id: "w6m03", type: "letter_intro", letter: "T", stars: 2, word: "Tiger", image: "tiger", audioPrompt: "This is T! T says tuh. T is for Tiger! T has a line across the top like a table! Roar!", audioCorrect: "T for Tiger! Tuh!" }
       ]
     },
     Tuesday: {
-      theme: "Number 8",
+      theme: "Number 8 — Like a Snowman!",
       title: "Crazy Eights!",
-      audioIntro: "Today is ALL about 8! Eight is like two circles stacked up!",
+      audioIntro: "Good morning! Today is ALL about the number 8! Eight looks like a snowman — two circles stacked on top of each other!",
       activities: [
-        { id: "w6t01", type: "count_with_me", targetNumber: 8, objects: "stars", stars: 1, audioPrompt: "Count 8 stars! One... two... all the way to EIGHT!", audioCorrect: "Eight stars!" },
-        { id: "w6t02", type: "find_the_number", target: 8, options: [3, 6, 8], stars: 1, audioPrompt: "Find 8! It looks like a snowman!", audioCorrect: "Eight! Like a snowman!", audioWrong: "8 is two circles stacked. 6 has just one loop." },
-        { id: "w6t03", type: "quantity_match", numbers: [6, 7, 8], stars: 1, audioPrompt: "Match 6, 7, and 8 to the right groups!", audioCorrect: "Perfect!" },
-        { id: "w6t04", type: "number_trace", digit: 8, stars: 2, audioPrompt: "Trace 8! Make one circle on top, one on the bottom!", audioCorrect: "Snowman 8!" },
-        { id: "w6t05", type: "count_with_me", targetNumber: 8, objects: "butterflies", stars: 1, audioPrompt: "Count 8 butterflies!", audioCorrect: "Eight butterflies! Beautiful!" },
-        { id: "w6t06", type: "more_or_less", groupA: 8, groupB: 5, stars: 1, audioPrompt: "Which has MORE?", audioCorrect: "8 is more than 5!" },
-        { id: "w6t07", type: "more_or_less", groupA: 3, groupB: 8, stars: 1, audioPrompt: "Which has LESS?", audioCorrect: "3 is less than 8!" },
-        { id: "w6t08", type: "find_the_number", target: 7, options: [7, 8, 1], stars: 1, audioPrompt: "Review! Find 7!", audioCorrect: "Seven!" },
-        { id: "w6t09", type: "star_celebration", stars: 3, message: "You know 8! Eight like a snowman! You can count to 8!" }
+        { id: "w6t01", type: "count_with_me", targetNumber: 8, objects: "stars", stars: 1, audioPrompt: "Count 8 stars! One... two... three... four... five... six... seven... EIGHT!", audioCorrect: "Eight stars! You counted all the way to eight!" },
+        { id: "w6t02", type: "find_number", target: 8, options: [3, 6, 8], stars: 1, audioPrompt: "Find the number 8! It looks like a snowman — two circles stacked up!", audioCorrect: "Eight! Like a snowman!", audioWrong: "8 is two circles stacked on top of each other. 6 only has one loop." },
+        { id: "w6t03", type: "quantity_match", numbers: [6, 7, 8], stars: 2, audioPrompt: "Match 6, 7, and 8 to the right groups! Big numbers!", audioCorrect: "Perfect! You matched 6, 7, and 8!", audioWrong: "Count the dots in each group carefully." }
       ]
     },
     Wednesday: {
       theme: "Purple Stars",
       title: "Purple Starlight!",
-      audioIntro: "NEW color: PURPLE! And NEW shape: STARS! Purple stars are magical!",
+      audioIntro: "Good morning! A magical day — we find PURPLE things and learn about STAR shapes! Purple stars are your sparkle kingdom!",
       activities: [
-        { id: "w6w01", type: "color_hunt", targetColor: "purple", count: 3, stars: 1, audioPrompt: "Find 3 PURPLE things!", audioCorrect: "Purple! Like a magical gem!" },
-        { id: "w6w02", type: "shape_match", target: "star", stars: 1, audioPrompt: "Find the star! It has 5 pointy tips!", audioCorrect: "Star! Five points!", audioWrong: "A star has 5 pointy tips. Count them!" },
-        { id: "w6w03", type: "color_sort", items: [{ name: "star", color: "purple" }, { name: "heart", color: "red" }, { name: "moon", color: "yellow" }, { name: "circle", color: "purple" }], bins: ["purple", "red", "yellow"], stars: 2, audioPrompt: "Sort by color!", audioCorrect: "Great sorting!" },
-        { id: "w6w04", type: "pattern_next", pattern: ["star", "triangle", "star", "triangle"], answer: "star", stars: 1, audioPrompt: "Star, triangle, star, triangle... what's next?", audioCorrect: "Star! The pattern repeats!" },
-        { id: "w6w05", type: "color_hunt", targetColor: "purple", count: 4, stars: 1, audioPrompt: "Find 4 purple things!", audioCorrect: "Purple power!" },
-        { id: "w6w06", type: "count_with_me", targetNumber: 5, objects: "stars", stars: 1, audioPrompt: "Count the stars — how many points on each one?", audioCorrect: "Five stars!" },
-        { id: "w6w07", type: "find_the_letter", target: "N", options: ["N", "M", "S"], stars: 1, audioPrompt: "Review! Find N from KINDLE!", audioCorrect: "N! Third letter of KINDLE!" },
-        { id: "w6w08", type: "star_celebration", stars: 3, message: "Purple and stars! Your Sparkle Kingdom is full of purple starlight!" }
+        { id: "w6w01", type: "color_hunt", targetColor: "purple", count: 3, stars: 1, audioPrompt: "Find 3 PURPLE things! Purple is the color of grapes and amethyst gems!", audioCorrect: "Purple! Like a magical gem!", audioWrong: "That is not purple — look for a dark, rich color between red and blue." },
+        { id: "w6w02", type: "shape_match", target: "star", options: ["circle", "star", "square"], stars: 1, audioPrompt: "Find the star! A star has 5 pointy tips sticking out!", audioCorrect: "Star! Five pointy tips!", audioWrong: "A star has 5 pointy tips. Count the points!" },
+        { id: "w6w03", type: "pattern_next", pattern: [{shape:"star",color:"purple"},{shape:"triangle",color:"yellow"},{shape:"star",color:"purple"},{shape:"triangle",color:"yellow"}], answer: {shape:"star",color:"purple"}, options: [{shape:"star",color:"purple"},{shape:"triangle",color:"yellow"},{shape:"heart",color:"pink"}], stars: 2, audioPrompt: "Purple star, yellow triangle, purple star, yellow triangle... what comes next?", audioCorrect: "Purple star! You see the pattern!", audioWrong: "Star, triangle, star, triangle... what always comes after a triangle?" }
       ]
     },
     Thursday: {
-      theme: "Sound Detective — S and T",
-      title: "Snake and Tiger Sounds!",
-      audioIntro: "Sound Detective is BACK! S says sss like a snake! T says tuh like a tiger!",
+      theme: "Trace S and T",
+      title: "Snake and Table Letters!",
+      audioIntro: "Good morning! Today we trace S and T — and hear a sparkle story!",
       activities: [
-        { id: "w6th01", type: "letter_sound", letter: "S", stars: 1, words: ["Sparkle", "Snake", "Sun"], audioPrompt: "S says sss! Sparkle! Snake! Sun! All start with sss!", audioCorrect: "Sss!" },
-        { id: "w6th02", type: "beginning_sound", answer: "S", word: "Star", options: ["S", "T", "A"], stars: 1, audioPrompt: "Sss... Star! Which letter?", audioCorrect: "Star starts with S!", audioWrong: "Sss... Star!" },
-        { id: "w6th03", type: "letter_sound", letter: "T", stars: 1, words: ["Tiger", "Turtle", "Taco"], audioPrompt: "T says tuh! Tiger! Turtle! Taco! Mmm, taco!", audioCorrect: "Tuh!" },
-        { id: "w6th04", type: "beginning_sound", answer: "T", word: "Tree", options: ["T", "S", "K"], stars: 1, audioPrompt: "Tuh... Tree! Which letter?", audioCorrect: "Tree starts with T!", audioWrong: "Tuh... Tree! T says tuh." },
-        { id: "w6th05", type: "beginning_sound", answer: "S", word: "Sandwich", options: ["S", "M", "T"], stars: 1, audioPrompt: "Sss... Sandwich!", audioCorrect: "Sandwich starts with S!" },
-        { id: "w6th06", type: "beginning_sound", answer: "T", word: "Tomato", options: ["T", "D", "M"], stars: 1, audioPrompt: "Tuh... Tomato!", audioCorrect: "Tomato starts with T!" },
-        { id: "w6th07", type: "letter_trace", letter: "S", stars: 2, audioPrompt: "Trace that snake S!", audioCorrect: "Sss!" },
-        { id: "w6th08", type: "letter_trace", letter: "T", stars: 2, audioPrompt: "Trace that table T!", audioCorrect: "Tuh!" },
-        { id: "w6th09", type: "find_the_letter", target: "E", options: ["E", "S", "T"], stars: 1, audioPrompt: "Review! Find E — the last letter of KINDLE!", audioCorrect: "E! K-I-N-D-L-E!" },
-        { id: "w6th10", type: "star_celebration", stars: 3, message: "S for Snake and Sparkle! T for Tiger and Tree!" }
+        { id: "w6th01", type: "find_letter", target: "T", options: ["T", "I", "L"], stars: 1, audioPrompt: "Find the letter T! T has a line across the TOP — like a table!", audioCorrect: "T! Line across the top — like a table!", audioWrong: "T has a line going down and a line across the TOP." },
+        { id: "w6th02", type: "letter_trace", letter: "S", stars: 1, audioPrompt: "Trace the letter S! Curve up, then curve back down — like a snake sliding!", audioCorrect: "Sss! Beautiful snake S!" },
+        { id: "w6th03", type: "audio_story", stars: 2, story: "A sparkly star lit up the purple sky. A tiger named Tara looked up and said wow! The star was so bright and beautiful.", question: "What color was the sky?", answer: "Purple", options: ["Purple", "Blue", "Yellow"], audioPrompt: "Story time! Listen to the sparkle star story!", audioCorrect: "Purple! The sky was purple! Amazing listening!", audioWrong: "Listen again — the sky was purple, just like the color we learned this week!" }
       ]
     },
     Friday: {
-      theme: "Review & Celebration",
-      title: "Week 6 Celebration!",
-      audioIntro: "Friday celebration! Let's show what we know!",
+      theme: "Week 6 Sparkle Celebration!",
+      title: "12 Letters! Let us celebrate!",
+      audioIntro: "HAPPY FRIDAY! You know 12 letters now — K, I, N, D, L, E, J, B, A, M, S, and T! Let us celebrate!",
       activities: [
-        { id: "w6f01", type: "find_the_letter", target: "S", options: ["S", "Z", "T", "C"], stars: 1, audioPrompt: "Find S!", audioCorrect: "Sss!" },
-        { id: "w6f02", type: "find_the_letter", target: "T", options: ["T", "I", "L", "S"], stars: 1, audioPrompt: "Find T!", audioCorrect: "Tuh!" },
-        { id: "w6f03", type: "find_the_number", target: 8, options: [3, 6, 8], stars: 1, audioPrompt: "Find 8!", audioCorrect: "Snowman!" },
-        { id: "w6f04", type: "count_with_me", targetNumber: 8, objects: "gems", stars: 1, audioPrompt: "Count 8 gems!", audioCorrect: "Eight gems!" },
-        { id: "w6f05", type: "color_hunt", targetColor: "purple", count: 3, stars: 1, audioPrompt: "Find 3 purple!", audioCorrect: "Purple!" },
-        { id: "w6f06", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 3, audioPrompt: "Spell KINDLE!", audioCorrect: "KINDLE!" },
-        { id: "w6f07", type: "sparkle_challenge", stars: 3, questions: [{ prompt: "S is for...", options: ["Sparkle", "Tiger", "Moon"], answer: 0 }, { prompt: "What shape has 5 points?", options: ["Triangle", "Star", "Circle"], answer: 1 }, { prompt: "Which number looks like a snowman?", options: ["6", "8", "3"], answer: 1 }], audioPrompt: "Final challenge!", audioCorrect: "WEEK 6 CHAMPION!" },
-        { id: "w6f08", type: "star_celebration", stars: 5, message: "12 letters! K,I,N,D,L,E,J,B,A,M,S,T! You are a LETTER MASTER!" }
+        { id: "w6f01", type: "sparkle_challenge", stars: 2, questions: [
+          { prompt: "Find the letter S!", answer: "S", options: ["S", "Z", "C"] },
+          { prompt: "Which number looks like a snowman?", answer: "8", options: ["6", "8", "3"] },
+          { prompt: "What shape has 5 points?", answer: "star", options: ["triangle", "star", "circle"] }
+        ], audioPrompt: "Three questions from this week — you know all of these!" },
+        { id: "w6f02", type: "free_draw", stars: 1, audioPrompt: "Drawing time! Draw a purple star or a tiger or anything in your sparkle kingdom!" },
+        { id: "w6f03", type: "star_celebration", stars: 5, message: "12 letters! K, I, N, D, L, E, J, B, A, M, S, T! You are a LETTER MASTER!" }
       ]
     }
   }
@@ -549,86 +462,57 @@ var JJ_WEEK_7 = {
   focusShapes: ["heart"],
   days: {
     Monday: {
-      theme: "Letters O and C",
+      theme: "Letters O and C — Last two Phase 2 letters!",
       title: "O is for Orange!",
-      audioIntro: "Last two Phase 2 letters — O and C! O is round like a circle! C is like O but with an opening!",
+      audioIntro: "Good morning, JJ! The LAST two Phase 2 letters today — O and C! O is a perfect circle! C is like O but with a little opening! Let us go!",
       activities: [
-        { id: "w7m01", type: "letter_intro", letter: "O", stars: 1, word: "Orange", image: "orange", audioPrompt: "This is O! O says oh. O is for Orange! Round and yummy!", audioCorrect: "O for Orange!" },
-        { id: "w7m02", type: "find_the_letter", target: "O", options: ["O", "C", "D"], stars: 1, audioPrompt: "Find O! It's a perfect circle!", audioCorrect: "O!", audioWrong: "O is a complete circle. C has an opening." },
-        { id: "w7m03", type: "beginning_sound", answer: "O", word: "Octopus", options: ["O", "A", "C"], stars: 1, audioPrompt: "Oh... Octopus! Which letter?", audioCorrect: "Octopus starts with O!", audioWrong: "Oh... Octopus! O says oh." },
-        { id: "w7m04", type: "letter_intro", letter: "C", stars: 1, word: "Cat", image: "cat", audioPrompt: "This is C! C says kuh (like K!). C is for Cat! Meow!", audioCorrect: "C for Cat!" },
-        { id: "w7m05", type: "find_the_letter", target: "C", options: ["C", "O", "S"], stars: 1, audioPrompt: "Find C! It's like O but with a bite taken out!", audioCorrect: "C!", audioWrong: "C is like O with an opening on the right side." },
-        { id: "w7m06", type: "beginning_sound", answer: "C", word: "Cake", options: ["C", "K", "S"], stars: 1, audioPrompt: "Kuh... Cake! Which letter? Tricky — both C and K say kuh!", audioCorrect: "Cake starts with C! Good job!", audioWrong: "Cake starts with C! C and K make similar sounds." },
-        { id: "w7m07", type: "letter_trace", letter: "O", stars: 2, audioPrompt: "Trace O! Go around in a big circle!", audioCorrect: "Perfect circle O!" },
-        { id: "w7m08", type: "letter_trace", letter: "C", stars: 2, audioPrompt: "Trace C! Like O but stop before you close it!", audioCorrect: "C with an opening!" },
-        { id: "w7m09", type: "find_the_letter", target: "S", options: ["S", "C", "O"], stars: 1, audioPrompt: "Review! Find S!", audioCorrect: "Sss!" },
-        { id: "w7m10", type: "find_the_letter", target: "K", options: ["K", "A", "T"], stars: 1, audioPrompt: "Find K — first letter of KINDLE!", audioCorrect: "K!" },
-        { id: "w7m11", type: "sparkle_challenge", stars: 3, questions: [{ prompt: "Which letter is a complete circle?", options: ["C", "O", "D"], answer: 1 }, { prompt: "C is for...", options: ["Cat", "Dog", "Sun"], answer: 0 }], audioPrompt: "Sparkle Challenge!", audioCorrect: "O and C MASTER!" },
-        { id: "w7m12", type: "star_celebration", stars: 3, message: "O and C! That's ALL the Phase 2 letters! You know 14 letters now!" }
+        { id: "w7m01", type: "letter_intro", letter: "O", stars: 1, word: "Orange", image: "orange", audioPrompt: "This is O! O says oh. O is for Orange — round and delicious! O is a perfect circle!", audioCorrect: "O for Orange! Oh!" },
+        { id: "w7m02", type: "find_letter", target: "O", options: ["O", "C", "D"], stars: 1, audioPrompt: "Find O! O is a COMPLETE circle. C has an opening. Which one is fully closed all the way around?", audioCorrect: "O! A perfect circle!", audioWrong: "O is completely closed all the way around. C has an opening on the right." },
+        { id: "w7m03", type: "letter_intro", letter: "C", stars: 2, word: "Cat", image: "cat", audioPrompt: "This is C! C says kuh — just like K! C is for Cat! Meow! C looks like O but with a bite taken out of the right side!", audioCorrect: "C for Cat! Kuh!" }
       ]
     },
     Tuesday: {
-      theme: "Numbers 9 and 10",
+      theme: "Numbers 9 and 10 — COUNT TO TEN!",
       title: "Counting to TEN!",
-      audioIntro: "TODAY IS HUGE! We learn 9 and 10! TEN! You can count to TEN!",
+      audioIntro: "TODAY IS HUGE! We learn 9 and 10! TEN! You will be able to count ALL the way to TEN with BOTH hands!",
       activities: [
-        { id: "w7t01", type: "count_with_me", targetNumber: 9, objects: "stars", stars: 1, audioPrompt: "Count 9 stars! Almost to TEN!", audioCorrect: "Nine stars!" },
-        { id: "w7t02", type: "find_the_number", target: 9, options: [6, 9, 8], stars: 1, audioPrompt: "Find 9! Be careful — 6 and 9 look alike but are FLIPPED!", audioCorrect: "That's 9!", audioWrong: "9 has the loop at the TOP. 6 has the loop at the BOTTOM." },
-        { id: "w7t03", type: "count_with_me", targetNumber: 10, objects: "hearts", stars: 2, audioPrompt: "Count to TEN! One... two... all the way to TEN!", audioCorrect: "TEN! You counted to TEN! Both hands!" },
-        { id: "w7t04", type: "find_the_number", target: 10, options: [1, 10, 7], stars: 1, audioPrompt: "Find 10! It has TWO digits — a 1 and a 0!", audioCorrect: "10! One-zero!", audioWrong: "10 is special — it uses TWO numbers: 1 and 0 together." },
-        { id: "w7t05", type: "number_trace", digit: 9, stars: 2, audioPrompt: "Trace 9! A circle on top, then a line going down!", audioCorrect: "Nice 9!" },
-        { id: "w7t06", type: "quantity_match", numbers: [8, 9, 10], stars: 2, audioPrompt: "Match 8, 9, and 10! Big numbers!", audioCorrect: "All matched!" },
-        { id: "w7t07", type: "more_or_less", groupA: 10, groupB: 7, stars: 1, audioPrompt: "Which has MORE? 10 or 7?", audioCorrect: "10 is more!" },
-        { id: "w7t08", type: "more_or_less", groupA: 5, groupB: 9, stars: 1, audioPrompt: "Which has LESS?", audioCorrect: "5 is less than 9!" },
-        { id: "w7t09", type: "count_with_me", targetNumber: 10, objects: "gems", stars: 2, audioPrompt: "Count TEN gems! You can do it!", audioCorrect: "TEN GEMS! You are a counting SUPERSTAR!" },
-        { id: "w7t10", type: "star_celebration", stars: 5, message: "YOU CAN COUNT TO TEN! That's BOTH hands! 1,2,3,4,5,6,7,8,9,10!" }
+        { id: "w7t01", type: "count_with_me", targetNumber: 10, objects: "gems", stars: 2, audioPrompt: "Count ALL THE WAY to TEN! One... two... three... four... five... six... seven... eight... nine... TEN! Tap each one!", audioCorrect: "TEN! You counted to TEN! That is BOTH hands! Amazing!" },
+        { id: "w7t02", type: "find_number", target: 9, options: [6, 9, 8], stars: 1, audioPrompt: "Find the number 9! Be careful — 6 and 9 look similar but are FLIPPED! 9 has the loop at the TOP!", audioCorrect: "That is 9! Nine! Loop at the top!", audioWrong: "9 has the loop at the TOP. 6 has the loop at the BOTTOM." },
+        { id: "w7t03", type: "quantity_match", numbers: [8, 9, 10], stars: 2, audioPrompt: "Match 8, 9, and 10 to the right groups! These are the biggest numbers!", audioCorrect: "Perfect! You matched 8, 9, and 10!", audioWrong: "Count the dots in each group carefully." }
       ]
     },
     Wednesday: {
-      theme: "Orange Hearts",
+      theme: "Orange and Hearts",
       title: "Orange Heart Day!",
-      audioIntro: "New color: ORANGE! New shape: HEARTS! Orange is warm and hearts mean LOVE!",
+      audioIntro: "Good morning! A warm and loving day — we find ORANGE things and learn about HEART shapes! Orange is warm and hearts mean love!",
       activities: [
-        { id: "w7w01", type: "color_hunt", targetColor: "orange", count: 3, stars: 1, audioPrompt: "Find 3 ORANGE things!", audioCorrect: "Orange! Warm like a sunset!" },
-        { id: "w7w02", type: "shape_match", target: "heart", stars: 1, audioPrompt: "Find the heart! It has a bumpy top and pointy bottom!", audioCorrect: "Heart! Love!", audioWrong: "A heart has two bumps on top and a point at the bottom." },
-        { id: "w7w03", type: "color_sort", items: [{ name: "heart", color: "orange" }, { name: "star", color: "purple" }, { name: "circle", color: "orange" }, { name: "triangle", color: "green" }], bins: ["orange", "purple", "green"], stars: 2, audioPrompt: "Sort by color!", audioCorrect: "Sorted!" },
-        { id: "w7w04", type: "pattern_next", pattern: ["heart", "star", "heart", "star"], answer: "heart", stars: 1, audioPrompt: "Heart, star, heart, star... what's next?", audioCorrect: "Heart!" },
-        { id: "w7w05", type: "count_with_me", targetNumber: 4, objects: "hearts", stars: 1, audioPrompt: "Count the hearts!", audioCorrect: "Four hearts full of love!" },
-        { id: "w7w06", type: "find_the_letter", target: "L", options: ["L", "I", "T"], stars: 1, audioPrompt: "Review! Find L from KINDLE!", audioCorrect: "L!" },
-        { id: "w7w07", type: "find_the_number", target: 10, options: [10, 1, 6], stars: 1, audioPrompt: "Find 10!", audioCorrect: "TEN!" },
-        { id: "w7w08", type: "star_celebration", stars: 3, message: "Orange hearts! You know 5 colors and 4 shapes now!" }
+        { id: "w7w01", type: "color_hunt", targetColor: "orange", count: 3, stars: 1, audioPrompt: "Find 3 ORANGE things! Orange is the warm color between red and yellow — like a sunset!", audioCorrect: "Orange! Warm and beautiful!", audioWrong: "That is not orange — look for a warm color between red and yellow, like a pumpkin." },
+        { id: "w7w02", type: "shape_match", target: "heart", options: ["circle", "heart", "star"], stars: 1, audioPrompt: "Find the heart! A heart has two bumps at the top and a pointy bottom — it means love!", audioCorrect: "Heart! Two bumps on top, pointy at the bottom! Love!", audioWrong: "A heart has two bumps at the top and one point at the bottom." },
+        { id: "w7w03", type: "pattern_next", pattern: [{shape:"heart",color:"orange"},{shape:"star",color:"purple"},{shape:"heart",color:"orange"},{shape:"star",color:"purple"}], answer: {shape:"heart",color:"orange"}, options: [{shape:"heart",color:"orange"},{shape:"star",color:"purple"},{shape:"moon",color:"yellow"}], stars: 2, audioPrompt: "Orange heart, purple star, orange heart, purple star... what comes next?", audioCorrect: "Orange heart! You see the pattern!", audioWrong: "Heart, star, heart, star... what always comes after a star?" }
       ]
     },
     Thursday: {
-      theme: "Sound Detective — O and C",
-      title: "Circle Sounds!",
-      audioIntro: "O and C both look like circles! But they sound different! Let's listen!",
+      theme: "Trace O and C",
+      title: "Circle Letters!",
+      audioIntro: "Good morning! Today we trace O and C — the circle letters! And we will hear an orange story!",
       activities: [
-        { id: "w7th01", type: "letter_sound", letter: "O", stars: 1, words: ["Orange", "Octopus", "Otter"], audioPrompt: "O says oh! Orange! Octopus! Otter!", audioCorrect: "Oh!" },
-        { id: "w7th02", type: "beginning_sound", answer: "O", word: "Owl", options: ["O", "C", "A"], stars: 1, audioPrompt: "Oh... Owl! Which letter?", audioCorrect: "Owl starts with O!" },
-        { id: "w7th03", type: "letter_sound", letter: "C", stars: 1, words: ["Cat", "Cake", "Car"], audioPrompt: "C says kuh! Cat! Cake! Car!", audioCorrect: "Kuh!" },
-        { id: "w7th04", type: "beginning_sound", answer: "C", word: "Cookie", options: ["C", "K", "O"], stars: 1, audioPrompt: "Kuh... Cookie! Which letter?", audioCorrect: "Cookie starts with C!" },
-        { id: "w7th05", type: "beginning_sound", answer: "O", word: "Ocean", options: ["O", "C", "E"], stars: 1, audioPrompt: "Oh... Ocean!", audioCorrect: "Ocean starts with O!" },
-        { id: "w7th06", type: "beginning_sound", answer: "C", word: "Cup", options: ["C", "T", "S"], stars: 1, audioPrompt: "Kuh... Cup!", audioCorrect: "Cup starts with C!" },
-        { id: "w7th07", type: "letter_trace", letter: "O", stars: 2, audioPrompt: "Trace the circle O!", audioCorrect: "Round and round!" },
-        { id: "w7th08", type: "letter_trace", letter: "C", stars: 2, audioPrompt: "Trace C — circle but stop!", audioCorrect: "C!" },
-        { id: "w7th09", type: "find_the_letter", target: "B", options: ["B", "D", "O"], stars: 1, audioPrompt: "Review! Find B!", audioCorrect: "B! Two bumps on the right!" },
-        { id: "w7th10", type: "star_celebration", stars: 3, message: "O says oh! C says kuh! Sound Detective VICTORY!" }
+        { id: "w7th01", type: "find_letter", target: "C", options: ["C", "O", "S"], stars: 1, audioPrompt: "Find the letter C! C is like O with an opening on the right side!", audioCorrect: "C! Open on the right side — like a moon shape!", audioWrong: "C is like O but with an opening. O is fully closed. Find the one with an opening!" },
+        { id: "w7th02", type: "letter_trace", letter: "O", stars: 1, audioPrompt: "Trace the letter O! Go all the way around in a big circle — do not stop until you reach the beginning!", audioCorrect: "Perfect circle O! Round and round!" },
+        { id: "w7th03", type: "audio_story", stars: 2, story: "An orange cat named Coco climbed an oak tree. She looked down and saw ten little birds below. Coco counted them all!", question: "How many birds did Coco see?", answer: "Ten", options: ["Ten", "Five", "Three"], audioPrompt: "Story time! Listen to the story about Coco the orange cat!", audioCorrect: "Ten! Coco counted ten birds! Great listening!", audioWrong: "Listen again — Coco counted ten little birds below the tree!" }
       ]
     },
     Friday: {
-      theme: "Week 7 Grand Review",
-      title: "Almost Done with Phase 2!",
-      audioIntro: "One more week! Let's show how much you know!",
+      theme: "Phase 2 Grand Review!",
+      title: "14 Letters! You are AMAZING!",
+      audioIntro: "HAPPY FRIDAY! You now know FOURTEEN letters — and you can count to TEN! One more week to celebrate! Let us go!",
       activities: [
-        { id: "w7f01", type: "find_the_letter", target: "O", options: ["O", "C", "D", "Q"], stars: 1, audioPrompt: "Find O!", audioCorrect: "Circle O!" },
-        { id: "w7f02", type: "find_the_letter", target: "C", options: ["C", "O", "S", "G"], stars: 1, audioPrompt: "Find C!", audioCorrect: "Open circle C!" },
-        { id: "w7f03", type: "count_with_me", targetNumber: 10, objects: "stars", stars: 2, audioPrompt: "Count to TEN!", audioCorrect: "TEN!" },
-        { id: "w7f04", type: "find_the_number", target: 9, options: [6, 9, 3], stars: 1, audioPrompt: "Find 9! Not 6!", audioCorrect: "Nine!" },
-        { id: "w7f05", type: "color_hunt", targetColor: "orange", count: 3, stars: 1, audioPrompt: "Find orange!", audioCorrect: "Orange!" },
-        { id: "w7f06", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 3, audioPrompt: "Spell KINDLE!", audioCorrect: "KINDLE!" },
-        { id: "w7f07", type: "sparkle_challenge", stars: 3, questions: [{ prompt: "O is for...", options: ["Orange", "Apple", "Sun"], answer: 0 }, { prompt: "How high can you count?", options: ["5", "8", "10"], answer: 2 }, { prompt: "What color is warm like a sunset?", options: ["Blue", "Orange", "Green"], answer: 1 }], audioPrompt: "Sparkle Challenge!", audioCorrect: "CHAMPION!" },
-        { id: "w7f08", type: "star_celebration", stars: 5, message: "14 letters, numbers 1-10, 5 colors, 4 shapes! You are AMAZING!" }
+        { id: "w7f01", type: "sparkle_challenge", stars: 2, questions: [
+          { prompt: "Find the letter O!", answer: "O", options: ["O", "C", "D"] },
+          { prompt: "How high can you count now?", answer: "10", options: ["5", "8", "10"] },
+          { prompt: "What warm color did we learn?", answer: "orange", options: ["orange", "blue", "green"] }
+        ], audioPrompt: "Three questions — you know all of these!" },
+        { id: "w7f02", type: "free_draw", stars: 1, audioPrompt: "Drawing time! Draw an orange heart, or Coco the cat, or the number 10! Have fun!" },
+        { id: "w7f03", type: "star_celebration", stars: 5, message: "14 letters! Numbers 1-10! 5 colors! 4 shapes! You are INCREDIBLE, JJ!" }
       ]
     }
   }
@@ -653,88 +537,65 @@ var JJ_WEEK_8 = {
   focusShapes: [],
   days: {
     Monday: {
-      theme: "Assessment — Letters",
+      theme: "Assessment — All Your Letters!",
       title: "Letter Champion Challenge!",
-      audioIntro: "This week we check EVERYTHING you learned! Today: ALL your letters! Show me what you know!",
+      audioIntro: "Good morning, JJ! This is ASSESSMENT WEEK — we check everything you learned! Today: ALL your letters! Show me what you know!",
       activities: [
-        { id: "w8m01", type: "find_the_letter", target: "K", options: ["K", "X", "T", "A"], stars: 1, audioPrompt: "Find K!", audioCorrect: "K for KINDLE!" },
-        { id: "w8m02", type: "find_the_letter", target: "I", options: ["I", "L", "T", "M"], stars: 1, audioPrompt: "Find I!", audioCorrect: "I!" },
-        { id: "w8m03", type: "find_the_letter", target: "N", options: ["N", "M", "A", "S"], stars: 1, audioPrompt: "Find N!", audioCorrect: "N!" },
-        { id: "w8m04", type: "find_the_letter", target: "D", options: ["D", "B", "O", "C"], stars: 1, audioPrompt: "Find D!", audioCorrect: "D!" },
-        { id: "w8m05", type: "find_the_letter", target: "L", options: ["L", "I", "T", "J"], stars: 1, audioPrompt: "Find L!", audioCorrect: "L!" },
-        { id: "w8m06", type: "find_the_letter", target: "E", options: ["E", "S", "A", "M"], stars: 1, audioPrompt: "Find E!", audioCorrect: "E! K-I-N-D-L-E!" },
-        { id: "w8m07", type: "find_the_letter", target: "A", options: ["A", "M", "S", "O"], stars: 1, audioPrompt: "Find A!", audioCorrect: "A!" },
-        { id: "w8m08", type: "find_the_letter", target: "M", options: ["M", "N", "W", "A"], stars: 1, audioPrompt: "Find M!", audioCorrect: "M!" },
-        { id: "w8m09", type: "find_the_letter", target: "S", options: ["S", "Z", "C", "T"], stars: 1, audioPrompt: "Find S!", audioCorrect: "S!" },
-        { id: "w8m10", type: "find_the_letter", target: "T", options: ["T", "I", "L", "S"], stars: 1, audioPrompt: "Find T!", audioCorrect: "T!" },
-        { id: "w8m11", type: "find_the_letter", target: "O", options: ["O", "C", "D", "Q"], stars: 1, audioPrompt: "Find O!", audioCorrect: "O!" },
-        { id: "w8m12", type: "find_the_letter", target: "C", options: ["C", "O", "S", "G"], stars: 1, audioPrompt: "Find C!", audioCorrect: "C!" },
-        { id: "w8m13", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 5, audioPrompt: "SPELL KINDLE!", audioCorrect: "K-I-N-D-L-E! KINDLE CHAMPION!" },
-        { id: "w8m14", type: "star_celebration", stars: 5, message: "ALL 14 LETTERS! You are a LETTER SUPERSTAR!" }
+        { id: "w8m01", type: "sparkle_challenge", stars: 3, questions: [
+          { prompt: "Find K!", answer: "K", options: ["K", "X", "T"] },
+          { prompt: "Find N!", answer: "N", options: ["N", "M", "A"] },
+          { prompt: "Find E!", answer: "E", options: ["E", "S", "F"] }
+        ], audioPrompt: "KINDLE letters! Find K, then N, then E — three letters from your name!" },
+        { id: "w8m02", type: "find_letter", target: "S", options: ["S", "Z", "C"], stars: 1, audioPrompt: "Find S! The snake letter!", audioCorrect: "S! You know your letters so well!", audioWrong: "S curves like a snake — up then down." },
+        { id: "w8m03", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 3, audioPrompt: "SPELL YOUR NAME one more time! You know all 6 letters of KINDLE!", audioCorrect: "K-I-N-D-L-E! KINDLE! You are a LETTER CHAMPION!" }
       ]
     },
     Tuesday: {
-      theme: "Assessment — Numbers",
+      theme: "Assessment — Count to 10!",
       title: "Number Champion Challenge!",
-      audioIntro: "Today: NUMBERS! Let's count all the way to TEN and show what you know!",
+      audioIntro: "Good morning! Today we show off our counting! Count to TEN and match numbers — you have got this!",
       activities: [
-        { id: "w8t01", type: "count_with_me", targetNumber: 10, objects: "stars", stars: 2, audioPrompt: "Count to TEN!", audioCorrect: "TEN!" },
-        { id: "w8t02", type: "find_the_number", target: 3, options: [3, 8, 5], stars: 1, audioPrompt: "Find 3!", audioCorrect: "3!" },
-        { id: "w8t03", type: "find_the_number", target: 7, options: [1, 7, 4], stars: 1, audioPrompt: "Find 7!", audioCorrect: "7!" },
-        { id: "w8t04", type: "find_the_number", target: 10, options: [10, 1, 6], stars: 1, audioPrompt: "Find 10!", audioCorrect: "10!" },
-        { id: "w8t05", type: "find_the_number", target: 6, options: [6, 9, 8], stars: 1, audioPrompt: "Find 6! Not 9!", audioCorrect: "6! Curly bottom!" },
-        { id: "w8t06", type: "quantity_match", numbers: [4, 7, 10], stars: 2, audioPrompt: "Match 4, 7, and 10!", audioCorrect: "All matched!" },
-        { id: "w8t07", type: "more_or_less", groupA: 9, groupB: 3, stars: 1, audioPrompt: "Which has MORE?", audioCorrect: "9 is more!" },
-        { id: "w8t08", type: "more_or_less", groupA: 2, groupB: 8, stars: 1, audioPrompt: "Which has LESS?", audioCorrect: "2 is less!" },
-        { id: "w8t09", type: "count_with_me", targetNumber: 10, objects: "gems", stars: 2, audioPrompt: "Count 10 gems one more time!", audioCorrect: "TEN GEMS!" },
-        { id: "w8t10", type: "star_celebration", stars: 5, message: "NUMBERS 1-10 CHAMPION! You can count everything!" }
+        { id: "w8t01", type: "count_with_me", targetNumber: 10, objects: "stars", stars: 2, audioPrompt: "Count ALL the way to TEN! One... two... three... four... five... six... seven... eight... nine... TEN!", audioCorrect: "TEN! You can count to ten! BOTH hands!" },
+        { id: "w8t02", type: "find_number", target: 9, options: [6, 9, 8], stars: 1, audioPrompt: "Find 9! Remember — 9 has the loop at the TOP, 6 has the loop at the BOTTOM!", audioCorrect: "Nine! Loop at the top!", audioWrong: "9 has the loop at the top. 6 has the loop at the bottom." },
+        { id: "w8t03", type: "quantity_match", numbers: [4, 7, 10], stars: 2, audioPrompt: "Final match! Show me you know 4, 7, and 10!", audioCorrect: "PERFECT! You matched 4, 7, and 10! Number champion!", audioWrong: "Count the dots carefully. 4 has four, 7 has seven, 10 has ten." }
       ]
     },
     Wednesday: {
-      theme: "Assessment — Colors & Shapes",
+      theme: "Assessment — Colors and Shapes!",
       title: "Rainbow Shape Challenge!",
-      audioIntro: "Today: COLORS and SHAPES! Let's find them all!",
+      audioIntro: "Good morning! Today we show everything we know about colors and shapes! You know 5 colors and 4 shapes — let us prove it!",
       activities: [
-        { id: "w8w01", type: "color_hunt", targetColor: "red", count: 2, stars: 1, audioPrompt: "Find 2 RED things!", audioCorrect: "Red!" },
-        { id: "w8w02", type: "color_hunt", targetColor: "blue", count: 2, stars: 1, audioPrompt: "Find 2 BLUE things!", audioCorrect: "Blue!" },
-        { id: "w8w03", type: "color_hunt", targetColor: "green", count: 2, stars: 1, audioPrompt: "Find 2 GREEN things!", audioCorrect: "Green!" },
-        { id: "w8w04", type: "color_hunt", targetColor: "yellow", count: 2, stars: 1, audioPrompt: "Find 2 YELLOW things!", audioCorrect: "Yellow!" },
-        { id: "w8w05", type: "color_hunt", targetColor: "purple", count: 2, stars: 1, audioPrompt: "Find 2 PURPLE things!", audioCorrect: "Purple!" },
-        { id: "w8w06", type: "shape_match", target: "circle", stars: 1, audioPrompt: "Find the circle!", audioCorrect: "Round circle!" },
-        { id: "w8w07", type: "shape_match", target: "square", stars: 1, audioPrompt: "Find the square!", audioCorrect: "Four equal sides!" },
-        { id: "w8w08", type: "shape_match", target: "triangle", stars: 1, audioPrompt: "Find the triangle!", audioCorrect: "Three sides!" },
-        { id: "w8w09", type: "shape_match", target: "star", stars: 1, audioPrompt: "Find the star!", audioCorrect: "Five points!" },
-        { id: "w8w10", type: "color_sort", items: [{ name: "heart", color: "red" }, { name: "star", color: "yellow" }, { name: "circle", color: "blue" }, { name: "triangle", color: "green" }, { name: "square", color: "purple" }], bins: ["red", "yellow", "blue", "green", "purple"], stars: 3, audioPrompt: "Sort ALL the colors!", audioCorrect: "ALL COLORS SORTED!" },
-        { id: "w8w11", type: "star_celebration", stars: 5, message: "5 COLORS! 4 SHAPES! COLOR AND SHAPE CHAMPION!" }
+        { id: "w8w01", type: "color_hunt", targetColor: "orange", count: 3, stars: 1, audioPrompt: "Find 3 ORANGE things! The warm sunset color!", audioCorrect: "Orange! You know your colors!" },
+        { id: "w8w02", type: "shape_match", target: "triangle", options: ["circle", "star", "triangle"], stars: 1, audioPrompt: "Find the triangle! Three sides, three corners — which one is it?", audioCorrect: "Triangle! Three sides!", audioWrong: "A triangle has 3 sides and 3 pointy corners." },
+        { id: "w8w03", type: "pattern_next", pattern: [{shape:"circle",color:"red"},{shape:"circle",color:"blue"},{shape:"circle",color:"yellow"},{shape:"circle",color:"red"},{shape:"circle",color:"blue"}], answer: {shape:"circle",color:"yellow"}, options: [{shape:"circle",color:"yellow"},{shape:"circle",color:"red"},{shape:"circle",color:"blue"}], stars: 2, audioPrompt: "Red, blue, yellow, red, blue... what comes next? You know this pattern!", audioCorrect: "Yellow! You are a PATTERN MASTER!", audioWrong: "Red, blue, yellow repeats. What comes after red and blue?" }
       ]
     },
     Thursday: {
-      theme: "Assessment — Beginning Sounds",
-      title: "Sound Champion Challenge!",
-      audioIntro: "Today: SOUNDS! Listen to every letter sound you know!",
+      theme: "Assessment — Sounds and Stories",
+      title: "Sound and Story Champion!",
+      audioIntro: "Good morning! Today we check sounds and listen to one last story! You have worked so hard, JJ!",
       activities: [
-        { id: "w8th01", type: "beginning_sound", answer: "K", word: "KINDLE", options: ["K", "A", "S"], stars: 1, audioPrompt: "Kuh... KINDLE!", audioCorrect: "KINDLE starts with K!" },
-        { id: "w8th02", type: "beginning_sound", answer: "A", word: "Apple", options: ["A", "O", "E"], stars: 1, audioPrompt: "Ah... Apple!", audioCorrect: "A!" },
-        { id: "w8th03", type: "beginning_sound", answer: "M", word: "Moon", options: ["M", "N", "S"], stars: 1, audioPrompt: "Mmm... Moon!", audioCorrect: "M!" },
-        { id: "w8th04", type: "beginning_sound", answer: "S", word: "Sparkle", options: ["S", "T", "C"], stars: 1, audioPrompt: "Sss... Sparkle!", audioCorrect: "S!" },
-        { id: "w8th05", type: "beginning_sound", answer: "T", word: "Tiger", options: ["T", "D", "K"], stars: 1, audioPrompt: "Tuh... Tiger!", audioCorrect: "T!" },
-        { id: "w8th06", type: "beginning_sound", answer: "O", word: "Octopus", options: ["O", "A", "C"], stars: 1, audioPrompt: "Oh... Octopus!", audioCorrect: "O!" },
-        { id: "w8th07", type: "beginning_sound", answer: "C", word: "Cat", options: ["C", "K", "S"], stars: 1, audioPrompt: "Kuh... Cat!", audioCorrect: "C for Cat!" },
-        { id: "w8th08", type: "beginning_sound", answer: "I", word: "Igloo", options: ["I", "L", "E"], stars: 1, audioPrompt: "Ih... Igloo!", audioCorrect: "I!" },
-        { id: "w8th09", type: "letter_trace", letter: "K", stars: 2, audioPrompt: "Trace K!", audioCorrect: "K for KINDLE!" },
-        { id: "w8th10", type: "letter_trace", letter: "S", stars: 2, audioPrompt: "Trace S!", audioCorrect: "Snake S!" },
-        { id: "w8th11", type: "star_celebration", stars: 5, message: "SOUND CHAMPION! You know ALL the sounds!" }
+        { id: "w8th01", type: "sparkle_challenge", stars: 2, questions: [
+          { prompt: "Kuh... KINDLE! Which letter?", answer: "K", options: ["K", "A", "S"] },
+          { prompt: "Sss... Sparkle! Which letter?", answer: "S", options: ["S", "T", "C"] },
+          { prompt: "Oh... Orange! Which letter?", answer: "O", options: ["O", "A", "C"] }
+        ], audioPrompt: "Sound champion challenge! Match the sound to the letter!" },
+        { id: "w8th02", type: "letter_trace", letter: "K", stars: 1, audioPrompt: "Trace K one last time — the first letter of KINDLE, YOUR name!", audioCorrect: "K! The first letter of YOUR name!" },
+        { id: "w8th03", type: "audio_story", stars: 2, story: "JJ learned 14 letters, 10 numbers, 5 colors, and 4 shapes. Her Mommy Jennifer and Daddy were so proud. They said JJ, you are amazing!", question: "How many letters did JJ learn?", answer: "14", options: ["10", "14", "5"], audioPrompt: "One last story — listen carefully! This story is about YOU, JJ!", audioCorrect: "14 letters! You learned 14 letters! This story is about YOU!", audioWrong: "Listen again — JJ learned 14 letters! And that JJ is YOU!" }
       ]
     },
     Friday: {
-      theme: "Phase 2 Grand Finale",
+      theme: "PHASE 2 GRAND FINALE!",
       title: "PHASE 2 COMPLETE!",
-      audioIntro: "THIS IS IT! The GRAND FINALE of Phase 2! Let's celebrate EVERYTHING you learned!",
+      audioIntro: "THIS IS IT, JJ! THE GRAND FINALE OF PHASE 2! You did EIGHT WEEKS of learning! You know 14 letters, numbers to 10, 5 colors, and 4 shapes! LET US CELEBRATE!",
       activities: [
-        { id: "w8f01", type: "name_builder", name: "KINDLE", letters: ["K", "I", "N", "D", "L", "E"], stars: 5, audioPrompt: "One last time — SPELL YOUR NAME!", audioCorrect: "K-I-N-D-L-E! That's YOUR name!" },
-        { id: "w8f02", type: "count_with_me", targetNumber: 10, objects: "gems", stars: 3, audioPrompt: "Count to TEN! The biggest number you know!", audioCorrect: "TEN! Both hands!" },
-        { id: "w8f03", type: "sparkle_challenge", stars: 5, questions: [{ prompt: "How many letters can you name?", options: ["8", "10", "14"], answer: 2 }, { prompt: "What number has two digits?", options: ["9", "10", "8"], answer: 1 }, { prompt: "What color is the sky?", options: ["Red", "Blue", "Green"], answer: 1 }, { prompt: "S is for...", options: ["SPARKLE", "Tiger", "Moon"], answer: 0 }], audioPrompt: "ULTIMATE SPARKLE CHALLENGE!", audioCorrect: "ULTIMATE CHAMPION!" },
-        { id: "w8f04", type: "star_celebration", stars: 10, message: "PHASE 2 COMPLETE! 14 letters! Numbers 1-10! 5 colors! 4 shapes! You are ready for PHASE 3! KINDLE, you are INCREDIBLE!" }
+        { id: "w8f01", type: "sparkle_challenge", stars: 3, questions: [
+          { prompt: "How many letters did you learn?", answer: "14", options: ["8", "10", "14"] },
+          { prompt: "What number has two digits?", answer: "10", options: ["9", "10", "8"] },
+          { prompt: "S is for...", answer: "Sparkle", options: ["Sparkle", "Tiger", "Moon"] }
+        ], audioPrompt: "ULTIMATE Sparkle Challenge! Three big questions!" },
+        { id: "w8f02", type: "free_draw", stars: 2, audioPrompt: "Grand finale drawing! Draw your favorite thing you learned — a letter, a number, a color, or KINDLE your name! This is your masterpiece!" },
+        { id: "w8f03", type: "star_celebration", stars: 10, message: "PHASE 2 COMPLETE! 14 letters! Numbers 1-10! 5 colors! 4 shapes! You are ready for PHASE 3! KINDLE, you are ABSOLUTELY INCREDIBLE!" }
       ]
     }
   }
