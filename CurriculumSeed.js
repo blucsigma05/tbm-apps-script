@@ -1,8 +1,8 @@
-// CurriculumSeed.gs — v8
+// CurriculumSeed.gs — v9
 // Owned by: KidsHub team
 // PURPOSE: One-time seed of curriculum for JJ (8 weeks) and Buggsy (16 weeks).
 // Run seedAllCurriculum() from the Script Editor to populate the Curriculum tab.
-// CurriculumSeed.gs — v8
+// CurriculumSeed.gs — v9
 
 // ════════════════════════════════════════════════════════════════════
 // JJ CURRICULUM — Pre-K (Age 4, KINDLE letter sequence: K,I,N,D,L,E,J,B)
@@ -616,7 +616,7 @@ var BUGGSY_WEEK_1 = {
   child: "buggsy",
   week: 1,
   startDate: "2026-04-06",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "observe", definition: "To watch something carefully to learn about it", sentence: "Scientists observe animals in the wild to understand their behavior." },
     { word: "signal", definition: "A sign or action that sends a message", sentence: "The traffic light gives a signal to stop or go." },
     { word: "measure", definition: "To find the size, amount, or degree of something using a tool", sentence: "We used a ruler to measure the length of the desk." },
@@ -762,7 +762,7 @@ var BUGGSY_WEEK_2 = {
   child: "buggsy",
   week: 2,
   startDate: "2026-04-13",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "hesitate", definition: "To pause before doing something because you are unsure", sentence: "Don't hesitate — jump in and try your best!" },
     { word: "collision", definition: "When two things crash into each other", sentence: "The collision between the two bumper cars made a loud noise." },
     { word: "frequency", definition: "How often something happens", sentence: "The frequency of thunderstorms increases in spring." },
@@ -908,7 +908,7 @@ var BUGGSY_WEEK_3 = {
   child: "buggsy",
   week: 3,
   startDate: "2026-04-20",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "erosion", definition: "The wearing away of land by water, wind, or ice", sentence: "The river caused erosion along the canyon walls over millions of years." },
     { word: "deposit", definition: "Material that has been left behind by wind, water, or ice", sentence: "The flood left a deposit of mud on the riverbank." },
     { word: "renewable", definition: "A resource that can be replaced naturally over time", sentence: "Solar energy is a renewable resource because the sun keeps shining." },
@@ -1055,7 +1055,7 @@ var BUGGSY_WEEK_4 = {
   child: "buggsy",
   week: 4,
   startDate: "2026-04-27",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "scavenger", definition: "An animal that feeds on dead or decaying matter", sentence: "A vulture is a scavenger that eats animals that have already died." },
     { word: "adaptation", definition: "A trait or behavior that helps a living thing survive in its environment", sentence: "A polar bear's thick fur is an adaptation for cold weather." },
     { word: "consumer", definition: "A living thing that eats other organisms for energy", sentence: "A rabbit is a consumer because it eats plants." },
@@ -1211,7 +1211,7 @@ var BUGGSY_WEEK_5 = {
   child: "buggsy",
   week: 5,
   startDate: "2026-05-11",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "chemical", definition: "Relating to a change that creates a new substance", sentence: "Burning wood is a chemical change because you cannot turn ash back into wood." },
     { word: "physical", definition: "A change in appearance that does not create a new substance", sentence: "Cutting paper is a physical change — it is still paper, just smaller." },
     { word: "mixture", definition: "Two or more substances combined but not chemically joined", sentence: "Trail mix is a mixture — you can still pick out the nuts, raisins, and chocolate." },
@@ -1389,7 +1389,7 @@ var BUGGSY_WEEK_6 = {
   child: "buggsy",
   week: 6,
   startDate: "2026-05-18",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "metamorphosis", definition: "A major change in body form during an animal's life cycle", sentence: "A caterpillar goes through metamorphosis to become a butterfly." },
     { word: "larva", definition: "The young form of an insect that looks very different from the adult", sentence: "The larva of a mosquito lives in water before becoming an adult." },
     { word: "product", definition: "The answer you get when you multiply two numbers", sentence: "The product of 25 and 4 is 100." },
@@ -1566,7 +1566,7 @@ var BUGGSY_WEEK_7 = {
   child: "buggsy",
   week: 7,
   startDate: "2026-05-25",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "fossil", definition: "The preserved remains or trace of a living thing from long ago", sentence: "Scientists found a fossil of a fish in the desert — proof it was once underwater." },
     { word: "sediment", definition: "Tiny pieces of rock, sand, or soil carried by water or wind", sentence: "The river carried sediment downstream and deposited it on the banks." },
     { word: "variable", definition: "Something in an experiment or equation that can change", sentence: "In the equation y = 3x + 2, the variable x can be any number." },
@@ -1744,7 +1744,7 @@ var BUGGSY_WEEK_8 = {
   child: "buggsy",
   week: 8,
   startDate: "2026-06-01",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "protractor", definition: "A tool used to measure angles in degrees", sentence: "Use a protractor to measure the angle at the corner of this triangle." },
     { word: "acute", definition: "An angle that measures less than 90 degrees", sentence: "The hands of a clock at 2:00 form an acute angle." },
     { word: "obtuse", definition: "An angle that measures more than 90 degrees but less than 180", sentence: "When you open a book wide, the spine makes an obtuse angle." },
@@ -1967,7 +1967,7 @@ var BUGGSY_WEEK_9 = {
   child: "buggsy",
   week: 9,
   startDate: "2026-06-08",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "symmetry", definition: "When both sides of something look exactly the same", sentence: "A butterfly's wings have beautiful symmetry." },
     { word: "dissolve", definition: "To mix into a liquid so it seems to disappear", sentence: "Watch the sugar dissolve in the warm water." },
     { word: "contrast", definition: "The differences between two or more things", sentence: "The contrast between the desert and the rainforest is striking." },
@@ -2141,7 +2141,7 @@ var BUGGSY_WEEK_10 = {
   child: "buggsy",
   week: 10,
   startDate: "2026-06-15",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "erode", definition: "To slowly wear away by wind, water, or ice", sentence: "The river will erode the rock over thousands of years." },
     { word: "persuade", definition: "To convince someone to think or do something", sentence: "She tried to persuade her mom to let her stay up late." },
     { word: "remainder", definition: "The amount left over after dividing", sentence: "17 divided by 5 is 3 with a remainder of 2." },
@@ -2315,7 +2315,7 @@ var BUGGSY_WEEK_11 = {
   child: "buggsy",
   week: 11,
   startDate: "2026-06-22",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "analyze", definition: "To examine something carefully to understand it", sentence: "Scientists analyze data to find patterns." },
     { word: "habitat", definition: "The natural home of an animal or plant", sentence: "A coral reef is the habitat of many colorful fish." },
     { word: "summarize", definition: "To tell the main ideas in fewer words", sentence: "Can you summarize the story in three sentences?" },
@@ -2489,7 +2489,7 @@ var BUGGSY_WEEK_12 = {
   child: "buggsy",
   week: 12,
   startDate: "2026-06-29",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "assess", definition: "To evaluate or judge the quality of something", sentence: "The teacher will assess your understanding with a quiz." },
     { word: "accumulate", definition: "To gather or collect over time", sentence: "Snow will accumulate on the ground overnight." },
     { word: "conclude", definition: "To reach a decision based on evidence", sentence: "Based on the experiment, I conclude that salt water freezes at a lower temperature." },
@@ -2663,7 +2663,7 @@ var BUGGSY_WEEK_13 = {
   child: "buggsy",
   week: 13,
   startDate: "2026-07-06",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "parallel", definition: "Lines that run side by side and never cross", sentence: "Railroad tracks are parallel lines." },
     { word: "perpendicular", definition: "Lines that meet at a right angle (90 degrees)", sentence: "The corner of a book shows perpendicular lines." },
     { word: "stanza", definition: "A group of lines in a poem, like a paragraph", sentence: "The poem had four stanzas with different rhymes." },
@@ -2837,7 +2837,7 @@ var BUGGSY_WEEK_14 = {
   child: "buggsy",
   week: 14,
   startDate: "2026-07-13",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "convert", definition: "To change from one form or unit to another", sentence: "You can convert inches to centimeters using a formula." },
     { word: "fossil", definition: "The preserved remains of an ancient living thing", sentence: "Scientists found a dinosaur fossil buried in the rock." },
     { word: "cite", definition: "To reference a source as evidence for a claim", sentence: "In your essay, cite the text to support your answer." },
@@ -3011,7 +3011,7 @@ var BUGGSY_WEEK_15 = {
   child: "buggsy",
   week: 15,
   startDate: "2026-07-20",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "hypothesis", definition: "An educated guess that can be tested with an experiment", sentence: "My hypothesis is that plants grow faster in sunlight than in shade." },
     { word: "variable", definition: "Something that can change or be changed in an experiment", sentence: "The variable we changed was the amount of water each plant received." },
     { word: "reliable", definition: "Can be trusted to be accurate or correct", sentence: "We ran the experiment three times to make sure our results were reliable." },
@@ -3185,7 +3185,7 @@ var BUGGSY_WEEK_16 = {
   child: "buggsy",
   week: 16,
   startDate: "2026-07-27",
-  vocabulary: [
+  vocabularyOverride: [
     { word: "budget", definition: "A plan for how to spend and save money", sentence: "Our family budget helps us decide what to buy each month." },
     { word: "income", definition: "Money earned from working or other sources", sentence: "Dad's income comes from his job at the office." },
     { word: "expense", definition: "Money spent on things you need or want", sentence: "Rent and groceries are our biggest expenses." },
@@ -3359,7 +3359,7 @@ var BUGGSY_WEEK_16 = {
 // MAIN SEED FUNCTION
 // ════════════════════════════════════════════════════════════════════
 
-function getCurriculumSeedVersion() { return 8; }
+function getCurriculumSeedVersion() { return 9; }
 
 /**
  * v6: Validates that all asset references in JJ week content exist in ASSET_REGISTRY.
@@ -3425,6 +3425,18 @@ function seedAllCurriculum() {
     sheet.deleteRows(2, sheet.getLastRow() - 1);
   }
 
+  // Wire SpellingCatalog into each BUGGSY week before serialising
+  var BUGGSY_WEEKS = [
+    BUGGSY_WEEK_1, BUGGSY_WEEK_2, BUGGSY_WEEK_3, BUGGSY_WEEK_4,
+    BUGGSY_WEEK_5, BUGGSY_WEEK_6, BUGGSY_WEEK_7, BUGGSY_WEEK_8,
+    BUGGSY_WEEK_9, BUGGSY_WEEK_10, BUGGSY_WEEK_11, BUGGSY_WEEK_12,
+    BUGGSY_WEEK_13, BUGGSY_WEEK_14, BUGGSY_WEEK_15, BUGGSY_WEEK_16
+  ];
+  for (var wi = 0; wi < BUGGSY_WEEKS.length; wi++) {
+    var wk = BUGGSY_WEEKS[wi];
+    wk.vocabulary = wk.vocabularyOverride || getSpellingWords_(wk.grade || 4, wk.week).newWords;
+  }
+
   var rows = [];
 
   // JJ Weeks 1-8
@@ -3477,4 +3489,4 @@ function seedAllCurriculumSafe() {
   });
 }
 
-// CurriculumSeed.gs — v8
+// CurriculumSeed.gs — v9

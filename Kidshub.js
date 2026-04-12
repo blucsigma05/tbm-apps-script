@@ -5,7 +5,7 @@
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 64; }
+function getKidsHubVersion() { return 65; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -162,6 +162,14 @@ var KH_SCHEMAS = {
       'ActivitiesJSON','ClientMeta','CompletionReason'
     ],
     widths: [280,70,140,120,160,100,180,180,180,100,90,90,100,320,280,160]
+  },
+
+  KH_VocabExposures: {
+    headers: [
+      'ExposureId','Child','Word','Tier','WeekNumber','Grade',
+      'Source','RunId','DateKey','Timestamp'
+    ],
+    widths: [280, 70, 120, 80, 80, 60, 160, 280, 100, 180]
   }
 };
 
@@ -3806,6 +3814,73 @@ function ensureKHLessonRunsTab_() {
   return sheet;
 }
 
+// ════════════════════════════════════════════════════════════════════
+// KH_VocabExposures — per-word exposure tracking
+// Writes to: 🧹📅 KH_VocabExposures
+// ════════════════════════════════════════════════════════════════════
+
+var KH_VOCAB_EXPOSURES_HEADERS_ = [
+  'ExposureId','Child','Word','Tier','WeekNumber','Grade',
+  'Source','RunId','DateKey','Timestamp'
+];
+
+function ensureKHVocabExposuresTab_() {
+  var ss = getKHSS_();
+  var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['KH_VocabExposures']) || 'KH_VocabExposures';
+  var sheet = ss.getSheetByName(tabName);
+  if (sheet) return sheet;
+  sheet = ss.insertSheet(tabName);
+  sheet.appendRow(KH_VOCAB_EXPOSURES_HEADERS_);
+  sheet.setFrozenRows(1);
+  sheet.getRange('1:1').setFontWeight('bold');
+  return sheet;
+}
+
+function recordVocabExposure_(child, wordEntry, source, runId) {
+  if (!child || !wordEntry || !wordEntry.word) return;
+  var dateKey = getTodayISO_();
+  var nowIso = new Date().toISOString();
+  var exposureId = child + '|' + wordEntry.word + '|' + source + '|' + (runId || dateKey);
+  var sheet = ensureKHVocabExposuresTab_();
+  sheet.appendRow([
+    exposureId,
+    String(child),
+    String(wordEntry.word),
+    String(wordEntry.tier || ''),
+    Number(wordEntry.weekIntroduced || wordEntry.weekNumber || 0),
+    Number(wordEntry.grade || 4),
+    String(source || ''),
+    String(runId || ''),
+    dateKey,
+    nowIso
+  ]);
+}
+
+function recordVocabExposuresSafe(child, wordEntries, source, runId) {
+  return withMonitor_('recordVocabExposuresSafe', function() {
+    if (!Array.isArray(wordEntries)) return { ok: false, reason: 'wordEntries not array' };
+    var sheet = ensureKHVocabExposuresTab_();
+    var dateKey = getTodayISO_();
+    var nowIso = new Date().toISOString();
+    var rows = [];
+    for (var i = 0; i < wordEntries.length; i++) {
+      var we = wordEntries[i];
+      if (!we || !we.word) continue;
+      rows.push([
+        child + '|' + we.word + '|' + source + '|' + (runId || dateKey),
+        String(child), String(we.word), String(we.tier || ''),
+        Number(we.weekIntroduced || 0), Number(we.grade || 4),
+        String(source || ''), String(runId || ''), dateKey, nowIso
+      ]);
+    }
+    if (rows.length > 0) {
+      sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, KH_VOCAB_EXPOSURES_HEADERS_.length)
+        .setValues(rows);
+    }
+    return { ok: true, count: rows.length };
+  });
+}
+
 // Scan RunIds from the bottom (most recent first) for faster hit on active runs.
 // Returns the 1-indexed sheet row (>=2) or -1 if not found.
 function _findRunRow_(sheet, runId) {
@@ -4064,6 +4139,26 @@ function completeLessonRun_(runId, final) {
     }
   } finally {
     lk.lock.releaseLock();
+  }
+
+  // Flush vocab exposures from lesson activities
+  try {
+    if (final.activitiesJSON && Array.isArray(final.activitiesJSON)) {
+      var allExposed = [];
+      for (var ei = 0; ei < final.activitiesJSON.length; ei++) {
+        var act = final.activitiesJSON[ei];
+        if (act && Array.isArray(act.vocab_exposures)) {
+          for (var vi = 0; vi < act.vocab_exposures.length; vi++) {
+            allExposed.push(act.vocab_exposures[vi]);
+          }
+        }
+      }
+      if (allExposed.length > 0) {
+        recordVocabExposuresSafe(child, allExposed, 'lesson', runId);
+      }
+    }
+  } catch(ve) {
+    if (typeof logError_ === 'function') logError_('completeLessonRun_.vocabFlush', ve);
   }
 
   if (alreadyCompleted) {

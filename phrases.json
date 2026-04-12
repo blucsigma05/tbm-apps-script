@@ -1641,6 +1641,3606 @@
       "text": "[encouraging] Halfway there... keep it going!",
       "model": "v3",
       "file": "buggsy/buggsy_cer_timer_half.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_acrobat",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] acrobat",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_acrobat.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ahead",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ahead",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ahead.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ahoy",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ahoy",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ahoy.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ajar",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ajar",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ajar.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_answer",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] answer",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_answer.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_asleep",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] asleep",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_asleep.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_attacked",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] attacked",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_attacked.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_avocado",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] avocado",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_avocado.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_awkward",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] awkward",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_awkward.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_baffling",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] baffling",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_baffling.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_bait",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] bait",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_bait.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_basil",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] basil",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_basil.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_baskets",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] baskets",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_baskets.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_before",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] before",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_before.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_blossoms",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] blossoms",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_blossoms.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_bombarded",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] bombarded",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_bombarded.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_breakfast",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] breakfast",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_breakfast.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_brilliant",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] brilliant",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_brilliant.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_brown",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] brown",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_brown.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_bucket",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] bucket",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_bucket.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_candy",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] candy",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_candy.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cartwheel",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cartwheel",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cartwheel.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_chance",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] chance",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_chance.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_chocolate",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] chocolate",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_chocolate.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_circus",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] circus",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_circus.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_close",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] close",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_close.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cluster",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cluster",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cluster.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_comfy",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] comfy",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_comfy.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_coral",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] coral",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_coral.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_countess",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] countess",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_countess.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_courtyard",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] courtyard",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_courtyard.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cozy",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cozy",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cozy.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_crowd",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] crowd",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_crowd.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_curious",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] curious",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_curious.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dangerous",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dangerous",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dangerous.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_deck",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] deck",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_deck.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dinosaur",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dinosaur",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dinosaur.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_disability",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] disability",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_disability.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_distress",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] distress",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_distress.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dollop",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dollop",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dollop.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_draw",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] draw",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_draw.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_eaten",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] eaten",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_eaten.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_elephant",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] elephant",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_elephant.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_especially",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] especially",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_especially.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_faint",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] faint",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_faint.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_faraway",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] faraway",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_faraway.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_farmer",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] farmer",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_farmer.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_february",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] February",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_february.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_fish",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] fish",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_fish.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_focus",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] focus",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_focus.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_forepaw",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] forepaw",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_forepaw.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_forest",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] forest",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_forest.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_formation",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] formation",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_formation.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_fruit",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] fruit",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_fruit.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_garbage",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] garbage",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_garbage.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_giant",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] giant",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_giant.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_goats",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] goats",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_goats.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_gorgeous",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] gorgeous",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_gorgeous.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_heater",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] heater",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_heater.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hedgehog",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hedgehog",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hedgehog.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hockey",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hockey",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hockey.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hoist",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hoist",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hoist.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hold",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hold",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hold.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hollow",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hollow",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hollow.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_incredible",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] incredible",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_incredible.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_insects",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] insects",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_insects.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_jangle",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] jangle",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_jangle.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_journey",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] journey",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_journey.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_kitchen",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] kitchen",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_kitchen.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_leaning",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] leaning",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_leaning.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_leather",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] leather",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_leather.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lessons",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lessons",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lessons.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_limbs",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] limbs",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_limbs.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lure",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lure",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lure.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_mango",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] mango",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_mango.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_melon",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] melon",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_melon.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_mermaid",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] mermaid",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_mermaid.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_message",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] message",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_message.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_milk",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] milk",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_milk.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_mind",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] mind",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_mind.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_minnows",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] minnows",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_minnows.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_moment",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] moment",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_moment.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_monsoon",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] monsoon",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_monsoon.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_nervous",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] nervous",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_nervous.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_parent",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] parent",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_parent.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_paste",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] paste",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_paste.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_peppercorn",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] peppercorn",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_peppercorn.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_pirates",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] pirates",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_pirates.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_pond",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] pond",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_pond.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_quilt",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] quilt",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_quilt.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_raise",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] raise",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_raise.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_recipe",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] recipe",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_recipe.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_remind",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] remind",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_remind.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_roam",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] roam",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_roam.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ruby",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ruby",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ruby.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_satin",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] satin",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_satin.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_scrub",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] scrub",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_scrub.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_scrunch",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] scrunch",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_scrunch.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_search",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] search",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_search.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_seep",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] seep",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_seep.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_send",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] send",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_send.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_seor",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] señor",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_seor.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sharks",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sharks",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sharks.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_shimmer",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] shimmer",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_shimmer.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_shortcut",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] shortcut",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_shortcut.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_shouting",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] shouting",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_shouting.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_shuffle",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] shuffle",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_shuffle.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_signal",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] signal",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_signal.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_silver",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] silver",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_silver.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sizzling",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sizzling",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sizzling.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_skater",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] skater",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_skater.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_skirt",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] skirt",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_skirt.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_slime",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] slime",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_slime.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_snug",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] snug",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_snug.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_spinning",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] spinning",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_spinning.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_stay",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] stay",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_stay.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_streetlights",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] streetlights",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_streetlights.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_stretch",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] stretch",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_stretch.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_stuck",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] stuck",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_stuck.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_studded",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] studded",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_studded.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sugar",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sugar",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sugar.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_surprise",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] surprise",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_surprise.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_swampy",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] swampy",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_swampy.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sweet",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sweet",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sweet.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tackle",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tackle",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tackle.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_taffy",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] taffy",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_taffy.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tag",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tag",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tag.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tail",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tail",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tail.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tank",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tank",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tank.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_teeth",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] teeth",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_teeth.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tender",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tender",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tender.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tight",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tight",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tight.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tint",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tint",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tint.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_triple",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] triple",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_triple.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_turnout",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] turnout",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_turnout.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_twigs",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] twigs",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_twigs.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_understand",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] understand",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_understand.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_unicorn",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] unicorn",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_unicorn.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_vacuum",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] vacuum",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_vacuum.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_valentine",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] valentine",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_valentine.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_want",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] want",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_want.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_weather",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] weather",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_weather.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_wheels",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] wheels",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_wheels.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_window",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] window",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_window.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_wire",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] wire",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_wire.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_wooden",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] wooden",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_wooden.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_woozy",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] woozy",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_woozy.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_writing",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] writing",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_writing.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_yawn",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] yawn",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_yawn.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_zooming",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] zooming",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_zooming.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_albatross",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] albatross",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_albatross.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_almanac",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] almanac",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_almanac.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ancestral",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ancestral",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ancestral.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_anguish",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] anguish",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_anguish.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_archipelago",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] archipelago",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_archipelago.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_aroma",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] aroma",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_aroma.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_artifacts",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] artifacts",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_artifacts.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_asphalt",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] asphalt",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_asphalt.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_atrium",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] atrium",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_atrium.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_battlements",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] battlements",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_battlements.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_beige",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] beige",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_beige.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_berlin",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Berlin",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_berlin.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_billowed",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] billowed",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_billowed.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_bracken",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] bracken",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_bracken.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_brandished",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] brandished",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_brandished.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_buffalo",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Buffalo",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_buffalo.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_campaign",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] campaign",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_campaign.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cavorting",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cavorting",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cavorting.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_chartreuse",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] chartreuse",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_chartreuse.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_chignon",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] chignon",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_chignon.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_colossus",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] colossus",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_colossus.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_commotion",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] commotion",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_commotion.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_conical",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] conical",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_conical.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_conjure",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] conjure",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_conjure.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_conscience",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] conscience",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_conscience.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_convulsively",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] convulsively",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_convulsively.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cosmetics",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cosmetics",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cosmetics.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_courier",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] courier",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_courier.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_crawdad",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] crawdad",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_crawdad.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_deferential",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] deferential",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_deferential.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_deflated",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] deflated",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_deflated.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_delphine",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] delphine",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_delphine.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_democracy",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] democracy",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_democracy.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dexterity",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dexterity",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dexterity.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dimensional",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dimensional",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dimensional.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_discoveries",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] discoveries",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_discoveries.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dissolving",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dissolving",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dissolving.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dubious",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dubious",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dubious.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ebony",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ebony",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ebony.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_eccentric",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] eccentric",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_eccentric.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_emporium",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] emporium",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_emporium.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_encourages",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] encourages",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_encourages.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_enormous",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] enormous",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_enormous.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_equestrian",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] equestrian",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_equestrian.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_et_cetera",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] et cetera",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_et_cetera.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_everest",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Everest",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_everest.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_fabulous",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] fabulous",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_fabulous.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_fluently",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] fluently",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_fluently.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_foreign",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] foreign",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_foreign.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_fragments",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] fragments",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_fragments.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_fraidycat",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] fraidycat",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_fraidycat.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_frankenstein",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Frankenstein",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_frankenstein.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_frustration",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] frustration",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_frustration.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_fugitive",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] fugitive",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_fugitive.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_galleon",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] galleon",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_galleon.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_gallop",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] gallop",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_gallop.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_galore",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] galore",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_galore.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_garbled",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] garbled",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_garbled.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_garishly",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] garishly",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_garishly.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_gaunt",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] gaunt",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_gaunt.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_geranium",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] geranium",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_geranium.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_gleaned",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] gleaned",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_gleaned.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_graffitist",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] graffitist",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_graffitist.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_grimace",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] grimace",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_grimace.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_gusto",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] gusto",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_gusto.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_guttural",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] guttural",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_guttural.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_heron",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] heron",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_heron.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hesitate",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hesitate",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hesitate.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hippies",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hippies",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hippies.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hypnosis",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hypnosis",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hypnosis.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_imitation",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] imitation",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_imitation.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_immigrants",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] immigrants",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_immigrants.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_jeered",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] jeered",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_jeered.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_khaki",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] khaki",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_khaki.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_language",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] language",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_language.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lanky",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lanky",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lanky.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lanyards",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lanyards",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lanyards.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lilt",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lilt",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lilt.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lo_mein",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lo mein",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lo_mein.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lunacy",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lunacy",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lunacy.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lurches",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lurches",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lurches.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_magnanimous",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] magnanimous",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_magnanimous.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_manticores",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] manticores",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_manticores.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_marauder",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] marauder",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_marauder.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_mascot",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] mascot",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_mascot.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_miniature",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] miniature",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_miniature.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_monsieur",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] monsieur",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_monsieur.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_mosque",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] mosque",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_mosque.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_moustache",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] moustache",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_moustache.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_mysterious",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] mysterious",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_mysterious.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_nautical",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] nautical",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_nautical.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_nehru",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Nehru",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_nehru.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_neon",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] neon",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_neon.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_noggin",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] noggin",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_noggin.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_nomad",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] nomad",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_nomad.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_oblivion",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] oblivion",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_oblivion.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_opalescent",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] opalescent",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_opalescent.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_paltry",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] paltry",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_paltry.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_parchment",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] parchment",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_parchment.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_pediatric",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] pediatric",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_pediatric.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_perfume",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] perfume",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_perfume.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_pheromone",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] pheromone",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_pheromone.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_pinioning",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] pinioning",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_pinioning.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_pistachio",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] pistachio",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_pistachio.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_plaited",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] plaited",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_plaited.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_plausible",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] plausible",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_plausible.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_porridge",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] porridge",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_porridge.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_prattling",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] prattling",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_prattling.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_preamble",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] preamble",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_preamble.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_prestigious",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] prestigious",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_prestigious.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_prognosis",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] prognosis",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_prognosis.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_psyche",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] psyche",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_psyche.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_puissance",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] puissance",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_puissance.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_rakish",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] rakish",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_rakish.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ramshackle",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ramshackle",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ramshackle.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ration",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ration",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ration.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_receptionist",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] receptionist",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_receptionist.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_reprimanding",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] reprimanding",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_reprimanding.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_rickety",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] rickety",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_rickety.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_rotunda",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] rotunda",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_rotunda.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_rummage",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] rummage",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_rummage.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_samosas",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] samosas",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_samosas.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sans_serif",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sans serif",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sans_serif.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sardines",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sardines",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sardines.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_savant",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] savant",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_savant.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_scavenger",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] scavenger",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_scavenger.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_schema",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] schema",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_schema.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_scorcher",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] scorcher",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_scorcher.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sequins",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sequins",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sequins.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_serape",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] serape",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_serape.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sinister",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sinister",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sinister.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_skewer",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] skewer",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_skewer.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_slough",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] slough",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_slough.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_spectators",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] spectators",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_spectators.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_steeple",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] steeple",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_steeple.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_stucco",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] stucco",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_stucco.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_suspicious",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] suspicious",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_suspicious.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_talcum",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] talcum",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_talcum.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_toiletries",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] toiletries",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_toiletries.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tranquilizer",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tranquilizer",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tranquilizer.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tuxedo",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tuxedo",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tuxedo.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_unleash",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] unleash",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_unleash.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_unruly",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] unruly",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_unruly.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_verdict",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] verdict",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_verdict.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_vidimus",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] vidimus",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_vidimus.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_wainscoting",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] wainscoting",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_wainscoting.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_warlock",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] warlock",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_warlock.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_winsome",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] winsome",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_winsome.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_yiddish",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Yiddish",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_yiddish.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_zombielike",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] zombielike",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_zombielike.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_adriatic",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Adriatic",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_adriatic.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_alfalfa",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] alfalfa",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_alfalfa.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_amicable",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] amicable",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_amicable.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_anonymously",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] anonymously",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_anonymously.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_apocalypse",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] apocalypse",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_apocalypse.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_appointment",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] appointment",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_appointment.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_aristocracy",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] aristocracy",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_aristocracy.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_assignment",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] assignment",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_assignment.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_au_revoir",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] au revoir",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_au_revoir.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_aubusson",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Aubusson",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_aubusson.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_auxiliary",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] auxiliary",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_auxiliary.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_baklava",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] baklava",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_baklava.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_barrette",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] barrette",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_barrette.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_barricade",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] barricade",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_barricade.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_bayonet",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] bayonet",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_bayonet.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_beautician",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] beautician",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_beautician.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_begrudge",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] begrudge",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_begrudge.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_belfry",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] belfry",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_belfry.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_boll_weevil",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] boll weevil",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_boll_weevil.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_boulangerie",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] boulangerie",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_boulangerie.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_boutique",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] boutique",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_boutique.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_bronchitis",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] bronchitis",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_bronchitis.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_bulletin",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] bulletin",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_bulletin.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_burpees",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] burpees",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_burpees.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_bursitis",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] bursitis",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_bursitis.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cadre",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cadre",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cadre.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cajolery",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cajolery",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cajolery.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_camphor",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] camphor",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_camphor.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cannelloni",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cannelloni",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cannelloni.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_careened",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] careened",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_careened.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_chandelier",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] chandelier",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_chandelier.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_charolais",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Charolais",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_charolais.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_chassis",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] chassis",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_chassis.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_chimneys",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] chimneys",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_chimneys.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_chlorine",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] chlorine",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_chlorine.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_compassionate",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] compassionate",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_compassionate.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_compunction",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] compunction",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_compunction.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_comrades",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] comrades",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_comrades.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_concierge",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] concierge",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_concierge.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_confreres",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] confreres",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_confreres.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_contentious",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] contentious",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_contentious.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_corbels",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] corbels",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_corbels.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cravenly",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cravenly",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cravenly.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_crematorium",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] crematorium",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_crematorium.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cycads",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cycads",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cycads.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_cylinders",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] cylinders",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_cylinders.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_depots",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] depots",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_depots.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dictatorship",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dictatorship",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dictatorship.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dignitaries",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dignitaries",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dignitaries.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_diphtheria",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] diphtheria",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_diphtheria.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dirge",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dirge",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dirge.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_discipline",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] discipline",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_discipline.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dismissal",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dismissal",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dismissal.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_dulce",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] dulce",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_dulce.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_emphatically",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] emphatically",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_emphatically.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ensemble",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ensemble",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ensemble.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_enthusiastic",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] enthusiastic",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_enthusiastic.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_equations",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] equations",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_equations.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_erie",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Erie",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_erie.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_exuberant",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] exuberant",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_exuberant.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_fiberglass",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] fiberglass",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_fiberglass.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_fissures",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] fissures",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_fissures.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_foreseeable",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] foreseeable",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_foreseeable.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_formidable",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] formidable",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_formidable.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_frulein",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] fräulein",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_frulein.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_gangly",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] gangly",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_gangly.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_gingham",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] gingham",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_gingham.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_gyroplane",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] gyroplane",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_gyroplane.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hibiscus",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hibiscus",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hibiscus.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hors_doeuvres",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hors d'oeuvres",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hors_doeuvres.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hyperventilated",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hyperventilated",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hyperventilated.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_hypocritical",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] hypocritical",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_hypocritical.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_invincible",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] invincible",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_invincible.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_junket",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] junket",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_junket.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_kilimanjaro",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Kilimanjaro",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_kilimanjaro.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_laborious",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] laborious",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_laborious.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lacrosse",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lacrosse",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lacrosse.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lasagna",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lasagna",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lasagna.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_latticework",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] latticework",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_latticework.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_lye",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] lye",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_lye.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_maquisards",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] maquisards",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_maquisards.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_maracas",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] maracas",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_maracas.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_marquee",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] marquee",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_marquee.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_matre_d",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] maître d'",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_matre_d.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_memoirs",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] memoirs",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_memoirs.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_mercantile",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] mercantile",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_mercantile.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_misanthrope",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] misanthrope",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_misanthrope.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_muffler",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] muffler",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_muffler.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_mulberry",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] mulberry",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_mulberry.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_nomination",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] nomination",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_nomination.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_officially",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] officially",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_officially.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ominous",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ominous",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ominous.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_onslaught",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] onslaught",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_onslaught.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_opportunist",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] opportunist",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_opportunist.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ostracism",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ostracism",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ostracism.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_oswego",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Oswego",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_oswego.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_paparazzi",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] paparazzi",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_paparazzi.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_parachute",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] parachute",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_parachute.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_patriarchs",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] patriarchs",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_patriarchs.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_peroxide",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] peroxide",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_peroxide.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_piccolo",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] piccolo",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_piccolo.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_pizzeria",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] pizzeria",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_pizzeria.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_plaid",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] plaid",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_plaid.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_pogrom",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] pogrom",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_pogrom.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_precocious",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] precocious",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_precocious.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_premises",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] premises",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_premises.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_proficient",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] proficient",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_proficient.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_promenade",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] promenade",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_promenade.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_propaganda",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] propaganda",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_propaganda.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_prototype",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] prototype",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_prototype.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_protg",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] protégé",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_protg.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_pumpernickel",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] pumpernickel",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_pumpernickel.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ptisserie",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] pâtisserie",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ptisserie.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_quandary",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] quandary",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_quandary.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ratify",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ratify",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ratify.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_receipts",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] receipts",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_receipts.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_reclusive",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] reclusive",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_reclusive.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_renowned",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] renowned",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_renowned.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_repugnant",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] repugnant",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_repugnant.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_residuals",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] residuals",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_residuals.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_riveted",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] riveted",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_riveted.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ruefully",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ruefully",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ruefully.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_safari",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] safari",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_safari.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_salvaged",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] salvaged",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_salvaged.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sarsaparilla",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sarsaparilla",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sarsaparilla.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_scalpel",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] scalpel",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_scalpel.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_scurrying",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] scurrying",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_scurrying.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_silhouette",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] silhouette",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_silhouette.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_skittish",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] skittish",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_skittish.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sluice",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sluice",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sluice.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_solemnly",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] solemnly",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_solemnly.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_sporadic",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] sporadic",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_sporadic.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_squalor",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] squalor",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_squalor.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_substantially",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] substantially",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_substantially.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_swaggering",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] swaggering",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_swaggering.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_syndrome",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] syndrome",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_syndrome.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tamale",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tamale",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tamale.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_thesaurus",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] thesaurus",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_thesaurus.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_traumatic",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] traumatic",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_traumatic.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_trebuchets",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] trebuchets",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_trebuchets.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tuberculosis",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tuberculosis",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tuberculosis.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tucson",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] Tucson",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tucson.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_tulle",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] tulle",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_tulle.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_ultimatum",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] ultimatum",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_ultimatum.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_unfamiliar",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] unfamiliar",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_unfamiliar.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_unparalleled",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] unparalleled",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_unparalleled.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_vigilance",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] vigilance",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_vigilance.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_whinnying",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] whinnying",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_whinnying.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_whittled",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] whittled",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_whittled.mp3"
+    },
+    {
+      "id": "buggsy_spell_word_zeal",
+      "kid": "buggsy",
+      "category": "Spelling",
+      "text": "[clear] zeal",
+      "model": "v3",
+      "file": "buggsy/spelling/buggsy_spell_word_zeal.mp3"
     }
   ]
 }
