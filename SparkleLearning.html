@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v17">
+  <meta name="tbm-version" content="v18">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -635,7 +635,7 @@ var KNOWN_ACTIVITY_TYPES = [
   'pattern_next', 'pattern_completion', 'letter_sound', 'what_sound', 'beginning_sound',
   'letter_trace', 'number_trace', 'audio_story', 'story_listen', 'color_sort',
   'more_or_less', 'name_builder', 'celebration', 'star_celebration',
-  'sparkle_challenge', 'free_draw'
+  'sparkle_challenge', 'free_draw', 'round_intro'
 ];
 
 /* ─── Global State ─── */
@@ -1770,20 +1770,63 @@ function loadContent() {
 /* ═══════════════════════════════════════════════════════════
    READY SCREEN
    ═══════════════════════════════════════════════════════════ */
+var _ACTIVITY_ICONS = {
+  'letter_intro': '🔤', 'find_letter': '🔍', 'find_the_letter': '🔍',
+  'find_number': '🔢', 'find_the_number': '🔢',
+  'count_with_me': '⭐', 'quantity_match': '🎯', 'quantity_matching': '🎯',
+  'color_hunt': '🎨', 'shape_match': '🔷', 'pattern_next': '🌈',
+  'letter_trace': '✏️', 'number_trace': '✏️',
+  'audio_story': '📖', 'story_listen': '📖',
+  'color_sort': '🎨', 'more_or_less': '⚖️',
+  'name_builder': '✨', 'sparkle_challenge': '💫',
+  'celebration': '🌟', 'star_celebration': '🌟',
+  'free_draw': '🖌️', 'round_intro': null
+};
+var _ACTIVITY_LABELS = {
+  'letter_intro': 'Meet a letter', 'find_letter': 'Find the letter', 'find_the_letter': 'Find the letter',
+  'find_number': 'Find the number', 'find_the_number': 'Find the number',
+  'count_with_me': 'Count together', 'quantity_match': 'Match numbers', 'quantity_matching': 'Match numbers',
+  'color_hunt': 'Color hunt', 'shape_match': 'Find the shape', 'pattern_next': 'Finish the pattern',
+  'letter_trace': 'Trace a letter', 'number_trace': 'Trace a number',
+  'audio_story': 'Story time', 'story_listen': 'Story time',
+  'color_sort': 'Sort by color', 'more_or_less': 'More or less?',
+  'name_builder': 'Spell your name', 'sparkle_challenge': 'Sparkle Challenge!',
+  'celebration': 'Celebration!', 'star_celebration': 'Celebration!',
+  'free_draw': 'Free draw'
+};
+
 function showReadyScreen(content) {
   hideSparkleLoading();
   var mc = getMainContent();
-  var actCount = content.activities ? content.activities.length : 0;
+  var activities = content.activities || [];
+  // Filter out round_intro types — they're transitions, not "games" to preview
+  var coreActs = [];
+  for (var i = 0; i < activities.length; i++) {
+    if (activities[i].type !== 'round_intro') { coreActs.push(activities[i]); }
+  }
+
+  var title = content.title || ('\u2728 SparkleLearn \u2728');
+  var theme = content.theme || ('Hi JJ!');
+
   var html = '<div class="ready-screen">';
-  html += '<div class="ready-title">&#10024; SparkleLearn &#10024;</div>';
-  html += '<p class="ready-subtitle">Hi JJ! You have ' + actCount + ' sparkle games today!</p>';
-  html += '<div class="activity-preview">';
-  for (var i = 0; i < actCount; i++) {
-    html += '<div class="preview-dot"></div>';
+  html += '<div class="ready-title">' + escapeHtml(title) + '</div>';
+  html += '<div class="ready-subtitle" style="font-size:20px;margin-bottom:20px;">' + escapeHtml(theme) + '</div>';
+
+  // Activity preview cards
+  html += '<div style="display:flex;flex-direction:column;gap:10px;margin:0 auto 24px;max-width:380px;width:100%;">';
+  for (var j = 0; j < coreActs.length; j++) {
+    var act = coreActs[j];
+    var icon = _ACTIVITY_ICONS[act.type] || '\u2734';
+    var label = _ACTIVITY_LABELS[act.type] || act.type;
+    html += '<div style="display:flex;align-items:center;gap:14px;background:rgba(255,255,255,0.12);border-radius:16px;padding:12px 18px;">';
+    html += '<span style="font-size:32px;line-height:1;">' + icon + '</span>';
+    html += '<span style="font-size:20px;font-weight:700;color:#f0d4ff;">' + escapeHtml(label) + '</span>';
+    html += '</div>';
   }
   html += '</div>';
-  html += '<button class="btn-big btn-pink" onclick="startSession()" style="font-size:36px;padding:20px 48px;margin-top:20px;">';
-  html += "Let's Play! &#127775;</button>";
+
+  html += '<button class="btn-big btn-pink" onclick="startSession()" style="font-size:32px;padding:18px 44px;">';
+  html += "Let's Go! \u2728</button>";
   html += '</div>';
   mc.innerHTML = html;
 
@@ -1857,6 +1900,7 @@ function renderActivity(index) {
         '<button class="btn-big btn-green" onclick="advanceActivity(' + (activity.stars || 1) + ')" style="margin-top:16px">Done!</button></div>';
       speak(activity.prompt || 'Free draw time! Draw on paper, then tap done!');
       break;
+    case 'round_intro':    renderRoundIntro(activity); break;
     default:
       /* Skip unknown types */
       advanceActivity(activity.stars || 0);
@@ -2974,6 +3018,25 @@ function tapNameLetter(bankIdx, letter) {
 /* ═══════════════════════════════════════════════════════════
    ACTIVITY 17: CELEBRATION
    ═══════════════════════════════════════════════════════════ */
+/* ═══ ROUND INTRO — auto-advancing transition screen ═══ */
+function renderRoundIntro(activity) {
+  var mc = getMainContent();
+  var label = activity.label || 'Next up!';
+  var icon = activity.icon || '\u2728';
+  var msg = activity.message || '';
+  var html = '<div class="activity-card" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;">';
+  html += '<div style="font-size:64px;line-height:1;margin-bottom:16px;animation:sparkle-pop 0.4s ease-out;">' + escapeHtml(icon) + '</div>';
+  html += '<div style="font-family:\'Fredoka One\',cursive;font-size:32px;color:#f9a8d4;font-weight:700;margin-bottom:8px;">' + escapeHtml(label) + '</div>';
+  if (msg) {
+    html += '<div style="font-size:18px;color:rgba(240,212,255,0.75);margin-top:6px;">' + escapeHtml(msg) + '</div>';
+  }
+  html += '</div>';
+  mc.innerHTML = html;
+  if (activity.audioPrompt) { speak(activity.audioPrompt); }
+  // Auto-advance after 2 seconds — no tap needed
+  setTimeout(function() { advanceActivity(0); }, 2000);
+}
+
 /* ═══ SPARKLE CHALLENGE — multi-question MC quiz ═══ */
 function renderSparkleChallenge(activity) {
   var mc = getMainContent();
