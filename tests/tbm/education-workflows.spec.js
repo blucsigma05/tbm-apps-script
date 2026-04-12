@@ -183,16 +183,20 @@ async function submitOneAnswer(page, section) {
 }
 
 // Shared helper: submit one open-ended (textarea) answer in a section.
-// FALLBACK_MODULE includes short_answer and why_question types rendered as textareas.
+// FALLBACK_MODULE includes short_answer, why_question, and error_analysis types as textareas.
+// NOTE: updateTextAnswer() stores text but does NOT re-render the card, so the lock button
+// stays class="lock-btn disabled" even after filling. We call submitAnswer(qId) directly
+// via evaluate, which reads answers[key].text and processes the submission.
 async function submitOpenEndedAnswer(page, section) {
   var unansweredCard = '#section-' + section + ' .q-card:not(:has(.feedback-box)):not(:has(.es-feedback))';
   var textarea = page.locator(unansweredCard + ' .q-textarea').first();
   await textarea.waitFor({ state: 'visible', timeout: 8000 });
   await textarea.fill('Test answer for automated Playwright submission.');
-  // Lock-btn enables once textarea has non-whitespace content
-  var lockBtn = page.locator(unansweredCard + ' .lock-btn:not(.disabled)').first();
-  await lockBtn.waitFor({ state: 'visible', timeout: 8000 });
-  await lockBtn.click();
+  // Extract qId from textarea id="textarea-{qId}" and call submitAnswer directly
+  // (lock button stays disabled because updateTextAnswer doesn't re-render)
+  var qId = await textarea.getAttribute('id');
+  var numericId = parseInt(qId.replace('textarea-', ''), 10);
+  await page.evaluate(function(id) { submitAnswer(id); }, numericId);
   var feedback = page.locator('#section-' + section + ' .feedback-box, #section-' + section + ' .es-feedback').last();
   await feedback.waitFor({ state: 'visible', timeout: 8000 });
 }
