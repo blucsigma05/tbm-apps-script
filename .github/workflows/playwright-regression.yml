@@ -97,6 +97,18 @@ jobs:
           printf '\n\n---\n\n' >> playwright-comment.md
           cat education-comment.md >> playwright-comment.md
 
+      # Upload education failure artifacts BEFORE the screenshot step. Screenshot run
+      # uses --output=test-results/screenshots-artifacts (isolated dir) so it cannot
+      # reset test-results/education/, but uploading first is an extra safety belt.
+      - name: Upload education failure artifacts
+        if: steps.education.outputs.edu_exit != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: education-traces-${{ github.run_id }}
+          path: test-results/education/
+          retention-days: 7
+          if-no-files-found: ignore
+
       - name: Detect changed UI files
         id: changed
         run: |
@@ -125,7 +137,7 @@ jobs:
           npx playwright test "$SCREENSHOT_SPEC" \
             --project=tbm-screenshots \
             --reporter=list \
-            --output=test-results \
+            --output=test-results/screenshots-artifacts \
             2>&1 | tee screenshot-output.txt || true
           echo "Screenshots captured to test-results/screenshots/"
 
@@ -148,7 +160,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload traces on failure
-        if: steps.playwright.outputs.pw_exit != '0'
+        if: steps.playwright.outputs.pw_exit != '0' || steps.education.outputs.edu_exit != '0'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-traces-${{ github.run_id }}

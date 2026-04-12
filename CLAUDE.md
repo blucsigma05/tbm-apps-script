@@ -285,10 +285,10 @@ thompsonfams.com/api/verify-pin   → PIN verification for finance surfaces
 | `/parent` | 412x915 | JT S25 |
 | `/pulse` | 412x915 | JT S25 |
 | `/vein` | 1920x1080 | LT Desktop |
-| `/buggsy` | 1340x800 | A9 Tablet |
-| `/jj` | 1340x800 | A7 Tablet |
+| `/buggsy` | 800x1340 | A9 Tablet (portrait) |
+| `/jj` | 800x1340 | A7 Tablet (portrait) |
 | `/daily-missions` | 1368x912 | Surface Pro |
-| `/daily-missions?child=jj` | 1920x1200 | S10 FE |
+| `/daily-missions?child=jj` | 1200x1920 | S10 FE (portrait) |
 
 ---
 

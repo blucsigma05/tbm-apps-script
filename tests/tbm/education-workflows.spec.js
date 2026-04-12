@@ -21,7 +21,7 @@ var DEVICES = {
   s25: { width: 390, height: 844 },
   a9: { width: 800, height: 1280 },
   surface_pro: { width: 1368, height: 912 },
-  s10fe: { width: 1920, height: 1200 }
+  s10fe: { width: 1200, height: 1920 }
 };
 
 // Screenshot helper — saves to test-results/screenshots/education/ so the

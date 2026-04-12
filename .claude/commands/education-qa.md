@@ -45,9 +45,9 @@ Base URLs:
 ### Device Viewports
 | Surface | Device | Viewport |
 |---------|--------|----------|
-| JJ Sparkle / Daily Adventures | Samsung S10 FE | 1920x1200 |
+| JJ Sparkle / Daily Adventures | Samsung S10 FE | 1200x1920 |
 | Buggsy Daily Missions | Surface Pro 5 | 1368x912 |
-| Buggsy KidsHub | Samsung A9 tablet | 1340x800 |
+| Buggsy KidsHub | Samsung A9 tablet | 800x1340 |
 | Parent Dashboard | Samsung S25 phone | 412x915 |
 
 ---

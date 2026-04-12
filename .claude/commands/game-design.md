@@ -197,7 +197,7 @@ All animations use CSS @keyframes — never JS animation libraries.
 - [ ] Voice is consistent throughout (no Nia→robot→Nia switching)
 - [ ] Loading state shown while audio fetches
 - [ ] Minimum 48px touch targets on all interactive elements
-- [ ] Tested at device viewport (JJ: 1920x1200 S10 FE, Buggsy: 1340x800 A9)
+- [ ] Tested at device viewport (JJ: 1200x1920 S10 FE, Buggsy: 800x1340 A9)
 - [ ] Theme matches loading screen aesthetic
 - [ ] Idle animations active on interactive elements
 - [ ] Celebration screen has confetti + audio + star count animation
