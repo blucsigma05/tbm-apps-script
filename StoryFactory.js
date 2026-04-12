@@ -477,12 +477,22 @@ toneGuide +
 '- Each scene must include a characters_in_scene array listing which characters appear\n' +
 '- Keep it warm, funny, and age-appropriate\n' +
 '- If referencing a previous story, do it with a quick natural callback — not a recap\n\n' +
+'VOCABULARY RULES:\n' +
+'- Include 3-5 vocabulary words naturally in the story text\n' +
+(character === 'JJ' ? '- JJ vocab: simple sight words and pre-K words (colors, shapes, feelings, animals, food). Words a 4-year-old is learning.\n' :
+ character === 'Buggsy' ? '- Buggsy vocab: 3rd-4th grade words tied to the story theme. Words that stretch but don\'t overwhelm.\n' :
+ '- Both vocab: mix of simple (JJ level) and stretch (Buggsy level) words.\n') +
+'- Each vocab word must appear in at least one scene\'s text\n' +
+'- Return vocab in the JSON with word + kid-friendly definition\n\n' +
 'STORY TOPIC: ' + topic + '\n' +
 'MAIN CHARACTER(S): ' + character + '\n\n' +
 'Return ONLY valid JSON, NO markdown, NO backticks, NO preamble:\n' +
 '{\n' +
 '  ' + titleTemplate + ',\n' +
 '  "character": "' + character + '",\n' +
+'  "vocab": [\n' +
+'    {"word": "explore", "definition": "to travel and discover new things"}\n' +
+'  ],\n' +
 '  "scenes": [\n' +
 '    {\n' +
 '      "scene_number": 1,\n' +
@@ -1089,6 +1099,23 @@ bulleted_list_item: { rich_text: [{ type: 'text', text: { content: canonData.pro
 }
 }
 
+// v16.0: Add vocabulary section to catalogue page
+if (storyData.vocab && storyData.vocab.length > 0) {
+blocks.push({ object: 'block', type: 'divider', divider: {} });
+blocks.push({
+object: 'block', type: 'heading_3',
+heading_3: { rich_text: [{ type: 'text', text: { content: '📖 Vocabulary Words' } }] }
+});
+for (var vi = 0; vi < storyData.vocab.length; vi++) {
+var vEntry = storyData.vocab[vi];
+var vText = (typeof vEntry === 'string') ? vEntry : (vEntry.word + ' — ' + (vEntry.definition || ''));
+blocks.push({
+object: 'block', type: 'bulleted_list_item',
+bulleted_list_item: { rich_text: [{ type: 'text', text: { content: vText } }] }
+});
+}
+}
+
 // Build properties including new memory fields
 var properties = {
 'Story Title': { title: [{ type: 'text', text: { content: storyData.title } }] },
@@ -1106,6 +1133,17 @@ properties['Summary'] = { rich_text: [{ type: 'text', text: { content: canonData
 if (canonData && canonData.proposed_canon && canonData.proposed_canon.length > 0) {
 properties['Proposed Canon'] = { rich_text: [{ type: 'text', text: { content: canonData.proposed_canon.join('\n') } }] };
 }
+
+// v16.0: Save vocab words to Notion property
+if (storyData.vocab && storyData.vocab.length > 0) {
+var vocabWords = [];
+for (var vj = 0; vj < storyData.vocab.length; vj++) {
+  var ve = storyData.vocab[vj];
+  vocabWords.push(typeof ve === 'string' ? ve : ve.word);
+}
+properties['Vocab Words'] = { rich_text: [{ type: 'text', text: { content: vocabWords.join(', ') } }] };
+}
+
 // Canon Approved defaults to unchecked — parent reviews and approves
 properties['Canon Approved'] = { checkbox: false };
 
@@ -1578,7 +1616,12 @@ function listStoredStories() {
     try {
       var data = JSON.parse(props[key]);
       var sceneCount = (data.scenes && data.scenes.length) ? data.scenes.length : 0;
-      var vocabList = data.vocab || data.vocabulary || [];
+      // v16.0: vocab may be array of {word, definition} objects or plain strings
+      var rawVocab = data.vocab || data.vocabulary || [];
+      var vocabList = [];
+      for (var vx = 0; vx < rawVocab.length; vx++) {
+        vocabList.push(typeof rawVocab[vx] === 'string' ? rawVocab[vx] : (rawVocab[vx].word || ''));
+      }
       var wordCount = data.wordCount || 0;
 
       // If wordCount not pre-computed, estimate from scene text
