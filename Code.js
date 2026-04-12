@@ -426,7 +426,8 @@ function serveData(e) {
         'recordVocabExposuresSafe': recordVocabExposuresSafe,
         'getStoryForReaderSafe': getStoryForReaderSafe,
         'getStoryImagesSafe': getStoryImagesSafe,
-        'runTestsSafe': runTestsSafe,
+        // runTestsSafe removed — diagnostic endpoint should not be publicly callable via CF /api.
+        // Tests still run via ?action=runTests (direct GAS route, not proxied).
         'saveMissionStateSafe': saveMissionStateSafe,
         'getMissionStateSafe': getMissionStateSafe,
         'submitHomeworkSafe': submitHomeworkSafe,
