@@ -3,11 +3,11 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 15.4
+// Version: 16.0
 // Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
 // ============================================================
 
-function getStoryFactoryVersion() { return 15.4; }
+function getStoryFactoryVersion() { return 16.0; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -154,6 +154,23 @@ Logger.log('notionPatch FAILED: ' + endpoint + ' — ' + e.message.substring(0, 
 sf_logError_('notionPatch', e.message);
 return 500;
 }
+}
+
+function notionGet_(endpoint) {
+  var response = UrlFetchApp.fetch('https://api.notion.com/v1/' + endpoint, {
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer ' + CONFIG.NOTION_TOKEN,
+      'Notion-Version': CONFIG.NOTION_VERSION
+    },
+    muteHttpExceptions: true
+  });
+  var code = response.getResponseCode();
+  var text = response.getContentText();
+  if (code >= 400) {
+    throw new Error('NOTION_GET_' + code + ': ' + text.substring(0, 300));
+  }
+  return JSON.parse(text);
 }
 
 // ── PHASE 1: CHARACTER TRUTH FROM NOTION ─────────────────────
@@ -1150,7 +1167,7 @@ return 7;
 // ── MAIN PIPELINE ────────────────────────────────────────────
 
 function runStoryFactory(topic, character, tone) {
-Logger.log('=== Story Factory v15.1 ===');
+Logger.log('=== Story Factory v16.0 (legacy monolithic — test only) ===');
 Logger.log('Topic: ' + topic + ' | Character: ' + character + ' | Tone: ' + (tone || 'Funny'));
 
 // Run-state object — tracks which phases completed so the catch block can produce honest hints.
@@ -1312,88 +1329,156 @@ return { success: false, error: e.message, resumeHint: hint };
 // ── POLL NOTION FOR NEW REQUESTS ─────────────────────────────
 
 function pollForNewStories() {
-// Circuit breaker — stop hammering if Gemini is down
-var props = PropertiesService.getScriptProperties();
-var consecutiveFails = parseInt(props.getProperty('SF_CONSECUTIVE_FAILS') || '0');
-var pausedUntil = parseInt(props.getProperty('SF_PAUSED_UNTIL') || '0');
-if (pausedUntil > 0 && Date.now() < pausedUntil) {
-Logger.log('Circuit breaker OPEN — paused until ' + new Date(pausedUntil).toISOString() + '. Skipping poll.');
-return;
-}
-if (pausedUntil > 0 && Date.now() >= pausedUntil) {
-props.deleteProperty('SF_PAUSED_UNTIL');
-props.setProperty('SF_CONSECUTIVE_FAILS', '0');
-consecutiveFails = 0;
-Logger.log('Circuit breaker RESET — resuming polls.');
-}
+  var props = PropertiesService.getScriptProperties();
 
-if (CONFIG.ENFORCE_OFF_PEAK) {
-var now = new Date();
-var cstString = Utilities.formatDate(now, 'America/Chicago', 'H');
-var hour = parseInt(cstString, 10);
-var isOffPeak = CONFIG.OFF_PEAK_START > CONFIG.OFF_PEAK_END
-? (hour >= CONFIG.OFF_PEAK_START || hour < CONFIG.OFF_PEAK_END)
-: (hour >= CONFIG.OFF_PEAK_START && hour < CONFIG.OFF_PEAK_END);
-if (!isOffPeak) {
-Logger.log('Skipping — outside off-peak. CST hour: ' + hour);
-return;
-}
-}
+  // v16.0: Per-phase circuit breakers (replace global SF_CONSECUTIVE_FAILS)
+  var phaseKeys = ['WRITE', 'ILLUS', 'ASSEM'];
+  for (var p = 0; p < phaseKeys.length; p++) {
+    var pauseKey = 'SF_' + phaseKeys[p] + '_PAUSED_UNTIL';
+    var phasePaused = parseInt(props.getProperty(pauseKey) || '0');
+    if (phasePaused > 0 && Date.now() >= phasePaused) {
+      props.deleteProperty(pauseKey);
+      props.setProperty('SF_' + phaseKeys[p] + '_FAILS', '0');
+      Logger.log('Circuit breaker RESET for ' + phaseKeys[p]);
+    }
+  }
 
-// v15.1: Concurrency guard — skip this trigger fire if a previous invocation is still running.
-// Uses tryLock (intentionally — we want to SKIP, not wait) so two triggers never double-process.
-var sfLock = LockService.getScriptLock();
-if (!sfLock.tryLock(1000)) {
-Logger.log('Another pollForNewStories invocation is already running. Skipping this trigger fire.');
-return;
-}
+  // Migrate: clean up old global circuit breaker keys (one-time on first poll after v16 deploy)
+  if (props.getProperty('SF_CONSECUTIVE_FAILS')) {
+    props.deleteProperty('SF_CONSECUTIVE_FAILS');
+    props.deleteProperty('SF_PAUSED_UNTIL');
+    Logger.log('Migrated: removed old global circuit breaker keys');
+  }
 
-try {
-Logger.log('Polling for new story requests...');
-var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
-filter: { property: 'Status', select: { equals: 'Idea' } }
-});
+  // Off-peak guard
+  if (CONFIG.ENFORCE_OFF_PEAK) {
+    var now = new Date();
+    var cstString = Utilities.formatDate(now, 'America/Chicago', 'H');
+    var hour = parseInt(cstString, 10);
+    var isOffPeak = CONFIG.OFF_PEAK_START > CONFIG.OFF_PEAK_END
+      ? (hour >= CONFIG.OFF_PEAK_START || hour < CONFIG.OFF_PEAK_END)
+      : (hour >= CONFIG.OFF_PEAK_START && hour < CONFIG.OFF_PEAK_END);
+    if (!isOffPeak) {
+      Logger.log('Skipping — outside off-peak. CST hour: ' + hour);
+      return;
+    }
+  }
 
-if (!result.results || result.results.length === 0) {
-Logger.log('No new requests.');
-return;
-}
+  // Concurrency guard — tryLock (skip, not wait)
+  var sfLock = LockService.getScriptLock();
+  if (!sfLock.tryLock(1000)) {
+    Logger.log('Another pollForNewStories invocation running. Skipping.');
+    return;
+  }
 
-Logger.log('Found ' + result.results.length + ' request(s)');
+  try {
+    Logger.log('Polling for actionable story requests...');
 
-var page = result.results[0];
-var pageId = page.id;
-var topic = getNotionText(page.properties['Topic'], 'rich_text') || 'A new adventure';
-var character = (page.properties['Character'] && page.properties['Character'].select)
-? page.properties['Character'].select.name
-: 'JJ';
-var tone = (page.properties['Tone'] && page.properties['Tone'].select)
-? page.properties['Tone'].select.name
-: 'Funny';
+    // v16.0: Multi-status query + stale-claim recovery (15 min threshold)
+    var STALE_CLAIM_MS = 15 * 60 * 1000;
+    var staleCutoff = new Date(Date.now() - STALE_CLAIM_MS).toISOString();
 
-// v15.1: Atomically claim the row by flipping Status BEFORE expensive work.
-// Prevents a second invocation (manual run, concurrent trigger, etc.) from picking up the same row.
-updateNotionRow(pageId, null, 'Generating');
-var r = runStoryFactory(topic, character, tone);
+    var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
+      filter: {
+        or: [
+          // Normal actionable statuses
+          { property: 'Status', select: { equals: 'Idea' } },
+          { property: 'Status', select: { equals: 'Written' } },
+          { property: 'Status', select: { equals: 'Illustrated' } },
+          // Stale-claim recovery: rows stuck in claim status > 15 min
+          { and: [
+            { property: 'Status', select: { equals: 'Writing' } },
+            { property: 'Last edited time', date: { before: staleCutoff } }
+          ]},
+          { and: [
+            { property: 'Status', select: { equals: 'Illustrating' } },
+            { property: 'Last edited time', date: { before: staleCutoff } }
+          ]},
+          { and: [
+            { property: 'Status', select: { equals: 'Assembling' } },
+            { property: 'Last edited time', date: { before: staleCutoff } }
+          ]}
+        ]
+      },
+      sorts: [{ timestamp: 'created_time', direction: 'ascending' }],
+      page_size: 1
+    });
 
-if (r.success) {
-updateNotionRow(pageId, r.pdfUrl, 'Ready');
-props.setProperty('SF_CONSECUTIVE_FAILS', '0');
-} else {
-updateNotionRow(pageId, null, 'Failed', r.resumeHint || null);
-Logger.log('Set to Failed. ' + (r.resumeHint || 'Change to Idea manually to retry.'));
-sf_logError_('pollForNewStories', new Error('Story generation failed: ' + (r.error || 'unknown')));
-consecutiveFails++;
-props.setProperty('SF_CONSECUTIVE_FAILS', String(consecutiveFails));
-if (consecutiveFails >= 3) {
-var pauseDuration = 3600000; // 1 hour
-props.setProperty('SF_PAUSED_UNTIL', String(Date.now() + pauseDuration));
-Logger.log('Circuit breaker TRIPPED — ' + consecutiveFails + ' consecutive failures. Pausing for 1 hour.');
-}
-}
-} finally {
-sfLock.releaseLock();
-}
+    if (!result.results || result.results.length === 0) {
+      Logger.log('No actionable requests.');
+      return;
+    }
+
+    var page = result.results[0];
+    var pageId = page.id;
+    var status = page.properties['Status'].select.name;
+    Logger.log('Found: pageId=' + pageId + ' status=' + status);
+
+    // Map status to phase key for circuit breaker
+    var phaseKey;
+    if (status === 'Idea' || status === 'Writing') phaseKey = 'WRITE';
+    else if (status === 'Written' || status === 'Illustrating') phaseKey = 'ILLUS';
+    else if (status === 'Illustrated' || status === 'Assembling') phaseKey = 'ASSEM';
+
+    // Check per-phase circuit breaker
+    if (phaseKey) {
+      var cbPaused = parseInt(props.getProperty('SF_' + phaseKey + '_PAUSED_UNTIL') || '0');
+      if (cbPaused > 0 && Date.now() < cbPaused) {
+        Logger.log('Circuit breaker OPEN for ' + phaseKey + ' — skipping.');
+        return;
+      }
+    }
+
+    // Dispatch based on status
+    var r;
+    if (status === 'Idea') {
+      var topic = getNotionText(page.properties['Topic'], 'rich_text') || 'A new adventure';
+      var character = (page.properties['Character'] && page.properties['Character'].select)
+        ? page.properties['Character'].select.name : 'JJ';
+      var tone = (page.properties['Tone'] && page.properties['Tone'].select)
+        ? page.properties['Tone'].select.name : 'Funny';
+      r = runWritePhase_(pageId, topic, character, tone);
+    }
+    else if (status === 'Written') {
+      r = runIllustratePhase_(pageId);
+    }
+    else if (status === 'Illustrated') {
+      r = runAssemblePhase_(pageId);
+    }
+    // Stale-claim recovery paths
+    else if (status === 'Writing') {
+      Logger.log('Stale claim recovery: Writing → Idea for ' + pageId);
+      updateNotionRow(pageId, null, 'Idea');
+      return;
+    }
+    else if (status === 'Illustrating') {
+      Logger.log('Stale claim recovery: Illustrating → Written for ' + pageId);
+      updateNotionRow(pageId, null, 'Written');
+      return;
+    }
+    else if (status === 'Assembling') {
+      Logger.log('Stale claim recovery: Assembling → Illustrated for ' + pageId);
+      updateNotionRow(pageId, null, 'Illustrated');
+      return;
+    }
+
+    // Update per-phase circuit breaker
+    if (r && phaseKey) {
+      if (r.success) {
+        props.setProperty('SF_' + phaseKey + '_FAILS', '0');
+      } else if (!r.partial) {
+        var fails = parseInt(props.getProperty('SF_' + phaseKey + '_FAILS') || '0') + 1;
+        props.setProperty('SF_' + phaseKey + '_FAILS', String(fails));
+        if (fails >= 3) {
+          props.setProperty('SF_' + phaseKey + '_PAUSED_UNTIL', String(Date.now() + 3600000));
+          Logger.log('Circuit breaker TRIPPED for ' + phaseKey + ' — ' + fails + ' failures. Pausing 1 hour.');
+        }
+      }
+    }
+
+  } finally {
+    sfLock.releaseLock();
+  }
 }
 
 // ── INSTALL TRIGGER ──────────────────────────────────────────
@@ -1857,5 +1942,462 @@ function sf_getFailureSummary_(days) {
   };
 }
 
-// END OF FILE — StoryFactory v15.4
+// ── PHASED PIPELINE: HELPERS (v16.0) ────────────────────────────────
+
+/**
+ * Save story JSON to Notion 'Story Data' property on the trigger row.
+ * If JSON <= 1800 chars: stored inline in rich_text property.
+ * If JSON > 1800 chars: stored as code blocks on the page, property set to 'CHILD_BLOCKS' marker.
+ */
+function sf_saveStoryData_(pageId, json) {
+  var jsonStr = typeof json === 'string' ? json : JSON.stringify(json);
+
+  if (jsonStr.length <= 1800) {
+    notionPatch('pages/' + pageId, {
+      properties: { 'Story Data': { rich_text: [{ text: { content: jsonStr } }] } }
+    });
+    Logger.log('sf_saveStoryData_: saved inline (' + jsonStr.length + ' chars)');
+    return;
+  }
+
+  // Too large for property — store in child code blocks
+  notionPatch('pages/' + pageId, {
+    properties: { 'Story Data': { rich_text: [{ text: { content: 'CHILD_BLOCKS' } }] } }
+  });
+
+  var chunks = [];
+  for (var i = 0; i < jsonStr.length; i += 1900) {
+    chunks.push(jsonStr.substring(i, Math.min(i + 1900, jsonStr.length)));
+  }
+
+  var blocks = [];
+  for (var c = 0; c < chunks.length; c++) {
+    blocks.push({
+      object: 'block', type: 'code',
+      code: { rich_text: [{ type: 'text', text: { content: chunks[c] } }], language: 'json' }
+    });
+  }
+
+  // Append blocks via Notion blocks API (PATCH /blocks/{id}/children)
+  safeFetch('https://api.notion.com/v1/blocks/' + pageId + '/children', {
+    method: 'PATCH',
+    headers: {
+      'Authorization': 'Bearer ' + CONFIG.NOTION_TOKEN,
+      'Content-Type': 'application/json',
+      'Notion-Version': CONFIG.NOTION_VERSION
+    },
+    contentType: 'application/json',
+    payload: JSON.stringify({ children: blocks }),
+    muteHttpExceptions: true
+  });
+
+  Logger.log('sf_saveStoryData_: saved as ' + chunks.length + ' child blocks (' + jsonStr.length + ' chars)');
+}
+
+/**
+ * Load and parse story JSON from Notion trigger row.
+ * Reads 'Story Data' property; if 'CHILD_BLOCKS', reads code blocks from page children.
+ */
+function sf_loadStoryData_(pageId) {
+  var page = notionGet_('pages/' + pageId);
+  var storyDataText = getNotionText(page.properties['Story Data'], 'rich_text');
+
+  if (!storyDataText) {
+    throw new Error('sf_loadStoryData_: Story Data empty for ' + pageId);
+  }
+
+  if (storyDataText !== 'CHILD_BLOCKS') {
+    return JSON.parse(storyDataText);
+  }
+
+  // Read child blocks and reassemble JSON from code blocks
+  var blocksResult = notionGet_('blocks/' + pageId + '/children?page_size=100');
+  var jsonParts = [];
+  var blocks = blocksResult.results || [];
+  for (var i = 0; i < blocks.length; i++) {
+    if (blocks[i].type === 'code') {
+      var codeText = '';
+      var richText = blocks[i].code.rich_text || [];
+      for (var r = 0; r < richText.length; r++) {
+        codeText += richText[r].plain_text || '';
+      }
+      jsonParts.push(codeText);
+    }
+  }
+
+  if (jsonParts.length === 0) {
+    throw new Error('sf_loadStoryData_: CHILD_BLOCKS marker but no code blocks for ' + pageId);
+  }
+
+  var fullJson = jsonParts.join('');
+  Logger.log('sf_loadStoryData_: loaded from ' + jsonParts.length + ' blocks (' + fullJson.length + ' chars)');
+  return JSON.parse(fullJson);
+}
+
+/**
+ * Create or get a per-story Drive subfolder for images.
+ * Folder named StoryImages_<first 8 chars of pageId> inside CONFIG.STORY_FOLDER_ID.
+ * Saves full Drive URL to Notion 'Drive Folder' property.
+ */
+function sf_getOrCreateImageFolder_(pageId) {
+  var shortId = pageId.replace(/-/g, '').substring(0, 8);
+  var folderName = 'StoryImages_' + shortId;
+  var parentFolder = DriveApp.getFolderById(CONFIG.STORY_FOLDER_ID);
+
+  var existing = parentFolder.getFoldersByName(folderName);
+  var folder;
+  if (existing.hasNext()) {
+    folder = existing.next();
+    Logger.log('sf_getOrCreateImageFolder_: found existing ' + folderName);
+  } else {
+    folder = parentFolder.createFolder(folderName);
+    Logger.log('sf_getOrCreateImageFolder_: created ' + folderName);
+  }
+
+  var url = 'https://drive.google.com/drive/folders/' + folder.getId();
+
+  notionPatch('pages/' + pageId, {
+    properties: { 'Drive Folder': { rich_text: [{ text: { content: url } }] } }
+  });
+
+  return { id: folder.getId(), url: url };
+}
+
+/**
+ * List scene numbers already saved as images in a Drive folder.
+ * Expected filenames: scene_0.png, scene_2.png, etc.
+ */
+function sf_listExistingImages_(folderId) {
+  var folder = DriveApp.getFolderById(folderId);
+  var files = folder.getFiles();
+  var scenes = [];
+  while (files.hasNext()) {
+    var name = files.next().getName();
+    var match = name.match(/scene_(\d+)/);
+    if (match) scenes.push(parseInt(match[1], 10));
+  }
+  Logger.log('sf_listExistingImages_: found ' + scenes.length + ' images');
+  return scenes;
+}
+
+/**
+ * Save a single image blob to a Drive folder.
+ */
+function sf_saveImageToFolder_(folderId, filename, imageData) {
+  var folder = DriveApp.getFolderById(folderId);
+  var blob = Utilities.newBlob(
+    Utilities.base64Decode(imageData.data),
+    imageData.mimeType || 'image/png',
+    filename
+  );
+  folder.createFile(blob);
+  Logger.log('sf_saveImageToFolder_: saved ' + filename);
+}
+
+/**
+ * Load ordered image blobs from a Drive folder, matching CONFIG.IMAGE_SCENES order.
+ * Returns array of length 6 (max scenes), with non-null entries for available images.
+ */
+function sf_loadImagesFromFolder_(folderId) {
+  var folder = DriveApp.getFolderById(folderId);
+  var files = folder.getFiles();
+
+  var fileMap = {};
+  while (files.hasNext()) {
+    var f = files.next();
+    var match = f.getName().match(/scene_(\d+)/);
+    if (match) fileMap[parseInt(match[1], 10)] = f;
+  }
+
+  var images = [];
+  for (var i = 0; i < 6; i++) images.push(null);
+
+  for (var s = 0; s < CONFIG.IMAGE_SCENES.length; s++) {
+    var sceneIdx = CONFIG.IMAGE_SCENES[s];
+    if (fileMap[sceneIdx]) {
+      try {
+        var blob = fileMap[sceneIdx].getBlob();
+        images[sceneIdx] = {
+          data: Utilities.base64Encode(blob.getBytes()),
+          mimeType: blob.getContentType() || 'image/png',
+          sceneNumber: sceneIdx + 1
+        };
+      } catch(e) {
+        Logger.log('sf_loadImagesFromFolder_: failed scene_' + sceneIdx + ': ' + e.message);
+      }
+    }
+  }
+
+  var loaded = 0;
+  for (var j = 0; j < images.length; j++) { if (images[j]) loaded++; }
+  Logger.log('sf_loadImagesFromFolder_: loaded ' + loaded + ' images');
+  return images;
+}
+
+/**
+ * Update 'Images Generated' progress property (e.g. "3/4").
+ */
+function sf_updateImagesProgress_(pageId, progress) {
+  notionPatch('pages/' + pageId, {
+    properties: { 'Images Generated': { rich_text: [{ text: { content: String(progress) } }] } }
+  });
+}
+
+/**
+ * Set 'Failed Phase' select property to indicate which phase caused failure.
+ */
+function sf_setFailedPhase_(pageId, phase) {
+  notionPatch('pages/' + pageId, {
+    properties: { 'Failed Phase': { select: { name: phase } } }
+  });
+}
+
+/**
+ * Read 'Drive Folder' URL from Notion, extract and return the folder ID.
+ */
+function sf_getDriveFolderForStory_(pageId) {
+  var page = notionGet_('pages/' + pageId);
+  var url = getNotionText(page.properties['Drive Folder'], 'rich_text');
+  if (!url) throw new Error('sf_getDriveFolderForStory_: Drive Folder not set for ' + pageId);
+  var parts = url.split('/folders/');
+  if (parts.length < 2) throw new Error('sf_getDriveFolderForStory_: invalid URL: ' + url);
+  return parts[1];
+}
+
+// ── PHASED PIPELINE: PHASE HANDLERS (v16.0) ────────────────────────
+
+/**
+ * Phase 1: WRITE — Generate story text, audit, extract canon, persist to Notion.
+ * Input: Idea → Claim: Writing → Output: Written (or Failed + Failed Phase = Write)
+ */
+function runWritePhase_(pageId, topic, character, tone) {
+  Logger.log('=== Phase 1: WRITE — pageId=' + pageId + ' ===');
+
+  try {
+    updateNotionRow(pageId, null, 'Writing');
+    _refImageCache = {};
+
+    if (!CONFIG.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured.');
+    if (!CONFIG.NOTION_TOKEN) throw new Error('NOTION_TOKEN not configured.');
+
+    if (!topic || String(topic).trim().length === 0) topic = 'A new adventure';
+    if (String(topic).length > 500) topic = String(topic).substring(0, 500);
+    topic = String(topic).trim();
+
+    var characters = sf_getCharacterFromNotion_(character);
+    if (characters.length === 0) throw new Error('No active characters found for: ' + character);
+
+    var recentStories = sf_getRecentStories_(character);
+    var canonFacts = sf_getCanonFacts_(character);
+
+    Logger.log('Generating story...');
+    var storyData = generateStory(topic, character, tone || 'Funny', characters, recentStories, canonFacts);
+    storyData.topic = topic;
+
+    if (!storyData.scenes || storyData.scenes.length < 6) {
+      Logger.log('WARN: ' + (storyData.scenes ? storyData.scenes.length : 0) + ' scenes. Retrying...');
+      storyData = generateStory(topic, character, tone || 'Funny', characters, recentStories, canonFacts);
+      storyData.topic = topic;
+      if (!storyData.scenes || storyData.scenes.length < 6) {
+        throw new Error('Story generation failed: ' + (storyData.scenes ? storyData.scenes.length : 0) + ' scenes after retry.');
+      }
+    }
+
+    for (var v = 0; v < storyData.scenes.length; v++) {
+      if (!storyData.scenes[v].text || storyData.scenes[v].text.trim().length < 20) {
+        Logger.log('WARN: Scene ' + (v + 1) + ' short text: "' + (storyData.scenes[v].text || '').substring(0, 50) + '"');
+      }
+    }
+
+    Logger.log('Story: "' + storyData.title + '" (' + storyData.scenes.length + ' scenes)');
+
+    var audit = auditStoryText_(storyData, character);
+    storyData._audit = audit;
+
+    Logger.log('Extracting canon...');
+    var canonData = extractCanonFromStory(storyData);
+
+    // Persist story + canon to Notion
+    var payload = { story: storyData, canon: canonData, tone: tone || 'Funny' };
+    sf_saveStoryData_(pageId, JSON.stringify(payload));
+
+    updateNotionRow(pageId, null, 'Written');
+    Logger.log('Phase 1 COMPLETE — Status → Written');
+    return { success: true, title: storyData.title };
+
+  } catch(e) {
+    Logger.log('Phase 1 FAILED: ' + e.message);
+    sf_logError_('runWritePhase_', e);
+    try { updateNotionRow(pageId, null, 'Failed'); } catch(e2) { /* best effort */ }
+    try { sf_setFailedPhase_(pageId, 'Write'); } catch(e3) { /* best effort */ }
+    return { success: false, error: e.message };
+  }
+}
+
+/**
+ * Phase 2: ILLUSTRATE — Generate scene images, save to Drive folder, track progress.
+ * Input: Written → Claim: Illustrating → Output: Illustrated (or Failed, or revert to Written for partial)
+ */
+function runIllustratePhase_(pageId) {
+  Logger.log('=== Phase 2: ILLUSTRATE — pageId=' + pageId + ' ===');
+
+  try {
+    updateNotionRow(pageId, null, 'Illustrating');
+    _refImageCache = {};
+
+    var payload = sf_loadStoryData_(pageId);
+    var storyData = payload.story;
+
+    var characters = sf_getCharacterFromNotion_(storyData.character);
+    var folderInfo = sf_getOrCreateImageFolder_(pageId);
+    var existing = sf_listExistingImages_(folderInfo.id);
+    Logger.log('Existing images: ' + existing.length + '/' + CONFIG.IMAGE_SCENES.length);
+
+    var refImages = sf_getCharacterRefImages_(characters);
+
+    // Build character visual/ref maps (same logic as generateSceneImages)
+    var charVisualMap = {};
+    var charRefMap = {};
+    for (var ci = 0; ci < characters.length; ci++) {
+      var charName = characters[ci].name.split(' ')[0].toUpperCase();
+      charVisualMap[charName] = 'CHARACTER: ' + characters[ci].visualTraits;
+      for (var ri = 0; ri < refImages.length; ri++) {
+        if (refImages[ri].name.toUpperCase() === charName || refImages[ri].name === characters[ci].name) {
+          charRefMap[charName] = refImages[ri];
+        }
+      }
+    }
+
+    var newImages = 0;
+    for (var idx = 0; idx < CONFIG.IMAGE_SCENES.length; idx++) {
+      var sceneIndex = CONFIG.IMAGE_SCENES[idx];
+
+      if (existing.indexOf(sceneIndex) !== -1) {
+        Logger.log('Scene ' + (sceneIndex + 1) + ' exists — skipping');
+        continue;
+      }
+
+      Logger.log('Generating image for scene ' + (sceneIndex + 1) + '...');
+
+      var scene = storyData.scenes[sceneIndex];
+      var sceneChars = scene.characters_in_scene || [];
+      var sceneVisuals = '';
+      var sceneRefImages = [];
+
+      if (sceneChars.length > 0) {
+        for (var sc = 0; sc < sceneChars.length; sc++) {
+          var scKey = sceneChars[sc].toUpperCase().split(' ')[0];
+          if (scKey === 'MOM' || scKey === 'LT') scKey = 'MOM';
+          if (scKey === 'DAD' || scKey === 'JT') scKey = 'DAD';
+          if (scKey === 'NATHAN') scKey = 'BUGGSY';
+          if (charVisualMap[scKey]) sceneVisuals += charVisualMap[scKey] + '\n';
+          if (charRefMap[scKey]) sceneRefImages.push(charRefMap[scKey]);
+        }
+      } else {
+        for (var allKey in charVisualMap) {
+          sceneVisuals += charVisualMap[allKey] + '\n';
+        }
+        sceneRefImages = refImages;
+      }
+
+      var fullPrompt = scene.image_prompt;
+      var _scText = (scene.text || '').toLowerCase();
+      var _setting = 'casual';
+      if (_scText.indexOf('pool') >= 0 || _scText.indexOf('swim') >= 0 || _scText.indexOf('beach') >= 0) _setting = 'beach';
+      else if (_scText.indexOf('school') >= 0 || _scText.indexOf('class') >= 0) _setting = 'school';
+      else if (_scText.indexOf('bed') >= 0 || _scText.indexOf('sleep') >= 0 || _scText.indexOf('pajama') >= 0 || _scText.indexOf('pillow') >= 0) _setting = 'bedtime';
+      else if (_scText.indexOf('formal') >= 0 || _scText.indexOf('church') >= 0 || _scText.indexOf('wedding') >= 0) _setting = 'formal';
+      else if (_scText.indexOf('sport') >= 0 || _scText.indexOf('basket') >= 0 || _scText.indexOf('soccer') >= 0) _setting = 'sports';
+      var _wardrobeNames = sceneChars.length > 0 ? sceneChars : ['Buggsy', 'JJ'];
+      var _wardrobeBlock = buildWardrobePrompt_(_wardrobeNames, _setting);
+      if (_wardrobeBlock) fullPrompt = _wardrobeBlock + '\n' + fullPrompt;
+      if (sceneVisuals) fullPrompt = sceneVisuals + '\n\n' + fullPrompt;
+      fullPrompt += '\n\nIMPORTANT: Centered composition. All characters fully visible within the frame. No cropping.';
+
+      var imageResult = generateWithRetry(fullPrompt, sceneIndex + 1, sceneRefImages);
+
+      if (imageResult) {
+        sf_saveImageToFolder_(folderInfo.id, 'scene_' + sceneIndex + '.png', imageResult);
+        newImages++;
+        Logger.log('Scene ' + (sceneIndex + 1) + ' saved to Drive');
+      } else {
+        Logger.log('Scene ' + (sceneIndex + 1) + ' failed');
+      }
+
+      if (idx < CONFIG.IMAGE_SCENES.length - 1) {
+        Utilities.sleep(CONFIG.IMAGE_COOLDOWN);
+      }
+    }
+
+    // Recount total images in folder
+    var finalCount = sf_listExistingImages_(folderInfo.id);
+    var total = CONFIG.IMAGE_SCENES.length;
+    sf_updateImagesProgress_(pageId, finalCount.length + '/' + total);
+
+    if (finalCount.length >= total) {
+      updateNotionRow(pageId, null, 'Illustrated');
+      Logger.log('Phase 2 COMPLETE — Illustrated (' + finalCount.length + '/' + total + ')');
+      return { success: true, imageCount: finalCount.length };
+    } else if (finalCount.length === 0) {
+      updateNotionRow(pageId, null, 'Failed');
+      sf_setFailedPhase_(pageId, 'Illustrate');
+      Logger.log('Phase 2 FAILED — 0 images generated');
+      return { success: false, error: '0 images generated' };
+    } else {
+      // Partial — revert to Written for retry next poll
+      updateNotionRow(pageId, null, 'Written');
+      Logger.log('Phase 2 PARTIAL — ' + finalCount.length + '/' + total + '. Reverted to Written.');
+      return { success: false, partial: true, imageCount: finalCount.length };
+    }
+
+  } catch(e) {
+    Logger.log('Phase 2 FAILED: ' + e.message);
+    sf_logError_('runIllustratePhase_', e);
+    try { updateNotionRow(pageId, null, 'Failed'); } catch(e2) { /* best effort */ }
+    try { sf_setFailedPhase_(pageId, 'Illustrate'); } catch(e3) { /* best effort */ }
+    return { success: false, error: e.message };
+  }
+}
+
+/**
+ * Phase 3: ASSEMBLE — Build PDF from persisted story + images, create Notion catalogue page.
+ * Input: Illustrated → Claim: Assembling → Output: Ready (or Failed + Failed Phase = Assemble)
+ */
+function runAssemblePhase_(pageId) {
+  Logger.log('=== Phase 3: ASSEMBLE — pageId=' + pageId + ' ===');
+
+  try {
+    updateNotionRow(pageId, null, 'Assembling');
+
+    var payload = sf_loadStoryData_(pageId);
+    var storyData = payload.story;
+    var canonData = payload.canon;
+    var tone = payload.tone || 'Funny';
+
+    var folderId = sf_getDriveFolderForStory_(pageId);
+    var imageBlobs = sf_loadImagesFromFolder_(folderId);
+
+    var bookNumber = getNextBookNumber();
+    Logger.log('Building PDF for Book #' + bookNumber + '...');
+    var pdf = buildStoryPDF(storyData, imageBlobs, bookNumber);
+    Logger.log('PDF: ' + pdf.url);
+
+    Logger.log('Creating Notion catalogue page...');
+    var notionUrl = buildNotionCataloguePage(storyData, pdf.url, bookNumber, canonData, tone);
+    Logger.log('Notion: ' + notionUrl);
+
+    updateNotionRow(pageId, pdf.url, 'Ready');
+    Logger.log('Phase 3 COMPLETE — Ready, Book #' + bookNumber);
+    return { success: true, title: storyData.title, pdfUrl: pdf.url, bookNumber: bookNumber };
+
+  } catch(e) {
+    Logger.log('Phase 3 FAILED: ' + e.message);
+    sf_logError_('runAssemblePhase_', e);
+    try { updateNotionRow(pageId, null, 'Failed'); } catch(e2) { /* best effort */ }
+    try { sf_setFailedPhase_(pageId, 'Assemble'); } catch(e3) { /* best effort */ }
+    return { success: false, error: e.message };
+  }
+}
+
+// END OF FILE — StoryFactory v16.0
 // ════════════════════════════════════════════════════════════════════
