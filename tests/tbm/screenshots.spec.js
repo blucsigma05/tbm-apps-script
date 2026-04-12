@@ -52,12 +52,12 @@ var ROUTE_VIEWPORTS = {
   '/parent':                   { width: 412,  height: 915,  device: 'JT S25' },
   '/pulse':                    { width: 412,  height: 915,  device: 'JT S25' },
   '/vein':                     { width: 1920, height: 1080, device: 'LT Desktop' },
-  '/buggsy':                   { width: 1340, height: 800,  device: 'A9 Tablet' },
-  '/jj':                       { width: 1340, height: 800,  device: 'A7 Tablet' },
+  '/buggsy':                   { width: 800,  height: 1340, device: 'A9 Tablet (portrait)' },
+  '/jj':                       { width: 800,  height: 1340, device: 'A7 Tablet (portrait)' },
   '/daily-missions':           { width: 1368, height: 912,  device: 'Surface Pro' },
-  '/daily-missions?child=jj':  { width: 1920, height: 1200, device: 'S10 FE' },
-  '/wolfdome':                 { width: 1340, height: 800,  device: 'A9 Tablet' },
-  '/sparkle-kingdom':          { width: 1340, height: 800,  device: 'A7 Tablet' }
+  '/daily-missions?child=jj':  { width: 1200, height: 1920, device: 'S10 FE (portrait)' },
+  '/wolfdome':                 { width: 800,  height: 1340, device: 'A9 Tablet (portrait)' },
+  '/sparkle-kingdom':          { width: 800,  height: 1340, device: 'A7 Tablet (portrait)' }
 };
 
 var DESKTOP = { width: 1920, height: 1080, device: 'Desktop' };

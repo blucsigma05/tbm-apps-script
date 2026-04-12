@@ -33,15 +33,15 @@ description: >
 ### Kid Surfaces
 | Route | Surface | Device | Viewport | Who Sees It |
 |-------|---------|--------|----------|-------------|
-| `/buggsy` | KidsHub (Buggsy board) | A9 Tablet | 1340x800 | Buggsy |
-| `/jj` | KidsHub (JJ board) | A7 Tablet | 1340x800 | JJ |
+| `/buggsy` | KidsHub (Buggsy board) | A9 Tablet | 800x1340 | Buggsy |
+| `/jj` | KidsHub (JJ board) | A7 Tablet | 800x1340 | JJ |
 | `/daily-missions` | Daily Missions (Buggsy) | Surface Pro 5 | 1368x912 | Buggsy |
-| `/daily-adventures` | Daily Missions (JJ) | S10 FE | 1920x1200 | JJ |
+| `/daily-adventures` | Daily Missions (JJ) | S10 FE | 1200x1920 | JJ |
 
 ### Education Surfaces
 | Route | Surface | Device | Viewport | Who Sees It |
 |-------|---------|--------|----------|-------------|
-| `/sparkle` | SparkleLearning | S10 FE | 1920x1200 | JJ |
+| `/sparkle` | SparkleLearning | S10 FE | 1200x1920 | JJ |
 | `/homework` | HomeworkModule | Surface Pro 5 | 1368x912 | Buggsy |
 | `/reading` | Reading Module | Surface Pro 5 | 1368x912 | Buggsy |
 | `/writing` | Writing Module | Surface Pro 5 | 1368x912 | Buggsy |

@@ -35,14 +35,14 @@ User -> thompsonfams.com/sparkle
 | /pulse | /pulse | pulse | ThePulse.html | JT S25 | 412x915 | Finance (PIN) |
 | /vein | /vein | vein | TheVein.html | LT Desktop | 1920x1080 | Finance (PIN) |
 | /parent | /parent | kidshub (view=parent) | KidsHub.html | JT S25 | 412x915 | Parents |
-| /buggsy | /buggsy | kidshub (child=buggsy) | KidsHub.html | A9 Tablet | 1340x800 | Buggsy |
-| /jj | /jj | kidshub (child=jj) | KidsHub.html | A7 Tablet | 1340x800 | JJ |
+| /buggsy | /buggsy | kidshub (child=buggsy) | KidsHub.html | A9 Tablet | 800x1340 | Buggsy |
+| /jj | /jj | kidshub (child=jj) | KidsHub.html | A7 Tablet | 800x1340 | JJ |
 | /spine | /spine | spine | TheSpine.html | Fire Stick | 980x551 | Adults |
 | /soul | /soul | soul | TheSoul.html | Fire Stick | 980x551 | Everyone |
 | /daily-missions | /daily-missions | daily-missions | daily-missions.html | Surface Pro | 1368x912 | Buggsy |
-| /daily-adventures | /daily-adventures | daily-missions (child=jj) | daily-missions.html | S10 FE | 1920x1200 | JJ |
-| /sparkle | /sparkle | sparkle | SparkleLearning.html | S10 FE | 1920x1200 | JJ |
-| /sparkle-free | /sparkle-free | sparkle (mode=freeplay) | SparkleLearning.html | S10 FE | 1920x1200 | JJ |
+| /daily-adventures | /daily-adventures | daily-missions (child=jj) | daily-missions.html | S10 FE | 1200x1920 | JJ |
+| /sparkle | /sparkle | sparkle | SparkleLearning.html | S10 FE | 1200x1920 | JJ |
+| /sparkle-free | /sparkle-free | sparkle (mode=freeplay) | SparkleLearning.html | S10 FE | 1200x1920 | JJ |
 | /homework | /homework | homework | HomeworkModule.html | Surface Pro | 1368x912 | Buggsy |
 | /wolfkid | /wolfkid | wolfkid | WolfkidCER.html | Surface Pro | 1368x912 | Buggsy |
 | /reading | /reading | reading | reading-module.html | Surface Pro | 1368x912 | Buggsy |
