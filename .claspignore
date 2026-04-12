@@ -14,6 +14,8 @@ audit-source.sh
 audit-wiring.sh
 wiring-audit-results.txt
 playwright.config.js
+tmp-*.js
+tmp-*.config.js
 package.json
 package-lock.json
 tests/**
