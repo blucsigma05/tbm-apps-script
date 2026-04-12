@@ -3,11 +3,12 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 15.4
-// Pipeline: Notion Trigger → Character Fetch → Memory Inject → Gemini Story → Canon Extract → Gemini Images (with ref images) → PDF on Drive → Notion Page
+// Version: 15.5
+// Pipeline: Notion Trigger → Phase 1 (Write) → Phase 2 (Illustrate) → Phase 3 (Assemble)
+// Each phase runs in its own poll cycle to avoid the 6-minute GAS execution limit.
 // ============================================================
 
-function getStoryFactoryVersion() { return 15.4; }
+function getStoryFactoryVersion() { return 15.5; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -47,6 +48,8 @@ MEMORY_STORY_COUNT: 5,
 MEMORY_CANON_COUNT: 20,
 MIN_IMAGES_REQUIRED: 1, // Throw IMAGE_GATE_FAILED if fewer than this many images succeed (LT can set to 4 for strict mode)
 FAILURE_LOG_SHEET_NAME: 'SF_FailureLog', // v15.2 telemetry: append-only failure log tab in TillerBudgetMaster (set to '' to disable)
+IMAGE_SUBFOLDER_PREFIX: 'sf-images-',
+STORY_DATA_CHUNK_SIZE: 1900,
 };
 
 function sf_logError_(context, error) {
@@ -154,6 +157,93 @@ Logger.log('notionPatch FAILED: ' + endpoint + ' — ' + e.message.substring(0, 
 sf_logError_('notionPatch', e.message);
 return 500;
 }
+}
+
+// ── UPDATE NOTION ROW ────────────────────────────────────────
+
+function updateNotionRow(pageId, storyLink, status, resumeHint) {
+var payload = { properties: { 'Status': { select: { name: status } } } };
+if (storyLink) payload.properties['Story Link'] = { url: storyLink };
+if (resumeHint) {
+  payload.properties['Resume Hint'] = { rich_text: [{ text: { content: String(resumeHint).substring(0, 2000) } }] };
+}
+try {
+  notionPatch('pages/' + pageId, payload);
+} catch (e) {
+  // Resume Hint property may not exist in Notion DB yet — retry without it
+  if (resumeHint && String(e).indexOf('Resume Hint') !== -1) {
+    delete payload.properties['Resume Hint'];
+    notionPatch('pages/' + pageId, payload);
+  } else {
+    throw e;
+  }
+}
+}
+
+// ── STORY DATA PERSISTENCE HELPERS ──────────────────────────
+
+// Serialize storyData to JSON, chunk into 1900-char segments, PATCH to Story Data rich_text field.
+function sf_saveStoryData_(pageId, storyData) {
+  var json = JSON.stringify(storyData);
+  var size = CONFIG.STORY_DATA_CHUNK_SIZE;
+  var chunks = [];
+  for (var i = 0; i < json.length; i += size) {
+    chunks.push(json.substring(i, i + size));
+  }
+
+  var richText = [];
+  for (var c = 0; c < chunks.length; c++) {
+    richText.push({ type: 'text', text: { content: chunks[c] } });
+  }
+
+  notionPatch('pages/' + pageId, {
+    properties: {
+      'Story Data': { rich_text: richText }
+    }
+  });
+  Logger.log('sf_saveStoryData_: saved ' + json.length + ' chars in ' + chunks.length + ' chunk(s)');
+}
+
+// Read Story Data rich_text from page object, rejoin chunks, JSON.parse. Returns null on any failure.
+function sf_loadStoryData_(page) {
+  try {
+    var prop = page && page.properties && page.properties['Story Data'];
+    if (!prop || !prop.rich_text || prop.rich_text.length === 0) {
+      Logger.log('sf_loadStoryData_: Story Data property is empty or missing');
+      return null;
+    }
+    var json = '';
+    for (var i = 0; i < prop.rich_text.length; i++) {
+      json += prop.rich_text[i].plain_text || '';
+    }
+    if (!json) {
+      Logger.log('sf_loadStoryData_: rejoined string is empty');
+      return null;
+    }
+    return JSON.parse(json);
+  } catch(e) {
+    Logger.log('sf_loadStoryData_ FAILED: ' + e.message);
+    return null;
+  }
+}
+
+// Single PATCH: Status=Failed, Failed Phase=phaseName, Resume Hint=hint (first 2000 chars).
+function sf_updateFailedPhase_(pageId, phaseName, hint) {
+  var hintStr = String(hint || '').substring(0, 2000);
+  var payload = {
+    properties: {
+      'Status':       { select: { name: 'Failed' } },
+      'Failed Phase': { rich_text: [{ type: 'text', text: { content: phaseName } }] },
+      'Resume Hint':  { rich_text: [{ type: 'text', text: { content: hintStr } }] }
+    }
+  };
+  try {
+    notionPatch('pages/' + pageId, payload);
+  } catch(e) {
+    // Failed Phase or Resume Hint may not exist yet — fall back to just Status
+    Logger.log('sf_updateFailedPhase_ full PATCH failed, retrying with Status only: ' + e.message);
+    notionPatch('pages/' + pageId, { properties: { 'Status': { select: { name: 'Failed' } } } });
+  }
 }
 
 // ── PHASE 1: CHARACTER TRUTH FROM NOTION ─────────────────────
@@ -1111,27 +1201,6 @@ if (result.object === 'error') throw new Error('Notion error: ' + result.message
 return result.url;
 }
 
-// ── UPDATE NOTION ROW ────────────────────────────────────────
-
-function updateNotionRow(pageId, storyLink, status, resumeHint) {
-var payload = { properties: { 'Status': { select: { name: status } } } };
-if (storyLink) payload.properties['Story Link'] = { url: storyLink };
-if (resumeHint) {
-  payload.properties['Resume Hint'] = { rich_text: [{ text: { content: String(resumeHint).substring(0, 2000) } }] };
-}
-try {
-  notionPatch('pages/' + pageId, payload);
-} catch (e) {
-  // Resume Hint property may not exist in Notion DB yet — retry without it
-  if (resumeHint && String(e).indexOf('Resume Hint') !== -1) {
-    delete payload.properties['Resume Hint'];
-    notionPatch('pages/' + pageId, payload);
-  } else {
-    throw e;
-  }
-}
-}
-
 // ── GET NEXT BOOK NUMBER ─────────────────────────────────────
 
 function getNextBookNumber() {
@@ -1147,15 +1216,373 @@ return (lastNum && lastNum.number ? lastNum.number : 0) + 1;
 return 7;
 }
 
-// ── MAIN PIPELINE ────────────────────────────────────────────
+// ── THREE-PHASE PIPELINE HANDLERS ────────────────────────────
 
-function runStoryFactory(topic, character, tone) {
-Logger.log('=== Story Factory v15.1 ===');
+// Phase 1: Write the story. Saves storyData, canonData, bookNumber, tone to Notion page.
+// On success sets Status='Written'. On error sets Status='Failed' and increments SF_CONSECUTIVE_FAILS.
+function sf_runPhase1Write_(pageId, topic, character, tone) {
+  Logger.log('=== Phase 1: Write === pageId=' + pageId);
+  var props = PropertiesService.getScriptProperties();
+
+  try {
+    updateNotionRow(pageId, null, 'Writing');
+
+    // Config validation
+    if (!CONFIG.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured. Set "JJ Stories" in Script Properties.');
+    if (!CONFIG.NOTION_TOKEN) throw new Error('NOTION_TOKEN not configured. Set "NOTION_TOKEN" in Script Properties.');
+
+    // Clear ref image cache from any prior execution on this instance
+    _refImageCache = {};
+
+    // Input validation
+    if (!topic || String(topic).trim().length === 0) throw new Error('Story topic is required.');
+    if (String(topic).length > 500) topic = String(topic).substring(0, 500);
+    topic = String(topic).trim();
+
+    // Fetch character truth
+    Logger.log('Fetching character data from Notion...');
+    var characters = sf_getCharacterFromNotion_(character);
+    if (characters.length === 0) throw new Error('No active characters found in Notion for: ' + character);
+
+    // Fetch story memory
+    Logger.log('Fetching story memory...');
+    var recentStories = sf_getRecentStories_(character);
+    var canonFacts = sf_getCanonFacts_(character);
+
+    // Generate story
+    Logger.log('Generating story...');
+    var storyData = generateStory(topic, character, tone || 'Funny', characters, recentStories, canonFacts);
+    storyData.topic = topic;
+
+    // Validate scene count — retry once if under 6 scenes
+    if (!storyData.scenes || storyData.scenes.length < 6) {
+      Logger.log('WARN: Only ' + (storyData.scenes ? storyData.scenes.length : 0) + ' scenes returned. Retrying...');
+      storyData = generateStory(topic, character, tone || 'Funny', characters, recentStories, canonFacts);
+      storyData.topic = topic;
+      if (!storyData.scenes || storyData.scenes.length < 6) {
+        throw new Error('Story generation failed: only ' + (storyData.scenes ? storyData.scenes.length : 0) + ' scenes after retry (need 6).');
+      }
+    }
+
+    // Validate scene text content
+    for (var v = 0; v < storyData.scenes.length; v++) {
+      if (!storyData.scenes[v].text || storyData.scenes[v].text.trim().length < 20) {
+        Logger.log('WARN: Scene ' + (v + 1) + ' has empty/short text: "' + (storyData.scenes[v].text || '').substring(0, 50) + '"');
+      }
+    }
+    Logger.log('Story: "' + storyData.title + '" (' + storyData.scenes.length + ' scenes)');
+
+    // Post-generation audit
+    var audit = auditStoryText_(storyData, character);
+    storyData._audit = audit;
+
+    // Extract canon
+    Logger.log('Extracting canon from story...');
+    var canonData = extractCanonFromStory(storyData);
+
+    // Get next book number — must happen here, saved with story data
+    var bookNumber = getNextBookNumber();
+    Logger.log('Assigned Book #' + bookNumber);
+
+    // Persist story data to Notion page
+    sf_saveStoryData_(pageId, { storyData: storyData, canonData: canonData, bookNumber: bookNumber, tone: tone || 'Funny' });
+
+    // Success
+    updateNotionRow(pageId, null, 'Written');
+    props.setProperty('SF_CONSECUTIVE_FAILS', '0');
+    Logger.log('Phase 1 complete: Book #' + bookNumber + ' "' + storyData.title + '" — Status set to Written');
+
+  } catch(e) {
+    Logger.log('Phase 1 FAILED: ' + e.message);
+    Logger.log('Stack: ' + e.stack);
+    sf_logError_('sf_runPhase1Write_', e);
+    sf_updateFailedPhase_(pageId, 'write', 'Phase 1 (Write) failed: ' + e.message);
+    var fails = parseInt(props.getProperty('SF_CONSECUTIVE_FAILS') || '0') + 1;
+    props.setProperty('SF_CONSECUTIVE_FAILS', String(fails));
+  }
+}
+
+// Phase 2: Generate and persist scene images to Drive subfolder.
+// Resumes from where it left off (skips already-generated scenes).
+// On full success sets Status='Illustrated'. On partial run resets to 'Written' with hint (no fail increment).
+// On hard exception sets Status='Failed' and increments SF_CONSECUTIVE_FAILS.
+function sf_runPhase2Illustrate_(pageId, page) {
+  Logger.log('=== Phase 2: Illustrate === pageId=' + pageId);
+  var props = PropertiesService.getScriptProperties();
+
+  try {
+    updateNotionRow(pageId, null, 'Illustrating');
+
+    // Load saved story data
+    var saved = sf_loadStoryData_(page);
+    if (!saved) {
+      sf_updateFailedPhase_(pageId, 'illustrate', 'Story Data missing or unreadable. Re-run Phase 1: set Status back to Idea.');
+      var fails = parseInt(props.getProperty('SF_CONSECUTIVE_FAILS') || '0') + 1;
+      props.setProperty('SF_CONSECUTIVE_FAILS', String(fails));
+      return;
+    }
+
+    var storyData = saved.storyData;
+    var characters = sf_getCharacterFromNotion_(storyData.character);
+
+    // Get or create Drive subfolder for this page's images
+    var pageProps = page.properties || {};
+    var imageFolderIdProp = pageProps['Image Folder ID'];
+    var existingFolderId = imageFolderIdProp && imageFolderIdProp.rich_text && imageFolderIdProp.rich_text.length > 0
+      ? (imageFolderIdProp.rich_text[0].plain_text || '')
+      : '';
+
+    var subfolder;
+    if (existingFolderId) {
+      Logger.log('Using existing image subfolder: ' + existingFolderId);
+      subfolder = DriveApp.getFolderById(existingFolderId);
+    } else {
+      Logger.log('Creating new image subfolder...');
+      var parentFolder = DriveApp.getFolderById(CONFIG.STORY_FOLDER_ID);
+      subfolder = parentFolder.createFolder(CONFIG.IMAGE_SUBFOLDER_PREFIX + pageId);
+      Logger.log('Created subfolder: ' + subfolder.getId());
+    }
+
+    // List existing scene files (scene-N.png) to determine which are missing
+    var existingFiles = {};
+    var fileIter = subfolder.getFiles();
+    while (fileIter.hasNext()) {
+      var f = fileIter.next();
+      var fname = f.getName(); // e.g. "scene-1.png"
+      var m = fname.match(/^scene-(\d+)\.png$/);
+      if (m) {
+        existingFiles[parseInt(m[1]) - 1] = f; // keyed by 0-based scene index
+      }
+    }
+    Logger.log('Existing scene files: ' + Object.keys(existingFiles).length);
+
+    // Determine which IMAGE_SCENES indices are missing
+    var missingScenes = [];
+    for (var mi = 0; mi < CONFIG.IMAGE_SCENES.length; mi++) {
+      var sceneIdx = CONFIG.IMAGE_SCENES[mi];
+      if (!existingFiles[sceneIdx]) {
+        missingScenes.push(sceneIdx);
+      }
+    }
+    Logger.log('Missing scenes to generate: ' + missingScenes.map(function(i) { return i + 1; }).join(', '));
+
+    // Download character reference images
+    _refImageCache = {};
+    var refImages = sf_getCharacterRefImages_(characters);
+
+    // Build character lookup maps
+    var charVisualMap = {};
+    var charRefMap = {};
+    for (var ci = 0; ci < characters.length; ci++) {
+      var charName = characters[ci].name.split(' ')[0].toUpperCase();
+      charVisualMap[charName] = 'CHARACTER: ' + characters[ci].visualTraits;
+      for (var ri = 0; ri < refImages.length; ri++) {
+        if (refImages[ri].name.toUpperCase() === charName || refImages[ri].name === characters[ci].name) {
+          charRefMap[charName] = refImages[ri];
+        }
+      }
+    }
+
+    var scenes = storyData.scenes;
+    var newlyGenerated = 0;
+
+    for (var idx = 0; idx < missingScenes.length; idx++) {
+      var sceneIndex = missingScenes[idx];
+      Logger.log('Generating image for scene ' + (sceneIndex + 1) + '...');
+
+      // Scene-level character filtering
+      var sceneChars = scenes[sceneIndex].characters_in_scene || [];
+      var sceneVisuals = '';
+      var sceneRefImages = [];
+
+      if (sceneChars.length > 0) {
+        for (var sc = 0; sc < sceneChars.length; sc++) {
+          var scKey = sceneChars[sc].toUpperCase().split(' ')[0];
+          if (scKey === 'MOM' || scKey === 'LT') scKey = 'MOM';
+          if (scKey === 'DAD' || scKey === 'JT') scKey = 'DAD';
+          if (scKey === 'NATHAN') scKey = 'BUGGSY';
+          if (charVisualMap[scKey]) sceneVisuals += charVisualMap[scKey] + '\\n';
+          if (charRefMap[scKey]) sceneRefImages.push(charRefMap[scKey]);
+        }
+      } else {
+        for (var allKey in charVisualMap) {
+          sceneVisuals += charVisualMap[allKey] + '\\n';
+        }
+        sceneRefImages = refImages;
+      }
+
+      var fullPrompt = scenes[sceneIndex].image_prompt;
+      var _scText = (scenes[sceneIndex].text || '').toLowerCase();
+      var _setting = 'casual';
+      if (_scText.indexOf('pool') >= 0 || _scText.indexOf('swim') >= 0 || _scText.indexOf('beach') >= 0) _setting = 'beach';
+      else if (_scText.indexOf('school') >= 0 || _scText.indexOf('class') >= 0) _setting = 'school';
+      else if (_scText.indexOf('bed') >= 0 || _scText.indexOf('sleep') >= 0 || _scText.indexOf('pajama') >= 0 || _scText.indexOf('pillow') >= 0) _setting = 'bedtime';
+      else if (_scText.indexOf('formal') >= 0 || _scText.indexOf('church') >= 0 || _scText.indexOf('wedding') >= 0) _setting = 'formal';
+      else if (_scText.indexOf('sport') >= 0 || _scText.indexOf('basket') >= 0 || _scText.indexOf('soccer') >= 0) _setting = 'sports';
+      var _wardrobeNames = sceneChars.length > 0 ? sceneChars : ['Buggsy', 'JJ'];
+      var _wardrobeBlock = buildWardrobePrompt_(_wardrobeNames, _setting);
+      if (_wardrobeBlock) fullPrompt = _wardrobeBlock + '\\n' + fullPrompt;
+      if (sceneVisuals) fullPrompt = sceneVisuals + '\\n\\n' + fullPrompt;
+      fullPrompt += '\\n\\nIMPORTANT: Centered composition. All characters fully visible within the frame. No cropping.';
+
+      var blob = generateWithRetry(fullPrompt, sceneIndex + 1, sceneRefImages);
+      if (blob && blob.data) {
+        var fileBlob = Utilities.newBlob(
+          Utilities.base64Decode(blob.data),
+          blob.mimeType,
+          'scene-' + (sceneIndex + 1) + '.png'
+        );
+        subfolder.createFile(fileBlob);
+        existingFiles[sceneIndex] = true; // mark as now existing
+        newlyGenerated++;
+        Logger.log('Scene ' + (sceneIndex + 1) + ' saved to Drive');
+      } else {
+        Logger.log('Scene ' + (sceneIndex + 1) + ' failed — will be retried next poll');
+      }
+
+      if (idx < missingScenes.length - 1) {
+        Utilities.sleep(CONFIG.IMAGE_COOLDOWN);
+      }
+    }
+
+    // Always persist Image Folder ID before checking gate
+    notionPatch('pages/' + pageId, {
+      properties: {
+        'Image Folder ID': { rich_text: [{ type: 'text', text: { content: subfolder.getId() } }] }
+      }
+    });
+
+    // Count total images (existing + new)
+    var totalImages = 0;
+    for (var ti = 0; ti < CONFIG.IMAGE_SCENES.length; ti++) {
+      if (existingFiles[CONFIG.IMAGE_SCENES[ti]]) totalImages++;
+    }
+    Logger.log('Total images in subfolder: ' + totalImages + '/' + CONFIG.IMAGE_SCENES.length);
+
+    var minRequired = (CONFIG.MIN_IMAGES_REQUIRED != null) ? CONFIG.MIN_IMAGES_REQUIRED : 1;
+
+    if (totalImages >= minRequired) {
+      updateNotionRow(pageId, null, 'Illustrated');
+      Logger.log('Phase 2 complete: ' + totalImages + ' images. Status set to Illustrated');
+    } else {
+      // Partial run — not a hard failure, will retry next poll
+      var hint = totalImages + '/' + CONFIG.IMAGE_SCENES.length + ' images generated. Retrying next poll.';
+      updateNotionRow(pageId, null, 'Written', hint);
+      Logger.log('Phase 2 partial: ' + hint + ' — reset to Written for retry');
+      // Do NOT increment SF_CONSECUTIVE_FAILS for partial runs
+    }
+
+  } catch(e) {
+    Logger.log('Phase 2 FAILED: ' + e.message);
+    Logger.log('Stack: ' + e.stack);
+    sf_logError_('sf_runPhase2Illustrate_', e);
+    sf_updateFailedPhase_(pageId, 'illustrate', 'Phase 2 (Illustrate) failed: ' + e.message);
+    var fails2 = parseInt(props.getProperty('SF_CONSECUTIVE_FAILS') || '0') + 1;
+    props.setProperty('SF_CONSECUTIVE_FAILS', String(fails2));
+  }
+}
+
+// Phase 3: Read images from Drive subfolder, build PDF, create Notion catalogue page.
+// On success sets Status='Ready'. On exception sets Status='Failed'.
+function sf_runPhase3Assemble_(pageId, page) {
+  Logger.log('=== Phase 3: Assemble === pageId=' + pageId);
+  var props = PropertiesService.getScriptProperties();
+
+  try {
+    updateNotionRow(pageId, null, 'Assembling');
+
+    // Load saved story data
+    var saved = sf_loadStoryData_(page);
+    if (!saved) {
+      sf_updateFailedPhase_(pageId, 'assemble', 'Story Data missing or unreadable. Re-run Phase 1: set Status back to Idea.');
+      var fails = parseInt(props.getProperty('SF_CONSECUTIVE_FAILS') || '0') + 1;
+      props.setProperty('SF_CONSECUTIVE_FAILS', String(fails));
+      return;
+    }
+
+    var storyData = saved.storyData;
+    var bookNumber = saved.bookNumber;
+    var canonData = saved.canonData;
+    var tone = saved.tone;
+
+    // Read Image Folder ID from page properties
+    var pageProps = page.properties || {};
+    var imageFolderIdProp = pageProps['Image Folder ID'];
+    var imageFolderId = imageFolderIdProp && imageFolderIdProp.rich_text && imageFolderIdProp.rich_text.length > 0
+      ? (imageFolderIdProp.rich_text[0].plain_text || '')
+      : '';
+
+    if (!imageFolderId) {
+      throw new Error('Image Folder ID not found on page. Phase 2 may not have completed successfully.');
+    }
+
+    // Read scene files from Drive subfolder, build imageBlobs array indexed by scene number
+    var subfolder = DriveApp.getFolderById(imageFolderId);
+    var imageBlobs = [];
+    for (var i = 0; i < storyData.scenes.length; i++) imageBlobs.push(null);
+
+    var fileIter = subfolder.getFiles();
+    while (fileIter.hasNext()) {
+      var f = fileIter.next();
+      var fname = f.getName();
+      var m = fname.match(/^scene-(\d+)\.png$/);
+      if (m) {
+        var sceneNum = parseInt(m[1]); // 1-based
+        var sceneIdx = sceneNum - 1;   // 0-based
+        if (sceneIdx >= 0 && sceneIdx < imageBlobs.length) {
+          try {
+            var fileBytes = f.getBlob().getBytes();
+            imageBlobs[sceneIdx] = {
+              data: Utilities.base64Encode(fileBytes),
+              mimeType: 'image/png',
+              sceneNumber: sceneNum
+            };
+            Logger.log('Loaded scene-' + sceneNum + '.png from Drive');
+          } catch(readErr) {
+            Logger.log('Could not read scene-' + sceneNum + '.png: ' + readErr.message);
+          }
+        }
+      }
+    }
+
+    var imageCount = 0;
+    for (var ic = 0; ic < imageBlobs.length; ic++) {
+      if (imageBlobs[ic]) imageCount++;
+    }
+    Logger.log('Loaded ' + imageCount + ' images from Drive subfolder');
+
+    // Build PDF
+    Logger.log('Building PDF for Book #' + bookNumber + '...');
+    var pdf = buildStoryPDF(storyData, imageBlobs, bookNumber);
+    Logger.log('PDF: ' + pdf.url);
+
+    // Build Notion catalogue page
+    Logger.log('Creating Notion catalogue page...');
+    var notionUrl = buildNotionCataloguePage(storyData, pdf.url, bookNumber, canonData, tone);
+    Logger.log('Notion: ' + notionUrl);
+
+    // Success
+    updateNotionRow(pageId, pdf.url, 'Ready');
+    props.setProperty('SF_CONSECUTIVE_FAILS', '0');
+    Logger.log('Phase 3 complete: Book #' + bookNumber + ' "' + storyData.title + '" — Status set to Ready');
+
+  } catch(e) {
+    Logger.log('Phase 3 FAILED: ' + e.message);
+    Logger.log('Stack: ' + e.stack);
+    sf_logError_('sf_runPhase3Assemble_', e);
+    sf_updateFailedPhase_(pageId, 'assemble', 'Phase 3 (Assemble) failed: ' + e.message);
+    var fails3 = parseInt(props.getProperty('SF_CONSECUTIVE_FAILS') || '0') + 1;
+    props.setProperty('SF_CONSECUTIVE_FAILS', String(fails3));
+  }
+}
+
+// ── MAIN PIPELINE (LEGACY — kept for testFactory()) ──────────
+
+function runStoryFactoryLegacy_(topic, character, tone) {
+Logger.log('=== Story Factory Legacy v15.5 ===');
 Logger.log('Topic: ' + topic + ' | Character: ' + character + ' | Tone: ' + (tone || 'Funny'));
 
 // Run-state object — tracks which phases completed so the catch block can produce honest hints.
-// These are IN-MEMORY ONLY. There is no persistent checkpoint store — the only retry path is
-// setting Status back to Idea. Do not present any intermediate status as a resumable checkpoint.
 var state = {
   story_generated: false,
   audit_passed: false,
@@ -1165,8 +1592,8 @@ var state = {
   notion_updated: false,
   pdfUrl: null,
   successfulImageCount: 0,
-  character: character,   // v15.2: captured for telemetry
-  topic: topic            // v15.2: captured for telemetry (pageId not available here — set by pollForNewStories)
+  character: character,
+  topic: topic
 };
 
 try {
@@ -1282,12 +1709,10 @@ return { success: true, title: storyData.title, pdfUrl: pdf.url, notionUrl: noti
 } catch(e) {
 Logger.log('FAILED: ' + e.message);
 Logger.log('Stack: ' + e.stack);
-sf_logError_('runStoryFactory', e);
+sf_logError_('runStoryFactoryLegacy_', e);
 sf_logFailure_(state, e.message); // v15.2 telemetry — must never throw
 
-// v15.1: Honest resume hints — no false checkpoint promises.
-// Every hint ends with "set Status back to Idea" — the ONLY retry path that works.
-// Intermediate statuses (Story Ready, Images Ready, etc.) are in-flight indicators only, NOT resumable.
+// v15.1: Honest resume hints
 var hint;
 if (!state.story_generated) {
   hint = 'FAILED at story generation: ' + e.message + ' | To retry: set Status back to Idea.';
@@ -1341,7 +1766,6 @@ return;
 }
 
 // v15.1: Concurrency guard — skip this trigger fire if a previous invocation is still running.
-// Uses tryLock (intentionally — we want to SKIP, not wait) so two triggers never double-process.
 var sfLock = LockService.getScriptLock();
 if (!sfLock.tryLock(1000)) {
 Logger.log('Another pollForNewStories invocation is already running. Skipping this trigger fire.');
@@ -1349,9 +1773,15 @@ return;
 }
 
 try {
-Logger.log('Polling for new story requests...');
+Logger.log('Polling for new story requests (Idea / Written / Illustrated)...');
 var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
-filter: { property: 'Status', select: { equals: 'Idea' } }
+filter: {
+  or: [
+    { property: 'Status', select: { equals: 'Idea' } },
+    { property: 'Status', select: { equals: 'Written' } },
+    { property: 'Status', select: { equals: 'Illustrated' } }
+  ]
+}
 });
 
 if (!result.results || result.results.length === 0) {
@@ -1363,6 +1793,9 @@ Logger.log('Found ' + result.results.length + ' request(s)');
 
 var page = result.results[0];
 var pageId = page.id;
+var pageStatus = (page.properties['Status'] && page.properties['Status'].select)
+  ? page.properties['Status'].select.name
+  : 'Idea';
 var topic = getNotionText(page.properties['Topic'], 'rich_text') || 'A new adventure';
 var character = (page.properties['Character'] && page.properties['Character'].select)
 ? page.properties['Character'].select.name
@@ -1371,26 +1804,26 @@ var tone = (page.properties['Tone'] && page.properties['Tone'].select)
 ? page.properties['Tone'].select.name
 : 'Funny';
 
-// v15.1: Atomically claim the row by flipping Status BEFORE expensive work.
-// Prevents a second invocation (manual run, concurrent trigger, etc.) from picking up the same row.
-updateNotionRow(pageId, null, 'Generating');
-var r = runStoryFactory(topic, character, tone);
+Logger.log('Dispatching pageId=' + pageId + ' status=' + pageStatus);
 
-if (r.success) {
-updateNotionRow(pageId, r.pdfUrl, 'Ready');
-props.setProperty('SF_CONSECUTIVE_FAILS', '0');
+if (pageStatus === 'Idea') {
+  sf_runPhase1Write_(pageId, topic, character, tone);
+} else if (pageStatus === 'Written') {
+  sf_runPhase2Illustrate_(pageId, page);
+} else if (pageStatus === 'Illustrated') {
+  sf_runPhase3Assemble_(pageId, page);
 } else {
-updateNotionRow(pageId, null, 'Failed', r.resumeHint || null);
-Logger.log('Set to Failed. ' + (r.resumeHint || 'Change to Idea manually to retry.'));
-sf_logError_('pollForNewStories', new Error('Story generation failed: ' + (r.error || 'unknown')));
-consecutiveFails++;
-props.setProperty('SF_CONSECUTIVE_FAILS', String(consecutiveFails));
+  Logger.log('Unexpected status "' + pageStatus + '" — skipping');
+}
+
+// Re-read consecutive fails after dispatch (phase handlers update props directly)
+consecutiveFails = parseInt(props.getProperty('SF_CONSECUTIVE_FAILS') || '0');
 if (consecutiveFails >= 3) {
-var pauseDuration = 3600000; // 1 hour
-props.setProperty('SF_PAUSED_UNTIL', String(Date.now() + pauseDuration));
-Logger.log('Circuit breaker TRIPPED — ' + consecutiveFails + ' consecutive failures. Pausing for 1 hour.');
+  var pauseDuration = 3600000; // 1 hour
+  props.setProperty('SF_PAUSED_UNTIL', String(Date.now() + pauseDuration));
+  Logger.log('Circuit breaker TRIPPED — ' + consecutiveFails + ' consecutive failures. Pausing for 1 hour.');
 }
-}
+
 } finally {
 sfLock.releaseLock();
 }
@@ -1409,15 +1842,34 @@ ScriptApp.newTrigger('pollForNewStories').timeBased().everyMinutes(5).create();
 Logger.log('Trigger installed — polling every 5 minutes.');
 }
 
-// ── TEST: Full pipeline ──────────────────────────────────────
+// ── TEST: Full pipeline (uses legacy single-run) ──────────────
 
 function testFactory() {
-var result = runStoryFactory(
+var result = runStoryFactoryLegacy_(
 'JJ goes to the grocery store and ends up running the whole place',
 'JJ',
 'Funny'
 );
 Logger.log(JSON.stringify(result, null, 2));
+}
+
+// ── TEST: Three-phase handlers ────────────────────────────────
+
+function testPhase1Write() {
+  var pageId = 'REPLACE_WITH_REAL_PAGE_ID';
+  sf_runPhase1Write_(pageId, 'A day at the museum', 'Buggsy', 'Funny');
+}
+
+function testPhase2Illustrate() {
+  var pageId = 'REPLACE_WITH_REAL_PAGE_ID';
+  var page = notionGet('pages/' + pageId);
+  sf_runPhase2Illustrate_(pageId, page);
+}
+
+function testPhase3Assemble() {
+  var pageId = 'REPLACE_WITH_REAL_PAGE_ID';
+  var page = notionGet('pages/' + pageId);
+  sf_runPhase3Assemble_(pageId, page);
 }
 
 // ── TEST: PDF only ───────────────────────────────────────────
@@ -1581,7 +2033,6 @@ function getStoryForReader(storyKey) {
     var props = PropertiesService.getScriptProperties();
     var raw = props.getProperty(meta.propertyKey);
     // v15.3: Fallback — try hyphenated key if underscore key not found
-    // (covers stories loaded directly to Props instead of via loadStoryToProps)
     if (!raw) {
       var hyphenKey = 'STORY_' + storyKey;
       raw = props.getProperty(hyphenKey);
@@ -1762,15 +2213,25 @@ function sf_logFailure_(state, errorMessage) {
       ]);
     }
 
-    // Detect which phase failed using state flags from runStoryFactory
+    // Detect which phase failed — use state.phase string if provided, else derive from flags
     var phase;
-    if (!state.story_generated) phase = 'story_generation';
-    else if (!state.audit_passed) phase = 'audit';
-    else if (!state.canon_extracted) phase = 'canon_extraction';
-    else if (!state.images_generated) phase = 'image_generation';
-    else if (!state.pdf_built) phase = 'pdf_build';
-    else if (!state.notion_updated) phase = 'notion_write';
-    else phase = 'unknown';
+    if (state.phase && typeof state.phase === 'string') {
+      phase = state.phase;
+    } else if (!state.story_generated) {
+      phase = 'story_generation';
+    } else if (!state.audit_passed) {
+      phase = 'audit';
+    } else if (!state.canon_extracted) {
+      phase = 'canon_extraction';
+    } else if (!state.images_generated) {
+      phase = 'image_generation';
+    } else if (!state.pdf_built) {
+      phase = 'pdf_build';
+    } else if (!state.notion_updated) {
+      phase = 'notion_write';
+    } else {
+      phase = 'unknown';
+    }
 
     // Classify error by message pattern
     var msg = String(errorMessage || '');
@@ -1804,9 +2265,6 @@ function sf_logFailure_(state, errorMessage) {
 }
 
 // Read the SF_FailureLog sheet and return a summary of failures in the last N days.
-// Run from Script Editor to make the checkpoint store unblock call (day 14).
-//   unblockCheckpointSpec: true → recoverable phase failures >= 2 AND total failures >= 3
-//   unblockCheckpointSpec: false → keep checkpoint store BLOCKED
 function sf_getFailureSummary_(days) {
   var d = days || 14;
   if (!CONFIG.FAILURE_LOG_SHEET_NAME) return { error: 'FAILURE_LOG_SHEET_NAME not configured' };
@@ -1857,5 +2315,5 @@ function sf_getFailureSummary_(days) {
   };
 }
 
-// END OF FILE — StoryFactory v15.4
+// END OF FILE — StoryFactory v15.5
 // ════════════════════════════════════════════════════════════════════
