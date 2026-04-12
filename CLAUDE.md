@@ -66,6 +66,16 @@
 - Do not silently create the wrong object.
 - One sentence, no back-and-forth. If it's ambiguous after one confirmation, default to Issue.
 
+**Skill tagging (MANDATORY on every Issue and spec):**
+
+Every Issue and spec MUST list the skills required to build and verify it. This prevents specced work from going unfinished because the builder didn't know what tools to use.
+
+- **Issue body:** Include a `## Skills Required` section listing which `/skills` are needed (e.g., `/thompson-engineer`, `/curriculum-planner`, `/audio-pipeline`).
+- **Spec files:** Include a `## Skills` section in the spec header.
+- **PRs:** The builder invokes the listed skills during implementation. If a skill is missing from the issue, add it before starting work.
+- **Rule:** If an Issue touches education modules → `/thompson-engineer` is required. If it touches curriculum content → `/curriculum-planner`. If it touches audio → `/audio-pipeline`. If it touches ADHD accommodations → `/adhd-accommodations`. If it needs QA → `/education-qa` or `/qa-walkthrough`. If it touches Notion → `/notion-contracts`. If it touches routes → `/route-contracts`. If it touches data layer → `/data-contracts`.
+- **Why:** Skills carry domain knowledge that doesn't fit in a prompt. Skipping them is how features get specced but never fully wired. The skill is the checklist that catches the gaps.
+
 **Forbidden patterns:**
 
 - Answering "where are we on X?" with a chat summary. Correct answer: "Check Issue #NNN" or "Check the Project board."
@@ -73,6 +83,7 @@
 - Handing Sonnet a prompt via chat copy-paste instead of an Issue body.
 - Letting a decision live in PR comments when it should be an Issue.
 - Using `needs:lt-decision` on a PR — those belong on Issues, then the PR picks up the decided answer.
+- Opening an Issue or spec WITHOUT a `## Skills Required` section.
 
 ## The Cardinal Rule
 Read source before writing assertions. Never claim a feature is missing, a value is correct, or a version is deployed without verifying. Confidence without verification is a hallucination.
