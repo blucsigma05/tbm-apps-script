@@ -1,6 +1,11 @@
 # .github/workflows/deploy-and-notify.yml
 # GAS Deploy + Smoke + Pushover — deploys on merge to main, verifies via HTTP, notifies.
-# Pushover includes deployment proof: deploy ID, HTTP status, smoke PASS/FAIL, version.
+# Pushover includes deployment proof: deploy ID, HTTP status, smoke status, version.
+#
+# Truthfulness contract (2026-04-12):
+#   - WARN is advisory (e.g. TAB_MAP drift, row growth). Deploy succeeds, release created.
+#   - FAIL is blocking. Deploy already happened but release is skipped, notification is honest.
+#   - smoke_response.txt is always uploaded so category breakdowns are visible.
 
 name: Deploy and Notify
 
@@ -85,7 +90,7 @@ jobs:
             exit 1
           fi
 
-          # Structured JSON assertion — don't grep for "PASS" string
+          # Structured JSON assertion — parse overall status + category breakdown
           PARSE_RESULT=$(python3 -c "
           import json, sys
           try:
@@ -97,6 +102,21 @@ jobs:
               print('overall=' + overall)
               print('smoke_overall=' + smoke_overall)
               print('code_version=' + code_ver)
+              # Category breakdown for step summary
+              cats = d.get('smoke', {}).get('categories', {})
+              lines = []
+              for k in sorted(cats.keys()):
+                  cat = cats[k]
+                  st = cat.get('status', '?')
+                  det = cat.get('details', '')[:120]
+                  lines.append('| ' + k + ' | ' + st + ' | ' + det + ' |')
+              if lines:
+                  print('CAT_TABLE_START')
+                  print('| Category | Status | Details |')
+                  print('|----------|--------|---------|')
+                  for l in lines:
+                      print(l)
+                  print('CAT_TABLE_END')
           except Exception as e:
               print('overall=PARSE_ERROR')
               print('smoke_overall=PARSE_ERROR')
@@ -113,25 +133,48 @@ jobs:
           echo "overall=$OVERALL" >> "$GITHUB_OUTPUT"
           echo "code_version=$CODE_VERSION" >> "$GITHUB_OUTPUT"
 
+          # Write category table to step summary
+          echo "$PARSE_RESULT" | sed -n '/CAT_TABLE_START/,/CAT_TABLE_END/p' | grep -v 'CAT_TABLE' >> "$GITHUB_STEP_SUMMARY" || true
+
+          # PASS or WARN = success (WARN is advisory — TAB_MAP drift, row growth, etc.)
+          # FAIL = blocking (wiring, environment, schema mismatch)
           if [ "$OVERALL" = "PASS" ] && [ "$SMOKE_OVERALL" = "PASS" ]; then
             echo "smoke_line=Smoke PASS (HTTP $HTTP_CODE)" >> "$GITHUB_OUTPUT"
+            echo "smoke_status=PASS" >> "$GITHUB_OUTPUT"
+          elif { [ "$OVERALL" = "PASS" ] || [ "$OVERALL" = "WARN" ]; } && \
+               { [ "$SMOKE_OVERALL" = "PASS" ] || [ "$SMOKE_OVERALL" = "WARN" ]; }; then
+            echo "smoke_line=Smoke WARN — advisory (HTTP $HTTP_CODE)" >> "$GITHUB_OUTPUT"
+            echo "smoke_status=WARN" >> "$GITHUB_OUTPUT"
+            echo "::warning::Smoke returned WARN (advisory). Deploy is live. Check category breakdown."
           elif [ "$OVERALL" = "PARSE_ERROR" ]; then
             echo "smoke_line=JSON parse failed (HTTP $HTTP_CODE)" >> "$GITHUB_OUTPUT"
+            echo "smoke_status=PARSE_ERROR" >> "$GITHUB_OUTPUT"
             echo "::error::Could not parse runTests response as JSON"
             cat parse_err.txt
             echo "Response body:" && head -c 500 smoke_response.txt
             exit 1
           else
-            echo "smoke_line=Smoke $OVERALL (HTTP $HTTP_CODE)" >> "$GITHUB_OUTPUT"
+            echo "smoke_line=Smoke FAIL (HTTP $HTTP_CODE)" >> "$GITHUB_OUTPUT"
+            echo "smoke_status=FAIL" >> "$GITHUB_OUTPUT"
             echo "::error::Structured assertion failed: overall=$OVERALL smoke.overall=$SMOKE_OVERALL"
             exit 1
           fi
+
+      - name: Upload smoke response
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-response-${{ github.run_id }}
+          path: smoke_response.txt
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Create GitHub release
         if: success()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CODE_VERSION: ${{ steps.smoke.outputs.code_version }}
+          SMOKE_STATUS: ${{ steps.smoke.outputs.smoke_status }}
         run: |
           if [ -z "$CODE_VERSION" ] || [ "$CODE_VERSION" = "?" ]; then
             echo "Version unknown — skipping release creation."
@@ -144,11 +187,17 @@ jobs:
             exit 0
           fi
           SHA_SHORT="${GITHUB_SHA:0:7}"
+          # Honest smoke status in release notes
+          if [ "$SMOKE_STATUS" = "WARN" ]; then
+            SMOKE_NOTE="Smoke test: WARN (advisory — see run artifacts for category breakdown)."
+          else
+            SMOKE_NOTE="Smoke test: PASS."
+          fi
           gh release create "$TAG" \
             --title "TBM ${TAG}" \
-            --notes "Deployed from commit ${SHA_SHORT}. Smoke test: PASS." \
+            --notes "Deployed from commit ${SHA_SHORT}. ${SMOKE_NOTE}" \
             --target "$GITHUB_SHA"
-          echo "✅ Release $TAG created at ${SHA_SHORT}."
+          echo "Release $TAG created at ${SHA_SHORT}."
 
       - name: Pushover — deploy success
         if: success()
@@ -189,6 +238,7 @@ jobs:
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
           DEPLOY_ID: ${{ steps.deploy.outputs.deploy_id }}
+          DEPLOYED: ${{ steps.deploy.outputs.deployed }}
           HTTP_CODE: ${{ steps.smoke.outputs.http_code }}
           SMOKE_LINE: ${{ steps.smoke.outputs.smoke_line }}
         run: |
@@ -205,7 +255,12 @@ jobs:
           else
             FAIL_MSG="$FAIL_MSG — smoke did not run"
           fi
-          FAIL_MSG="$FAIL_MSG — Commit ${SHA_SHORT} — BLOCKED, nothing broken live"
+          # Honest state: if deploy completed, code is live regardless of smoke result
+          if [ "$DEPLOYED" = "true" ]; then
+            FAIL_MSG="$FAIL_MSG — Commit ${SHA_SHORT} — DEPLOYED but smoke FAILED — verify live state"
+          else
+            FAIL_MSG="$FAIL_MSG — Commit ${SHA_SHORT} — BLOCKED — deploy did not complete"
+          fi
           curl -sS \
             --form-string "token=${PUSHOVER_APP_TOKEN}" \
             --form-string "user=${PUSHOVER_USER_KEY}" \
