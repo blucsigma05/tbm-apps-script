@@ -163,18 +163,22 @@ test.describe('Homework: wrong answer shows purple not red', function() {
 
 // Shared helper: submit one MC answer in a section and wait for feedback to confirm processing.
 // Uses selector-state transitions instead of fixed timeouts to avoid CI timing fragility.
+// Scopes to unanswered cards only (.q-card that has no .feedback-box child) to avoid
+// re-clicking dead distractors from already-submitted questions.
 async function submitOneAnswer(page, section) {
-  // Wait for an unanswered option — brain break overlay may be covering the screen
-  var option = page.locator('#section-' + section + ' .q-option:not(.correct-answer):not(.wrong-answer)').first();
+  // Scope to unanswered question cards — submitted cards contain .feedback-box
+  var unansweredCard = '#section-' + section + ' .q-card:not(:has(.feedback-box)):not(:has(.es-feedback))';
+  // Wait for a clickable option inside an unanswered card
+  var option = page.locator(unansweredCard + ' .q-option:not(.correct-answer):not(.wrong-answer)').first();
   await option.waitFor({ state: 'visible', timeout: 12000 });
   await option.click();
   // Wait for lock-btn to become enabled (class .disabled removed after selection)
-  var lockBtn = page.locator('#section-' + section + ' .lock-btn:not(.disabled)').first();
+  var lockBtn = page.locator(unansweredCard + ' .lock-btn:not(.disabled)').first();
   await lockBtn.waitFor({ state: 'visible', timeout: 8000 });
   await lockBtn.click();
   // Wait for feedback to confirm answer was processed before moving on.
   // HomeworkModule has two feedback paths: .feedback-box (MC inline) and .es-feedback (exec skills).
-  var feedback = page.locator('#section-' + section + ' .feedback-box, #section-' + section + ' .es-feedback').first();
+  var feedback = page.locator('#section-' + section + ' .feedback-box, #section-' + section + ' .es-feedback').last();
   await feedback.waitFor({ state: 'visible', timeout: 8000 });
 }
 
