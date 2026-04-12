@@ -270,8 +270,8 @@ function snapshotQAState(snapshotName) {
     Logger.log('Snapshot "' + snapshotName + '" saved to Script Properties (' + json.length + ' bytes)');
   } else {
     // Fallback: write to a dedicated tab
-    var snapSheet = ss.getSheetByName('QA_Snapshots');
-    if (!snapSheet) snapSheet = ss.insertSheet('QA_Snapshots');
+    var snapSheet = ss.getSheetByName(TAB_MAP['QA_Snapshots']);
+    if (!snapSheet) snapSheet = ss.insertSheet(TAB_MAP['QA_Snapshots']);
     var row = snapSheet.getLastRow() + 1;
     snapSheet.getRange(row, 1).setValue(snapshotName);
     snapSheet.getRange(row, 2).setValue(json);
@@ -294,7 +294,7 @@ function restoreQAState(snapshotName) {
   // Check fallback tab if not in properties
   if (!json) {
     var ss = SpreadsheetApp.openById(SSID);
-    var snapSheet = ss.getSheetByName('QA_Snapshots');
+    var snapSheet = ss.getSheetByName(TAB_MAP['QA_Snapshots']);
     if (snapSheet) {
       var data = snapSheet.getDataRange().getValues();
       for (var r = 0; r < data.length; r++) {
