@@ -141,8 +141,8 @@ jobs:
           if [ "$OVERALL" = "PASS" ] && [ "$SMOKE_OVERALL" = "PASS" ]; then
             echo "smoke_line=Smoke PASS (HTTP $HTTP_CODE)" >> "$GITHUB_OUTPUT"
             echo "smoke_status=PASS" >> "$GITHUB_OUTPUT"
-          elif ([ "$OVERALL" = "PASS" ] || [ "$OVERALL" = "WARN" ]) && \
-               ([ "$SMOKE_OVERALL" = "PASS" ] || [ "$SMOKE_OVERALL" = "WARN" ]); then
+          elif { [ "$OVERALL" = "PASS" ] || [ "$OVERALL" = "WARN" ]; } && \
+               { [ "$SMOKE_OVERALL" = "PASS" ] || [ "$SMOKE_OVERALL" = "WARN" ]; }; then
             echo "smoke_line=Smoke WARN — advisory (HTTP $HTTP_CODE)" >> "$GITHUB_OUTPUT"
             echo "smoke_status=WARN" >> "$GITHUB_OUTPUT"
             echo "::warning::Smoke returned WARN (advisory). Deploy is live. Check category breakdown."
