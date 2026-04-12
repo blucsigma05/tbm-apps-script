@@ -3,7 +3,7 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 16.1
+// Version: 17
 // Pipeline (phased): Idea→Writing→Written→Illustrating→Illustrated→Assembling→Ready
 //   Phase 1 (Write):     Character Fetch → Memory Inject → Gemini Story → Canon Extract → persist JSON to Drive
 //   Phase 2 (Illustrate): Load story JSON → Gemini Images → persist blobs to Drive folder
@@ -11,7 +11,7 @@
 // Each phase runs in a separate poll cycle — any phase failure is isolated and retried independently.
 // ============================================================
 
-function getStoryFactoryVersion() { return 16.1; }
+function getStoryFactoryVersion() { return 17; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -1582,9 +1582,90 @@ function sf_recoverStaleClaims_() {
   }
 }
 
-// v16: Three-phase poll — handles Idea (Write), Written (Illustrate), Illustrated (Assemble).
+// ── Per-row backoff helpers (v17) ────────────────────────────
+// Stores backed-off page IDs in SF_BACKOFF Script Property as JSON:
+//   { "<pageId>": <expiryTimestamp>, ... }
+// Entries expire after BACKOFF_DURATION_MS. Prevents one toxic row from
+// starving healthy rows behind it in the queue.
+var BACKOFF_DURATION_MS = 3600000; // 1 hour
+
+function sf_getBackoffMap_() {
+  var raw = PropertiesService.getScriptProperties().getProperty('SF_BACKOFF');
+  if (!raw) return {};
+  try {
+    var map = JSON.parse(raw);
+    // Prune expired entries
+    var now = Date.now();
+    var keys = Object.keys(map);
+    var pruned = false;
+    for (var i = 0; i < keys.length; i++) {
+      if (map[keys[i]] <= now) { delete map[keys[i]]; pruned = true; }
+    }
+    if (pruned) {
+      PropertiesService.getScriptProperties().setProperty('SF_BACKOFF', JSON.stringify(map));
+    }
+    return map;
+  } catch (e) {
+    return {};
+  }
+}
+
+function sf_isBackedOff_(pageId) {
+  var map = sf_getBackoffMap_();
+  return !!(map[pageId] && map[pageId] > Date.now());
+}
+
+function sf_markBackoff_(pageId) {
+  var map = sf_getBackoffMap_();
+  map[pageId] = Date.now() + BACKOFF_DURATION_MS;
+  PropertiesService.getScriptProperties().setProperty('SF_BACKOFF', JSON.stringify(map));
+  Logger.log('Backoff set for ' + pageId + ' — skip until ' + new Date(map[pageId]).toISOString());
+}
+
+function sf_clearBackoff_(pageId) {
+  var map = sf_getBackoffMap_();
+  if (map[pageId]) {
+    delete map[pageId];
+    PropertiesService.getScriptProperties().setProperty('SF_BACKOFF', JSON.stringify(map));
+  }
+}
+
+// v17: Paginated row selection — fetch batches of 5 until an eligible (non-backed-off) row
+// is found, or the result set is exhausted. Prevents head-of-line starvation.
+function sf_findEligibleRow_() {
+  var startCursor = undefined;
+  var attempts = 0;
+  while (attempts < 10) { // safety cap: 50 rows max (10 pages of 5)
+    attempts++;
+    var body = {
+      filter: {
+        or: [
+          { property: 'Status', select: { equals: 'Idea' } },
+          { property: 'Status', select: { equals: 'Written' } },
+          { property: 'Status', select: { equals: 'Illustrated' } }
+        ]
+      },
+      sorts: [{ property: 'Created time', direction: 'ascending' }],
+      page_size: 5
+    };
+    if (startCursor) body.start_cursor = startCursor;
+    var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', body);
+    if (!result.results || result.results.length === 0) return null;
+    for (var i = 0; i < result.results.length; i++) {
+      if (!sf_isBackedOff_(result.results[i].id)) {
+        return result.results[i];
+      }
+      Logger.log('Skipping backed-off row: ' + result.results[i].id);
+    }
+    if (!result.has_more) return null;
+    startCursor = result.next_cursor;
+  }
+  return null;
+}
+
+// v16→v17: Three-phase poll — handles Idea (Write), Written (Illustrate), Illustrated (Assemble).
 // Phase failures are isolated: only the failing phase is retried on the next poll cycle.
-// Circuit breaker still operates per consecutive-fail count across all phases.
+// v17: Per-row backoff replaces single-head polling. Circuit breaker only counts fresh failures.
 function pollForNewStories() {
 // Circuit breaker
 var props = PropertiesService.getScriptProperties();
@@ -1626,25 +1707,13 @@ try {
 // Recover any rows stuck in transitional statuses from a prior crash/timeout before polling.
 sf_recoverStaleClaims_();
 Logger.log('Polling for story work (Idea | Written | Illustrated)...');
-// Query all three actionable statuses, oldest first so the queue drains in order.
-var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
-  filter: {
-    or: [
-      { property: 'Status', select: { equals: 'Idea' } },
-      { property: 'Status', select: { equals: 'Written' } },
-      { property: 'Status', select: { equals: 'Illustrated' } }
-    ]
-  },
-  sorts: [{ property: 'Created time', direction: 'ascending' }],
-  page_size: 1
-});
+// v17: Paginated row selection — skips backed-off pages, finds first eligible row.
+var page = sf_findEligibleRow_();
 
-if (!result.results || result.results.length === 0) {
-Logger.log('No actionable story rows found.');
+if (!page) {
+Logger.log('No eligible story rows found (all backed off or none actionable).');
 return;
 }
-
-var page = result.results[0];
 var pageId = page.id;
 var pageStatus = (page.properties['Status'] && page.properties['Status'].select)
   ? page.properties['Status'].select.name : 'Idea';
@@ -1737,8 +1806,14 @@ if (pageStatus === 'Idea') {
 }
 
 if (phaseSuccess) {
+  sf_clearBackoff_(pageId);
   props.setProperty('SF_CONSECUTIVE_FAILS', '0');
 } else {
+  // v17: Per-row backoff — mark this page so next poll skips it for 1 hour.
+  // Only phases that reset to an actionable status (Written/Illustrated) cause
+  // starvation. Phase 1 failures go to 'Failed' and are already non-actionable,
+  // but we backoff all failures uniformly for simplicity.
+  sf_markBackoff_(pageId);
   consecutiveFails++;
   props.setProperty('SF_CONSECUTIVE_FAILS', String(consecutiveFails));
   sf_logError_('pollForNewStories', new Error(failMsg || 'unknown phase failure'));
@@ -2214,5 +2289,5 @@ function sf_getFailureSummary_(days) {
   };
 }
 
-// END OF FILE — StoryFactory v16.1
+// END OF FILE — StoryFactory v17
 // ════════════════════════════════════════════════════════════════════
