@@ -42,9 +42,9 @@ function gh_getSS_() {
  */
 function setupErrorLogSheet() {
   var ss = gh_getSS_();
-  var sheet = ss.getSheetByName('💻 ErrorLog');
+  var sheet = ss.getSheetByName(TAB_MAP['ErrorLog']);
   if (!sheet) {
-    sheet = ss.insertSheet('💻 ErrorLog');
+    sheet = ss.insertSheet(TAB_MAP['ErrorLog']);
     sheet.appendRow(['Timestamp', 'Function', 'Error Message', 'Stack Trace', 'Duration (s)']);
     sheet.setFrozenRows(1);
     sheet.getRange('1:1').setFontWeight('bold');
@@ -68,7 +68,7 @@ function setupErrorLogSheet() {
 function logError_(functionName, error, durationSec) {
   try {
     var ss = gh_getSS_();
-    var sheet = ss.getSheetByName('💻 ErrorLog');
+    var sheet = ss.getSheetByName(TAB_MAP['ErrorLog']);
     if (!sheet) return; // fail silently if sheet doesn't exist yet
     
     var msg = (error && error.message) ? error.message : String(error);
@@ -105,9 +105,9 @@ function logError_(functionName, error, durationSec) {
  */
 function setupPerfLogSheet() {
   var ss = gh_getSS_();
-  var sheet = ss.getSheetByName('💻 PerfLog');
+  var sheet = ss.getSheetByName(TAB_MAP['PerfLog']);
   if (!sheet) {
-    sheet = ss.insertSheet('💻 PerfLog');
+    sheet = ss.insertSheet(TAB_MAP['PerfLog']);
     sheet.appendRow(['Timestamp', 'Function', 'Duration (s)', 'Status', 'Note']);
     sheet.setFrozenRows(1);
     sheet.getRange('1:1').setFontWeight('bold');
@@ -134,7 +134,7 @@ function logPerf_(functionName, durationSec, status, note) {
     // Only write to sheet if slow (>3s) or errored
     if (durationSec > 3 || status === 'ERROR') {
       var ss = gh_getSS_();
-      var sheet = ss.getSheetByName('💻 PerfLog');
+      var sheet = ss.getSheetByName(TAB_MAP['PerfLog']);
       if (!sheet) return;
       
       sheet.appendRow([
@@ -301,7 +301,7 @@ function listTriggers() {
  */
 function checkTillerSyncHealth() {
   var ss = gh_getSS_();
-  var txnSheet = ss.getSheetByName('Transactions');
+  var txnSheet = ss.getSheetByName(TAB_MAP['Transactions']);
   if (!txnSheet) {
     Logger.log('ERROR: Transactions sheet not found');
     return;
@@ -420,7 +420,7 @@ function monthClosePreflight() {
   Logger.log('═══ MONTH CLOSE PREFLIGHT: ' + priorLabel + ' ═══');
   
   var ss = gh_getSS_();
-  var txnSheet = ss.getSheetByName('Transactions');
+  var txnSheet = ss.getSheetByName(TAB_MAP['Transactions']);
   if (!txnSheet) { Logger.log('ERROR: No Transactions sheet'); return; }
   
   var data = txnSheet.getDataRange().getValues();
@@ -622,9 +622,9 @@ function writeWeeklySnapshot() {
   var ss = gh_getSS_();
   
   // Create sheet if needed
-  var sheet = ss.getSheetByName('💻 Snapshots');
+  var sheet = ss.getSheetByName(TAB_MAP['Snapshots']);
   if (!sheet) {
-    sheet = ss.insertSheet('💻 Snapshots');
+    sheet = ss.insertSheet(TAB_MAP['Snapshots']);
     sheet.appendRow([
       'Date', 'Total Debt', 'Consumer Debt', 'Mortgage',
       'Net Worth', 'Monthly Burn', 'Cash on Hand',
@@ -646,7 +646,7 @@ function writeWeeklySnapshot() {
     // Debt-free date from cascade if available
     var debtFreeDate = '';
     try {
-      var cascadeSheet = ss.getSheetByName('💻 Cascade_Proof');
+      var cascadeSheet = ss.getSheetByName(TAB_MAP['Cascade Proof']);
       if (cascadeSheet) {
         // Look for payoff date in cascade proof
         var proofData = cascadeSheet.getDataRange().getValues();
@@ -802,7 +802,7 @@ function getSystemHealth() {
 
   // ── 1. TILLER SYNC ──────────────────────────────────────────
   try {
-    var txnSheet = ss.getSheetByName('Transactions');
+    var txnSheet = ss.getSheetByName(TAB_MAP['Transactions']);
     var tillerStatus = { status: 'unknown', staleAccounts: [], checkedAt: now.toISOString() };
     if (txnSheet) {
       var txnData = txnSheet.getDataRange().getValues();
@@ -849,7 +849,7 @@ function getSystemHealth() {
     var curLabel = curYear + '-' + (curMonth < 10 ? '0' : '') + curMonth;
     
     // Check if current month has uncategorized transactions
-    var txnSheet2 = ss.getSheetByName('Transactions');
+    var txnSheet2 = ss.getSheetByName(TAB_MAP['Transactions']);
     var monthStatus = { month: curLabel, status: 'open', uncategorized: 0, atmCash: 0 };
     if (txnSheet2) {
       var startDate = new Date(curYear, curMonth - 1, 1);
@@ -910,7 +910,7 @@ function getSystemHealth() {
 
   // ── 3. ERROR LOG (last 24h) ─────────────────────────────────
   try {
-    var errSheet = ss.getSheetByName('💻 ErrorLog');
+    var errSheet = ss.getSheetByName(TAB_MAP['ErrorLog']);
     var errorSummary = { count24h: 0, lastError: null, status: 'healthy' };
     if (errSheet && errSheet.getLastRow() > 1) {
       var errData = errSheet.getDataRange().getValues();
@@ -937,7 +937,7 @@ function getSystemHealth() {
 
   // ── 4. PERF LOG (last 24h) ──────────────────────────────────
   try {
-    var perfSheet = ss.getSheetByName('💻 PerfLog');
+    var perfSheet = ss.getSheetByName(TAB_MAP['PerfLog']);
     var perfSummary = { slowCalls24h: 0, avgDuration: 0, slowest: null, status: 'healthy' };
     if (perfSheet && perfSheet.getLastRow() > 1) {
       var perfData = perfSheet.getDataRange().getValues();
@@ -1002,7 +1002,7 @@ function getSystemHealth() {
 
   // ── 7. LAST SNAPSHOT ────────────────────────────────────────
   try {
-    var snapSheet = ss.getSheetByName('💻 Snapshots');
+    var snapSheet = ss.getSheetByName(TAB_MAP['Snapshots']);
     var snapshot = { status: 'none' };
     if (snapSheet && snapSheet.getLastRow() > 1) {
       var lastRow = snapSheet.getLastRow();
@@ -1114,7 +1114,7 @@ function getSpineHeartbeatSafe() {
 
     // Error count last 24h (one sheet read)
     try {
-      var errSheet = ss.getSheetByName('💻 ErrorLog');
+      var errSheet = ss.getSheetByName(TAB_MAP['ErrorLog']);
       if (errSheet && errSheet.getLastRow() > 1) {
         var errData = errSheet.getDataRange().getValues();
         var cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
