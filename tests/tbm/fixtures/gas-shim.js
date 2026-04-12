@@ -16,10 +16,6 @@ var EDUCATION_FIXTURES = {
     content: {
       module: {
         date: 'Test Module',
-        // Gate field: success handler checks c.module.questions.length > 0 before
-        // accepting. Without this, the page falls through to FALLBACK_MODULE which
-        // contains open-ended questions the MC-only test loop cannot complete.
-        questions: [{ id: 0 }],
         science: {
           strand: 'Force and Motion',
           teks: '4.7A',

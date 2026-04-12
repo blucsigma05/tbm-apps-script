@@ -182,6 +182,39 @@ async function submitOneAnswer(page, section) {
   await feedback.waitFor({ state: 'visible', timeout: 8000 });
 }
 
+// Shared helper: submit one open-ended (textarea) answer in a section.
+// FALLBACK_MODULE includes short_answer and why_question types rendered as textareas.
+async function submitOpenEndedAnswer(page, section) {
+  var unansweredCard = '#section-' + section + ' .q-card:not(:has(.feedback-box)):not(:has(.es-feedback))';
+  var textarea = page.locator(unansweredCard + ' .q-textarea').first();
+  await textarea.waitFor({ state: 'visible', timeout: 8000 });
+  await textarea.fill('Test answer for automated Playwright submission.');
+  // Lock-btn enables once textarea has non-whitespace content
+  var lockBtn = page.locator(unansweredCard + ' .lock-btn:not(.disabled)').first();
+  await lockBtn.waitFor({ state: 'visible', timeout: 8000 });
+  await lockBtn.click();
+  var feedback = page.locator('#section-' + section + ' .feedback-box, #section-' + section + ' .es-feedback').last();
+  await feedback.waitFor({ state: 'visible', timeout: 8000 });
+}
+
+// Shared helper: submit ALL unanswered questions (MC + open-ended) in a section.
+// Handles brain break dismissal between submissions.
+async function submitAllQuestionsInSection(page, section) {
+  for (var i = 0; i < 12; i++) {
+    await dismissBrainBreakIfVisible(page);
+    var unansweredCard = '#section-' + section + ' .q-card:not(:has(.feedback-box)):not(:has(.es-feedback))';
+    var remaining = await page.locator(unansweredCard).count();
+    if (remaining === 0) break;
+    // Check whether the next unanswered card has MC options or a textarea
+    var hasMC = await page.locator(unansweredCard + ' .q-option').count();
+    if (hasMC > 0) {
+      await submitOneAnswer(page, section);
+    } else {
+      await submitOpenEndedAnswer(page, section);
+    }
+  }
+}
+
 // Shared helper: dismiss brain break overlay if it is currently visible.
 async function dismissBrainBreakIfVisible(page) {
   var bb = page.locator('#brain-break-overlay');
@@ -247,25 +280,18 @@ test.describe('Homework: Monday Error Journal appears', function() {
     await page.locator('.es-ready-btn').click();
     await page.locator('.es-session-timer').waitFor({ state: 'visible', timeout: 10000 });
 
-    // Answer all questions in both tabs to trigger completion.
+    // Answer all questions (MC + open-ended) in both tabs to trigger completion.
+    // FALLBACK_MODULE contains short_answer and why_question types alongside MC.
     // Brain break fires after 4 total submissions — dismiss and continue.
     var tabs = ['science', 'math'];
     for (var t = 0; t < tabs.length; t++) {
-      var tab = tabs[t];
-      await page.locator('#tab-' + tab).click();
-      await page.locator('#section-' + tab + ' .q-option').first().waitFor({ state: 'visible', timeout: 10000 });
-
-      for (var i = 0; i < 8; i++) {
-        await dismissBrainBreakIfVisible(page);
-        // Check if any unanswered options remain in this section
-        var optionCount = await page.locator('#section-' + tab + ' .q-card:not(:has(.feedback-box)):not(:has(.es-feedback)) .q-option').count();
-        if (optionCount === 0) break;
-        await submitOneAnswer(page, tab);
-      }
+      await page.locator('#tab-' + tabs[t]).click();
+      await page.locator('#section-' + tabs[t] + ' .q-card').first().waitFor({ state: 'visible', timeout: 10000 });
+      await submitAllQuestionsInSection(page, tabs[t]);
     }
 
-    // Monday Error Journal should appear after completion (fixture answer:1 means option 0 is wrong,
-    // so missedQuestions will be populated and the error journal will render)
+    // Monday Error Journal should appear after completion (FALLBACK_MODULE answer:1
+    // means clicking option 0 is wrong, populating missedQuestions)
     await expect(page.locator('.es-error-journal')).toBeVisible({ timeout: 15000 });
     await snap(page, '04-homework-monday-error-journal');
 
@@ -288,19 +314,12 @@ test.describe('Homework: Friday Reflection appears', function() {
     await page.locator('.es-ready-btn').click();
     await page.locator('.es-session-timer').waitFor({ state: 'visible', timeout: 10000 });
 
-    // Same completion loop as Monday test — dismiss brain break, answer all questions in both tabs.
+    // Same completion loop as Monday test — handles MC + open-ended questions.
     var tabs = ['science', 'math'];
     for (var t = 0; t < tabs.length; t++) {
-      var tab = tabs[t];
-      await page.locator('#tab-' + tab).click();
-      await page.locator('#section-' + tab + ' .q-option').first().waitFor({ state: 'visible', timeout: 10000 });
-
-      for (var i = 0; i < 8; i++) {
-        await dismissBrainBreakIfVisible(page);
-        var optionCount = await page.locator('#section-' + tab + ' .q-card:not(:has(.feedback-box)):not(:has(.es-feedback)) .q-option').count();
-        if (optionCount === 0) break;
-        await submitOneAnswer(page, tab);
-      }
+      await page.locator('#tab-' + tabs[t]).click();
+      await page.locator('#section-' + tabs[t] + ' .q-card').first().waitFor({ state: 'visible', timeout: 10000 });
+      await submitAllQuestionsInSection(page, tabs[t]);
     }
 
     // Friday Reflection should appear after completion
