@@ -1114,7 +1114,7 @@ function getSpineHeartbeatSafe() {
 
     // Error count last 24h (one sheet read)
     try {
-      var errSheet = ss.getSheetByName('💻 ErrorLog');
+      var errSheet = ss.getSheetByName(TAB_MAP['ErrorLog']);
       if (errSheet && errSheet.getLastRow() > 1) {
         var errData = errSheet.getDataRange().getValues();
         var cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
