@@ -151,8 +151,9 @@ Plus: injects non-dismissable amber QA banner.
 
 ### 4.5 `handleApi()` Change
 
-Gains optional `envOverride` parameter. When `'qa'`, appends `&env=qa`
-to the GAS target URL.
+Gains optional `envOverride` parameter. When `'qa'`, generates a
+signed `qa_token` and appends `&env=qa&qa_token=<token>` to the GAS
+target URL.
 
 ### 4.6 PIN Gate `returnTo`
 
@@ -317,39 +318,55 @@ Injected by the QA shim on every `/qa/*` page:
 ### Resolved: GAS-Side Signed Token (Required)
 
 GAS must validate a signed token on every `env=qa` request. The CF
-Worker generates an HMAC per-request; GAS validates before honoring
-the override. Without this, anyone with the GAS deployment URL could
+Worker generates a SHA-256 digest per-request; GAS recomputes and
+compares. Without this, anyone with the GAS deployment URL could
 bypass the PIN gate and hit `?env=qa` directly.
 
+**Algorithm:** SHA-256 digest of `<timestamp>:qa:<secret>`, hex-encoded.
+Same algorithm on both sides. No HMAC — plain digest with secret
+appended (matches the existing cookie-signing pattern at
+`cloudflare-worker.js:473-476`).
+
 **Token generation (CF Worker):**
+```javascript
+// In serveQAPage() and handleApi() when envOverride === 'qa'
+var ts = Date.now().toString();
+var data = new TextEncoder().encode(ts + ':qa:' + env.QA_HMAC_SECRET);
+var hashBuf = await crypto.subtle.digest('SHA-256', data);
+var hashArr = Array.from(new Uint8Array(hashBuf));
+var token = ts + ':' + hashArr.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+// Append as &qa_token=<token> on GAS request URL
 ```
-timestamp = Date.now()
-payload = timestamp + ":qa"
-token = hex(SHA-256(payload + ":" + env.QA_HMAC_SECRET))
-```
-Appended as `&qa_token=<timestamp>:<token>` on every GAS request.
 
 **Token validation (GAS, in serveData):**
 ```javascript
 function validateQAToken_(tokenParam) {
   if (!tokenParam) return false;
-  var parts = tokenParam.split(':');
-  if (parts.length !== 2) return false;
-  var ts = parseInt(parts[0], 10);
-  if (isNaN(ts) || Math.abs(Date.now() - ts) > 300000) return false; // 5 min window
+  var colonIdx = tokenParam.indexOf(':');
+  if (colonIdx === -1) return false;
+  var ts = tokenParam.substring(0, colonIdx);
+  var hash = tokenParam.substring(colonIdx + 1);
+  var tsNum = parseInt(ts, 10);
+  if (isNaN(tsNum) || Math.abs(Date.now() - tsNum) > 300000) return false; // 5 min window
   var secret = PropertiesService.getScriptProperties().getProperty('QA_HMAC_SECRET');
   if (!secret) return false;
-  var expected = computeHmac_(ts + ':qa', secret);
-  return expected === parts[1];
+  var expected = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    ts + ':qa:' + secret
+  );
+  var expectedHex = expected.map(function(b) {
+    return ('0' + ((b + 256) % 256).toString(16)).slice(-2);
+  }).join('');
+  return expectedHex === hash;
 }
 ```
 
-Reuses the shared-secret validation pattern at `Code.js:1634-1655`.
 Requires `QA_HMAC_SECRET` as both a CF environment variable and a
 GAS Script Property (same value).
 
-**If token is missing or invalid:** Return 403 `{"error":"Invalid QA token"}`.
-`env=qa` without a valid token is silently ignored (treated as prod).
+**If token is missing or invalid:** Return 403
+`{"error":"Invalid QA token"}`. No silent fallthrough — `env=qa`
+without a valid token is always rejected.
 
 ### OQ-2: Cache Capacity
 
