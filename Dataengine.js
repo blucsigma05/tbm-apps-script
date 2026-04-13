@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v90 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v91 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 90; }
+function getDataEngineVersion() { return 91; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -335,6 +335,10 @@ function getData(startStr, endStr, includeDebt) {
   var rawBankActivity = 0;
   var ccPayments = 0;
   var loanPayments = 0;
+  // v91: Track total debt payments in main loop (was IIFE at export time).
+  // Used for totalCashFlow = true all-cash-in minus all-cash-out.
+  var DEBT_PAY_CATS_MAIN = ['CC Payment', 'LOC Payment', 'Loan Payment', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
+  var debtPaymentsMTD = 0;
 
   for (var t = 1; t < txData.length; t++) {
     var txDate = txData[t][1];   // Col B
@@ -366,6 +370,10 @@ function getData(startStr, endStr, includeDebt) {
     }
     if (txCat === 'CC Payment') ccPayments += amt;
     if (txCat === 'Loan Payment') loanPayments += amt;
+    // v91: Accumulate debt payments for totalCashFlow
+    if (amt < 0 && DEBT_PAY_CATS_MAIN.indexOf(txCat) >= 0) {
+      debtPaymentsMTD += Math.abs(amt);
+    }
   }
 
   totalMoneyIn = earnedIncome + loanProceeds + balanceTransfers;
@@ -488,9 +496,9 @@ function getData(startStr, endStr, includeDebt) {
       totalAssets += entry.balance;
       assetCount++;
     } else if (entry.cls === 'Liability') {
-      var liabBal = Math.abs(entry.balance);
-      if (entry.balance < 0) liabBal = 0;
-      totalLiabilities += liabBal;
+      // v91: Match convention used by diagBalanceSheet, stampCloseMonth, liabilityAccounts.
+      // Negative balance = overpaid account (credit) — still include as abs value.
+      totalLiabilities += Math.abs(entry.balance);
       liabCount++;
     }
   }
@@ -644,7 +652,9 @@ function getData(startStr, endStr, includeDebt) {
 
   // ── 7. Compute derived metrics ──
   var operationalCashFlow = earnedIncome - operatingExpenses;
-  var netCashFlow = totalMoneyIn - operatingExpenses;
+  // v91: totalCashFlow = true all-cash metric (includes debt payments as cash out)
+  // operationalCashFlow excludes debt payments (intentional — tracks operating margin)
+  var totalCashFlow = totalMoneyIn - operatingExpenses - debtPaymentsMTD;
 
   var startM = startDate.getMonth();
   var endM = endDate.getMonth();
@@ -810,8 +820,11 @@ function getData(startStr, endStr, includeDebt) {
     operationalCashFlow: roundTo(operationalCashFlow, 2),
     bridgeCash: roundTo(loanProceeds, 2),
     bridgeCashLabel: loanProceeds > 0 ? 'LOC / Loan Draw' : '',
-    'netCashFlow (All Money In \u2212 Out)': roundTo(operationalCashFlow + loanProceeds, 2),
+    // v91: Renamed label to match actual computation (opex only, no debt payments)
+    'netCashFlow (Operating Net + LOC)': roundTo(operationalCashFlow + loanProceeds, 2),
     netCashFlow: roundTo(operationalCashFlow + loanProceeds, 2),
+    // v91: True all-cash metric — includes debt payments as money out
+    totalCashFlow: roundTo(totalCashFlow, 2),
 
     // WeeklyCashMap
     weeklyCashMin: weeklyCashMap.weeklyCashMin,
@@ -853,22 +866,8 @@ cashFlowPositiveDate: (function() {
   return _cfpMS[_cfpLater.getMonth()] + ' ' + _cfpLater.getFullYear();
 })(),
 
-    // ── Debt payments for this date range (v43) ──
-    // Previously only in getSimulatorData(). Adding to getData() so prior-month
-    // views in ThePulse show correct debt payments, not current-month fallback.
-    debtPaymentsMTD: (function() {
-      var _dpm = 0;
-      var _DEBT_PAY = ['CC Payment', 'LOC Payment', 'Loan Payment', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
-      for (var _t = 1; _t < txData.length; _t++) {
-        var _td = txData[_t][1], _tc = String(txData[_t][3]||'').trim(), _ta = parseFloat(txData[_t][4])||0;
-        if (!_td||!_tc) continue;
-        if (typeof _td==='string') _td=new Date(_td);
-        if (!(_td instanceof Date)||isNaN(_td.getTime())) continue;
-        if (_td<startDate||_td>endDate) continue;
-        if (_ta<0 && _DEBT_PAY.indexOf(_tc)>=0) _dpm+=Math.abs(_ta);
-      }
-      return roundTo(_dpm,2);
-    })(),
+    // v91: debtPaymentsMTD now computed in main tx loop (no second scan needed)
+    debtPaymentsMTD: roundTo(debtPaymentsMTD, 2),
     debtPaymentDetail: (function() {
       var _dpd = {};
       var _DEBT_PAY2 = ['CC Payment', 'LOC Payment', 'Loan Payment', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
@@ -3412,4 +3411,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v90
+// END OF FILE — DataEngine v91
