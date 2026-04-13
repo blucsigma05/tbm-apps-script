@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// ResetTesting.gs v3 — QA Sandbox Reset + Seed Tooling
+// ResetTesting.gs v4 — QA Sandbox Reset + Seed Tooling
 // WRITES TO: KH_ tabs (KH_History, KH_Chores, KH_Children, etc.)
 // READS FROM: TAB_MAP (via DataEngine global scope)
 // ════════════════════════════════════════════════════════════════════
 
-function getResetTestingVersion() { return 3; }
+function getResetTestingVersion() { return 4; }
 
 // ════════════════════════════════════════════════════════════════════
 // 1. ENVIRONMENT-GUARDED RESET
@@ -48,7 +48,8 @@ function clearKHTestData() {
     'KH_Streaks',
     'KH_ScreenTime',
     'KH_Deductions',
-    'KH_Requests'
+    'KH_Requests',
+    'KH_MissionState'
   ];
   var totalCleared = 0;
   for (var t = 0; t < tabs.length; t++) {
@@ -133,6 +134,7 @@ function seedQAWorkbook() {
   clearKHTestData();
   seedKHChores_();
   seedKHHistory_();
+  seedKHMissionState_();
   seedSampleTransactions_();
   seedSampleBalanceHistory_();
 
@@ -218,17 +220,21 @@ function seedKHHistory_() {
   var yesterday = new Date(today.getTime() - 86400000);
 
   var entries = [
-    // Approved entries (yesterday)
-    {Child: 'buggsy', Task_Name: 'QA-Make Bed', Points_Earned: 5, Status: 'approved', Date: yesterday},
-    {Child: 'buggsy', Task_Name: 'QA-Brush Teeth AM', Points_Earned: 3, Status: 'approved', Date: yesterday},
-    {Child: 'buggsy', Task_Name: 'QA-Get Dressed', Points_Earned: 3, Status: 'approved', Date: yesterday},
-    {Child: 'jj', Task_Name: 'QA-Make Bed', Points_Earned: 5, Status: 'approved', Date: yesterday},
-    {Child: 'jj', Task_Name: 'QA-Brush Teeth AM', Points_Earned: 3, Status: 'approved', Date: yesterday},
+    // Approved chore entries (yesterday)
+    {Child: 'buggsy', Task_Name: 'QA-Make Bed', Points_Earned: 5, Status: 'approved', Date: yesterday, Event_Type: 'chore'},
+    {Child: 'buggsy', Task_Name: 'QA-Brush Teeth AM', Points_Earned: 3, Status: 'approved', Date: yesterday, Event_Type: 'chore'},
+    {Child: 'buggsy', Task_Name: 'QA-Get Dressed', Points_Earned: 3, Status: 'approved', Date: yesterday, Event_Type: 'chore'},
+    {Child: 'jj', Task_Name: 'QA-Make Bed', Points_Earned: 5, Status: 'approved', Date: yesterday, Event_Type: 'chore'},
+    {Child: 'jj', Task_Name: 'QA-Brush Teeth AM', Points_Earned: 3, Status: 'approved', Date: yesterday, Event_Type: 'chore'},
+    // Education events (yesterday) — required by checkDay1_ to skip Day 1 setup
+    {Child: 'buggsy', Task_Name: 'QA-Homework Complete', Points_Earned: 10, Status: 'approved', Date: yesterday, Event_Type: 'education'},
+    {Child: 'buggsy', Task_Name: 'QA-CER Wolfkid', Points_Earned: 8, Status: 'approved', Date: yesterday, Event_Type: 'education'},
+    {Child: 'jj', Task_Name: 'QA-Sparkle Session', Points_Earned: 5, Status: 'approved', Date: yesterday, Event_Type: 'education'},
     // Pending approval (today)
-    {Child: 'buggsy', Task_Name: 'QA-Homework', Points_Earned: 10, Status: 'pending', Date: today},
-    {Child: 'jj', Task_Name: 'QA-Pick Up Toys', Points_Earned: 5, Status: 'pending', Date: today},
+    {Child: 'buggsy', Task_Name: 'QA-Homework', Points_Earned: 10, Status: 'pending', Date: today, Event_Type: 'chore'},
+    {Child: 'jj', Task_Name: 'QA-Pick Up Toys', Points_Earned: 5, Status: 'pending', Date: today, Event_Type: 'chore'},
     // Declined
-    {Child: 'buggsy', Task_Name: 'QA-Read 20min', Points_Earned: 0, Status: 'declined', Date: yesterday}
+    {Child: 'buggsy', Task_Name: 'QA-Read 20min', Points_Earned: 0, Status: 'declined', Date: yesterday, Event_Type: 'chore'}
   ];
 
   var rows = [];
@@ -242,13 +248,49 @@ function seedKHHistory_() {
     if (colMap['Status'] !== undefined) row[colMap['Status']] = e.Status;
     if (colMap['Date'] !== undefined) row[colMap['Date']] = e.Date;
     if (colMap['Completed_Date'] !== undefined) row[colMap['Completed_Date']] = e.Date;
+    if (colMap['Event_Type'] !== undefined && e.Event_Type) row[colMap['Event_Type']] = e.Event_Type;
     rows.push(row);
   }
 
   if (rows.length > 0) {
     sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
   }
-  Logger.log('OK: KH_History seeded with ' + rows.length + ' entries (5 approved, 2 pending, 1 declined)');
+  Logger.log('OK: KH_History seeded with ' + rows.length + ' entries (5 chore approved, 3 education, 2 pending, 1 declined)');
+}
+
+/**
+ * Seed KH_MissionState with one prior-mission record per child.
+ * checkDay1_ returns isDay1:false when ANY row exists for the child.
+ * Seeding this prevents daily-missions from falling into Day 1 setup.
+ */
+function seedKHMissionState_() {
+  var ss = SpreadsheetApp.openById(SSID);
+  var tabName = typeof TAB_MAP !== 'undefined' ? (TAB_MAP['KH_MissionState'] || 'KH_MissionState') : 'KH_MissionState';
+  var sheet = ss.getSheetByName(tabName);
+  if (!sheet) { Logger.log('WARNING: KH_MissionState not found — skipping seed'); return; }
+
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(String);
+  var colMap = {};
+  for (var h = 0; h < headers.length; h++) { colMap[headers[h]] = h; }
+
+  var yesterday = new Date(new Date().getTime() - 86400000);
+  var children = ['buggsy', 'jj'];
+  var rows = [];
+  for (var i = 0; i < children.length; i++) {
+    var row = new Array(headers.length);
+    for (var c = 0; c < row.length; c++) row[c] = '';
+    // column 0 must be child name — checkDay1_ reads missions[j][0]
+    row[0] = children[i];
+    if (colMap['Child'] !== undefined) row[colMap['Child']] = children[i];
+    if (colMap['Date'] !== undefined) row[colMap['Date']] = yesterday;
+    if (colMap['Mission_Date'] !== undefined) row[colMap['Mission_Date']] = yesterday;
+    rows.push(row);
+  }
+
+  if (rows.length > 0) {
+    sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+  }
+  Logger.log('OK: KH_MissionState seeded with ' + rows.length + ' entries (1 per child)');
 }
 
 /**
@@ -358,4 +400,4 @@ function resetQAData() {
 }
 
 // Version history tracked in Notion deploy page. Do not add version comments here.
-// ResetTesting.gs v3 — EOF
+// ResetTesting.gs v4 — EOF
