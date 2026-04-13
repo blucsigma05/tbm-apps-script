@@ -611,7 +611,7 @@ var _sim=null,_tracker=null,_trackerError=null,DEBTS=[],EXCL=[],
 DEBT_CONFIG={BREATHING_ROOM:0,BUDGET_BREATHING_ROOM:0,BONUS_AMOUNT:0,ESTIMATED_PEAK:0},
 extra=0,wf=0,strat='hybrid',baseResult=null,currentView='weekly',selectedMonthIdx=new Date().getMonth(),
 _debtLookup={},
-_gbAccordion={},_debtGroupAccordion={},_plOpen=false,_moreCatsOpen=false,_wfTimer=null,_availableMonths=[],customRange=null,_customRangeData=null,_serverMonths=null,_selectedYM=null;
+_gbAccordion={},_debtGroupAccordion={},_plOpen=false,_moreCatsOpen=false,_wfTimer=null,_availableMonths=[],customRange=null,_customRangeData=null,_serverMonths=null,_selectedYM=null,_debtSectionOpen=true,_cashSectionOpen=false;
 
 function isMinOnly(a){return !a.strategy||a.strategy==='Minimum Only'||a.strategy==='Minimum'||a.strategy==='Excluded';}
 function simulate(debts,ext,windfall,strategy){
@@ -698,6 +698,9 @@ function onSimData(r){if(!r||!r.debts){onError('Empty simulator data');return;}_
   DEBT_CONFIG._debtNetChange=r.debtNetChange||0;
   // v58: Pulse Summary from DataEngine v77
   DEBT_CONFIG._pulseSummary=r.pulseSummary||null;
+  // v64: Cash on Hand accounts from DataEngine cashAccounts/liquidCash
+  DEBT_CONFIG._cashAccounts=r.cashAccounts||[];
+  DEBT_CONFIG._liquidCash=r.liquidCash||0;
   // v21 FIX: removed gapAfterDebt server read — was using total minimums instead of actual payments
   tryRender();}
 function onTrackerData(r){if(!r||!r.currentMonth)return;_tracker=r;selectedMonthIdx=r.currentMonth.idx;
@@ -867,7 +870,10 @@ function render(){
   html+='</div></div>';
 
   // 2. DEBT ROAD
-  html+='<div class="sec a3"><div class="sec-label">Total Debt (excl. mortgage)</div><div class="road-wrap">';
+  // v64: Total Debt section — collapsible, default expanded
+  html+='<div class="sec a3"><div class="sec-label" onclick="toggleDebtSection()" style="cursor:pointer;user-select:none">Total Debt (excl. mortgage) <span id="debt-sec-chev" style="font-size:10px;opacity:.6;margin-left:4px">'+(_debtSectionOpen?'▼':'▶')+'</span></div>';
+  html+='<div id="debt-sec-body" style="display:'+(_debtSectionOpen?'block':'none')+'">';
+  html+='<div class="road-wrap">';
   html+='<div class="road-label">'+(netChange>=0?'Debt Erased Since Jan 2026':'Debt Added Since Jan 2026')+'</div>';
   html+='<div class="road-title">'+F(Math.abs(netChange))+'</div>';
   html+='<div class="road-track"><div class="road-dashes"></div><div class="road-bar" id="dpBar" data-pct="'+pct.toFixed(1)+'" style="width:0%"><span class="mustang">✦</span></div></div>';
@@ -879,6 +885,26 @@ function render(){
   else{html+='<div class="des-stat"><div class="des-stat-l">Interest Cost</div><div class="des-stat-v red">'+F(Math.round(plan.totalInterest))+'</div></div>';}
   html+='<div class="des-stat"><div class="des-stat-l">Interest Burn</div><div class="des-stat-v red">'+((extra>0||wf>0)?'\u2014':F(intBurn)+'/mo')+'</div></div></div>';
   if(monthsSaved>0)html+='<div style="margin-top:8px;text-align:center;font-size:12px;color:#FBE8A8;font-weight:600">✦ '+monthsSaved+' months sooner</div>';
+  html+='</div></div></div>';
+
+  // v64: Cash on Hand section — collapsible, default collapsed
+  var cashAccts = DEBT_CONFIG._cashAccounts || [];
+  var liquidCash = DEBT_CONFIG._liquidCash || 0;
+  html+='<div class="sec a3"><div class="sec-label" onclick="toggleCashSection()" style="cursor:pointer;user-select:none">Cash on Hand <span style="font-size:10px;color:rgba(201,168,76,0.7);margin-left:6px">'+F(liquidCash)+'</span><span id="cash-sec-chev" style="font-size:10px;opacity:.6;margin-left:4px">'+(_cashSectionOpen?'▼':'▶')+'</span></div>';
+  html+='<div id="cash-sec-body" style="display:'+(_cashSectionOpen?'block':'none')+'">';
+  if(!cashAccts.length){
+    html+='<div style="font-size:12px;color:var(--ink3);padding:10px 0">No cash accounts found — check Tiller sync.</div>';
+  } else {
+    html+='<div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">';
+    for(var ci=0;ci<cashAccts.length;ci++){
+      var ca=cashAccts[ci];
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:8px">';
+      html+='<div style="font-size:12px;color:var(--ink)">'+String(ca.name||'')+'<span style="font-size:10px;color:var(--ink3);margin-left:6px">'+String(ca.type||'')+'</span></div>';
+      html+='<div style="font-size:13px;font-weight:700;color:var(--green)">'+F(ca.balance||0)+'</div>';
+      html+='</div>';
+    }
+    html+='</div>';
+  }
   html+='</div></div>';
 
   // 3. PLAY WITH NUMBERS
@@ -1092,6 +1118,9 @@ function toggleGBAccordion(k){
   }
 }
 function toggleDebtGroup(type){_debtGroupAccordion[type]=!_debtGroupAccordion[type];var gid=debtGroupId(type),body=document.getElementById(gid),arrow=document.getElementById(gid+'-arrow');if(body)body.style.display=_debtGroupAccordion[type]?'block':'none';if(arrow)arrow.textContent=_debtGroupAccordion[type]?'▼':'▶';}
+// v64: Section-level collapse toggles
+function toggleDebtSection(){_debtSectionOpen=!_debtSectionOpen;localStorage.setItem('pulse_debtSectionOpen',String(_debtSectionOpen));var b=document.getElementById('debt-sec-body'),c=document.getElementById('debt-sec-chev');if(b)b.style.display=_debtSectionOpen?'block':'none';if(c)c.textContent=_debtSectionOpen?'▼':'▶';if(_debtSectionOpen){setTimeout(function(){var bar=document.getElementById('dpBar');if(bar)bar.style.width=bar.dataset.pct+'%';},200);}}
+function toggleCashSection(){_cashSectionOpen=!_cashSectionOpen;localStorage.setItem('pulse_cashSectionOpen',String(_cashSectionOpen));var b=document.getElementById('cash-sec-body'),c=document.getElementById('cash-sec-chev');if(b)b.style.display=_cashSectionOpen?'block':'none';if(c)c.textContent=_cashSectionOpen?'▼':'▶';}
 function toggleMoreCats(){_moreCatsOpen=!_moreCatsOpen;var e=document.getElementById('more-cats'),t=document.getElementById('more-cats-text');if(e)e.style.display=_moreCatsOpen?'block':'none';if(t)t.textContent=_moreCatsOpen?'Hide extras ▲':t.textContent.replace('▲','▼');}
 function switchView(v){currentView=v;render();}
 function onMonthSelect(v){selectedMonthIdx=parseInt(v);customRange=null;render();}
@@ -1390,6 +1419,14 @@ function _renderKidsWidget(data) {
 
 // Auto-refresh kids every 3 minutes
 setInterval(function() { initKidsWidget(); }, 3 * 60 * 1000);
+
+// v64: Load section collapse prefs from localStorage
+(function(){
+  var ds = localStorage.getItem('pulse_debtSectionOpen');
+  if(ds !== null) _debtSectionOpen = ds === 'true';
+  var cs = localStorage.getItem('pulse_cashSectionOpen');
+  if(cs !== null) _cashSectionOpen = cs === 'true';
+})();
 
 loadData();
 // v53: Track 8 — wake-from-sleep refresh
