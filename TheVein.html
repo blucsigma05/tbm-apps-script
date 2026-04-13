@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="tbm-version" content="v65">
 <title>The Vein v65 — Household Command Center</title>
-<!-- TheVein v65 — Version history tracked in Notion deploy page. No changelogs in this file. -->
+<!-- TheVein v66 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -209,7 +209,7 @@ background:linear-gradient(90deg,transparent,var(--blue),transparent);}
 .fnote-row{display:flex;gap:8px;align-items:flex-start}
 .fnote-input{flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);resize:none;min-height:36px;max-height:80px;line-height:1.4;outline:none}
 .fnote-input:focus{border-color:var(--blue)}
-.fnote-save{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;cursor:pointer;white-space:nowrap;opacity:.5;pointer-events:none;transition:opacity .2s}
+.fnote-save{background:var(--blue);color:#fff;border:none;border-radius:8px;padding:8px 14px;min-height:44px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;cursor:pointer;white-space:nowrap;opacity:.5;pointer-events:none;transition:opacity .2s}
 .fnote-save.active{opacity:1;pointer-events:auto}
 .fnote-save:active{transform:scale(.97)}
 .fnote-preview{margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);line-height:1.5}
@@ -706,7 +706,7 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
       <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Notes</div>
       <input type="text" id="dinnerNotes" class="fnote-input" placeholder="Optional" maxlength="300" style="width:100%;resize:none;height:36px;padding:6px 10px;">
     </div>
-    <button class="fnote-save" id="dinnerSave" onclick="saveDinner()" style="height:36px;">Save</button>
+    <button class="fnote-save active" id="dinnerSave" onclick="saveDinner()" style="height:44px;min-width:54px;">Save</button>
   </div>
   <div style="margin-top:8px;">
     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-muted);">
