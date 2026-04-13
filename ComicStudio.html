@@ -459,6 +459,12 @@ main {
   position: relative;
   cursor: pointer;
   transition: border-color 0.2s;
+  touch-action: none;
+}
+.panel-slot canvas {
+  display: block;
+  width: 100%;
+  touch-action: none;
 }
 .panel-slot.active {
   border-color: #F59E0B;
@@ -951,7 +957,7 @@ main {
 </main>
 
 <script>
-// ── ComicStudio v4 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
+// ── ComicStudio v5 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
 // ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
 // tbm-version: v11
 
@@ -1820,8 +1826,8 @@ function attachPointerEvents(canvas, panelIdx) {
   });
 
   canvas.addEventListener('pointermove', (e) => {
-    if (!isDrawing) return;
     e.preventDefault();
+    if (!isDrawing) return;
 
     const ctx = panelContexts[panelIdx];
     const pos = getPos(e);
