@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v81 — Apps Script Router (TBM Consolidated)
+// Code.gs v83 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 82; }
+function getCodeVersion() { return 83; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -1122,22 +1122,33 @@ function seedStaarRlaSprintSafe(jsonStr) {
   });
 }
 
-// v52: Feedback Form — setup + submit
+// v83: Feedback Form — setup + submit (extended schema for pipeline #231)
 function setupFeedbackSheet() {
   var ss = SpreadsheetApp.openById(SSID);
   var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Feedback']) || '💻 Feedback';
   var sheet = ss.getSheetByName(tabName);
   if (!sheet) {
     sheet = ss.insertSheet(tabName);
-    sheet.appendRow(['Timestamp', 'Surface', 'LayoutRating', 'ReadabilityRating', 'FreeText', 'UserAgent']);
+    sheet.appendRow(['Timestamp', 'Surface', 'LayoutRating', 'ReadabilityRating', 'FreeText', 'User', 'Processed', 'Classification']);
     sheet.setFrozenRows(1);
     sheet.getRange('1:1').setFontWeight('bold');
-    Logger.log('✅ Feedback sheet created: ' + tabName);
+    Logger.log('Feedback sheet created: ' + tabName);
   } else {
-    Logger.log('Feedback sheet already exists.');
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var headerStr = headers.join(',');
+    if (headerStr.indexOf('User') === -1) {
+      var nextCol = headers.length + 1;
+      sheet.getRange(1, nextCol).setValue('User');
+      sheet.getRange(1, nextCol + 1).setValue('Processed');
+      sheet.getRange(1, nextCol + 2).setValue('Classification');
+      Logger.log('Feedback sheet migrated: added User, Processed, Classification columns');
+    } else {
+      Logger.log('Feedback sheet already has extended schema.');
+    }
   }
 }
 
+// v83: Feedback with Pushover notification + Processed column for pipeline (#231)
 function submitFeedbackSafe(payload) {
   return withMonitor_('submitFeedbackSafe', function() {
     var layout = parseInt(payload.layout, 10);
@@ -1150,6 +1161,7 @@ function submitFeedbackSafe(payload) {
     }
     var surface = String(payload.surface || 'unknown');
     var text = String(payload.text || '').substring(0, 500);
+    var user = String(payload.user || 'unknown');
 
     var lock = LockService.getScriptLock();
     try { lock.waitLock(30000); } catch(e) {
@@ -1162,7 +1174,25 @@ function submitFeedbackSafe(payload) {
       if (!sheet) {
         return JSON.parse(JSON.stringify({ error: true, message: 'Feedback sheet not found. Run setupFeedbackSheet() first.' }));
       }
-      sheet.appendRow([new Date().toISOString(), surface, layout, readability, text, 'web']);
+      sheet.appendRow([new Date().toISOString(), surface, layout, readability, text, user, '', '']);
+
+      // v83: Immediate Pushover to LT only — no feedback sits unread (#231 Layer 1)
+      try {
+        var stars = '';
+        for (var s = 0; s < layout; s++) stars += '\u2b50';
+        var preview = text ? (' \u2014 ' + text.substring(0, 80)) : '';
+        if (typeof sendPush_ === 'function') {
+          sendPush_(
+            '\ud83d\udde3 Feedback: ' + surface,
+            user + ': ' + stars + preview,
+            'LT',
+            typeof PUSHOVER_PRIORITY !== 'undefined' ? PUSHOVER_PRIORITY.CHORE_APPROVAL : 0
+          );
+        }
+      } catch(pushErr) {
+        if (typeof logError_ === 'function') logError_('submitFeedback_push', pushErr);
+      }
+
       return JSON.parse(JSON.stringify({ success: true }));
     } finally {
       lock.releaseLock();
@@ -2108,4 +2138,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v81
+// END OF FILE — Code.gs v83

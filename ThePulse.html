@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="tbm-version" content="v63">
-<title>The Pulse v63 — Thompson Household</title>
+<meta name="tbm-module" content="the-pulse">
+<meta name="tbm-version" content="v64">
+<title>The Pulse v64 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -548,7 +549,7 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
 <div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 
 <script>
-var TBM_VERSION = 'v63';
+var TBM_VERSION = 'v64';
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 var _lastFetchTime = null;
 var _lastGoodSim = null;
@@ -1423,6 +1424,158 @@ p.innerHTML='<div style="padding:10px 16px;display:flex;justify-content:space-be
 document.body.appendChild(p);
 document.body.style.border=allPass?'3px solid #4ade80':'3px solid #f87171';
 });
+})();
+</script>
+<!-- ═══ Adult Feedback Widget (ES5 IIFE) ═══ -->
+<script>
+(function() {
+  var FB_STYLES = '#tbm-fb-btn{position:fixed;bottom:12px;left:12px;width:48px;height:48px;border-radius:50%;'
+    + 'background:rgba(11,19,29,0.7);border:1px solid #1e3347;color:#e2e8f0;font-size:22px;cursor:pointer;'
+    + 'z-index:9000;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);'
+    + 'transition:opacity 0.2s;opacity:0.6;}'
+    + '#tbm-fb-btn:hover{opacity:1;}'
+    + '#tbm-fb-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9001;}'
+    + '#tbm-fb-modal{position:fixed;bottom:70px;left:12px;width:280px;background:#0b131d;border:1px solid #1e3347;'
+    + 'border-radius:12px;padding:16px;z-index:9002;box-shadow:0 4px 24px rgba(0,0,0,0.5);display:none;}'
+    + '#tbm-fb-modal h3{margin:0 0 14px 0;color:#e2e8f0;font-size:15px;text-align:center;}'
+    + '.tbm-fb-row{display:flex;align-items:center;margin-bottom:10px;}'
+    + '.tbm-fb-row-label{color:#9ca3af;font-size:12px;width:80px;flex-shrink:0;}'
+    + '.tbm-fb-stars{display:flex;gap:4px;}'
+    + '.tbm-fb-stars span{font-size:22px;cursor:pointer;opacity:0.3;transition:opacity 0.15s;}'
+    + '.tbm-fb-stars span.active{opacity:1;}'
+    + '#tbm-fb-text{width:100%;box-sizing:border-box;background:#0f1a2a;border:1px solid #1e3347;border-radius:8px;'
+    + 'color:#e2e8f0;padding:8px;font-size:14px;font-family:inherit;resize:none;height:52px;margin-bottom:10px;}'
+    + '#tbm-fb-text::placeholder{color:#4a6080;}'
+    + '.tbm-fb-actions{display:flex;justify-content:flex-end;gap:8px;}'
+    + '.tbm-fb-actions button{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;border:none;}'
+    + '#tbm-fb-skip{background:transparent;color:#4a6080;}#tbm-fb-skip:hover{color:#e2e8f0;}'
+    + '#tbm-fb-send{background:#1e3a5f;color:#38bdf8;font-weight:700;}#tbm-fb-send:hover{background:#254a73;}'
+    + '.tbm-fb-toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#0b131d;'
+    + 'border:1px solid #1e3347;color:#e2e8f0;padding:8px 20px;border-radius:8px;font-size:14px;z-index:9010;'
+    + 'opacity:0;transition:opacity 0.3s;}';
+
+  var style = document.createElement('style');
+  style.textContent = FB_STYLES;
+  document.head.appendChild(style);
+
+  var btn = document.createElement('button');
+  btn.id = 'tbm-fb-btn';
+  btn.innerHTML = '&#x1F4AC;';
+  btn.setAttribute('aria-label', 'Give feedback');
+  document.body.appendChild(btn);
+
+  var overlay = document.createElement('div');
+  overlay.id = 'tbm-fb-overlay';
+  document.body.appendChild(overlay);
+
+  function buildStarRow(label, id) {
+    var html = '<div class="tbm-fb-row"><span class="tbm-fb-row-label">' + label + '</span>'
+      + '<div class="tbm-fb-stars" data-rating-id="' + id + '">';
+    for (var s = 1; s <= 5; s++) {
+      html += '<span data-val="' + s + '">&#x2B50;</span>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  var modal = document.createElement('div');
+  modal.id = 'tbm-fb-modal';
+  modal.innerHTML = '<h3>Quick Feedback</h3>'
+    + buildStarRow('Layout', 'layout')
+    + buildStarRow('Readability', 'readability')
+    + '<textarea id="tbm-fb-text" placeholder="Any thoughts? (optional)" maxlength="200"></textarea>'
+    + '<div class="tbm-fb-actions">'
+    + '<button id="tbm-fb-skip">Skip</button>'
+    + '<button id="tbm-fb-send">Send</button>'
+    + '</div>';
+  document.body.appendChild(modal);
+
+  var ratings = { layout: 0, readability: 0 };
+
+  function updateStars(containerId, val) {
+    var container = modal.querySelector('[data-rating-id="' + containerId + '"]');
+    if (!container) return;
+    var spans = container.querySelectorAll('span');
+    for (var i = 0; i < spans.length; i++) {
+      var v = parseInt(spans[i].getAttribute('data-val'), 10);
+      spans[i].className = v <= val ? 'active' : '';
+    }
+    ratings[containerId] = val;
+  }
+
+  function wireStars(containerId) {
+    var container = modal.querySelector('[data-rating-id="' + containerId + '"]');
+    if (!container) return;
+    var spans = container.querySelectorAll('span');
+    for (var i = 0; i < spans.length; i++) {
+      spans[i].onclick = (function(sp) {
+        return function() {
+          updateStars(containerId, parseInt(sp.getAttribute('data-val'), 10));
+        };
+      })(spans[i]);
+    }
+  }
+
+  wireStars('layout');
+  wireStars('readability');
+
+  function getSurface() {
+    var meta = document.querySelector('meta[name="tbm-module"]');
+    return meta ? meta.getAttribute('content') : 'unknown';
+  }
+
+  function showToast(msg) {
+    var t = document.createElement('div');
+    t.className = 'tbm-fb-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { t.style.opacity = '1'; }, 10);
+    setTimeout(function() {
+      t.style.opacity = '0';
+      setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+    }, 1500);
+  }
+
+  function openModal() {
+    ratings.layout = 0;
+    ratings.readability = 0;
+    updateStars('layout', 0);
+    updateStars('readability', 0);
+    var ta = document.getElementById('tbm-fb-text');
+    if (ta) ta.value = '';
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+  }
+
+  function closeModal() {
+    overlay.style.display = 'none';
+    modal.style.display = 'none';
+  }
+
+  btn.onclick = openModal;
+  overlay.onclick = closeModal;
+
+  document.getElementById('tbm-fb-skip').onclick = closeModal;
+
+  document.getElementById('tbm-fb-send').onclick = function() {
+    if (!ratings.layout || !ratings.readability) {
+      showToast('Please rate both categories');
+      return;
+    }
+    var ta = document.getElementById('tbm-fb-text');
+    var payload = {
+      surface: getSurface(),
+      layout: ratings.layout,
+      readability: ratings.readability,
+      text: ta ? ta.value : '',
+      user: 'JT'
+    };
+    closeModal();
+    google.script.run
+      .withSuccessHandler(function() { showToast('\u2713 Thanks!'); })
+      .withFailureHandler(function() { showToast('Oops, try later'); })
+      .submitFeedbackSafe(payload);
+  };
 })();
 </script>
 </body>
