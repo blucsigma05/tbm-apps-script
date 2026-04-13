@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 81; }
+function getCodeVersion() { return 82; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -47,11 +47,12 @@ var KH_CACHE_HB_KEY = 'KH_LAST_HB'; // stores last-seen heartbeat value
  */
 function getCachedKHPayload_(key) {
   try {
-    var cacheKey = key || KH_CACHE_KEY;
+    var cacheKey = getEnvCacheKey_(key || KH_CACHE_KEY);
+    var scopedHBKey = getEnvCacheKey_(KH_CACHE_HB_KEY);
     var cache = CacheService.getScriptCache();
-    var keys = cache.getAll([cacheKey, KH_CACHE_HB_KEY]);
+    var keys = cache.getAll([cacheKey, scopedHBKey]);
     var raw = keys[cacheKey];
-    var cachedHB = keys[KH_CACHE_HB_KEY];
+    var cachedHB = keys[scopedHBKey];
     if (!raw || !cachedHB) return null;
 
     // Check heartbeat — single cell read (fast)
@@ -70,13 +71,14 @@ function getCachedKHPayload_(key) {
  */
 function setCachedKHPayload_(jsonStr, key) {
   try {
-    var cacheKey = key || KH_CACHE_KEY;
+    var cacheKey = getEnvCacheKey_(key || KH_CACHE_KEY);
+    var scopedHBKey = getEnvCacheKey_(KH_CACHE_HB_KEY);
     var cache = CacheService.getScriptCache();
     var currentHB = getKHLastModified();
     if (!currentHB) return; // no heartbeat → don't cache stale
     var payload = {};
     payload[cacheKey] = jsonStr;
-    payload[KH_CACHE_HB_KEY] = currentHB;
+    payload[scopedHBKey] = currentHB;
     cache.putAll(payload, KH_CACHE_TTL);
     var size = jsonStr.length;
     if (size > 50000) {
@@ -89,6 +91,7 @@ function setCachedKHPayload_(jsonStr, key) {
 
 function getCachedPayload_(cacheKey) {
   try {
+    cacheKey = getEnvCacheKey_(cacheKey);
     var cache = CacheService.getScriptCache();
     var raw = cache.get(cacheKey);
     if (!raw) return null;
@@ -124,6 +127,7 @@ function getCachedPayload_(cacheKey) {
 
 function setCachedPayload_(cacheKey, payload, ttl) {
   try {
+    cacheKey = getEnvCacheKey_(cacheKey);
     var json = JSON.stringify(payload);
     var size = json.length;
     var effectiveTTL = ttl || DE_CACHE_TTL;
@@ -162,29 +166,74 @@ function setCachedPayload_(cacheKey, payload, ttl) {
   }
 }
 
-/** Bust the DE payload cache. Call from dashboards via google.script.run. */
+// ════════════════════════════════════════════════════════════════════
+// v82: QA ROUTE ISOLATION — HMAC token validation + env-scoped cache keys
+// (specs/qa-route-isolation.md, issue #219)
+// ════════════════════════════════════════════════════════════════════
+
+/** Compute HMAC-SHA256 of message with secret. Returns lowercase hex string. */
+function computeHmac_(message, secret) {
+  try {
+    var bytes = Utilities.computeHmacSha256Signature(message, secret);
+    return bytes.map(function(b) {
+      var hex = (b & 0xff).toString(16);
+      return hex.length === 1 ? '0' + hex : hex;
+    }).join('');
+  } catch(e) { return ''; }
+}
+
+/**
+ * Validate a per-request QA HMAC token from the CF Worker.
+ * Token format: "<timestamp>:<hmac-hex>" — 5-minute window.
+ * Returns true if valid, false otherwise.
+ */
+function validateQAToken_(tokenParam) {
+  if (!tokenParam) return false;
+  var parts = tokenParam.split(':');
+  if (parts.length !== 2) return false;
+  var ts = parseInt(parts[0], 10);
+  if (isNaN(ts) || Math.abs(Date.now() - ts) > 300000) return false;
+  var secret = PropertiesService.getScriptProperties().getProperty('QA_HMAC_SECRET');
+  if (!secret) return false;
+  var expected = computeHmac_(ts + ':qa', secret);
+  return expected === parts[1];
+}
+
+/**
+ * Return env-scoped cache key. Prepends 'qa:' when running in QA context
+ * (SSID matches TBM_QA_SSID). Prod requests are unaffected.
+ */
+function getEnvCacheKey_(baseKey) {
+  var qaSSID = PropertiesService.getScriptProperties().getProperty('TBM_QA_SSID');
+  if (qaSSID && SSID === qaSSID) return 'qa:' + baseKey;
+  return baseKey;
+}
+
+/** Bust the DE payload cache. Call from dashboards via google.script.run.
+ * v82: env-scoped — busts only the namespace matching the active SSID (prod or qa:*). */
 function bustCache() {
   try {
     var cache = CacheService.getScriptCache();
 
-    // Remove primary keys
-    cache.remove(DE_CACHE_KEY);
+    // Remove primary keys (scoped to active env)
+    var deKey = getEnvCacheKey_(DE_CACHE_KEY);
+    cache.remove(deKey);
     var n = new Date();
     var ym = n.getFullYear() + '-' + leftPad2_(n.getMonth() + 1);
-    var monthKey = DE_CACHE_KEY + '_' + ym + '-01';
+    var monthKey = getEnvCacheKey_(DE_CACHE_KEY + '_' + ym + '-01');
     cache.remove(monthKey);
 
-    // Clean up any chunk keys (up to 10 chunks should cover any payload)
+    // Clean up chunk keys (up to 10 chunks per payload)
     var chunkKeys = [];
     for (var i = 0; i < 10; i++) {
-      chunkKeys.push(DE_CACHE_KEY + '_chunk_' + i);
+      chunkKeys.push(deKey + '_chunk_' + i);
       chunkKeys.push(monthKey + '_chunk_' + i);
     }
-    // v47/v70: Also bust KH cache (all + per-child keys)
-    chunkKeys.push(KH_CACHE_KEY);
-    chunkKeys.push(KH_CACHE_KEY + '_buggsy');
-    chunkKeys.push(KH_CACHE_KEY + '_jj');
-    chunkKeys.push(KH_CACHE_HB_KEY);
+    // Also bust KH cache (all + per-child keys)
+    chunkKeys.push(getEnvCacheKey_(KH_CACHE_KEY));
+    chunkKeys.push(getEnvCacheKey_(KH_CACHE_KEY + '_buggsy'));
+    chunkKeys.push(getEnvCacheKey_(KH_CACHE_KEY + '_jj'));
+    chunkKeys.push(getEnvCacheKey_(KH_CACHE_HB_KEY));
     cache.removeAll(chunkKeys);
   } catch(e) { if (typeof logError_ === 'function') logError_('bustCache', e); }
   return { status: 'ok', busted: new Date().toISOString() };
@@ -319,6 +368,24 @@ function doPost(e) {
 
 function serveData(e) {
   var action = e.parameter.action || 'data';
+
+  // v82: QA env override — per-request SSID swap (tokens from CF Worker, 5-min window)
+  // Safe: each GAS HTTP request runs in its own V8 isolate; SSID reassignment is local.
+  if (e.parameter.env === 'qa') {
+    if (!validateQAToken_(e.parameter.qa_token)) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ error: 'Invalid QA token' })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+    var qaSSID = PropertiesService.getScriptProperties().getProperty('TBM_QA_SSID');
+    if (!qaSSID) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ error: 'QA workbook not configured' })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+    SSID = qaSSID;
+    _tbmSS = null; // bust cached workbook reference
+  }
 
   try {
     var result;

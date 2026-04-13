@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v10">
+<meta name="tbm-version" content="v11">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -953,7 +953,7 @@ main {
 <script>
 // ── ComicStudio v4 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
 // ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
-// tbm-version: v10
+// tbm-version: v11
 
 const COMIC_STUDIO_VERSION = 10; // v10: bubble text span fix + replay bubble composite
 
@@ -2109,7 +2109,7 @@ function finishComic() {
   html += `<p style="margin-top:12px;color:#64748B;font-size:12px;">Total words written: ${totalWords}</p>`;
   html += '<div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">';
   html += '<button style="padding:12px 28px;background:#00F0FF;color:#0B0F1A;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Orbitron,sans-serif" onclick="playReplay()">&#9654; REPLAY</button>';
-  html += '<button style="padding:12px 28px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=\'/daily-missions\'">Back to Missions</button>';
+  html += '<button style="padding:12px 28px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=(window.location.pathname.indexOf(\'/qa/\')===0?\'/qa\':\'\')+\'/daily-missions\'">Back to Missions</button>';
   html += '</div>';
   html += '</div>';
   comp.innerHTML = html;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<meta name="tbm-version" content="KidsHub v44">
+<meta name="tbm-version" content="KidsHub v45">
 <title>Kids Hub v40</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -1190,11 +1190,13 @@ var IS_PARENT = INIT_VIEW  === 'parent';
 var _pNavBaseUrl = '';
 if (IS_PARENT) { google.script.run.withSuccessHandler(function(u) { _pNavBaseUrl = u; }).withFailureHandler(function(e){ console.log('Nav URL fetch failed: ' + (e && e.message ? e.message : 'unknown')); }).getScriptUrlSafe(); }
 // v32: Education nav helper — builds URL for education module pages
+// v33: Include /qa prefix when served under /qa/* route
 var _eduBaseUrl = '';
 (function() {
   var loc = window.location;
   if (loc.hostname && loc.hostname !== 'script.google.com' && loc.hostname.indexOf('googleusercontent') === -1) {
-    _eduBaseUrl = loc.origin;
+    var qaPrefix = (loc.pathname.indexOf('/qa/') === 0) ? '/qa' : '';
+    _eduBaseUrl = loc.origin + qaPrefix;
   }
 })();
 function eduGo(page) {
