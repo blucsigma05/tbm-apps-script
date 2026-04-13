@@ -371,7 +371,9 @@ function getData(startStr, endStr, includeDebt) {
     if (txCat === 'CC Payment') ccPayments += amt;
     if (txCat === 'Loan Payment') loanPayments += amt;
     // v91: Accumulate debt payments for totalCashFlow
-    if (amt < 0 && DEBT_PAY_CATS_MAIN.indexOf(txCat) >= 0) {
+    // Trim matches old IIFE behavior (String(...).trim()) — handles whitespace in Tiller imports
+    var _txCatTrimmed = String(txCat || '').trim();
+    if (amt < 0 && DEBT_PAY_CATS_MAIN.indexOf(_txCatTrimmed) >= 0) {
       debtPaymentsMTD += Math.abs(amt);
     }
   }
