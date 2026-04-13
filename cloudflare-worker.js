@@ -491,7 +491,7 @@ function getShimScript() {
 
 // ═══════════════════════════════════════════════════════════════════
 // QA SHIM — Same as prod shim but API="/qa/api", /qa/* nav URLs,
-// amber non-dismissable banner. Injected on all /qa/* pages. (v3.5)
+// amber non-dismissable banner. Finance functions stripped. (v3.6)
 // ═══════════════════════════════════════════════════════════════════
 
 function getQAShimScript() {
@@ -533,13 +533,10 @@ function getQAShimScript() {
 '    return this;\n' +
 '  };\n' +
 '\n' +
+'  // Finance functions (ThePulse/TheVein) stripped — those surfaces are QA-denied.\n' +
 '  var FNS = [\n' +
-'    "getDataSafe","getMonthsSafe","getCashFlowForecastSafe",\n' +
-'    "getSimulatorDataSafe","getWeeklyTrackerDataSafe",\n' +
-'    "getSubscriptionDataSafe","getCategoryTransactionsSafe",\n' +
-'    "getReconcileStatusSafe","reconcileVeinPulseSafe","getBoardDataSafe",\n' +
-'    "getSystemHealthSafe","getMERGateStatusSafe",\n' +
-'    "getCloseHistoryDataSafe",\n' +
+'    "getBoardDataSafe",\n' +
+'    "getSystemHealthSafe",\n' +
 '    "getKidsHubDataSafe","getKidsHubWidgetDataSafe",\n' +
 '    "getKHLastModified","getSpineHeartbeatSafe",\n' +
 '    "khCompleteTaskSafe","khCompleteTaskWithBonusSafe","khUncompleteTaskSafe",\n' +
@@ -551,10 +548,9 @@ function getQAShimScript() {
 '    "khSetBankOpeningSafe","khVerifyPinSafe",\n' +
 '    "khAddDeductionSafe","khHealthCheckSafe",\n' +
 '    "khSubmitGradeSafe","khGetGradeHistorySafe",\n' +
-'    "updateFamilyNoteSafe","reconcileVeinPulse",\n' +
+'    "updateFamilyNoteSafe",\n' +
 '    "getVaultDataSafe","runStoryFactorySafe",\n' +
 '    "getDeployedVersionsSafe",\n' +
-'    "runMERGatesSafe","stampCloseMonthSafe",\n' +
 '    "addKidsEventSafe",\n' +
 '    "getKHLastModifiedSafe","getStoryApiStatsSafe",\n' +
 '    "khBatchApproveSafe","updateMealPlanSafe",\n' +
@@ -572,7 +568,6 @@ function getQAShimScript() {
 '    "getDesignChoicesSafe",\n' +
 '    "getDesignUnlockedSafe",\n' +
 '    "resetSandboxSafe",\n' +
-'    "getRecentTransactionsSafe",\n' +
 '    "getDailyMissionsInitSafe",\n' +
 '    "getAssetRegistrySafe"\n' +
 '  ];\n' +
