@@ -68,6 +68,18 @@ const QA_ROUTES = {
 };
 // Finance surfaces excluded — real Tiller data, no QA snapshot. Explicit 403.
 const QA_DENIED = { '/qa/pulse': true, '/qa/vein': true };
+// Finance API denylist — blocks direct /qa/api calls to finance-only functions.
+// Mirrors QA_DENIED: if the page is denied, its backing API calls are denied too.
+const QA_FINANCE_DENIED = {
+  'getDataSafe': true, 'getMonthsSafe': true,
+  'getCashFlowForecastSafe': true, 'getSimulatorDataSafe': true,
+  'getWeeklyTrackerDataSafe': true, 'getSubscriptionDataSafe': true,
+  'getCategoryTransactionsSafe': true, 'getReconcileStatusSafe': true,
+  'reconcileVeinPulseSafe': true, 'reconcileVeinPulse': true,
+  'getMERGateStatusSafe': true, 'getCloseHistoryDataSafe': true,
+  'runMERGatesSafe': true, 'stampCloseMonthSafe': true,
+  'getRecentTransactionsSafe': true
+};
 
 export default {
   async fetch(request, env) {
@@ -280,6 +292,12 @@ async function handleApi(request, url, env, envOverride) {
 
   var target = GAS_URL + '?action=api&fn=' + encodeURIComponent(fn)
     + '&args=' + encodeURIComponent(args);
+
+  // v3.6: QA finance denylist — block finance-only functions at the proxy layer.
+  // Matches QA_DENIED route policy: pulse/vein pages denied → their backing API calls denied too.
+  if (envOverride === 'qa' && QA_FINANCE_DENIED[fn]) {
+    return jsonResponse({ error: 'Finance function not available in QA mode: ' + fn }, 403);
+  }
 
   // v3.6: QA env override — append env=qa + per-request HMAC token; fail closed if secret missing
   if (envOverride === 'qa') {
