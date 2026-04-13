@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// ResetTesting.gs v2 — QA Sandbox Reset + Seed Tooling
+// ResetTesting.gs v3 — QA Sandbox Reset + Seed Tooling
 // WRITES TO: KH_ tabs (KH_History, KH_Chores, KH_Children, etc.)
 // READS FROM: TAB_MAP (via DataEngine global scope)
 // ════════════════════════════════════════════════════════════════════
 
-function getResetTestingVersion() { return 2; }
+function getResetTestingVersion() { return 3; }
 
 // ════════════════════════════════════════════════════════════════════
 // 1. ENVIRONMENT-GUARDED RESET
@@ -117,12 +117,16 @@ function clearKHTestData() {
 
 /**
  * Master seed — resets everything then populates all test data.
- * Run from GAS editor after setting TBM_ENV=qa.
+ * v3: Self-overrides SSID to QA workbook. No TBM_ENV toggle needed.
+ * Run from GAS editor — just hit play.
  */
 function seedQAWorkbook() {
-  tbm_requireQA_('seedQAWorkbook');
+  var qaSSID = PropertiesService.getScriptProperties().getProperty('TBM_QA_SSID');
+  if (!qaSSID) throw new Error('TBM_QA_SSID not set in Script Properties');
+  SSID = qaSSID;
+  _tbmSS = null;
   Logger.log('=== QA Workbook Seed ===');
-  Logger.log('Environment: ' + TBM_ENV.ENV_NAME);
+  Logger.log('Target: QA workbook (' + qaSSID.substring(0, 12) + '...)');
   Logger.log('SSID: ' + SSID);
   Logger.log('');
 
@@ -345,13 +349,13 @@ function seedSampleBalanceHistory_() {
 /**
  * Full QA reset — clears everything and reseeds.
  * This is the one-button "give me a fresh QA environment" function.
+ * v3: seedQAWorkbook() handles its own SSID override now.
  */
 function resetQAData() {
-  tbm_requireQA_('resetQAData');
   Logger.log('=== Full QA Reset + Reseed ===');
   seedQAWorkbook();
   Logger.log('=== resetQAData complete ===');
 }
 
 // Version history tracked in Notion deploy page. Do not add version comments here.
-// ResetTesting.gs v2 — EOF
+// ResetTesting.gs v3 — EOF

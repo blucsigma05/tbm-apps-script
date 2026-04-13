@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// TBMConfig.gs v1 — Shared Environment Configuration
+// TBMConfig.gs v2 — Shared Environment Configuration
 // WRITES TO: (none — config only)
 // READS FROM: Script Properties (TBM_ENV)
 // ════════════════════════════════════════════════════════════════════
 
-function getTBMConfigVersion() { return 1; }
+function getTBMConfigVersion() { return 2; }
 
 // ════════════════════════════════════════════════════════════════════
 // ENVIRONMENT CONFIGURATION
@@ -53,17 +53,20 @@ function tbm_getWorkbook_() {
 // ENVIRONMENT GUARDS
 // ════════════════════════════════════════════════════════════════════
 
-// Returns true if running in QA environment
+// Returns true if running in QA environment.
+// v2: Also returns true when per-request SSID override targets QA workbook.
 function tbm_isQA_() {
-  return TBM_ENV.ENV === 'qa';
+  if (TBM_ENV.ENV === 'qa') return true;
+  var qaSSID = PropertiesService.getScriptProperties().getProperty('TBM_QA_SSID');
+  return !!(qaSSID && SSID === qaSSID);
 }
 
-// Throws if NOT in QA — use before destructive test operations
+// Throws if NOT in QA — use before destructive test operations.
+// v2: Accepts per-request SSID override as QA proof (no global toggle needed).
 function tbm_requireQA_(caller) {
-  if (TBM_ENV.ENV !== 'qa') {
-    throw new Error(caller + ' blocked — requires TBM_ENV=qa. Current: ' + TBM_ENV.ENV);
-  }
+  if (tbm_isQA_()) return;
+  throw new Error(caller + ' blocked — requires QA context. Current env: ' + TBM_ENV.ENV + ', SSID not QA');
 }
 
 // Version history tracked in Notion deploy page. Do not add version comments here.
-// TBMConfig.gs v1 — EOF
+// TBMConfig.gs v2 — EOF
