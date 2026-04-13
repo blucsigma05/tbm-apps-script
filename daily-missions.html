@@ -1003,8 +1003,6 @@ var _serverStateLoaded = false;
 var _cachedMissionState = {};
 var dynamicSchedule = null;
 var _designUnlocked = false;
-// QA prefix — non-empty when served under /qa/* so nav stays in QA namespace
-var _qaPrefix = (window.location.pathname.indexOf('/qa/') === 0) ? '/qa' : '';
 
 function isJJ() { return currentChild === 'jj' || currentChild === 'sandbox-jj'; }
 
@@ -1605,7 +1603,7 @@ function render() {
       html += '<div class="mission-number" style="background:linear-gradient(135deg,#003311,#001a0a);border-color:#00ff88;color:#00ff88;">\uD83C\uDF89</div>';
       html += '<div class="mission-info"><div class="mission-name">' + block.name + '</div>';
       html += '<div class="mission-meta"><span class="mission-time">Take as long as you want. No timer.</span></div></div>';
-      html += '<div class="mission-actions"><button class="launch-btn" onclick="window.location.href=_qaPrefix+\'/wolfdome?customize=1\'" style="border-color:#00ff88;color:#00ff88;box-shadow:0 0 10px rgba(0,255,136,0.3);">ENTER \u2192</button></div>';
+      html += '<div class="mission-actions"><button class="launch-btn" onclick="window.location.href=\'/wolfdome?customize=1\'" style="border-color:#00ff88;color:#00ff88;box-shadow:0 0 10px rgba(0,255,136,0.3);">ENTER \u2192</button></div>';
       html += '</div>';
     } else {
       // Normal card
@@ -1716,6 +1714,11 @@ function render() {
       setTimeout(function() { showXPPop(cx, cy, '+10 RINGS'); }, 300);
     }
   }
+
+  // Auto-open feedback after all missions complete (fires once)
+  if (allDone && typeof window._tbmFbAutoOpen === 'function') {
+    window._tbmFbAutoOpen();
+  }
 }
 
 // ============================================================
@@ -1737,14 +1740,14 @@ function renderWeekend(container) {
     html += '<div class="bonus-title">\uD83C\uDF08 FREE PLAY \uD83C\uDF08</div>';
     html += '<div class="bonus-desc">Pick any game you want, JJ!</div>';
     html += '<div style="margin-top:12px;display:-webkit-flex;display:flex;gap:10px;-webkit-justify-content:center;justify-content:center;-webkit-flex-wrap:wrap;flex-wrap:wrap">';
-    html += '<button class="launch-btn" onclick="launchMission(_qaPrefix+\'/sparkle-free\',\'freeplay_jj\',\'Sparkle Free Play\')">Sparkle Kingdom \u2728</button>';
+    html += '<button class="launch-btn" onclick="launchMission(\'/sparkle-free\',\'freeplay_jj\',\'Sparkle Free Play\')">Sparkle Kingdom \u2728</button>';
     html += '</div>';
   } else {
     html += '<div class="bonus-title">\uD83C\uDFAE FREE TIME \uD83C\uDFAE</div>';
     html += '<div class="bonus-desc">No missions today. Pick what you want to do.</div>';
     html += '<div style="margin-top:12px;display:-webkit-flex;display:flex;gap:10px;-webkit-justify-content:center;justify-content:center;-webkit-flex-wrap:wrap;flex-wrap:wrap">';
-    html += '<button class="launch-btn" onclick="launchMission(_qaPrefix+\'/facts\',\'bonus_facts\',\'Fact Sprint\')">Fact Sprint \u26A1</button>';
-    html += '<button class="launch-btn" onclick="launchMission(_qaPrefix+\'/comic-studio\',\'freeplay_comic\',\'Comic Studio\')">Comic Studio \uD83C\uDFA8</button>';
+    html += '<button class="launch-btn" onclick="launchMission(\'/facts\',\'bonus_facts\',\'Fact Sprint\')">Fact Sprint \u26A1</button>';
+    html += '<button class="launch-btn" onclick="launchMission(\'/comic-studio\',\'freeplay_comic\',\'Comic Studio\')">Comic Studio \uD83C\uDFA8</button>';
     html += '</div>';
   }
   html += '</div>';
@@ -1799,6 +1802,146 @@ function showXPPop(cx, cy, label) {
 // BOOT
 // ============================================================
 init();
+</script>
+<!-- ═══ Kid Feedback Widget (ES5 IIFE) — auto-opens on day-complete ═══ -->
+<script>
+(function() {
+  var FB_STYLES = '#tbm-fb-btn{position:fixed;bottom:12px;left:12px;width:48px;height:48px;border-radius:50%;'
+    + 'background:rgba(11,19,29,0.7);border:1px solid #1e3347;color:#e2e8f0;font-size:22px;cursor:pointer;'
+    + 'z-index:9000;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);'
+    + 'transition:opacity 0.2s;opacity:0.6;}'
+    + '#tbm-fb-btn:hover{opacity:1;}'
+    + '#tbm-fb-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9001;}'
+    + '#tbm-fb-modal{position:fixed;bottom:70px;left:12px;width:260px;background:#0b131d;border:1px solid #1e3347;'
+    + 'border-radius:12px;padding:16px;z-index:9002;box-shadow:0 4px 24px rgba(0,0,0,0.5);display:none;}'
+    + '#tbm-fb-modal h3{margin:0 0 12px 0;color:#e2e8f0;font-size:16px;text-align:center;}'
+    + '.tbm-fb-emojis{display:flex;justify-content:center;gap:16px;margin-bottom:12px;}'
+    + '.tbm-fb-emojis button{width:52px;height:52px;border-radius:50%;border:2px solid #1e3347;background:#0f1a2a;'
+    + 'font-size:26px;cursor:pointer;transition:border-color 0.15s,transform 0.15s;}'
+    + '.tbm-fb-emojis button.selected{border-color:#38bdf8;transform:scale(1.15);}'
+    + '#tbm-fb-text{width:100%;box-sizing:border-box;background:#0f1a2a;border:1px solid #1e3347;border-radius:8px;'
+    + 'color:#e2e8f0;padding:8px;font-size:14px;font-family:inherit;resize:none;height:52px;margin-bottom:10px;}'
+    + '#tbm-fb-text::placeholder{color:#4a6080;}'
+    + '.tbm-fb-actions{display:flex;justify-content:flex-end;gap:8px;}'
+    + '.tbm-fb-actions button{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;border:none;}'
+    + '#tbm-fb-skip{background:transparent;color:#4a6080;}#tbm-fb-skip:hover{color:#e2e8f0;}'
+    + '#tbm-fb-send{background:#1e3a5f;color:#38bdf8;font-weight:700;}#tbm-fb-send:hover{background:#254a73;}'
+    + '.tbm-fb-toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#0b131d;'
+    + 'border:1px solid #1e3347;color:#e2e8f0;padding:8px 20px;border-radius:8px;font-size:14px;z-index:9010;'
+    + 'opacity:0;transition:opacity 0.3s;}';
+
+  var style = document.createElement('style');
+  style.textContent = FB_STYLES;
+  document.head.appendChild(style);
+
+  var btn = document.createElement('button');
+  btn.id = 'tbm-fb-btn';
+  btn.innerHTML = '&#x1F4AC;';
+  btn.setAttribute('aria-label', 'Give feedback');
+  document.body.appendChild(btn);
+
+  var overlay = document.createElement('div');
+  overlay.id = 'tbm-fb-overlay';
+  document.body.appendChild(overlay);
+
+  var modal = document.createElement('div');
+  modal.id = 'tbm-fb-modal';
+  modal.innerHTML = '<h3>How was it?</h3>'
+    + '<div class="tbm-fb-emojis">'
+    + '<button data-score="1" aria-label="Okay">&#x1F610;</button>'
+    + '<button data-score="3" aria-label="Good">&#x1F642;</button>'
+    + '<button data-score="5" aria-label="Awesome">&#x1F929;</button>'
+    + '</div>'
+    + '<textarea id="tbm-fb-text" placeholder="What happened? (optional)" maxlength="200"></textarea>'
+    + '<div class="tbm-fb-actions">'
+    + '<button id="tbm-fb-skip">Skip</button>'
+    + '<button id="tbm-fb-send">Send</button>'
+    + '</div>';
+  document.body.appendChild(modal);
+
+  var selectedScore = 0;
+  var _fbShownOnce = false;
+
+  function getUser() {
+    var search = window.location.search || '';
+    var match = search.match(/[?&]child=([^&]+)/);
+    if (match) return decodeURIComponent(match[1]);
+    return 'unknown';
+  }
+
+  function getSurface() {
+    var meta = document.querySelector('meta[name="tbm-module"]');
+    return meta ? meta.getAttribute('content') : 'daily-missions';
+  }
+
+  function showToast(msg) {
+    var t = document.createElement('div');
+    t.className = 'tbm-fb-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { t.style.opacity = '1'; }, 10);
+    setTimeout(function() {
+      t.style.opacity = '0';
+      setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+    }, 1500);
+  }
+
+  function openModal() {
+    selectedScore = 0;
+    var btns = modal.querySelectorAll('.tbm-fb-emojis button');
+    for (var i = 0; i < btns.length; i++) btns[i].className = '';
+    var ta = document.getElementById('tbm-fb-text');
+    if (ta) ta.value = '';
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+  }
+
+  function closeModal() {
+    overlay.style.display = 'none';
+    modal.style.display = 'none';
+  }
+
+  btn.onclick = openModal;
+  overlay.onclick = closeModal;
+
+  var emojiButtons = modal.querySelectorAll('.tbm-fb-emojis button');
+  for (var e = 0; e < emojiButtons.length; e++) {
+    emojiButtons[e].onclick = (function(b) {
+      return function() {
+        selectedScore = parseInt(b.getAttribute('data-score'), 10);
+        var all = modal.querySelectorAll('.tbm-fb-emojis button');
+        for (var k = 0; k < all.length; k++) all[k].className = '';
+        b.className = 'selected';
+      };
+    })(emojiButtons[e]);
+  }
+
+  document.getElementById('tbm-fb-skip').onclick = closeModal;
+
+  document.getElementById('tbm-fb-send').onclick = function() {
+    if (!selectedScore) { showToast('Tap an emoji first!'); return; }
+    var ta = document.getElementById('tbm-fb-text');
+    var payload = {
+      surface: getSurface(),
+      layout: selectedScore,
+      readability: selectedScore,
+      text: ta ? ta.value : '',
+      user: getUser()
+    };
+    closeModal();
+    google.script.run
+      .withSuccessHandler(function() { showToast('\u2713 Thanks!'); })
+      .withFailureHandler(function() { showToast('Oops, try later'); })
+      .submitFeedbackSafe(payload);
+  };
+
+  // Expose auto-open hook for day-complete celebration
+  window._tbmFbAutoOpen = function() {
+    if (_fbShownOnce) return;
+    _fbShownOnce = true;
+    setTimeout(openModal, 2000);
+  };
+})();
 </script>
 </body>
 </html>

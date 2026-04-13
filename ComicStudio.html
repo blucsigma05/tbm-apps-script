@@ -2109,7 +2109,7 @@ function finishComic() {
   html += `<p style="margin-top:12px;color:#64748B;font-size:12px;">Total words written: ${totalWords}</p>`;
   html += '<div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">';
   html += '<button style="padding:12px 28px;background:#00F0FF;color:#0B0F1A;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Orbitron,sans-serif" onclick="playReplay()">&#9654; REPLAY</button>';
-  html += '<button style="padding:12px 28px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=(window.location.pathname.indexOf(\'/qa/\')===0?\'/qa\':\'\')+\'/daily-missions\'">Back to Missions</button>';
+  html += '<button style="padding:12px 28px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=\'/daily-missions\'">Back to Missions</button>';
   html += '</div>';
   html += '</div>';
   comp.innerHTML = html;
@@ -2359,6 +2359,138 @@ function init() {
 
 init();
 </script>
+<!-- ═══ Kid Feedback Widget (ES5 IIFE) ═══ -->
+<script>
+(function() {
+  var FB_STYLES = '#tbm-fb-btn{position:fixed;bottom:12px;left:12px;width:48px;height:48px;border-radius:50%;'
+    + 'background:rgba(11,19,29,0.7);border:1px solid #1e3347;color:#e2e8f0;font-size:22px;cursor:pointer;'
+    + 'z-index:9000;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.3);'
+    + 'transition:opacity 0.2s;opacity:0.6;}'
+    + '#tbm-fb-btn:hover{opacity:1;}'
+    + '#tbm-fb-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9001;}'
+    + '#tbm-fb-modal{position:fixed;bottom:70px;left:12px;width:260px;background:#0b131d;border:1px solid #1e3347;'
+    + 'border-radius:12px;padding:16px;z-index:9002;box-shadow:0 4px 24px rgba(0,0,0,0.5);display:none;}'
+    + '#tbm-fb-modal h3{margin:0 0 12px 0;color:#e2e8f0;font-size:16px;text-align:center;}'
+    + '.tbm-fb-emojis{display:flex;justify-content:center;gap:16px;margin-bottom:12px;}'
+    + '.tbm-fb-emojis button{width:52px;height:52px;border-radius:50%;border:2px solid #1e3347;background:#0f1a2a;'
+    + 'font-size:26px;cursor:pointer;transition:border-color 0.15s,transform 0.15s;}'
+    + '.tbm-fb-emojis button.selected{border-color:#38bdf8;transform:scale(1.15);}'
+    + '#tbm-fb-text{width:100%;box-sizing:border-box;background:#0f1a2a;border:1px solid #1e3347;border-radius:8px;'
+    + 'color:#e2e8f0;padding:8px;font-size:14px;font-family:inherit;resize:none;height:52px;margin-bottom:10px;}'
+    + '#tbm-fb-text::placeholder{color:#4a6080;}'
+    + '.tbm-fb-actions{display:flex;justify-content:flex-end;gap:8px;}'
+    + '.tbm-fb-actions button{padding:6px 14px;border-radius:6px;font-size:13px;cursor:pointer;border:none;}'
+    + '#tbm-fb-skip{background:transparent;color:#4a6080;}#tbm-fb-skip:hover{color:#e2e8f0;}'
+    + '#tbm-fb-send{background:#1e3a5f;color:#38bdf8;font-weight:700;}#tbm-fb-send:hover{background:#254a73;}'
+    + '.tbm-fb-toast{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#0b131d;'
+    + 'border:1px solid #1e3347;color:#e2e8f0;padding:8px 20px;border-radius:8px;font-size:14px;z-index:9010;'
+    + 'opacity:0;transition:opacity 0.3s;}';
+
+  var style = document.createElement('style');
+  style.textContent = FB_STYLES;
+  document.head.appendChild(style);
+
+  var btn = document.createElement('button');
+  btn.id = 'tbm-fb-btn';
+  btn.innerHTML = '&#x1F4AC;';
+  btn.setAttribute('aria-label', 'Give feedback');
+  document.body.appendChild(btn);
+
+  var overlay = document.createElement('div');
+  overlay.id = 'tbm-fb-overlay';
+  document.body.appendChild(overlay);
+
+  var modal = document.createElement('div');
+  modal.id = 'tbm-fb-modal';
+  modal.innerHTML = '<h3>How was it?</h3>'
+    + '<div class="tbm-fb-emojis">'
+    + '<button data-score="1" aria-label="Okay">&#x1F610;</button>'
+    + '<button data-score="3" aria-label="Good">&#x1F642;</button>'
+    + '<button data-score="5" aria-label="Awesome">&#x1F929;</button>'
+    + '</div>'
+    + '<textarea id="tbm-fb-text" placeholder="What happened? (optional)" maxlength="200"></textarea>'
+    + '<div class="tbm-fb-actions">'
+    + '<button id="tbm-fb-skip">Skip</button>'
+    + '<button id="tbm-fb-send">Send</button>'
+    + '</div>';
+  document.body.appendChild(modal);
+
+  var selectedScore = 0;
+
+  function getUser() {
+    var search = window.location.search || '';
+    var match = search.match(/[?&]child=([^&]+)/);
+    if (match) return decodeURIComponent(match[1]);
+    return 'unknown';
+  }
+
+  function getSurface() {
+    var meta = document.querySelector('meta[name="tbm-module"]');
+    return meta ? meta.getAttribute('content') : 'unknown';
+  }
+
+  function showToast(msg) {
+    var t = document.createElement('div');
+    t.className = 'tbm-fb-toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function() { t.style.opacity = '1'; }, 10);
+    setTimeout(function() {
+      t.style.opacity = '0';
+      setTimeout(function() { if (t.parentNode) t.parentNode.removeChild(t); }, 300);
+    }, 1500);
+  }
+
+  function openModal() {
+    selectedScore = 0;
+    var btns = modal.querySelectorAll('.tbm-fb-emojis button');
+    for (var i = 0; i < btns.length; i++) btns[i].className = '';
+    var ta = document.getElementById('tbm-fb-text');
+    if (ta) ta.value = '';
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+  }
+
+  function closeModal() {
+    overlay.style.display = 'none';
+    modal.style.display = 'none';
+  }
+
+  btn.onclick = openModal;
+  overlay.onclick = closeModal;
+
+  var emojiButtons = modal.querySelectorAll('.tbm-fb-emojis button');
+  for (var e = 0; e < emojiButtons.length; e++) {
+    emojiButtons[e].onclick = (function(b) {
+      return function() {
+        selectedScore = parseInt(b.getAttribute('data-score'), 10);
+        var all = modal.querySelectorAll('.tbm-fb-emojis button');
+        for (var k = 0; k < all.length; k++) all[k].className = '';
+        b.className = 'selected';
+      };
+    })(emojiButtons[e]);
+  }
+
+  document.getElementById('tbm-fb-skip').onclick = closeModal;
+
+  document.getElementById('tbm-fb-send').onclick = function() {
+    if (!selectedScore) { showToast('Tap an emoji first!'); return; }
+    var ta = document.getElementById('tbm-fb-text');
+    var payload = {
+      surface: getSurface(),
+      layout: selectedScore,
+      readability: selectedScore,
+      text: ta ? ta.value : '',
+      user: getUser()
+    };
+    closeModal();
+    google.script.run
+      .withSuccessHandler(function() { showToast('\u2713 Thanks!'); })
+      .withFailureHandler(function() { showToast('Oops, try later'); })
+      .submitFeedbackSafe(payload);
+  };
+})();
+</script>
 </body>
 </html>
-<!-- ComicStudio.html v10 -->
+<!-- ComicStudio.html v11 -->
