@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="tbm-module" content="kidshub">
-<meta name="tbm-version" content="KidsHub v45">
+<meta name="tbm-version" content="KidsHub v46">
 <title>Kids Hub v40</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Barlow+Condensed:wght@400;600;700;800&family=Fredoka+One&family=Nunito:wght@700;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
@@ -3831,7 +3831,7 @@ function pBatchApprove(child) {
       '<div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap">' +
       '<select id="bScreenType" style="padding:5px 8px;background:#1e293b;color:#e2e8f0;border:1px solid rgba(255,255,255,0.15);border-radius:6px;font-size:11px">' +
       '<option value="TV">📺 TV</option><option value="Gaming">🎮 Game</option></select>' +
-      '<input type="number" id="bScreenMin" min="15" max="999" step="15" value="30" style="width:60px;padding:5px 8px;background:#1e293b;color:#e2e8f0;border:1px solid rgba(255,255,255,0.15);border-radius:6px;font-size:11px;text-align:center">'+
+      '<input type="number" id="bScreenMin" min="1" max="999" step="1" value="30" style="width:60px;padding:5px 8px;background:#1e293b;color:#e2e8f0;border:1px solid rgba(255,255,255,0.15);border-radius:6px;font-size:11px;text-align:center">'+
       '<span style="font-size:10px;color:#94a3b8">min</span>' +
       '<button onclick="window._v2DebitScreenCustom(\'buggsy\')" style="padding:6px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">Debit</button>' +
       '</div></div>' +
@@ -3840,7 +3840,7 @@ function pBatchApprove(child) {
       '<div style="font-size:12px;color:#e2e8f0;margin-bottom:4px">📺 TV: <b>' + jTV + 'm</b></div>' +
       '<div style="font-size:12px;color:#e2e8f0;margin-bottom:8px">&nbsp;</div>' +
       '<div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap">' +
-      '<input type="number" id="jjScreenMin" min="15" max="999" step="15" value="30" style="width:60px;padding:5px 8px;background:#1e293b;color:#e2e8f0;border:1px solid rgba(255,255,255,0.15);border-radius:6px;font-size:11px;text-align:center">'+
+      '<input type="number" id="jjScreenMin" min="1" max="999" step="1" value="30" style="width:60px;padding:5px 8px;background:#1e293b;color:#e2e8f0;border:1px solid rgba(255,255,255,0.15);border-radius:6px;font-size:11px;text-align:center">'+
       '<span style="font-size:10px;color:#94a3b8">min TV</span>' +
       '<button onclick="window._v2DebitScreenCustom(\'jj\')" style="padding:6px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">Debit</button>' +
       '</div></div>' +
@@ -4167,7 +4167,7 @@ function pBatchApprove(child) {
       screenType = 'TV';
       minutes = parseInt(document.getElementById('jjScreenMin').value, 10) || 30;
     }
-    if (minutes < 15) { toast('Minimum 15 minutes'); return; }
+    if (minutes < 1) { toast('Enter minutes to debit'); return; }
     window._v2DebitScreen(child, screenType, minutes);
   };
   window._v2Reset = function(mode, child) {
