@@ -1,11 +1,12 @@
 // ════════════════════════════════════════════════════════════════════════════
 // ContentEngine.gs — Gemini-powered grading + content generation
 // READS FROM: 💻 QuestionLog (via SSID + TAB_MAP)
+// WRITES TO: 🧹📅 KH_Education (gradeVocabUsageSafe)
 // DEPENDENCIES: SSID, TAB_MAP, logError_, withMonitor_ (GASHardening.gs)
 // DO NOT redeclare var TAB_MAP in this file.
 // ════════════════════════════════════════════════════════════════════════════
 
-function getContentEngineVersion() { return 1; }
+function getContentEngineVersion() { return 2; }
 
 // ════════════════════════════════════════════════════════════════════════════
 // SECTION 1: Gemini API Wrapper
@@ -593,5 +594,144 @@ function gradeShortAnswerSafe(studentResponse, correctAnswer, teksCode) {
   return withMonitor_('gradeShortAnswerSafe', function() {
     var questionText = 'Expected answer: ' + (correctAnswer || 'N/A');
     return gradeResponseWithGemini_(studentResponse, CER_RUBRIC_TEMPLATE, teksCode, questionText);
+  });
+}
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// SECTION 5: Vocabulary Usage Grading (Comic Studio #225)
+// ════════════════════════════════════════════════════════════════════════════
+
+var VOCAB_GRADE_SYSTEM_PROMPT = [
+  'You are Wolfkid, a friendly learning coach for Buggsy, a 4th grade student.',
+  'Your job is to evaluate whether a vocabulary word is used correctly in a comic book caption.',
+  '',
+  'RULES:',
+  '- Auto-approve if the word is used with its correct meaning in a clear, sensible sentence.',
+  '- Flag for parent review if usage is forced, unclear, unrelated to definition, or clearly wrong.',
+  '- "auto_approve" should be true for borderline-but-plausible usage — give the kid credit.',
+  '- Keep feedback under 60 words. Be encouraging, never punishing.',
+  '',
+  'Return ONLY valid JSON:',
+  '{',
+  '  "auto_approve": true,',
+  '  "confidence": "high|medium|low",',
+  '  "feedback": "<one encouraging sentence>",',
+  '  "misconception": "<what went wrong, or null if correct>"',
+  '}'
+].join('\n');
+
+/**
+ * Grades whether a vocab word is used correctly in comic captions.
+ * @param {string} word - The vocabulary word
+ * @param {string} definition - The word's definition
+ * @param {string} captionText - All panel captions joined
+ * @return {Object} { auto_approve, confidence, feedback, misconception }
+ * @private
+ */
+function gradeVocabUsage_(word, definition, captionText) {
+  var prompt = [
+    'Vocabulary word: "' + word + '"',
+    'Definition: "' + definition + '"',
+    '',
+    'Student caption(s): "' + captionText + '"',
+    '',
+    'Is the vocabulary word used correctly in context?'
+  ].join('\n');
+
+  var resp = callGemini_(prompt, {
+    temperature: 0.2,
+    maxOutputTokens: 512,
+    systemInstruction: VOCAB_GRADE_SYSTEM_PROMPT
+  });
+  return extractGeminiJSON_(resp);
+}
+
+/**
+ * Safe wrapper: Grade vocab usage and write result to KH_Education.
+ * Awards rings immediately if auto-approved; queues for parent review otherwise.
+ *
+ * @param {Object} payload - { child, word, definition, captions: string[], vocabRings }
+ * @return {Object} { status, autoApproved, ringsAwarded, feedback }
+ */
+function gradeVocabUsageSafe(payload) {
+  return withMonitor_('gradeVocabUsageSafe', function() {
+    var child = String(payload.child || 'buggsy').toLowerCase();
+    var word = String(payload.word || '');
+    var definition = String(payload.definition || '');
+    var captions = payload.captions || [];
+    var captionText = captions.join(' | ');
+    var vocabRings = Number(payload.vocabRings) || 10;
+
+    if (!word || !captionText) {
+      return JSON.parse(JSON.stringify({ error: true, message: 'word and captions required' }));
+    }
+
+    var grade;
+    try {
+      grade = gradeVocabUsage_(word, definition, captionText);
+    } catch (e) {
+      if (typeof logError_ === 'function') logError_('gradeVocabUsage_:gemini', e);
+      // Gemini failure → flag for parent review, non-blocking
+      grade = { auto_approve: false, confidence: 'low', feedback: 'Could not auto-grade — needs parent review.', misconception: null };
+    }
+
+    var autoApprove = !!grade.auto_approve;
+    var status = autoApprove ? 'auto_approved' : 'pending_review';
+    var ringsAwarded = 0;
+
+    // Write KH_Education row (uses Kidshub.js shared scope)
+    try {
+      var sheet = ensureKHEducationTab_();
+      sheet.appendRow([
+        new Date(),
+        child,
+        'comic-studio',
+        'Vocabulary — ' + word,
+        autoApprove ? vocabRings : 0,
+        autoApprove,
+        captionText.substring(0, 500),
+        status,
+        '',
+        autoApprove ? vocabRings : 0,
+        '',
+        grade.feedback || ''
+      ]);
+    } catch (writeErr) {
+      if (typeof logError_ === 'function') logError_('gradeVocabUsageSafe:write', writeErr);
+    }
+
+    // Award rings if auto-approved
+    if (autoApprove && vocabRings > 0) {
+      try {
+        if (typeof kh_awardEducationPoints_ === 'function') {
+          var awardRaw = kh_awardEducationPoints_(child, vocabRings, 'comic-studio — vocab: ' + word);
+          var awardResult = typeof awardRaw === 'string' ? JSON.parse(awardRaw) : awardRaw;
+          ringsAwarded = (awardResult && awardResult.duplicate) ? 0 : vocabRings;
+        }
+      } catch (awardErr) {
+        if (typeof logError_ === 'function') logError_('gradeVocabUsageSafe:award', awardErr);
+      }
+    }
+
+    // Push notification if pending parent review
+    if (!autoApprove && typeof sendPush_ === 'function') {
+      try {
+        sendPush_(
+          child.charAt(0).toUpperCase() + child.slice(1) + ' Comic vocab needs review',
+          'Word: "' + word + '" — check Parent Dashboard',
+          'BOTH',
+          typeof PUSHOVER_PRIORITY !== 'undefined' ? PUSHOVER_PRIORITY.CHORE_APPROVAL : 0
+        );
+      } catch (pushErr) { /* non-blocking */ }
+    }
+
+    return JSON.parse(JSON.stringify({
+      status: status,
+      autoApproved: autoApprove,
+      ringsAwarded: ringsAwarded,
+      feedback: grade.feedback || '',
+      confidence: grade.confidence || 'medium'
+    }));
   });
 }
