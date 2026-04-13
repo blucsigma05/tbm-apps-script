@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v17">
+<meta name="tbm-version" content="v18">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -670,6 +670,19 @@ body.jj-theme #launch-overlay .ov-sub { color: rgba(255,200,240,0.55) !important
 /* ExecSkills plan overlay */
 #es-plan-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,26,0.97);z-index:200;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:24px;}
 #es-plan-inner{max-width:520px;width:100%;}
+/* End-of-day feedback modal (#226) */
+#mission-feedback-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,26,0.96);z-index:8000;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:24px;}
+#mission-feedback-overlay.active{display:-webkit-flex;display:flex;}
+.mf-card{max-width:400px;width:100%;background:linear-gradient(135deg,#1a1000,#2a1a00);border:2px solid #f59e0b;border-radius:16px;padding:28px 24px;text-align:center;}
+.mf-title{font-family:'Orbitron',sans-serif;font-size:14px;color:#f59e0b;letter-spacing:2px;margin-bottom:8px;}
+.mf-sub{font-size:13px;color:#94a3b8;margin-bottom:20px;}
+.mf-emoji-row{display:-webkit-flex;display:flex;-webkit-justify-content:center;justify-content:center;gap:16px;margin-bottom:20px;}
+.mf-emoji-btn{font-size:40px;background:none;border:2px solid transparent;border-radius:12px;cursor:pointer;padding:10px 14px;-webkit-transition:border-color .2s;transition:border-color .2s;}
+.mf-emoji-btn.selected{border-color:#f59e0b;}
+.mf-text{width:100%;box-sizing:border-box;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#e2e8f0;font-size:13px;padding:10px 12px;font-family:'Nunito',sans-serif;resize:none;margin-bottom:18px;}
+.mf-actions{display:-webkit-flex;display:flex;gap:12px;-webkit-justify-content:center;justify-content:center;}
+.mf-submit-btn{background:#f59e0b;color:#0b0f1a;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Orbitron',sans-serif;}
+.mf-skip-btn{background:transparent;border:1px solid rgba(255,255,255,0.2);color:#94a3b8;border-radius:10px;padding:12px 20px;font-size:13px;cursor:pointer;}
 </style>
 </head>
 <body>
@@ -677,6 +690,24 @@ body.jj-theme #launch-overlay .ov-sub { color: rgba(255,200,240,0.55) !important
 <!-- ExecSkills Plan Overlay (#171) — hidden until render() shows it -->
 <div id="es-plan-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,26,0.97);z-index:200;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:24px;">
   <div id="es-plan-inner" style="max-width:520px;width:100%;"></div>
+</div>
+
+<!-- End-of-day Feedback Modal (#226) — Buggsy only, shows before celebration -->
+<div id="mission-feedback-overlay">
+  <div class="mf-card">
+    <div class="mf-title">HOW WAS YOUR DAY?</div>
+    <div class="mf-sub">Quick check-in before the celebration!</div>
+    <div class="mf-emoji-row">
+      <button class="mf-emoji-btn" id="mf-emoji-1" onclick="selectFeedbackEmoji(1)">&#x1F610;</button>
+      <button class="mf-emoji-btn" id="mf-emoji-3" onclick="selectFeedbackEmoji(3)">&#x1F642;</button>
+      <button class="mf-emoji-btn" id="mf-emoji-5" onclick="selectFeedbackEmoji(5)">&#x1F929;</button>
+    </div>
+    <textarea class="mf-text" id="mf-freetext" rows="2" placeholder="What was your favorite part today? (optional)" maxlength="200"></textarea>
+    <div class="mf-actions">
+      <button class="mf-submit-btn" id="mf-submit-btn" onclick="submitMissionFeedback()" disabled style="opacity:.5;cursor:default">SEND IT</button>
+      <button class="mf-skip-btn" onclick="skipMissionFeedback()">Skip</button>
+    </div>
+  </div>
 </div>
 
 <!-- Brain Break Overlay (#170) -->
@@ -1000,6 +1031,10 @@ var todayKey = '';
 var launchedKey = '';
 var dayOfWeek = 0;
 var _serverStateLoaded = false;
+var _missionFeedbackDone = false;
+var _missionFeedbackRating = 0;
+var _celebrationCx = 0;
+var _celebrationCy = 0;
 var _cachedMissionState = {};
 var dynamicSchedule = null;
 var _designUnlocked = false;
@@ -1703,15 +1738,18 @@ function render() {
   }
 
   // Ring burst + XP pop on completion (Buggsy only)
+  // v18 (#226): show feedback modal first, then fire celebration on dismiss
   if (allDone && !isJJ()) {
     var banner = container.querySelector('.celebration-banner');
     if (banner) {
       var rect = banner.getBoundingClientRect();
-      var cx = Math.round(rect.left + rect.width / 2);
-      var cy = Math.round(rect.top + rect.height / 2);
-      fireRingBurst(cx, cy);
-      setTimeout(function() { fireRingBurst(cx - 80, cy + 20); }, 200);
-      setTimeout(function() { showXPPop(cx, cy, '+10 RINGS'); }, 300);
+      _celebrationCx = Math.round(rect.left + rect.width / 2);
+      _celebrationCy = Math.round(rect.top + rect.height / 2);
+    }
+    if (!_missionFeedbackDone) {
+      showMissionFeedbackModal();
+    } else {
+      fireCelebrationAnimations_();
     }
   }
 
@@ -1719,6 +1757,51 @@ function render() {
   if (allDone && typeof window._tbmFbAutoOpen === 'function') {
     window._tbmFbAutoOpen();
   }
+}
+
+function showMissionFeedbackModal() {
+  var overlay = document.getElementById('mission-feedback-overlay');
+  if (overlay) overlay.className = 'active';
+}
+
+function selectFeedbackEmoji(rating) {
+  _missionFeedbackRating = rating;
+  var ids = [1, 3, 5];
+  for (var i = 0; i < ids.length; i++) {
+    var btn = document.getElementById('mf-emoji-' + ids[i]);
+    if (btn) btn.className = 'mf-emoji-btn' + (ids[i] === rating ? ' selected' : '');
+  }
+  var submitBtn = document.getElementById('mf-submit-btn');
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.style.opacity = '1'; submitBtn.style.cursor = 'pointer'; }
+}
+
+function submitMissionFeedback() {
+  var text = (document.getElementById('mf-freetext') || {}).value || '';
+  var overlay = document.getElementById('mission-feedback-overlay');
+  if (overlay) overlay.className = '';
+  _missionFeedbackDone = true;
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function() {})
+      .withFailureHandler(function() {})
+      .submitFeedbackSafe({ surface: 'daily-missions', layout: _missionFeedbackRating, text: text, user: currentChild });
+  }
+  fireCelebrationAnimations_();
+}
+
+function skipMissionFeedback() {
+  var overlay = document.getElementById('mission-feedback-overlay');
+  if (overlay) overlay.className = '';
+  _missionFeedbackDone = true;
+  fireCelebrationAnimations_();
+}
+
+function fireCelebrationAnimations_() {
+  var cx = _celebrationCx || Math.round(window.innerWidth / 2);
+  var cy = _celebrationCy || Math.round(window.innerHeight / 3);
+  fireRingBurst(cx, cy);
+  setTimeout(function() { fireRingBurst(cx - 80, cy + 20); }, 200);
+  setTimeout(function() { showXPPop(cx, cy, '+10 RINGS'); }, 300);
 }
 
 // ============================================================
