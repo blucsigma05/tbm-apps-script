@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 83; }
+function getCodeVersion() { return 84; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -1134,6 +1134,7 @@ function setupFeedbackSheet() {
     sheet.getRange('1:1').setFontWeight('bold');
     Logger.log('Feedback sheet created: ' + tabName);
   } else {
+    // v83: Migrate existing sheet — add User, Processed, Classification if missing
     var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     var headerStr = headers.join(',');
     if (headerStr.indexOf('User') === -1) {
@@ -1152,13 +1153,12 @@ function setupFeedbackSheet() {
 function submitFeedbackSafe(payload) {
   return withMonitor_('submitFeedbackSafe', function() {
     var layout = parseInt(payload.layout, 10);
-    var readability = parseInt(payload.readability, 10);
     if (isNaN(layout) || layout < 1 || layout > 5) {
       return JSON.parse(JSON.stringify({ error: true, message: 'Layout rating must be 1-5' }));
     }
-    if (isNaN(readability) || readability < 1 || readability > 5) {
-      return JSON.parse(JSON.stringify({ error: true, message: 'Readability rating must be 1-5' }));
-    }
+    // readability is optional — kid surfaces send one emoji rating mapped to layout only
+    var readabilityRaw = parseInt(payload.readability, 10);
+    var readability = (isNaN(readabilityRaw) || readabilityRaw < 1 || readabilityRaw > 5) ? layout : readabilityRaw;
     var surface = String(payload.surface || 'unknown');
     var text = String(payload.text || '').substring(0, 500);
     var user = String(payload.user || 'unknown');
@@ -1174,6 +1174,7 @@ function submitFeedbackSafe(payload) {
       if (!sheet) {
         return JSON.parse(JSON.stringify({ error: true, message: 'Feedback sheet not found. Run setupFeedbackSheet() first.' }));
       }
+      // v83: Extended row — added User, Processed, Classification columns for pipeline
       sheet.appendRow([new Date().toISOString(), surface, layout, readability, text, user, '', '']);
 
       // v83: Immediate Pushover to LT only — no feedback sits unread (#231 Layer 1)
