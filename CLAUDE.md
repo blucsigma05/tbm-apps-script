@@ -66,6 +66,17 @@
 - Do not silently create the wrong object.
 - One sentence, no back-and-forth. If it's ambiguous after one confirmation, default to Issue.
 
+**Build Skills (MANDATORY on every Issue):**
+
+Every Issue body or first comment MUST include a `## Build Skills` section listing the skill names needed to implement it. This tells any agent picking up the work which skills to load before starting. No Issue is complete without this section. Format:
+
+```
+## Build Skills
+- `skill-name` — why it's needed (one line)
+```
+
+Common skills: `thompson-engineer` (GAS architecture), `game-design` (game UI), `adhd-accommodations` (Buggsy surfaces), `content-review` (Gemini grading), `grading-review-pipeline` (submission→review→award), `data-contracts` (sheet schemas), `deploy-pipeline` (full build pipeline), `education-qa` (education testing), `qa-walkthrough` (device QA), `route-contracts` (CF routing), `incident-response` (diagnosing failures), `parent-reporting` (parent dashboard UX), `curriculum-planner` (TEKS/scope).
+
 **Forbidden patterns:**
 
 - Answering "where are we on X?" with a chat summary. Correct answer: "Check Issue #NNN" or "Check the Project board."
@@ -73,6 +84,7 @@
 - Handing Sonnet a prompt via chat copy-paste instead of an Issue body.
 - Letting a decision live in PR comments when it should be an Issue.
 - Using `needs:lt-decision` on a PR — those belong on Issues, then the PR picks up the decided answer.
+- Filing an Issue without a `## Build Skills` section.
 
 ## The Cardinal Rule
 Read source before writing assertions. Never claim a feature is missing, a value is correct, or a version is deployed without verifying. Confidence without verification is a hallucination.
