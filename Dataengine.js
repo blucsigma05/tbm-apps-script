@@ -1301,16 +1301,17 @@ function computeDebtBaseline() {
   // ── v91: Find earliest closed month in Close History (was hardcoded to Jan 2026) ──
   var chData = de_readSheet_('Close History');
   if (chData && chData.length > 1) {
-    // Walk rows chronologically — first row with a positive debt_current is the baseline
+    // Walk rows chronologically — first CLOSED row with a positive debt_current is the baseline
     for (var r = 1; r < chData.length; r++) {
       var monthStr = String(chData[r][0] || '').trim();
+      var status = String(chData[r][1] || '').trim().toLowerCase();
       var baseline = parseFloat(chData[r][7]);
-      if (monthStr && baseline > 0) {
+      if (monthStr && status === 'closed' && baseline > 0) {
         Logger.log('computeDebtBaseline: $' + Math.round(baseline) + ' from Close History row ' + (r+1) + ' (' + monthStr + ')');
         return roundTo(baseline, 2);
       }
     }
-    Logger.log('\u26a0\ufe0f computeDebtBaseline: No valid baseline row in Close History \u2014 falling back to Balance History scan');
+    Logger.log('\u26a0\ufe0f computeDebtBaseline: No closed month with valid baseline in Close History \u2014 falling back to Balance History scan');
   } else {
     Logger.log('\u26a0\ufe0f computeDebtBaseline: Close History sheet not found \u2014 falling back to Balance History scan');
   }
