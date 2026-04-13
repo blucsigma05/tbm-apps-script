@@ -536,7 +536,9 @@ function serveData(e) {
         'notionLogHomeworkSafe': notionLogHomeworkSafe,
         'notionLogSparkleProgressSafe': notionLogSparkleProgressSafe,
         'notionApproveHomeworkSafe': notionApproveHomeworkSafe,
-        'getPendingReviewsSafe': getPendingReviewsSafe
+        'getPendingReviewsSafe': getPendingReviewsSafe,
+        // ContentEngine.gs v2 — Vocabulary usage grading (#225)
+        'gradeVocabUsageSafe': gradeVocabUsageSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {

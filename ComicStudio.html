@@ -2091,13 +2091,14 @@ function finishComic() {
     if (wc > 0) captionedPanels++;
   }
 
+  // v5 (#225): base rings — vocab bonus handled separately via Gemini
   let rings = 15;
   if (captionedPanels === panelCount) rings += 10;
   if (totalWords >= 20) rings += 5;
-  // Spec bug fix: vocab bonus (+10) is Mission-only — not awarded in Free mode.
-  if (currentMode === 'mission' && checkVocabInCaptions()) rings += 10;
   rings = Math.min(rings, ringsCap);
   ringsEarned = rings;
+
+  const vocabUsed = currentMode === 'mission' && checkVocabInCaptions();
 
   document.getElementById('tab-preview').classList.add('hidden');
   document.getElementById('nav-bar').style.display = 'none';
@@ -2110,7 +2111,10 @@ function finishComic() {
   html += `<div class="ring-award"><span>+${rings}</span> Rings Earned!</div>`;
   html += `<p>${panelCount} panels drawn`;
   if (captionedPanels === panelCount) html += ' &bull; All panels captioned';
-  if (checkVocabInCaptions()) html += ` &bull; Vocab word "${escapeHtml(todayVocab.word)}" used!`;
+  if (vocabUsed) {
+    html += ` &bull; Vocab word "${escapeHtml(todayVocab.word)}" used!`;
+    html += '<div id="vocab-grade-status" style="margin-top:10px;font-size:12px;color:#94A3B8">Checking vocab with Wolfkid AI&#8230;</div>';
+  }
   html += '</p>';
   html += `<p style="margin-top:12px;color:#64748B;font-size:12px;">Total words written: ${totalWords}</p>`;
   html += '<div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">';
@@ -2130,14 +2134,45 @@ function finishComic() {
 
   document.getElementById('ring-badge').textContent = rings + ' Rings';
 
-  // Award rings via backend
+  // Award base rings via backend
   if (TBM_TEST_MODE) {
     console.log('[TEST MODE] awardRings skipped, rings=' + rings);
+    if (vocabUsed) {
+      const el = document.getElementById('vocab-grade-status');
+      if (el) el.textContent = '[TEST] Vocab grading skipped';
+    }
   } else if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function() { })
       .withFailureHandler(function(err) { })
       .awardRingsSafe(CHILD, rings, MODULE_NAME);
+
+    // v5 (#225): Vocab bonus — Gemini first-pass, parent review if flagged
+    if (vocabUsed) {
+      google.script.run
+        .withSuccessHandler(function(result) {
+          const el = document.getElementById('vocab-grade-status');
+          if (!el) return;
+          if (result && result.autoApproved) {
+            el.innerHTML = `<span style="color:#22C55E">&#10003; Vocab approved! +${result.ringsAwarded} bonus rings</span>`;
+          } else if (result && result.status === 'pending_review') {
+            el.innerHTML = '<span style="color:#F59E0B">&#9888; Vocab sent to parent for review &mdash; rings coming!</span>';
+          } else {
+            el.innerHTML = '<span style="color:#94A3B8">Vocab submitted.</span>';
+          }
+        })
+        .withFailureHandler(function() {
+          const el = document.getElementById('vocab-grade-status');
+          if (el) el.textContent = 'Vocab check unavailable — check back later.';
+        })
+        .gradeVocabUsageSafe({
+          child: CHILD,
+          word: todayVocab.word,
+          definition: todayVocab.def,
+          captions: captions.slice(0, panelCount),
+          vocabRings: 10
+        });
+    }
   }
 }
 
