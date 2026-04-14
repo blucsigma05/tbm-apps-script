@@ -1559,7 +1559,8 @@ function sf_recoverStaleClaims_() {
           or: [
             { property: 'Status', select: { equals: 'Writing' } },
             { property: 'Status', select: { equals: 'Illustrating' } },
-            { property: 'Status', select: { equals: 'Assembling' } }
+            { property: 'Status', select: { equals: 'Assembling' } },
+            { property: 'Status', select: { equals: 'Generating' } }
           ]
         },
         { timestamp: 'last_edited_time', last_edited_time: { before: staleBefore } }
@@ -1568,7 +1569,7 @@ function sf_recoverStaleClaims_() {
     page_size: 10
   });
   if (!result.results || result.results.length === 0) return;
-  var REVERT_MAP = { 'Writing': 'Idea', 'Illustrating': 'Written', 'Assembling': 'Illustrated' };
+  var REVERT_MAP = { 'Writing': 'Idea', 'Illustrating': 'Written', 'Assembling': 'Illustrated', 'Generating': 'Idea' };
   for (var ri = 0; ri < result.results.length; ri++) {
     var page = result.results[ri];
     var stuck = page.properties['Status'] && page.properties['Status'].select
