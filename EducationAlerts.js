@@ -6,7 +6,7 @@
 // DEPENDS ON: AlertEngine (sendPush_, PUSHOVER_PRIORITY), NotionEngine (queryPendingReviews_)
 // ════════════════════════════════════════════════════════════════════
 
-function getEducationAlertsVersion() { return 1; }
+function getEducationAlertsVersion() { return 2; }
 
 // ── HELPERS ─────────────────────────────────────────────────────────
 
@@ -319,7 +319,43 @@ function sendMilestoneAlert_(child, milestone) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SECTION 6: Trigger Installation
+// SECTION 6: Daily Orchestrator
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Runs all daily education alert checks for both children.
+ * Install via installDailyEducationAlertTrigger_() to fire automatically.
+ * Each check is isolated — one failure does not block the others.
+ */
+function runDailyEducationAlerts() {
+  try { checkStreakBroken_('buggsy'); } catch (e) { Logger.log('EducationAlerts streak buggsy: ' + e.message); }
+  try { checkStreakBroken_('jj'); } catch (e) { Logger.log('EducationAlerts streak jj: ' + e.message); }
+  try { checkPendingReviewAge_(); } catch (e) { Logger.log('EducationAlerts pending review: ' + e.message); }
+  try { checkAccuracyDrop_('buggsy'); } catch (e) { Logger.log('EducationAlerts accuracy buggsy: ' + e.message); }
+  try { checkAccuracyDrop_('jj'); } catch (e) { Logger.log('EducationAlerts accuracy jj: ' + e.message); }
+}
+
+/**
+ * Installs a daily 7pm trigger for runDailyEducationAlerts().
+ * Run once from Apps Script editor.
+ */
+function installDailyEducationAlertTrigger_() {
+  const triggers = ScriptApp.getProjectTriggers();
+  for (const trigger of triggers) {
+    if (trigger.getHandlerFunction() === 'runDailyEducationAlerts') {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  }
+  ScriptApp.newTrigger('runDailyEducationAlerts')
+    .timeBased()
+    .everyDays(1)
+    .atHour(19) // 7 PM Central — after homework time, before bedtime
+    .create();
+  Logger.log('Trigger installed: runDailyEducationAlerts() every day ~7 PM');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION 7: Weekly Digest Trigger
 // ═══════════════════════════════════════════════════════════════
 
 /**

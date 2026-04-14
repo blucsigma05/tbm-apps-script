@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 84; }
+function getCodeVersion() { return 86; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -300,7 +300,8 @@ function servePage(page, e) {
     'investigation': { file: 'investigation-module', title: 'Field Investigation — Science' },
     'daily-missions':{ file: 'daily-missions', title: 'Daily Missions — Thompson Education' },
     'baseline':      { file: 'BaselineDiagnostic', title: 'Baseline Diagnostic — Thompson Education' },
-    'power-scan':    { file: 'wolfkid-power-scan', title: 'Power Scan — Wolfkid Intelligence Division' }
+    'power-scan':    { file: 'wolfkid-power-scan', title: 'Power Scan — Wolfkid Intelligence Division' },
+    'qa-operator':   { file: 'QAOperator',         title: 'QA Operator Dashboard' }
   };
 
   var route = routes[page] || routes['pulse'];
@@ -406,7 +407,8 @@ function serveData(e) {
         'writing': 'writing-module',
         'investigation': 'investigation-module', 'daily-missions': 'daily-missions',
         'baseline': 'BaselineDiagnostic',
-        'power-scan': 'wolfkid-power-scan'
+        'power-scan': 'wolfkid-power-scan',
+        'qa-operator': 'QAOperator'
       };
       var filename = routes[page] || 'ThePulse';
       try {
@@ -1477,6 +1479,7 @@ function healthCheck() {
     'khRejectTaskSafe', 'khApproveWithBonusSafe', 'khOverrideTaskSafe',
     'getKHAppUrls', 'setupKHSheets', 'validateTaskIDs',
     'runDailyGateCheck', 'installDailyGateAlert', 'removeDailyGateAlert',
+    'runDailyEducationAlerts', 'installDailyEducationAlertTrigger_', 'installWeeklyDigestTrigger_',
     'notionApi_', 'pushQAResult', 'pushPipelineEvent_', 'testNotionConnection',
     'isPipelineUrl_', 'pipelineStatusForType_', 'normalizePipelinePayload_', 'pipelineRelaySafe',
     'reconcileVeinPulse', 'reconcileVeinPulseSafe', 'resolveNestedKey_',
