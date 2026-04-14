@@ -89,13 +89,27 @@ jobs:
           # pull_request_target runs with trusted base-context permissions (write access, secrets).
           # Checking out PR head code via head.ref or head.sha exposes those secrets to
           # potentially untrusted fork code — a severe trust-escalation vector.
-          # Fail if any pull_request_target workflow uses head.ref or head.sha as a checkout ref.
+          #
+          # Guard scope: only workflows actually TRIGGERED BY pull_request_target (i.e., the
+          # string appears as a key under `on:` at the top of the YAML, not merely referenced
+          # in a condition or if: expression inside a different trigger's job).
+          # Detection: match `^on:` block lines until the next top-level key, then check for
+          # the trigger name. A workflow that mentions pull_request_target only in an `if:`
+          # expression (e.g. workflow_run checking event type) is correctly excluded.
           FAIL=0
           for wf in .github/workflows/*.yml; do
-            if grep -q 'pull_request_target' "$wf"; then
+            # Extract whether pull_request_target is an actual on: trigger.
+            # Strategy: check lines between `^on:` and next `^[a-z]` top-level key.
+            # Use awk to parse only the on: block (stops at next non-indented line after on:).
+            is_prt_trigger=$(awk '
+              /^on:/ { in_on=1; next }
+              in_on && /^[a-z]/ { exit }
+              in_on && /pull_request_target/ { print "yes"; exit }
+            ' "$wf")
+            if [ "$is_prt_trigger" = "yes" ]; then
               # Detect checkout steps referencing head ref/sha (dot or underscore form)
               if grep -qE 'ref:[[:space:]]*.*head[._](ref|sha)' "$wf"; then
-                echo "::error::POLICY VIOLATION: $wf uses pull_request_target and checks out untrusted head code."
+                echo "::error::POLICY VIOLATION: $wf is triggered by pull_request_target and checks out untrusted head code."
                 echo "  Only base-branch checkout is safe in pull_request_target workflows."
                 echo "  Remove head.ref / head.sha / head_ref / head_sha from any checkout ref: field."
                 FAIL=1
