@@ -8,15 +8,57 @@ on:
       - 'wrangler.toml'
   workflow_dispatch:
 
+# Serialize all production-mutation lanes. Same group as deploy-and-notify.yml (F05).
+concurrency:
+  group: tbm-production-release
+  cancel-in-progress: false
+
 jobs:
   deploy:
+    name: Deploy + Smoke (Cloudflare Worker)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Stamp build identity (F04)
+        run: |
+          BUILD_ID="${GITHUB_SHA:0:12}"
+          sed -i "s/__BUILD_ID__/${BUILD_ID}/" cloudflare-worker.js
+          echo "Stamped WORKER_BUILD=${BUILD_ID}"
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Post-deploy smoke — front-door /version (F03/F04)
+        env:
+          CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
+        run: |
+          if [ -z "$CF_WORKER_URL" ]; then
+            echo "::warning::CF_WORKER_URL not set — skipping front-door smoke. Set this secret to enable post-deploy verification."
+            exit 0
+          fi
+          BUILD_ID="${GITHUB_SHA:0:12}"
+          echo "Probing ${CF_WORKER_URL}/version for build ${BUILD_ID}..."
+          RESPONSE=$(curl -sS --max-time 30 "${CF_WORKER_URL}/version")
+          echo "Response: $RESPONSE"
+          DEPLOYED_BUILD=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('worker',''))" 2>/dev/null || echo "")
+          if [ "$DEPLOYED_BUILD" != "$BUILD_ID" ]; then
+            echo "::error::Front-door smoke FAILED — expected worker=${BUILD_ID}, got worker=${DEPLOYED_BUILD}"
+            exit 1
+          fi
+          echo "Front-door smoke PASS — worker=${DEPLOYED_BUILD}"
+
+          # Alignment check (F03): confirm GAS target suffix matches cloudflare-worker.js constant
+          REMOTE_GAS_TAIL=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('gas_target',''))" 2>/dev/null || echo "")
+          LOCAL_GAS_TAIL=$(grep "^const GAS_URL" cloudflare-worker.js | grep -oP "(?<=')[^']+" | tail -c 13 | head -c 12)
+          if [ "$REMOTE_GAS_TAIL" != "$LOCAL_GAS_TAIL" ]; then
+            echo "::error::GAS alignment check FAILED — live worker gas_target=${REMOTE_GAS_TAIL}, repo GAS_URL tail=${LOCAL_GAS_TAIL}"
+            exit 1
+          fi
+          echo "GAS alignment PASS — gas_target tail matches: ${REMOTE_GAS_TAIL}"

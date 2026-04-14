@@ -5,6 +5,10 @@
 
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbweFe1QLmIAlr2x0umcJ-uc2EIm-ADdcjJ9QjihBr6tmnt4Axz6xO73lmwBl4Jk6_KVOw/exec';
 
+// Build identity — replaced at deploy time by deploy-worker.yml
+// Exposes /version route so post-deploy smoke and alignment checks have a stable assertion target.
+const WORKER_BUILD = '__BUILD_ID__';
+
 // Clean URL → GAS query param mapping
 const PATH_ROUTES = {
   '/buggsy': { page: 'kidshub', child: 'buggsy' },
@@ -94,6 +98,13 @@ export default {
           'Access-Control-Allow-Headers': 'Content-Type',
           'Access-Control-Max-Age': '86400'
         }
+      });
+    }
+
+    // Route: /version → build identity for post-deploy smoke + alignment checks (F03/F04)
+    if (url.pathname === '/version') {
+      return new Response(JSON.stringify({ worker: WORKER_BUILD, gas_target: GAS_URL.slice(-12) }), {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
       });
     }
 
