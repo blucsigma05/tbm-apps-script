@@ -1749,23 +1749,29 @@ function buildSparkleLoadingScreen() {
   }
   var cartwheelWrap = document.createElement('div');
   cartwheelWrap.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:0;height:0;z-index:15;';
-  var cartwheelImg = document.createElement('img');
-  cartwheelImg.src = 'https://i.ibb.co/k2sWCnvH/Gemini-Generated-Image-8uhoc98uhoc98uho.png';
-  cartwheelImg.alt = 'JJ cartwheel';
-  cartwheelImg.style.cssText = 'width:130px;height:auto;display:block;position:absolute;left:-65px;top:-65px;filter:drop-shadow(0 0 12px #ff80ff) drop-shadow(0 0 24px rgba(255,128,255,0.4));animation:skCartwheelArc 2.4s ease-in-out 0s infinite;';
+  // JJ cartwheel — inline SVG so it never depends on an external host
+  var cartwheelEl = document.createElement('div');
+  cartwheelEl.style.cssText = 'position:absolute;left:-55px;top:-55px;width:110px;height:110px;filter:drop-shadow(0 0 12px #ff80ff) drop-shadow(0 0 24px rgba(255,128,255,0.4));animation:skCartwheelArc 2.4s ease-in-out 0s infinite;';
+  cartwheelEl.innerHTML = '<svg viewBox="0 0 120 120" width="110" height="110">' +
+    '<circle cx="60" cy="30" r="16" fill="#FBBF24"/>' +
+    '<circle cx="54" cy="27" r="2.5" fill="#1a0533"/>' +
+    '<circle cx="66" cy="27" r="2.5" fill="#1a0533"/>' +
+    '<path d="M56 34 Q60 38 64 34" stroke="#1a0533" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
+    '<line x1="60" y1="46" x2="60" y2="75" stroke="#FBBF24" stroke-width="6" stroke-linecap="round"/>' +
+    '<line x1="60" y1="55" x2="35" y2="40" stroke="#FBBF24" stroke-width="5" stroke-linecap="round"/>' +
+    '<line x1="60" y1="55" x2="85" y2="70" stroke="#FBBF24" stroke-width="5" stroke-linecap="round"/>' +
+    '<line x1="60" y1="75" x2="40" y2="100" stroke="#FBBF24" stroke-width="5" stroke-linecap="round"/>' +
+    '<line x1="60" y1="75" x2="80" y2="100" stroke="#FBBF24" stroke-width="5" stroke-linecap="round"/>' +
+    '<circle cx="30" cy="18" r="6" fill="#ff66cc" opacity="0.7"/>' +
+    '<circle cx="90" cy="22" r="4" fill="#aa44ff" opacity="0.6"/>' +
+    '<circle cx="20" cy="80" r="3" fill="#44ddff" opacity="0.5"/>' +
+    '</svg>';
   var skCwDir = 0;
-  cartwheelImg.addEventListener('animationiteration', function() {
+  cartwheelEl.addEventListener('animationiteration', function() {
     skCwDir = 1 - skCwDir;
-    cartwheelImg.style.animationName = skCwDir === 0 ? 'skCartwheelArc' : 'skCartwheelReturn';
+    cartwheelEl.style.animationName = skCwDir === 0 ? 'skCartwheelArc' : 'skCartwheelReturn';
   });
-  cartwheelImg.onerror = function() {
-    cartwheelImg.style.display = 'none';
-    var fallback = document.createElement('div');
-    fallback.style.cssText = 'font-size:60px;position:absolute;left:-30px;top:-30px;animation:skCartwheelArc 2.4s ease-in-out infinite;';
-    fallback.textContent = '\u2728';
-    cartwheelWrap.appendChild(fallback);
-  };
-  cartwheelWrap.appendChild(cartwheelImg);
+  cartwheelWrap.appendChild(cartwheelEl);
   starWrap.appendChild(outerRing);
   starWrap.appendChild(cartwheelWrap);
   var hiText = document.createElement('div');
