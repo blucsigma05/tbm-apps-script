@@ -290,7 +290,7 @@ html,body{width:100%;height:100%;overflow-x:hidden;}
   window.launchStory = function(storyKey) {
     // v5: If story has a Drive PDF link, open it directly
     if (storyLinks[storyKey]) {
-      window.open(storyLinks[storyKey], '_blank');
+      window.open(storyLinks[storyKey], '_blank', 'noopener,noreferrer');
       return;
     }
     // Fallback: navigate to reader surface

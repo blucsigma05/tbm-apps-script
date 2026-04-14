@@ -3,7 +3,7 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 17
+// Version: 18
 // Pipeline (phased): Idea→Writing→Written→Illustrating→Illustrated→Assembling→Ready
 //   Phase 1 (Write):     Character Fetch → Memory Inject → Gemini Story → Canon Extract → persist JSON to Drive
 //   Phase 2 (Illustrate): Load story JSON → Gemini Images → persist blobs to Drive folder
@@ -11,7 +11,7 @@
 // Each phase runs in a separate poll cycle — any phase failure is isolated and retried independently.
 // ============================================================
 
-function getStoryFactoryVersion() { return 17; }
+function getStoryFactoryVersion() { return 18; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -1915,16 +1915,23 @@ Logger.log('=== Memory Fetch Complete ===');
 // Returns an array of story metadata objects for the Story Library UI.
 
 function listStoredStories() {
-  // v18: Query Notion Story Library for Ready stories (was: Script Properties)
+  // v19: Query Notion Story Library for Ready stories with pagination
   var stories = [];
   try {
-    var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
-      filter: { property: 'Status', select: { equals: 'Ready' } },
-      sorts: [{ property: 'Book Number', direction: 'descending' }],
-      page_size: 100
-    });
-    if (!result || !result.results) return stories;
-    for (var i = 0; i < result.results.length; i++) {
+    var hasMore = true;
+    var startCursor = null;
+    while (hasMore) {
+      var body = {
+        filter: { property: 'Status', select: { equals: 'Ready' } },
+        sorts: [{ property: 'Book Number', direction: 'descending' }],
+        page_size: 100
+      };
+      if (startCursor) body.start_cursor = startCursor;
+      var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', body);
+      if (!result || !result.results) break;
+      hasMore = !!result.has_more;
+      startCursor = result.next_cursor || null;
+      for (var i = 0; i < result.results.length; i++) {
       var page = result.results[i];
       var p = page.properties || {};
       var title = '';
@@ -1951,6 +1958,7 @@ function listStoredStories() {
         storyLink: storyLink,
         bookNumber: bookNum
       });
+    }
     }
   } catch (e) {
     Logger.log('listStoredStories: Notion query failed — ' + e.message);
@@ -2285,5 +2293,5 @@ function sf_getFailureSummary_(days) {
   };
 }
 
-// END OF FILE — StoryFactory v17
+// END OF FILE — StoryFactory v18
 // ════════════════════════════════════════════════════════════════════
