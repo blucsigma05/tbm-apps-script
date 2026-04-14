@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v83 — Apps Script Router (TBM Consolidated)
+// Code.gs v86 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -532,6 +532,8 @@ function serveData(e) {
         // ComicStudio v4 Day 2 — Drive draft + mode aggregator
         'saveComicDraftSafe': saveComicDraftSafe,
         'loadComicDraftSafe': loadComicDraftSafe,
+        'loadComicDraftByDateSafe': loadComicDraftByDateSafe,
+        'listComicDraftsSafe': listComicDraftsSafe,
         'deleteComicDraftSafe': deleteComicDraftSafe,
         'getComicStudioContextSafe': getComicStudioContextSafe,
         // NotionEngine.js — Notion-specific wrappers (v2: renamed to avoid overriding Code.js handlers)
@@ -2144,4 +2146,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v83
+// END OF FILE — Code.gs v86

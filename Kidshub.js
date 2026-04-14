@@ -5019,24 +5019,36 @@ function getComicStudioContextSafe(child) {
   });
 }
 
-// ── v66: Comic gallery — list saved drafts + load by date ──
+// ── Comic Gallery: listComicDrafts_ (#271) ─────────────────────────────────
 
+/**
+ * Lists all saved comic drafts for a child, newest first.
+ * Returns up to 30 entries: [{ dateKey, label, fileId }]
+ */
 function listComicDrafts_(child) {
   try {
     var childLower = String(child || 'buggsy').toLowerCase();
     var folder = ensureComicDraftsFolder_();
-    var files = folder.getFiles();
+    var iter = folder.getFiles();
+    var entries = [];
     var prefix = childLower + '_';
-    var drafts = [];
-    while (files.hasNext()) {
-      var f = files.next();
-      var name = f.getName();
+    while (iter.hasNext()) {
+      var file = iter.next();
+      var name = file.getName(); // e.g. buggsy_2026-04-14.json
       if (name.indexOf(prefix) !== 0 || name.indexOf('.json') < 0) continue;
       var dateKey = name.replace(prefix, '').replace('.json', '');
-      drafts.push({ date: dateKey, fileId: f.getId(), size: f.getSize() });
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) continue;
+      entries.push({ dateKey: dateKey, fileId: file.getId() });
     }
-    drafts.sort(function(a, b) { return b.date < a.date ? -1 : b.date > a.date ? 1 : 0; });
-    return drafts;
+    // Sort newest first
+    entries.sort(function(a, b) { return b.dateKey > a.dateKey ? 1 : -1; });
+    // Cap at 30 and add a human-readable label
+    return entries.slice(0, 30).map(function(e) {
+      var parts = e.dateKey.split('-');
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var label = months[parseInt(parts[1], 10) - 1] + ' ' + parseInt(parts[2], 10) + ', ' + parts[0];
+      return { dateKey: e.dateKey, label: label, fileId: e.fileId };
+    });
   } catch (e) {
     if (typeof logError_ === 'function') logError_('listComicDrafts_', e);
     return [];
@@ -5049,15 +5061,22 @@ function listComicDraftsSafe(child) {
   });
 }
 
+/**
+ * Loads a specific date's comic draft for a child.
+ * @param {string} child — 'buggsy' or 'jj'
+ * @param {string} dateKey — 'YYYY-MM-DD'
+ * @returns {Object|null} parsed draft JSON or null
+ */
 function loadComicDraftByDate_(child, dateKey) {
   try {
     var childLower = String(child || 'buggsy').toLowerCase();
+    var key = String(dateKey || '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return null;
+    var fileName = childLower + '_' + key + '.json';
     var folder = ensureComicDraftsFolder_();
-    var fileName = childLower + '_' + dateKey + '.json';
     var files = folder.getFilesByName(fileName);
     if (!files.hasNext()) return null;
-    var file = files.next();
-    var text = file.getBlob().getDataAsString();
+    var text = files.next().getBlob().getDataAsString();
     return JSON.parse(text);
   } catch (e) {
     if (typeof logError_ === 'function') logError_('loadComicDraftByDate_', e);

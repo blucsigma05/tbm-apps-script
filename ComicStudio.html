@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v11">
+<meta name="tbm-version" content="v13">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -840,6 +840,153 @@ main {
   left: -17px; top: 50%; transform: translateY(-50%);
   border-right-color: #00f0ff;
 }
+
+/* ── v12: Comic Gallery (#271) ── */
+#gallery-overlay, #viewer-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: rgba(11,15,26,0.97);
+}
+#gallery-overlay.hidden, #viewer-overlay.hidden { display: none; }
+.gallery-header, .viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #1E2A4A;
+  flex-shrink: 0;
+}
+.viewer-header { justify-content: flex-start; gap: 14px; }
+.gallery-title, .viewer-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  color: #F59E0B;
+}
+.gallery-close-btn, .viewer-back-btn {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  color: #E2E8F0;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+}
+.gallery-body, .viewer-body { flex: 1; overflow-y: auto; padding: 16px; }
+.gallery-empty, .viewer-loading {
+  color: #64748B;
+  text-align: center;
+  padding: 48px 20px;
+  font-size: 14px;
+}
+.gallery-list { display: flex; flex-direction: column; gap: 12px; }
+.gallery-card {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: border-color 0.2s;
+}
+.gallery-card:hover { border-color: #F59E0B; }
+.gallery-card-icon { font-size: 32px; flex-shrink: 0; }
+.gallery-card-meta { flex: 1; }
+.gallery-card-date { font-family: 'Orbitron', sans-serif; font-size: 12px; color: #FBBF24; font-weight: 700; }
+.gallery-card-sub { font-size: 11px; color: #64748B; margin-top: 2px; }
+.gallery-card-arrow { color: #64748B; font-size: 18px; }
+.viewer-panels { display: flex; flex-direction: column; gap: 16px; max-width: 480px; margin: 0 auto; }
+.viewer-panel-card { background: #171D30; border: 1px solid #1E2A4A; border-radius: 12px; overflow: hidden; }
+.viewer-panel-img { width: 100%; display: block; background: #FFFFFF; }
+.viewer-panel-caption { padding: 10px 14px; font-size: 13px; color: #E2E8F0; min-height: 36px; }
+
+/* ── v12: Character Stickers (#282) ── */
+#gallery-btn {
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  color: #E2E8F0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-family: 'Nunito', sans-serif;
+  line-height: 1;
+}
+.sticker-palette-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #1E2A4A;
+  flex-wrap: wrap;
+}
+.sticker-palette-label { font-size: 10px; color: #64748B; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+.sticker-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 1px solid #1E2A4A;
+  background: #171D30;
+  cursor: pointer;
+  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, transform 0.1s;
+  position: relative;
+  vertical-align: middle;
+}
+.sticker-btn:hover:not(.locked) { border-color: #F59E0B; transform: scale(1.1); }
+.sticker-btn.locked { opacity: 0.45; cursor: not-allowed; }
+.sticker-btn .lock-badge { position: absolute; bottom: -4px; right: -4px; font-size: 9px; }
+.sticker {
+  position: absolute;
+  font-size: 44px;
+  cursor: grab;
+  user-select: none;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+}
+.sticker-del {
+  position: absolute;
+  top: -8px; right: -8px;
+  width: 18px; height: 18px;
+  background: #EF4444;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 10px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  font-style: normal;
+  display: block;
+}
+.sticker:hover .sticker-del { opacity: 1; }
+#_comic-toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%);
+  background: #171D30;
+  border: 1px solid #1E2A4A;
+  color: #E2E8F0;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  z-index: 9050;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
 </style>
 </head>
 <body>
@@ -858,6 +1005,7 @@ main {
     <div class="header-right">
       <span id="pen-badge">PEN</span>
       <span id="autosave-indicator">AUTOSAVE</span>
+      <button id="gallery-btn" onclick="openGallery()" title="My Comics">&#128218;</button>
       <div class="progress-badge" id="ring-badge">0 Rings</div>
     </div>
   </div>
@@ -886,6 +1034,33 @@ main {
       </div>
     </div>
   </div>
+
+  <!-- ── v12: Comic Gallery overlay (#271) ── -->
+  <div id="gallery-overlay" class="hidden">
+    <div class="gallery-header">
+      <div class="gallery-title">MY COMICS</div>
+      <button class="gallery-close-btn" onclick="closeGallery()">&#x2715; Close</button>
+    </div>
+    <div class="gallery-body" id="gallery-body">
+      <div class="gallery-empty">Loading your comics...</div>
+    </div>
+  </div>
+
+  <!-- ── v12: Comic Viewer overlay (#271) ── -->
+  <div id="viewer-overlay" class="hidden">
+    <div class="viewer-header">
+      <button class="viewer-back-btn" onclick="closeViewer()">&#8592; Back</button>
+      <div class="viewer-title" id="viewer-title">Comic</div>
+    </div>
+    <div class="viewer-body">
+      <div id="viewer-panels" class="viewer-panels">
+        <div class="viewer-loading">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast for sticker/gallery feedback -->
+  <div id="_comic-toast"></div>
 
   <!-- Plan Your Attack overlay -->
   <div id="plan-overlay">
@@ -972,9 +1147,9 @@ main {
 <script>
 // ── ComicStudio v5 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
 // ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
-// tbm-version: v11
+// tbm-version: v13
 
-const COMIC_STUDIO_VERSION = 10; // v10: bubble text span fix + replay bubble composite
+const COMIC_STUDIO_VERSION = 12; // v12: gallery autosave guard + sticker overlay in viewer
 
 // ── Test Mode Detection ──
 const TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
@@ -1073,6 +1248,18 @@ let _replayBubbles = []; // Snapshot taken in finishComic() before bubbles is cl
 const BUBBLE_MAX_PER_PANEL = 3;
 const BUBBLE_TAILS = ['bottom', 'right', 'top', 'left'];
 let _bubbleIdSeq = 0;
+
+// v11: Character stickers — [{id, charId, panel, xPct, yPct}]
+const STICKER_CATALOG = [
+  { id: 'wolfkid', emoji: '\uD83D\uDC3A', label: 'Wolfkid', locked: false },
+  { id: 'turbo',   emoji: '\uD83E\uDD94', label: 'Turbo',   locked: false },
+  { id: 'buggsy',  emoji: '\uD83D\uDC30', label: 'Buggsy',  locked: false },
+  { id: 'hex',     emoji: '\u26A1',       label: 'Hex',      locked: false },
+  { id: 'crush',   emoji: '\uD83D\uDC8E', label: 'Crush',   locked: true  }
+];
+let stickers = [];
+const STICKER_MAX_PER_PANEL = 3;
+let _stickerId = 0;
 
 // F3 Day 2: two-phase init gate (context + draft must both resolve before resume/fresh)
 let _initPending = 2;
@@ -1282,6 +1469,7 @@ function serializeDraft() {
     strokeHistory,
     replayBuffer,
     bubbles: bubbles.slice(), // v9: persist speech bubble state
+    stickers: stickers.slice(), // v11: persist character sticker state
     panels: panelCanvases.map((canvas, idx) => ({
       idx,
       dataUrl: canvas ? canvas.toDataURL('image/jpeg', 0.7) : null
@@ -1384,8 +1572,18 @@ function buildToolbar() {
       html += `<div class="${ccls}" style="background:${col};${border}" onclick="setColor('${col}')"></div>`;
     }
   }
-  html += `<button class="tool-btn" onclick="clearPanel()" title="Clear Panel">🗑️</button>`;
-  html += `<button class="tool-btn" onclick="addBubble()" title="Add Speech Bubble (max ${BUBBLE_MAX_PER_PANEL} per panel)" style="font-size:16px;">💬</button>`;
+  html += `<button class="tool-btn" onclick="clearPanel()" title="Clear Panel">&#128465;</button>`;
+  html += `<button class="tool-btn" onclick="addBubble()" title="Add Speech Bubble (max ${BUBBLE_MAX_PER_PANEL} per panel)" style="font-size:16px;">&#128172;</button>`;
+  // v11: sticker palette row
+  html += '<div class="sticker-palette-row"><span class="sticker-palette-label">STICKERS</span>';
+  for (const c of STICKER_CATALOG) {
+    if (c.locked) {
+      html += `<button class="sticker-btn locked" title="${c.label} (unlock in rewards)" disabled>${c.emoji}<span class="lock-badge">&#128274;</span></button>`;
+    } else {
+      html += `<button class="sticker-btn" title="Add ${c.label}" onclick="addSticker('${c.id}')">${c.emoji}</button>`;
+    }
+  }
+  html += '</div>';
   document.getElementById('toolbar').innerHTML = html;
 }
 
@@ -1784,6 +1982,7 @@ function buildPanelGrid() {
     }
   });
   renderBubbles();
+  renderStickers(); // v11: restore sticker overlays after grid rebuild
 }
 
 function selectPanel(idx) {
@@ -2250,8 +2449,12 @@ function setAutosaveIndicator(state) {
   indicator.className = conf.cls;
 }
 
+// v12: read-only gallery guard — autosave is suspended while gallery/viewer is open
+// to prevent an in-progress timer from clobbering today's slot with historical data.
+let _galleryOpen = false;
+
 function autosaveDraft() {
-  if (TBM_TEST_MODE || !hasDrawnAnything) return;
+  if (TBM_TEST_MODE || !hasDrawnAnything || _galleryOpen) return;
   if (typeof google === 'undefined' || !google.script || !google.script.run) return;
   setAutosaveIndicator('saving');
   const payload = serializeDraft();
@@ -2316,8 +2519,16 @@ function applyDraftState(draft) {
       if (!isNaN(n) && n > _bubbleIdSeq) _bubbleIdSeq = n;
     }
   }
+  // v11: restore stickers (backward compat — old drafts without stickers get empty array)
+  if (Array.isArray(draft.stickers)) {
+    stickers = draft.stickers.slice();
+    for (let si = 0; si < stickers.length; si++) {
+      const n = parseInt((stickers[si].id || '').replace('sticker-', ''), 10);
+      if (!isNaN(n) && n > _stickerId) _stickerId = n;
+    }
+  }
   buildLayoutPicker();
-  buildPanelGrid(); // also calls renderBubbles()
+  buildPanelGrid(); // also calls renderBubbles() + renderStickers()
   renderCaptions();
 }
 
@@ -2473,6 +2684,213 @@ function _onBothLoaded() {
     buildPanelGrid();
     renderCaptions();
   }
+}
+
+// ── v11: Main-scope toast (#282) ─────────────────────────────────────────────
+let _comicToastTimer = null;
+function _comicToast(msg) {
+  const el = document.getElementById('_comic-toast');
+  if (!el) return;
+  clearTimeout(_comicToastTimer);
+  el.textContent = msg;
+  el.style.opacity = '1';
+  _comicToastTimer = setTimeout(function() { el.style.opacity = '0'; }, 2200);
+}
+
+// ── v11: Comic Gallery (#271) ─────────────────────────────────────────────────
+
+function openGallery() {
+  _galleryOpen = true; // suspend autosave while gallery is open (read-only mode)
+  document.getElementById('gallery-overlay').classList.remove('hidden');
+  const body = document.getElementById('gallery-body');
+  body.innerHTML = '<div class="gallery-empty">Loading your comics...</div>';
+  if (TBM_TEST_MODE) {
+    renderGalleryList([
+      { dateKey: '2026-04-13', label: 'Apr 13, 2026' },
+      { dateKey: '2026-04-12', label: 'Apr 12, 2026' }
+    ]);
+    return;
+  }
+  serverCall('listComicDraftsSafe', CHILD)
+    .then(function(drafts) { renderGalleryList(drafts || []); })
+    .catch(function() {
+      body.innerHTML = '<div class="gallery-empty">Could not load comics. Try again later.</div>';
+    });
+}
+
+function closeGallery() {
+  _galleryOpen = false; // resume autosave
+  document.getElementById('gallery-overlay').classList.add('hidden');
+}
+
+function renderGalleryList(drafts) {
+  const body = document.getElementById('gallery-body');
+  if (!drafts || drafts.length === 0) {
+    body.innerHTML = '<div class="gallery-empty">No saved comics yet.<br>Finish a session to save your work!</div>';
+    return;
+  }
+  let html = '<div class="gallery-list">';
+  for (let i = 0; i < drafts.length; i++) {
+    const d = drafts[i];
+    const safeDate = escapeHtml(d.label || d.dateKey);
+    html += `<div class="gallery-card" onclick="openComicViewer('${d.dateKey}', '${safeDate}')">`;
+    html += '<div class="gallery-card-icon">&#128225;</div>';
+    html += '<div class="gallery-card-meta">';
+    html += `<div class="gallery-card-date">${safeDate}</div>`;
+    html += '<div class="gallery-card-sub">Tap to view</div>';
+    html += '</div>';
+    html += '<div class="gallery-card-arrow">&#8250;</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+function openComicViewer(dateKey, label) {
+  closeGallery();
+  document.getElementById('viewer-overlay').classList.remove('hidden');
+  document.getElementById('viewer-title').textContent = label || dateKey;
+  document.getElementById('viewer-panels').innerHTML = '<div class="viewer-loading">Loading comic...</div>';
+  if (TBM_TEST_MODE) {
+    renderViewerPanels({ panels: [], captions: [] });
+    return;
+  }
+  serverCall('loadComicDraftByDateSafe', CHILD, dateKey)
+    .then(function(draft) { renderViewerPanels(draft); })
+    .catch(function() {
+      document.getElementById('viewer-panels').innerHTML = '<div class="viewer-loading">Could not load this comic.</div>';
+    });
+}
+
+function closeViewer() {
+  document.getElementById('viewer-overlay').classList.add('hidden');
+  openGallery(); // _galleryOpen stays true until closeGallery()
+}
+
+function renderViewerPanels(draft) {
+  const container = document.getElementById('viewer-panels');
+  if (!draft || !Array.isArray(draft.panels) || draft.panels.length === 0) {
+    container.innerHTML = '<div class="viewer-loading">No panels saved in this comic.</div>';
+    return;
+  }
+  // Build sticker lookup by panel index
+  const stickersByPanel = {};
+  if (Array.isArray(draft.stickers)) {
+    for (let si = 0; si < draft.stickers.length; si++) {
+      const s = draft.stickers[si];
+      if (!stickersByPanel[s.panel]) stickersByPanel[s.panel] = [];
+      stickersByPanel[s.panel].push(s);
+    }
+  }
+  let html = '';
+  for (let i = 0; i < draft.panels.length; i++) {
+    const p = draft.panels[i];
+    const caption = Array.isArray(draft.captions) && draft.captions[i]
+      ? escapeHtml(draft.captions[i]) : '';
+    html += '<div class="viewer-panel-card">';
+    // Panel image wrapper — position:relative so sticker overlays work
+    html += '<div style="position:relative;background:#FFFFFF;">';
+    if (p && p.dataUrl) {
+      html += `<img class="viewer-panel-img" src="${p.dataUrl}" alt="Panel ${i + 1}">`;
+    } else {
+      html += `<div style="height:160px;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:13px;">Panel ${i + 1} — no drawing</div>`;
+    }
+    // Overlay stickers at saved positions (read-only, non-draggable)
+    const panelStickers = stickersByPanel[i] || [];
+    for (let si2 = 0; si2 < panelStickers.length; si2++) {
+      const s = panelStickers[si2];
+      const def = STICKER_CATALOG.find(function(c) { return c.id === s.charId; });
+      const emoji = def ? def.emoji : '';
+      if (!emoji) continue;
+      html += `<span style="position:absolute;font-size:44px;line-height:1;left:${s.xPct}%;top:${s.yPct}%;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));">${emoji}</span>`;
+    }
+    html += '</div>'; // end panel wrapper
+    html += '<div class="viewer-panel-caption">';
+    html += caption || '<span style="color:#64748B;font-style:italic;">No caption</span>';
+    html += '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+// ── v11: Character Sticker System (#282) ──────────────────────────────────────
+
+function _stickersForPanel(panelIdx) {
+  return stickers.filter(function(s) { return s.panel === panelIdx; });
+}
+
+function addSticker(charId) {
+  const existing = _stickersForPanel(activePanel);
+  if (existing.length >= STICKER_MAX_PER_PANEL) {
+    _comicToast('Max ' + STICKER_MAX_PER_PANEL + ' stickers per panel');
+    return;
+  }
+  const def = STICKER_CATALOG.find(function(c) { return c.id === charId; });
+  if (!def || def.locked) return;
+  _stickerId++;
+  stickers.push({ id: 'sticker-' + _stickerId, charId: charId, panel: activePanel, xPct: 50, yPct: 50 });
+  renderStickers();
+  if (!hasDrawnAnything) { hasDrawnAnything = true; startAutosaveTimer(); }
+}
+
+function deleteSticker(id) {
+  stickers = stickers.filter(function(s) { return s.id !== id; });
+  renderStickers();
+}
+
+function renderStickers() {
+  const existing = document.querySelectorAll('.sticker');
+  for (let i = 0; i < existing.length; i++) existing[i].remove();
+  for (let i = 0; i < stickers.length; i++) {
+    const s = stickers[i];
+    if (s.panel >= panelCount) continue;
+    const slot = document.querySelector(`.panel-slot[data-panel="${s.panel}"]`);
+    if (!slot) continue;
+    const def = STICKER_CATALOG.find(function(c) { return c.id === s.charId; });
+    const emoji = def ? def.emoji : '?';
+    const el = document.createElement('div');
+    el.className = 'sticker';
+    el.setAttribute('data-sticker-id', s.id);
+    el.style.left = s.xPct + '%';
+    el.style.top = s.yPct + '%';
+    el.innerHTML = emoji + '<i class="sticker-del" onclick="event.stopPropagation();deleteSticker(\'' + s.id + '\')">&#x2715;</i>';
+    attachStickerDrag(el, s);
+    slot.appendChild(el);
+  }
+}
+
+function attachStickerDrag(el, s) {
+  let dragging = false, dragOffsetX = 0, dragOffsetY = 0;
+  el.addEventListener('pointerdown', function(e) {
+    if (e.target.classList.contains('sticker-del')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragging = true;
+    el.setPointerCapture(e.pointerId);
+    el.style.cursor = 'grabbing';
+    const rect = el.getBoundingClientRect();
+    dragOffsetX = e.clientX - (rect.left + rect.width / 2);
+    dragOffsetY = e.clientY - (rect.top + rect.height / 2);
+  });
+  el.addEventListener('pointermove', function(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    const slot = el.parentElement;
+    if (!slot) return;
+    const slotRect = slot.getBoundingClientRect();
+    const xPx = (e.clientX - dragOffsetX) - slotRect.left;
+    const yPx = (e.clientY - dragOffsetY) - slotRect.top;
+    const xPct = Math.max(5, Math.min(95, (xPx / slotRect.width) * 100));
+    const yPct = Math.max(5, Math.min(95, (yPx / slotRect.height) * 100));
+    el.style.left = xPct + '%';
+    el.style.top = yPct + '%';
+    const found = stickers.find(function(x) { return x.id === s.id; });
+    if (found) { found.xPct = xPct; found.yPct = yPct; }
+  });
+  el.addEventListener('pointerup', function() {
+    if (!dragging) return;
+    dragging = false;
+    el.style.cursor = 'grab';
+  });
 }
 
 // ── Init ──
