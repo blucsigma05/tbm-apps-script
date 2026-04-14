@@ -95,7 +95,9 @@ jobs:
           P3="gh run download"
           FAIL=0
           for wf in .github/workflows/*.yml; do
-            # Only check files that contain workflow_run triggers
+            # Skip this file — its run block contains the trigger string and would self-match
+            [ "$(basename "$wf")" = "workflow-lint.yml" ] && continue
+            # Only check files that have workflow_run in their on: trigger block
             if grep -q 'workflow_run:' "$wf"; then
               if grep -qE "${P1}|${P2}|${P3}" "$wf"; then
                 echo "::error::POLICY VIOLATION: $wf uses workflow_run and contains an artifact-download API."
