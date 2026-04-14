@@ -83,3 +83,33 @@ jobs:
             exit 1
           fi
           echo "PASS: all shell scripts pass shellcheck (or none found)"
+
+      - name: Policy — no artifact downloads in workflow_run handlers (F08)
+        run: |
+          # workflow_run runs with repo-level write permissions in the trusted context.
+          # Artifact downloads from untrusted forks are a classic trust-escalation vector.
+          # Fail if any workflow_run-triggered file introduces artifact-fetch APIs.
+          # Patterns split to avoid self-match when this policy file is scanned.
+          P1="actions/download-artifact"
+          P2="github.rest.actions.downloadArtifact"
+          P3="gh run download"
+          FAIL=0
+          for wf in .github/workflows/*.yml; do
+            # Skip this file — its run block contains the trigger string and would self-match
+            [ "$(basename "$wf")" = "workflow-lint.yml" ] && continue
+            # Only check files that have workflow_run in their on: trigger block
+            if grep -q 'workflow_run:' "$wf"; then
+              if grep -qE "${P1}|${P2}|${P3}" "$wf"; then
+                echo "::error::POLICY VIOLATION: $wf uses workflow_run and contains an artifact-download API."
+                echo "  Add explicit trust-model docs and origin validation before using artifacts in workflow_run handlers."
+                FAIL=1
+              else
+                echo "  OK (no artifact download): $wf"
+              fi
+            fi
+          done
+          if [ $FAIL -eq 1 ]; then
+            echo "FAIL: workflow_run artifact-download policy violated"
+            exit 1
+          fi
+          echo "PASS: no workflow_run handlers contain artifact-download APIs"
