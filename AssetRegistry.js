@@ -1,4 +1,4 @@
-// AssetRegistry.gs — v4
+// AssetRegistry.gs — v5
 // ════════════════════════════════════════════════════════════════════
 // Shared asset catalog for SparkleLearning, CurriculumSeed, and validators.
 // V8 server-side — modern JS OK here.
@@ -6,7 +6,7 @@
 // READS FROM: (in-memory constant — no sheet reads)
 // ════════════════════════════════════════════════════════════════════
 
-function getAssetRegistryVersion() { return 4; }
+function getAssetRegistryVersion() { return 5; }
 
 var ASSET_REGISTRY = {
   // ── Letter intro hero images — concepts tied to letters in CurriculumSeed ──
@@ -14,9 +14,9 @@ var ASSET_REGISTRY = {
   'ice_cream': { id: 'ice_cream', type: 'emoji', value: '\uD83C\uDF66', name: 'ice cream',  plural: 'ice creams',  color: 'pink',   category: 'food' },
   'kite':      { id: 'kite',      type: 'emoji', value: '\uD83E\uDEB1', name: 'kite',       plural: 'kites',       color: 'blue',   category: 'object' },
   'bug':       { id: 'bug',       type: 'emoji', value: '\uD83D\uDC1B', name: 'bug',        plural: 'bugs',        color: 'green',  category: 'animal' },
-  'dad':       { id: 'dad',       type: 'emoji', value: '\uD83D\uDC68', name: 'Daddy',      plural: 'daddies',     color: 'gray',   category: 'person' },
-  'boy':       { id: 'boy',       type: 'emoji', value: '\uD83D\uDC66', name: 'boy',        plural: 'boys',        color: 'gray',   category: 'person' },
-  'girl':      { id: 'girl',      type: 'emoji', value: '\uD83D\uDC67', name: 'girl',       plural: 'girls',       color: 'pink',   category: 'person' },
+  'dad':       { id: 'dad',       type: 'emoji', value: '\uD83D\uDC68\uD83C\uDFFE', name: 'Daddy',      plural: 'daddies',     color: 'gray',   category: 'person' },
+  'boy':       { id: 'boy',       type: 'emoji', value: '\uD83D\uDC66\uD83C\uDFFE', name: 'boy',        plural: 'boys',        color: 'gray',   category: 'person' },
+  'girl':      { id: 'girl',      type: 'emoji', value: '\uD83D\uDC67\uD83C\uDFFE', name: 'girl',       plural: 'girls',       color: 'pink',   category: 'person' },
   'star':      { id: 'star',      type: 'svg',   value: 'star',         name: 'star',       plural: 'stars',       color: 'gold',   category: 'shape' },
 
   // ── color_sort items — Week 3 and Week 4 from CurriculumSeed ──
@@ -84,4 +84,4 @@ function getAssetRegistry_() {
   return ASSET_REGISTRY;
 }
 
-// END OF FILE — AssetRegistry.gs v4
+// END OF FILE — AssetRegistry.gs v5
