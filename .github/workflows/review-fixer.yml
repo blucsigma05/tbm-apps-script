@@ -94,50 +94,6 @@ jobs:
         shell: bash
         run: bash audit-source.sh
 
-      - name: Install clasp
-        if: steps.prepare.outputs.should_push == 'true' && steps.prepare.outputs.needs_deploy == 'true'
-        env:
-          CLASP_CREDENTIALS_JSON: ${{ secrets.CLASP_CREDENTIALS_JSON }}
-        shell: bash
-        run: |
-          if [ -z "$CLASP_CREDENTIALS_JSON" ]; then
-            echo "CLASP_CREDENTIALS_JSON is required for deploying review fixes." >&2
-            exit 1
-          fi
-          npm install -g @google/clasp
-          printf '%s' "$CLASP_CREDENTIALS_JSON" > "$HOME/.clasprc.json"
-
-      - name: Deploy GAS review fixes
-        if: steps.prepare.outputs.should_push == 'true' && steps.prepare.outputs.needs_deploy == 'true'
-        env:
-          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
-          GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
-          REVIEW_FIX_CYCLE: ${{ steps.prepare.outputs.next_cycle }}
-        shell: bash
-        run: |
-          if [ -z "$GAS_DEPLOYMENT_ID" ] || [ -z "$GAS_DEPLOY_URL" ]; then
-            echo "GAS_DEPLOYMENT_ID and GAS_DEPLOY_URL are required for deploying review fixes." >&2
-            exit 1
-          fi
-          clasp push --force
-          clasp deploy -i "$GAS_DEPLOYMENT_ID" -d "review-fix-$REVIEW_FIX_CYCLE"
-          response="$(curl -sS -L --max-time 120 "${GAS_DEPLOY_URL}?action=runTests")"
-          printf '%s' "$response" > review_fix_test_response.json
-          overall="$(python3 - <<'PY'
-          import json
-          try:
-              with open('review_fix_test_response.json', 'r', encoding='utf-8') as fh:
-                  data = json.load(fh)
-              print(data.get('overall', 'UNKNOWN'))
-          except Exception:
-              print('ERROR')
-          PY
-          )"
-          if [ "$overall" != "PASS" ]; then
-            echo "Review-fix deploy tests failed: $overall" >&2
-            exit 1
-          fi
-
       - name: Commit and push review fixes
         if: steps.prepare.outputs.should_push == 'true'
         env:
