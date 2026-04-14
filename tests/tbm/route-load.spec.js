@@ -58,9 +58,15 @@ for (const route of OPEN_ROUTES) {
     // Page should return 200
     expect(response.status(), route.name + ' returned ' + response.status()).toBe(200);
 
-    // Page should not be blank
-    const body = await page.locator('body').textContent();
-    expect(body.trim().length, route.name + ' body is empty').toBeGreaterThan(0);
+    // Page should render real DOM content, not just an injected shim script.
+    const domState = await page.evaluate(() => {
+      return {
+        childCount: document.body ? document.body.children.length : 0,
+        visibleTextLength: document.body ? (document.body.innerText || '').trim().length : 0
+      };
+    });
+    expect(domState.childCount, route.name + ' body has no rendered elements').toBeGreaterThan(0);
+    expect(domState.visibleTextLength, route.name + ' body has no visible text').toBeGreaterThan(0);
 
     // No fatal JS errors (filter noise)
     const fatal = errors.filter((e) => {

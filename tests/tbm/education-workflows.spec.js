@@ -361,6 +361,40 @@ test.describe('Sparkle: session loads with star counter', function() {
   });
 });
 
+test.describe('Sparkle: JJ mission launch path', function() {
+  test('count mission URL renders the ready screen and launches gameplay', async function({ page }) {
+    test.setTimeout(60000);
+    var errors = collectErrors(page);
+    await page.setViewportSize(DEVICES.s10fe);
+    await shimGAS(page, Object.assign({}, FIXTURES, {
+      getTodayContentSafe: {
+        content: {
+          title: 'Counting Higher!',
+          theme: 'Numbers 6 and 7',
+          audioIntro: 'Today we count higher!',
+          activities: [
+            { id: 'w5t01', type: 'count_with_me', targetNumber: 6, objects: 'stars', stars: 1 },
+            { id: 'w5t04', type: 'count_with_me', targetNumber: 7, objects: 'hearts', stars: 1 },
+            { id: 'w5t09', type: 'count_with_me', targetNumber: 7, objects: 'butterflies', stars: 1 }
+          ]
+        }
+      },
+      loadProgressSafe: {
+        stars: 0,
+        lettersCompleted: []
+      }
+    }));
+
+    await page.goto(BASE_URL + '/sparkle?child=jj&activity=count', { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await expect(page.locator("button:has-text(\"Let's Go\")")).toBeVisible({ timeout: 15000 });
+    await page.locator("button:has-text(\"Let's Go\")").click();
+    await expect(page.locator('.activity-card')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('.instruction').first()).toContainText(/count/i);
+
+    expect(filterRealErrors(errors)).toHaveLength(0);
+  });
+});
+
 test.describe('Sparkle: reload preserves star count', function() {
   test('star count persists across page reload', async function({ page }) {
     test.setTimeout(90000);

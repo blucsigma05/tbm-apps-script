@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v20">
+  <meta name="tbm-version" content="v21">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -887,12 +887,42 @@ function resolveAsset(assetId, size, fallbackColor) {
   return renderShape('circle', fallbackColor || 'pink', size || 64);
 }
 
+function getRequestedSparkleActivity() {
+  var activity = getParam('activity');
+  if (!activity) { return null; }
+  return String(activity).toLowerCase().replace(/-/g, '_');
+}
+
+function filterContentForRequestedActivity(content) {
+  var requested = getRequestedSparkleActivity();
+  if (!requested || !content || !content.activities || !content.activities.length) {
+    return content;
+  }
+
+  var filtered = [];
+  for (var i = 0; i < content.activities.length; i++) {
+    if (String(content.activities[i].type || '').toLowerCase() === requested) {
+      filtered.push(content.activities[i]);
+    }
+  }
+  if (!filtered.length) { return content; }
+
+  var nextContent = {};
+  for (var key in content) {
+    if (content.hasOwnProperty(key)) {
+      nextContent[key] = content[key];
+    }
+  }
+  nextContent.activities = filtered;
+  return nextContent;
+}
+
 function loadContent() {
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function(content) {
         if (content && content.content && content.content.activities) {
-          todayContent = content.content;
+          todayContent = filterContentForRequestedActivity(content.content);
           // Cap at 10 activities per session — 15 is too long for pre-K
           if (todayContent.activities.length > 10) {
             todayContent.activities = todayContent.activities.slice(0, 10);
@@ -3058,11 +3088,29 @@ function tapSortBin(binIdx, binColor) {
 /* ═══════════════════════════════════════════════════════════
    ACTIVITY 15: MORE OR LESS
    ═══════════════════════════════════════════════════════════ */
+function normalizeMoreOrLessGroup(group, fallback) {
+  if (typeof group === 'number') {
+    return {
+      count: Math.max(0, group),
+      shape: fallback.shape,
+      color: fallback.color
+    };
+  }
+  if (!group) { return fallback; }
+  return {
+    count: Math.max(0, Number(group.count) || 0),
+    shape: group.shape || fallback.shape,
+    color: group.color || fallback.color
+  };
+}
+
 function renderMoreOrLess(activity) {
   var mc = getMainContent();
   var mode = activity.mode || 'more'; /* 'more' or 'less' */
-  var groupA = activity.groupA || { count: 3, shape: 'star', color: 'pink' };
-  var groupB = activity.groupB || { count: 6, shape: 'heart', color: 'purple' };
+  var fallbackA = { count: 3, shape: 'star', color: 'pink' };
+  var fallbackB = { count: 6, shape: 'heart', color: 'purple' };
+  var groupA = normalizeMoreOrLessGroup(activity.groupA, fallbackA);
+  var groupB = normalizeMoreOrLessGroup(activity.groupB, fallbackB);
   var answerSide = groupA.count > groupB.count ? (mode === 'more' ? 'A' : 'B') : (mode === 'more' ? 'B' : 'A');
   if (groupA.count === groupB.count) { answerSide = 'A'; } /* tie = either works */
 
