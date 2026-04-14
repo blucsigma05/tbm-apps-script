@@ -84,6 +84,32 @@ jobs:
           fi
           echo "PASS: all shell scripts pass shellcheck (or none found)"
 
+      - name: Policy — pull_request_target must not check out untrusted head code (F07)
+        run: |
+          # pull_request_target runs with trusted base-context permissions (write access, secrets).
+          # Checking out PR head code via head.ref or head.sha exposes those secrets to
+          # potentially untrusted fork code — a severe trust-escalation vector.
+          # Fail if any pull_request_target workflow uses head.ref or head.sha as a checkout ref.
+          FAIL=0
+          for wf in .github/workflows/*.yml; do
+            if grep -q 'pull_request_target' "$wf"; then
+              # Detect checkout steps referencing head ref/sha (dot or underscore form)
+              if grep -qE 'ref:[[:space:]]*.*head[._](ref|sha)' "$wf"; then
+                echo "::error::POLICY VIOLATION: $wf uses pull_request_target and checks out untrusted head code."
+                echo "  Only base-branch checkout is safe in pull_request_target workflows."
+                echo "  Remove head.ref / head.sha / head_ref / head_sha from any checkout ref: field."
+                FAIL=1
+              else
+                echo "  OK (no unsafe head checkout): $(basename "$wf")"
+              fi
+            fi
+          done
+          if [ $FAIL -eq 1 ]; then
+            echo "FAIL: pull_request_target untrusted-checkout policy violated"
+            exit 1
+          fi
+          echo "PASS: no pull_request_target workflows check out untrusted head code"
+
       - name: Policy — no artifact downloads in workflow_run handlers (F08)
         run: |
           # workflow_run runs with repo-level write permissions in the trusted context.
