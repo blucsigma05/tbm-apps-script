@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v12">
+<meta name="tbm-version" content="v13">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1147,9 +1147,9 @@ main {
 <script>
 // ── ComicStudio v5 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
 // ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
-// tbm-version: v12
+// tbm-version: v13
 
-const COMIC_STUDIO_VERSION = 11; // v11: gallery + character stickers (#271, #282)
+const COMIC_STUDIO_VERSION = 12; // v12: gallery autosave guard + sticker overlay in viewer
 
 // ── Test Mode Detection ──
 const TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
@@ -2449,8 +2449,12 @@ function setAutosaveIndicator(state) {
   indicator.className = conf.cls;
 }
 
+// v12: read-only gallery guard — autosave is suspended while gallery/viewer is open
+// to prevent an in-progress timer from clobbering today's slot with historical data.
+let _galleryOpen = false;
+
 function autosaveDraft() {
-  if (TBM_TEST_MODE || !hasDrawnAnything) return;
+  if (TBM_TEST_MODE || !hasDrawnAnything || _galleryOpen) return;
   if (typeof google === 'undefined' || !google.script || !google.script.run) return;
   setAutosaveIndicator('saving');
   const payload = serializeDraft();
@@ -2696,6 +2700,7 @@ function _comicToast(msg) {
 // ── v11: Comic Gallery (#271) ─────────────────────────────────────────────────
 
 function openGallery() {
+  _galleryOpen = true; // suspend autosave while gallery is open (read-only mode)
   document.getElementById('gallery-overlay').classList.remove('hidden');
   const body = document.getElementById('gallery-body');
   body.innerHTML = '<div class="gallery-empty">Loading your comics...</div>';
@@ -2714,6 +2719,7 @@ function openGallery() {
 }
 
 function closeGallery() {
+  _galleryOpen = false; // resume autosave
   document.getElementById('gallery-overlay').classList.add('hidden');
 }
 
@@ -2758,7 +2764,7 @@ function openComicViewer(dateKey, label) {
 
 function closeViewer() {
   document.getElementById('viewer-overlay').classList.add('hidden');
-  openGallery();
+  openGallery(); // _galleryOpen stays true until closeGallery()
 }
 
 function renderViewerPanels(draft) {
@@ -2767,17 +2773,38 @@ function renderViewerPanels(draft) {
     container.innerHTML = '<div class="viewer-loading">No panels saved in this comic.</div>';
     return;
   }
+  // Build sticker lookup by panel index
+  const stickersByPanel = {};
+  if (Array.isArray(draft.stickers)) {
+    for (let si = 0; si < draft.stickers.length; si++) {
+      const s = draft.stickers[si];
+      if (!stickersByPanel[s.panel]) stickersByPanel[s.panel] = [];
+      stickersByPanel[s.panel].push(s);
+    }
+  }
   let html = '';
   for (let i = 0; i < draft.panels.length; i++) {
     const p = draft.panels[i];
     const caption = Array.isArray(draft.captions) && draft.captions[i]
       ? escapeHtml(draft.captions[i]) : '';
     html += '<div class="viewer-panel-card">';
+    // Panel image wrapper — position:relative so sticker overlays work
+    html += '<div style="position:relative;background:#FFFFFF;">';
     if (p && p.dataUrl) {
       html += `<img class="viewer-panel-img" src="${p.dataUrl}" alt="Panel ${i + 1}">`;
     } else {
-      html += `<div style="height:160px;background:#F8FAFC;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:13px;">Panel ${i + 1} — no drawing</div>`;
+      html += `<div style="height:160px;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:13px;">Panel ${i + 1} — no drawing</div>`;
     }
+    // Overlay stickers at saved positions (read-only, non-draggable)
+    const panelStickers = stickersByPanel[i] || [];
+    for (let si2 = 0; si2 < panelStickers.length; si2++) {
+      const s = panelStickers[si2];
+      const def = STICKER_CATALOG.find(function(c) { return c.id === s.charId; });
+      const emoji = def ? def.emoji : '';
+      if (!emoji) continue;
+      html += `<span style="position:absolute;font-size:44px;line-height:1;left:${s.xPct}%;top:${s.yPct}%;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));">${emoji}</span>`;
+    }
+    html += '</div>'; // end panel wrapper
     html += '<div class="viewer-panel-caption">';
     html += caption || '<span style="color:#64748B;font-style:italic;">No caption</span>';
     html += '</div></div>';
