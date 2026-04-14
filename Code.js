@@ -550,6 +550,7 @@ function serveData(e) {
         'listComicDraftsSafe': listComicDraftsSafe,
         'deleteComicDraftSafe': deleteComicDraftSafe,
         'getComicStudioContextSafe': getComicStudioContextSafe,
+        'checkHomeworkGateSafe': checkHomeworkGateSafe,
         // NotionEngine.js — Notion-specific wrappers (v2: renamed to avoid overriding Code.js handlers)
         'notionLogHomeworkSafe': notionLogHomeworkSafe,
         'notionLogSparkleProgressSafe': notionLogSparkleProgressSafe,
