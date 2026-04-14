@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="qa-operator">
-<meta name="tbm-version" content="v1">
+<meta name="tbm-version" content="v2">
 <title>TBM QA Operator</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -395,7 +395,7 @@ function submitPIN() {
     .withFailureHandler(function(err) {
       document.getElementById('pin-err').textContent = 'Error: ' + String(err && err.message || err);
     })
-    .khVerifyPin(val);
+    .khVerifyPinSafe(val);
 }
 
 // ── Dashboard Init ────────────────────────────────────────────────
