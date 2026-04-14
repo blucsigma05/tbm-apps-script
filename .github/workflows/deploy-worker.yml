@@ -29,6 +29,9 @@ jobs:
           sed -i "s/__BUILD_ID__/${BUILD_ID}/" cloudflare-worker.js
           echo "Stamped WORKER_BUILD=${BUILD_ID}"
 
+      - name: Install Wrangler
+        run: npm install -g wrangler
+
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
