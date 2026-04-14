@@ -745,22 +745,47 @@ function speak(text, onEndOrKey, maybeOnEnd) {
       }
     }
 
-    // Web Speech fallback
-    if (!window.speechSynthesis) { if (onEnd) { onEnd(); } return; }
-    var u = new SpeechSynthesisUtterance(String(text));
-    u.rate = 0.85;
-    u.pitch = 1.1;
-    _audioPlaying = true;
-    u.onend = function() {
-      _audioPlaying = false;
-      if (onEnd) { onEnd(); }
-    };
-    u.onerror = function() {
-      _audioPlaying = false;
-      if (onEnd) { onEnd(); }
-    };
-    speechSynthesis.speak(u);
+    // v13: If we expected an ElevenLabs clip but it's missing, try a single fetch
+    // before falling back to TTS. Prevents mid-activity voice mixing.
+    if (audioKey && !audioCache[audioKey] && typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(batch) {
+          if (mySeq !== _audioRequestSeq) { return; }
+          if (batch && batch[audioKey]) {
+            audioCache[audioKey] = new Audio('data:audio/mp3;base64,' + batch[audioKey]);
+            var clip = audioCache[audioKey];
+            _activeClip = clip;
+            _audioPlaying = true;
+            clip.onended = function() { _activeClip = null; _audioPlaying = false; if (onEnd) { onEnd(); } };
+            clip.onerror = function() { _activeClip = null; _audioPlaying = false; if (onEnd) { onEnd(); } };
+            clip.play();
+          } else {
+            _speakTTSFallback(text, onEnd);
+          }
+        })
+        .withFailureHandler(function() {
+          if (mySeq !== _audioRequestSeq) { return; }
+          _speakTTSFallback(text, onEnd);
+        })
+        .getAudioBatchSafe([audioKey]);
+      return;
+    }
+
+    // Web Speech fallback — only reached when no audioKey or no GAS context
+    _speakTTSFallback(text, onEnd);
   });
+}
+
+// v13: Extracted TTS fallback — rate/pitch match audio-pipeline spec (0.9/1.1)
+function _speakTTSFallback(text, onEnd) {
+  if (!window.speechSynthesis) { if (onEnd) { onEnd(); } return; }
+  var u = new SpeechSynthesisUtterance(String(text));
+  u.rate = 0.9;
+  u.pitch = 1.1;
+  _audioPlaying = true;
+  u.onend = function() { _audioPlaying = false; if (onEnd) { onEnd(); } };
+  u.onerror = function() { _audioPlaying = false; if (onEnd) { onEnd(); } };
+  speechSynthesis.speak(u);
 }
 
 function autoMatchAudio(text) {
@@ -1752,8 +1777,14 @@ function loadContent() {
           if (todayContent.activities.length > 10) {
             todayContent.activities = todayContent.activities.slice(0, 10);
           }
-          preloadCurriculumAudio(todayContent.activities);
-          showReadyScreen(todayContent);
+          // v13: Lazy load — only preload FIRST activity now, rest load as kid plays
+          if (todayContent.activities.length > 0) {
+            loadAudioForGame(todayContent.activities[0].type, function() {
+              showReadyScreen(todayContent);
+            });
+          } else {
+            showReadyScreen(todayContent);
+          }
         } else {
           showFallback();
         }
@@ -1866,6 +1897,11 @@ function renderActivity(index) {
 
   var activity = todayContent.activities[index];
   var type = activity.type;
+
+  // v13: Preload NEXT activity's audio in background while current plays
+  if (index + 1 < todayContent.activities.length) {
+    loadAudioForGame(todayContent.activities[index + 1].type, function() {});
+  }
 
   switch (type) {
     case 'letter_intro':       renderLetterIntro(activity); break;
