@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v66 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v67 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 66; }
+function getKidsHubVersion() { return 67; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -4423,7 +4423,7 @@ function submitHomework_(data) {
         : 'Auto-graded — complete';
       sendPush_(childDisplay + ' submitted ' + (data.subject || 'homework'), pushMsg, 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL);
     }
-  } catch(e) { /* non-blocking */ }
+  } catch(e) { if (typeof logError_ === 'function') logError_('submitHomework_:push', e); }
 
   // Phase 4: Gemini review (outside lock, can take 5-30s)
   if (status === 'pending_review' && data.responseText && String(data.responseText).length > 20) {
@@ -4542,7 +4542,7 @@ function approveHomework_(rowIndex, action, notes) {
         var childDisplay = child.charAt(0).toUpperCase() + child.slice(1);
         sendPush_(childDisplay + ': Writing approved! +' + rings + ' rings', String(notes || 'Great work!'), 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL);
       }
-    } catch(e) { /* non-blocking */ }
+    } catch(e) { if (typeof logError_ === 'function') logError_('approveHomework_:push', e); }
   }
 
   return JSON.stringify({ status: 'ok', action: action });
@@ -5135,5 +5135,5 @@ function loadComicDraftByDateSafe(child, dateKey) {
   });
 }
 
-// END OF FILE — KidsHub.gs v66
+// END OF FILE — KidsHub.gs v67
 // ════════════════════════════════════════════════════════════════════
