@@ -380,28 +380,26 @@ echo ""
 # ── ASSET REGISTRY REGRESSION GUARDS ─────────────────────────
 echo "--- Asset Registry Regression Guards ---"
 
-# Guard: activity.image must be consumed in SparkleLearning.html (was 0 before PR 1)
-if [ -f "SparkleLearning.html" ]; then
-  IMG_COUNT=$(grep -c "activity\.image" SparkleLearning.html 2>/dev/null || echo 0)
-  if [ "$IMG_COUNT" -gt 0 ]; then
-    echo "  OK -- activity.image referenced in SparkleLearning.html ($IMG_COUNT occurrence(s))"
-  else
-    echo "  FAIL -- activity.image has 0 references in SparkleLearning.html (regression: renderLetterIntro must consume it)"
-    FAIL=1
-  fi
+# Guard: activity.image must be consumed in Sparkle module files (was 0 before PR 1)
+# v87: SparkleLearning is split into SparkleLearning.html + sparkle-games.html + sparkle-audio.html
+SPARKLE_FILES="SparkleLearning.html"
+if [ -f "sparkle-games.html" ]; then SPARKLE_FILES="$SPARKLE_FILES sparkle-games.html"; fi
+if [ -f "sparkle-audio.html" ]; then SPARKLE_FILES="$SPARKLE_FILES sparkle-audio.html"; fi
+IMG_COUNT=$(grep -hc "activity\.image" $SPARKLE_FILES 2>/dev/null | awk '{s+=$1} END{print s}')
+if [ "${IMG_COUNT:-0}" -gt 0 ]; then
+  echo "  OK -- activity.image referenced in sparkle module files ($IMG_COUNT occurrence(s))"
 else
-  echo "  SKIP -- SparkleLearning.html not found"
+  echo "  FAIL -- activity.image has 0 references in sparkle module files (regression: renderLetterIntro must consume it)"
+  FAIL=1
 fi
 
-# Guard: resolveAsset must have >= 3 call sites in SparkleLearning.html
-if [ -f "SparkleLearning.html" ]; then
-  RESOLVE_COUNT=$(grep -c "resolveAsset(" SparkleLearning.html 2>/dev/null || echo 0)
-  if [ "$RESOLVE_COUNT" -ge 3 ]; then
-    echo "  OK -- resolveAsset has $RESOLVE_COUNT call sites (>= 3 required)"
-  else
-    echo "  FAIL -- resolveAsset has only $RESOLVE_COUNT call site(s) in SparkleLearning.html (need >= 3)"
-    FAIL=1
-  fi
+# Guard: resolveAsset must have >= 3 call sites across Sparkle module files
+RESOLVE_COUNT=$(grep -hc "resolveAsset(" $SPARKLE_FILES 2>/dev/null | awk '{s+=$1} END{print s}')
+if [ "${RESOLVE_COUNT:-0}" -ge 3 ]; then
+  echo "  OK -- resolveAsset has $RESOLVE_COUNT call sites across sparkle module files (>= 3 required)"
+else
+  echo "  FAIL -- resolveAsset has only ${RESOLVE_COUNT:-0} call site(s) in sparkle module files (need >= 3)"
+  FAIL=1
 fi
 
 # Guard: ASSET_REGISTRY must be defined in AssetRegistry.js
