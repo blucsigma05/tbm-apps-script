@@ -532,6 +532,8 @@ function serveData(e) {
         // ComicStudio v4 Day 2 — Drive draft + mode aggregator
         'saveComicDraftSafe': saveComicDraftSafe,
         'loadComicDraftSafe': loadComicDraftSafe,
+        'loadComicDraftByDateSafe': loadComicDraftByDateSafe,
+        'listComicDraftsSafe': listComicDraftsSafe,
         'deleteComicDraftSafe': deleteComicDraftSafe,
         'getComicStudioContextSafe': getComicStudioContextSafe,
         // NotionEngine.js — Notion-specific wrappers (v2: renamed to avoid overriding Code.js handlers)
