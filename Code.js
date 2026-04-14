@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 84; }
+function getCodeVersion() { return 85; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -1477,6 +1477,7 @@ function healthCheck() {
     'khRejectTaskSafe', 'khApproveWithBonusSafe', 'khOverrideTaskSafe',
     'getKHAppUrls', 'setupKHSheets', 'validateTaskIDs',
     'runDailyGateCheck', 'installDailyGateAlert', 'removeDailyGateAlert',
+    'runDailyEducationAlerts', 'installDailyEducationAlertTrigger_', 'installWeeklyDigestTrigger_',
     'notionApi_', 'pushQAResult', 'pushPipelineEvent_', 'testNotionConnection',
     'isPipelineUrl_', 'pipelineStatusForType_', 'normalizePipelinePayload_', 'pipelineRelaySafe',
     'reconcileVeinPulse', 'reconcileVeinPulseSafe', 'resolveNestedKey_',
