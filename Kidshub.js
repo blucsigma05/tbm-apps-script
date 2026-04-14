@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v67 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v68 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 67; }
+function getKidsHubVersion() { return 68; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -5135,5 +5135,39 @@ function loadComicDraftByDateSafe(child, dateKey) {
   });
 }
 
-// END OF FILE — KidsHub.gs v67
+// ── HOMEWORK GATE — check if daily homework is done ─────────────
+// Returns { locked: bool, reason: string }
+// Weekends always unlocked. Weekdays check KH_Education for today's submission.
+function checkHomeworkGate_(child) {
+  var today = new Date();
+  var day = today.getDay(); // 0=Sun, 6=Sat
+  if (day === 0 || day === 6) return { locked: false, reason: 'weekend' };
+
+  var childLower = String(child || 'buggsy').toLowerCase();
+  var todayStr = Utilities.formatDate(today, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  var sheet = ensureKHEducationTab_();
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { locked: true, reason: 'No homework submitted today' };
+
+  // Scan from bottom — most recent first
+  var data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+  for (var i = data.length - 1; i >= 0; i--) {
+    var ts = data[i][0];
+    if (!(ts instanceof Date)) continue;
+    var rowDate = Utilities.formatDate(ts, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+    if (rowDate < todayStr) break; // past today, stop scanning
+    if (rowDate === todayStr && String(data[i][1]).toLowerCase() === childLower) {
+      return { locked: false, reason: 'Homework submitted today' };
+    }
+  }
+  return { locked: true, reason: 'No homework submitted today' };
+}
+
+function checkHomeworkGateSafe(child) {
+  return withMonitor_('checkHomeworkGateSafe', function() {
+    return checkHomeworkGate_(child);
+  });
+}
+
+// END OF FILE — KidsHub.gs v68
 // ════════════════════════════════════════════════════════════════════

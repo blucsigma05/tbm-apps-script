@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="comic-studio">
-<meta name="tbm-version" content="v13">
+<meta name="tbm-version" content="v14">
 <title>Wolfkid Comic Studio</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -991,6 +991,15 @@ main {
 </head>
 <body>
 
+<!-- v14: Homework gate overlay — blocks Comic Studio until daily homework is done (weekdays only) -->
+<div id="hw-gate" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#0B0F1A;color:#E2E8F0;font-family:Nunito,sans-serif;text-align:center;padding-top:20vh;">
+  <div style="font-size:64px;margin-bottom:16px;">&#128218;</div>
+  <div style="font-family:Orbitron,sans-serif;font-size:22px;font-weight:900;color:#F59E0B;letter-spacing:2px;margin-bottom:12px;">HOMEWORK FIRST</div>
+  <div style="font-size:15px;color:#94A3B8;max-width:320px;margin:0 auto 24px;line-height:1.6;">Complete today's homework to unlock Comic Studio.</div>
+  <a href="/homework" style="display:inline-block;padding:14px 32px;background:#3B82F6;color:#fff;border-radius:10px;font-family:Orbitron,sans-serif;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:1px;">GO TO HOMEWORK</a>
+  <div style="margin-top:16px;font-size:12px;color:#475569;">Unlocked on weekends &bull; Unlocked after any homework submission</div>
+</div>
+
 <div id="starfield"></div>
 
 <div id="app-header">
@@ -1147,7 +1156,7 @@ main {
 <script>
 // ── ComicStudio v5 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
 // ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
-// tbm-version: v13
+// tbm-version: v14
 
 const COMIC_STUDIO_VERSION = 12; // v12: gallery autosave guard + sticker overlay in viewer
 
@@ -2912,7 +2921,29 @@ function init() {
     .catch(() => { _initReady(); });
 }
 
-init();
+// v14: Homework gate — check before allowing Comic Studio
+function checkHomeworkGateAndInit() {
+  // Skip gate in test mode
+  if (TBM_TEST_MODE) { init(); return; }
+  // Skip gate if google.script.run not available (local dev)
+  if (typeof google === 'undefined' || !google.script || !google.script.run) { init(); return; }
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result && result.locked) {
+        document.getElementById('hw-gate').style.display = 'block';
+      } else {
+        init();
+      }
+    })
+    .withFailureHandler(function() {
+      // Gate check failed — let them through rather than block on error
+      init();
+    })
+    .checkHomeworkGateSafe(CHILD);
+}
+
+checkHomeworkGateAndInit();
 </script>
 <!-- ═══ Kid Feedback Widget (ES5 IIFE) ═══ -->
 <script>
