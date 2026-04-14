@@ -337,12 +337,7 @@ function servePage(page, e) {
         .setTitle(title)
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
-    // v87: SparkleLearning uses template evaluation for modular include_ splits
-    if (page === 'sparkle') {
-      return HtmlService.createTemplateFromFile('SparkleLearning').evaluate()
-        .setTitle(route.title)
-        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
-    }
+    // v88: SparkleLearning inlined (split reverted — template include boundary bugs)
     return HtmlService.createHtmlOutputFromFile(route.file)
       .setTitle(route.title)
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -439,9 +434,6 @@ function serveData(e) {
           var tmpl = HtmlService.createTemplateFromFile('Vault');
           tmpl.sheetData = JSON.stringify(getAllVaultData());
           content = tmpl.evaluate().getContent();
-        } else if (page === 'sparkle') {
-          // v87: SparkleLearning uses template evaluation for modular include_ splits
-          content = HtmlService.createTemplateFromFile('SparkleLearning').evaluate().getContent();
         } else {
           content = HtmlService.createHtmlOutputFromFile(filename).getContent();
         }
