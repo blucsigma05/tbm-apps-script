@@ -55,7 +55,6 @@ jobs:
           echo "Front-door smoke PASS — worker=${DEPLOYED_BUILD}"
 
           # Alignment check (F03): confirm GAS target suffix matches cloudflare-worker.js constant
-          GAS_SUFFIX="${CF_WORKER_URL}" # unused — alignment via /version gas_target field
           REMOTE_GAS_TAIL=$(echo "$RESPONSE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('gas_target',''))" 2>/dev/null || echo "")
           LOCAL_GAS_TAIL=$(grep "^const GAS_URL" cloudflare-worker.js | grep -oP "(?<=')[^']+" | tail -c 13 | head -c 12)
           if [ "$REMOTE_GAS_TAIL" != "$LOCAL_GAS_TAIL" ]; then
