@@ -1915,51 +1915,46 @@ Logger.log('=== Memory Fetch Complete ===');
 // Returns an array of story metadata objects for the Story Library UI.
 
 function listStoredStories() {
-  var props = PropertiesService.getScriptProperties().getProperties();
+  // v18: Query Notion Story Library for Ready stories (was: Script Properties)
   var stories = [];
-
-  var keys = Object.keys(props);
-  for (var i = 0; i < keys.length; i++) {
-    var key = keys[i];
-    if (key.indexOf('STORY_') !== 0) continue;
-
-    try {
-      var data = JSON.parse(props[key]);
-      var sceneCount = (data.scenes && data.scenes.length) ? data.scenes.length : 0;
-      var vocabList = data.vocab || data.vocabulary || [];
-      var wordCount = data.wordCount || 0;
-
-      // If wordCount not pre-computed, estimate from scene text
-      if (!wordCount && data.scenes) {
-        for (var s = 0; s < data.scenes.length; s++) {
-          var txt = data.scenes[s].text || '';
-          wordCount += txt.split(/\s+/).length;
-        }
+  try {
+    var result = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
+      filter: { property: 'Status', select: { equals: 'Ready' } },
+      sorts: [{ property: 'Book Number', direction: 'descending' }],
+      page_size: 100
+    });
+    if (!result || !result.results) return stories;
+    for (var i = 0; i < result.results.length; i++) {
+      var page = result.results[i];
+      var p = page.properties || {};
+      var title = '';
+      if (p['Story Title'] && p['Story Title'].title && p['Story Title'].title.length > 0) {
+        title = p['Story Title'].title[0].plain_text || '';
       }
+      var character = (p['Character'] && p['Character'].select) ? p['Character'].select.name : '';
+      var tone = (p['Tone'] && p['Tone'].select) ? p['Tone'].select.name : '';
+      var topic = getNotionText(p['Topic'], 'rich_text') || '';
+      var storyLink = (p['Story Link'] && p['Story Link'].url) ? p['Story Link'].url : '';
+      var bookNum = (p['Book Number'] && p['Book Number'].number != null) ? p['Book Number'].number : 0;
+      var vocabStr = getNotionText(p['Vocab Words'], 'rich_text') || '';
+      var vocabList = vocabStr ? vocabStr.split(',').map(function(v) { return v.trim(); }).filter(function(v) { return v; }) : [];
 
-      // v15.3: Return canonical short key (strip STORY_ prefix) so StoryLibrary
-      // passes keys that STORY_INDEX and getStoryForReader() accept
-      var canonicalKey = key.indexOf('STORY_') === 0 ? key.substring(6) : key;
       stories.push({
-        storyKey: canonicalKey,
-        title: data.title || 'Untitled Story',
-        character: data.character || 'Unknown',
-        sceneCount: sceneCount,
+        storyKey: page.id,
+        title: title || 'Untitled Story',
+        character: character || 'Unknown',
+        sceneCount: 0,
         vocabWords: vocabList,
-        wordCount: wordCount,
-        tone: data.tone || '',
-        topic: data.topic || ''
+        wordCount: 0,
+        tone: tone,
+        topic: topic,
+        storyLink: storyLink,
+        bookNumber: bookNum
       });
-    } catch (e) {
-      Logger.log('listStoredStories: skipped malformed property ' + key + ': ' + e.message);
     }
+  } catch (e) {
+    Logger.log('listStoredStories: Notion query failed — ' + e.message);
   }
-
-  // Sort by title alphabetically
-  stories.sort(function(a, b) {
-    return a.title < b.title ? -1 : a.title > b.title ? 1 : 0;
-  });
-
   return stories;
 }
 
