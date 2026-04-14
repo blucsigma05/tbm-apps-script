@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v65 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v66 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 65; }
+function getKidsHubVersion() { return 66; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -5019,5 +5019,58 @@ function getComicStudioContextSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v65
+// ── v66: Comic gallery — list saved drafts + load by date ──
+
+function listComicDrafts_(child) {
+  try {
+    var childLower = String(child || 'buggsy').toLowerCase();
+    var folder = ensureComicDraftsFolder_();
+    var files = folder.getFiles();
+    var prefix = childLower + '_';
+    var drafts = [];
+    while (files.hasNext()) {
+      var f = files.next();
+      var name = f.getName();
+      if (name.indexOf(prefix) !== 0 || name.indexOf('.json') < 0) continue;
+      var dateKey = name.replace(prefix, '').replace('.json', '');
+      drafts.push({ date: dateKey, fileId: f.getId(), size: f.getSize() });
+    }
+    drafts.sort(function(a, b) { return b.date < a.date ? -1 : b.date > a.date ? 1 : 0; });
+    return drafts;
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('listComicDrafts_', e);
+    return [];
+  }
+}
+
+function listComicDraftsSafe(child) {
+  return withMonitor_('listComicDraftsSafe', function() {
+    return JSON.parse(JSON.stringify(listComicDrafts_(child)));
+  });
+}
+
+function loadComicDraftByDate_(child, dateKey) {
+  try {
+    var childLower = String(child || 'buggsy').toLowerCase();
+    var folder = ensureComicDraftsFolder_();
+    var fileName = childLower + '_' + dateKey + '.json';
+    var files = folder.getFilesByName(fileName);
+    if (!files.hasNext()) return null;
+    var file = files.next();
+    var text = file.getBlob().getDataAsString();
+    return JSON.parse(text);
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('loadComicDraftByDate_', e);
+    return null;
+  }
+}
+
+function loadComicDraftByDateSafe(child, dateKey) {
+  return withMonitor_('loadComicDraftByDateSafe', function() {
+    var result = loadComicDraftByDate_(child, dateKey);
+    return JSON.parse(JSON.stringify(result));
+  });
+}
+
+// END OF FILE — KidsHub.gs v66
 // ════════════════════════════════════════════════════════════════════
