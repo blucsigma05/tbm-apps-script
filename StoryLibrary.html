@@ -223,6 +223,11 @@ html,body{width:100%;height:100%;overflow-x:hidden;}
       return;
     }
 
+    // v5: Capture storyLinks from Notion data
+    for (var j = 0; j < stories.length; j++) {
+      if (stories[j].storyLink) storyLinks[stories[j].storyKey] = stories[j].storyLink;
+    }
+
     // Story grid
     html += '<div class="sl-grid">';
     for (var i = 0; i < stories.length; i++) {
@@ -239,9 +244,9 @@ html,body{width:100%;height:100%;overflow-x:hidden;}
     c += '<div class="sl-card" onclick="launchStory(\'' + escapeAttr(s.storyKey) + '\')">';
     c += '<div class="sl-card-title">' + escapeHtml(s.title) + '</div>';
     c += '<div class="sl-card-meta">';
-    c += escapeHtml(s.character) + ' &bull; ';
-    c += s.sceneCount + ' scenes &bull; ';
-    c += s.wordCount + ' words';
+    c += escapeHtml(s.character);
+    if (s.bookNumber) c += ' &bull; Book #' + s.bookNumber;
+    if (s.tone) c += ' &bull; ' + escapeHtml(s.tone);
     c += '</div>';
 
     // Vocab badges
@@ -280,13 +285,18 @@ html,body{width:100%;height:100%;overflow-x:hidden;}
   }
 
   // ── Launch story reader ──
+  // v6: Always route through StoryReader for themed experience.
+  // Pass Drive PDF URL as pdfUrl param so StoryReader can embed it.
+  var storyLinks = {};
   window.launchStory = function(storyKey) {
-    // v4: Navigate to /story clean route — old query-param approach failed because
-    // CF route precedence keeps page=story-library when URL path is /story-library
     var origin = window.location.origin || '';
-    var url = origin + '/story?story=' + encodeURIComponent(storyKey) +
-              '&mode=' + encodeURIComponent(mode) +
+    var url = origin + '/story?mode=' + encodeURIComponent(mode) +
               '&child=' + encodeURIComponent(child);
+    if (storyLinks[storyKey]) {
+      url += '&pdfUrl=' + encodeURIComponent(storyLinks[storyKey]);
+    } else {
+      url += '&story=' + encodeURIComponent(storyKey);
+    }
     window.location.href = url;
   };
 
