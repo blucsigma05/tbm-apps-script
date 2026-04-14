@@ -340,10 +340,14 @@ function getData(startStr, endStr, includeDebt) {
   var DEBT_PAY_CATS_MAIN = ['CC Payment', 'LOC Payment', 'Loan Payment', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
   var debtPaymentsMTD = 0;
 
+  // v92: F04 Phase 2 — transfer classification diagnostic
+  var _transferClassification = [];
+
   for (var t = 1; t < txData.length; t++) {
     var txDate = txData[t][1];   // Col B
     var txCat = txData[t][3];    // Col D
     var txAmt = txData[t][4];    // Col E
+    var txAcct = String(txData[t][5] || '').trim(); // Col F — Account (F04)
 
     if (!txDate || !txCat) continue;
     if (typeof txDate === 'string') txDate = new Date(txDate);
@@ -375,6 +379,13 @@ function getData(startStr, endStr, includeDebt) {
     var _txCatTrimmed = String(txCat || '').trim();
     if (amt < 0 && DEBT_PAY_CATS_MAIN.indexOf(_txCatTrimmed) >= 0) {
       debtPaymentsMTD += Math.abs(amt);
+    }
+    // v92: F04 Phase 2 — collect raw transfer data (classified AFTER ACCOUNT_CLASS is built)
+    if (TRANSFER_CATS.indexOf(txCat) >= 0 && txAcct) {
+      _transferClassification.push({
+        date: txDate.toISOString().slice(0, 10),
+        cat: txCat, amt: roundTo(amt, 2), acct: txAcct
+      });
     }
   }
 
@@ -488,6 +499,37 @@ function getData(startStr, endStr, includeDebt) {
   var latestBal = {};
   for (var acct in latestOverall) {
     latestBal[acct] = latestInRange[acct] || latestOverall[acct];
+  }
+
+  // ── 5a. Build ACCOUNT_CLASS map for transfer classification (F04 Phase 2) ──
+  var ACCOUNT_CLASS = {};
+  var LIQUID_TYPES = ['checking', 'savings', 'cash'];
+  var INVEST_TYPES = ['brokerage', '401k', 'ira', 'hsa', 'investment', 'stock plan'];
+  for (var _acm in latestBal) {
+    var _acEntry = latestBal[_acm];
+    var _acType = String(_acEntry.type || '').toLowerCase();
+    var _isLiquid = false, _isInvest = false;
+    for (var _li = 0; _li < LIQUID_TYPES.length; _li++) {
+      if (_acType.indexOf(LIQUID_TYPES[_li]) >= 0) { _isLiquid = true; break; }
+    }
+    if (!_isLiquid) {
+      for (var _ii = 0; _ii < INVEST_TYPES.length; _ii++) {
+        if (_acType.indexOf(INVEST_TYPES[_ii]) >= 0) { _isInvest = true; break; }
+      }
+    }
+    ACCOUNT_CLASS[_acm] = {
+      cls: _acEntry.cls,
+      type: _acEntry.type,
+      tag: _acEntry.cls === 'Liability' ? 'LIABILITY' :
+           (_isLiquid ? 'LIQUID' : (_isInvest ? 'INVESTMENT' : 'OTHER'))
+    };
+  }
+
+  // v92: Now that ACCOUNT_CLASS is built, tag the collected transfer data
+  for (var _tci = 0; _tci < _transferClassification.length; _tci++) {
+    var _tcEntry = _transferClassification[_tci];
+    var _acInfo = ACCOUNT_CLASS[_tcEntry.acct];
+    _tcEntry.srcTag = _acInfo ? _acInfo.tag : 'UNKNOWN';
   }
 
   var totalAssets = 0, totalLiabilities = 0;
@@ -1136,6 +1178,17 @@ cashFlowPositiveDate: (function() {
 
   // v45: Unmapped category diagnostic for bucket variance debugging
   result.unmappedCategories = _unmappedCategories;
+  // v92: F04 Phase 2 — transfer classification summary
+  var _tcSummary = { bySourceTag: {}, total: _transferClassification.length };
+  for (var _tci = 0; _tci < _transferClassification.length; _tci++) {
+    var _tc = _transferClassification[_tci];
+    var _tagKey = _tc.srcTag + '|' + _tc.cat;
+    if (!_tcSummary.bySourceTag[_tagKey]) _tcSummary.bySourceTag[_tagKey] = { count: 0, net: 0 };
+    _tcSummary.bySourceTag[_tagKey].count++;
+    _tcSummary.bySourceTag[_tagKey].net = roundTo(_tcSummary.bySourceTag[_tagKey].net + _tc.amt, 2);
+  }
+  result._transferClassification = _tcSummary;
+  result._accountClassMap = ACCOUNT_CLASS;
   // v24: Attach response metadata
   result._meta = de_buildMeta_(startStr, endStr, _warnings);
   // v24: debtStart $0 warning
