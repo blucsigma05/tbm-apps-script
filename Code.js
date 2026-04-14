@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 86; }
+function getCodeVersion() { return 87; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
