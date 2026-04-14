@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="tbm-module" content="qa-operator">
+<meta name="tbm-version" content="v1">
+<title>TBM QA Operator</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0B0F1A;
+  color: #E2E8F0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 15px;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* ── PIN Gate ───────────────────────────────────────────── */
+#pin-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+#pin-gate h1 { font-size: 22px; color: #F59E0B; margin-bottom: 6px; }
+#pin-gate p  { font-size: 13px; color: #94A3B8; margin-bottom: 24px; }
+#pin-input {
+  width: 100%;
+  max-width: 280px;
+  padding: 14px;
+  background: #1E2A4A;
+  border: 1px solid #2D3F6B;
+  border-radius: 10px;
+  color: #E2E8F0;
+  font-size: 20px;
+  text-align: center;
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+}
+#pin-input:focus { outline: none; border-color: #F59E0B; }
+#pin-err { font-size: 13px; color: #EF4444; min-height: 18px; }
+
+/* ── Guard page (prod env) ──────────────────────────────── */
+#guard-page {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  text-align: center;
+}
+#guard-page .guard-icon { font-size: 48px; margin-bottom: 12px; }
+#guard-page h2 { color: #EF4444; margin-bottom: 8px; }
+#guard-page p  { color: #94A3B8; font-size: 13px; max-width: 320px; }
+
+/* ── Main dashboard ─────────────────────────────────────── */
+#dashboard { display: none; }
+
+.qa-banner {
+  background: #F59E0B;
+  color: #0B0F1A;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  padding: 8px;
+  letter-spacing: 1px;
+}
+
+/* ── Status bar ─────────────────────────────────────────── */
+#status-bar {
+  background: #111827;
+  border-bottom: 1px solid #1E2A4A;
+  padding: 12px 16px;
+}
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.status-row:last-child { margin-bottom: 0; }
+.status-label { color: #64748B; }
+.status-val   { color: #E2E8F0; font-family: monospace; }
+.env-qa   { color: #22C55E; font-weight: 700; }
+.env-prod { color: #EF4444; font-weight: 700; }
+.status-refresh {
+  font-size: 11px;
+  color: #475569;
+  margin-top: 6px;
+  text-align: right;
+}
+
+/* ── Sections ───────────────────────────────────────────── */
+.section { padding: 16px; border-bottom: 1px solid #1E2A4A; }
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #F59E0B;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+/* ── Buttons ────────────────────────────────────────────── */
+.btn {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn:active { opacity: 0.7; }
+.btn:disabled { opacity: 0.35; cursor: default; }
+.btn-primary  { background: #F59E0B; color: #0B0F1A; }
+.btn-danger   { background: #EF4444; color: #fff; }
+.btn-ghost    { background: #1E2A4A; color: #E2E8F0; }
+.btn-sm { padding: 7px 12px; font-size: 13px; }
+.btn-full { display: block; width: 100%; margin-bottom: 8px; }
+
+/* ── Scenario pills ─────────────────────────────────────── */
+.scenario-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.scenario-btn {
+  background: #1E2A4A;
+  color: #E2E8F0;
+  border: 1px solid #2D3F6B;
+  border-radius: 8px;
+  padding: 10px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+.scenario-btn:active { opacity: 0.7; }
+.scenario-btn.active { border-color: #F59E0B; color: #F59E0B; }
+
+/* ── Text inputs ────────────────────────────────────────── */
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #1E2A4A;
+  border: 1px solid #2D3F6B;
+  border-radius: 8px;
+  color: #E2E8F0;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.input:focus { outline: none; border-color: #F59E0B; }
+
+/* ── Row layout ─────────────────────────────────────────── */
+.row { display: flex; gap: 8px; }
+.row .btn { flex: 1; }
+
+/* ── Launch grid ─────────────────────────────────────────── */
+.launch-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.launch-btn {
+  background: #1E2A4A;
+  color: #93C5FD;
+  border: 1px solid #2D3F6B;
+  border-radius: 8px;
+  padding: 12px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+}
+.launch-btn:active { opacity: 0.7; }
+
+/* ── Snapshots list ──────────────────────────────────────── */
+#snapshots-list { margin-bottom: 12px; }
+.snap-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: #1E2A4A;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.snap-name { color: #E2E8F0; font-family: monospace; }
+.snap-age  { color: #64748B; font-size: 12px; }
+.snap-restore { background: none; border: 1px solid #3B82F6; color: #93C5FD; border-radius: 5px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+
+/* ── Test results ────────────────────────────────────────── */
+#test-results {
+  background: #111827;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #94A3B8;
+  min-height: 60px;
+  margin-top: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Toast ───────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #22C55E;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+  z-index: 999;
+  white-space: nowrap;
+}
+#toast.err { background: #EF4444; }
+#toast.show { opacity: 1; }
+
+/* ── Spinner ─────────────────────────────────────────────── */
+.spin {
+  display: inline-block;
+  width: 14px; height: 14px;
+  border: 2px solid #2D3F6B;
+  border-top-color: #F59E0B;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- PIN Gate -->
+<div id="pin-gate">
+  <h1>&#9881; TBM QA Operator</h1>
+  <p>Enter your PIN to access the QA operator dashboard.</p>
+  <input id="pin-input" type="password" placeholder="&#9679;&#9679;&#9679;&#9679;" maxlength="8">
+  <div id="pin-err"></div>
+</div>
+
+<!-- Prod guard page (shown if TBM_ENV !== qa after unlock) -->
+<div id="guard-page">
+  <div class="guard-icon">&#128683;</div>
+  <h2>QA Mode Not Active</h2>
+  <p>TBM_ENV is currently set to <strong>prod</strong>. The QA operator dashboard is only available when TBM_ENV=qa.<br><br>To activate: open the GAS Script Editor &#8594; Project Settings &#8594; Script Properties &#8594; set TBM_ENV=qa.</p>
+</div>
+
+<!-- Main Dashboard -->
+<div id="dashboard">
+  <div class="qa-banner">&#9888; TBM QA OPERATOR MODE &#8212; DO NOT USE FOR REAL OPERATIONS</div>
+
+  <!-- Status Bar -->
+  <div id="status-bar">
+    <div class="status-row">
+      <span class="status-label">ENV</span>
+      <span class="status-val" id="st-env">&#8212;</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">Clock</span>
+      <span class="status-val" id="st-clock">&#8212;</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">Snapshot</span>
+      <span class="status-val" id="st-snap">none</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">Scenario</span>
+      <span class="status-val" id="st-scenario">none</span>
+    </div>
+    <div class="status-refresh" id="st-refreshed">Refreshing&#8230;</div>
+  </div>
+
+  <!-- Scenarios -->
+  <div class="section">
+    <div class="section-title">Scenarios</div>
+    <div class="scenario-grid" id="scenario-grid">
+      <button class="scenario-btn" onclick="loadScenario('fresh-morning')">fresh-morning</button>
+      <button class="scenario-btn" onclick="loadScenario('pending-approvals')">pending-approvals</button>
+      <button class="scenario-btn" onclick="loadScenario('all-clear')">all-clear</button>
+      <button class="scenario-btn" onclick="loadScenario('week-rollover')">week-rollover</button>
+      <button class="scenario-btn" onclick="loadScenario('education-pending-review')">edu-pending-review</button>
+    </div>
+  </div>
+
+  <!-- Clock Override -->
+  <div class="section">
+    <div class="section-title">Clock Override</div>
+    <input class="input" id="clock-input" type="datetime-local" placeholder="YYYY-MM-DDTHH:MM">
+    <div class="row">
+      <button class="btn btn-primary" onclick="setClock()">Set Clock</button>
+      <button class="btn btn-ghost" onclick="clearClock()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Snapshot Management -->
+  <div class="section">
+    <div class="section-title">Snapshots</div>
+    <div id="snapshots-list"><div style="color:#64748B;font-size:13px;">Loading&#8230;</div></div>
+    <input class="input" id="snap-name-input" type="text" placeholder="Snapshot name">
+    <div class="row">
+      <button class="btn btn-primary" onclick="takeSnapshot()">Take Snapshot</button>
+      <button class="btn btn-ghost" onclick="loadSnapshots()">Refresh</button>
+    </div>
+  </div>
+
+  <!-- Launch Shortcuts -->
+  <div class="section">
+    <div class="section-title">Launch Surface</div>
+    <div class="launch-grid">
+      <a class="launch-btn" href="/qa/jj" target="_blank">JJ (/qa/jj)</a>
+      <a class="launch-btn" href="/qa/buggsy" target="_blank">Buggsy (/qa/buggsy)</a>
+      <a class="launch-btn" href="/qa/parent" target="_blank">Parent</a>
+      <a class="launch-btn" href="/qa/sparkle" target="_blank">Sparkle</a>
+      <a class="launch-btn" href="/qa/homework" target="_blank">Homework</a>
+      <a class="launch-btn" href="/qa/daily-missions" target="_blank">Daily Missions</a>
+      <a class="launch-btn" href="/qa/facts" target="_blank">Fact Sprint</a>
+      <a class="launch-btn" href="/qa/progress" target="_blank">Progress</a>
+    </div>
+  </div>
+
+  <!-- Persistence Tests -->
+  <div class="section">
+    <div class="section-title">Persistence Tests</div>
+    <button class="btn btn-primary btn-full" onclick="runTests()">Run All Tests</button>
+    <div id="test-results">Results will appear here&#8230;</div>
+  </div>
+
+  <!-- Data Management -->
+  <div class="section">
+    <div class="section-title">Data Management</div>
+    <button class="btn btn-ghost btn-full" onclick="exportState()">Export State (JSON)</button>
+    <button class="btn btn-danger btn-full" id="btn-clear" onclick="clearTestData()">Clear Test Data</button>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast"></div>
+
+<script>
+// ── ES5 — no arrow functions, const, let, template literals, etc. ──
+
+var PIN_KEY = 'tbm_qa_pin';
+var _pinOk = false;
+var _statusInterval = null;
+
+// ── PIN Gate ──────────────────────────────────────────────────────
+
+document.getElementById('pin-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') submitPIN();
+});
+
+function submitPIN() {
+  var val = document.getElementById('pin-input').value;
+  if (!val) return;
+  // Simple client-side check against sessionStorage cache, then verify server-side
+  document.getElementById('pin-err').textContent = '';
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    // Not in GAS context — dev fallback shows guard
+    document.getElementById('pin-gate').style.display = 'none';
+    document.getElementById('guard-page').style.display = 'flex';
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(function(ok) {
+      if (ok) {
+        _pinOk = true;
+        document.getElementById('pin-gate').style.display = 'none';
+        initDashboard();
+      } else {
+        document.getElementById('pin-err').textContent = 'Incorrect PIN.';
+        document.getElementById('pin-input').value = '';
+      }
+    })
+    .withFailureHandler(function(err) {
+      document.getElementById('pin-err').textContent = 'Error: ' + String(err && err.message || err);
+    })
+    .khVerifyPin(val);
+}
+
+// ── Dashboard Init ────────────────────────────────────────────────
+
+function initDashboard() {
+  loadEnvStatus(function(status) {
+    if (!status || status.env !== 'qa') {
+      document.getElementById('guard-page').style.display = 'flex';
+      return;
+    }
+    document.getElementById('dashboard').style.display = 'block';
+    applyStatus(status);
+    loadSnapshots();
+    _statusInterval = setInterval(refreshStatus, 10000);
+  });
+}
+
+// ── Status Polling ────────────────────────────────────────────────
+
+function loadEnvStatus(cb) {
+  if (typeof google === 'undefined' || !google.script || !google.script.run) return;
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (cb) cb(result);
+    })
+    .withFailureHandler(function(err) {
+      toast('Status error: ' + String(err && err.message || err), true);
+      if (cb) cb(null);
+    })
+    .qaGetEnvStatusSafe();
+}
+
+function refreshStatus() {
+  loadEnvStatus(function(status) {
+    if (status) applyStatus(status);
+  });
+}
+
+function applyStatus(s) {
+  var envEl = document.getElementById('st-env');
+  envEl.textContent = s.env || '--';
+  envEl.className = 'status-val ' + (s.env === 'qa' ? 'env-qa' : 'env-prod');
+  document.getElementById('st-clock').textContent = s.clockOverride || 'real time';
+  document.getElementById('st-snap').textContent = s.activeSnapshot || 'none';
+  document.getElementById('st-scenario').textContent = s.activeScenario || 'none';
+  var now = new Date();
+  var hh = now.getHours();
+  var mm = now.getMinutes();
+  var ss = now.getSeconds();
+  document.getElementById('st-refreshed').textContent =
+    'Refreshed ' + (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+}
+
+// ── Scenarios ─────────────────────────────────────────────────────
+
+function loadScenario(name) {
+  var btns = document.querySelectorAll('.scenario-btn');
+  for (var i = 0; i < btns.length; i++) btns[i].disabled = true;
+  google.script.run
+    .withSuccessHandler(function() {
+      for (var i = 0; i < btns.length; i++) {
+        btns[i].disabled = false;
+        btns[i].className = 'scenario-btn' + (btns[i].textContent.indexOf(name) >= 0 ? ' active' : '');
+      }
+      document.getElementById('st-scenario').textContent = name;
+      toast('Loaded: ' + name);
+      refreshStatus();
+    })
+    .withFailureHandler(function(err) {
+      for (var i = 0; i < btns.length; i++) btns[i].disabled = false;
+      toast('Error: ' + String(err && err.message || err), true);
+    })
+    .qaLoadScenarioSafe(name);
+}
+
+// ── Clock Override ────────────────────────────────────────────────
+
+function setClock() {
+  var val = document.getElementById('clock-input').value;
+  if (!val) { toast('Enter a date/time first', true); return; }
+  var iso = val.length === 16 ? val + ':00' : val; // append seconds if missing
+  google.script.run
+    .withSuccessHandler(function() {
+      document.getElementById('st-clock').textContent = iso;
+      toast('Clock set to ' + iso);
+    })
+    .withFailureHandler(function(err) {
+      toast('Error: ' + String(err && err.message || err), true);
+    })
+    .qaSetClockSafe(iso);
+}
+
+function clearClock() {
+  google.script.run
+    .withSuccessHandler(function() {
+      document.getElementById('st-clock').textContent = 'real time';
+      document.getElementById('clock-input').value = '';
+      toast('Clock cleared');
+    })
+    .withFailureHandler(function(err) {
+      toast('Error: ' + String(err && err.message || err), true);
+    })
+    .qaClearClockSafe();
+}
+
+// ── Snapshots ─────────────────────────────────────────────────────
+
+function loadSnapshots() {
+  var listEl = document.getElementById('snapshots-list');
+  listEl.innerHTML = '<div style="color:#64748B;font-size:13px;">Loading&#8230;</div>';
+  google.script.run
+    .withSuccessHandler(function(snaps) {
+      renderSnapshotList(snaps || []);
+    })
+    .withFailureHandler(function(err) {
+      listEl.innerHTML = '<div style="color:#EF4444;font-size:13px;">Error: ' + escHtml(String(err && err.message || err)) + '</div>';
+    })
+    .qaListSnapshotsSafe();
+}
+
+function renderSnapshotList(snaps) {
+  var listEl = document.getElementById('snapshots-list');
+  if (!snaps || snaps.length === 0) {
+    listEl.innerHTML = '<div style="color:#64748B;font-size:13px;">No snapshots yet.</div>';
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < snaps.length; i++) {
+    var s = snaps[i];
+    html += '<div class="snap-row">' +
+      '<span><div class="snap-name">' + escHtml(s.name || '') + '</div>' +
+      '<div class="snap-age">' + escHtml(s.savedAt || '') + '</div></span>' +
+      '<button class="snap-restore" onclick="restoreSnapshot(\'' + escAttr(s.name || '') + '\')">Restore</button>' +
+      '</div>';
+  }
+  listEl.innerHTML = html;
+}
+
+function takeSnapshot() {
+  var name = document.getElementById('snap-name-input').value.trim();
+  if (!name) { toast('Enter a snapshot name', true); return; }
+  google.script.run
+    .withSuccessHandler(function() {
+      document.getElementById('snap-name-input').value = '';
+      toast('Snapshot saved: ' + name);
+      loadSnapshots();
+      refreshStatus();
+    })
+    .withFailureHandler(function(err) {
+      toast('Error: ' + String(err && err.message || err), true);
+    })
+    .qaSnapshotSafe(name);
+}
+
+function restoreSnapshot(name) {
+  google.script.run
+    .withSuccessHandler(function() {
+      toast('Restored: ' + name);
+      refreshStatus();
+    })
+    .withFailureHandler(function(err) {
+      toast('Error: ' + String(err && err.message || err), true);
+    })
+    .qaRestoreSafe(name);
+}
+
+// ── Persistence Tests ─────────────────────────────────────────────
+
+function runTests() {
+  var el = document.getElementById('test-results');
+  el.textContent = 'Running tests\u2026';
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (!result) { el.textContent = 'No result returned.'; return; }
+      var lines = [];
+      var tests = result.tests || [];
+      for (var i = 0; i < tests.length; i++) {
+        var t = tests[i];
+        var icon = t.pass ? '\u2713' : '\u2717';
+        lines.push(icon + ' ' + (t.name || 'Test ' + (i + 1)) + (t.pass ? '' : ': ' + (t.error || 'FAIL')));
+      }
+      var summary = (result.passed || 0) + '/' + (tests.length || 0) + ' passed';
+      el.textContent = summary + '\n' + lines.join('\n');
+    })
+    .withFailureHandler(function(err) {
+      el.textContent = 'Error: ' + String(err && err.message || err);
+    })
+    .qaRunPersistenceTestsSafe();
+}
+
+// ── Data Management ───────────────────────────────────────────────
+
+function exportState() {
+  google.script.run
+    .withSuccessHandler(function(json) {
+      var blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'tbm-qa-state-' + new Date().toISOString().slice(0, 10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    })
+    .withFailureHandler(function(err) {
+      toast('Export error: ' + String(err && err.message || err), true);
+    })
+    .qaExportStateSafe();
+}
+
+function clearTestData() {
+  if (!confirm('Clear all QA test data? This cannot be undone.')) return;
+  google.script.run
+    .withSuccessHandler(function() {
+      toast('Test data cleared');
+      refreshStatus();
+    })
+    .withFailureHandler(function(err) {
+      toast('Error: ' + String(err && err.message || err), true);
+    })
+    .qaClearTestDataSafe();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+
+var _toastTimer = null;
+function toast(msg, isErr) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show' + (isErr ? ' err' : '');
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function() {
+    el.className = '';
+  }, 2800);
+}
+
+// ── Utils ─────────────────────────────────────────────────────────
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function escAttr(str) {
+  return String(str).replace(/'/g, "\\'").replace(/</g, '').replace(/>/g, '');
+}
+</script>
+</body>
+</html>

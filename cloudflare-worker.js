@@ -41,7 +41,7 @@ const PATH_ROUTES = {
   '/power-scan':    { page: 'power-scan' }
 };
 
-// ─── QA Route Isolation (v3.5, issue #219) ──────────────────────────────────
+// ─── QA Route Isolation (v3.6, issue #219, #297) ────────────────────────────
 // 25-entry allowlist mirrors PATH_ROUTES minus finance surfaces.
 const QA_ROUTES = {
   '/qa/buggsy':          { page: 'kidshub', child: 'buggsy' },
@@ -68,7 +68,8 @@ const QA_ROUTES = {
   '/qa/power-scan':      { page: 'power-scan' },
   '/qa/spine':           { page: 'spine' },
   '/qa/soul':            { page: 'soul' },
-  '/qa/vault':           { page: 'vault' }
+  '/qa/vault':           { page: 'vault' },
+  '/qa/operator':        { page: 'qa-operator' }
 };
 // Finance surfaces excluded — real Tiller data, no QA snapshot. Explicit 403.
 const QA_DENIED = { '/qa/pulse': true, '/qa/vein': true };
