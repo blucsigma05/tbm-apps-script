@@ -140,10 +140,12 @@ test.describe('P2-1: Education Review Flow', function() {
     await page.setViewportSize(DEVICES.s25);
     await gotoPath(page, '/parent');
 
-    await expect(page.getByText(/EDUCATION/i).first()).toBeVisible();
-    await expect(page.getByText(/TODAY'S HOMEWORK/i)).toBeVisible();
-    await expect(page.getByText(/Daily Missions/i)).toBeVisible();
-    await expect(page.getByText(/Baseline/i)).toBeVisible();
+    // Parent Dashboard sections render after google.script.run callbacks —
+    // allow extra time beyond the 6s waitForGAS for data-dependent rendering.
+    await expect(page.getByText(/EDUCATION/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/TODAY'S HOMEWORK/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Daily Missions/i)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/Baseline/i)).toBeVisible({ timeout: 10000 });
   });
 });
 
@@ -206,7 +208,8 @@ test.describe('Story Factory', function() {
     await page.setViewportSize(DEVICES.s25);
     await gotoPath(page, '/parent');
 
-    await expect(page.getByText(/STORY FACTORY/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /Create Bedtime Story/i })).toBeVisible();
+    // Story Factory section renders after GAS data callback — needs extra timeout
+    await expect(page.getByText(/STORY FACTORY/i)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('button', { name: /Create Bedtime Story/i })).toBeVisible({ timeout: 10000 });
   });
 });

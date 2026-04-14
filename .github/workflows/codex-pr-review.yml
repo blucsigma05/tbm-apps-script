@@ -22,13 +22,12 @@ permissions:
   pull-requests: write
 
 concurrency:
-  # Per-PR group cancels stale runs when a new push arrives (desirable — avoids
-  # reviewing an outdated commit). The primary 429 fix is exponential backoff in
-  # codex_review.py (15/30/60/120s) rather than workflow-level serialization,
-  # since a shared global group with cancel-in-progress: false still drops runs
-  # when GitHub's single pending-slot limit is hit under burst conditions.
-  group: codex-pr-review-${{ github.event.pull_request.number || inputs.pr }}
-  cancel-in-progress: true
+  # Shared group serializes reviews so only one OpenAI call runs at a time.
+  # This prevents concurrent PRs from exhausting the rate limit (429s).
+  # GitHub queues one pending run and drops the rest — those can be re-triggered
+  # with "@codex review" or a re-run. Preferable to 3 simultaneous INCONCLUSIVEs.
+  group: codex-pr-review-global
+  cancel-in-progress: false
 
 jobs:
   # Fast gate: broken YAML → fail early, skip OpenAI call.
