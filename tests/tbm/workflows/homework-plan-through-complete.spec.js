@@ -193,6 +193,55 @@ test.describe('Homework Module — Plan Your Attack → Complete', function() {
 
 test.describe('Homework Module — API Wiring', function() {
 
+  test('submitHomeworkSafe fires as soon as completion overlay appears', async function({ page }) {
+    await gasShim.shimGAS(page);
+
+    var submitCallMade = false;
+    await page.route('**\/api**', function(route) {
+      var url = route.request().url();
+      if (url.indexOf('fn=submitHomeworkSafe') !== -1) {
+        submitCallMade = true;
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ status: 'ok', autoApproved: false, ringsAwarded: 0 })
+        });
+      } else {
+        route.continue();
+      }
+    });
+
+    await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: helpers.GAS_TIMEOUT });
+
+    var readyBtn = page.locator('.es-ready-btn, button:has-text("Let\'s go"), button:has-text("Ready")');
+    if (await readyBtn.count() > 0) {
+      await readyBtn.first().click();
+      await page.waitForTimeout(500);
+    }
+
+    await page.evaluate(function() {
+      var i;
+      moduleStarted = true;
+      for (i = 0; i < allQs.length; i++) {
+        var q = allQs[i];
+        var key = 'q' + q.id;
+        answers[key] = { submitted: true, correct: true };
+        if (isMCQuestion(q)) {
+          answers[key].selected = typeof q.answer === 'number' ? q.answer : 0;
+        } else {
+          answers[key].text = 'Synthetic answer for submit timing test.';
+        }
+      }
+      renderScience();
+      renderMath();
+      updateProgress();
+    });
+
+    await expect(page.locator('#completion-overlay')).toBeVisible();
+    await page.waitForTimeout(500);
+    expect(submitCallMade).toBe(true);
+  });
+
   test('submitHomeworkSafe is called when module completes', async function({ page }) {
     await gasShim.shimGAS(page);
 
@@ -253,6 +302,39 @@ test.describe('Homework Module — API Wiring', function() {
     await page.waitForTimeout(1000);
 
     expect(contentCallMade).toBe(true);
+  });
+
+});
+
+test.describe('Homework Module — Draft Persistence', function() {
+
+  test('typed open-ended answer is restored after reload', async function({ page }) {
+    await gasShim.shimGAS(page);
+
+    await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: helpers.GAS_TIMEOUT });
+
+    var readyBtn = page.locator('.es-ready-btn, button:has-text("Let\'s go"), button:has-text("Ready")');
+    if (await readyBtn.count() > 0) {
+      await readyBtn.first().click();
+      await page.waitForTimeout(500);
+    }
+
+    await page.locator('#tab-science').click();
+    var draftText = 'Friction slowed the book because the table rubbed against it.';
+    var textarea = page.locator('textarea[id^="textarea-"]').first();
+    await textarea.fill(draftText);
+    await page.evaluate(function() { saveHomeworkDraft_(); });
+
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: helpers.GAS_TIMEOUT });
+
+    readyBtn = page.locator('.es-ready-btn, button:has-text("Let\'s go"), button:has-text("Ready")');
+    if (await readyBtn.count() > 0) {
+      await readyBtn.first().click();
+      await page.waitForTimeout(500);
+    }
+
+    await page.locator('#tab-science').click();
+    await expect(page.locator('textarea[id^="textarea-"]').first()).toHaveValue(draftText);
   });
 
 });

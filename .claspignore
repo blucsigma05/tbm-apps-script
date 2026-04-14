@@ -20,6 +20,9 @@ package.json
 package-lock.json
 tests/**
 playwright-report/**
+test-results/**
+test-results-codex/**
+test-results-codex-target/**
 ops/**
 specs/**
 .gitignore

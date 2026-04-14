@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v12">
+<meta name="tbm-version" content="v13">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -521,9 +521,11 @@ main {
     <div id="comp-subtitle" style="font-size:14px;color:#94A3B8;line-height:1.7;margin-bottom:16px;"></div>
     <div id="comp-rings" style="font-size:32px;font-weight:900;color:#F59E0B;font-family:'Orbitron',sans-serif;margin-bottom:8px;"></div>
     <div style="font-size:11px;color:#64748B;margin-bottom:16px;">Open-ended answers pending parent review</div>
-    <div id="comp-feedback" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:14px;font-size:13px;color:#94A3B8;line-height:1.6;margin-bottom:16px;text-align:left;"></div>
+    <div id="comp-feedback" style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.3);border-radius:10px;padding:14px;font-size:13px;color:#94A3B8;line-height:1.6;margin-bottom:12px;text-align:left;"></div>
+    <div id="comp-save-status" style="display:none;margin-bottom:12px;padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.6;text-align:left;"></div>
+    <button id="comp-retry-btn" style="display:none;margin:0 auto 12px;padding:10px 24px;background:#1E293B;border:1px solid #475569;border-radius:10px;color:#E2E8F0;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;cursor:pointer;" onclick="retryHomeworkSubmit_()">RETRY SAVE</button>
     <button style="background:#3B82F6;border:none;border-radius:10px;padding:12px 32px;color:#fff;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:1px;" onclick="closeCompletion()">VIEW RESULTS</button>
-    <button style="display:block;margin:12px auto 0;padding:10px 24px;background:transparent;border:1px solid #334155;border-radius:10px;color:#94A3B8;font-family:Nunito,sans-serif;font-size:13px;font-weight:600;cursor:pointer;" onclick="window.location.href='/daily-missions'">Back to Missions</button>
+    <button style="display:block;margin:12px auto 0;padding:10px 24px;background:transparent;border:1px solid #334155;border-radius:10px;color:#94A3B8;font-family:Nunito,sans-serif;font-size:13px;font-weight:600;cursor:pointer;" onclick="goBackToMissions_()">Back to Missions</button>
   </div>
 </div>
 
@@ -1230,6 +1232,9 @@ var sessionStartTime = null;
 var timerInterval = null;
 var moduleStarted = false;
 var completionLogged = false;
+var completionSubmitState = "idle";
+var completionSubmitError = "";
+var _homeworkDraftTimer = null;
 // #170/#171 state
 var missedQuestions = [];
 var _dayOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
@@ -1324,6 +1329,262 @@ function updateProgress() {
   }
 }
 
+function getHomeworkDraftKey_() {
+  return 'tbm:' + MODULE_NAME + ':' + SANDBOX_CHILD + ':draft';
+}
+
+function getHomeworkDraftSignature_() {
+  var dateKey = MODULE && MODULE.date ? String(MODULE.date) : '';
+  return [dateKey, scienceQs.length, mathQs.length].join('|');
+}
+
+function canUseHomeworkDraftStorage_() {
+  try { return typeof localStorage !== 'undefined'; }
+  catch (e) { return false; }
+}
+
+function saveHomeworkDraft_() {
+  if (!canUseHomeworkDraftStorage_()) return;
+  if (completionSubmitState === 'submitted' && getTotalAnswered() === allQs.length) {
+    clearHomeworkDraft_();
+    return;
+  }
+  var hasState = Object.keys(answers).length > 0 || moduleStarted || missedQuestions.length > 0;
+  if (!hasState) {
+    clearHomeworkDraft_();
+    return;
+  }
+  try {
+    localStorage.setItem(getHomeworkDraftKey_(), JSON.stringify({
+      version: 1,
+      moduleSignature: getHomeworkDraftSignature_(),
+      savedAt: new Date().toISOString(),
+      answers: answers,
+      missedQuestions: missedQuestions,
+      currentSection: currentSection,
+      moduleStarted: moduleStarted,
+      sessionStartTime: sessionStartTime,
+      completionSubmitState: completionSubmitState,
+      completionSubmitError: completionSubmitError
+    }));
+  } catch (e) {
+    console.warn('Homework draft save skipped:', e && e.message ? e.message : e);
+  }
+}
+
+function restoreHomeworkDraft_() {
+  if (!canUseHomeworkDraftStorage_()) return;
+  try {
+    var raw = localStorage.getItem(getHomeworkDraftKey_());
+    if (!raw) return;
+    var draft = JSON.parse(raw);
+    if (!draft || draft.moduleSignature !== getHomeworkDraftSignature_()) return;
+    answers = draft.answers || {};
+    missedQuestions = draft.missedQuestions || [];
+    currentSection = draft.currentSection || 'overview';
+    moduleStarted = !!draft.moduleStarted || Object.keys(answers).length > 0;
+    if (moduleStarted) {
+      sessionStartTime = typeof draft.sessionStartTime === 'number' ? draft.sessionStartTime : Date.now();
+      var overlay = document.getElementById('plan-overlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+    completionSubmitState = draft.completionSubmitState === 'submitted' ? 'submitted' : 'idle';
+    completionSubmitError = completionSubmitState === 'submitted' ? '' : String(draft.completionSubmitError || '');
+    console.log('Homework draft restored from ' + String(draft.savedAt || 'unknown time'));
+  } catch (e) {
+    console.warn('Homework draft restore skipped:', e && e.message ? e.message : e);
+  }
+}
+
+function clearHomeworkDraft_() {
+  if (!canUseHomeworkDraftStorage_()) return;
+  try { localStorage.removeItem(getHomeworkDraftKey_()); }
+  catch (e) {}
+}
+
+function initHomeworkDraftAutoSave_() {
+  if (_homeworkDraftTimer) return;
+  _homeworkDraftTimer = setInterval(saveHomeworkDraft_, 15000);
+  window.addEventListener('beforeunload', saveHomeworkDraft_);
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'hidden') saveHomeworkDraft_();
+  });
+}
+
+function buildHomeworkCompletionPayload_() {
+  var totalMCCorrect = getTotalMCCorrect();
+  var totalMC = getTotalMC();
+  var ringsEarned = totalMC > 0 ? Math.round(8 * (totalMCCorrect / totalMC)) : 0;
+  var openEndedBySubject = { science: [], math: [] };
+  var i, q, key, a;
+  for (i = 0; i < allQs.length; i++) {
+    q = allQs[i];
+    if (!isMCQuestion(q)) {
+      key = "q" + q.id;
+      a = answers[key];
+      if (a && a.text && a.text.replace(/^\s+|\s+$/g, "").length > 0) {
+        var subj = q.id <= 6 ? "science" : "math";
+        openEndedBySubject[subj].push({
+          id: q.id,
+          prompt: q.question || "",
+          response: a.text
+        });
+      }
+    }
+  }
+
+  var allOpenEnded = openEndedBySubject.science.concat(openEndedBySubject.math);
+  var responseText = "";
+  for (i = 0; i < allOpenEnded.length; i++) {
+    if (i > 0) responseText += "\n---\n";
+    responseText += "Q: " + allOpenEnded[i].prompt + "\nA: " + allOpenEnded[i].response;
+  }
+
+  return {
+    totalMCCorrect: totalMCCorrect,
+    totalMC: totalMC,
+    ringsEarned: ringsEarned,
+    responseText: responseText,
+    openEndedCount: allOpenEnded.length,
+    moduleTitle: 'Homework: ' + (MODULE.science ? MODULE.science.title : 'Module'),
+    request: {
+      child: SANDBOX_CHILD,
+      module: 'homework',
+      subject: MODULE.science ? 'Science & Math' : 'Math',
+      score: totalMCCorrect,
+      responseText: responseText,
+      prompt: allOpenEnded.length > 0 ? allOpenEnded.length + ' open-ended question(s)' : '',
+      rings: ringsEarned
+    }
+  };
+}
+
+function getCompletionStatusMarkup_() {
+  if (completionSubmitState === 'submitted') {
+    return {
+      message: 'Saved to the parent review queue.',
+      style: 'background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);color:#86EFAC;',
+      showRetry: false
+    };
+  }
+  if (completionSubmitState === 'submitting') {
+    return {
+      message: 'Saving homework now. Keep this tab open for a moment.',
+      style: 'background:rgba(59,130,246,0.10);border:1px solid rgba(59,130,246,0.30);color:#93C5FD;',
+      showRetry: false
+    };
+  }
+  if (completionSubmitState === 'failed') {
+    return {
+      message: 'Save did not finish' + (completionSubmitError ? ': ' + escapeHtml(completionSubmitError) : '.') + ' A draft is still stored on this device.',
+      style: 'background:rgba(249,115,22,0.10);border:1px solid rgba(249,115,22,0.30);color:#FDBA74;',
+      showRetry: true
+    };
+  }
+  if (_usingFallback) {
+    return {
+      message: 'Practice mode only. This session is not being sent to the homework queue.',
+      style: 'background:rgba(148,163,184,0.10);border:1px solid rgba(148,163,184,0.25);color:#CBD5E1;',
+      showRetry: false
+    };
+  }
+  return {
+    message: 'Preparing final save...',
+    style: 'background:rgba(148,163,184,0.10);border:1px solid rgba(148,163,184,0.25);color:#CBD5E1;',
+    showRetry: false
+  };
+}
+
+function updateCompletionSaveStatusUi_() {
+  var statusEl = document.getElementById('comp-save-status');
+  var retryBtn = document.getElementById('comp-retry-btn');
+  var status = getCompletionStatusMarkup_();
+  if (statusEl) {
+    statusEl.style.cssText = 'display:block;margin-bottom:12px;padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.6;text-align:left;' + status.style;
+    statusEl.innerHTML = status.message;
+  }
+  if (retryBtn) retryBtn.style.display = status.showRetry ? 'block' : 'none';
+  if (currentSection === 'results') renderResults();
+}
+
+function submitHomeworkCompletion_() {
+  if (!moduleStarted || getTotalAnswered() !== allQs.length) return;
+  if (completionSubmitState === 'submitted' || completionSubmitState === 'submitting') return;
+  if (TBM_TEST_MODE) {
+    completionSubmitState = 'submitted';
+    completionSubmitError = '';
+    updateCompletionSaveStatusUi_();
+    clearHomeworkDraft_();
+    return;
+  }
+  if (_usingFallback) {
+    completionSubmitState = 'idle';
+    completionSubmitError = '';
+    updateCompletionSaveStatusUi_();
+    saveHomeworkDraft_();
+    return;
+  }
+
+  var payload = buildHomeworkCompletionPayload_();
+  completionSubmitState = 'submitting';
+  completionSubmitError = '';
+  updateCompletionSaveStatusUi_();
+  saveHomeworkDraft_();
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (!result || result.status !== 'ok') {
+        completionSubmitState = 'failed';
+        completionSubmitError = result && result.status ? 'server returned ' + result.status : 'server returned an empty response';
+        updateCompletionSaveStatusUi_();
+        saveHomeworkDraft_();
+        return;
+      }
+
+      completionSubmitState = 'submitted';
+      completionSubmitError = '';
+      completionLogged = true;
+      clearHomeworkDraft_();
+      updateCompletionSaveStatusUi_();
+      console.log('Submitted: ' + result.status);
+
+      google.script.run
+        .withSuccessHandler(function() { console.log('Homework completion logged'); })
+        .withFailureHandler(function(err) { console.error('Log failed:', err && err.message ? err.message : err); })
+        .logHomeworkCompletionSafe({
+          child: SANDBOX_CHILD,
+          title: payload.moduleTitle,
+          subject: 'Math/Science',
+          score: payload.totalMCCorrect,
+          total: payload.totalMC
+        });
+
+      if (payload.openEndedCount > 0) {
+        console.log('Rings deferred — ' + payload.openEndedCount + ' open-ended question(s) pending parent review');
+      }
+    })
+    .withFailureHandler(function(err) {
+      completionSubmitState = 'failed';
+      completionSubmitError = err && err.message ? err.message : 'unknown error';
+      updateCompletionSaveStatusUi_();
+      saveHomeworkDraft_();
+      console.error('Submit failed:', err);
+    })
+    .submitHomeworkSafe(payload.request);
+}
+
+function retryHomeworkSubmit_() {
+  if (completionSubmitState === 'submitting') return;
+  completionSubmitState = 'idle';
+  completionSubmitError = '';
+  submitHomeworkCompletion_();
+}
+
+function goBackToMissions_() {
+  saveHomeworkDraft_();
+  window.location.href = '/daily-missions';
+}
+
 // ─── STAR FIELD ───
 function buildStarField() {
   var container = document.getElementById("starfield");
@@ -1368,9 +1629,15 @@ function showCompletion() {
   var totalMC = getTotalMC();
   var openEnded = allQs.length - totalMC;
   var pct = totalMC > 0 ? Math.round((mcCorrect / totalMC) * 100) : 0;
+  var existingEs = document.getElementById('es-completion-block');
+  if (existingEs && existingEs.parentNode) existingEs.parentNode.removeChild(existingEs);
+  var existingJournal = document.getElementById('es-error-journal-block');
+  if (existingJournal && existingJournal.parentNode) existingJournal.parentNode.removeChild(existingJournal);
+  var existingReflection = document.getElementById('es-reflection-block');
+  if (existingReflection && existingReflection.parentNode) existingReflection.parentNode.removeChild(existingReflection);
 
   var subtitle = document.getElementById("comp-subtitle");
-  subtitle.textContent = "Auto-graded: " + mcCorrect + "/" + totalMC + " multiple choice correct (" + pct + "%). " + openEnded + " open-ended answers submitted for parent review.";
+  subtitle.textContent = "Auto-graded: " + mcCorrect + "/" + totalMC + " multiple choice correct (" + pct + "%). " + openEnded + " open-ended answers ready for parent review.";
 
   var ringsEl = document.getElementById("comp-rings");
   ringsEl.innerHTML = "&#x2B55; Up to 16 RINGS";
@@ -1444,11 +1711,15 @@ function showCompletion() {
       ExecSkills.showFridayReflection('es-reflection-block');
     }, 500);
   }
+
+  submitHomeworkCompletion_();
+  updateCompletionSaveStatusUi_();
 }
 
 function closeCompletion() {
   var overlay = document.getElementById("completion-overlay");
   overlay.style.display = "none";
+  saveHomeworkDraft_();
   switchTab("results");
 }
 
@@ -1511,6 +1782,7 @@ function switchTab(tab) {
   if (tab === "science") renderScience();
   if (tab === "math") renderMath();
   if (tab === "results") renderResults();
+  saveHomeworkDraft_();
 }
 
 // ─── QUESTION INTERACTION ───
@@ -1519,6 +1791,7 @@ function selectOption(qId, optIdx) {
   if (answers[key] && answers[key].submitted) return;
   if (!answers[key]) answers[key] = {};
   answers[key].selected = optIdx;
+  saveHomeworkDraft_();
 
   // Re-render the question options
   var subject = qId <= 6 ? "science" : "math";
@@ -1533,6 +1806,7 @@ function updateTextAnswer(qId) {
   if (!textarea) return;
   if (!answers[key]) answers[key] = {};
   answers[key].text = textarea.value;
+  saveHomeworkDraft_();
 }
 
 function submitAnswer(qId) {
@@ -1590,6 +1864,7 @@ function submitAnswer(qId) {
   checkBrainBreak();
 
   updateProgress();
+  saveHomeworkDraft_();
 
   // Re-render
   var subject = qId <= 6 ? "science" : "math";
@@ -1696,6 +1971,20 @@ function buildQuestionHtml(q, index, subjectColor) {
   return html;
 }
 
+function syncDraftInputs_(sectionId) {
+  var section = document.getElementById(sectionId);
+  if (!section) return;
+  var textareas = section.querySelectorAll('textarea[id^="textarea-"]');
+  for (var i = 0; i < textareas.length; i++) {
+    var ta = textareas[i];
+    var qId = String(ta.id || '').replace('textarea-', '');
+    var answer = answers['q' + qId];
+    if (answer && typeof answer.text === 'string' && ta.value !== answer.text) {
+      ta.value = answer.text;
+    }
+  }
+}
+
 // ─── RENDER SECTIONS ───
 function renderOverview() {
   var html = '';
@@ -1762,6 +2051,7 @@ function renderScience() {
   }
 
   document.getElementById("section-science").innerHTML = html;
+  syncDraftInputs_('section-science');
 }
 
 function renderMath() {
@@ -1779,6 +2069,7 @@ function renderMath() {
   }
 
   document.getElementById("section-math").innerHTML = html;
+  syncDraftInputs_('section-math');
 }
 
 function renderResults() {
@@ -1797,6 +2088,8 @@ function renderResults() {
     html += '<div style="font-size:13px;color:' + C.textMuted + ';line-height:1.6;">';
     html += 'Auto-graded: ' + totalMCCorrect + '/' + totalMC + ' multiple choice correct.<br>Open-ended answers submitted for parent review.';
     html += '</div></div>';
+    var statusMarkup = getCompletionStatusMarkup_();
+    html += '<div style="' + statusMarkup.style + 'border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;line-height:1.6;">' + statusMarkup.message + '</div>';
 
     // Breakdown
     html += '<div style="background:' + C.card + ';border:1px solid ' + C.border + ';border-radius:12px;padding:16px;">';
@@ -1843,83 +2136,6 @@ function renderResults() {
     html += '<div style="margin-top:12px;padding:10px 14px;background:' + C.orange + '10;border-radius:8px;font-size:13px;color:' + C.textMuted + ';line-height:1.6;">';
     html += '\u23F3 <strong style="color:' + C.orange + ';">Pending parent review</strong> for ' + openEndedCount + ' open-ended questions. Rings will be awarded after review.';
     html += '</div></div>';
-
-    // Ring award + completion log (once only)
-    if (!completionLogged) {
-      completionLogged = true;
-      var ringsEarned = totalMC > 0 ? Math.round(8 * (totalMCCorrect / totalMC)) : 0;
-
-      // Collect open-ended responses grouped by subject
-      var openEndedBySubject = { science: [], math: [] };
-      var i, q, key, a;
-      for (i = 0; i < allQs.length; i++) {
-        q = allQs[i];
-        if (!isMCQuestion(q)) {
-          key = "q" + q.id;
-          a = answers[key];
-          if (a && a.text && a.text.replace(/^\s+|\s+$/g, "").length > 0) {
-            var subj = (q.id <= 6) ? "science" : "math";
-            openEndedBySubject[subj].push({
-              id: q.id,
-              prompt: q.question || "",
-              response: a.text
-            });
-          }
-        }
-      }
-
-      // Build combined responseText for server (all open-ended answers)
-      var allOpenEnded = openEndedBySubject.science.concat(openEndedBySubject.math);
-      var responseText = "";
-      for (i = 0; i < allOpenEnded.length; i++) {
-        if (i > 0) responseText += "\n---\n";
-        responseText += "Q: " + allOpenEnded[i].prompt + "\nA: " + allOpenEnded[i].response;
-      }
-
-      if (TBM_TEST_MODE) {
-        console.log('[TEST MODE] awardRingsSafe skipped, rings=' + ringsEarned);
-        console.log('[TEST MODE] submitHomeworkSafe skipped, responseText length=' + responseText.length);
-        console.log('[TEST MODE] logHomeworkCompletionSafe skipped');
-      } else if (_usingFallback) {
-        console.log('Practice mode — rings not awarded');
-      } else {
-        // Submit with collected open-ended responses
-        google.script.run
-          .withSuccessHandler(function(result) {
-            console.log('Submitted: ' + (result && result.status ? result.status : 'unknown'));
-          })
-          .withFailureHandler(function(err) { console.error('Submit failed:', err); })
-          .submitHomeworkSafe({
-            child: SANDBOX_CHILD,
-            module: 'homework',
-            subject: MODULE.science ? 'Science & Math' : 'Math',
-            score: totalMCCorrect,
-            responseText: responseText,
-            prompt: allOpenEnded.length > 0 ? allOpenEnded.length + ' open-ended question(s)' : '',
-            rings: ringsEarned
-          });
-
-        // Ring awards handled server-side by submitHomework_() auto-award path.
-        // When auto-graded (no open-ended): server awards rings immediately.
-        // When pending_review (has open-ended): server defers to approveHomework_().
-        // Client-side awardRingsSafe() removed to prevent double-award (#160).
-        if (allOpenEnded.length > 0) {
-          console.log('Rings deferred — ' + allOpenEnded.length + ' open-ended question(s) pending parent review');
-        }
-
-        var moduleTitle = 'Homework: ' + (MODULE.science ? MODULE.science.title : 'Module');
-        google.script.run
-          .withSuccessHandler(function() { console.log('Homework completion logged'); })
-          .withFailureHandler(function(err) { console.error('Log failed:', err.message); })
-          .logHomeworkCompletionSafe({
-            child: SANDBOX_CHILD,
-            title: moduleTitle,
-            subject: 'Math/Science',
-            score: totalMCCorrect,
-            total: totalMC
-          });
-      }
-    }
 
   } else {
     // Not done yet
@@ -2048,13 +2264,16 @@ function init() {
   mathQs = MODULE.math ? MODULE.math.questions || [] : [];
   allQs = scienceQs.concat(mathQs);
   validateQuestionTypes(allQs);
+  restoreHomeworkDraft_();
   buildStarField();
   renderOverview();
   renderScience();
   renderMath();
   renderResults();
+  switchTab(currentSection || "overview");
   updateProgress();
   loadAudioForPhase('mc');
+  initHomeworkDraftAutoSave_();
 
   // #171 — Plan Your Attack via ExecSkills
   var planQs = [];
@@ -2070,8 +2289,12 @@ function init() {
       document.getElementById('plan-overlay').style.display = 'none';
       moduleStarted = true;
       sessionStartTime = Date.now(); // ExecSkills owns the floating timer; set for elapsed-time display at completion
+      saveHomeworkDraft_();
     }
   });
+  if (moduleStarted) {
+    document.getElementById('plan-overlay').style.display = 'none';
+  }
 }
 
 loadCurriculumContent();
