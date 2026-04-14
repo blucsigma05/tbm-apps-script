@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════
 // tbmSmokeTest.gs v15 — Pre-Deploy Structural + Behavioral Validation
-// WRITES TO: (none — read-only checks)
+// WRITES TO: KH_Education (smoke row — written and immediately deleted)
 // READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
 // Version history tracked in Notion deploy page. Do not add version comments here.
@@ -850,56 +850,44 @@ function checkEducationBehavioral_() {
     result.checks.curriculum_buggsy = 'FAIL — exception: ' + (e.message || String(e));
   }
 
-  // ── Check 2: submitHomework_ round-trip ──
-  // Write a smoke-test row, verify it persists, then delete it.
+  // ── Check 2: KH_Education write round-trip ──
+  // Write directly to the sheet (NOT through submitHomework_ which fires
+  // Pushover notifications, awards rings, and triggers Gemini review).
+  // This proves the sheet is writable and readable — no side effects.
   var smokeModule = '_smoke_test_' + Date.now();
   try {
-    if (typeof submitHomework_ !== 'function') {
-      failures.push('submitHomework_ function not found');
+    if (typeof ensureKHEducationTab_ !== 'function') {
+      failures.push('ensureKHEducationTab_ function not found');
       result.checks.submit_roundtrip = 'FAIL — function missing';
     } else {
-      var submitResult = submitHomework_({
-        child: 'buggsy',
-        module: smokeModule,
-        subject: 'SmokeTest',
-        score: 1,
-        responseText: '',
-        prompt: '',
-        rings: 0
-      });
-      var parsed = typeof submitResult === 'string' ? JSON.parse(submitResult) : submitResult;
+      var eduSheet = ensureKHEducationTab_();
+      eduSheet.appendRow([
+        new Date(), '_smoke_', smokeModule, 'SmokeTest', 0, true, '', 'smoke_test', '', 0, '', ''
+      ]);
+      SpreadsheetApp.flush();
 
-      if (!parsed || parsed.status !== 'ok') {
-        failures.push('submitHomework_ returned non-ok status: ' + JSON.stringify(parsed));
-        result.checks.submit_roundtrip = 'FAIL — status: ' + (parsed ? parsed.status : 'null');
+      // Verify the row landed
+      var lastRow = eduSheet.getLastRow();
+      var found = false;
+      var scanStart = Math.max(2, lastRow - 4);
+      var range = eduSheet.getRange(scanStart, 1, lastRow - scanStart + 1, 3).getValues();
+      for (var r = range.length - 1; r >= 0; r--) {
+        if (String(range[r][2]) === smokeModule) {
+          found = true;
+          eduSheet.deleteRow(scanStart + r);
+          break;
+        }
+      }
+
+      if (found) {
+        result.checks.submit_roundtrip = 'OK — row persisted and cleaned up (direct write, no side effects)';
       } else {
-        // Verify the row landed in KH_Education
-        Utilities.sleep(500); // brief settle time for sheet write
-        var eduSheet = ensureKHEducationTab_();
-        var lastRow = eduSheet.getLastRow();
-        var found = false;
-        // Scan last 5 rows (the smoke row should be at the bottom)
-        var scanStart = Math.max(2, lastRow - 4);
-        var range = eduSheet.getRange(scanStart, 1, lastRow - scanStart + 1, 3).getValues();
-        for (var r = range.length - 1; r >= 0; r--) {
-          if (String(range[r][2]) === smokeModule) {
-            found = true;
-            // Clean up: delete the smoke row
-            eduSheet.deleteRow(scanStart + r);
-            break;
-          }
-        }
-
-        if (found) {
-          result.checks.submit_roundtrip = 'OK — row persisted and cleaned up';
-        } else {
-          failures.push('submitHomework_ returned ok but no row found in KH_Education with module=' + smokeModule);
-          result.checks.submit_roundtrip = 'FAIL — row not found after successful submit';
-        }
+        failures.push('Sheet appendRow succeeded but row not found in KH_Education with module=' + smokeModule);
+        result.checks.submit_roundtrip = 'FAIL — row not found after write';
       }
     }
   } catch(e) {
-    failures.push('Submit round-trip threw: ' + (e.message || String(e)));
+    failures.push('Write round-trip threw: ' + (e.message || String(e)));
     result.checks.submit_roundtrip = 'FAIL — exception: ' + (e.message || String(e));
     // Best-effort cleanup
     try {
