@@ -104,23 +104,24 @@ jobs:
               overall = d.get('overall', 'MISSING')
               smoke_overall = d.get('smoke', {}).get('overall', 'MISSING')
               versions = d.get('versions', {})
-              code_ver = versions.get('codeGs', '?')
+              code_ver = str(versions.get('codeGs', '?'))
+              # Category breakdown — compute before printing so any crash goes to except
+              cats = d.get('smoke', {}).get('categories', {})
+              cat_lines = []
+              for k in sorted(cats.keys()):
+                  cat = cats[k]
+                  st = str(cat.get('status', '?'))
+                  det = str(cat.get('details', ''))[:120]
+                  cat_lines.append('| ' + k + ' | ' + st + ' | ' + det + ' |')
+              # Print all fields only after all computation succeeds
               print('overall=' + overall)
               print('smoke_overall=' + smoke_overall)
               print('code_version=' + code_ver)
-              # Category breakdown for step summary
-              cats = d.get('smoke', {}).get('categories', {})
-              lines = []
-              for k in sorted(cats.keys()):
-                  cat = cats[k]
-                  st = cat.get('status', '?')
-                  det = cat.get('details', '')[:120]
-                  lines.append('| ' + k + ' | ' + st + ' | ' + det + ' |')
-              if lines:
+              if cat_lines:
                   print('CAT_TABLE_START')
                   print('| Category | Status | Details |')
                   print('|----------|--------|---------|')
-                  for l in lines:
+                  for l in cat_lines:
                       print(l)
                   print('CAT_TABLE_END')
           except Exception as e:
@@ -130,10 +131,10 @@ jobs:
               print('parse_error=' + str(e), file=sys.stderr)
           " "$RESPONSE" 2>parse_err.txt)
 
-          # Extract fields from structured parse
-          OVERALL=$(echo "$PARSE_RESULT" | grep '^overall=' | cut -d= -f2)
-          SMOKE_OVERALL=$(echo "$PARSE_RESULT" | grep '^smoke_overall=' | cut -d= -f2)
-          CODE_VERSION=$(echo "$PARSE_RESULT" | grep '^code_version=' | cut -d= -f2)
+          # Extract fields — -m1 guards against duplicate lines if output is ever mixed
+          OVERALL=$(echo "$PARSE_RESULT" | grep -m1 '^overall=' | cut -d= -f2)
+          SMOKE_OVERALL=$(echo "$PARSE_RESULT" | grep -m1 '^smoke_overall=' | cut -d= -f2)
+          CODE_VERSION=$(echo "$PARSE_RESULT" | grep -m1 '^code_version=' | cut -d= -f2)
 
           echo "Overall: $OVERALL | Smoke: $SMOKE_OVERALL | Version: $CODE_VERSION"
           echo "overall=$OVERALL" >> "$GITHUB_OUTPUT"
