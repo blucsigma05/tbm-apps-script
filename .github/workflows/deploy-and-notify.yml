@@ -22,6 +22,12 @@ on:
 permissions:
   contents: write   # required for gh release create
 
+# Serialize all production-mutation lanes. Same group applies to deploy-worker.yml (F03/F04).
+# cancel-in-progress: false ensures a queued deploy is never silently dropped.
+concurrency:
+  group: tbm-production-release
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: GAS Deploy + Smoke + Pushover
