@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmRegressionSuite.gs v5 — Phase A3: Post-Deploy Behavioral Assertions
+// tbmRegressionSuite.gs v6 — Phase A3: Post-Deploy Behavioral Assertions
 // WRITES TO: (none — read-only assertions)
 // READS FROM: All sheets (for regression assertions)
 // ════════════════════════════════════════════════════════════════════
@@ -20,7 +20,7 @@
 // USAGE: Run tbmRegressionSuite() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getRegressionSuiteVersion() { return 5; }
+function getRegressionSuiteVersion() { return 6; }
 
 /**
  * Main entry point. Run after every deploy.
@@ -43,6 +43,9 @@ function tbmRegressionSuite() {
   runBugAssertions_(results);
   runEnvironmentAssertions_(results);
   runPerformanceAssertions_(results);
+  // v6: Finance audit — golden-month identity checks + tolerance checks
+  runFinanceIdentityAssertions_(results);
+  runFinanceToleranceAssertions_(results);
 
   // ── Compute totals ──
   results.total = results.assertions.length;
@@ -800,6 +803,223 @@ function runPerformanceAssertions_(results) {
 
 
 // ════════════════════════════════════════════════════════════════════
+// FINANCE IDENTITY ASSERTIONS — v6
+// Calls getData() for current month, verifies derived metrics are
+// mathematically consistent. These are NOT tolerance checks — they
+// verify exact algebraic relationships that must always hold.
+// ════════════════════════════════════════════════════════════════════
+
+function runFinanceIdentityAssertions_(results) {
+  var now = new Date();
+  var y = now.getFullYear();
+  var m = now.getMonth();
+  var startStr = y + '-' + (m < 9 ? '0' : '') + (m + 1) + '-01';
+  var lastDay = new Date(y, m + 1, 0).getDate();
+  var endStr = y + '-' + (m < 9 ? '0' : '') + (m + 1) + '-' + (lastDay < 10 ? '0' : '') + lastDay;
+
+  var data = null;
+  try {
+    data = getData(startStr, endStr, true);
+  } catch (e) {
+    results.assertions.push({
+      id: 'FIN-001', status: 'FAIL', category: 'finance-identity',
+      description: 'getData() must not throw for current month',
+      details: 'Error: ' + e.message
+    });
+    return;
+  }
+
+  // FIN-001: Net worth = assets - liabilities
+  var nwExpected = roundTo(data.totalAssets - data.totalLiabilities, 2);
+  var nwActual = roundTo(data.netWorth, 2);
+  results.assertions.push({
+    id: 'FIN-001', category: 'finance-identity',
+    description: 'netWorth === totalAssets - totalLiabilities',
+    status: Math.abs(nwActual - nwExpected) < 0.02 ? 'PASS' : 'FAIL',
+    details: 'expected=' + nwExpected + ' actual=' + nwActual
+  });
+
+  // FIN-002: operationalCashFlow = earnedIncome - operatingExpenses
+  var ocfExpected = roundTo(data.earnedIncome - data.operatingExpenses, 2);
+  var ocfActual = roundTo(data.operationalCashFlow, 2);
+  results.assertions.push({
+    id: 'FIN-002', category: 'finance-identity',
+    description: 'operationalCashFlow === earnedIncome - operatingExpenses',
+    status: Math.abs(ocfActual - ocfExpected) < 0.02 ? 'PASS' : 'FAIL',
+    details: 'expected=' + ocfExpected + ' actual=' + ocfActual
+  });
+
+  // FIN-003: netCashFlow = operationalCashFlow + bridgeCash
+  var ncfExpected = roundTo(data.operationalCashFlow + data.bridgeCash, 2);
+  var ncfActual = roundTo(data.netCashFlow, 2);
+  results.assertions.push({
+    id: 'FIN-003', category: 'finance-identity',
+    description: 'netCashFlow === operationalCashFlow + bridgeCash (LOC)',
+    status: Math.abs(ncfActual - ncfExpected) < 0.02 ? 'PASS' : 'FAIL',
+    details: 'expected=' + ncfExpected + ' actual=' + ncfActual
+  });
+
+  // FIN-004: totalCashFlow = (earnedIncome + bridgeCash) - operatingExpenses - debtPaymentsMTD
+  var tcfExpected = roundTo((data.earnedIncome + data.bridgeCash) - data.operatingExpenses - data.debtPaymentsMTD, 2);
+  var tcfActual = roundTo(data.totalCashFlow, 2);
+  results.assertions.push({
+    id: 'FIN-004', category: 'finance-identity',
+    description: 'totalCashFlow === trueCashIn - opex - debtPayments',
+    status: Math.abs(tcfActual - tcfExpected) < 0.02 ? 'PASS' : 'FAIL',
+    details: 'expected=' + tcfExpected + ' actual=' + tcfActual
+  });
+
+  // FIN-005: liabilityAccounts sum === totalLiabilities
+  var liabSum = 0;
+  if (data.liabilityAccounts) {
+    for (var la = 0; la < data.liabilityAccounts.length; la++) {
+      liabSum += data.liabilityAccounts[la].balance || 0;
+    }
+  }
+  liabSum = roundTo(liabSum, 2);
+  var totalLiab = roundTo(data.totalLiabilities, 2);
+  results.assertions.push({
+    id: 'FIN-005', category: 'finance-identity',
+    description: 'sum(liabilityAccounts) === totalLiabilities',
+    status: Math.abs(liabSum - totalLiab) < 0.02 ? 'PASS' : 'FAIL',
+    details: 'sum=' + liabSum + ' total=' + totalLiab
+  });
+
+  // FIN-006: totalMoneyIn >= earnedIncome (can include loanProceeds + balanceTransfers)
+  results.assertions.push({
+    id: 'FIN-006', category: 'finance-identity',
+    description: 'totalMoneyIn >= earnedIncome',
+    status: data.totalMoneyIn >= data.earnedIncome - 0.01 ? 'PASS' : 'FAIL',
+    details: 'totalMoneyIn=' + data.totalMoneyIn + ' earnedIncome=' + data.earnedIncome
+  });
+
+  // FIN-007: debtPaymentsMTD >= 0
+  results.assertions.push({
+    id: 'FIN-007', category: 'finance-identity',
+    description: 'debtPaymentsMTD >= 0 (cannot be negative)',
+    status: data.debtPaymentsMTD >= 0 ? 'PASS' : 'FAIL',
+    details: 'debtPaymentsMTD=' + data.debtPaymentsMTD
+  });
+
+  // FIN-008: incomeThrottle = earnedIncome - opex - debtPaymentsMTD
+  var itExpected = roundTo(data.earnedIncome - data.operatingExpenses - data.debtPaymentsMTD, 2);
+  var itActual = roundTo(data.incomeThrottle, 2);
+  results.assertions.push({
+    id: 'FIN-008', category: 'finance-identity',
+    description: 'incomeThrottle === earnedIncome - opex - debtPaymentsMTD',
+    status: Math.abs(itActual - itExpected) < 0.02 ? 'PASS' : 'FAIL',
+    details: 'expected=' + itExpected + ' actual=' + itActual
+  });
+}
+
+
+// ════════════════════════════════════════════════════════════════════
+// FINANCE TOLERANCE ASSERTIONS — v6
+// Verifies production data stays within sane bounds.
+// NOT algebraic identities — these are sanity guardrails.
+// Thresholds calibrated to Thompson household norms.
+// ════════════════════════════════════════════════════════════════════
+
+function runFinanceToleranceAssertions_(results) {
+  var now = new Date();
+  var y = now.getFullYear();
+  var m = now.getMonth();
+  var startStr = y + '-' + (m < 9 ? '0' : '') + (m + 1) + '-01';
+  var lastDay = new Date(y, m + 1, 0).getDate();
+  var endStr = y + '-' + (m < 9 ? '0' : '') + (m + 1) + '-' + (lastDay < 10 ? '0' : '') + lastDay;
+
+  var data = null;
+  try {
+    data = getData(startStr, endStr, true);
+  } catch (e) {
+    results.assertions.push({
+      id: 'TOL-001', status: 'FAIL', category: 'finance-tolerance',
+      description: 'getData() for tolerance checks',
+      details: 'Error: ' + e.message
+    });
+    return;
+  }
+
+  // TOL-001: earnedIncome in reasonable range (>$0, <$50K/month)
+  results.assertions.push({
+    id: 'TOL-001', category: 'finance-tolerance',
+    description: 'earnedIncome between $0 and $50,000',
+    status: (data.earnedIncome >= 0 && data.earnedIncome < 50000) ? 'PASS' : 'WARN',
+    details: 'earnedIncome=' + data.earnedIncome
+  });
+
+  // TOL-002: operatingExpenses in reasonable range
+  results.assertions.push({
+    id: 'TOL-002', category: 'finance-tolerance',
+    description: 'operatingExpenses between $0 and $30,000',
+    status: (data.operatingExpenses >= 0 && data.operatingExpenses < 30000) ? 'PASS' : 'WARN',
+    details: 'operatingExpenses=' + data.operatingExpenses
+  });
+
+  // TOL-003: debtCurrent in reasonable range (>$0 while paying off, <$500K)
+  results.assertions.push({
+    id: 'TOL-003', category: 'finance-tolerance',
+    description: 'debtCurrent between $0 and $500,000',
+    status: (data.debtCurrent >= 0 && data.debtCurrent < 500000) ? 'PASS' : 'WARN',
+    details: 'debtCurrent=' + data.debtCurrent
+  });
+
+  // TOL-004: no unmapped categories with spend > $500
+  var bigUnmapped = [];
+  if (data.unmappedCategories) {
+    for (var u = 0; u < data.unmappedCategories.length; u++) {
+      if (data.unmappedCategories[u].amount > 500) {
+        bigUnmapped.push(data.unmappedCategories[u].category + ' ($' + data.unmappedCategories[u].amount + ')');
+      }
+    }
+  }
+  results.assertions.push({
+    id: 'TOL-004', category: 'finance-tolerance',
+    description: 'No unmapped categories with spend > $500',
+    status: bigUnmapped.length === 0 ? 'PASS' : 'WARN',
+    details: bigUnmapped.length === 0 ? 'clean' : bigUnmapped.join(', ')
+  });
+
+  // TOL-005: getData vs getSimulatorData — operatingExpenses within 1%
+  var simData = null;
+  try {
+    simData = JSON.parse(getSimulatorDataSafe());
+  } catch (e) {
+    results.assertions.push({
+      id: 'TOL-005', status: 'WARN', category: 'finance-tolerance',
+      description: 'Cross-engine parity — opex',
+      details: 'getSimulatorData unavailable: ' + e.message
+    });
+    simData = null;
+  }
+  if (simData && data.operatingExpenses > 0) {
+    var simOpex = simData.operatingExpenses || 0;
+    var opexDrift = Math.abs(data.operatingExpenses - simOpex);
+    var opexPct = (opexDrift / data.operatingExpenses) * 100;
+    results.assertions.push({
+      id: 'TOL-005', category: 'finance-tolerance',
+      description: 'getData vs getSimulatorData opex within 1%',
+      status: opexPct < 1 ? 'PASS' : (opexPct < 5 ? 'WARN' : 'FAIL'),
+      details: 'getData=' + roundTo(data.operatingExpenses, 2) + ' sim=' + roundTo(simOpex, 2) +
+        ' drift=' + roundTo(opexPct, 1) + '%'
+    });
+  }
+
+  // TOL-006: getData vs getSimulatorData — debtPaymentsMTD within $5
+  if (simData) {
+    var simDebtPay = simData.debtPaymentsMTD || 0;
+    var debtPayDrift = Math.abs(data.debtPaymentsMTD - simDebtPay);
+    results.assertions.push({
+      id: 'TOL-006', category: 'finance-tolerance',
+      description: 'getData vs getSimulatorData debtPaymentsMTD within $5',
+      status: debtPayDrift < 5 ? 'PASS' : (debtPayDrift < 50 ? 'WARN' : 'FAIL'),
+      details: 'getData=' + data.debtPaymentsMTD + ' sim=' + simDebtPay + ' drift=$' + roundTo(debtPayDrift, 2)
+    });
+  }
+}
+
+
+// ════════════════════════════════════════════════════════════════════
 // HELPERS
 // ════════════════════════════════════════════════════════════════════
 
@@ -829,4 +1049,4 @@ function regressionEnvOnly() {
 }
 
 
-// END OF FILE — tbmRegressionSuite.gs v5
+// END OF FILE — tbmRegressionSuite.gs v6

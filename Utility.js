@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// Utility.js v7 — Run-once utility functions
+// Utility.js v8 — Run-once utility functions
 // ═══════════════════════════════════════════════════════════════
 // The isStaleDaily_ and isStaleWeekly_ fixes are already in
 // KidsHub.gs v6 Full Deploy. These utilities handle cleanup.
 // ═══════════════════════════════════════════════════════════════
 
-function getUtilityVersion() { return 7; }
+function getUtilityVersion() { return 8; }
 
 
 // ── FIX 3: Add Parent_PIN column to KH_Children ─────────────
@@ -269,4 +269,188 @@ function verifyKHFix() {
   Logger.log('═══ End ═══');
 }
 
-// END Utility.js v7
+// ═══════════════════════════════════════════════════════════════
+// F04 PHASE 1 DIAGNOSTICS — Run from Apps Script editor
+// Delete after Phase 1 data discovery is complete.
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * diagAccountTypes() — F04 Phase 1, Diagnostic 1
+ * Enumerates all Balance History Type + Class combos.
+ * Answers: what are the actual account types? Which are liquid?
+ * Run from editor → View → Logs.
+ */
+function diagAccountTypes() {
+  var ss = SpreadsheetApp.openById(SSID);
+  var bh = ss.getSheetByName(TAB_MAP['Balance History']);
+  if (!bh) { Logger.log('ERROR: Balance History not found'); return; }
+  var data = bh.getDataRange().getValues();
+
+  var combos = {};   // "Type|Class" → { count, accounts[], latestBalance }
+  var accounts = {}; // account name → { type, class, latestDate, latestBalance }
+
+  for (var i = 1; i < data.length; i++) {
+    var acct = String(data[i][3] || '').trim();
+    var bal = parseFloat(data[i][8]) || 0;
+    var dt = data[i][1];
+    var type = String(data[i][11] || '').trim();
+    var cls = String(data[i][12] || '').trim();
+    if (!acct) continue;
+    if (typeof dt === 'string') dt = new Date(dt);
+    if (!(dt instanceof Date) || isNaN(dt.getTime())) continue;
+
+    var key = type + ' | ' + cls;
+    if (!combos[key]) combos[key] = { count: 0, accounts: [] };
+    combos[key].count++;
+    if (combos[key].accounts.indexOf(acct) < 0 && combos[key].accounts.length < 5) {
+      combos[key].accounts.push(acct);
+    }
+
+    if (!accounts[acct] || dt >= accounts[acct].latestDate) {
+      accounts[acct] = { type: type, cls: cls, latestDate: dt, balance: bal };
+    }
+  }
+
+  Logger.log('═══ BALANCE HISTORY TYPE/CLASS COMBOS ═══');
+  for (var c in combos) {
+    Logger.log(c + '  (' + combos[c].count + ' rows)  e.g. ' + combos[c].accounts.join(', '));
+  }
+
+  Logger.log('');
+  Logger.log('═══ ACCOUNT CLASSIFICATION MAP ═══');
+  var liquid = [], investment = [], liability = [], other = [];
+  for (var a in accounts) {
+    var info = accounts[a];
+    var typeLower = info.type.toLowerCase();
+    var isLiquid = (typeLower.indexOf('checking') >= 0 || typeLower.indexOf('savings') >= 0 ||
+                    typeLower.indexOf('cash') >= 0);
+    var isInvestment = (typeLower.indexOf('brokerage') >= 0 || typeLower.indexOf('401') >= 0 ||
+                        typeLower.indexOf('ira') >= 0 || typeLower.indexOf('hsa') >= 0 ||
+                        typeLower.indexOf('investment') >= 0);
+    var tag = info.cls === 'Liability' ? 'LIABILITY' :
+              (isLiquid ? 'LIQUID' : (isInvestment ? 'INVESTMENT' : 'OTHER'));
+
+    var line = tag + ' | ' + a + ' | type="' + info.type + '" class="' + info.cls +
+               '" | $' + Math.round(info.balance);
+    Logger.log(line);
+
+    if (tag === 'LIQUID') liquid.push(a);
+    else if (tag === 'INVESTMENT') investment.push(a);
+    else if (tag === 'LIABILITY') liability.push(a);
+    else other.push(a);
+  }
+
+  Logger.log('');
+  Logger.log('SUMMARY: ' + liquid.length + ' liquid, ' + investment.length +
+    ' investment, ' + liability.length + ' liability, ' + other.length + ' other');
+  Logger.log('Total accounts: ' + Object.keys(accounts).length);
+}
+
+/**
+ * diagTransferPairing() — F04 Phase 1, Diagnostic 2
+ * Checks transfer pair matching rates for last 3 months.
+ * Answers: does Tiller produce reliable paired rows for transfers?
+ * Run from editor → View → Logs.
+ */
+function diagTransferPairing() {
+  var ss = SpreadsheetApp.openById(SSID);
+  var txSheet = ss.getSheetByName(TAB_MAP['Transactions']);
+  if (!txSheet) { Logger.log('ERROR: Transactions not found'); return; }
+  var data = txSheet.getDataRange().getValues();
+
+  var TRANSFER_CATS = [
+    'Transfer: Internal', 'Transfer: LOC Draw', 'Balance Transfers',
+    'CC Payment', 'LOC Payment', 'Loan Payment', 'Investment',
+    'Payroll Deduction', 'Duplicate - Exclude', 'Debt Offset'
+  ];
+
+  var now = new Date();
+  var threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+
+  // Collect all transfer-category transactions
+  var transfers = [];
+  for (var i = 1; i < data.length; i++) {
+    var dt = data[i][1];
+    var desc = String(data[i][2] || '').trim();
+    var cat = String(data[i][3] || '').trim();
+    var amt = parseFloat(data[i][4]) || 0;
+    var acct = String(data[i][5] || '').trim();
+    if (!dt || !cat) continue;
+    if (typeof dt === 'string') dt = new Date(dt);
+    if (!(dt instanceof Date) || isNaN(dt.getTime())) continue;
+    if (dt < threeMonthsAgo) continue;
+    if (TRANSFER_CATS.indexOf(cat) < 0) continue;
+
+    transfers.push({ date: dt, desc: desc, cat: cat, amt: amt, acct: acct, matched: false });
+  }
+
+  // Attempt pair matching: same abs(amount), opposite signs, within 3 days
+  var paired = 0;
+  var unpaired = 0;
+  for (var a = 0; a < transfers.length; a++) {
+    if (transfers[a].matched) continue;
+    var found = false;
+    for (var b = a + 1; b < transfers.length; b++) {
+      if (transfers[b].matched) continue;
+      var daysDiff = Math.abs(transfers[a].date.getTime() - transfers[b].date.getTime()) / 86400000;
+      if (daysDiff > 3) continue;
+      if (Math.abs(Math.abs(transfers[a].amt) - Math.abs(transfers[b].amt)) < 0.01 &&
+          transfers[a].amt * transfers[b].amt < 0) {
+        transfers[a].matched = true;
+        transfers[b].matched = true;
+        paired += 2;
+        found = true;
+        break;
+      }
+    }
+    if (!found) unpaired++;
+  }
+
+  Logger.log('═══ TRANSFER PAIR MATCHING (last 3 months) ═══');
+  Logger.log('Total transfer-category transactions: ' + transfers.length);
+  Logger.log('Paired: ' + paired + ' (' + (transfers.length > 0 ? Math.round(paired/transfers.length*100) : 0) + '%)');
+  Logger.log('Unpaired: ' + unpaired);
+
+  // Breakdown by category
+  var byCat = {};
+  for (var t = 0; t < transfers.length; t++) {
+    var c = transfers[t].cat;
+    if (!byCat[c]) byCat[c] = { total: 0, matched: 0, unmatched: 0 };
+    byCat[c].total++;
+    if (transfers[t].matched) byCat[c].matched++;
+    else byCat[c].unmatched++;
+  }
+  Logger.log('');
+  Logger.log('BY CATEGORY:');
+  for (var cat in byCat) {
+    var pct = byCat[cat].total > 0 ? Math.round(byCat[cat].matched / byCat[cat].total * 100) : 0;
+    Logger.log('  ' + cat + ': ' + byCat[cat].total + ' total, ' + byCat[cat].matched +
+      ' matched (' + pct + '%), ' + byCat[cat].unmatched + ' unmatched');
+  }
+
+  // Show unmatched details (first 15)
+  Logger.log('');
+  Logger.log('UNMATCHED SAMPLES (up to 15):');
+  var shown = 0;
+  for (var u = 0; u < transfers.length && shown < 15; u++) {
+    if (!transfers[u].matched) {
+      Logger.log('  ' + transfers[u].date.toLocaleDateString() + ' | ' + transfers[u].cat +
+        ' | $' + transfers[u].amt.toFixed(2) + ' | acct=' + transfers[u].acct +
+        ' | ' + transfers[u].desc.substring(0, 40));
+      shown++;
+    }
+  }
+
+  // Account diversity in transfers
+  var acctSet = {};
+  for (var j = 0; j < transfers.length; j++) {
+    if (transfers[j].acct) acctSet[transfers[j].acct] = (acctSet[transfers[j].acct] || 0) + 1;
+  }
+  Logger.log('');
+  Logger.log('ACCOUNTS IN TRANSFER TRANSACTIONS:');
+  for (var acc in acctSet) {
+    Logger.log('  ' + acc + ': ' + acctSet[acc] + ' transactions');
+  }
+}
+
+// END Utility.js v8
