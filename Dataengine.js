@@ -655,8 +655,10 @@ function getData(startStr, endStr, includeDebt) {
   // ── 7. Compute derived metrics ──
   var operationalCashFlow = earnedIncome - operatingExpenses;
   // v91: totalCashFlow = true all-cash metric (includes debt payments as cash out)
-  // operationalCashFlow excludes debt payments (intentional — tracks operating margin)
-  var totalCashFlow = totalMoneyIn - operatingExpenses - debtPaymentsMTD;
+  // Uses earnedIncome + loanProceeds (real cash sources), NOT totalMoneyIn which
+  // includes balanceTransfers (card-to-card debt moves, not real cash inflows).
+  var trueCashIn = earnedIncome + loanProceeds;
+  var totalCashFlow = trueCashIn - operatingExpenses - debtPaymentsMTD;
 
   var startM = startDate.getMonth();
   var endM = endDate.getMonth();
