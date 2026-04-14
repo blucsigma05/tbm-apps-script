@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v11">
+<meta name="tbm-version" content="v12">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -2001,7 +2001,12 @@ function loadCurriculumContent() {
       }
       if (response && response.content) {
         var c = response.content;
-        if (c.module && c.module.questions && c.module.questions.length > 0) {
+        var hasModuleQuestions = c.module && (
+          (c.module.math && c.module.math.questions && c.module.math.questions.length > 0) ||
+          (c.module.science && c.module.science.questions && c.module.science.questions.length > 0) ||
+          (c.module.questions && c.module.questions.length > 0)
+        );
+        if (hasModuleQuestions) {
           MODULE = c.module;
           init();
         } else if (c.review_quiz && c.review_quiz.length > 0) {
@@ -2011,6 +2016,7 @@ function loadCurriculumContent() {
           _usingFallback = true;
           MODULE = FALLBACK_MODULE;
           init();
+          console.warn('Curriculum loaded but no module questions found for today. Day type may be non-homework (cold_passage, writing, etc). Keys: ' + Object.keys(c).join(', '));
         }
       } else {
         _usingFallback = true;
