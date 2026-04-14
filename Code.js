@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v87 — Apps Script Router (TBM Consolidated)
+// Code.gs v88 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,12 +19,17 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 87; }
+function getCodeVersion() { return 88; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
   var s = String(n);
   return s.length < 2 ? '0' + s : s;
+}
+
+// v87: GAS HtmlService include helper — used by SparkleLearning template
+function include_(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -332,6 +337,12 @@ function servePage(page, e) {
         .setTitle(title)
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
+    // v87: SparkleLearning uses template evaluation for modular include_ splits
+    if (page === 'sparkle') {
+      return HtmlService.createTemplateFromFile('SparkleLearning').evaluate()
+        .setTitle(route.title)
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
     return HtmlService.createHtmlOutputFromFile(route.file)
       .setTitle(route.title)
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
@@ -428,6 +439,9 @@ function serveData(e) {
           var tmpl = HtmlService.createTemplateFromFile('Vault');
           tmpl.sheetData = JSON.stringify(getAllVaultData());
           content = tmpl.evaluate().getContent();
+        } else if (page === 'sparkle') {
+          // v87: SparkleLearning uses template evaluation for modular include_ splits
+          content = HtmlService.createTemplateFromFile('SparkleLearning').evaluate().getContent();
         } else {
           content = HtmlService.createHtmlOutputFromFile(filename).getContent();
         }
@@ -704,58 +718,12 @@ function getDataSafe(paramsOrStart, endArg, debtArg) {
   });
 }
 
-function getMonthsSafe() {
-  return withMonitor_('getMonthsSafe', function() {
-    return JSON.parse(JSON.stringify(getAvailableMonths()));
-  });
-}
-
-function getSimulatorDataSafe() {
-  return withMonitor_('getSimulatorDataSafe', function() {
-    return JSON.parse(JSON.stringify(getSimulatorData()));
-  });
-}
-
-function getWeeklyTrackerDataSafe() {
-  return withMonitor_('getWeeklyTrackerDataSafe', function() {
-    return JSON.parse(JSON.stringify(getWeeklyTrackerData()));
-  });
-}
-
-function getCashFlowForecastSafe() {
-  return withMonitor_('getCashFlowForecastSafe', function() {
-    return JSON.parse(JSON.stringify(getCashFlowForecast()));
-  });
-}
-
-function getScriptUrl() {
-  return ScriptApp.getService().getUrl();
-}
-
-function getScriptUrlSafe() {
-  return withMonitor_('getScriptUrlSafe', function() {
-    return JSON.parse(JSON.stringify({ url: ScriptApp.getService().getUrl() }));
-  });
-}
-
-// ── MonitorEngine safe wrappers (v48) ────────────────────────────
-function runMERGatesSafe(monthLabel) {
-  return withMonitor_('runMERGatesSafe', function() {
-    return JSON.stringify(runMERGates(monthLabel));
-  });
-}
-function stampCloseMonthSafe(monthLabel) {
-  return withMonitor_('stampCloseMonthSafe', function() {
-    return JSON.stringify(stampCloseMonth(monthLabel));
-  });
-}
-
-// ── Family Note safe wrapper (v48) ───────────────────────────────
-function updateFamilyNoteSafe(noteText) {
-  return withMonitor_('updateFamilyNoteSafe', function() {
-    return updateFamilyNote(noteText);
-  });
-}
+// getMonthsSafe, getSimulatorDataSafe, getWeeklyTrackerDataSafe, getCashFlowForecastSafe,
+// getScriptUrl, getScriptUrlSafe, runMERGatesSafe, stampCloseMonthSafe, updateFamilyNoteSafe,
+// getCategoryTransactionsSafe, getCloseHistoryDataSafe, getSubscriptionDataSafe,
+// runStoryFactorySafe, getStoredStorySafe, getAssetRegistrySafe,
+// seedWeek1CurriculumSafe, seedStaarRlaSprintSafe, getStoryApiStatsSafe
+// → moved to Code-Finance.gs.js (#299)
 
 // ── KidsHub safe wrappers ────────────────────────────────────────
 function getKidsHubDataSafe(child) {
@@ -1929,4 +1897,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v87
+// END OF FILE — Code.gs v88

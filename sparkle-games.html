@@ -1,0 +1,1267 @@
+<script>
+   ACTIVITY ROUTER
+   ═══════════════════════════════════════════════════════════ */
+function renderActivity(index) {
+  if (!todayContent || !todayContent.activities) { return; }
+  if (index >= todayContent.activities.length) {
+    showSessionComplete();
+    return;
+  }
+
+  setMascotVisible(true);
+  currentActivityIndex = index;
+  activityLocked = false;
+  updateProgressBar();
+
+  var activity = todayContent.activities[index];
+  var type = activity.type;
+
+  // v13: Preload NEXT activity's audio in background while current plays
+  if (index + 1 < todayContent.activities.length) {
+    loadAudioForGame(todayContent.activities[index + 1].type, function() {});
+  }
+
+  switch (type) {
+    case 'letter_intro':       renderLetterIntro(activity); break;
+    case 'find_letter':
+    case 'find_the_letter':    renderFindLetter(activity); break;
+    case 'find_number':
+    case 'find_the_number':    renderFindNumber(activity); break;
+    case 'count_with_me':      renderCountWithMe(activity); break;
+    case 'quantity_match':
+    case 'quantity_matching':  renderQuantityMatch(activity); break;
+    case 'color_hunt':         renderColorHunt(activity); break;
+    case 'shape_match':        renderShapeMatch(activity); break;
+    case 'pattern_next':
+    case 'pattern_completion': renderPatternNext(activity); break;
+    case 'letter_sound':
+    case 'what_sound':         renderLetterSound(activity); break;
+    case 'beginning_sound':    renderBeginningSound(activity); break;
+    case 'letter_trace':       renderLetterTrace(activity); break;
+    case 'number_trace':       renderNumberTrace(activity); break;
+    case 'audio_story':
+    case 'story_listen':       renderAudioStory(activity); break;
+    case 'color_sort':         renderColorSort(activity); break;
+    case 'more_or_less':       renderMoreOrLess(activity); break;
+    case 'name_builder':       renderNameBuilder(activity); break;
+    case 'celebration':
+    case 'star_celebration':   renderCelebration(activity); break;
+    case 'sparkle_challenge':  renderSparkleChallenge(activity); break;
+    case 'free_draw':
+      var fdMc = getMainContent();
+      fdMc.innerHTML = '<div class="activity-card"><p class="instruction">' + escapeHtml(activity.prompt || 'Free draw time!') + '</p>' +
+        '<div style="background:#1a1040;border:2px solid rgba(255,255,255,0.2);border-radius:16px;height:200px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.3);font-size:18px">Draw on paper, then tap Done!</div>' +
+        '<button class="btn-big btn-green" onclick="advanceActivity(' + (activity.stars || 1) + ')" style="margin-top:16px">Done!</button></div>';
+      speak(activity.prompt || 'Free draw time! Draw on paper, then tap done!');
+      break;
+    case 'round_intro':    renderRoundIntro(activity); break;
+    default:
+      /* Skip unknown types */
+      advanceActivity(activity.stars || 0);
+  }
+}
+
+function advanceActivity(starsEarned) {
+  completedActivities.push({
+    index: currentActivityIndex,
+    starsEarned: starsEarned || 0
+  });
+  totalStars += (starsEarned || 0);
+  updateStarCounter();
+
+  if (_freePlayMode && _freePlayGame) {
+    _freePlayIdx++;
+    setTimeout(function() { runFreePlayRound(); }, 800);
+    return;
+  }
+  if (_freePlayMode) {
+    setTimeout(function() { renderFreePlayMenu(); }, 800);
+    return;
+  }
+
+  setTimeout(function() {
+    renderActivity(currentActivityIndex + 1);
+  }, 600);
+}
+
+function handleCorrectAnswer(activity, el) {
+  if (activityLocked) { return; }
+  activityLocked = true;
+
+  /* Cancel any pending wrong-answer audio so it can't play over the celebration */
+  if (_wrongAnswerTimer) { clearTimeout(_wrongAnswerTimer); _wrongAnswerTimer = null; }
+
+  if (el) {
+    el.className += ' correct';
+    var rect = el.getBoundingClientRect();
+    spawnSparkles(rect.left + rect.width / 2, rect.top + rect.height / 2, 12);
+  }
+
+  playAudioCached('jj_feedback_correct1.mp3', 'Correct!');
+  showFeedback('Great job!', true);
+  var celebClips = ['jj_feedback_correct1.mp3','jj_feedback_correct2.mp3','jj_feedback_correct3.mp3','jj_feedback_correct4.mp3','jj_feedback_correct5.mp3','jj_feedback_correct6.mp3','jj_feedback_correct7.mp3','jj_feedback_correct8.mp3'];
+  setTimeout(function() {
+    playAudioCached(celebClips[Math.floor(Math.random() * celebClips.length)], 'Great job!');
+    setTimeout(function() {
+      advanceActivity(activity.stars || 1);
+    }, 1200);
+  }, 500);
+}
+
+function handleWrongAnswer(el) {
+  if (activityLocked) { return; }
+  if (el) { el.className += ' wrong'; }
+  var tryClips = ['jj_feedback_tryagain1.mp3','jj_feedback_tryagain2.mp3','jj_feedback_tryagain3.mp3','jj_feedback_tryagain4.mp3'];
+  /* +100ms delay before Try Again audio — gives JJ a moment to process (P2 Fix 6) */
+  var _clip = tryClips[Math.floor(Math.random() * tryClips.length)];
+  _wrongAnswerTimer = setTimeout(function() {
+    _wrongAnswerTimer = null;
+    playAudioCached(_clip, 'Try again!');
+  }, 100);
+  setTimeout(function() {
+    if (el) {
+      el.className = el.className.replace(' wrong', '');
+    }
+  }, 700);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 1: LETTER INTRO
+   ═══════════════════════════════════════════════════════════ */
+function renderLetterIntro(activity) {
+  var mc = getMainContent();
+  var letter = activity.letter || 'A';
+  var words = activity.words || (activity.word ? [activity.word] : ['Apple', 'Ant', 'Alligator']);
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Meet the letter:</p>';
+
+  // Render activity.image hero asset above the letter card when available (P2 Fix 5)
+  if (activity.image) {
+    html += '<div style="text-align:center;margin-bottom:12px;">' + resolveAsset(activity.image, 120, 'gold') + '</div>';
+  } else {
+    /* No image — render the focus letter as a large decorative element with gradient circle */
+    html += '<div style="text-align:center;margin-bottom:12px;">';
+    html += '<div style="display:inline-flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;width:140px;height:140px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#ec4899);">';
+    html += '<span style="font-family:\'Fredoka One\',\'Comic Sans MS\',sans-serif;font-size:80px;color:#fde68a;text-shadow:0 0 20px rgba(253,230,138,0.5);">' + escapeHtml(letter.toUpperCase()) + '</span>';
+    html += '</div></div>';
+  }
+
+  html += '<div class="big-letter">' + letter.toUpperCase() + '</div>';
+  html += '<p class="instruction" style="font-size:20px;">and lowercase: <span style="font-size:80px;color:#a855f7;">' + letter.toLowerCase() + '</span></p>';
+  html += '<div class="word-cards">';
+  for (var i = 0; i < words.length; i++) {
+    html += '<div class="word-card" onclick="speak(\'' + words[i].replace(/'/g, "\\'") + '\')">' + escapeHtml(words[i]) + '</div>';
+  }
+  html += '</div>';
+  html += '<button class="btn-big btn-green" onclick="handleLetterIntroDone()" style="margin-top:20px;">I got it! &#128077;</button>';
+  html += '</div>';
+  mc.innerHTML = html;
+
+  /* Track letter */
+  if (lettersCompleted.indexOf(letter.toUpperCase()) === -1) {
+    lettersCompleted.push(letter.toUpperCase());
+  }
+
+  playAudioCached('jj_letter_name_' + letter.toUpperCase() + '.mp3', activity.audioPhrase || ('This is the letter ' + letter.toUpperCase()));
+  setTimeout(function() {
+    speak(letter.toUpperCase() + " is for " + words.join(", and "), 'jj_letter_phrase_' + letter.toUpperCase() + '.mp3');
+  }, 1500);
+}
+
+function handleLetterIntroDone() {
+  if (activityLocked) { return; }
+  activityLocked = true;
+  var act = todayContent.activities[currentActivityIndex];
+  showFeedback('Awesome!', true);
+  speak("Awesome!", function() {
+    advanceActivity(act.stars || 1);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 2: FIND LETTER
+   ═══════════════════════════════════════════════════════════ */
+function renderFindLetter(activity) {
+  var mc = getMainContent();
+  var target = activity.target || 'A';
+  var allOpts = activity.options ? activity.options.slice() : ['A', 'B', 'C', 'D'];
+  var distractors = [];
+  for (var di = 0; di < allOpts.length; di++) {
+    if (String(allOpts[di]).toUpperCase() !== String(target).toUpperCase()) { distractors.push(allOpts[di]); }
+  }
+  var options = shuffleArray([target, distractors[0] || 'B', distractors[1] || 'C']);
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Find the letter:</p>';
+  html += '<div class="big-letter" style="font-size:100px;">' + target.toUpperCase() + '</div>';
+  html += '<div class="grid-2x2">';
+  for (var i = 0; i < options.length; i++) {
+    html += '<button class="option-btn" onclick="checkFindLetter(this, \'' + options[i] + '\', \'' + target + '\')">' + options[i].toUpperCase() + '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Find the letter " + target.toUpperCase() + "!", 'jj_find_' + target.toUpperCase() + '.mp3', function() {
+    speakOptions(options, 0);
+  });
+}
+
+function checkFindLetter(el, chosen, target) {
+  if (chosen.toUpperCase() === target.toUpperCase()) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 3: FIND NUMBER
+   ═══════════════════════════════════════════════════════════ */
+function renderFindNumber(activity) {
+  var mc = getMainContent();
+  var target = activity.target || '3';
+  var allOpts = activity.options ? activity.options.slice() : ['1', '2', '3', '4'];
+  var distractors = [];
+  for (var di = 0; di < allOpts.length; di++) {
+    if (String(allOpts[di]) !== String(target)) { distractors.push(allOpts[di]); }
+  }
+  var options = shuffleArray([target, distractors[0] || '1', distractors[1] || '2']);
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Find the number:</p>';
+  html += '<div class="big-letter" style="font-size:100px;">' + String(target) + '</div>';
+  html += '<div class="grid-2x2">';
+  for (var i = 0; i < options.length; i++) {
+    html += '<button class="option-btn" onclick="checkFindNumber(this, \'' + options[i] + '\', \'' + target + '\')">' + String(options[i]) + '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  var numKey = (parseInt(target, 10) >= 1 && parseInt(target, 10) <= 10) ? 'jj_number_' + target + '.mp3' : null;
+  speak("Find the number " + target + "!", numKey, function() {
+    var labels = [];
+    for (var j = 0; j < options.length; j++) { labels.push(String(options[j])); }
+    speakOptions(labels, 0);
+  });
+}
+
+function checkFindNumber(el, chosen, target) {
+  if (String(chosen) === String(target)) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 4: COUNT WITH ME
+   ═══════════════════════════════════════════════════════════ */
+function renderCountWithMe(activity) {
+  var mc = getMainContent();
+  var count = activity.count || activity.targetNumber || 5;
+  var shape = activity.shape || activity.objects || 'star';
+  var color = activity.color || 'pink';
+
+  countState = { total: count, tapped: 0, done: false };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Tap each ' + escapeHtml(shape) + ' to count!</p>';
+  html += '<div class="scatter-area" id="scatterArea">';
+
+  var positions = scatterObjects(count, 320, 280, 80);
+  for (var i = 0; i < count; i++) {
+    html += '<div class="scatter-obj" id="countObj' + i + '" ';
+    html += 'style="left:' + positions[i].x + 'px;top:' + positions[i].y + 'px;" ';
+    html += 'onclick="tapCountObject(' + i + ')">';
+    html += resolveAsset(shape, 56, color);
+    html += '</div>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Tap each " + shape + " to count them! There are " + count + "!");
+}
+
+function tapCountObject(idx) {
+  if (countState.done) { return; }
+  var el = document.getElementById('countObj' + idx);
+  if (!el || el.className.indexOf('counted') !== -1) { return; }
+
+  countState.tapped++;
+  el.className += ' tapped counted';
+  showCountBadge(countState.tapped);
+  if (countState.tapped <= 10) {
+    playAudioCached('jj_number_' + countState.tapped + '.mp3', String(countState.tapped));
+  } else {
+    speak(String(countState.tapped));
+  }
+
+  var rect = el.getBoundingClientRect();
+  spawnSparkles(rect.left + 28, rect.top + 28, 5);
+
+  if (countState.tapped >= countState.total) {
+    countState.done = true;
+    setTimeout(function() {
+      handleCorrectAnswer(todayContent.activities[currentActivityIndex], null);
+    }, 800);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 5: QUANTITY MATCH (tap-tap)
+   ═══════════════════════════════════════════════════════════ */
+function renderQuantityMatch(activity) {
+  var mc = getMainContent();
+  var groups = activity.groups;
+  if (!groups && activity.numbers) {
+    groups = [];
+    for (var ni = 0; ni < activity.numbers.length; ni++) {
+      groups.push({ dots: activity.numbers[ni], numeral: String(activity.numbers[ni]) });
+    }
+  }
+  if (!groups) { groups = [{ dots: 3, numeral: '3' }, { dots: 5, numeral: '5' }, { dots: 2, numeral: '2' }]; }
+
+  var qmState = { phase: 'dots', selectedDots: null, pairsLeft: groups.length, groups: groups };
+  window._qmState = qmState;
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Tap the dots, then tap the matching number!</p>';
+  html += '<div style="display:-webkit-flex;display:flex;-webkit-justify-content:space-around;justify-content:space-around;-webkit-flex-wrap:wrap;flex-wrap:wrap;gap:16px;">';
+
+  /* Dot groups */
+  html += '<div>';
+  html += '<p style="font-size:18px;color:#e0d4f5;margin-bottom:8px;">Dots</p>';
+  var shuffledG = shuffleArray(groups);
+  for (var i = 0; i < shuffledG.length; i++) {
+    html += '<button class="option-btn" id="qmDots' + i + '" style="display:block;margin:8px auto;min-width:100px;" ';
+    html += 'onclick="tapQmDots(' + i + ',' + shuffledG[i].dots + ')">';
+    /* SVG gradient circles — 40px orbs with highlight (P2 Fix 4) */
+    for (var d = 0; d < shuffledG[i].dots; d++) {
+      html += renderSvgDot('#a855f7');
+    }
+    html += '</button>';
+  }
+  html += '</div>';
+
+  /* Numeral buttons */
+  html += '<div>';
+  html += '<p style="font-size:18px;color:#e0d4f5;margin-bottom:8px;">Numbers</p>';
+  var shuffledN = shuffleArray(groups);
+  for (var j = 0; j < shuffledN.length; j++) {
+    html += '<button class="option-btn" id="qmNum' + j + '" style="display:block;margin:8px auto;min-width:100px;" ';
+    html += 'onclick="tapQmNum(' + j + ',' + shuffledN[j].dots + ')">' + escapeHtml(shuffledN[j].numeral) + '</button>';
+  }
+  html += '</div>';
+
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  window._qmShuffledG = shuffledG;
+  window._qmShuffledN = shuffledN;
+
+  speak("Tap the dots, then tap the matching number!");
+}
+
+function tapQmDots(idx, dotCount) {
+  var st = window._qmState;
+  if (!st || st.phase !== 'dots') { return; }
+  var el = document.getElementById('qmDots' + idx);
+  if (!el || el.className.indexOf('correct') !== -1) { return; }
+
+  /* Deselect previous */
+  var all = document.querySelectorAll('[id^=qmDots]');
+  for (var i = 0; i < all.length; i++) {
+    all[i].className = all[i].className.replace(' selected', '');
+  }
+
+  el.className += ' selected';
+  st.selectedDots = dotCount;
+  st.selectedDotsIdx = idx;
+  st.phase = 'num';
+  speak(dotCount + " dots. Now find the number " + dotCount + "!");
+}
+
+function tapQmNum(idx, dotCount) {
+  var st = window._qmState;
+  if (!st || st.phase !== 'num') { return; }
+  var el = document.getElementById('qmNum' + idx);
+  if (!el || el.className.indexOf('correct') !== -1) { return; }
+
+  if (dotCount === st.selectedDots) {
+    el.className += ' correct';
+    var dotsEl = document.getElementById('qmDots' + st.selectedDotsIdx);
+    if (dotsEl) { dotsEl.className += ' correct'; }
+    st.pairsLeft--;
+    st.phase = 'dots';
+    st.selectedDots = null;
+
+    if (st.pairsLeft <= 0) {
+      handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+    } else {
+      speak("Yes! " + dotCount + "! Find the next match!");
+      spawnSparkles(el.getBoundingClientRect().left + 50, el.getBoundingClientRect().top + 40, 8);
+    }
+  } else {
+    handleWrongAnswer(el);
+    st.phase = 'dots';
+    st.selectedDots = null;
+    var prevDots = document.getElementById('qmDots' + st.selectedDotsIdx);
+    if (prevDots) { prevDots.className = prevDots.className.replace(' selected', ''); }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 6: COLOR HUNT
+   ═══════════════════════════════════════════════════════════ */
+function renderColorHunt(activity) {
+  var mc = getMainContent();
+  var targetColor = activity.targetColor || 'red';
+  var shapes = activity.shapes || [];
+  /* shapes: [{shape:'circle', color:'red'}, {shape:'square', color:'blue'}, ...] */
+
+  if (shapes.length === 0) {
+    /* Generate default */
+    var allColors = ['red', 'blue', 'green', 'yellow', 'purple'];
+    for (var g = 0; g < 8; g++) {
+      shapes.push({
+        shape: ['circle', 'star', 'heart', 'square'][Math.floor(Math.random() * 4)],
+        color: g < 3 ? targetColor : allColors[Math.floor(Math.random() * allColors.length)]
+      });
+    }
+  }
+
+  var targetCount = 0;
+  for (var t = 0; t < shapes.length; t++) {
+    if (shapes[t].color === targetColor) { targetCount++; }
+  }
+
+  window._chState = { targetColor: targetColor, found: 0, total: targetCount };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Tap all the <span style="color:' + (COLOR_MAP[targetColor] || targetColor) + ';font-weight:800;">' + escapeHtml(targetColor) + '</span> shapes!</p>';
+  html += '<div class="scatter-area" id="colorHuntArea">';
+
+  var positions = scatterObjects(shapes.length, 320, 280, 80);
+  for (var i = 0; i < shapes.length; i++) {
+    html += '<div class="scatter-obj" id="chObj' + i + '" ';
+    html += 'style="left:' + positions[i].x + 'px;top:' + positions[i].y + 'px;" ';
+    html += 'onclick="tapColorHunt(' + i + ',\'' + shapes[i].color + '\')">';
+    html += renderShape(shapes[i].shape, shapes[i].color, 56);
+    html += '</div>';
+  }
+
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Find all the " + targetColor + " shapes! Tap them!");
+}
+
+function tapColorHunt(idx, color) {
+  var st = window._chState;
+  if (!st) { return; }
+  var el = document.getElementById('chObj' + idx);
+  if (!el || el.className.indexOf('tapped') !== -1) { return; }
+
+  if (color === st.targetColor) {
+    el.className += ' tapped';
+    st.found++;
+    var rect = el.getBoundingClientRect();
+    spawnSparkles(rect.left + 28, rect.top + 28, 6);
+    speak("Yes!");
+
+    if (st.found >= st.total) {
+      setTimeout(function() {
+        handleCorrectAnswer(todayContent.activities[currentActivityIndex], null);
+      }, 500);
+    }
+  } else {
+    speak("That one is not " + st.targetColor + ". Try again!");
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 7: SHAPE MATCH
+   ═══════════════════════════════════════════════════════════ */
+function renderShapeMatch(activity) {
+  var mc = getMainContent();
+  var target = activity.target || 'star';
+  var allOpts = activity.options ? activity.options.slice() : ['circle', 'star', 'triangle', 'square'];
+  var distractors = [];
+  for (var k = 0; k < allOpts.length; k++) {
+    if (allOpts[k] !== target) { distractors.push(allOpts[k]); }
+  }
+  var options = shuffleArray([target, distractors[0] || 'circle', distractors[1] || 'square']);
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Find the shape:</p>';
+  html += '<div style="margin:16px 0;">' + renderShape(target, 'gold', 120) + '</div>';
+  html += '<p class="instruction" style="font-size:20px;">Which one is the ' + escapeHtml(target) + '?</p>';
+  html += '<div class="grid-2x2">';
+  for (var i = 0; i < options.length; i++) {
+    html += '<button class="option-btn" style="padding:12px;" onclick="checkShapeMatch(this,\'' + options[i] + '\',\'' + target + '\')">';
+    html += renderShape(options[i], 'pink', 80);
+    html += '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Find the " + target + "! Which shape is the " + target + "?");
+}
+
+function checkShapeMatch(el, chosen, target) {
+  if (chosen === target) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 8: PATTERN NEXT
+   ═══════════════════════════════════════════════════════════ */
+function renderPatternNext(activity) {
+  var mc = getMainContent();
+  var pattern = activity.pattern || [
+    { shape: 'circle', color: 'red' },
+    { shape: 'square', color: 'blue' },
+    { shape: 'circle', color: 'red' },
+    { shape: 'square', color: 'blue' }
+  ];
+  var answer = activity.answer || { shape: 'circle', color: 'red' };
+  var options = activity.options || [
+    { shape: 'circle', color: 'red' },
+    { shape: 'triangle', color: 'green' },
+    { shape: 'square', color: 'yellow' }
+  ];
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">What comes next in the pattern?</p>';
+  html += '<div class="pattern-row">';
+  for (var i = 0; i < pattern.length; i++) {
+    html += '<div class="pattern-item">' + renderShape(pattern[i].shape, pattern[i].color, 50) + '</div>';
+  }
+  html += '<div class="pattern-mystery">?</div>';
+  html += '</div>';
+  html += '<div class="option-grid">';
+  for (var j = 0; j < options.length; j++) {
+    var isCorrect = (options[j].shape === answer.shape && options[j].color === answer.color);
+    html += '<button class="option-btn" style="padding:12px;min-width:90px;" ';
+    html += 'onclick="checkPatternNext(this,' + (isCorrect ? 'true' : 'false') + ')">';
+    html += renderShape(options[j].shape, options[j].color, 60);
+    html += '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Look at the pattern! What comes next? Tap the right shape!");
+}
+
+function checkPatternNext(el, isCorrect) {
+  if (isCorrect) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 9: LETTER SOUND
+   ═══════════════════════════════════════════════════════════ */
+function renderLetterSound(activity) {
+  var mc = getMainContent();
+  var letter = activity.letter || 'B';
+  var sound = activity.sound || 'buh';
+  var words = activity.words || ['Ball', 'Bear', 'Banana'];
+
+  var html = '<div class="activity-card">';
+  html += '<div class="big-letter">' + letter.toUpperCase() + '</div>';
+  html += '<p class="instruction">' + letter.toUpperCase() + ' says "' + escapeHtml(sound) + '"!</p>';
+  html += '<button class="btn-big btn-purple" onclick="speak(\'' + letter.toUpperCase() + ' says ' + sound + '\')" style="margin:10px;">&#128266; Hear it again</button>';
+  html += '<div class="word-cards">';
+  for (var i = 0; i < words.length; i++) {
+    html += '<div class="word-card" onclick="speak(\'' + words[i].replace(/'/g, "\\'") + ' starts with ' + sound + '\')">';
+    html += '<span style="color:#ec4899;font-size:28px;">' + escapeHtml(words[i].charAt(0).toUpperCase()) + '</span>' + escapeHtml(words[i].substring(1));
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<button class="btn-big btn-green" onclick="handleLetterSoundDone()" style="margin-top:16px;">I got it! &#128077;</button>';
+  html += '</div>';
+  mc.innerHTML = html;
+
+  playAudioCached('jj_sound_' + letter.toUpperCase() + '.mp3', letter.toUpperCase() + ' says ' + sound);
+  setTimeout(function() {
+    speak(words[0] + " starts with " + sound);
+  }, 1500);
+}
+
+function handleLetterSoundDone() {
+  if (activityLocked) { return; }
+  activityLocked = true;
+  var act = todayContent.activities[currentActivityIndex];
+  showFeedback('Super!', true);
+  speak("Super!", function() {
+    advanceActivity(act.stars || 1);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 10: BEGINNING SOUND
+   ═══════════════════════════════════════════════════════════ */
+function renderBeginningSound(activity) {
+  var mc = getMainContent();
+  var word = activity.word || 'Cat';
+  var answer = activity.answer || 'C';
+  var allOpts = activity.options ? activity.options.slice() : ['C', 'D', 'B', 'S'];
+  var distractors = [];
+  for (var di = 0; di < allOpts.length; di++) {
+    if (String(allOpts[di]).toUpperCase() !== String(answer).toUpperCase()) { distractors.push(allOpts[di]); }
+  }
+  var options = shuffleArray([answer, distractors[0] || 'D', distractors[1] || 'B']);
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">What letter does this word start with?</p>';
+  html += '<button class="btn-big btn-purple" onclick="speak(\'' + word.replace(/'/g, "\\'") + '\')" style="font-size:32px;margin:16px;">&#128266; ' + escapeHtml(word) + '</button>';
+  html += '<div class="grid-2x2">';
+  for (var i = 0; i < options.length; i++) {
+    html += '<button class="option-btn" onclick="checkBeginningSound(this,\'' + options[i] + '\',\'' + answer + '\')">' + options[i].toUpperCase() + '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak(word + "! What letter does " + word + " start with?", function() {
+    speakOptions(options, 0);
+  });
+}
+
+function checkBeginningSound(el, chosen, answer) {
+  if (chosen.toUpperCase() === answer.toUpperCase()) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 11: LETTER TRACE
+   ═══════════════════════════════════════════════════════════ */
+function setMascotVisible(visible) {
+  var img = document.querySelector('#sparkle-bg img');
+  if (img) { img.style.opacity = visible ? '1' : '0'; }
+}
+
+function renderLetterTrace(activity) {
+  setMascotVisible(false);
+  var mc = getMainContent();
+  var letter = activity.letter || 'A';
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Trace the letter with your finger!</p>';
+  html += '<div class="trace-canvas-wrap" id="traceWrap">';
+  html += '<canvas id="traceCanvas" width="300" height="350"></canvas>';
+  html += '</div>';
+  html += '<div style="display:-webkit-flex;display:flex;-webkit-justify-content:center;justify-content:center;gap:12px;margin-top:12px;">';
+  html += '<button class="btn-big btn-purple" onclick="clearTraceCanvas()">Try Again</button>';
+  html += '<button class="btn-big btn-green" onclick="handleTraceDone()">Done! &#128077;</button>';
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  traceState = { drawing: false, letter: letter };
+
+  setTimeout(function() {
+    var canvas = document.getElementById('traceCanvas');
+    if (!canvas) { return; }
+    var ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    /* Draw guide letter */
+    ctx.fillStyle = 'rgba(168,85,247,0.15)';
+    ctx.font = 'bold ' + Math.floor(canvas.height * 0.75) + 'px Fredoka One, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(letter.toUpperCase(), canvas.width / 2, canvas.height / 2);
+
+    /* Touch drawing */
+    ctx.strokeStyle = '#ec4899';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    var getPos = function(e) {
+      var rect = canvas.getBoundingClientRect();
+      var touch = e.touches ? e.touches[0] : e;
+      return {
+        x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+        y: (touch.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    };
+
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      traceState.drawing = true;
+      var pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    });
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault();
+      if (!traceState.drawing) { return; }
+      var pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    });
+    canvas.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      traceState.drawing = false;
+    });
+
+    /* Mouse fallback */
+    canvas.addEventListener('mousedown', function(e) {
+      traceState.drawing = true;
+      var pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    });
+    canvas.addEventListener('mousemove', function(e) {
+      if (!traceState.drawing) { return; }
+      var pos = getPos(e);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    });
+    canvas.addEventListener('mouseup', function() { traceState.drawing = false; });
+  }, 100);
+
+  speak("Trace the letter " + letter.toUpperCase() + " with your finger! Follow the purple shape!", 'jj_trace_' + letter.toUpperCase() + '.mp3');
+}
+
+function clearTraceCanvas() {
+  var canvas = document.getElementById('traceCanvas');
+  if (!canvas) { return; }
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  /* Redraw guide */
+  ctx.fillStyle = 'rgba(168,85,247,0.15)';
+  ctx.font = 'bold ' + Math.floor(canvas.height * 0.75) + 'px Fredoka One, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(traceState.letter.toUpperCase(), canvas.width / 2, canvas.height / 2);
+
+  ctx.strokeStyle = '#ec4899';
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  speak("Try again! Trace the letter " + traceState.letter.toUpperCase());
+}
+
+function handleTraceDone() {
+  setMascotVisible(true);
+  if (activityLocked) { return; }
+  activityLocked = true;
+  var act = todayContent.activities[currentActivityIndex];
+  showFeedback('Beautiful!', true);
+  speak("Beautiful tracing!", function() {
+    advanceActivity(act.stars || 1);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 12: NUMBER TRACE
+   ═══════════════════════════════════════════════════════════ */
+function renderNumberTrace(activity) {
+  setMascotVisible(false);
+  var mc = getMainContent();
+  var numeral = activity.numeral || '1';
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Trace the number with your finger!</p>';
+  html += '<div class="trace-canvas-wrap" id="traceWrap">';
+  html += '<canvas id="traceCanvas" width="300" height="350"></canvas>';
+  html += '</div>';
+  html += '<div style="display:-webkit-flex;display:flex;-webkit-justify-content:center;justify-content:center;gap:12px;margin-top:12px;">';
+  html += '<button class="btn-big btn-purple" onclick="clearNumTraceCanvas()">Try Again</button>';
+  html += '<button class="btn-big btn-green" onclick="handleNumTraceDone()">Done! &#128077;</button>';
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  traceState = { drawing: false, numeral: numeral };
+
+  setTimeout(function() {
+    var canvas = document.getElementById('traceCanvas');
+    if (!canvas) { return; }
+    var ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    ctx.fillStyle = 'rgba(168,85,247,0.15)';
+    ctx.font = 'bold ' + Math.floor(canvas.height * 0.75) + 'px Fredoka One, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(numeral), canvas.width / 2, canvas.height / 2);
+
+    ctx.strokeStyle = '#fde68a';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    var getPos = function(e) {
+      var rect = canvas.getBoundingClientRect();
+      var touch = e.touches ? e.touches[0] : e;
+      return {
+        x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+        y: (touch.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    };
+
+    canvas.addEventListener('touchstart', function(e) {
+      e.preventDefault(); traceState.drawing = true;
+      var pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+    });
+    canvas.addEventListener('touchmove', function(e) {
+      e.preventDefault(); if (!traceState.drawing) { return; }
+      var pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+    });
+    canvas.addEventListener('touchend', function(e) { e.preventDefault(); traceState.drawing = false; });
+    canvas.addEventListener('mousedown', function(e) {
+      traceState.drawing = true; var pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+    });
+    canvas.addEventListener('mousemove', function(e) {
+      if (!traceState.drawing) { return; }
+      var pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+    });
+    canvas.addEventListener('mouseup', function() { traceState.drawing = false; });
+  }, 100);
+
+  speak("Trace the number " + numeral + " with your finger!");
+}
+
+function clearNumTraceCanvas() {
+  var canvas = document.getElementById('traceCanvas');
+  if (!canvas) { return; }
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'rgba(168,85,247,0.15)';
+  ctx.font = 'bold ' + Math.floor(canvas.height * 0.75) + 'px Fredoka One, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(String(traceState.numeral), canvas.width / 2, canvas.height / 2);
+  ctx.strokeStyle = '#fde68a';
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  speak("Try again! Trace the number " + traceState.numeral);
+}
+
+function handleNumTraceDone() {
+  setMascotVisible(true);
+  if (activityLocked) { return; }
+  activityLocked = true;
+  var act = todayContent.activities[currentActivityIndex];
+  showFeedback('Great number!', true);
+  speak("Great number tracing!", function() {
+    advanceActivity(act.stars || 1);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 13: AUDIO STORY
+   ═══════════════════════════════════════════════════════════ */
+function renderAudioStory(activity) {
+  var mc = getMainContent();
+  var story = activity.story || 'Once upon a time, a little bunny hopped through the garden.';
+  var question = activity.question || 'What animal was in the story?';
+  var answer = activity.answer || 'Bunny';
+  var options = activity.options || ['Bunny', 'Cat', 'Dog'];
+
+  window._storyState = { phase: 'listening', answer: answer };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Listen to the story!</p>';
+  html += '<div class="story-panel" id="storyText">' + escapeHtml(story) + '</div>';
+  html += '<button class="btn-big btn-purple" id="storyPlayBtn" onclick="playStoryAudio()">&#128266; Listen Again</button>';
+  html += '<div id="storyQuestion" style="display:none;">';
+  html += '<p class="instruction" style="margin-top:20px;">' + escapeHtml(question) + '</p>';
+  html += '<div class="option-grid">';
+  for (var i = 0; i < options.length; i++) {
+    html += '<button class="option-btn" style="font-size:24px;min-width:100px;" ';
+    html += 'onclick="checkStoryAnswer(this,\'' + options[i].replace(/'/g, "\\'") + '\')">' + escapeHtml(options[i]) + '</button>';
+  }
+  html += '</div></div></div>';
+  mc.innerHTML = html;
+
+  speak(story, function() {
+    /* 2000ms pause after story — JJ processes what she heard (P2 Fix 7) */
+    setTimeout(function() {
+      var qEl = document.getElementById('storyQuestion');
+      if (qEl) { qEl.style.display = 'block'; }
+      speak(question, function() {
+        /* 1000ms pause after question before reading options (P2 Fix 7) */
+        setTimeout(function() {
+          speakOptions(options, 0);
+        }, 1000);
+      });
+    }, 2000);
+  });
+}
+
+function playStoryAudio() {
+  var act = todayContent.activities[currentActivityIndex];
+  speak(act.story || 'Once upon a time...');
+}
+
+function checkStoryAnswer(el, chosen) {
+  var st = window._storyState;
+  if (!st) { return; }
+  if (chosen === st.answer) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 14: COLOR SORT (tap shape, tap bin)
+   ═══════════════════════════════════════════════════════════ */
+function renderColorSort(activity) {
+  var mc = getMainContent();
+  var items = activity.items || [
+    { shape: 'circle', color: 'red' },
+    { shape: 'square', color: 'blue' },
+    { shape: 'star', color: 'red' },
+    { shape: 'heart', color: 'blue' },
+    { shape: 'triangle', color: 'red' },
+    { shape: 'diamond', color: 'blue' }
+  ];
+  var bins = activity.bins || activity.colors || ['red', 'blue'];
+
+  sortState = { selectedItem: null, remaining: items.length, items: items };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Tap a shape, then tap the matching color bin!</p>';
+
+  /* Items */
+  html += '<div class="option-grid" id="sortItems">';
+  for (var i = 0; i < items.length; i++) {
+    html += '<div class="option-btn" id="sortItem' + i + '" style="padding:10px;min-width:70px;min-height:70px;" ';
+    html += 'onclick="tapSortItem(' + i + ',\'' + items[i].color + '\')">';
+    // Use item name for registry lookup (resolveAsset) — falls back to circle if not registered
+    html += resolveAsset(items[i].name || items[i].shape, 56, items[i].color);
+    html += '</div>';
+  }
+  html += '</div>';
+
+  /* Bins — large filled color rectangles, no text label (P1 Fix 2) */
+  html += '<div class="bin-row" id="sortBins">';
+  for (var b = 0; b < bins.length; b++) {
+    var _binHex = COLOR_MAP[bins[b]] || bins[b];
+    html += '<div class="color-bin" id="sortBin' + b + '" ';
+    html += 'style="background:' + _binHex + ';border-color:' + _binHex + ';" ';
+    html += 'onclick="tapSortBin(' + b + ',\'' + bins[b] + '\')">';
+    /* No text — pure color rectangle so a 4-year-old reads the color visually */
+    html += '</div>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Tap a shape, then tap the bin with the same color!");
+}
+
+function tapSortItem(idx, color) {
+  if (sortState.selectedItem !== null) { return; }
+  var el = document.getElementById('sortItem' + idx);
+  if (!el || el.className.indexOf('correct') !== -1) { return; }
+
+  /* Deselect others */
+  var all = document.querySelectorAll('[id^=sortItem]');
+  for (var i = 0; i < all.length; i++) {
+    all[i].className = all[i].className.replace(' selected', '');
+  }
+
+  el.className += ' selected';
+  sortState.selectedItem = { idx: idx, color: color };
+  speak("Now tap the " + color + " bin!");
+}
+
+function tapSortBin(binIdx, binColor) {
+  if (!sortState.selectedItem) {
+    speak("First tap a shape!");
+    return;
+  }
+
+  var binEl = document.getElementById('sortBin' + binIdx);
+  var itemEl = document.getElementById('sortItem' + sortState.selectedItem.idx);
+
+  if (sortState.selectedItem.color === binColor) {
+    if (itemEl) { itemEl.className += ' correct'; itemEl.style.opacity = '0.3'; }
+    if (binEl) { binEl.className += ' selected-bin'; }
+    sortState.remaining--;
+    sortState.selectedItem = null;
+
+    if (sortState.remaining <= 0) {
+      handleCorrectAnswer(todayContent.activities[currentActivityIndex], binEl);
+    } else {
+      spawnSparkles(binEl.getBoundingClientRect().left + 40, binEl.getBoundingClientRect().top + 40, 6);
+      speak("Yes! Pick another shape!");
+    }
+  } else {
+    speak("That bin is " + binColor + ". Try the " + sortState.selectedItem.color + " bin!");
+    if (itemEl) { itemEl.className = itemEl.className.replace(' selected', ''); }
+    sortState.selectedItem = null;
+  }
+
+  /* Reset bin highlight */
+  setTimeout(function() {
+    var allBins = document.querySelectorAll('.color-bin');
+    for (var i = 0; i < allBins.length; i++) {
+      allBins[i].className = allBins[i].className.replace(' selected-bin', '');
+    }
+  }, 600);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 15: MORE OR LESS
+   ═══════════════════════════════════════════════════════════ */
+function renderMoreOrLess(activity) {
+  var mc = getMainContent();
+  var mode = activity.mode || 'more'; /* 'more' or 'less' */
+  var groupA = activity.groupA || { count: 3, shape: 'star', color: 'pink' };
+  var groupB = activity.groupB || { count: 6, shape: 'heart', color: 'purple' };
+  var answerSide = groupA.count > groupB.count ? (mode === 'more' ? 'A' : 'B') : (mode === 'more' ? 'B' : 'A');
+  if (groupA.count === groupB.count) { answerSide = 'A'; } /* tie = either works */
+
+  window._molState = { answer: answerSide };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Which group has <span style="color:#ec4899;font-weight:800;">' + escapeHtml(mode) + '</span>?</p>';
+
+  html += '<div style="display:-webkit-flex;display:flex;-webkit-justify-content:space-around;justify-content:space-around;gap:16px;">';
+
+  /* Group A */
+  html += '<button class="option-btn" id="molA" style="min-width:140px;min-height:140px;padding:16px;-webkit-flex-direction:column;flex-direction:column;" ';
+  html += 'onclick="checkMoreOrLess(this,\'A\')">';
+  for (var a = 0; a < groupA.count; a++) {
+    html += renderShape(groupA.shape, groupA.color, 36) + ' ';
+  }
+  html += '</button>';
+
+  /* Group B */
+  html += '<button class="option-btn" id="molB" style="min-width:140px;min-height:140px;padding:16px;-webkit-flex-direction:column;flex-direction:column;" ';
+  html += 'onclick="checkMoreOrLess(this,\'B\')">';
+  for (var b = 0; b < groupB.count; b++) {
+    html += renderShape(groupB.shape, groupB.color, 36) + ' ';
+  }
+  html += '</button>';
+
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  speak("Which group has " + mode + "? " + groupA.count + " " + groupA.shape + "s or " + groupB.count + " " + groupB.shape + "s? Tap the group with " + mode + "!");
+}
+
+function checkMoreOrLess(el, side) {
+  var st = window._molState;
+  if (!st) { return; }
+  if (side === st.answer) {
+    handleCorrectAnswer(todayContent.activities[currentActivityIndex], el);
+  } else {
+    handleWrongAnswer(el);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 16: NAME BUILDER
+   ═══════════════════════════════════════════════════════════ */
+function renderNameBuilder(activity) {
+  var mc = getMainContent();
+  var target = (activity.target || activity.name || 'JJ').toUpperCase();
+  var letters = activity.letters || null;
+
+  if (!letters) {
+    /* Build shuffled letter bank from target + random extras */
+    var pool = target.split('');
+    var extras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    while (pool.length < target.length + 3) {
+      var randChar = extras.charAt(Math.floor(Math.random() * extras.length));
+      if (pool.indexOf(randChar) === -1 || pool.length < target.length + 2) {
+        pool.push(randChar);
+      }
+    }
+    letters = shuffleArray(pool);
+  }
+
+  nameState = {
+    target: target,
+    progress: '',
+    bankUsed: []
+  };
+
+  var html = '<div class="activity-card">';
+  html += '<p class="instruction">Build the name: <span style="color:#ec4899;font-size:32px;">' + escapeHtml(target) + '</span></p>';
+
+  /* Slots */
+  html += '<div class="name-slots" id="nameSlots">';
+  for (var s = 0; s < target.length; s++) {
+    html += '<div class="name-slot" id="nameSlot' + s + '"></div>';
+  }
+  html += '</div>';
+
+  /* Letter bank */
+  html += '<div class="letter-bank" id="nameBank">';
+  for (var i = 0; i < letters.length; i++) {
+    html += '<button class="letter-bank-btn" id="bankBtn' + i + '" ';
+    html += 'onclick="tapNameLetter(' + i + ',\'' + letters[i] + '\')">' + letters[i] + '</button>';
+  }
+  html += '</div></div>';
+  mc.innerHTML = html;
+
+  /* Pulse the first empty slot so JJ knows where to start (P2 Fix 8) */
+  var _firstSlot = document.getElementById('nameSlot0');
+  if (_firstSlot) { _firstSlot.className += ' next-slot'; }
+
+  var spellKey = target === 'JJ' ? 'jj_spell_jj.mp3' : (target === 'KINDLE' ? 'jj_spell_kindle.mp3' : null);
+  speak("Build the name " + target + "! Tap the letters in order. First, find " + target.charAt(0) + "!", spellKey);
+}
+
+function tapNameLetter(bankIdx, letter) {
+  var nextIdx = nameState.progress.length;
+  if (nextIdx >= nameState.target.length) { return; }
+
+  var expected = nameState.target.charAt(nextIdx);
+  if (letter === expected) {
+    nameState.progress += letter;
+    nameState.bankUsed.push(bankIdx);
+
+    /* Fill slot */
+    var slot = document.getElementById('nameSlot' + nextIdx);
+    if (slot) {
+      slot.textContent = letter;
+      slot.className = slot.className.replace(' next-slot', '').replace(' next-slot', '');
+      slot.className += ' filled';
+    }
+
+    /* Disable bank button */
+    var btn = document.getElementById('bankBtn' + bankIdx);
+    if (btn) { btn.className += ' used'; }
+
+    spawnSparkles(slot.getBoundingClientRect().left + 28, slot.getBoundingClientRect().top + 32, 5);
+    speak(letter + "!");
+
+    /* Check complete */
+    if (nameState.progress.length >= nameState.target.length) {
+      setTimeout(function() {
+        handleCorrectAnswer(todayContent.activities[currentActivityIndex], null);
+      }, 500);
+    } else {
+      /* Pulse the next empty slot (P2 Fix 8) */
+      var nextSlotEl = document.getElementById('nameSlot' + nameState.progress.length);
+      if (nextSlotEl) { nextSlotEl.className += ' next-slot'; }
+      var nextExpected = nameState.target.charAt(nameState.progress.length);
+      setTimeout(function() {
+        speak("Now find " + nextExpected + "!");
+      }, 400);
+    }
+  } else {
+    var btn2 = document.getElementById('bankBtn' + bankIdx);
+    handleWrongAnswer(btn2);
+    speak("That is " + letter + ". Find " + expected + "!");
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ACTIVITY 17: CELEBRATION
+   ═══════════════════════════════════════════════════════════ */
+/* ═══ ROUND INTRO — auto-advancing transition screen ═══ */
+function renderRoundIntro(activity) {
+  var mc = getMainContent();
+  var label = activity.label || 'Next up!';
+  var icon = activity.icon || '\u2728';
+  var msg = activity.message || '';
+  var html = '<div class="activity-card" style="text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;">';
+  html += '<div style="font-size:64px;line-height:1;margin-bottom:16px;animation:sparkle-pop 0.4s ease-out;">' + escapeHtml(icon) + '</div>';
+  html += '<div style="font-family:\'Fredoka One\',cursive;font-size:32px;color:#f9a8d4;font-weight:700;margin-bottom:8px;">' + escapeHtml(label) + '</div>';
+  if (msg) {
+    html += '<div style="font-size:18px;color:rgba(240,212,255,0.75);margin-top:6px;">' + escapeHtml(msg) + '</div>';
+  }
+  html += '</div>';
+  mc.innerHTML = html;
+  if (activity.audioPrompt) { speak(activity.audioPrompt); }
+  // Auto-advance after 2 seconds — no tap needed
+  setTimeout(function() { advanceActivity(0); }, 2000);
+}
+
+/* ═══ SPARKLE CHALLENGE — multi-question MC quiz ═══ */
+function renderSparkleChallenge(activity) {
+  var mc = getMainContent();
+  var qs = activity.questions || [];
+  if (!qs.length) { advanceActivity(activity.stars || 2); return; }
+  var qIdx = 0;
+  var correct = 0;
+
+  function showQ() {
+    if (qIdx >= qs.length) {
+      var html = '<div class="activity-card">';
+      html += '<p class="instruction" style="font-size:28px;">' + escapeHtml(correct + '/' + qs.length + ' correct!') + '</p>';
+      html += '<button class="btn-big btn-green" onclick="advanceActivity(' + (activity.stars || 2) + ')" style="margin-top:20px;">Next! &#x2728;</button>';
+      html += '</div>';
+      mc.innerHTML = html;
+      speak('You got ' + correct + ' out of ' + qs.length + '!');
+      return;
+    }
+    var q = qs[qIdx];
+    var html = '<div class="activity-card">';
+    html += '<p class="instruction">' + escapeHtml(q.prompt || 'Pick the answer:') + '</p>';
+    html += '<div style="display:flex;flex-direction:column;gap:12px;margin-top:16px">';
+    for (var i = 0; i < (q.options || []).length; i++) {
+      html += '<button class="btn-big" style="min-height:64px;font-size:22px;" onclick="handleSC(' + i + ')">' + escapeHtml(q.options[i]) + '</button>';
+    }
+    html += '</div></div>';
+    mc.innerHTML = html;
+    speak(q.prompt || 'Pick the answer', function() {
+      speakOptions(q.options || [], 0);
+    });
+  }
+
+  window.handleSC = function(idx) {
+    var q = qs[qIdx];
+    var picked = q.options[idx];
+    if (String(picked) === String(q.answer)) {
+      correct++;
+      speak('Yes! ' + picked + '!', function() { qIdx++; showQ(); });
+    } else {
+      speak('Not quite. The answer is ' + q.answer, function() { qIdx++; showQ(); });
+    }
+  };
+
+  showQ();
+}
+
+function renderCelebration(activity) {
+  var mc = getMainContent();
+  var message = activity.message || 'You are a superstar!';
+  var starsAwarded = activity.stars || 3;
+
+  var html = '<div class="celebration-wrap">';
+  html += '<div class="celebration-stars">&#11088;&#11088;&#11088;</div>';
+  html += '<div class="ready-title" style="font-size:48px;">' + escapeHtml(message) + '</div>';
+  html += '<p class="instruction">You earned ' + starsAwarded + ' bonus stars!</p>';
+  html += '<button class="btn-big btn-gold" onclick="handleCelebrationDone()" style="font-size:32px;margin-top:24px;">';
+  html += 'Yay! &#127881;</button>';
+  html += '</div>';
+  mc.innerHTML = html;
+
+  launchConfetti();
+  playAudioCached('celebration.mp3');
+  speak(message + " You earned " + starsAwarded + " bonus stars!");
+}
+
+function handleCelebrationDone() {
+  if (activityLocked) { return; }
+  activityLocked = true;
+  var act = todayContent.activities[currentActivityIndex];
+  advanceActivity(act.stars || 3);
+}
+
+/* ═══════════════════════════════════════════════════════════
+</script>
