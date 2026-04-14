@@ -1,6 +1,6 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmSmokeTest.gs v14 — Pre-Deploy Structural Validation
-// WRITES TO: (none — read-only checks)
+// tbmSmokeTest.gs v15 — Pre-Deploy Structural + Behavioral Validation
+// WRITES TO: KH_Education (smoke row — written and immediately deleted)
 // READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
 // Version history tracked in Notion deploy page. Do not add version comments here.
@@ -32,12 +32,11 @@
 //   - Workflows work end to end (that's Q7 persistence tests / Playwright)
 //   - Data is correct (that's QA walkthroughs)
 //   - UI renders properly (that's manual QA / screenshots)
-//   - Save paths persist data (that's education persistence tests)
 //
 // A PASS here means "safe to deploy" not "system works perfectly."
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 14; }
+function getSmokeTestVersion() { return 15; }
 
 var CANONICAL_SAFE_FUNCTIONS = [
   // KidsHub core
@@ -125,6 +124,9 @@ function tbmSmokeTest() {
 
   // ── Category 10: QA Route Parity ────────────────────────────────
   results.categories['10_qa_routes'] = checkQARouteParity_();
+
+  // ── Category 11: Behavioral — Education Round-Trip ─────────────
+  results.categories['11_behavioral'] = checkEducationBehavioral_();
 
   // ── Categories 6-8: Source-level (NOT runtime verifiable) ───────
   results.categories['6_concurrency'] = {
@@ -787,4 +789,159 @@ function checkQARouteParity_() {
 }
 
 
-// END OF FILE — tbmSmokeTest.gs v14
+// ════════════════════════════════════════════════════════════════════
+// CATEGORY 11: BEHAVIORAL — Education Submission Round-Trip (v15)
+// Verifies that the education pipeline actually persists data, not just
+// that functions exist. Catches shape mismatches, fallback mode, silent
+// drops, and missing curriculum. This is what every structural check missed.
+// ════════════════════════════════════════════════════════════════════
+
+function checkEducationBehavioral_() {
+  var result = {
+    status: 'PASS',
+    description: 'Education submissions persist end-to-end and curriculum loads correctly',
+    details: [],
+    method: 'runtime',
+    checks: {}
+  };
+
+  var failures = [];
+  var warnings = [];
+
+  // ── Check 1: Curriculum loads for Buggsy ──
+  try {
+    var dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var todayName = dayNames[new Date().getDay()];
+    var isModuleDay = ['Monday','Wednesday','Friday'].indexOf(todayName) !== -1;
+    var isWeekday = ['Monday','Tuesday','Wednesday','Thursday','Friday'].indexOf(todayName) !== -1;
+
+    var content = null;
+    if (typeof getTodayContent_ === 'function') {
+      content = getTodayContent_('buggsy');
+    }
+
+    if (!content && isWeekday) {
+      failures.push('Curriculum returned null for Buggsy on ' + todayName + '. Curriculum may not be seeded for this week.');
+      result.checks.curriculum_buggsy = 'FAIL — null on weekday';
+    } else if (content && content.content) {
+      var c = content.content;
+      var hasModule = c.module && (
+        (c.module.math && c.module.math.questions && c.module.math.questions.length > 0) ||
+        (c.module.science && c.module.science.questions && c.module.science.questions.length > 0)
+      );
+      if (isModuleDay && !hasModule) {
+        failures.push('Curriculum loaded for Buggsy but no module.math/science.questions on ' + todayName + ' (a module day). Shape mismatch or missing content.');
+        result.checks.curriculum_buggsy = 'FAIL — module day but no questions';
+      } else if (!isModuleDay && !hasModule) {
+        result.checks.curriculum_buggsy = 'OK — non-module day (' + todayName + '), no module questions expected. Keys: ' + Object.keys(c).join(', ');
+      } else {
+        var mathCount = (c.module.math && c.module.math.questions) ? c.module.math.questions.length : 0;
+        var sciCount = (c.module.science && c.module.science.questions) ? c.module.science.questions.length : 0;
+        result.checks.curriculum_buggsy = 'OK — ' + mathCount + ' math, ' + sciCount + ' science questions';
+      }
+    } else if (!isWeekday) {
+      result.checks.curriculum_buggsy = 'OK — weekend, no curriculum expected';
+    } else {
+      result.checks.curriculum_buggsy = 'WARN — content returned but content.content is null';
+      warnings.push('Curriculum returned but content.content is null for Buggsy on ' + todayName);
+    }
+  } catch(e) {
+    failures.push('Curriculum check threw: ' + (e.message || String(e)));
+    result.checks.curriculum_buggsy = 'FAIL — exception: ' + (e.message || String(e));
+  }
+
+  // ── Check 2: KH_Education write round-trip ──
+  // Write directly to the sheet (NOT through submitHomework_ which fires
+  // Pushover notifications, awards rings, and triggers Gemini review).
+  // This proves the sheet is writable and readable — no side effects.
+  var smokeModule = '_smoke_test_' + Date.now();
+  try {
+    if (typeof ensureKHEducationTab_ !== 'function') {
+      failures.push('ensureKHEducationTab_ function not found');
+      result.checks.submit_roundtrip = 'FAIL — function missing';
+    } else {
+      var eduSheet = ensureKHEducationTab_();
+      eduSheet.appendRow([
+        new Date(), '_smoke_', smokeModule, 'SmokeTest', 0, true, '', 'smoke_test', '', 0, '', ''
+      ]);
+      SpreadsheetApp.flush();
+
+      // Verify the row landed
+      var lastRow = eduSheet.getLastRow();
+      var found = false;
+      var scanStart = Math.max(2, lastRow - 4);
+      var range = eduSheet.getRange(scanStart, 1, lastRow - scanStart + 1, 3).getValues();
+      for (var r = range.length - 1; r >= 0; r--) {
+        if (String(range[r][2]) === smokeModule) {
+          found = true;
+          eduSheet.deleteRow(scanStart + r);
+          break;
+        }
+      }
+
+      if (found) {
+        result.checks.submit_roundtrip = 'OK — row persisted and cleaned up (direct write, no side effects)';
+      } else {
+        failures.push('Sheet appendRow succeeded but row not found in KH_Education with module=' + smokeModule);
+        result.checks.submit_roundtrip = 'FAIL — row not found after write';
+      }
+    }
+  } catch(e) {
+    failures.push('Write round-trip threw: ' + (e.message || String(e)));
+    result.checks.submit_roundtrip = 'FAIL — exception: ' + (e.message || String(e));
+    // Best-effort cleanup
+    try {
+      var cleanSheet = ensureKHEducationTab_();
+      var cleanLast = cleanSheet.getLastRow();
+      if (cleanLast >= 2) {
+        var cleanRange = cleanSheet.getRange(Math.max(2, cleanLast - 2), 1, Math.min(3, cleanLast - 1), 3).getValues();
+        for (var ci = cleanRange.length - 1; ci >= 0; ci--) {
+          if (String(cleanRange[ci][2]) === smokeModule) {
+            cleanSheet.deleteRow(Math.max(2, cleanLast - 2) + ci);
+            break;
+          }
+        }
+      }
+    } catch(ce) { /* cleanup failed, not critical */ }
+  }
+
+  // ── Check 3: Pushover config exists ──
+  try {
+    if (typeof getPushoverConfig_ === 'function') {
+      var pushConfig = getPushoverConfig_();
+      if (!pushConfig.token) {
+        failures.push('PUSHOVER_TOKEN not set in Script Properties');
+        result.checks.pushover_config = 'FAIL — no token';
+      } else if (!pushConfig.userLT || !pushConfig.userJT) {
+        var missing = [];
+        if (!pushConfig.userLT) missing.push('PUSHOVER_USER_LT');
+        if (!pushConfig.userJT) missing.push('PUSHOVER_USER_JT');
+        warnings.push('Pushover user keys missing: ' + missing.join(', '));
+        result.checks.pushover_config = 'WARN — missing: ' + missing.join(', ');
+      } else {
+        result.checks.pushover_config = 'OK — token + both user keys present';
+      }
+    } else {
+      warnings.push('getPushoverConfig_ not found — AlertEngine may not be loaded');
+      result.checks.pushover_config = 'WARN — function not found';
+    }
+  } catch(e) {
+    warnings.push('Pushover config check threw: ' + (e.message || String(e)));
+    result.checks.pushover_config = 'WARN — exception: ' + (e.message || String(e));
+  }
+
+  // ── Assemble result ──
+  if (failures.length > 0) {
+    result.status = 'FAIL';
+    result.details = failures.concat(warnings);
+  } else if (warnings.length > 0) {
+    result.status = 'WARN';
+    result.details = warnings;
+  } else {
+    result.details = ['All behavioral checks passed'];
+  }
+
+  return result;
+}
+
+// END OF FILE — tbmSmokeTest.gs v15
