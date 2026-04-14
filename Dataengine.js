@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v90 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v92 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 90; }
+function getDataEngineVersion() { return 92; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -335,6 +335,10 @@ function getData(startStr, endStr, includeDebt) {
   var rawBankActivity = 0;
   var ccPayments = 0;
   var loanPayments = 0;
+  // v91: Track total debt payments in main loop (was IIFE at export time).
+  // Used for totalCashFlow = true all-cash-in minus all-cash-out.
+  var DEBT_PAY_CATS_MAIN = ['CC Payment', 'LOC Payment', 'Loan Payment', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
+  var debtPaymentsMTD = 0;
 
   for (var t = 1; t < txData.length; t++) {
     var txDate = txData[t][1];   // Col B
@@ -366,6 +370,12 @@ function getData(startStr, endStr, includeDebt) {
     }
     if (txCat === 'CC Payment') ccPayments += amt;
     if (txCat === 'Loan Payment') loanPayments += amt;
+    // v91: Accumulate debt payments for totalCashFlow
+    // Trim matches old IIFE behavior (String(...).trim()) — handles whitespace in Tiller imports
+    var _txCatTrimmed = String(txCat || '').trim();
+    if (amt < 0 && DEBT_PAY_CATS_MAIN.indexOf(_txCatTrimmed) >= 0) {
+      debtPaymentsMTD += Math.abs(amt);
+    }
   }
 
   totalMoneyIn = earnedIncome + loanProceeds + balanceTransfers;
@@ -488,9 +498,9 @@ function getData(startStr, endStr, includeDebt) {
       totalAssets += entry.balance;
       assetCount++;
     } else if (entry.cls === 'Liability') {
-      var liabBal = Math.abs(entry.balance);
-      if (entry.balance < 0) liabBal = 0;
-      totalLiabilities += liabBal;
+      // v91: Match convention used by diagBalanceSheet, stampCloseMonth, liabilityAccounts.
+      // Negative balance = overpaid account (credit) — still include as abs value.
+      totalLiabilities += Math.abs(entry.balance);
       liabCount++;
     }
   }
@@ -644,7 +654,11 @@ function getData(startStr, endStr, includeDebt) {
 
   // ── 7. Compute derived metrics ──
   var operationalCashFlow = earnedIncome - operatingExpenses;
-  var netCashFlow = totalMoneyIn - operatingExpenses;
+  // v91: totalCashFlow = true all-cash metric (includes debt payments as cash out)
+  // Uses earnedIncome + loanProceeds (real cash sources), NOT totalMoneyIn which
+  // includes balanceTransfers (card-to-card debt moves, not real cash inflows).
+  var trueCashIn = earnedIncome + loanProceeds;
+  var totalCashFlow = trueCashIn - operatingExpenses - debtPaymentsMTD;
 
   var startM = startDate.getMonth();
   var endM = endDate.getMonth();
@@ -810,8 +824,11 @@ function getData(startStr, endStr, includeDebt) {
     operationalCashFlow: roundTo(operationalCashFlow, 2),
     bridgeCash: roundTo(loanProceeds, 2),
     bridgeCashLabel: loanProceeds > 0 ? 'LOC / Loan Draw' : '',
-    'netCashFlow (All Money In \u2212 Out)': roundTo(operationalCashFlow + loanProceeds, 2),
+    // v91: Renamed label to match actual computation (opex only, no debt payments)
+    'netCashFlow (Operating Net + LOC)': roundTo(operationalCashFlow + loanProceeds, 2),
     netCashFlow: roundTo(operationalCashFlow + loanProceeds, 2),
+    // v91: True all-cash metric — includes debt payments as money out
+    totalCashFlow: roundTo(totalCashFlow, 2),
 
     // WeeklyCashMap
     weeklyCashMin: weeklyCashMap.weeklyCashMin,
@@ -853,22 +870,8 @@ cashFlowPositiveDate: (function() {
   return _cfpMS[_cfpLater.getMonth()] + ' ' + _cfpLater.getFullYear();
 })(),
 
-    // ── Debt payments for this date range (v43) ──
-    // Previously only in getSimulatorData(). Adding to getData() so prior-month
-    // views in ThePulse show correct debt payments, not current-month fallback.
-    debtPaymentsMTD: (function() {
-      var _dpm = 0;
-      var _DEBT_PAY = ['CC Payment', 'LOC Payment', 'Loan Payment', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
-      for (var _t = 1; _t < txData.length; _t++) {
-        var _td = txData[_t][1], _tc = String(txData[_t][3]||'').trim(), _ta = parseFloat(txData[_t][4])||0;
-        if (!_td||!_tc) continue;
-        if (typeof _td==='string') _td=new Date(_td);
-        if (!(_td instanceof Date)||isNaN(_td.getTime())) continue;
-        if (_td<startDate||_td>endDate) continue;
-        if (_ta<0 && _DEBT_PAY.indexOf(_tc)>=0) _dpm+=Math.abs(_ta);
-      }
-      return roundTo(_dpm,2);
-    })(),
+    // v91: debtPaymentsMTD now computed in main tx loop (no second scan needed)
+    debtPaymentsMTD: roundTo(debtPaymentsMTD, 2),
     debtPaymentDetail: (function() {
       var _dpd = {};
       var _DEBT_PAY2 = ['CC Payment', 'LOC Payment', 'Loan Payment', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
@@ -1291,24 +1294,24 @@ function readDebtExportMeta(key) {
 /**
  * Compute non-mortgage debt baseline from Balance History.
  * v22 FIX: Three bugs caused $299K → $242K regression — all fixed.
- * See v22 changelog for details.
+ * v91: Use earliest closed month in Close History, not hardcoded Jan 2026.
  */
 function computeDebtBaseline() {
   // v73: Use cached reads when called within getData() scope
-  // ── v28 PRIMARY: Iterate Close History for January 2026 (not hardcoded row) ──
+  // ── v91: Find earliest closed month in Close History (was hardcoded to Jan 2026) ──
   var chData = de_readSheet_('Close History');
   if (chData && chData.length > 1) {
+    // Walk rows chronologically — first CLOSED row with a positive debt_current is the baseline
     for (var r = 1; r < chData.length; r++) {
-      var monthStr = String(chData[r][0] || '').trim().toLowerCase();
-      if (monthStr.indexOf('jan') >= 0 && monthStr.indexOf('2026') >= 0) {
-        var baseline = parseFloat(chData[r][7]);
-        if (baseline > 0) {
-          Logger.log('computeDebtBaseline: $' + Math.round(baseline) + ' from Close History row ' + (r+1) + ' (Jan 2026)');
-          return roundTo(baseline, 2);
-        }
+      var monthStr = String(chData[r][0] || '').trim();
+      var status = String(chData[r][1] || '').trim().toLowerCase();
+      var baseline = parseFloat(chData[r][7]);
+      if (monthStr && status === 'closed' && baseline > 0) {
+        Logger.log('computeDebtBaseline: $' + Math.round(baseline) + ' from Close History row ' + (r+1) + ' (' + monthStr + ')');
+        return roundTo(baseline, 2);
       }
     }
-    Logger.log('\u26a0\ufe0f computeDebtBaseline: Jan 2026 not found or zero in Close History \u2014 falling back to Balance History scan');
+    Logger.log('\u26a0\ufe0f computeDebtBaseline: No closed month with valid baseline in Close History \u2014 falling back to Balance History scan');
   } else {
     Logger.log('\u26a0\ufe0f computeDebtBaseline: Close History sheet not found \u2014 falling back to Balance History scan');
   }
@@ -1992,7 +1995,8 @@ function de_getDebtByType_(activeDebts, excludedDebts, mortgageBalance) {
 }
 
 /**
- * getPartnerBucketMap() — v17
+ * getPartnerBucketMap() — v17 (DEPRECATED v91: use getCategoryBucketMap_())
+ * Reads from Budget_Data.PartnerBucket — kept for backward compat.
  */
 function getPartnerBucketMap() {
   var data = de_readSheet_('Budget_Data');
@@ -2006,6 +2010,27 @@ function getPartnerBucketMap() {
     var cat = String(data[i][catIdx] || '').trim();
     var bucket = String(data[i][bucketIdx] || '').trim();
     if (cat && bucket) map[cat] = bucket;
+  }
+  return map;
+}
+
+/**
+ * getCategoryBucketMap_() — v91
+ * Canonical bucket mapping from Categories sheet (same source as getData).
+ * Strips numeric sort prefixes (e.g. "2-Fixed Expenses" → "Fixed Expenses")
+ * so both getData() and getSimulatorData() resolve to the same buckets.
+ */
+function getCategoryBucketMap_() {
+  var data = de_readSheet_('Categories');
+  if (!data || data.length < 2) return {};
+  var map = {};
+  for (var i = 1; i < data.length; i++) {
+    var cat = String(data[i][0] || '').trim();   // Col A: Category name
+    var rawBucket = String(data[i][4] || '').trim(); // Col E: Partner Bucket
+    if (!cat || !rawBucket) continue;
+    // Strip numeric sort prefix: "2-Fixed Expenses" → "Fixed Expenses"
+    var normalized = rawBucket.replace(/^\d+-/, '');
+    map[cat] = normalized;
   }
   return map;
 }
@@ -2026,7 +2051,8 @@ function getSimulatorData() {
   var m = now.getMonth(); // 0-indexed
   var ym = y + '-' + leftPad2_(m + 1);
 
-  var partnerBucketMap = getPartnerBucketMap();
+  // v91: Use canonical Categories source (same as getData) instead of Budget_Data
+  var partnerBucketMap = getCategoryBucketMap_();
   var BUCKET_KEYS = {
     'Fixed Expenses': 'fixedExpenses',
     'Necessary Living': 'necessaryLiving',
@@ -2354,7 +2380,7 @@ function getSimulatorData() {
     bucketBudgets: (function() {
       var _bdD3 = de_readSheet_('Budget_Data');
       if (!_bdD3 || _bdD3.length < 2) return {};
-      var _pbm = getPartnerBucketMap();
+      var _pbm = getCategoryBucketMap_();
       var _BKEYS2 = { 'Fixed Expenses': 'fixedExpenses', 'Necessary Living': 'necessaryLiving', 'Discretionary': 'discretionary', 'Debt Cost': 'debtCost' };
       var _XFER2 = ['Transfer: Internal', 'Transfer: LOC Draw', 'Balance Transfers', 'CC Payment', 'LOC Payment', 'Loan Payment', 'Investment', 'Payroll Deduction', 'Duplicate - Exclude', 'Debt Offset', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
       var _INCOME2 = ['JT Income', 'LT Income', 'Bonus Income', 'Other Income', 'Interest Income'];
@@ -2451,7 +2477,7 @@ function getSimulatorData() {
       'expenses.fixed_expenses.budget': (function() {
         var _bdD = de_readSheet_('Budget_Data');
         if (!_bdD || _bdD.length < 2) return 0;
-        var _pbm = getPartnerBucketMap();
+        var _pbm = getCategoryBucketMap_();
         var _total = 0;
         var _XFER = ['Transfer: Internal', 'Transfer: LOC Draw', 'Balance Transfers', 'CC Payment', 'LOC Payment', 'Loan Payment', 'Investment', 'Payroll Deduction', 'Duplicate - Exclude', 'Debt Offset', 'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'];
         var _INC = ['JT Income', 'LT Income', 'Bonus Income', 'Other Income', 'Interest Income'];
@@ -2761,7 +2787,10 @@ function getCloseHistoryData() {
       netCashFlow: roundTo(ncf, 2),
       operationalCashFlow: roundTo(earned - absMoneyOut, 2),
       debtCurrent: roundTo(debt, 2),
-      disc_actual: 0
+      // v91: Read discretionary from col I (8) if stampCloseMonth writes it;
+      // falls back to 0 until Close History schema is extended.
+      // TODO: Extend stampCloseMonth() to write discretionary spend to col I.
+      disc_actual: roundTo(parseFloat(data[i][8]) || 0, 2)
     });
   }
 
@@ -3412,4 +3441,4 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v90
+// END OF FILE — DataEngine v92

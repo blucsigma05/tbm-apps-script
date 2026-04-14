@@ -1,4 +1,4 @@
-// NotionBridge.gs v3
+// NotionBridge.gs v4
 // Pushes TBM health data to Notion for Custom Agent consumption.
 // Setup: Script Properties → NOTION_TOKEN = your integration token
 //        Script Properties → NOTION_HEALTH_DB = 82411a222f774ee59574e06d5ac76154
@@ -8,7 +8,7 @@
 //
 // Version history tracked in Notion deploy page. Do not add version comments here.
 
-function getNotionBridgeVersion() { return 3; }
+function getNotionBridgeVersion() { return 4; }
 
 // ═══════════════════════════════════════════════════════════════
 // SECTION 1: Configuration
@@ -66,7 +66,11 @@ function _collectHealthData() {
 
     log.push('KPI collection: OK');
   } catch (e) {
+    // v4: Fail closed — flag the failure so _determineStatus returns 'Error'
+    // and downstream consumers see explicit failure, not plausible zeros.
     log.push('KPI collection FAILED: ' + e.message);
+    result.kpiFailed = true;
+    result.kpiError = e.message;
     result.earnedIncome = 0;
     result.opExpenses = 0;
     result.cashFlow = 0;
@@ -218,6 +222,8 @@ function _pad(n) {
 // ═══════════════════════════════════════════════════════════════
 
 function _determineStatus(health) {
+  // v4: KPI engine failure overrides all other checks
+  if (health.kpiFailed) return 'Error';
   if (health.gateFail > 0 || health.uncategorized > 5) return 'Alert';
   if (health.gateWarn > 0 || health.uncategorized > 0 || health.rowPct > 80) return 'Warning';
   return 'Healthy';
@@ -240,6 +246,14 @@ function _buildPageContent(health) {
     }
   }
   lines.push('');
+
+  // v4: Fail-closed warning — show explicit error before KPI zeros
+  if (health.kpiFailed) {
+    lines.push('### ⚠️ KPI COLLECTION FAILED');
+    lines.push('DataEngine threw an error. All KPI values below are **zeros, not real data**.');
+    lines.push('Error: ' + (health.kpiError || 'unknown'));
+    lines.push('');
+  }
 
   // KPI snapshot
   lines.push('### KPI Snapshot');
@@ -543,4 +557,4 @@ function installWeeklyHealthPush() {
   Logger.log('✅ Weekly trigger installed: pushHealthSnapshot() every Wednesday ~10 AM');
 }
 
-// EOF — NotionBridge.gs v3
+// EOF — NotionBridge.gs v4
