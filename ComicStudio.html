@@ -464,7 +464,11 @@ main {
 .panel-slot canvas {
   display: block;
   width: 100%;
+  height: 100%;
   touch-action: none;
+}
+.panel-slot {
+  overflow: hidden;
 }
 .panel-slot.active {
   border-color: #F59E0B;
@@ -864,6 +868,7 @@ main {
   <button class="nav-tab" onclick="switchTab('caption')">Caption</button>
   <button class="nav-tab" onclick="switchTab('vocab')">Vocab</button>
   <button class="nav-tab" onclick="switchTab('preview')">Preview</button>
+  <button class="nav-tab" onclick="switchTab('gallery')">My Comics</button>
 </div>
 
 <div id="mode-brief-wrap" class="hidden"></div>
@@ -932,6 +937,14 @@ main {
     <div id="preview-area"></div>
     <button class="btn-primary" id="finish-btn" onclick="finishComic()">FINISH &amp; EARN RINGS</button>
     <div id="rings-cap-note"></div>
+  </div>
+
+  <!-- Gallery tab -->
+  <div id="tab-gallery" class="hidden">
+    <div class="section-label">MY COMICS</div>
+    <div id="gallery-list" style="display:flex;flex-wrap:wrap;gap:8px;padding:8px;">
+      <div style="color:#94a3b8;font-size:14px;">Loading your comics...</div>
+    </div>
   </div>
 
   <!-- Completion -->
@@ -1298,7 +1311,7 @@ function dismissPlan() {
 // ── Tab switching ──
 function switchTab(tab) {
   activeTab = tab;
-  const tabs = ['draw', 'caption', 'vocab', 'preview'];
+  const tabs = ['draw', 'caption', 'vocab', 'preview', 'gallery'];
   const btns = document.getElementById('nav-bar').getElementsByTagName('button');
   for (let i = 0; i < tabs.length; i++) {
     const el = document.getElementById(`tab-${tabs[i]}`);
@@ -1315,6 +1328,7 @@ function switchTab(tab) {
   }
   if (tab === 'preview') { renderPreview(); }
   if (tab === 'caption') { renderCaptions(); }
+  if (tab === 'gallery') { loadGallery(); }
 }
 
 // ── Layout picker ──
@@ -1328,6 +1342,10 @@ function buildLayoutPicker() {
 }
 
 function setLayout(count) {
+  if (count < panelCount) {
+    var lost = panelCount - count;
+    if (!confirm('This will delete ' + lost + ' panel' + (lost > 1 ? 's' : '') + ' and their drawings. Continue?')) return;
+  }
   panelCount = count;
   activePanel = 0;
   buildLayoutPicker();
@@ -1381,14 +1399,14 @@ function setBrushSize(val) {
 }
 
 function clearPanel() {
-  if (panelContexts[activePanel]) {
-    const c = panelCanvases[activePanel];
-    panelContexts[activePanel].clearRect(0, 0, c.width, c.height);
-    panelContexts[activePanel].fillStyle = '#FFFFFF';
-    panelContexts[activePanel].fillRect(0, 0, c.width, c.height);
-    /* Prune replay history for this panel so replay matches final canvas */
-    replayBuffer = replayBuffer.filter(function(e) { return e.panel !== activePanel; });
-  }
+  if (!panelContexts[activePanel]) return;
+  if (!confirm('Clear Panel ' + (activePanel + 1) + '? This will erase your drawing.')) return;
+  const c = panelCanvases[activePanel];
+  panelContexts[activePanel].clearRect(0, 0, c.width, c.height);
+  panelContexts[activePanel].fillStyle = '#FFFFFF';
+  panelContexts[activePanel].fillRect(0, 0, c.width, c.height);
+  /* Prune replay history for this panel so replay matches final canvas */
+  replayBuffer = replayBuffer.filter(function(e) { return e.panel !== activePanel; });
 }
 
 // ── v9: Speech Bubble System ──────────────────────────────────────────────────
@@ -1748,7 +1766,24 @@ function buildPanelGrid() {
     panelContexts.push(ctx);
     attachPointerEvents(canvas, j);  // F1: use pointer events
   }
-  renderBubbles(); // v9: restore bubble overlays after grid rebuild
+  // Resize canvases to match actual display size after layout computes.
+  // Contexts are already valid above so rehydratePanels() can run immediately.
+  requestAnimationFrame(function() {
+    for (let k = 0; k < panelCanvases.length; k++) {
+      const c = panelCanvases[k];
+      const rect = c.getBoundingClientRect();
+      const w = Math.round(rect.width) || 400;
+      const h = Math.round(rect.height) || 400;
+      if (c.width !== w || c.height !== h) {
+        // Save current drawing, resize, restore
+        var imgData = panelContexts[k].getImageData(0, 0, c.width, c.height);
+        c.width = w;
+        c.height = h;
+        panelContexts[k].putImageData(imgData, 0, 0);
+      }
+    }
+  });
+  renderBubbles();
 }
 
 function selectPanel(idx) {
@@ -2315,6 +2350,67 @@ function startFresh() {
   }
   buildPanelGrid();
   renderCaptions();
+}
+
+// ── Gallery: list and view saved comics ──
+function loadGallery() {
+  const list = document.getElementById('gallery-list');
+  list.innerHTML = '<div style="color:#94a3b8;font-size:14px;">Loading your comics...</div>';
+  google.script.run
+    .withSuccessHandler(function(drafts) {
+      if (!drafts || drafts.length === 0) {
+        list.innerHTML = '<div style="color:#94a3b8;font-size:14px;padding:20px;">No saved comics yet. Draw one and it auto-saves!</div>';
+        return;
+      }
+      let html = '';
+      for (let i = 0; i < drafts.length; i++) {
+        const d = drafts[i];
+        const parts = d.date.split('-');
+        const label = parts.length === 3 ? (parseInt(parts[1]) + '/' + parseInt(parts[2]) + '/' + parts[0]) : d.date;
+        const isToday = d.date === new Date().toISOString().slice(0, 10);
+        html += '<div onclick="viewComic(\'' + d.date + '\')" style="' +
+          'background:#1E293B;border:2px solid ' + (isToday ? '#F59E0B' : '#334155') + ';border-radius:8px;' +
+          'padding:16px;cursor:pointer;min-width:120px;text-align:center;'  +
+          'transition:border-color 0.2s;">' +
+          '<div style="font-size:28px;margin-bottom:6px;">\uD83D\uDCDD</div>' +
+          '<div style="color:#F8FAFC;font-weight:600;font-size:14px;">' + label + '</div>' +
+          (isToday ? '<div style="color:#F59E0B;font-size:11px;margin-top:4px;">TODAY</div>' : '') +
+          '</div>';
+      }
+      list.innerHTML = html;
+    })
+    .withFailureHandler(function(e) {
+      list.innerHTML = '<div style="color:#EF4444;font-size:14px;">Could not load comics: ' + e.message + '</div>';
+    })
+    .listComicDraftsSafe(CHILD);
+}
+
+function viewComic(dateKey) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (dateKey === today) {
+    switchTab('draw');
+    return;
+  }
+  document.getElementById('gallery-list').innerHTML =
+    '<div style="color:#94a3b8;font-size:14px;">Loading comic from ' + dateKey + '...</div>';
+  google.script.run
+    .withSuccessHandler(function(draft) {
+      if (!draft) {
+        document.getElementById('gallery-list').innerHTML =
+          '<div style="color:#EF4444;">Comic not found.</div>';
+        return;
+      }
+      applyDraftState(draft);
+      rehydratePanels(draft).then(function() {
+        switchTab('draw');
+        setAutosaveIndicator('viewing ' + dateKey);
+      });
+    })
+    .withFailureHandler(function(e) {
+      document.getElementById('gallery-list').innerHTML =
+        '<div style="color:#EF4444;">Error: ' + e.message + '</div>';
+    })
+    .loadComicDraftByDateSafe(CHILD, dateKey);
 }
 
 // ── F4 Day 2: Mode brief rendering ──
