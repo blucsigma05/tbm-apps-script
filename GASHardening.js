@@ -5,7 +5,7 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 8; }
+function getGASHardeningVersion() { return 9; }
 
 // v6: openById migration — trigger-safe spreadsheet accessor
 var _ghSS = null;
@@ -1907,5 +1907,53 @@ function diagPreQA() {
 }
 
 
-// END OF FILE — GAS HARDENING v8
+// ═══════════════════════════════════════════════════════════════
+// 9. STAGED WRITES (F12)
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * writeStaged_: buffer rows in a hidden staging tab, validate, then promote to production.
+ * Must be called within an active LockService scope — the lock guards the full
+ * stage → validate → promote sequence so no concurrent writer can race it.
+ *
+ * On validation failure the staging tab is left populated for post-mortem inspection.
+ * On success the staging tab is cleared.
+ *
+ * @param {string}       key       - staging key; staging tab name = '_STAGING_' + key
+ * @param {Array<Array>} rows      - 2D array of values to stage and validate
+ * @param {Function}     validator - function(rows) → {ok:boolean, reason:string}
+ * @param {Function}     writer    - called with no args after validation passes; does real write
+ * @return {{ok:boolean, reason:string}}
+ */
+function writeStaged_(key, rows, validator, writer) {
+  var ss = gh_getSS_();
+  var stagingName = '_STAGING_' + key;
+  var staging = ss.getSheetByName(stagingName);
+  try {
+    if (!staging) {
+      staging = ss.insertSheet(stagingName);
+      staging.hideSheet();
+    } else {
+      staging.clearContents();
+    }
+    if (rows && rows.length > 0 && rows[0] && rows[0].length > 0) {
+      staging.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+    }
+    var result = validator(rows);
+    if (!result.ok) {
+      // Leave staging populated for post-mortem; do not promote
+      logError_('writeStaged_[' + key + ']', new Error('Validation failed: ' + result.reason));
+      return { ok: false, reason: result.reason };
+    }
+    writer();
+    staging.clearContents();
+    return { ok: true, reason: '' };
+  } catch (e) {
+    logError_('writeStaged_[' + key + ']', e);
+    return { ok: false, reason: 'writeStaged_ threw: ' + e.message };
+  }
+}
+
+
+// END OF FILE — GAS HARDENING v9
 // ═══════════════════════════════════════════════════════════════

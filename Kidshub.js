@@ -1349,19 +1349,40 @@ function khCompleteTask(rowIndex, expectedTaskID) {
     // v25: Batch write — modify row in memory, single writeback
     row[khCol_(h, 'Completed')] = true;
     row[khCol_(h, 'Completed_Date')] = getTodayISO_();
-    sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
-    // v36: Verify write persisted (diagnostic for task-revert bug)
-    var verifyRow = sheet.getRange(rowIndex, 1, 1, h.length).getValues()[0];
-    var verifyDone = verifyRow[khCol_(h, 'Completed')] === true ||
-      String(verifyRow[khCol_(h, 'Completed')]).toUpperCase() === 'TRUE';
-    if (!verifyDone) {
-      console.log('KH_VERIFY_FAIL', JSON.stringify({
-        fn: 'khCompleteTask', taskID: taskID, rowIndex: rowIndex,
-        wrote: true, readBack: verifyRow[khCol_(h, 'Completed')],
-        timestamp: getNowISO_()
-      }));
-      sheet.getRange(rowIndex, khCol_(h, 'Completed') + 1).setValue(true);
-      sheet.getRange(rowIndex, khCol_(h, 'Completed_Date') + 1).setValue(getTodayISO_());
+    // v66(F12): staged write — validate before promotion to prevent bad rows reaching production
+    var staged = writeStaged_(
+      'KH_Chores',
+      [row],
+      (function(hh, tid) {
+        return function(rows) {
+          if (!rows || rows.length !== 1) return { ok: false, reason: 'expected 1 row' };
+          var r = rows[0];
+          if (!r[khCol_(hh, 'Task_ID')]) return { ok: false, reason: 'Task_ID empty' };
+          if (r[khCol_(hh, 'Task_ID')] !== tid) return { ok: false, reason: 'Task_ID mismatch: ' + tid };
+          if (r[khCol_(hh, 'Completed')] !== true) return { ok: false, reason: 'Completed not true' };
+          if (!r[khCol_(hh, 'Child')]) return { ok: false, reason: 'Child empty' };
+          return { ok: true, reason: '' };
+        };
+      })(h, taskID),
+      (function(sh, ri, hh, rw) {
+        return function() {
+          sh.getRange(ri, 1, 1, hh.length).setValues([rw]);
+          // v36: Verify write persisted (diagnostic for task-revert bug)
+          var verify = sh.getRange(ri, 1, 1, hh.length).getValues()[0];
+          if (verify[khCol_(hh, 'Completed')] !== true &&
+              String(verify[khCol_(hh, 'Completed')]).toUpperCase() !== 'TRUE') {
+            console.log('KH_VERIFY_FAIL', JSON.stringify({
+              fn: 'khCompleteTask', taskID: rw[khCol_(hh, 'Task_ID')], rowIndex: ri,
+              wrote: true, readBack: verify[khCol_(hh, 'Completed')], timestamp: getNowISO_()
+            }));
+            sh.getRange(ri, khCol_(hh, 'Completed') + 1).setValue(true);
+            sh.getRange(ri, khCol_(hh, 'Completed_Date') + 1).setValue(getTodayISO_());
+          }
+        };
+      })(sheet, rowIndex, h, row)
+    );
+    if (!staged.ok) {
+      return JSON.stringify({ status: 'error', message: 'Write validation failed: ' + staged.reason });
     }
     appendHistory_(uid, taskID, child, task, 0, basePoints, mult, 'completion', today, now);
     updateStreakCache_(child.toLowerCase(), taskID, today);
@@ -1426,7 +1447,30 @@ function khCompleteTaskWithBonus(rowIndex, multiplier, expectedTaskID) {
     }
     row[khCol_(h, 'Completed')] = true;
     row[khCol_(h, 'Completed_Date')] = today;
-    sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
+    // v66(F12): staged write — validate before promotion to prevent bad rows reaching production
+    var stagedBonus = writeStaged_(
+      'KH_Chores',
+      [row],
+      (function(hh, tid, vm) {
+        return function(rows) {
+          if (!rows || rows.length !== 1) return { ok: false, reason: 'expected 1 row' };
+          var r = rows[0];
+          if (!r[khCol_(hh, 'Task_ID')]) return { ok: false, reason: 'Task_ID empty' };
+          if (r[khCol_(hh, 'Task_ID')] !== tid) return { ok: false, reason: 'Task_ID mismatch: ' + tid };
+          if (r[khCol_(hh, 'Completed')] !== true) return { ok: false, reason: 'Completed not true' };
+          if (!r[khCol_(hh, 'Child')]) return { ok: false, reason: 'Child empty' };
+          var mult = parseFloat(r[khCol_(hh, 'Bonus_Multiplier')]);
+          if (isNaN(mult) || mult < 1) return { ok: false, reason: 'Bonus_Multiplier invalid: ' + mult };
+          return { ok: true, reason: '' };
+        };
+      })(h, taskID, validMult),
+      (function(sh, ri, hh, rw) {
+        return function() { sh.getRange(ri, 1, 1, hh.length).setValues([rw]); };
+      })(sheet, rowIndex, h, row)
+    );
+    if (!stagedBonus.ok) {
+      return JSON.stringify({ status: 'error', message: 'Write validation failed: ' + stagedBonus.reason });
+    }
     appendHistory_(uid, taskID, child, task, 0, basePoints, validMult, 'completion', today, now);
     updateStreakCache_(child.toLowerCase(), taskID, today);
     if (child.toUpperCase() === 'BOTH') {
