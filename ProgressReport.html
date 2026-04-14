@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="progress-report">
-<meta name="tbm-version" content="v4">
+<meta name="tbm-version" content="v5">
 <title>Weekly Progress Report</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -507,7 +507,7 @@ main {
 
 <script>
 var MODULE_NAME = 'progress-report';
-var MODULE_VERSION = 'v2';
+var MODULE_VERSION = 'v3';
 var activeTab = 'buggsy';
 var reportData = null;
 var pendingItems = [];
@@ -620,7 +620,7 @@ function renderBuggsy(data) {
   var streak = b.streak || 0;
   var done = b.sessionsCompleted || 0;
   var total = b.sessionsTotal || 5;
-  var avgPct = b.avgScore !== null && b.avgScore !== undefined ? Math.round(b.avgScore) : null;
+  var avgPct = (b.avgScore !== null && b.avgScore !== undefined) ? Math.round(b.avgScore) : null;
   var completion = b.completionRate !== null && b.completionRate !== undefined ? b.completionRate : Math.min(100, Math.round((done / total) * 100));
   var pending = b.pendingReview || 0;
 
@@ -762,20 +762,20 @@ function renderOverview(data) {
   html += '<div class="section-label">FAMILY OVERVIEW</div>';
   html += '<div class="overview-card">';
   html += '<h3>BUGGSY</h3>';
-  html += '<div class="overview-row"><span class="overview-label">Rings This Week</span><span class="overview-value">' + b.ringsThisWeek + '</span></div>';
-  html += '<div class="overview-row"><span class="overview-label">Total Rings</span><span class="overview-value">' + b.ringsTotal + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Rings This Week</span><span class="overview-value">' + (b.ringsThisWeek || 0) + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Total Rings</span><span class="overview-value">' + (b.ringsTotal !== null && b.ringsTotal !== undefined ? b.ringsTotal : '--') + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + (b.sessionsCompleted !== null && b.sessionsCompleted !== undefined ? b.sessionsCompleted + '/' + b.sessionsTotal : '--') + '</span></div>';
-  html += '<div class="overview-row"><span class="overview-label">Avg Score</span><span class="overview-value">' + (b.avgScore ? Math.round(b.avgScore) + '%' : '--') + '</span></div>';
-  html += '<div class="overview-row"><span class="overview-label">Streak</span><span class="overview-value">' + b.streak + ' days</span></div>';
-  html += '<div class="overview-row"><span class="overview-label">Time Spent</span><span class="overview-value">' + (b.timeSpent || 0) + ' min</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Avg Score</span><span class="overview-value">' + (b.avgScore !== null && b.avgScore !== undefined ? Math.round(b.avgScore) + '%' : '--') + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Streak</span><span class="overview-value">' + (b.streak || 0) + ' days</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Time Spent</span><span class="overview-value">' + (b.timeSpent !== null && b.timeSpent !== undefined ? b.timeSpent + ' min' : '--') + '</span></div>';
   html += '</div>';
 
   html += '<div class="overview-card">';
   html += '<h3>JJ (KINDLE)</h3>';
-  html += '<div class="overview-row"><span class="overview-label">Stars This Week</span><span class="overview-value">' + j.starsThisWeek + '</span></div>';
-  html += '<div class="overview-row"><span class="overview-label">Total Stars</span><span class="overview-value">' + j.starsTotal + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Stars This Week</span><span class="overview-value">' + (j.starsThisWeek || 0) + '</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Total Stars</span><span class="overview-value">' + (j.starsTotal !== null && j.starsTotal !== undefined ? j.starsTotal : '--') + '</span></div>';
   html += '<div class="overview-row"><span class="overview-label">Sessions</span><span class="overview-value">' + (j.sessionsCompleted !== null && j.sessionsCompleted !== undefined ? j.sessionsCompleted + '/' + j.sessionsTotal : 'Not yet tracked') + '</span></div>';
-  html += '<div class="overview-row"><span class="overview-label">Streak</span><span class="overview-value">' + j.streak + ' days</span></div>';
+  html += '<div class="overview-row"><span class="overview-label">Streak</span><span class="overview-value">' + (j.streak || 0) + ' days</span></div>';
   html += '</div>';
 
   var allAlerts = [];
@@ -942,8 +942,9 @@ function loadData() {
       })
       .getWeeklyProgressSafe();
   } else {
-    // No google.script.run — offline/dev environment. Use mock data.
-    useMockData();
+    // No google.script.run — not running inside GAS. Show a clear error rather than
+    // silently rendering mock zeros which could mask real data problems.
+    showLoadError({ message: 'Not running inside Apps Script. Open via the deployed GAS web app.' });
   }
 }
 
@@ -966,51 +967,6 @@ function showLoadError(err) {
       '</div>';
     loadEl.className = 'loading-wrap';
   }
-}
-
-// useMockData is for local dev/offline only (when google.script.run is unavailable).
-// It mirrors the Phase 1 tier-classified shape so the renderer paths stay testable.
-// Production failure path is showLoadError() — not this function.
-function useMockData() {
-  reportData = {
-    buggsy: {
-      name: 'Buggsy',
-      child: 'buggsy',
-      ringsThisWeek: 0,
-      ringsTotal: null,
-      streak: 0,
-      completionRate: 0,
-      sessionsCompleted: 0,
-      sessionsTotal: 5,
-      avgScore: null,
-      pendingReview: 0,
-      timeSpent: null,
-      subjects: [],
-      weekLog: [],
-      milestones: [],
-      tierB_blocked: false,
-      tierB_reason: null,
-      alerts: []
-    },
-    jj: {
-      name: 'JJ (Kindle)',
-      child: 'jj',
-      starsThisWeek: 0,
-      starsTotal: null,
-      streak: 0,
-      sessionsCompleted: null,
-      sessionsTotal: 5,
-      completionRate: null,
-      avgScore: null,
-      pendingReview: 0,
-      milestones: [],
-      weekLog: [],
-      tierB_blocked: true,
-      tierB_reason: 'jj-lesson-run-data-model',
-      alerts: []
-    }
-  };
-  onDataLoaded();
 }
 
 function onDataLoaded() {
