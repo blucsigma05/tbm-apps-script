@@ -1,0 +1,116 @@
+# .github/workflows/rail-watchdog.yml
+# Rail Liveness Watchdog (F16) — pages when a scheduled safety rail has not run successfully
+# within its expected interval. Runs daily; checks last successful run of each rail.
+# Sends Pushover alert if any rail is stale.
+
+name: Rail Liveness Watchdog
+
+on:
+  schedule:
+    - cron: '0 16 * * *'   # Daily 16:00 UTC (10:00 Central) — after most rails have run
+  workflow_dispatch:
+
+permissions:
+  actions: read
+
+jobs:
+  watchdog:
+    name: Check scheduled rail liveness
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check rail last-success timestamps
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+        run: |
+          # Rails and their maximum allowed silence intervals (seconds).
+          # Interval is 2x the scheduled frequency to tolerate one missed run.
+          python3 - <<'PY'
+          import os, json, subprocess, sys
+          from datetime import datetime, timezone
+
+          RAILS = [
+            # (workflow_filename, display_name, max_silence_seconds)
+            ("hyg-06-version-drift.yml",       "HYG-06 version-drift",    172800),  # daily → 48h
+            ("hyg-07-secrets-audit.yml",       "HYG-07 secrets-audit",    172800),  # daily → 48h
+            ("hyg-01-stale-branches.yml",      "HYG-01 stale-branches",   604800),  # weekly → 14d
+            ("hyg-02-orphaned-prs.yml",        "HYG-02 orphaned-prs",     172800),  # daily → 48h
+            ("hyg-03-integration-map-drift.yml","HYG-03 map-drift",        604800),  # weekly → 14d
+            ("hyg-04-claude-md-bloat.yml",     "HYG-04 claudemd-bloat",   2592000), # bi-monthly → 60d
+            ("hyg-05-parking-lot-age.yml",     "HYG-05 parking-lot",      172800),  # daily → 48h
+            ("hyg-08-dead-workflows.yml",      "HYG-08 dead-workflows",   604800),  # weekly → 14d
+            ("hyg-11-trust-backlog-age.yml",   "HYG-11 trust-backlog",    2592000), # monthly → 60d
+            ("hyg-13-knowledge-graph-diff.yml","HYG-13 kg-diff",          604800),  # weekly → 14d
+          ]
+
+          token = os.environ["GITHUB_TOKEN"]
+          repo = os.environ["GITHUB_REPOSITORY"]
+          now = datetime.now(timezone.utc)
+          stale = []
+
+          for filename, display, max_silence in RAILS:
+            url = (
+              f"https://api.github.com/repos/{repo}/actions/workflows/{filename}/runs"
+              f"?status=success&per_page=1"
+            )
+            result = subprocess.run(
+              ["curl", "-sS", "-H", f"Authorization: Bearer {token}",
+               "-H", "Accept: application/vnd.github+json",
+               "-H", "X-GitHub-Api-Version: 2022-11-28", url],
+              capture_output=True, text=True
+            )
+            try:
+              data = json.loads(result.stdout)
+              runs = data.get("workflow_runs", [])
+              if not runs:
+                age_secs = float("inf")
+                last_ran = "NEVER"
+              else:
+                updated_at = runs[0]["updated_at"]  # ISO8601 UTC
+                last_ran_dt = datetime.fromisoformat(updated_at.replace("Z", "+00:00"))
+                age_secs = (now - last_ran_dt).total_seconds()
+                last_ran = updated_at[:16] + "Z"
+            except Exception as e:
+              age_secs = float("inf")
+              last_ran = f"ERROR:{e}"
+
+            age_h = age_secs / 3600
+            max_h = max_silence / 3600
+            if age_secs > max_silence:
+              stale.append(f"  ❌ {display} — last success: {last_ran} ({age_h:.0f}h ago, limit {max_h:.0f}h)")
+              print(f"STALE: {display} — {last_ran} ({age_h:.0f}h > {max_h:.0f}h)")
+            else:
+              print(f"OK:    {display} — {last_ran} ({age_h:.0f}h <= {max_h:.0f}h)")
+
+          if stale:
+            print(f"\n::error::Rail watchdog — {len(stale)} stale rail(s) detected:")
+            for s in stale:
+              print(s)
+
+            pushover_user = os.environ.get("PUSHOVER_USER_KEY", "")
+            pushover_token = os.environ.get("PUSHOVER_APP_TOKEN", "")
+            if pushover_user and pushover_token:
+              msg = f"Rail watchdog: {len(stale)} stale rail(s)\n" + "\n".join(stale)
+              run_url = (
+                f"{os.environ.get('GITHUB_SERVER_URL','')}"
+                f"/{repo}/actions/runs/{os.environ.get('GITHUB_RUN_ID','')}"
+              )
+              subprocess.run([
+                "curl", "-sS",
+                "--form-string", f"token={pushover_token}",
+                "--form-string", f"user={pushover_user}",
+                "--form-string", "title=TBM Rail Watchdog ⚠️",
+                "--form-string", f"message={msg}",
+                "--form-string", f"url={run_url}",
+                "--form-string", "url_title=View watchdog run",
+                "--form-string", "priority=1",
+                "https://api.pushover.net/1/messages.json"
+              ], check=False)
+            sys.exit(1)
+          else:
+            print("\nAll rails are live.")
+          PY
