@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v88 — Apps Script Router (TBM Consolidated)
+// Code.gs v89 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 88; }
+function getCodeVersion() { return 89; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -1272,7 +1272,10 @@ function healthCheck() {
     'getWeeklyProgressSafe',
     // v174: NotionEngine.js — renamed to avoid overriding Code.js handlers
     'notionLogHomeworkSafe', 'notionLogSparkleProgressSafe', 'notionApproveHomeworkSafe',
-    'getPendingReviewsSafe'
+    'getPendingReviewsSafe',
+    // v89: Close cockpit endpoints (TV-017 wiring verification)
+    'runMERGatesSafe', 'stampCloseMonthSafe',
+    'getRecentTransactionsSafe', 'getCloseProofSafe'
   ];
   var allOk = true;
   for (var fi = 0; fi < fns.length; fi++) {
@@ -1892,4 +1895,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v88
+// END OF FILE — Code.gs v89
