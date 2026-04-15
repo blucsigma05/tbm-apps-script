@@ -75,10 +75,10 @@ test.describe('Homework: Plan Your Attack → answer flow → completion', funct
     await shimGAS(page, FIXTURES);
 
     await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForTimeout(6000);
 
-    // Plan Your Attack screen should be visible
-    await expect(page.locator('.es-plan-attack')).toBeVisible({ timeout: 15000 });
+    // Plan Your Attack screen should be visible — wait for dynamic render (ExecSkills.showPlanYourAttack
+    // injects .es-plan-attack into #plan-overlay after getTodayContentSafe returns).
+    await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
 
     // Click ready button to start session
     await page.locator('.es-ready-btn').click();
@@ -119,8 +119,9 @@ test.describe('Homework: wrong answer shows purple not red', function() {
     await shimGAS(page, FIXTURES);
 
     await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForTimeout(6000);
 
+    // Wait for Plan Your Attack to render before clicking the ready button.
+    await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
     // Start the session
     await page.locator('.es-ready-btn').click();
     await page.waitForTimeout(2000);
