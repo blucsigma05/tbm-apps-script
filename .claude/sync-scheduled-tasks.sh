@@ -62,11 +62,12 @@ for src_dir in "$SRC"/*/; do
     fi
   else
     mkdir -p "$dest_dir"
-    cp "$src_skill" "$dest_skill"
-    if [ ! -f "$dest_skill.was" ]; then
-      echo "  ADDED $task_name"
-    else
+    if [ -f "$dest_skill" ]; then
+      cp "$src_skill" "$dest_skill"
       echo "  UPDATED $task_name"
+    else
+      cp "$src_skill" "$dest_skill"
+      echo "  ADDED $task_name"
     fi
   fi
   changed=$((changed + 1))

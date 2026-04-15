@@ -11,11 +11,12 @@ Find stale PRs and report what's blocking them.
 2. For each PR, compute age = `now - createdAt` in hours.
 3. Filter to PRs older than 24 hours.
 4. For each stale PR, infer what's blocking it from labels:
-   - `pipeline:codex-review` → Codex
-   - `pipeline:awaiting-fix` → author
+   - `pipeline:waiting` → Codex or CI in progress
+   - `pipeline:fix-needed` → author
+   - `pipeline:stalled` → blocked, needs triage
    - `needs:lt-decision` → LT
    - No pipeline label → CI not started
-   - Has `pipeline:passed` but unmerged → ready to merge
+   - Has `pipeline:ready` but unmerged → ready to merge
 
 ## Output
 
