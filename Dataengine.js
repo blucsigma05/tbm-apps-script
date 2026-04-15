@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v95 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v96 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 95; }
+function getDataEngineVersion() { return 96; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -2874,7 +2874,10 @@ function getCloseHistoryData() {
       proofStatus: proofStatus,
       proofTimestamp: proofTimestamp,
       closeNote: closeNote,
-      openItems: openItemsRaw ? String(openItemsRaw) : '',
+      openItems: (function(raw) {
+        if (!raw) return [];
+        try { var p = JSON.parse(raw); return Array.isArray(p) ? p : [String(raw)]; } catch(e) { return [String(raw)]; }
+      })(openItemsRaw),
       closeMode: closeMode,
       overrideRationale: overrideRationale
     });
@@ -3855,4 +3858,4 @@ function getCloseProofSafe(monthLabel) {
   });
 }
 
-// END OF FILE — DataEngine v95
+// END OF FILE — DataEngine v96
