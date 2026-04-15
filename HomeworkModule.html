@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v14">
+<meta name="tbm-version" content="v15">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -893,7 +893,7 @@ var ExecSkills = (function() {
     var textarea = document.getElementById('es-ej-textarea');
     var text = textarea ? textarea.value : '';
     if (!text || text.replace(/^\s+|\s+$/g, '').length < 5) {
-      if (textarea) { textarea.style.borderColor = '#ffc107'; textarea.placeholder = 'Write at least one sentence about WHY...'; }
+      if (textarea) { textarea.style.borderColor = '#ffc107'; textarea.placeholder = 'Write at least one sentence about WHY (explain your thinking).'; }
       return;
     }
     ExecSkills._journalData = { questionIndex: _selectedMissedQ, reflection: text.replace(/^\s+|\s+$/g, ''), timestamp: new Date().toISOString() };
@@ -2274,6 +2274,22 @@ function loadCurriculumContent() {
         );
         if (hasModuleQuestions) {
           MODULE = c.module;
+          // v15: Guard — normalize module shape so render functions never crash on undefined fields.
+          if (!MODULE.science) { MODULE.science = {}; }
+          MODULE.science.strand    = MODULE.science.strand    || '';
+          MODULE.science.teks      = MODULE.science.teks      || '';
+          MODULE.science.quickFact = MODULE.science.quickFact || '';
+          MODULE.science.passage   = MODULE.science.passage   || [];
+          MODULE.science.title     = MODULE.science.title     || '';
+          MODULE.science.questions = MODULE.science.questions || [];
+          if (!MODULE.math) { MODULE.math = {}; }
+          MODULE.math.strand    = MODULE.math.strand    || '';
+          MODULE.math.teks      = MODULE.math.teks      || '';
+          MODULE.math.quickFact = MODULE.math.quickFact || '';
+          MODULE.math.passage   = MODULE.math.passage   || [];
+          MODULE.math.title     = MODULE.math.title     || '';
+          MODULE.math.questions = MODULE.math.questions || [];
+          MODULE.date = MODULE.date || '';
           init();
         } else if (c.review_quiz && c.review_quiz.length > 0) {
           MODULE = { science: { title: 'Review', questions: c.review_quiz }, math: { title: 'Review', questions: [] } };
