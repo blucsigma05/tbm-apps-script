@@ -1,12 +1,12 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// AlertEngine.gs v10 — Push Notifications via Pushover API
+// AlertEngine.gs v11 — Push Notifications via Pushover API
 // WRITES TO: (Pushover API only — no sheet writes)
 // READS FROM: 💻🧮 Helpers (for config)
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
-function getAlertEngineVersion() { return 10; }
+function getAlertEngineVersion() { return 11; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor
 var _aeSS = null;
@@ -646,6 +646,27 @@ function dailyHealthCheck() {
     console.log('dailyHealthCheck Tiller freshness check failed: ' + e.message);
   }
 
+  // v11: Homework module shape check — fires SYSTEM_ERROR if any child's module is broken
+  try {
+    var hwChildren = ['buggsy', 'jj'];
+    for (var hc = 0; hc < hwChildren.length; hc++) {
+      if (typeof validateHomeworkShape_ === 'function') {
+        var hwResult = validateHomeworkShape_(hwChildren[hc]);
+        if (!hwResult.valid) {
+          sendPush_(
+            'Homework broken: ' + hwResult.child,
+            'Missing: ' + hwResult.missing.join(', ') + '. Fix before kids wake up.',
+            'LT',
+            PUSHOVER_PRIORITY.SYSTEM_ERROR
+          );
+          logError_('dailyHealthCheck', 'Homework shape invalid for ' + hwResult.child, hwResult.missing);
+        }
+      }
+    }
+  } catch(e) {
+    console.log('dailyHealthCheck homework shape check failed: ' + e.message);
+  }
+
   // Send all accumulated alerts
   for (var a = 0; a < alerts.length; a++) {
     sendPush_(alerts[a].title, alerts[a].msg, alerts[a].to, alerts[a].pri);
@@ -719,5 +740,5 @@ function checkTillerFreshness_() {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — AlertEngine v10
+// END OF FILE — AlertEngine v11
 // ════════════════════════════════════════════════════════════════════
