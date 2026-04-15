@@ -226,6 +226,12 @@ Every build spec must include BOTH a Deploy Manifest (Gate 4) AND a Feature Veri
 
 **What goes on the checklist:** specific hex colors, pixel dimensions, math/formula outputs, conditional logic, text content, state transitions, interaction behavior.
 
+### Gate 5b — Module Go-Live Preflight (automated, kid-facing deploys only)
+For every kid-facing module touched in the PR, run `modulePreflight(moduleId, kid, date)` from `Preflight.gs` for both kids and today's date. If any module returns `ready: false`, the surface MUST NOT go live. Pushover fires `blocked_check_chat`. Codex review comment must surface the failure summary.
+- Run after Gate 5 (feature verification) and before deploy.
+- Skip for PRs that touch no kid-facing HTML modules.
+- Trigger map for which audit fires after a clean preflight: see `audit-trigger-map.json` at repo root.
+
 ### Gate 6 — Pre-QA Diagnostic (automated)
 Run `diagPreQA()` from `GASHardening.gs` (Deploy Pipeline step 5). All categories must show PASS. Any FAIL blocks deploy. Captures: TAB_MAP integrity, lock service health, workbook reference, cache state, Pushover key validity.
 
@@ -373,6 +379,7 @@ HTML modules served via Cloudflare use the `google.script.run` shim which POSTs 
 | cloudflare-worker.js | CF Worker: smart proxy, PIN gate, Tiller freshness |
 | uptime-worker.js | CF Worker: uptime monitoring |
 | playwright.config.js | Playwright test configuration |
+| audit-trigger-map.json | Trigger-to-audit-role lookup (machine-readable). Canonical answer to "which audit fires when X happens?" |
 | CLAUDE.md | This file |
 
 ### CI/CD scripts (.github/scripts/)

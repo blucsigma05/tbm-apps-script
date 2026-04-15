@@ -567,6 +567,8 @@ main {
 </style>
 </head>
 <body>
+<!-- Preflight instrumentation: populated by loadCurriculumContent() success handler (check #7) -->
+<span id="tbm-source-row" data-tbm-source-row="" style="display:none;"></span>
 
 <!-- Plan Your Attack Overlay -->
 <div id="plan-overlay">
@@ -1907,6 +1909,8 @@ function loadCurriculumContent() {
         var cp = response.content.cold_passage;
         PASSAGE = { title: cp.title || 'Reading Passage', text: cp.passage || cp.text || '', paragraphs: cp.paragraphs || [], vocabWords: cp.vocabWords || [], passageVisibility: cp.passageVisibility };
         QUESTIONS = cp.questions || [];
+        var _srEl = document.getElementById('tbm-source-row');
+        if (_srEl) { _srEl.setAttribute('data-tbm-source-row', (response.week || '') + '-' + (response.day || '') + '-' + (response.child || 'buggsy')); }
         init();
       } else {
         _usingFallback = true;

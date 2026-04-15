@@ -489,6 +489,8 @@ main {
 </style>
 </head>
 <body>
+<!-- Preflight instrumentation: populated by loadFactSprintContent() success handler (check #7) -->
+<span id="tbm-source-row" data-tbm-source-row="" style="display:none;"></span>
 
 <!-- ExecSkills Plan Overlay (#171) -->
 <div id="es-plan-overlay">
@@ -1675,6 +1677,8 @@ function loadFactSprintContent() {
           if (adhd.brainBreakPrompt) { _brainBreakPrompt = adhd.brainBreakPrompt; }
         }
         if (response && response.content && response.content.fact_sprint && response.content.fact_sprint.questions) {
+          var _srEl = document.getElementById('tbm-source-row');
+          if (_srEl) { _srEl.setAttribute('data-tbm-source-row', (response.week || '') + '-' + (response.day || '') + '-' + (response.child || 'buggsy')); }
           var fs = response.content.fact_sprint;
           if (fs.timeLimit) { _countdownFrom = fs.timeLimit; }
           // Respect scaffoldConfig.adhd.timerMode from session config (#169)

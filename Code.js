@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v90 — Apps Script Router (TBM Consolidated)
+// Code.gs v91 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 90; }
+function getCodeVersion() { return 91; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -507,6 +507,7 @@ function serveData(e) {
         'getMissionStateSafe': getMissionStateSafe,
         'submitHomeworkSafe': submitHomeworkSafe,
         'getEducationQueueSafe': getEducationQueueSafe,
+        'modulePreflightSafe': modulePreflightSafe,
         'approveHomeworkSafe': approveHomeworkSafe,
         'getDailyScheduleSafe': getDailyScheduleSafe,
         'checkDay1Safe': checkDay1Safe,
@@ -1285,6 +1286,8 @@ function healthCheck() {
     // v174: NotionEngine.js — renamed to avoid overriding Code.js handlers
     'notionLogHomeworkSafe', 'notionLogSparkleProgressSafe', 'notionApproveHomeworkSafe',
     'getPendingReviewsSafe',
+    // v91: Preflight
+    'modulePreflight', 'modulePreflightSafe',
   ];
   var allOk = true;
   for (var fi = 0; fi < fns.length; fi++) {
@@ -1917,4 +1920,11 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v90
+// v91: Module Go-Live Preflight (Preflight.gs)
+function modulePreflightSafe(moduleId, kid, date) {
+  return withMonitor_('modulePreflightSafe', function() {
+    return modulePreflight(moduleId, kid, date);
+  });
+}
+
+// END OF FILE — Code.gs v91

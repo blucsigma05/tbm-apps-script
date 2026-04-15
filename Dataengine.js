@@ -234,7 +234,9 @@ var TAB_MAP = {
   'Snapshots':        '💻 Snapshots',
   'QA_Snapshots':     '💻 QA_Snapshots',
   // 📋 Board Config
-  'Board_Config':     '📋 Board_Config'
+  'Board_Config':     '📋 Board_Config',
+  // 💻 Preflight (created on first pf_trackFailures_ run if absent)
+  'Preflight_Status': '💻 Preflight_Status'
 };
 
 // v73: Request-scoped sheet data cache — same pattern as KidsHub v25.

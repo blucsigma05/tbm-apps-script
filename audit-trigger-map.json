@@ -1,0 +1,61 @@
+{
+  "_meta": {
+    "description": "Trigger-to-audit-role lookup for the TBM platform. Machine-readable mirror of the Audit Roles parent page Roster. Human-readable canonical: https://www.notion.so/343cea3cd9e88177ad67c23682fa376f",
+    "last_updated": "2026-04-15",
+    "spec": "specs/module-golive-preflight.md",
+    "note_on_preflight": "Preflight failures are NOT audit findings. Fix readiness first; do not file as audit role finding. See Pipeline Operating Mode -> Module Go-Live Preflight."
+  },
+
+  "deploy_kid_surface": {
+    "buggsy": {
+      "ComicZone":        "Play / User Desire (Buggsy) — ComicZone path",
+      "WolfDome":         "Play / User Desire (Buggsy) — Gamified-learning path",
+      "HomeworkModule":   "Play / User Desire (Buggsy) — Gamified-learning path",
+      "ReadingModule":    "Play / User Desire (Buggsy) — Gamified-learning path",
+      "WritingModule":    "Play / User Desire (Buggsy) — Gamified-learning path",
+      "FactSprint":       "Play / User Desire (Buggsy) — Gamified-learning path",
+      "InvestigationModule": "Play / User Desire (Buggsy) — Gamified-learning path",
+      "ChoreBoard":       "Play / User Desire (Buggsy) — ChoreBoard path"
+    },
+    "jj": {
+      "SparkleLearning":  "Play / User Desire (JJ) — Sparkle path",
+      "sparkle-free":     "Play / User Desire (JJ) — Sparkle path",
+      "sparkle-kingdom":  "Play / User Desire (JJ) — Sparkle path",
+      "JJHome":           "Play / User Desire (JJ) — Sparkle path",
+      "DailyAdventures":  "Play / User Desire (JJ) — Sparkle path",
+      "ChoreBoard":       "Play / User Desire (JJ) — ChoreBoard path"
+    }
+  },
+
+  "content_rotation":         ["Curriculum / Pedagogy", "Education Module Health"],
+  "daily_rotation":           "Education Module Health",
+  "weekly_audio_rotation":    "Education Module Health",
+  "weekly_jj_buggsy_split":   "Education Module Health",
+
+  "after_kidshub_deploy":     "Education Module Health",
+  "new_ed_module_ships":      "Curriculum / Pedagogy",
+  "monthly_content_rotation": ["Curriculum / Pedagogy", "Education Module Health"],
+  "before_school_year":       "Curriculum / Pedagogy",
+  "staar_window_4_weeks_out": "Curriculum / Pedagogy",
+
+  "production_deploy":        "Reliability / SRE",
+  "post_incident":            "Reliability / SRE",
+  "monthly_first":            ["Reliability / SRE", "Security / Surface Area", "Play / User Desire (JJ) — KidsHub floor"],
+
+  "new_endpoint":             "Security / Surface Area",
+  "new_integration":          "Security / Surface Area",
+  "secret_rotation":          "Security / Surface Area",
+
+  "major_refactor":           "System Developer",
+  "version_bump_hot_file":    "System Developer",
+  "claude_md_edit":           "System Developer",
+
+  "quarterly": [
+    "Play / User Desire (Buggsy) — all paths",
+    "Play / User Desire (JJ) — all paths",
+    "JT Quarterly Walkthrough",
+    "Quarterly Meta-Audit"
+  ],
+
+  "preflight_failure": "NOT an audit role — fix readiness; do not file as audit finding. See Pipeline Operating Mode -> Module Go-Live Preflight and run modulePreflight() from Preflight.gs."
+}

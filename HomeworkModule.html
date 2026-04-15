@@ -483,6 +483,8 @@ main {
 </style>
 </head>
 <body>
+<!-- Preflight instrumentation: populated by loadCurriculumContent() success handler (check #7) -->
+<span id="tbm-source-row" data-tbm-source-row="" style="display:none;"></span>
 
 <!-- Plan Your Attack Overlay -->
 <div id="plan-overlay">
@@ -2273,6 +2275,8 @@ function loadCurriculumContent() {
           (c.module.questions && c.module.questions.length > 0)
         );
         if (hasModuleQuestions) {
+          var _srEl = document.getElementById('tbm-source-row');
+          if (_srEl) { _srEl.setAttribute('data-tbm-source-row', (response.week || '') + '-' + (response.day || '') + '-' + (response.child || 'buggsy')); }
           MODULE = c.module;
           // v15: Guard — normalize module shape so render functions never crash on undefined fields.
           if (!MODULE.science) { MODULE.science = {}; }
