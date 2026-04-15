@@ -2655,9 +2655,18 @@ function _kidsApprove(rowIndex, el, taskID) {
   if (rowIndex == null || rowIndex === '') return;
   _kidsOptimistic(el);
   google.script.run
-    .withSuccessHandler(function() { _showKidsToast('\u2713 Approved! Points awarded.'); initKidsWidget(); })
+    .withSuccessHandler(function(r) {
+      var res = (typeof r === 'string') ? JSON.parse(r) : (r || {});
+      if (res.status === 'ok') {
+        _showKidsToast('\u2713 Approved! Points awarded.');
+      } else {
+        _showKidsToast('\u26A0 ' + (res.message || 'Approval may not have saved. Refreshing...'));
+      }
+      initKidsWidget();
+    })
     .withFailureHandler(function(err) {
       console.error('Vein approve failed:', err);
+      _showKidsToast('\u26A0 Approval failed. Refreshing...');
       initKidsWidget();
     })
     .khApproveTaskSafe(rowIndex, taskID);
@@ -2666,7 +2675,15 @@ function _kidsApproveBonus(rowIndex, el, taskID) {
   if (rowIndex == null || rowIndex === '') return;
   _kidsOptimistic(el);
   google.script.run
-    .withSuccessHandler(function() { _showKidsToast('\u2726 2x bonus approved!'); initKidsWidget(); })
+    .withSuccessHandler(function(r) {
+      var res = (typeof r === 'string') ? JSON.parse(r) : (r || {});
+      if (res.status === 'ok') {
+        _showKidsToast('\u2726 2x bonus approved!');
+      } else {
+        _showKidsToast('\u26A0 ' + (res.message || 'Bonus may not have saved. Refreshing...'));
+      }
+      initKidsWidget();
+    })
     .withFailureHandler(function(err) {
       console.error('Vein bonus approve failed:', err);
       initKidsWidget();
