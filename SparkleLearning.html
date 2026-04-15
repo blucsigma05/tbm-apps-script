@@ -899,10 +899,23 @@ function filterContentForRequestedActivity(content) {
     return content;
   }
 
+  // Prefer activityIndex (exact single activity) over type filter
+  var idxParam = getParam('activityIndex');
   var filtered = [];
-  for (var i = 0; i < content.activities.length; i++) {
-    if (String(content.activities[i].type || '').toLowerCase() === requested) {
-      filtered.push(content.activities[i]);
+
+  if (idxParam !== null && idxParam !== '') {
+    var idx = parseInt(idxParam, 10);
+    if (!isNaN(idx) && idx >= 0 && idx < content.activities.length) {
+      filtered.push(content.activities[idx]);
+    }
+  }
+
+  // Fall back to type filter (may match multiple activities of same type)
+  if (!filtered.length) {
+    for (var i = 0; i < content.activities.length; i++) {
+      if (String(content.activities[i].type || '').toLowerCase() === requested) {
+        filtered.push(content.activities[i]);
+      }
     }
   }
   if (!filtered.length) { return content; }
