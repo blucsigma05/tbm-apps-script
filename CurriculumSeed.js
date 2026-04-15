@@ -1,8 +1,8 @@
-// CurriculumSeed.gs — v10
+// CurriculumSeed.gs — v11
 // Owned by: KidsHub team
 // PURPOSE: One-time seed of curriculum for JJ (8 weeks) and Buggsy (16 weeks).
 // Run seedAllCurriculum() from the Script Editor to populate the Curriculum tab.
-// CurriculumSeed.gs — v10
+// CurriculumSeed.gs — v11
 
 // ════════════════════════════════════════════════════════════════════
 // JJ CURRICULUM — Pre-K (Age 4, KINDLE letter sequence: K,I,N,D,L,E,J,B)
@@ -828,7 +828,7 @@ var JJ_WEEK_8 = {
 //   reading-module.html → content.cold_passage
 //   fact-sprint.html    → content.factSprint
 //   investigation-module.html → content.investigation
-//   writing-module.html → content.writing
+//   writing-module.html → content.quick_write
 //   WolfkidCER.html     → content.wolfkidEpisode
 // ════════════════════════════════════════════════════════════════════
 
@@ -906,7 +906,7 @@ var BUGGSY_WEEK_1 = {
           { q: "Which detail supports the idea that the Grand Canyon is very old?", type: "multiple_choice", choices: ["It is in Arizona", "Visitors come from all over", "The oldest rocks are nearly 2 billion years old", "The walls change color"], correct: 2, standard: "TEKS 4.6C" }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write a descriptive paragraph about a place you have visited or would like to visit. Use at least 3 sensory details (what you see, hear, smell, taste, or feel).",
         standard: "TEKS 4.11A",
         minSentences: 5,
@@ -1016,7 +1016,7 @@ var BUGGSY_WEEK_1 = {
         }
       },
       factSprint: { operation: "multiply", range: [3, 12], count: 25, timeLimit: 120 },
-      writing: {
+      quick_write: {
         prompt: "Free Write Friday! Write about anything you want for 15 minutes. Challenge: use at least 3 vocabulary words from this week.",
         standard: "TEKS 4.11A",
         minSentences: 8,
@@ -1100,7 +1100,7 @@ var BUGGSY_WEEK_2 = {
           { q: "Which detail best supports the idea that octopuses are intelligent?", type: "multiple_choice", choices: ["They have eight arms", "They live in the ocean", "They can solve puzzles and open jars", "They can squeeze through small spaces"], correct: 2, standard: "TEKS 4.6C" }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write a narrative about discovering a mysterious creature in your backyard. Include a beginning, middle, and end. Use dialogue in at least one part.",
         standard: "TEKS 4.11A",
         minSentences: 8,
@@ -1210,7 +1210,7 @@ var BUGGSY_WEEK_2 = {
         }
       },
       factSprint: { operation: "divide", range: [2, 12], count: 25, timeLimit: 120 },
-      writing: {
+      quick_write: {
         prompt: "Write a letter to a 2nd grader explaining what the water cycle is. Use simple words they would understand. Include all 4 stages.",
         standard: "TEKS 4.11A, 4.8A",
         minSentences: 8,
@@ -1295,7 +1295,7 @@ var BUGGSY_WEEK_3 = {
           { q: "Which quote from the text best shows Tubman never failed on a mission?", type: "multiple_choice", choices: ["She escaped to freedom in 1849", "She risked her life again and again", "I never ran my train off the track and I never lost a passenger", "She served as a nurse and cook"], correct: 2, standard: "TEKS 4.6C" }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write a persuasive paragraph: Should kids your age have homework on weekends? State your opinion, give at least 2 reasons with details, and include a conclusion.",
         standard: "TEKS 4.11A",
         minSentences: 7,
@@ -1405,7 +1405,7 @@ var BUGGSY_WEEK_3 = {
         }
       },
       factSprint: { operation: "mixed", range: [3, 12], count: 25, timeLimit: 120 },
-      writing: {
+      quick_write: {
         prompt: "Write a how-to paragraph teaching someone to do something you are good at (a sport, a game, cooking something, building with LEGOs, etc.). Use sequence words: first, next, then, finally.",
         standard: "TEKS 4.11A",
         minSentences: 8,
@@ -1490,7 +1490,7 @@ var BUGGSY_WEEK_4 = {
           { q: "Which detail best supports the idea that the ISS is an international effort?", type: "multiple_choice", choices: ["It orbits 250 miles up", "Astronauts exercise daily", "The US, Russia, Japan, Canada, and Europe all contribute", "It has been occupied since 2000"], correct: 2, standard: "TEKS 4.6C" }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Imagine you get to spend one day on the International Space Station. Write a journal entry describing your day. Include what you see, what you do, and how it feels to float in microgravity.",
         standard: "TEKS 4.11A",
         minSentences: 8,
@@ -1600,7 +1600,7 @@ var BUGGSY_WEEK_4 = {
         }
       },
       factSprint: { operation: "mixed", range: [2, 12], count: 30, timeLimit: 150 },
-      writing: {
+      quick_write: {
         prompt: "End-of-month reflection: Write about something you learned in April that surprised you OR something you want to learn more about. Explain WHY it was interesting.",
         standard: "TEKS 4.11A",
         minSentences: 8,
@@ -1711,7 +1711,7 @@ var BUGGSY_WEEK_5 = {
           { q: "This story is told in what order?", type: "multiple_choice", choices: ["Compare and contrast", "Problem and solution", "Chronological (time order)", "Cause and effect"], correct: 2, standard: "TEKS 4.9D", explanation: "Events happen in time order: waiting → first star → counting → wish at the end." }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write a short story about a character who discovers something amazing in nature. Include: a setting description, dialogue between two characters, and a moment of wonder. Use at least 2 vocabulary words from this week.",
         standard: "TEKS 4.11A, 4.11B",
         minSentences: 10,
@@ -1834,7 +1834,7 @@ var BUGGSY_WEEK_5 = {
         }
       },
       factSprint: { operation: "multiply", range: [7, 12], count: 25, timeLimit: 100 },
-      writing: {
+      quick_write: {
         prompt: "STAAR Practice — Extended Constructed Response: Read the prompt below and write a 4-paragraph response (intro, 2 body paragraphs with evidence, conclusion). Prompt: 'Should schools serve only healthy food in the cafeteria? Write an essay arguing your position. Use at least 2 reasons with supporting details.'",
         standard: "TEKS 4.12A",
         minSentences: 12,
@@ -1937,7 +1937,7 @@ var BUGGSY_WEEK_6 = {
           { q: "This poem uses which literary device MOST?", type: "multiple_choice", choices: ["Simile (comparing with like/as)", "Metaphor (roads = life choices)", "Onomatopoeia (sound words)", "Alliteration (same starting sounds)"], correct: 1, standard: "TEKS 4.4A" }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write your OWN short poem (8+ lines, at least 2 stanzas) about a time you had to make a choice. It can be big or small — choosing a game, picking a team, deciding to try something new. Use at least 1 metaphor or simile.",
         standard: "TEKS 4.11A, 4.4",
         minSentences: 8,
@@ -2060,7 +2060,7 @@ var BUGGSY_WEEK_6 = {
         }
       },
       factSprint: { operation: "multiply", range: [12, 15], count: 25, timeLimit: 120 },
-      writing: {
+      quick_write: {
         prompt: "Choose an animal. Write an informational paragraph explaining its life cycle. Include at least 3 stages and use transition words (first, next, then, finally). Use at least 2 vocabulary words.",
         standard: "TEKS 4.11A, 4.10B",
         minSentences: 8,
@@ -2162,7 +2162,7 @@ var BUGGSY_WEEK_7 = {
           { q: "Which word BEST describes the Bone Wars?", type: "multiple_choice", choices: ["Boring", "Competitive and productive", "Peaceful", "Simple"], correct: 1, standard: "TEKS 4.6B" }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write a persuasive paragraph: Was the Bone Wars rivalry GOOD or BAD for science? Take a position, give 2 reasons with evidence from the passage, and include a concluding sentence.",
         standard: "TEKS 4.11A, 4.12A",
         minSentences: 7,
@@ -2285,7 +2285,7 @@ var BUGGSY_WEEK_7 = {
         }
       },
       factSprint: { operation: "mixed", range: [4, 15], count: 30, timeLimit: 150 },
-      writing: {
+      quick_write: {
         prompt: "STAAR Practice — ECR: Read the prompt and write a 4-paragraph response. Prompt: 'Some people think zoos help animals by protecting endangered species. Others think zoos are unfair because animals belong in the wild. Write an essay explaining BOTH sides, then tell which side YOU agree with and WHY.'",
         standard: "TEKS 4.12A",
         minSentences: 14,
@@ -2388,7 +2388,7 @@ var BUGGSY_WEEK_8 = {
           { q: "The phrase 'Mr. Whiskers was NOT happy about it' uses what technique?", type: "multiple_choice", choices: ["Simile", "Understatement (saying less than what's meant)", "Onomatopoeia", "Rhyme"], correct: 1, standard: "TEKS 4.4A", explanation: "Saying the cat was 'not happy' is an understatement — the cat was probably terrified! This adds humor." }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write a short story where a character has to FIX something that went wrong because of a small mistake. Include: a clear problem, a moment of discovery (finding the cause), and a solution. Use dialogue between at least 2 characters.",
         standard: "TEKS 4.11A, 4.11B",
         minSentences: 12,
@@ -2513,7 +2513,7 @@ var BUGGSY_WEEK_8 = {
         }
       },
       factSprint: { operation: "mixed", range: [2, 15], count: 30, timeLimit: 150 },
-      writing: {
+      quick_write: {
         prompt: "STAAR Practice — ECR Final: Write a 4-paragraph essay. Prompt: 'Think about a time you faced a challenge — something difficult that you had to work hard to overcome. Describe the challenge, what you did, and what you learned from the experience. Include specific details.'",
         standard: "TEKS 4.12A",
         minSentences: 16,
@@ -2658,7 +2658,7 @@ var BUGGSY_WEEK_9 = {
           { q: "How does the author organize the passage?", type: "multiple_choice", choices: ["Problem and solution", "Compare and contrast", "Chronological order", "Description with examples and cause/effect"], correct: 3, standard: "TEKS 4.9D", explanation: "The passage describes Tornado Alley, explains what causes tornadoes (cause/effect), and gives examples of the scale and storm chasers." }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Compare and contrast two types of severe weather (tornadoes vs. hurricanes, or thunderstorms vs. blizzards). Use a Venn diagram to plan, then write at least 2 paragraphs.",
         standard: "TEKS 4.11B",
         minSentences: 8,
@@ -2779,7 +2779,7 @@ var BUGGSY_WEEK_9 = {
         }
       },
       factSprint: { operation: "multiply", range: [7, 12], count: 25, timeLimit: 100 },
-      writing: {
+      quick_write: {
         prompt: "ECR Practice: A classmate says 'Mixtures and solutions are the same thing.' Do you agree or disagree? Write a CER paragraph using evidence from this week's science lessons.",
         standard: "TEKS 4.11A",
         minSentences: 6,
@@ -2880,7 +2880,7 @@ var BUGGSY_WEEK_10 = {
           { q: "What does 'This was only the beginning' suggest?", type: "multiple_choice", choices: ["Amara will stop flying", "More adventures are coming", "Her brother will be angry", "The wings will disappear"], correct: 1, standard: "TEKS 4.6D", explanation: "This line suggests the story continues and Amara will have more flying adventures." }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write a persuasive paragraph: Should kids be allowed to have phones at school? State your opinion clearly, give at least 2 reasons with evidence, and address a counterargument.",
         standard: "TEKS 4.11B",
         minSentences: 7,
@@ -3001,7 +3001,7 @@ var BUGGSY_WEEK_10 = {
         }
       },
       factSprint: { operation: "mixed", range: [4, 12], count: 25, timeLimit: 120 },
-      writing: {
+      quick_write: {
         prompt: "Free Write Friday! Write a short story (fiction or realistic fiction) about a character who discovers something unexpected in nature. Use vivid sensory details.",
         standard: "TEKS 4.11A",
         minSentences: 10,
@@ -3102,7 +3102,7 @@ var BUGGSY_WEEK_11 = {
           { q: "What does 'enzymes' most likely mean?", type: "multiple_choice", choices: ["Small insects", "Chemicals that help break things down", "Types of flowers", "A kind of wax"], correct: 1, standard: "TEKS 4.2B" }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Summarize the honey-making process in your own words. Then write a paragraph explaining why you think bees are (or aren't) important to humans. Use evidence.",
         standard: "TEKS 4.11A",
         minSentences: 8,
@@ -3223,7 +3223,7 @@ var BUGGSY_WEEK_11 = {
         }
       },
       factSprint: { operation: "divide", range: [6, 12], count: 25, timeLimit: 100 },
-      writing: {
+      quick_write: {
         prompt: "ECR Practice: Your friend says 'Metal pots cook food faster because metal is a better conductor of heat.' Do you agree? Write a CER paragraph explaining why, using what you learned about conductors and insulators.",
         standard: "TEKS 4.11A",
         minSentences: 6,
@@ -3324,7 +3324,7 @@ var BUGGSY_WEEK_12 = {
           { q: "What is the author's purpose?", type: "multiple_choice", choices: ["To persuade readers to become astronauts", "To inform readers about the Apollo 11 Moon landing", "To entertain readers with a space adventure", "To explain how rockets work"], correct: 1, standard: "TEKS 4.10A" }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "ASSESSMENT: Write a well-organized essay (3 paragraphs) about a time you accomplished something difficult. Include: an introduction with a hook, a body paragraph with specific details, and a conclusion that reflects on what you learned.",
         standard: "TEKS 4.11A",
         minSentences: 12,
@@ -3445,7 +3445,7 @@ var BUGGSY_WEEK_12 = {
         }
       },
       factSprint: { operation: "mixed", range: [2, 12], count: 30, timeLimit: 120 },
-      writing: {
+      quick_write: {
         prompt: "ASSESSMENT: Reflect on your learning from weeks 1-12. What subject do you feel strongest in? What do you want to improve? Write at least 2 paragraphs with specific examples.",
         standard: "TEKS 4.11A",
         minSentences: 10,
@@ -3546,7 +3546,7 @@ var BUGGSY_WEEK_13 = {
           { q: "What rhyme scheme does this poem follow?", type: "multiple_choice", choices: ["AABB", "ABAB", "ABAAB", "No rhyme"], correct: 2, standard: "TEKS 4.8A", explanation: "The stanzas follow ABAAB: wood/both/stood/could/undergrowth." }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write your own poem (at least 3 stanzas, 4 lines each) about a choice you had to make. Use at least one metaphor and one example of imagery (describing something you see, hear, or feel).",
         standard: "TEKS 4.11A",
         minSentences: 12,
@@ -3667,7 +3667,7 @@ var BUGGSY_WEEK_13 = {
         }
       },
       factSprint: { operation: "mixed", range: [7, 12], count: 25, timeLimit: 100 },
-      writing: {
+      quick_write: {
         prompt: "Write a poem (at least 2 stanzas) from the perspective of an animal going through metamorphosis. What does the butterfly feel inside the chrysalis? What does the tadpole think as it grows legs?",
         standard: "TEKS 4.11A",
         minSentences: 8,
@@ -3768,7 +3768,7 @@ var BUGGSY_WEEK_14 = {
           { q: "How is the passage organized?", type: "multiple_choice", choices: ["Compare and contrast", "Problem and solution", "Chronological + cause and effect", "Persuasive argument"], correct: 2, standard: "TEKS 4.9D", explanation: "The passage tells the story chronologically (1977 discovery) and explains cause/effect (why this matters)." }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write an informational paragraph about a scientific discovery that interests you. Cite at least 2 specific facts (you can use facts from the passage or make up realistic ones). Include a topic sentence, supporting details, and a concluding sentence.",
         standard: "TEKS 4.11B",
         minSentences: 7,
@@ -3889,7 +3889,7 @@ var BUGGSY_WEEK_14 = {
         }
       },
       factSprint: { operation: "mixed", range: [4, 12], count: 25, timeLimit: 100 },
-      writing: {
+      quick_write: {
         prompt: "Free Write Friday! Imagine you are an archaeologist who just discovered a fossil of an animal no one has ever seen before. Describe the fossil, what the animal might have looked like when alive, and what its environment might have been.",
         standard: "TEKS 4.11A",
         minSentences: 10,
@@ -3990,7 +3990,7 @@ var BUGGSY_WEEK_15 = {
           { q: "What is the author's purpose?", type: "multiple_choice", choices: ["To persuade readers to use telephones", "To inform readers about the invention of the telephone", "To entertain with a fictional story", "To compare phones and radios"], correct: 1, standard: "TEKS 4.10A" }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "Write a well-organized paragraph about an invention that changed the world. State your opinion about which invention is MOST important and support it with at least 2 reasons. Cite specific facts.",
         standard: "TEKS 4.11B",
         minSentences: 7,
@@ -4111,7 +4111,7 @@ var BUGGSY_WEEK_15 = {
         }
       },
       factSprint: { operation: "mixed", range: [6, 12], count: 30, timeLimit: 100 },
-      writing: {
+      quick_write: {
         prompt: "ECR Practice: A classmate says 'You only need to do an experiment once to prove your hypothesis.' Do you agree or disagree? Write a CER paragraph explaining why scientists repeat experiments and why a single trial is not enough.",
         standard: "TEKS 4.11A",
         minSentences: 6,
@@ -4212,7 +4212,7 @@ var BUGGSY_WEEK_16 = {
           { q: "Which text structure does the author use MOST?", type: "multiple_choice", choices: ["Chronological order", "Compare and contrast", "Cause and effect + problem and solution", "Description only"], correct: 2, standard: "TEKS 4.9D", explanation: "The passage explains what causes climate change (cause/effect) and what solutions exist (problem/solution)." }
         ]
       },
-      writing: {
+      quick_write: {
         prompt: "STAAR ECR Practice: Based on the passage, explain how greenhouse gases cause climate change AND describe two solutions mentioned in the text. Use specific evidence from the passage. Write at least 3 paragraphs (intro, body, conclusion).",
         standard: "TEKS 4.11A, 4.11B",
         minSentences: 15,
@@ -4333,7 +4333,7 @@ var BUGGSY_WEEK_16 = {
         }
       },
       factSprint: { operation: "mixed", range: [2, 12], count: 30, timeLimit: 120 },
-      writing: {
+      quick_write: {
         prompt: "SEMESTER REFLECTION: Write 3 paragraphs. (1) What subject are you strongest in and why? Give specific examples. (2) What was your biggest challenge and how did you work through it? (3) What are your goals for next semester?",
         standard: "TEKS 4.11A",
         minSentences: 15,
@@ -4347,7 +4347,7 @@ var BUGGSY_WEEK_16 = {
 // MAIN SEED FUNCTION
 // ════════════════════════════════════════════════════════════════════
 
-function getCurriculumSeedVersion() { return 10; }
+function getCurriculumSeedVersion() { return 11; }
 
 /**
  * v9: Replaces a Buggsy week's hardcoded vocabulary arrays with words from SpellingCatalog.
@@ -4525,4 +4525,4 @@ function seedAllCurriculumSafe() {
   });
 }
 
-// CurriculumSeed.gs — v10
+// CurriculumSeed.gs — v11
