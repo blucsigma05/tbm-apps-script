@@ -237,3 +237,52 @@ def test_title_prefix():
         'identity': {'check': 'x'},
     }
     assert filer.render_title(finding) == '[HYG-06] Version drift: DataEngine.js'
+
+
+# ---------- dedup helper: issue_marker_matches ----------
+# Regression for sandbox drill 2026-04-15: GraphQL search had indexing lag, so
+# dedup now uses REST list + client-side body-marker grep. These tests cover
+# the client-side matcher directly.
+
+def test_issue_marker_matches_positive():
+    issue = {'body': 'foo\n<!-- auto-finding v=1 check=version-drift sig=abc123def4567890 -->\n'}
+    assert filer.issue_marker_matches(issue, 'version-drift', 'abc123def4567890')
+
+
+def test_issue_marker_matches_wrong_sig():
+    issue = {'body': '<!-- auto-finding v=1 check=version-drift sig=ZZZZZZZZZZZZZZZZ -->'}
+    assert not filer.issue_marker_matches(issue, 'version-drift', 'abc123def4567890')
+
+
+def test_issue_marker_matches_wrong_check():
+    issue = {'body': '<!-- auto-finding v=1 check=stale-branch sig=abc123def4567890 -->'}
+    assert not filer.issue_marker_matches(issue, 'version-drift', 'abc123def4567890')
+
+
+def test_issue_marker_matches_no_marker():
+    issue = {'body': 'plain text issue with no marker at all'}
+    assert not filer.issue_marker_matches(issue, 'version-drift', 'abc123def4567890')
+
+
+def test_issue_marker_matches_empty_body():
+    assert not filer.issue_marker_matches({'body': ''}, 'x', 'y')
+    assert not filer.issue_marker_matches({'body': None}, 'x', 'y')
+
+
+def test_issue_marker_matches_v2_marker_rejected():
+    issue = {'body': '<!-- auto-finding v=2 check=version-drift sig=abc123def4567890 -->'}
+    assert not filer.issue_marker_matches(issue, 'version-drift', 'abc123def4567890')
+
+
+def test_issue_marker_matches_round_trip_with_render_body():
+    finding = {
+        'check': 'version-drift',
+        'check_title': 'HYG-06',
+        'title': 'drift',
+        'identity': {'check': 'version-drift', 'file': 'foo.js', 'direction': 'source-ahead'},
+    }
+    sig = filer.compute_sig(finding['identity'])
+    body = filer.render_body(finding, sig)
+    issue = {'body': body}
+    assert filer.issue_marker_matches(issue, 'version-drift', sig)
+    assert not filer.issue_marker_matches(issue, 'version-drift', 'deadbeefdeadbeef')

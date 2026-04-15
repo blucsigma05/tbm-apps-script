@@ -147,33 +147,50 @@ def gh_run(args, check=True):
     return proc
 
 
-def gh_graphql_search(query, repo):
-    """Search issues matching a query. Returns list of {number, state, labels}."""
-    q = 'repo:' + repo + ' ' + query
-    proc = gh_run([
-        'api', 'graphql',
-        '-f', 'query=query($q:String!){search(query:$q,type:ISSUE,first:25){'
-              'nodes{...on Issue{number state labels(first:20){nodes{name}}}}}}',
-        '-f', 'q=' + q,
-    ])
-    data = json.loads(proc.stdout)
-    nodes = data.get('data', {}).get('search', {}).get('nodes', []) or []
+def gh_list_issues(repo, state, labels=None, limit=200):
+    """List Issues via REST `gh issue list` (consistent — no search-index lag).
+    Returns list of dicts with number, body, closedAt, labels.
+    GraphQL `search` was tried first and rejected: newly-created Issues are not
+    immediately searchable (private repo indexing lag of 30s+ caused a duplicate
+    Issue when the filer was invoked twice in quick succession during sandbox
+    drill 2026-04-15). REST list is consistent and bounded for Phase 1 volumes.
+    """
+    args = ['issue', 'list', '-R', repo, '--state', state, '--limit', str(limit),
+            '--json', 'number,body,closedAt,labels']
+    for lab in (labels or []):
+        args.extend(['--label', lab])
+    proc = gh_run(args)
+    issues = json.loads(proc.stdout or '[]')
     out = []
-    for n in nodes:
-        if not n:
-            continue
-        labels = [L['name'] for L in (n.get('labels') or {}).get('nodes', []) or []]
-        out.append({'number': n['number'], 'state': n['state'], 'labels': labels})
+    for it in issues:
+        out.append({
+            'number': it['number'],
+            'body': it.get('body') or '',
+            'closedAt': it.get('closedAt'),
+            'labels': [L['name'] for L in (it.get('labels') or [])],
+        })
     return out
 
 
+def issue_marker_matches(issue, check_id, sig):
+    """True iff the issue body contains the v=1 marker for this check + sig."""
+    m = MARKER_RE.search(issue['body'] or '')
+    return bool(m and m.group(1) == check_id and m.group(2) == sig)
+
+
 def daily_issue_count(repo):
-    """Count Issues created with label auto:filed in the last 24h."""
+    """Count Issues created with label auto:filed in the last 24h.
+    REST list (consistent) + client-side date filter on createdAt.
+    """
     cutoff = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-    q = 'is:issue label:auto:filed created:>=' + cutoff
     try:
-        results = gh_graphql_search(q, repo)
-        return len(results)
+        proc = gh_run([
+            'issue', 'list', '-R', repo, '--state', 'all',
+            '--label', 'auto:filed', '--limit', '200',
+            '--json', 'number,createdAt',
+        ])
+        items = json.loads(proc.stdout or '[]')
+        return sum(1 for it in items if (it.get('createdAt') or '').startswith(cutoff))
     except Exception as e:
         log('daily count failed (not blocking): ' + str(e))
         return 0
@@ -192,22 +209,41 @@ def post_status(repo, message, status_issue):
 
 
 def find_open_match(repo, check_id, sig):
-    q = 'is:issue is:open in:body "sig=' + sig + '" "check=' + check_id + '"'
-    return gh_graphql_search(q, repo)
+    """Open Issues with label auto:filed whose body marker matches."""
+    issues = gh_list_issues(repo, 'open', labels=['auto:filed'])
+    return [it for it in issues if issue_marker_matches(it, check_id, sig)]
 
 
 def find_suppressed(repo, check_id, sig):
-    q = ('is:issue is:closed label:auto:suppressed in:body '
-         '"sig=' + sig + '" "check=' + check_id + '"')
-    return gh_graphql_search(q, repo)
+    """Closed Issues with label auto:suppressed whose body marker matches.
+    Must also have auto:filed label (to scope; suppress is a complement, not standalone).
+    """
+    issues = gh_list_issues(repo, 'closed', labels=['auto:filed', 'auto:suppressed'])
+    return [it for it in issues if issue_marker_matches(it, check_id, sig)]
 
 
 def find_recent_closed(repo, check_id, sig, days):
-    cutoff = (datetime.now(timezone.utc).timestamp() - days * 86400)
-    cutoff_iso = datetime.fromtimestamp(cutoff, tz=timezone.utc).strftime('%Y-%m-%d')
-    q = ('is:issue is:closed -label:auto:suppressed in:body '
-         '"sig=' + sig + '" "check=' + check_id + '" closed:>=' + cutoff_iso)
-    return gh_graphql_search(q, repo)
+    """Closed Issues with auto:filed (NOT auto:suppressed) whose body marker matches
+    AND closedAt is within `days` of now. Suppressed exclusion is client-side.
+    """
+    cutoff_ts = datetime.now(timezone.utc).timestamp() - (days * 86400)
+    issues = gh_list_issues(repo, 'closed', labels=['auto:filed'])
+    out = []
+    for it in issues:
+        if 'auto:suppressed' in it['labels']:
+            continue
+        if not issue_marker_matches(it, check_id, sig):
+            continue
+        closed_at = it.get('closedAt')
+        if not closed_at:
+            continue
+        try:
+            closed_ts = datetime.strptime(closed_at, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc).timestamp()
+        except ValueError:
+            continue
+        if closed_ts >= cutoff_ts:
+            out.append(it)
+    return out
 
 
 def create_issue(repo, title, body, labels):
