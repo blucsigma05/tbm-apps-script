@@ -83,7 +83,8 @@ const QA_FINANCE_DENIED = {
   'reconcileVeinPulseSafe': true, 'reconcileVeinPulse': true,
   'getMERGateStatusSafe': true, 'getCloseHistoryDataSafe': true,
   'runMERGatesSafe': true, 'stampCloseMonthSafe': true,
-  'getRecentTransactionsSafe': true
+  'getRecentTransactionsSafe': true,
+  'getCloseProofSafe': true
 };
 
 export default {
@@ -459,6 +460,7 @@ function getShimScript() {
 '    "getDesignUnlockedSafe",\n' +
 '    "resetSandboxSafe",\n' +
 '    "getRecentTransactionsSafe",\n' +
+'    "getCloseProofSafe",\n' +
 '    "getDailyMissionsInitSafe",\n' +
 '    "getAssetRegistrySafe",\n' +
 '    "checkHomeworkGateSafe",\n' +

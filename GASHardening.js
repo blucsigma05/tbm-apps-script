@@ -1276,7 +1276,7 @@ function diag_auditCatchBlocks() {
     'getWeeklyTrackerDataSafe', 'getCashFlowForecastSafe',
     'getSubscriptionDataSafe', 'getCategoryTransactionsSafe',
     'getReconcileStatusSafe', 'getBoardDataSafe', 'getSystemHealthSafe',
-    'getMERGateStatusSafe', 'getCloseHistoryDataSafe',
+    'getMERGateStatusSafe', 'getCloseHistoryDataSafe', 'getCloseProofSafe',
     'getKidsHubDataSafe', 'getKidsHubWidgetDataSafe',
     'khCompleteTaskSafe', 'khApproveTaskSafe', 'khUncompleteTaskSafe',
     'khRejectTaskSafe', 'khOverrideTaskSafe', 'khApproveWithBonusSafe',
