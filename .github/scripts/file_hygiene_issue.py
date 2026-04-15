@@ -354,6 +354,24 @@ def main():
         )
         return 0
 
+    # Step 4.5: defensive recheck before create.
+    # gh issue list (REST) has ~3s cache lag — back-to-back invocations could
+    # both miss a just-created Issue and produce duplicates. Workflow concurrency
+    # serializes the production path, but direct CLI callers don't get that gate.
+    # Sleep + recheck closes the window cheaply (one create-path penalty).
+    recheck_seconds = env_int('FILER_PRECREATE_RECHECK_SECONDS', 4)
+    if recheck_seconds > 0:
+        import time
+        time.sleep(recheck_seconds)
+        try:
+            recheck = find_open_match(repo, check_id, sig)
+        except Exception as e:
+            log('recheck failed (proceeding to create): ' + str(e))
+            recheck = []
+        if recheck:
+            log('dedup: open match #' + str(recheck[0]['number']) + ' (caught on recheck)')
+            return 0
+
     # Step 5: create new
     labels = ['auto:filed']
     extra = finding.get('extra_labels') or []
