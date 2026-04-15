@@ -890,7 +890,37 @@ function resolveAsset(assetId, size, fallbackColor) {
 function getRequestedSparkleActivity() {
   var activity = getParam('activity');
   if (!activity) { return null; }
-  return String(activity).toLowerCase().replace(/-/g, '_');
+  var key = String(activity).toLowerCase().replace(/-/g, '_');
+  // v21: Alias map matches daily-missions normalizeSparkleActivity()
+  var aliases = {
+    'letter_intro': 'letter_intro',
+    'find_letter': 'find_the_letter',
+    'find_the_letter': 'find_the_letter',
+    'name_builder': 'name_builder',
+    'count': 'count_with_me',
+    'count_with_me': 'count_with_me',
+    'find_number': 'find_the_number',
+    'find_the_number': 'find_the_number',
+    'quantity_match': 'quantity_match',
+    'color_hunt': 'color_hunt',
+    'shape_match': 'shape_match',
+    'pattern': 'pattern_next',
+    'pattern_next': 'pattern_next',
+    'sounds': 'letter_sound',
+    'letter_sound': 'letter_sound',
+    'what_sound': 'letter_sound',
+    'trace': 'letter_trace',
+    'letter_trace': 'letter_trace',
+    'audio_story': 'audio_story',
+    'challenge': 'sparkle_challenge',
+    'sparkle_challenge': 'sparkle_challenge',
+    'draw': 'free_draw',
+    'free_draw': 'free_draw',
+    'celebration': 'star_celebration',
+    'star_celebration': 'star_celebration',
+    'more_or_less': 'more_or_less'
+  };
+  return aliases[key] || key;
 }
 
 function filterContentForRequestedActivity(content) {
