@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v68 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v69 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 68; }
+function getKidsHubVersion() { return 69; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2615,6 +2615,49 @@ function ensureCurriculumTab_() {
 }
 
 
+// v69: Ensures module shape always has all 6 required fields.
+// Applies || defaults so clients never receive undefined for strand/teks/quickFact/passage.
+function normalizeModule_(mod) {
+  if (!mod) return mod;
+  var subjects = ['math', 'science'];
+  for (var i = 0; i < subjects.length; i++) {
+    var s = subjects[i];
+    if (!mod[s]) continue;
+    mod[s].strand    = mod[s].strand    || '';
+    mod[s].teks      = mod[s].teks      || '';
+    mod[s].quickFact = mod[s].quickFact || '';
+    mod[s].passage   = mod[s].passage   || [];
+    mod[s].title     = mod[s].title     || '';
+    mod[s].questions = mod[s].questions || [];
+  }
+  return mod;
+}
+
+// v69: Validates that all 6 required module fields are present and populated.
+// Called by dailyHealthCheck() to alert LT before kids wake up.
+function validateHomeworkShape_(child) {
+  var result = { valid: true, missing: [], child: String(child) };
+  var resp = getTodayContent_(child);
+  if (!resp || !resp.content || !resp.content.module) {
+    result.valid = false;
+    result.missing.push('content.module missing entirely');
+    return result;
+  }
+  var mod = resp.content.module;
+  var subjects = ['math', 'science'];
+  var required = ['title', 'strand', 'teks', 'quickFact', 'passage', 'questions'];
+  for (var s = 0; s < subjects.length; s++) {
+    for (var r = 0; r < required.length; r++) {
+      var val = mod[subjects[s]] ? mod[subjects[s]][required[r]] : undefined;
+      if (val === undefined || val === null || val === '') {
+        result.valid = false;
+        result.missing.push(subjects[s] + '.' + required[r]);
+      }
+    }
+  }
+  return result;
+}
+
 // Reads today's curriculum content for a child.
 // Returns { content, fullWeek, day, week, child } or null if no data.
 function getTodayContent_(child, _testDateOverride) {
@@ -2693,6 +2736,10 @@ function getTodayContent_(child, _testDateOverride) {
           // back to the hardcoded bunny placeholder (same as today).
         }
       }
+    }
+    // v69: Normalize module shape — clients never receive undefined for strand/teks/quickFact/passage.
+    if (dayContent && dayContent.module) {
+      dayContent.module = normalizeModule_(dayContent.module);
     }
     return { content: dayContent, fullWeek: weekContent, day: todayName, week: bestRow[weekCol] || 0, child: childLower };
   } catch (e) {
@@ -5169,5 +5216,5 @@ function checkHomeworkGateSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v68
+// END OF FILE — KidsHub.gs v69
 // ════════════════════════════════════════════════════════════════════
