@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v69 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v70 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 69; }
+function getKidsHubVersion() { return 70; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2636,7 +2636,7 @@ function normalizeModule_(mod) {
 // v69: Validates that all 6 required module fields are present and populated.
 // Called by dailyHealthCheck() to alert LT before kids wake up.
 function validateHomeworkShape_(child) {
-  var result = { valid: true, missing: [], child: String(child) };
+  var result = { valid: true, missing: [], child: String(child), surface: 'homework' };
   var resp = getTodayContent_(child);
   if (!resp || !resp.content || !resp.content.module) {
     result.valid = false;
@@ -2655,6 +2655,47 @@ function validateHomeworkShape_(child) {
       }
     }
   }
+  return result;
+}
+
+// v70 (#348) — Validate reading-module curriculum shape.
+// Surface needs response.content.cold_passage with title + (paragraphs[] OR passage/text) + questions[].
+// If cold_passage is absent, treat as valid — non-reading day, other surfaces handle today.
+function validateReadingShape_(child) {
+  var result = { valid: true, missing: [], child: String(child), surface: 'reading' };
+  var resp = getTodayContent_(child);
+  if (!resp || !resp.content) {
+    result.valid = false;
+    result.missing.push('content missing entirely');
+    return result;
+  }
+  if (!resp.content.cold_passage) {
+    return result;
+  }
+  var cp = resp.content.cold_passage;
+  if (!cp.title) { result.valid = false; result.missing.push('cold_passage.title'); }
+  var hasParagraphs = (cp.paragraphs && cp.paragraphs.length > 0) || cp.passage || cp.text;
+  if (!hasParagraphs) { result.valid = false; result.missing.push('cold_passage.paragraphs (or passage/text)'); }
+  var hasQuestions = (cp.questions && cp.questions.length > 0);
+  if (!hasQuestions) { result.valid = false; result.missing.push('cold_passage.questions'); }
+  return result;
+}
+
+// v70 (#348) — Validate writing-module curriculum shape.
+// Surface needs response.content.quick_write.prompt. If quick_write absent, treat as valid (non-writing day).
+function validateWritingShape_(child) {
+  var result = { valid: true, missing: [], child: String(child), surface: 'writing' };
+  var resp = getTodayContent_(child);
+  if (!resp || !resp.content) {
+    result.valid = false;
+    result.missing.push('content missing entirely');
+    return result;
+  }
+  if (!resp.content.quick_write) {
+    return result;
+  }
+  var qw = resp.content.quick_write;
+  if (!qw.prompt) { result.valid = false; result.missing.push('quick_write.prompt'); }
   return result;
 }
 
@@ -5216,5 +5257,5 @@ function checkHomeworkGateSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v69
+// END OF FILE — KidsHub.gs v70
 // ════════════════════════════════════════════════════════════════════
