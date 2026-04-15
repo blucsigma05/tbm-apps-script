@@ -1,11 +1,11 @@
 // ════════════════════════════════════════════════════════════════════
-// GAS HARDENING v8 — Centralized Monitoring, Logging & Maintenance
+// GAS HARDENING v10 — Centralized Monitoring, Logging & Maintenance
 // WRITES TO: ErrorLog, PerfLog
 // READS FROM: (all files for version reporting)
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 9; }
+function getGASHardeningVersion() { return 10; }
 
 // v6: openById migration — trigger-safe spreadsheet accessor
 var _ghSS = null;
@@ -878,17 +878,21 @@ function getSystemHealth() {
     }
     
     // Check prior month close status from Close History
+    // v9 FIX: Match display label format used by stampCloseMonth() and getCloseHistoryData()
+    // Column A stores "January 2026", not "2026-01". Previous indexOf('2026-01') never matched.
     try {
       var priorMonth = curMonth === 1 ? 12 : curMonth - 1;
       var priorYear = curMonth === 1 ? curYear - 1 : curYear;
-      var priorLabel = priorYear + '-' + (priorMonth < 10 ? '0' : '') + priorMonth;
+      var MN_LABELS = ['January','February','March','April','May','June',
+                       'July','August','September','October','November','December'];
+      var priorLabel = MN_LABELS[priorMonth - 1] + ' ' + priorYear;
       var chSheet = ss.getSheetByName(TAB_MAP['Close History'] || 'Close History');
       var priorClosed = false;
       if (chSheet) {
         var chData = chSheet.getDataRange().getValues();
         for (var ch = 1; ch < chData.length; ch++) {
-          if (String(chData[ch][0]).indexOf(priorLabel) !== -1) {
-            priorClosed = true;
+          if (String(chData[ch][0]).trim() === priorLabel) {
+            priorClosed = String(chData[ch][1]).trim() === 'Closed';
             break;
           }
         }
@@ -1276,7 +1280,7 @@ function diag_auditCatchBlocks() {
     'getWeeklyTrackerDataSafe', 'getCashFlowForecastSafe',
     'getSubscriptionDataSafe', 'getCategoryTransactionsSafe',
     'getReconcileStatusSafe', 'getBoardDataSafe', 'getSystemHealthSafe',
-    'getMERGateStatusSafe', 'getCloseHistoryDataSafe',
+    'getMERGateStatusSafe', 'getCloseHistoryDataSafe', 'getCloseProofSafe',
     'getKidsHubDataSafe', 'getKidsHubWidgetDataSafe',
     'khCompleteTaskSafe', 'khApproveTaskSafe', 'khUncompleteTaskSafe',
     'khRejectTaskSafe', 'khOverrideTaskSafe', 'khApproveWithBonusSafe',
@@ -1955,5 +1959,5 @@ function writeStaged_(key, rows, validator, writer) {
 }
 
 
-// END OF FILE — GAS HARDENING v9
+// END OF FILE — GAS HARDENING v10
 // ═══════════════════════════════════════════════════════════════

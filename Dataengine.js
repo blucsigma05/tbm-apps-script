@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v93 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v94 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 93; }
+function getDataEngineVersion() { return 94; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -3582,4 +3582,244 @@ function getRecentTransactionsSafe(days) {
   });
 }
 
-// END OF FILE — DataEngine v93
+// ═══════════════════════════════════════════════════════════════════
+// v94: Close Proof — real tie-out math for month-end close (#326)
+// Returns actual/expected/variance for each proof, not just field existence.
+// This is NOT reconcileVeinPulse (which is a null check).
+// ═══════════════════════════════════════════════════════════════════
+function getCloseProof_(monthLabel) {
+  var ss = SpreadsheetApp.openById(SSID);
+  var now = new Date();
+
+  // Parse month range
+  var yr, mo;
+  if (monthLabel && monthLabel.indexOf('-') >= 0) {
+    var parts = monthLabel.split('-');
+    yr = parseInt(parts[0]);
+    mo = parseInt(parts[1]);
+  } else {
+    yr = now.getFullYear();
+    mo = now.getMonth() + 1;
+  }
+  var startDate = new Date(yr, mo - 1, 1);
+  var endDate = new Date(yr, mo, 0, 23, 59, 59);
+  var startStr = yr + '-' + (mo < 10 ? '0' : '') + mo + '-01';
+  var endDay = endDate.getDate();
+  var endStr = yr + '-' + (mo < 10 ? '0' : '') + mo + '-' + (endDay < 10 ? '0' : '') + endDay;
+
+  var proofs = {};
+  var blockers = [];
+  var warnings = [];
+
+  // ── 1. Net Worth Tie-Out ──
+  // totalAssets - totalLiabilities must equal netWorth within $10
+  try {
+    var data = getData(startStr, endStr, true);
+    var nwActual = roundTo(data.totalAssets - data.totalLiabilities, 2);
+    var nwExpected = roundTo(data.netWorth, 2);
+    var nwVariance = roundTo(nwActual - nwExpected, 2);
+    var nwPass = Math.abs(nwVariance) < 10;
+    proofs.netWorthTieOut = {
+      status: nwPass ? 'PASS' : 'FAIL',
+      actual: nwActual,
+      expected: nwExpected,
+      variance: nwVariance,
+      label: 'Assets - Liabilities = Net Worth'
+    };
+    if (!nwPass) blockers.push('netWorthTieOut');
+  } catch (e) {
+    proofs.netWorthTieOut = { status: 'ERROR', error: e.message };
+    blockers.push('netWorthTieOut');
+  }
+
+  // ── 2. Transfer Net ──
+  // All transfer-category transactions should net to ~$0 within $50
+  try {
+    var txSheet = ss.getSheetByName(TAB_MAP['Transactions']);
+    var txData = txSheet.getDataRange().getValues();
+    var TRANSFER_CATS = [
+      'Transfer: Internal', 'Transfer: LOC Draw', 'Balance Transfers',
+      'CC Payment', 'LOC Payment', 'Loan Payment', 'Investment', 'Payroll Deduction',
+      'Duplicate - Exclude', 'Debt Offset',
+      'SoFi Loan', 'Auto Loan', 'Student Loans', 'Solar Panel'
+    ];
+    var transferSum = 0;
+    var transferCount = 0;
+    for (var t = 1; t < txData.length; t++) {
+      var txDate = txData[t][1];
+      var txCat = String(txData[t][3] || '').trim();
+      var txAmt = parseFloat(txData[t][4]) || 0;
+      if (!txDate) continue;
+      if (typeof txDate === 'string') txDate = new Date(txDate);
+      if (!(txDate instanceof Date) || isNaN(txDate.getTime())) continue;
+      if (txDate < startDate || txDate > endDate) continue;
+      if (TRANSFER_CATS.indexOf(txCat) >= 0) {
+        transferSum += txAmt;
+        transferCount++;
+      }
+    }
+    transferSum = roundTo(transferSum, 2);
+    var txNetPass = Math.abs(transferSum) < 50;
+    proofs.transferNet = {
+      status: txNetPass ? 'PASS' : (Math.abs(transferSum) < 200 ? 'WARN' : 'FAIL'),
+      actual: transferSum,
+      expected: 0,
+      variance: transferSum,
+      count: transferCount,
+      label: 'Transfer categories net to zero'
+    };
+    if (!txNetPass && Math.abs(transferSum) >= 200) blockers.push('transferNet');
+    else if (!txNetPass) warnings.push('transferNet');
+  } catch (e) {
+    proofs.transferNet = { status: 'ERROR', error: e.message };
+    warnings.push('transferNet');
+  }
+
+  // ── 3. Debt Tie-Out ──
+  // debtCurrent from getData matches sum of Debt_Export balances
+  try {
+    var debtFromEngine = roundTo(data.debtCurrent || 0, 2);
+    var debtFromExport = 0;
+    var dxData = de_readSheet_('Debt_Export');
+    if (dxData && dxData.length > 0) {
+      var dxHeaders = [];
+      var dxFoundHeader = false;
+      for (var d = 0; d < dxData.length; d++) {
+        var cellA = String(dxData[d][0] || '').trim();
+        if (!cellA) continue;
+        if (cellA.indexOf('DEBT EXPORT') >= 0 || cellA.indexOf('Publish') >= 0 || cellA.indexOf('Pulls live') >= 0) continue;
+        if (cellA.indexOf('SUMMARY') >= 0) break;
+        if (cellA === 'name') {
+          if (!dxFoundHeader) { dxHeaders = dxData[d]; dxFoundHeader = true; }
+          continue;
+        }
+        if (!dxFoundHeader) continue;
+        var balIdx = -1;
+        for (var di = 0; di < dxHeaders.length; di++) {
+          if (dxHeaders[di] === 'balance') { balIdx = di; break; }
+        }
+        if (balIdx >= 0) {
+          var bal = parseFloat(dxData[d][balIdx]) || 0;
+          if (bal > 0.01) debtFromExport += bal;
+        }
+      }
+    }
+    debtFromExport = roundTo(debtFromExport, 2);
+    var debtVariance = roundTo(debtFromEngine - debtFromExport, 2);
+    var debtPass = Math.abs(debtVariance) < 10;
+    proofs.debtTieOut = {
+      status: debtPass ? 'PASS' : 'FAIL',
+      actual: debtFromEngine,
+      expected: debtFromExport,
+      variance: debtVariance,
+      label: 'getData debtCurrent = Debt_Export total'
+    };
+    if (!debtPass) blockers.push('debtTieOut');
+  } catch (e) {
+    proofs.debtTieOut = { status: 'ERROR', error: e.message };
+    warnings.push('debtTieOut');
+  }
+
+  // ── 4. Account Coverage ──
+  // All accounts in Balance History should have data within 7 days of end date
+  try {
+    var bhSheet = ss.getSheetByName(TAB_MAP['Balance History']);
+    var bhData = bhSheet.getDataRange().getValues();
+    var acctLatest = {};
+    for (var h = 1; h < bhData.length; h++) {
+      var bhDate = bhData[h][1];
+      var bhAcct = String(bhData[h][3] || '').trim();
+      if (!bhDate || !bhAcct) continue;
+      if (typeof bhDate === 'string') bhDate = new Date(bhDate);
+      if (!(bhDate instanceof Date) || isNaN(bhDate.getTime())) continue;
+      if (!acctLatest[bhAcct] || bhDate > acctLatest[bhAcct].date) {
+        acctLatest[bhAcct] = { date: bhDate, balance: parseFloat(bhData[h][8]) || 0, cls: bhData[h][12] };
+      }
+    }
+    var totalAccts = 0;
+    var freshAccts = 0;
+    var staleAccts = [];
+    var staleExposure = 0;
+    var STALE_DAYS = 7;
+    var refDate = endDate > now ? now : endDate;
+    for (var acct in acctLatest) {
+      totalAccts++;
+      var ageDays = Math.floor((refDate.getTime() - acctLatest[acct].date.getTime()) / (1000 * 60 * 60 * 24));
+      if (ageDays <= STALE_DAYS) {
+        freshAccts++;
+      } else {
+        var absBalance = Math.abs(acctLatest[acct].balance);
+        staleAccts.push({ name: acct, balance: absBalance, lastSeen: acctLatest[acct].date.toISOString().slice(0, 10), ageDays: ageDays });
+        staleExposure += absBalance;
+      }
+    }
+    var coveragePass = staleAccts.length === 0;
+    proofs.accountCoverage = {
+      status: coveragePass ? 'PASS' : 'WARN',
+      total: totalAccts,
+      fresh: freshAccts,
+      stale: staleAccts.length,
+      staleAccounts: staleAccts,
+      label: 'All accounts updated within ' + STALE_DAYS + ' days'
+    };
+    proofs.staleExposure = {
+      status: staleExposure < 100 ? 'PASS' : (staleExposure < 5000 ? 'WARN' : 'FAIL'),
+      totalAtRisk: roundTo(staleExposure, 2),
+      accounts: staleAccts,
+      label: 'Dollar value at risk from stale balances'
+    };
+    if (!coveragePass) warnings.push('accountCoverage');
+    if (staleExposure >= 5000) blockers.push('staleExposure');
+    else if (staleExposure >= 100) warnings.push('staleExposure');
+  } catch (e) {
+    proofs.accountCoverage = { status: 'ERROR', error: e.message };
+    proofs.staleExposure = { status: 'ERROR', error: e.message };
+    warnings.push('accountCoverage');
+  }
+
+  // ── 5. Uncategorized Count ──
+  try {
+    var uncatCount = 0;
+    var txSheet2 = ss.getSheetByName(TAB_MAP['Transactions']);
+    var txData2 = txSheet2.getDataRange().getValues();
+    for (var u = 1; u < txData2.length; u++) {
+      var uDate = txData2[u][1];
+      var uCat = String(txData2[u][3] || '').trim();
+      if (!uDate) continue;
+      if (typeof uDate === 'string') uDate = new Date(uDate);
+      if (!(uDate instanceof Date) || isNaN(uDate.getTime())) continue;
+      if (uDate < startDate || uDate > endDate) continue;
+      if (!uCat || uCat === 'Uncategorized') uncatCount++;
+    }
+    proofs.uncategorized = {
+      status: uncatCount === 0 ? 'PASS' : (uncatCount <= 5 ? 'WARN' : 'FAIL'),
+      count: uncatCount,
+      label: 'Uncategorized transactions in period'
+    };
+    if (uncatCount > 5) blockers.push('uncategorized');
+    else if (uncatCount > 0) warnings.push('uncategorized');
+  } catch (e) {
+    proofs.uncategorized = { status: 'ERROR', error: e.message };
+    warnings.push('uncategorized');
+  }
+
+  // ── Compute overall ──
+  var overall = blockers.length > 0 ? 'FAIL' : (warnings.length > 0 ? 'WARN' : 'PASS');
+
+  return {
+    month: yr + '-' + (mo < 10 ? '0' : '') + mo,
+    computedAt: new Date().toISOString(),
+    proofs: proofs,
+    overall: overall,
+    blockers: blockers,
+    warnings: warnings
+  };
+}
+
+function getCloseProofSafe(monthLabel) {
+  return withMonitor_('getCloseProofSafe', function() {
+    return getCloseProof_(monthLabel);
+  });
+}
+
+// END OF FILE — DataEngine v94
