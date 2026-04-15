@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="tbm-version" content="v67">
-<title>The Vein v67 — Household Command Center</title>
-<!-- TheVein v67 — Version history tracked in Notion deploy page. No changelogs in this file. -->
+<meta name="tbm-version" content="v68">
+<title>The Vein v68 — Household Command Center</title>
+<!-- TheVein v68 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -630,13 +630,13 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
 </div>
 
 
-<!-- ═══ MER Gates (v30: moved to top) ═══ -->
+<!-- ═══ Close Readiness (v68: verdict-first gates) ═══ -->
 <div class="gates-section">
 <div class="gates-bar">
 <div class="gates-toggle" onclick="toggleGates()">
 <div class="gates-toggle-left">
-<div class="gates-ey">MER Status Gates</div>
-<div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--text-muted);letter-spacing:.1em;margin-top:2px;">✅ ON TRACK · ⚠️ REVIEW NEEDED · 🔴 ACTION REQUIRED</div>
+<div class="gates-ey">Close Readiness</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:7px;color:var(--text-muted);letter-spacing:.1em;margin-top:2px;" id="closeVerdict">Loading gates...</div>
 <div class="gates-summary" id="gatePips"></div>
 </div>
 <div style="display:flex;align-items:center;gap:12px;">
@@ -650,7 +650,22 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
 </div>
 </div>
 
-<!-- ═══ System Ops (v55) ═══ -->
+<!-- ═══ Close Controls (v68: extracted from System Ops) ═══ -->
+<div class="gates-section" id="closeControlsSection" style="margin-top:12px">
+<div class="gates-bar gold-top">
+<div style="padding:14px 24px;">
+<div class="gates-ey" style="margin-bottom:10px;">Close Month</div>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<select id="closeMonthSelect" style="font-family:JetBrains Mono,monospace;font-size:10px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer"></select>
+<button id="runGatesBtn" onclick="veinRunGates()" style="font-family:JetBrains Mono,monospace;font-size:9px;padding:4px 10px;border:1px solid var(--blue);border-radius:4px;background:var(--blue-wash);color:var(--blue);cursor:pointer">Run Gates</button>
+<button id="stampCloseBtn" onclick="veinStampClose()" style="display:none;font-family:JetBrains Mono,monospace;font-size:9px;padding:4px 10px;border:1px solid var(--positive);border-radius:4px;background:var(--positive-bg);color:var(--positive);cursor:pointer">Stamp Close</button>
+</div>
+<div id="gateResults" style="margin-top:6px;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--text-dim)"></div>
+</div>
+</div>
+</div>
+
+<!-- ═══ System Ops (v55, v68: monitoring only) ═══ -->
 <div class="gates-section" id="sysOpsSection" style="margin-top:12px">
 <div class="gates-bar">
 <div class="gates-toggle" onclick="toggleSysOps()">
@@ -671,74 +686,7 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
 </div>
 </div>
 
-<!-- ═══ Family Note Editor (v60) ═══ -->
-<div class="fnote-wrap" id="fnoteWrap">
-  <div class="fnote-header">
-    <div class="fnote-title">&#x2728; Family Note</div>
-    <div class="fnote-status" id="fnoteStatus">Saved</div>
-  </div>
-  <div class="fnote-row">
-    <textarea class="fnote-input" id="fnoteInput" placeholder="Leave a note for the family..." maxlength="200" rows="2"></textarea>
-    <button class="fnote-save" id="fnoteSave" onclick="saveFamilyNote()">Save</button>
-  </div>
-  <div class="fnote-preview" id="fnotePreview"><span>Shows on kitchen &amp; office displays</span></div>
-</div>
-
-<!-- ═══ Dinner Plan (v61) ═══ -->
-<div class="fnote-wrap" id="dinnerWrap">
-  <div class="fnote-header">
-    <div class="fnote-title">&#x1F37D;&#xFE0F; Tonight's Dinner</div>
-    <div class="fnote-status" id="dinnerStatus"></div>
-  </div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
-    <div style="flex:2;min-width:140px;">
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Meal</div>
-      <input type="text" id="dinnerMeal" class="fnote-input" placeholder="What's for dinner?" maxlength="200" style="width:100%;resize:none;height:36px;padding:6px 10px;">
-    </div>
-    <div style="flex:0 0 90px;">
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Cook</div>
-      <select id="dinnerCook" style="width:100%;height:36px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;">
-        <option value="JT">JT</option>
-        <option value="LT">LT</option>
-      </select>
-    </div>
-    <div style="flex:2;min-width:120px;">
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Notes</div>
-      <input type="text" id="dinnerNotes" class="fnote-input" placeholder="Optional" maxlength="300" style="width:100%;resize:none;height:36px;padding:6px 10px;">
-    </div>
-    <button class="fnote-save active" id="dinnerSave" onclick="saveDinner()" style="height:44px;min-width:54px;">Save</button>
-  </div>
-  <div style="margin-top:8px;">
-    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-muted);">
-      <input type="checkbox" id="dinnerKidsToggle" onchange="toggleKidsMealVein()" style="width:14px;height:14px;cursor:pointer;">
-      Kids eating something different?
-    </label>
-    <div id="dinnerKidsRow" style="display:none;margin-top:6px;">
-      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Kids Meal</div>
-      <input type="text" id="dinnerKidsMeal" class="fnote-input" placeholder="What are the kids having?" maxlength="200" style="width:100%;height:36px;padding:6px 10px;">
-    </div>
-  </div>
-</div>
-
-<!-- ═══ Kids Hub Widget ═══ -->
-<div class="kids-widget" id="kidsHubWidget" style="position:relative;z-index:2;">
-  <div class="kids-widget-header">
-    <div class="kids-widget-title">
-      <div class="kids-widget-title-dot"></div>
-      Kids Hub
-    </div>
-    <div id="kidsAlertBadge" style="display:none" class="kids-alert-badge">
-      — pending
-    </div>
-    <div style="display:flex;gap:4px;align-items:center;">
-      <img class="kid-avatar" src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" alt="Buggsy" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid #f5d58a;box-shadow:0 1px 4px rgba(0,0,0,0.12)">
-      <img class="kid-avatar" src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" alt="JJ" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid #f5b8cc;box-shadow:0 1px 4px rgba(0,0,0,0.12)">
-    </div>
-  </div>
-  <div id="kidsWidgetBody">
-    <div class="kids-loading">Loading kids data...</div>
-  </div>
-</div>
+<!-- v68: Family Note, Dinner, Kids Hub moved to Household section below finance -->
 
 <!-- v24 Wave 5: Early-month context banner -->
 <div id="contextBanner" style="display:none;background:var(--warning-bg);border:1px solid rgba(217,119,6,.2);border-radius:10px;padding:10px 16px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--warning);line-height:1.6;"></div>
@@ -976,11 +924,83 @@ id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition
 </div>
 </div>
 
+<!-- ═══ Household (v68: moved below finance) ═══ -->
+<div class="sec" style="margin-top:28px;">Household</div>
+
+<!-- ═══ Family Note Editor (v60) ═══ -->
+<div class="fnote-wrap" id="fnoteWrap">
+  <div class="fnote-header">
+    <div class="fnote-title">&#x2728; Family Note</div>
+    <div class="fnote-status" id="fnoteStatus">Saved</div>
+  </div>
+  <div class="fnote-row">
+    <textarea class="fnote-input" id="fnoteInput" placeholder="Leave a note for the family..." maxlength="200" rows="2"></textarea>
+    <button class="fnote-save" id="fnoteSave" onclick="saveFamilyNote()">Save</button>
+  </div>
+  <div class="fnote-preview" id="fnotePreview"><span>Shows on kitchen &amp; office displays</span></div>
+</div>
+
+<!-- ═══ Dinner Plan (v61) ═══ -->
+<div class="fnote-wrap" id="dinnerWrap">
+  <div class="fnote-header">
+    <div class="fnote-title">&#x1F37D;&#xFE0F; Tonight's Dinner</div>
+    <div class="fnote-status" id="dinnerStatus"></div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+    <div style="flex:2;min-width:140px;">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Meal</div>
+      <input type="text" id="dinnerMeal" class="fnote-input" placeholder="What's for dinner?" maxlength="200" style="width:100%;resize:none;height:36px;padding:6px 10px;">
+    </div>
+    <div style="flex:0 0 90px;">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Cook</div>
+      <select id="dinnerCook" style="width:100%;height:36px;padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;">
+        <option value="JT">JT</option>
+        <option value="LT">LT</option>
+      </select>
+    </div>
+    <div style="flex:2;min-width:120px;">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Notes</div>
+      <input type="text" id="dinnerNotes" class="fnote-input" placeholder="Optional" maxlength="300" style="width:100%;resize:none;height:36px;padding:6px 10px;">
+    </div>
+    <button class="fnote-save active" id="dinnerSave" onclick="saveDinner()" style="height:44px;min-width:54px;">Save</button>
+  </div>
+  <div style="margin-top:8px;">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-muted);">
+      <input type="checkbox" id="dinnerKidsToggle" onchange="toggleKidsMealVein()" style="width:14px;height:14px;cursor:pointer;">
+      Kids eating something different?
+    </label>
+    <div id="dinnerKidsRow" style="display:none;margin-top:6px;">
+      <div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Kids Meal</div>
+      <input type="text" id="dinnerKidsMeal" class="fnote-input" placeholder="What are the kids having?" maxlength="200" style="width:100%;height:36px;padding:6px 10px;">
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Kids Hub Widget ═══ -->
+<div class="kids-widget" id="kidsHubWidget" style="position:relative;z-index:2;">
+  <div class="kids-widget-header">
+    <div class="kids-widget-title">
+      <div class="kids-widget-title-dot"></div>
+      Kids Hub
+    </div>
+    <div id="kidsAlertBadge" style="display:none" class="kids-alert-badge">
+      — pending
+    </div>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <img class="kid-avatar" src="https://i.ibb.co/Y7rjjNDg/1773710329577.png" alt="Buggsy" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid #f5d58a;box-shadow:0 1px 4px rgba(0,0,0,0.12)">
+      <img class="kid-avatar" src="https://i.ibb.co/N2Qn0J0Q/1773720439302.png" alt="JJ" style="width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid #f5b8cc;box-shadow:0 1px 4px rgba(0,0,0,0.12)">
+    </div>
+  </div>
+  <div id="kidsWidgetBody">
+    <div class="kids-loading">Loading kids data...</div>
+  </div>
+</div>
+
 <div id="jj-sonic-egg" title="JJ Sonic mode"><img src="https://i.ibb.co/cKLhDLqy/1773720167754.png" alt="JJ Sonic"></div>
 <div class="footer">
 <span id="footerSrc">Source: Tiller BudgetMaster</span>
 <span id="veinReconcileBadge" style="font-size:10px;font-weight:600;letter-spacing:.05em;opacity:0.85;"></span>
-<span id="veinVersionTag">The Vein v64</span>
+<span id="veinVersionTag">The Vein v68</span>
 </div>
 
 </div>
@@ -1006,7 +1026,7 @@ REFRESH_MINS: 0,
 var IS_EMBEDDED=(function(){try{var g=google;return!!g.script.run;}catch(e){return false;}})();
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 // v62: Confidence Rail + Graceful Degradation
-var TBM_VERSION = 'v67';
+var TBM_VERSION = 'v68';
 var _veinLastFetch = null;
 var _veinLastGoodEngine = null;
 function markVeinFresh() {
@@ -1828,17 +1848,44 @@ gates = [
 }
 var passCount = gates.filter(function(g){return g.pass;}).length;
 var checkable = gates.filter(function(g){return g.resultCls !== 'dim';}).length;
+var dimCount = gates.filter(function(g){return g.resultCls === 'dim';}).length;
+var isPartialEval = dimCount > 0;
 var gatesBar = document.querySelector('.gates-bar');
 if (gatesBar) {
-  var allPass = (passCount === checkable);
-  var accentColor = allPass ? 'var(--positive, #7aab85)' : (passCount >= checkable - 1 ? 'var(--gold, #C9A84C)' : 'var(--negative, #d4888a)');
+  var allPass = (passCount === checkable) && !isPartialEval;
+  var accentColor = isPartialEval ? 'var(--warning, #D97706)' : (allPass ? 'var(--positive, #7aab85)' : (passCount >= checkable - 1 ? 'var(--gold, #C9A84C)' : 'var(--negative, #d4888a)'));
   gatesBar.style.setProperty('--gates-accent', accentColor);
 }
-$('gateScore').textContent = passCount + '/' + checkable;
-$('gateScore').style.color = passCount === checkable ? 'var(--positive)' : (passCount >= checkable - 1 ? 'var(--gold)' : 'var(--negative)');
+if (isPartialEval) {
+  $('gateScore').textContent = passCount + '/' + checkable + ' (partial)';
+  $('gateScore').style.color = 'var(--warning)';
+} else {
+  $('gateScore').textContent = passCount + '/' + checkable;
+  $('gateScore').style.color = passCount === checkable ? 'var(--positive)' : (passCount >= checkable - 1 ? 'var(--gold)' : 'var(--negative)');
+}
 var pips = '';
 gates.forEach(function(g) { var cls = g.resultCls === 'dim' ? '' : (g.pass ? 'pass' : (g.warn ? 'warn' : 'fail')); if (cls) pips += '<div class="gate-pip ' + cls + '"></div>'; });
+if (isPartialEval) pips += '<div class="gate-pip warn" title="' + dimCount + ' gate(s) not evaluated"></div>';
 $('gatePips').innerHTML = pips;
+// v68: Close readiness verdict
+var failCount = gates.filter(function(g){return g.resultCls === 'fail';}).length;
+var warnCount = gates.filter(function(g){return g.resultCls === 'warn' || g.resultCls === 'dim';}).length;
+var verdictEl = $('closeVerdict');
+if (verdictEl) {
+  if (isPartialEval) {
+    verdictEl.textContent = 'PARTIAL EVALUATION — ' + dimCount + ' gate(s) not tested';
+    verdictEl.style.color = 'var(--warning)';
+  } else if (failCount > 0) {
+    verdictEl.textContent = 'NOT READY — ' + failCount + ' blocker' + (failCount === 1 ? '' : 's');
+    verdictEl.style.color = 'var(--negative)';
+  } else if (warnCount > 0) {
+    verdictEl.textContent = 'REVIEW NEEDED — ' + warnCount + ' item' + (warnCount === 1 ? '' : 's') + ' to check';
+    verdictEl.style.color = 'var(--warning)';
+  } else {
+    verdictEl.textContent = 'READY TO CLOSE — all gates pass';
+    verdictEl.style.color = 'var(--positive)';
+  }
+}
 var html = '';
 gates.forEach(function(g) {
 var cls = g.resultCls === 'dim' ? '' : (g.pass ? 'gp' : (g.warn ? 'gw' : 'gf'));
@@ -1853,8 +1900,11 @@ if (g.details && g.details.length > 0 && !g.pass) {
 }
 html += '</div>';
 });
+if (isPartialEval) {
+  html = '<div style="padding:8px 12px;margin-bottom:8px;background:var(--warning-bg);border:1px solid rgba(217,119,6,.2);border-radius:6px;font-family:JetBrains Mono,monospace;font-size:10px;color:var(--warning);line-height:1.5;">⚠️ Partial Evaluation — ' + dimCount + ' gate' + (dimCount === 1 ? '' : 's') + ' could not be evaluated (live MER data unavailable). Close readiness is incomplete.</div>' + html;
+}
 $('gateGrid').innerHTML = html;
-var srcLabel = MER_GATE_DATA ? 'MER Live' : 'Client-side';
+var srcLabel = MER_GATE_DATA ? 'MER Live' : 'Client-side (partial)';
 var existingFooter = document.querySelector('.gates-src');
 if (!existingFooter) {
 var footer = document.createElement('div'); footer.className = 'gates-src';
@@ -1945,33 +1995,9 @@ function renderSysOps(raw){
     html += '<div class="sysops-item ' + it.cls + '"><div class="sysops-label">' + it.label + '</div><div class="sysops-val">' + it.val + '</div></div>';
   });
   html += '<div class="sysops-versions"><div class="sysops-label">Versions</div><div class="sysops-val">' + vrText + '</div></div>';
-  // v60: Close Month controls
-  html += '<div class="sysops-close-month" style="grid-column:1/-1;padding:10px 0;border-top:1px solid var(--border);margin-top:6px">';
-  html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
-  html += '<div class="sysops-label" style="margin:0">Close Month</div>';
-  html += '<select id="closeMonthSelect" style="font-family:JetBrains Mono,monospace;font-size:10px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer"></select>';
-  html += '<button id="runGatesBtn" onclick="veinRunGates()" style="font-family:JetBrains Mono,monospace;font-size:9px;padding:4px 10px;border:1px solid var(--blue);border-radius:4px;background:var(--blue-wash);color:var(--blue);cursor:pointer">Run Gates</button>';
-  html += '<button id="stampCloseBtn" onclick="veinStampClose()" style="display:none;font-family:JetBrains Mono,monospace;font-size:9px;padding:4px 10px;border:1px solid var(--positive);border-radius:4px;background:var(--positive-bg);color:var(--positive);cursor:pointer">Stamp Close</button>';
-  html += '</div>';
-  html += '<div id="gateResults" style="margin-top:6px;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--text-dim)"></div>';
-  html += '</div>';
+  // v68: Close controls moved to dedicated Close Controls section
 
   $('sysOpsGrid').innerHTML = html;
-  // Populate month selector
-  (function(){
-    var sel = $('closeMonthSelect');
-    if (!sel) return;
-    var now = new Date();
-    for (var mi = 0; mi < 3; mi++) {
-      var dt = new Date(now.getFullYear(), now.getMonth() - mi, 1);
-      var val = dt.getFullYear() + '-' + ((dt.getMonth()+1 < 10 ? '0' : '') + (dt.getMonth()+1));
-      var label = dt.toLocaleString('en-US',{month:'long',year:'numeric'});
-      var opt = document.createElement('option');
-      opt.value = val; opt.textContent = label;
-      if (mi === 1) opt.selected = true;
-      sel.appendChild(opt);
-    }
-  })();
 
   // Pips + overall score
   var overall = d.overall || {};
@@ -2027,6 +2053,22 @@ function veinStampClose() {
       if (res) res.innerHTML += '<div style="color:var(--negative)">Close failed: ' + (err.message || 'unknown') + '</div>';
     })
     .stampCloseMonthSafe(month);
+}
+
+// v68: Populate close month selector (was inside renderSysOps, now standalone)
+function initCloseControls() {
+  var sel = $('closeMonthSelect');
+  if (!sel) return;
+  var now = new Date();
+  for (var mi = 0; mi < 3; mi++) {
+    var dt = new Date(now.getFullYear(), now.getMonth() - mi, 1);
+    var val = dt.getFullYear() + '-' + ((dt.getMonth()+1 < 10 ? '0' : '') + (dt.getMonth()+1));
+    var label = dt.toLocaleString('en-US',{month:'long',year:'numeric'});
+    var opt = document.createElement('option');
+    opt.value = val; opt.textContent = label;
+    if (mi === 1) opt.selected = true;
+    sel.appendChild(opt);
+  }
 }
 
 /* ═══ Family Note Editor (v60) ═══ */
@@ -3184,6 +3226,7 @@ window.addEventListener('DOMContentLoaded',function(){
 function pad2(n){return n<10?'0'+n:String(n);}
 var now=new Date();var y=now.getFullYear();var m=pad2(now.getMonth()+1);var d=pad2(now.getDate());
 $('rangeStart').value=y+'-'+m+'-01';$('rangeEnd').value=y+'-'+m+'-'+d;
+initCloseControls();
 initDashboard();
 initKidsWidget();
 loadReconcileBadge();
