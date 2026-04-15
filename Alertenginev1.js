@@ -1,12 +1,12 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// AlertEngine.gs v11 — Push Notifications via Pushover API
+// AlertEngine.gs v12 — Push Notifications via Pushover API
 // WRITES TO: (Pushover API only — no sheet writes)
 // READS FROM: 💻🧮 Helpers (for config)
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
-function getAlertEngineVersion() { return 11; }
+function getAlertEngineVersion() { return 12; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor
 var _aeSS = null;
@@ -649,22 +649,28 @@ function dailyHealthCheck() {
   // v11: Homework module shape check — fires SYSTEM_ERROR if any child's module is broken
   try {
     var hwChildren = ['buggsy', 'jj'];
+    var validators = [
+      { name: 'Homework', fn: typeof validateHomeworkShape_ === 'function' ? validateHomeworkShape_ : null },
+      { name: 'Reading',  fn: typeof validateReadingShape_  === 'function' ? validateReadingShape_  : null },
+      { name: 'Writing',  fn: typeof validateWritingShape_  === 'function' ? validateWritingShape_  : null }
+    ];
     for (var hc = 0; hc < hwChildren.length; hc++) {
-      if (typeof validateHomeworkShape_ === 'function') {
-        var hwResult = validateHomeworkShape_(hwChildren[hc]);
-        if (!hwResult.valid) {
+      for (var v = 0; v < validators.length; v++) {
+        if (!validators[v].fn) continue;
+        var checkResult = validators[v].fn(hwChildren[hc]);
+        if (!checkResult.valid) {
           sendPush_(
-            'Homework broken: ' + hwResult.child,
-            'Missing: ' + hwResult.missing.join(', ') + '. Fix before kids wake up.',
+            validators[v].name + ' broken: ' + checkResult.child,
+            'Missing: ' + checkResult.missing.join(', ') + '. Fix before kids wake up.',
             'LT',
             PUSHOVER_PRIORITY.SYSTEM_ERROR
           );
-          logError_('dailyHealthCheck', 'Homework shape invalid for ' + hwResult.child, hwResult.missing);
+          logError_('dailyHealthCheck', validators[v].name + ' shape invalid for ' + checkResult.child, checkResult.missing);
         }
       }
     }
   } catch(e) {
-    console.log('dailyHealthCheck homework shape check failed: ' + e.message);
+    console.log('dailyHealthCheck education shape check failed: ' + e.message);
   }
 
   // Send all accumulated alerts
@@ -740,5 +746,5 @@ function checkTillerFreshness_() {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — AlertEngine v11
+// END OF FILE — AlertEngine v12
 // ════════════════════════════════════════════════════════════════════
