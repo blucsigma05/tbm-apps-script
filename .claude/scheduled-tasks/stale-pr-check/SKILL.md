@@ -24,7 +24,7 @@ Find stale PRs and report what's blocking them.
   ```
   #NN [age]h - [title] - blocked-on:[reason]
   ```
-- Any PR > 72h old: priority `HYGIENE_REPORT_LOW` (-1) with same content + "URGENT 72h+" tag at top.
+- Any PR > 72h old: priority `BACKLOG_STALE` (0) with same content + "URGENT 72h+" tag at top.
 
 ## Override behavior
 
