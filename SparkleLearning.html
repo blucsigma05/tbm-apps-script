@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v20">
+  <meta name="tbm-version" content="v21">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -887,12 +887,85 @@ function resolveAsset(assetId, size, fallbackColor) {
   return renderShape('circle', fallbackColor || 'pink', size || 64);
 }
 
+function getRequestedSparkleActivity() {
+  var activity = getParam('activity');
+  if (!activity) { return null; }
+  var key = String(activity).toLowerCase().replace(/-/g, '_');
+  // v21: Alias map matches daily-missions normalizeSparkleActivity()
+  var aliases = {
+    'letter_intro': 'letter_intro',
+    'find_letter': 'find_the_letter',
+    'find_the_letter': 'find_the_letter',
+    'name_builder': 'name_builder',
+    'count': 'count_with_me',
+    'count_with_me': 'count_with_me',
+    'find_number': 'find_the_number',
+    'find_the_number': 'find_the_number',
+    'quantity_match': 'quantity_match',
+    'color_hunt': 'color_hunt',
+    'shape_match': 'shape_match',
+    'pattern': 'pattern_next',
+    'pattern_next': 'pattern_next',
+    'sounds': 'letter_sound',
+    'letter_sound': 'letter_sound',
+    'what_sound': 'letter_sound',
+    'trace': 'letter_trace',
+    'letter_trace': 'letter_trace',
+    'audio_story': 'audio_story',
+    'challenge': 'sparkle_challenge',
+    'sparkle_challenge': 'sparkle_challenge',
+    'draw': 'free_draw',
+    'free_draw': 'free_draw',
+    'celebration': 'star_celebration',
+    'star_celebration': 'star_celebration',
+    'more_or_less': 'more_or_less'
+  };
+  return aliases[key] || key;
+}
+
+function filterContentForRequestedActivity(content) {
+  var requested = getRequestedSparkleActivity();
+  if (!requested || !content || !content.activities || !content.activities.length) {
+    return content;
+  }
+
+  // Prefer activityIndex (exact single activity) over type filter
+  var idxParam = getParam('activityIndex');
+  var filtered = [];
+
+  if (idxParam !== null && idxParam !== '') {
+    var idx = parseInt(idxParam, 10);
+    if (!isNaN(idx) && idx >= 0 && idx < content.activities.length) {
+      filtered.push(content.activities[idx]);
+    }
+  }
+
+  // Fall back to type filter (may match multiple activities of same type)
+  if (!filtered.length) {
+    for (var i = 0; i < content.activities.length; i++) {
+      if (String(content.activities[i].type || '').toLowerCase() === requested) {
+        filtered.push(content.activities[i]);
+      }
+    }
+  }
+  if (!filtered.length) { return content; }
+
+  var nextContent = {};
+  for (var key in content) {
+    if (content.hasOwnProperty(key)) {
+      nextContent[key] = content[key];
+    }
+  }
+  nextContent.activities = filtered;
+  return nextContent;
+}
+
 function loadContent() {
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function(content) {
         if (content && content.content && content.content.activities) {
-          todayContent = content.content;
+          todayContent = filterContentForRequestedActivity(content.content);
           // Cap at 10 activities per session — 15 is too long for pre-K
           if (todayContent.activities.length > 10) {
             todayContent.activities = todayContent.activities.slice(0, 10);
@@ -1719,23 +1792,53 @@ function buildSparkleLoadingScreen() {
   }
   var cartwheelWrap = document.createElement('div');
   cartwheelWrap.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:0;height:0;z-index:15;';
-  var cartwheelImg = document.createElement('img');
-  cartwheelImg.src = 'https://i.ibb.co/k2sWCnvH/Gemini-Generated-Image-8uhoc98uhoc98uho.png';
-  cartwheelImg.alt = 'JJ cartwheel';
-  cartwheelImg.style.cssText = 'width:130px;height:auto;display:block;position:absolute;left:-65px;top:-65px;filter:drop-shadow(0 0 12px #ff80ff) drop-shadow(0 0 24px rgba(255,128,255,0.4));animation:skCartwheelArc 2.4s ease-in-out 0s infinite;';
+  // JJ cartwheel — inline SVG, mid-cartwheel pose with flowing hair + tutu
+  var cartwheelEl = document.createElement('div');
+  cartwheelEl.style.cssText = 'position:absolute;left:-65px;top:-65px;width:130px;height:130px;filter:drop-shadow(0 0 14px #ff80ff) drop-shadow(0 0 28px rgba(255,128,255,0.5));animation:skCartwheelArc 2.4s ease-in-out 0s infinite;';
+  cartwheelEl.innerHTML = '<svg viewBox="0 0 140 140" width="130" height="130">' +
+    /* head */
+    '<circle cx="70" cy="32" r="15" fill="#FBBF24"/>' +
+    /* hair — flowing upward (mid-flip) */
+    '<path d="M58 28 Q52 12 46 8" stroke="#8B5CF6" stroke-width="4" stroke-linecap="round" fill="none"/>' +
+    '<path d="M62 24 Q58 10 54 4" stroke="#A78BFA" stroke-width="3.5" stroke-linecap="round" fill="none"/>' +
+    '<path d="M67 22 Q66 8 64 2" stroke="#8B5CF6" stroke-width="3" stroke-linecap="round" fill="none"/>' +
+    '<path d="M72 23 Q74 10 76 6" stroke="#C4B5FD" stroke-width="2.5" stroke-linecap="round" fill="none"/>' +
+    /* face */
+    '<circle cx="64" cy="30" r="2.2" fill="#1a0533"/>' +
+    '<circle cx="76" cy="30" r="2.2" fill="#1a0533"/>' +
+    '<path d="M66 36 Q70 40 74 36" stroke="#1a0533" stroke-width="1.5" fill="none" stroke-linecap="round"/>' +
+    /* blush */
+    '<circle cx="61" cy="35" r="3" fill="#FF9ECE" opacity="0.5"/>' +
+    '<circle cx="79" cy="35" r="3" fill="#FF9ECE" opacity="0.5"/>' +
+    /* body */
+    '<line x1="70" y1="47" x2="70" y2="72" stroke="#FBBF24" stroke-width="5" stroke-linecap="round"/>' +
+    /* tutu skirt */
+    '<path d="M62 65 Q58 78 50 82" stroke="#E879F9" stroke-width="3" stroke-linecap="round" fill="none"/>' +
+    '<path d="M66 68 Q62 80 56 86" stroke="#D946EF" stroke-width="2.5" stroke-linecap="round" fill="none"/>' +
+    '<path d="M74 68 Q78 80 84 86" stroke="#E879F9" stroke-width="2.5" stroke-linecap="round" fill="none"/>' +
+    '<path d="M78 65 Q82 78 90 82" stroke="#D946EF" stroke-width="3" stroke-linecap="round" fill="none"/>' +
+    '<ellipse cx="70" cy="68" rx="12" ry="4" fill="#D946EF" opacity="0.6"/>' +
+    /* arm reaching down (cartwheel support) */
+    '<line x1="70" y1="52" x2="45" y2="72" stroke="#FBBF24" stroke-width="4" stroke-linecap="round"/>' +
+    '<circle cx="44" cy="73" r="4" fill="#FBBF24"/>' +
+    /* arm up (waving) */
+    '<line x1="70" y1="52" x2="96" y2="36" stroke="#FBBF24" stroke-width="4" stroke-linecap="round"/>' +
+    '<circle cx="97" cy="35" r="4" fill="#FBBF24"/>' +
+    /* legs — kicked up */
+    '<line x1="70" y1="72" x2="52" y2="98" stroke="#FBBF24" stroke-width="4" stroke-linecap="round"/>' +
+    '<line x1="70" y1="72" x2="92" y2="94" stroke="#FBBF24" stroke-width="4" stroke-linecap="round"/>' +
+    /* sparkle trail accents */
+    '<circle cx="105" cy="22" r="3" fill="#ff66cc" opacity="0.8"><animate attributeName="opacity" values="0.3;1;0.3" dur="1.2s" repeatCount="indefinite"/></circle>' +
+    '<circle cx="28" cy="90" r="2.5" fill="#44ddff" opacity="0.7"><animate attributeName="opacity" values="0.2;0.9;0.2" dur="1.5s" repeatCount="indefinite"/></circle>' +
+    '<circle cx="112" cy="58" r="2" fill="#ffdd44" opacity="0.7"><animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite"/></circle>' +
+    '<path d="M22 18 l3 -6 l3 6 M25 15 l-6 3 l6 3" fill="#E879F9" opacity="0.6"><animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.8s" repeatCount="indefinite"/></path>' +
+    '</svg>';
   var skCwDir = 0;
-  cartwheelImg.addEventListener('animationiteration', function() {
+  cartwheelEl.addEventListener('animationiteration', function() {
     skCwDir = 1 - skCwDir;
-    cartwheelImg.style.animationName = skCwDir === 0 ? 'skCartwheelArc' : 'skCartwheelReturn';
+    cartwheelEl.style.animationName = skCwDir === 0 ? 'skCartwheelArc' : 'skCartwheelReturn';
   });
-  cartwheelImg.onerror = function() {
-    cartwheelImg.style.display = 'none';
-    var fallback = document.createElement('div');
-    fallback.style.cssText = 'font-size:60px;position:absolute;left:-30px;top:-30px;animation:skCartwheelArc 2.4s ease-in-out infinite;';
-    fallback.textContent = '\u2728';
-    cartwheelWrap.appendChild(fallback);
-  };
-  cartwheelWrap.appendChild(cartwheelImg);
+  cartwheelWrap.appendChild(cartwheelEl);
   starWrap.appendChild(outerRing);
   starWrap.appendChild(cartwheelWrap);
   var hiText = document.createElement('div');
@@ -3058,11 +3161,29 @@ function tapSortBin(binIdx, binColor) {
 /* ═══════════════════════════════════════════════════════════
    ACTIVITY 15: MORE OR LESS
    ═══════════════════════════════════════════════════════════ */
+function normalizeMoreOrLessGroup(group, fallback) {
+  if (typeof group === 'number') {
+    return {
+      count: Math.max(0, group),
+      shape: fallback.shape,
+      color: fallback.color
+    };
+  }
+  if (!group) { return fallback; }
+  return {
+    count: Math.max(0, Number(group.count) || 0),
+    shape: group.shape || fallback.shape,
+    color: group.color || fallback.color
+  };
+}
+
 function renderMoreOrLess(activity) {
   var mc = getMainContent();
   var mode = activity.mode || 'more'; /* 'more' or 'less' */
-  var groupA = activity.groupA || { count: 3, shape: 'star', color: 'pink' };
-  var groupB = activity.groupB || { count: 6, shape: 'heart', color: 'purple' };
+  var fallbackA = { count: 3, shape: 'star', color: 'pink' };
+  var fallbackB = { count: 6, shape: 'heart', color: 'purple' };
+  var groupA = normalizeMoreOrLessGroup(activity.groupA, fallbackA);
+  var groupB = normalizeMoreOrLessGroup(activity.groupB, fallbackB);
   var answerSide = groupA.count > groupB.count ? (mode === 'more' ? 'A' : 'B') : (mode === 'more' ? 'B' : 'A');
   if (groupA.count === groupB.count) { answerSide = 'A'; } /* tie = either works */
 
