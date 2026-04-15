@@ -650,7 +650,7 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
 </div>
 </div>
 
-<!-- ═══ Close Controls (v68: extracted from System Ops) ═══ -->
+<!-- ═══ Close Controls + Sign-Off (v68) ═══ -->
 <div class="gates-section" id="closeControlsSection" style="margin-top:12px">
 <div class="gates-bar gold-top">
 <div style="padding:14px 24px;">
@@ -658,9 +658,32 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
 <select id="closeMonthSelect" style="font-family:JetBrains Mono,monospace;font-size:10px;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer"></select>
 <button id="runGatesBtn" onclick="veinRunGates()" style="font-family:JetBrains Mono,monospace;font-size:9px;padding:4px 10px;border:1px solid var(--blue);border-radius:4px;background:var(--blue-wash);color:var(--blue);cursor:pointer">Run Gates</button>
-<button id="stampCloseBtn" onclick="veinStampClose()" style="display:none;font-family:JetBrains Mono,monospace;font-size:9px;padding:4px 10px;border:1px solid var(--positive);border-radius:4px;background:var(--positive-bg);color:var(--positive);cursor:pointer">Stamp Close</button>
+<button id="loadProofBtn" onclick="veinLoadProof()" style="font-family:JetBrains Mono,monospace;font-size:9px;padding:4px 10px;border:1px solid var(--gold);border-radius:4px;background:var(--gold-wash);color:var(--gold);cursor:pointer">Load Proof</button>
 </div>
 <div id="gateResults" style="margin-top:6px;font-family:JetBrains Mono,monospace;font-size:9px;color:var(--text-dim)"></div>
+
+<!-- Reconciliation Proof Panel -->
+<div id="proofPanel" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+<div class="gates-ey" style="margin-bottom:8px;">Reconciliation Proof</div>
+<div id="proofGrid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;"></div>
+<div id="proofOverall" style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:10px;"></div>
+</div>
+
+<!-- Sign-Off Panel -->
+<div id="signOffPanel" style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+<div class="gates-ey" style="margin-bottom:8px;">Close Sign-Off</div>
+<div style="margin-bottom:8px;">
+<div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Close note (optional)</div>
+<input type="text" id="closeNote" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--surface-2);color:var(--text);" placeholder="What was reviewed, any notes..." maxlength="500">
+</div>
+<div style="margin-bottom:8px;">
+<div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">Open items to carry forward (optional)</div>
+<input type="text" id="closeOpenItems" style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--surface-2);color:var(--text);" placeholder="Unresolved items, carry-forwards..." maxlength="500">
+</div>
+<div id="closeSnapshot" style="display:none;margin-bottom:8px;padding:8px 12px;background:var(--surface-2);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim);line-height:1.6;"></div>
+<button id="stampCloseBtn" onclick="veinStampClose()" style="display:none;font-family:JetBrains Mono,monospace;font-size:9px;padding:6px 14px;border:1px solid var(--positive);border-radius:4px;background:var(--positive-bg);color:var(--positive);cursor:pointer;font-weight:700;">Close Month</button>
+</div>
+
 </div>
 </div>
 </div>
@@ -690,6 +713,20 @@ function tbmNav(p){var s=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl){window.top.lo
 
 <!-- v24 Wave 5: Early-month context banner -->
 <div id="contextBanner" style="display:none;background:var(--warning-bg);border:1px solid rgba(217,119,6,.2);border-radius:10px;padding:10px 16px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--warning);line-height:1.6;"></div>
+
+<!-- v69: Recent Transaction Feed (#334) — moved above Core Metrics (TV-004) -->
+<div class="trend-section">
+<div class="trend-toggle" onclick="toggleTxFeed()">
+<div class="trend-toggle-left">
+<div class="gates-ey">Recent Activity</div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);" id="txFeedCount">loading...</span>
+</div>
+<div class="gates-arrow" id="txFeedArrow">▲</div>
+</div>
+<div class="trend-body" id="txFeedBody" style="display:block;">
+<div id="txFeedContent" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-primary);"></div>
+</div>
+</div>
 
 <!-- ═══ Core Metrics ═══ -->
 <div class="sec a2">Core Metrics</div>
@@ -911,20 +948,6 @@ id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition
 <div class="cff-stats" id="cffStats"></div>
 </div>
 </div>
-<!-- v68: Recent Transaction Feed (#321) -->
-<div class="trend-section">
-<div class="trend-toggle" onclick="toggleTxFeed()">
-<div class="trend-toggle-left">
-<div class="gates-ey">Recent Activity</div>
-<span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);" id="txFeedCount">loading...</span>
-</div>
-<div class="gates-arrow" id="txFeedArrow">▲</div>
-</div>
-<div class="trend-body" id="txFeedBody" style="display:block;">
-<div id="txFeedContent" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-primary);"></div>
-</div>
-</div>
-
 <div class="trend-section">
 <div class="trend-toggle" onclick="toggleTrends()">
 <div class="trend-toggle-left">
@@ -2042,8 +2065,12 @@ function veinRunGates() {
         h += '<div style="padding:2px 0">' + icon + ' Gate ' + g.gate + ': ' + g.name + ' — ' + g.detail + '</div>';
       });
       if (res) res.innerHTML = h;
+      var signOff = $('signOffPanel');
+      if (signOff) signOff.style.display = allPass ? 'block' : 'none';
       var stampBtn = $('stampCloseBtn');
       if (stampBtn) stampBtn.style.display = allPass ? 'inline-block' : 'none';
+      // Cache gate data for close snapshot
+      _lastGateData = gates;
     })
     .withFailureHandler(function(err) {
       if (btn) { btn.disabled = false; btn.textContent = 'Run Gates'; }
