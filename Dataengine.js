@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v92 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v93 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 92; }
+function getDataEngineVersion() { return 93; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -3494,4 +3494,92 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
   return moments[idx];
 }
 
-// END OF FILE — DataEngine v92
+// ═══════════════════════════════════════════════════════════════
+// RECENT TRANSACTIONS — last N days for TheVein daily feed
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Returns the last `days` days of transactions for the Vein feed.
+ * Groups by date, sorted newest first. Each entry has:
+ * date, description, amount, category, account.
+ * @param {number} [days=5] Number of days to look back.
+ * @returns {Object} { transactions: [], summary: {} }
+ */
+function getRecentTransactions_(days) {
+  days = days || 5;
+  var ss = SpreadsheetApp.openById(SSID);
+  var sheet = ss.getSheetByName(TAB_MAP['Transactions']);
+  if (!sheet) return { transactions: [], summary: { error: 'Transactions tab not found' } };
+
+  var data = sheet.getDataRange().getValues();
+  if (data.length < 2) return { transactions: [], summary: { total: 0 } };
+
+  var tz = Session.getScriptTimeZone();
+  var now = new Date();
+  var cutoff = new Date(now.getTime() - (days * 86400000));
+
+  var txList = [];
+  var totalIn = 0;
+  var totalOut = 0;
+  var catTotals = {};
+
+  for (var i = 1; i < data.length; i++) {
+    var txDate = data[i][1];
+    if (!txDate) continue;
+    if (typeof txDate === 'string') txDate = new Date(txDate);
+    if (!(txDate instanceof Date) || isNaN(txDate.getTime())) continue;
+    if (txDate < cutoff) continue;
+
+    var amt = parseFloat(data[i][4]) || 0;
+    var cat = String(data[i][3] || 'Uncategorized').trim();
+    var desc = String(data[i][2] || '').trim();
+    var acct = String(data[i][5] || '').trim();
+
+    txList.push({
+      date: Utilities.formatDate(txDate, tz, 'yyyy-MM-dd'),
+      dateDisplay: Utilities.formatDate(txDate, tz, 'EEE MMM d'),
+      description: desc.length > 80 ? desc.substring(0, 77) + '...' : desc,
+      amount: amt,
+      category: cat,
+      account: acct,
+      row: i + 1
+    });
+
+    if (amt > 0) totalIn += amt;
+    if (amt < 0) totalOut += Math.abs(amt);
+    if (!catTotals[cat]) catTotals[cat] = 0;
+    catTotals[cat] += amt;
+  }
+
+  // Sort newest first
+  txList.sort(function(a, b) { return b.date > a.date ? 1 : (b.date < a.date ? -1 : 0); });
+
+  // Top spending categories
+  var catList = [];
+  for (var c in catTotals) {
+    if (catTotals[c] < 0) {
+      catList.push({ category: c, total: Math.abs(catTotals[c]) });
+    }
+  }
+  catList.sort(function(a, b) { return b.total - a.total; });
+
+  return {
+    transactions: txList,
+    summary: {
+      days: days,
+      count: txList.length,
+      totalIn: Math.round(totalIn * 100) / 100,
+      totalOut: Math.round(totalOut * 100) / 100,
+      net: Math.round((totalIn - totalOut) * 100) / 100,
+      topCategories: catList.slice(0, 8)
+    }
+  };
+}
+
+function getRecentTransactionsSafe(days) {
+  return withMonitor_('getRecentTransactionsSafe', function() {
+    return getRecentTransactions_(days);
+  });
+}
+
+// END OF FILE — DataEngine v93

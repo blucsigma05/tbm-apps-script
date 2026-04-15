@@ -460,7 +460,10 @@ function getShimScript() {
 '    "resetSandboxSafe",\n' +
 '    "getRecentTransactionsSafe",\n' +
 '    "getDailyMissionsInitSafe",\n' +
-'    "getAssetRegistrySafe"\n' +
+'    "getAssetRegistrySafe",\n' +
+'    "checkHomeworkGateSafe",\n' +
+'    "saveComicDraftSafe","loadComicDraftSafe","listComicDraftsSafe",\n' +
+'    "loadComicDraftByDateSafe","getComicStudioContextSafe","finishComicSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +
@@ -599,7 +602,10 @@ function getQAShimScript() {
 '    "getDesignUnlockedSafe",\n' +
 '    "resetSandboxSafe",\n' +
 '    "getDailyMissionsInitSafe",\n' +
-'    "getAssetRegistrySafe"\n' +
+'    "getAssetRegistrySafe",\n' +
+'    "checkHomeworkGateSafe",\n' +
+'    "saveComicDraftSafe","loadComicDraftSafe","listComicDraftsSafe",\n' +
+'    "loadComicDraftByDateSafe","getComicStudioContextSafe","finishComicSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +

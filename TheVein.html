@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="tbm-version" content="v67">
+<meta name="tbm-version" content="v68">
 <title>The Vein v67 — Household Command Center</title>
 <!-- TheVein v67 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -963,6 +963,20 @@ id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition
 <div class="cff-stats" id="cffStats"></div>
 </div>
 </div>
+<!-- v68: Recent Transaction Feed (#321) -->
+<div class="trend-section">
+<div class="trend-toggle" onclick="toggleTxFeed()">
+<div class="trend-toggle-left">
+<div class="gates-ey">Recent Activity</div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-muted);" id="txFeedCount">loading...</span>
+</div>
+<div class="gates-arrow" id="txFeedArrow">▲</div>
+</div>
+<div class="trend-body" id="txFeedBody" style="display:block;">
+<div id="txFeedContent" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-primary);"></div>
+</div>
+</div>
+
 <div class="trend-section">
 <div class="trend-toggle" onclick="toggleTrends()">
 <div class="trend-toggle-left">
@@ -2163,6 +2177,70 @@ html += '<div class="trend-card ' + c.cls + '"><div class="trend-title">' + c.ti
 $('trendGrid').innerHTML = html || '<div class="trend-empty">Insufficient data for trends</div>';
 }
 function toggleTrends(){ $('trendBody').classList.toggle('open'); $('trendArrow').classList.toggle('open'); }
+function toggleTxFeed(){ $('txFeedBody').classList.toggle('open'); $('txFeedArrow').classList.toggle('open'); }
+
+// v68: Recent transaction feed renderer (#321)
+function renderTxFeed(data) {
+  var el = $('txFeedContent');
+  var countEl = $('txFeedCount');
+  if (!el) return;
+  var txs = data.transactions || [];
+  var summary = data.summary || {};
+  countEl.textContent = summary.count + ' transactions · last ' + summary.days + ' days';
+
+  // Summary bar
+  var html = '<div style="display:flex;gap:16px;margin-bottom:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:4px;">';
+  html += '<div><span style="color:#22c55e;font-weight:700;">+$' + fmt(summary.totalIn) + '</span> <span style="color:var(--text-dim);font-size:9px;">IN</span></div>';
+  html += '<div><span style="color:#ef4444;font-weight:700;">-$' + fmt(summary.totalOut) + '</span> <span style="color:var(--text-dim);font-size:9px;">OUT</span></div>';
+  html += '<div><span style="color:' + (summary.net >= 0 ? '#22c55e' : '#ef4444') + ';font-weight:700;">' + (summary.net >= 0 ? '+' : '-') + '$' + fmt(Math.abs(summary.net)) + '</span> <span style="color:var(--text-dim);font-size:9px;">NET</span></div>';
+  html += '</div>';
+
+  // Transaction table
+  html += '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
+  html += '<tr style="color:var(--text-dim);border-bottom:1px solid var(--glass-border);font-size:9px;letter-spacing:1px;">';
+  html += '<th style="text-align:left;padding:4px 6px;">DATE</th>';
+  html += '<th style="text-align:left;padding:4px 6px;">DESCRIPTION</th>';
+  html += '<th style="text-align:right;padding:4px 6px;">AMOUNT</th>';
+  html += '<th style="text-align:left;padding:4px 6px;">CATEGORY</th>';
+  html += '<th style="text-align:left;padding:4px 6px;">ACCOUNT</th>';
+  html += '</tr>';
+
+  var prevDate = '';
+  for (var i = 0; i < txs.length && i < 60; i++) {
+    var tx = txs[i];
+    var isNew = tx.date !== prevDate;
+    prevDate = tx.date;
+    var amtColor = tx.amount >= 0 ? '#22c55e' : '#e2e8f0';
+    var amtStr = tx.amount >= 0 ? '+$' + fmt(tx.amount) : '-$' + fmt(Math.abs(tx.amount));
+    var catStyle = '';
+    if (tx.category.indexOf('Uncategorized') >= 0 || tx.category.indexOf('General Shopping') >= 0) {
+      catStyle = 'color:#f59e0b;font-weight:600;';
+    }
+    html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.03);' + (isNew ? 'border-top:1px solid var(--glass-border);' : '') + '">';
+    html += '<td style="padding:3px 6px;color:var(--text-muted);white-space:nowrap;">' + (isNew ? tx.dateDisplay : '') + '</td>';
+    html += '<td style="padding:3px 6px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(tx.description) + '</td>';
+    html += '<td style="padding:3px 6px;text-align:right;color:' + amtColor + ';white-space:nowrap;">' + amtStr + '</td>';
+    html += '<td style="padding:3px 6px;' + catStyle + 'max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(tx.category) + '</td>';
+    html += '<td style="padding:3px 6px;color:var(--text-dim);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(tx.account) + '</td>';
+    html += '</tr>';
+  }
+  html += '</table>';
+
+  // Top spending categories
+  if (summary.topCategories && summary.topCategories.length > 0) {
+    html += '<div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:4px;">';
+    html += '<div style="font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:6px;">TOP SPENDING (LAST ' + summary.days + ' DAYS)</div>';
+    for (var c = 0; c < summary.topCategories.length && c < 5; c++) {
+      var cat = summary.topCategories[c];
+      html += '<div style="display:flex;justify-content:space-between;padding:2px 0;"><span>' + escapeHtml(cat.category) + '</span><span style="color:#ef4444;">-$' + fmt(cat.total) + '</span></div>';
+    }
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+function fmt(n) { return (Math.round(n * 100) / 100).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
 /* ── E-11: Cash Flow Forecast Renderer ── */
 function renderCFF(data){
 if(!data||!data.months||!data.months.length){return;}
@@ -2288,6 +2366,11 @@ var iw=$('dataError');if(iw){iw.innerHTML='⚠ Integrity check: '+engineData.int
 }
 google.script.run.withSuccessHandler(function(months){if(months && months.length) buildDropdownFromEngine(months);}).withFailureHandler(function(e){console.warn('getMonths failed:',e);}).getMonthsSafe();
 google.script.run.withSuccessHandler(function(historyData){if(historyData && historyData.length){ HISTORY_DATA = historyData; renderTrends(); }}).withFailureHandler(function(e){ console.warn('Close History unavailable:', e); }).getCloseHistoryDataSafe();
+
+// v68: Load recent transaction feed (#321)
+google.script.run.withSuccessHandler(function(data) {
+  if (data && data.transactions) { renderTxFeed(data); }
+}).withFailureHandler(function(e) { console.warn('Tx feed unavailable:', e); }).getRecentTransactionsSafe(5);
 try{ google.script.run.withSuccessHandler(renderCFF).withFailureHandler(function(e){console.warn('CFF unavailable:',e);}).getCashFlowForecastSafe(); }catch(e){}
 google.script.run.withSuccessHandler(function(bd){if(bd)initFamilyNote(bd.familyNote);}).withFailureHandler(function(e){console.warn('getBoardData failed:',e);}).getBoardDataSafe();
 setTimeout(function(){loader.classList.add('hidden');},500);
@@ -2655,9 +2738,18 @@ function _kidsApprove(rowIndex, el, taskID) {
   if (rowIndex == null || rowIndex === '') return;
   _kidsOptimistic(el);
   google.script.run
-    .withSuccessHandler(function() { _showKidsToast('\u2713 Approved! Points awarded.'); })
+    .withSuccessHandler(function(r) {
+      var res = (typeof r === 'string') ? JSON.parse(r) : (r || {});
+      if (res.status === 'ok') {
+        _showKidsToast('\u2713 Approved! Points awarded.');
+      } else {
+        _showKidsToast('\u26A0 ' + (res.message || 'Approval may not have saved. Refreshing...'));
+      }
+      initKidsWidget();
+    })
     .withFailureHandler(function(err) {
       console.error('Vein approve failed:', err);
+      _showKidsToast('\u26A0 Approval failed. Refreshing...');
       initKidsWidget();
     })
     .khApproveTaskSafe(rowIndex, taskID);
@@ -2666,7 +2758,15 @@ function _kidsApproveBonus(rowIndex, el, taskID) {
   if (rowIndex == null || rowIndex === '') return;
   _kidsOptimistic(el);
   google.script.run
-    .withSuccessHandler(function() { _showKidsToast('\u2726 2x bonus approved!'); })
+    .withSuccessHandler(function(r) {
+      var res = (typeof r === 'string') ? JSON.parse(r) : (r || {});
+      if (res.status === 'ok') {
+        _showKidsToast('\u2726 2x bonus approved!');
+      } else {
+        _showKidsToast('\u26A0 ' + (res.message || 'Bonus may not have saved. Refreshing...'));
+      }
+      initKidsWidget();
+    })
     .withFailureHandler(function(err) {
       console.error('Vein bonus approve failed:', err);
       initKidsWidget();

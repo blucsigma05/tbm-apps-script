@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v13">
+<meta name="tbm-version" content="v14">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1044,10 +1044,11 @@ var KNOWN_QUESTION_TYPES = [
 // ─── MODULE DATA ───
 var MODULE = null;
 var _usingFallback = false;
-var FALLBACK_MODULE = {
-  date: "Monday Module",
+
+// v14: FALLBACK_MODULE deleted — redirect to daily-missions instead
+var _FALLBACK_STUB = {
   science: {
-    strand: "Force, Motion, and Energy",
+    strand: "deleted",
     teks: "4.7A \u2014 Forces (gravity, friction, magnetism)",
     title: "Mission Briefing: The Physics of the Chase",
     quickFact: "A wolf can run at speeds up to 40 mph, but friction between its paws and the ground is what lets it turn corners without sliding. Without friction, even the fastest wolf would just... keep sliding.",
@@ -2199,12 +2200,61 @@ function renderInhibitionReminder(dayConfig) {
   return '<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#fbbf24;text-align:center">' + escapeHtml(dayConfig.inhibitionReminder) + '</div>';
 }
 
+// ─── NO-MODULE REDIRECT (non-homework days only) ───
+// v14: If curriculum loads but today has no module questions, redirect.
+// Preserves /qa/ prefix and sandbox/test query flags.
+function redirectToDailyMissions_() {
+  var loc = window.location;
+  var origin = loc.origin || '';
+  // Preserve /qa/ prefix so QA routes don't leak into production
+  var prefix = '';
+  if (loc.pathname.indexOf('/qa/') === 0) { prefix = '/qa'; }
+  var url = origin + prefix + '/daily-missions';
+  // Carry sandbox/test flags forward
+  var params = [];
+  if (loc.search.indexOf('sandbox=1') !== -1) { params.push('sandbox=1'); }
+  if (loc.search.indexOf('test=1') !== -1) { params.push('test=1'); }
+  if (params.length > 0) { url += '?' + params.join('&'); }
+
+  var body = document.body;
+  if (body) {
+    body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;' +
+      'min-height:100vh;background:#0B0F1A;color:#E2E8F0;font-family:Nunito,sans-serif;' +
+      'flex-direction:column;gap:16px;padding:20px;text-align:center;">' +
+      '<div style="font-size:48px;">&#128640;</div>' +
+      '<div style="font-family:Orbitron,sans-serif;font-size:18px;color:#F59E0B;' +
+      'letter-spacing:2px;">NO MATH/SCIENCE MODULE TODAY</div>' +
+      '<div style="font-size:16px;max-width:400px;">Today\'s assignments are on your Daily Missions board.</div>' +
+      '<div style="font-size:13px;color:#64748B;">Redirecting in 3 seconds...</div>' +
+      '</div>';
+  }
+  setTimeout(function() { window.location.href = url; }, 3000);
+}
+
+// ─── LOAD ERROR SCREEN (transient failures — retry, don't redirect) ───
+function showLoadError_(reason) {
+  var msg = 'Having trouble loading your homework.';
+  if (reason === 'offline') { msg = 'Cannot reach the server right now.'; }
+  var body = document.body;
+  if (body) {
+    body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;' +
+      'min-height:100vh;background:#0B0F1A;color:#E2E8F0;font-family:Nunito,sans-serif;' +
+      'flex-direction:column;gap:16px;padding:20px;text-align:center;">' +
+      '<div style="font-size:48px;">&#9888;&#65039;</div>' +
+      '<div style="font-family:Orbitron,sans-serif;font-size:18px;color:#F59E0B;' +
+      'letter-spacing:2px;">HOMEWORK LOAD FAILED</div>' +
+      '<div style="font-size:16px;max-width:400px;">' + msg + '</div>' +
+      '<button onclick="window.location.reload()" style="margin-top:12px;padding:12px 32px;' +
+      'background:#F59E0B;color:#0B0F1A;border:none;border-radius:8px;font-family:Orbitron,sans-serif;' +
+      'font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;">TRY AGAIN</button>' +
+      '</div>';
+  }
+}
+
 // ─── CURRICULUM LOADING ───
 function loadCurriculumContent() {
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
-    _usingFallback = true;
-    MODULE = FALLBACK_MODULE;
-    init();
+    showLoadError_('offline');
     return;
   }
   google.script.run
@@ -2229,22 +2279,19 @@ function loadCurriculumContent() {
           MODULE = { science: { title: 'Review', questions: c.review_quiz }, math: { title: 'Review', questions: [] } };
           init();
         } else {
-          _usingFallback = true;
-          MODULE = FALLBACK_MODULE;
-          init();
-          console.warn('Curriculum loaded but no module questions found for today. Day type may be non-homework (cold_passage, writing, etc). Keys: ' + Object.keys(c).join(', '));
+          // No module questions today — this is a reading/writing/drill day.
+          // Redirect to daily-missions so Buggsy does the correct assignments.
+          var keys = Object.keys(c).join(', ');
+          console.warn('No module questions today. Day content keys: ' + keys);
+          redirectToDailyMissions_();
         }
       } else {
-        _usingFallback = true;
-        MODULE = FALLBACK_MODULE;
-        init();
+        showLoadError_('no-content');
       }
     })
     .withFailureHandler(function(err) {
       console.log('Curriculum load failed: ' + (err && err.message ? err.message : 'unknown'));
-      _usingFallback = true;
-      MODULE = FALLBACK_MODULE;
-      init();
+      showLoadError_('load-error');
     })
     .getTodayContentSafe('buggsy');
 }

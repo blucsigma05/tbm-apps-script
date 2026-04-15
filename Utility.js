@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════════════════
-// Utility.js v8 — Run-once utility functions
+// Utility.js v9 — Run-once utility functions
 // ═══════════════════════════════════════════════════════════════
 // The isStaleDaily_ and isStaleWeekly_ fixes are already in
 // KidsHub.gs v6 Full Deploy. These utilities handle cleanup.
 // ═══════════════════════════════════════════════════════════════
 
-function getUtilityVersion() { return 8; }
+function getUtilityVersion() { return 9; }
 
 
 // ── FIX 3: Add Parent_PIN column to KH_Children ─────────────
@@ -453,4 +453,225 @@ function diagTransferPairing() {
   }
 }
 
-// END Utility.js v8
+// ═══════════════════════════════════════════════════════════════
+// AMAZON ORDER DETAIL MATCHING
+// Seeds Amazon order CSV data into Amazon_Detail tab, then
+// cross-references against Tiller Transactions to match lump
+// Amazon charges with item-level detail.
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Step 1: Seed Amazon order history into Amazon_Detail tab.
+ * Data from amazon.com/gp/b2b/reports CSV export (Jan 15 – Apr 15 2026).
+ * Run once, then use matchAmazonToTiller() to cross-reference.
+ */
+function seedAmazonOrderHistory() {
+  var ss = SpreadsheetApp.openById(SSID);
+  var tabName = 'Amazon_Detail';
+  var sheet = ss.getSheetByName(tabName);
+  if (!sheet) {
+    sheet = ss.insertSheet(tabName);
+  } else {
+    sheet.clear();
+  }
+
+  var headers = ['Order ID', 'Order Date', 'Qty', 'Description', 'Price', 'Amazon Category', 'ASIN', 'Matched Tiller Row', 'Tiller Amount', 'Tiller Category'];
+  sheet.appendRow(headers);
+
+  // Embedded data from amazon_order_history.csv (Jan 15 – Apr 15 2026)
+  var items = [
+    ['111-7601270-2963447','2026-04-13',1,'Basesailor USB to USB C Adapter',7.99,'Cell Phones & Accessories','B07Z66MK6L'],
+    ['111-7601270-2963447','2026-04-13',1,'Honest Amish Classic Beard Oil 2oz',12.22,'Beauty & Personal Care','B00M49SG0Q'],
+    ['111-7601270-2963447','2026-04-13',1,'Anker USB C Adapter 2-Pack',8.99,'Electronics','B08HZ6PS61'],
+    ['111-3043999-2967417','2026-04-09',1,'JOLLY RANCHER Gummies 27oz',7.39,'Grocery','B0DW5LNSJN'],
+    ['111-3043999-2967417','2026-04-09',1,'HI-CHEW Easter Variety 6-Pack',23.99,'Grocery','B0CNL3FFZL'],
+    ['111-3043999-2967417','2026-04-09',1,'Laffy Taffy Fruit Combos 6oz',9.92,'Grocery','B0B8T8P3ZX'],
+    ['111-3043999-2967417','2026-04-09',1,'JOLLY RANCHER Sour Gummies 6.5oz',2.75,'Grocery','B0CFWZWYSM'],
+    ['111-1132284-6893848','2026-04-09',1,'Girls Gymnastics Leotard 5t Gold Pink Blue',9.58,'Clothing','B0F9WYH51W'],
+    ['111-1132284-6893848','2026-04-09',2,'Microsoft Surface Pen Platinum',17.42,'Cell Phones & Accessories','B0DLDQDQC4'],
+    ['111-1132284-6893848','2026-04-09',1,'Girls Gymnastics Leotard 5t Leopard',7.57,'Clothing','B0CNSLSMXR'],
+    ['111-1132284-6893848','2026-04-09',1,'XIMA Pastel Floral Headbands 5-Pack',9.99,'Beauty & Personal Care','B0F9WZTL7L'],
+    ['111-0122931-3142624','2026-03-29',1,'UGREEN USB 3.0 Switch 2-Computer 4-Port',35.14,'Electronics','B0C8MSP967'],
+    ['111-3796570-7793814','2026-03-28',1,'Beyblade X Xtreme Battle Set',54.99,'Toys & Games','B0CS8CM4YB'],
+    ['111-1247617-5985069','2026-03-28',1,'Beyblade X Transformers Optimus vs Megatron',25.49,'Toys & Games','B0CLFNMPF6'],
+    ['111-9189780-6582659','2026-03-28',1,'Gerutek 2-Pack Screen Protector Tab A11/A9',7.49,'Electronics','B0CMC28R5Q'],
+    ['111-8203589-0306656','2026-03-28',1,'SPARIN 2-Pack Screen Protector Tab A7 Lite',7.98,'Electronics','B09228GJ3G'],
+    ['111-8680126-9377856','2026-03-28',1,'Gerutek Case Tab A11 8.7" Blue',26.99,'Electronics','B0GG8RGCKK'],
+    ['111-6042876-1381830','2026-03-28',1,'SEYMAC Case Tab A7 Lite Yellowish/Pink',26.99,'Electronics','B096LLBG39'],
+    ['111-1677330-8643466','2026-02-10',1,'BUYIFY Foldable Laptop Bed Desk',28.97,'Office Products','B0D3CZL7FB'],
+    ['111-5949670-9479416','2026-02-09',1,'Premier Protein Powder Vanilla 23.3oz',26.48,'Health & Household','B06ZZ3PJQD'],
+    ['111-5129023-9901004','2026-02-07',1,'WOCCI 18mm Watch Band White Garden',14.99,'Clothing','B0B2PDV45Q'],
+    ['111-5129023-9901004','2026-02-07',1,'WOCCI 18mm Watch Band Black',14.99,'Clothing','B0B2PB8RR8'],
+    ['111-5129023-9901004','2026-02-07',1,'WOCCI 18mm Watch Band Leopard',14.99,'Clothing','B0B2P9MDHP'],
+    ['111-5129023-9901004','2026-02-07',1,'WOCCI 18mm Watch Band Brown',14.99,'Clothing','B0B2PCP2YK'],
+    ['111-3309691-9069802','2026-02-07',1,'National Blue Ice Melt 20lb Bucket',54.99,'Patio & Garden','B08RJV7G89'],
+    ['111-1916655-2515465','2026-02-07',1,'Festty Glasses Strap 3-Pack Black',7.99,'Clothing','B0BG9XR1MQ'],
+    ['111-1916655-2515465','2026-02-07',1,'Charmast 10000mAh Power Bank',20.99,'Cell Phones & Accessories','B0BY2RV75W'],
+    ['111-2782053-7961062','2026-02-03',1,'Snow Joe Snow Shovel 18" Blade',39.97,'Patio & Garden','B01LXEQ6UM'],
+    ['111-2204875-1501032','2026-02-03',1,'ProCase Watch Box 12-Slot Espresso',29.99,'Clothing','B0CXXJ94SB'],
+    ['111-2204875-1501032','2026-02-03',1,'iBayam 2-Pack Tape Measure',3.99,'Tools','B07WG5B464'],
+    ['111-2204875-1501032','2026-02-03',1,'Flintstones Complete Gummies 180ct',13.99,'Health & Household','B00BV47LQA'],
+    ['111-5329756-1853007','2026-01-29',1,'JOREST Watch Repair Kit',14.99,'Clothing','B09MK72YFD'],
+    ['111-5329756-1853007','2026-01-29',1,'JOREST Watch Repair Kit (2nd)',14.99,'Clothing','B09MK72YFD'],
+    ['111-6251942-1240262','2026-01-27',1,'Amazon Essentials Mickey Hoodie L',21.50,'Clothing','B0BHTJB8J2'],
+    ['111-6251942-1240262','2026-01-27',1,'Amazon Essentials Minnie Hoodie L',21.50,'Clothing','B08WY4596T'],
+    ['111-8550495-6367455','2026-01-27',1,'GORILLA GRIP Can Opener Black',11.99,'Home & Kitchen','B09NXMDPS1'],
+    ['111-9222713-3133863','2026-01-27',1,'LiCB 20-Pack SR621SW 364 Battery',6.99,'Health & Household','B07DF6YP1J'],
+    ['111-9222713-3133863','2026-01-27',1,'Miss Jessies Pillow Soft Curls 8.5oz',19.97,'Beauty','B0094KPK70'],
+    ['111-9222713-3133863','2026-01-27',1,'LiCB 20-Pack SR920SW 371 Battery',6.99,'Health & Household','B07DJ9G64D'],
+    ['111-9222713-3133863','2026-01-27',1,'LiCB 20-Pack SR927SW 395 Battery',6.99,'Health & Household','B07G532RBV'],
+    ['111-9222713-3133863','2026-01-27',1,'Supaze Hair Styling Set 3-Piece',7.99,'Beauty','B096FPFZ6Z'],
+    ['111-9222713-3133863','2026-01-27',1,'LiCB 20-Pack SR626SW 377 Battery',6.99,'Health & Household','B0792Q2H8G'],
+    ['111-7168478-6399429','2026-01-22',1,'RAW Classic 1-1/4 Pre-Rolled Cones 100-Pack',21.99,'Health & Household','B09D8T9FG9'],
+    ['111-8131531-0074604','2026-01-20',1,'Kinky-Curly Knot Today Leave-In 236ml',16.99,'Beauty','B01N00TYUY'],
+    ['111-8131531-0074604','2026-01-20',1,'Mielle Pomegranate & Honey Conditioner 12oz',12.96,'Beauty','B07GZYSC81'],
+    ['111-2700970-0665849','2026-01-19',1,'Conair Hair Dryer 1875W Pink',21.99,'Beauty','B000E8PG98'],
+    ['111-5470153-9879428','2026-01-19',2,'Bob Marley Rolling Paper Variety 16-Pack',12.83,'Health & Household','B0DB6L5XQQ'],
+    ['111-6365137-1923411','2026-01-19',1,'UGREEN 25000mAh 200W Power Bank',79.98,'Cell Phones & Accessories','B0CXHM5RY2'],
+    ['111-6365137-1923411','2026-01-19',1,'Amazon Essentials Boys Sweatsuit Camel 4T',12.00,'Clothing','B0FFJXFC9S'],
+    ['111-6365137-1923411','2026-01-19',1,'Fernvia Toddler Girls Outfit 2T-5T',19.99,'Clothing','B0C73TDFL5'],
+    ['111-6365137-1923411','2026-01-19',1,'Anker Zolo Power Bank 20000mAh 45W',37.99,'Cell Phones & Accessories','B0DT12DNVF'],
+    ['111-6365137-1923411','2026-01-19',1,'Amazon Essentials Boys Sweatsuit Grey 4T',12.00,'Clothing','B0FFJ54NTW'],
+    ['111-3306539-9637814','2026-01-19',1,'Disney Minnie Mouse Outfit Pink/Brown 4T',19.99,'Clothing','B0BXB9353F'],
+    ['111-3306539-9637814','2026-01-19',1,'Disney Minnie Mouse Outfit Pink Glitter 5T',19.99,'Clothing','B07Q3ZS9X6'],
+    ['111-3306539-9637814','2026-01-19',1,'Disney Mickey Minnie Hoodie Oatmeal 4T',19.99,'Clothing','B0D1JFR68T'],
+    ['D01-5147369-1485028','2026-03-26',1,'Paramount+ Premium Monthly',13.99,'Digital Subscription','B08WPPBTJ2'],
+    ['D01-0807399-5504214','2026-02-26',1,'Paramount+ Premium Monthly',13.99,'Digital Subscription','B08WPPBTJ2'],
+    ['D01-1341589-8425843','2026-01-30',1,'Alexa+',0,'Digital Subscription','B0DCCNHWV5'],
+    ['D01-4545339-0329819','2026-01-26',1,'Paramount+ Premium Monthly',12.99,'Digital Subscription','B08WPPBTJ2']
+  ];
+
+  var rows = [];
+  for (var i = 0; i < items.length; i++) {
+    rows.push([items[i][0], items[i][1], items[i][2], items[i][3], items[i][4], items[i][5], items[i][6], '', '', '']);
+  }
+  sheet.getRange(2, 1, rows.length, 10).setValues(rows);
+
+  // Format
+  sheet.getRange(1, 1, 1, 10).setFontWeight('bold').setBackground('#E8E8E8');
+  sheet.setFrozenRows(1);
+  sheet.autoResizeColumns(1, 10);
+
+  Logger.log('Seeded ' + rows.length + ' Amazon items into ' + tabName);
+  return { status: 'ok', items: rows.length };
+}
+
+/**
+ * Step 2: Match Amazon orders to Tiller Transactions.
+ * Groups items by Order ID → sums prices → finds matching Amazon/AMZN
+ * charge in Transactions within ±3 days and ±$2.00 of order total.
+ * Writes matched Tiller row number, amount, and category back to Amazon_Detail.
+ */
+function matchAmazonToTiller() {
+  var ss = SpreadsheetApp.openById(SSID);
+  var amzSheet = ss.getSheetByName('Amazon_Detail');
+  if (!amzSheet) return { error: 'Run seedAmazonOrderHistory() first' };
+  var amzData = amzSheet.getDataRange().getValues();
+
+  // Group Amazon items by Order ID
+  var orders = {};
+  for (var a = 1; a < amzData.length; a++) {
+    var oid = String(amzData[a][0] || '').trim();
+    if (!oid) continue;
+    if (!orders[oid]) {
+      orders[oid] = { date: amzData[a][1], total: 0, items: [], rows: [] };
+    }
+    var price = parseFloat(amzData[a][4]) || 0;
+    var qty = parseInt(amzData[a][2], 10) || 1;
+    orders[oid].total += price * qty;
+    orders[oid].items.push(String(amzData[a][3] || '').substring(0, 60));
+    orders[oid].rows.push(a + 1); // 1-indexed sheet row
+  }
+
+  // Load Transactions
+  var txSheet = ss.getSheetByName(TAB_MAP['Transactions']);
+  if (!txSheet) return { error: 'Transactions tab not found' };
+  var txData = txSheet.getDataRange().getValues();
+
+  // Find Amazon transactions
+  var amazonTx = [];
+  for (var t = 1; t < txData.length; t++) {
+    var desc = String(txData[t][2] || '').toUpperCase();
+    if (desc.indexOf('AMAZON') >= 0 || desc.indexOf('AMZN') >= 0 || desc.indexOf('PRIME') >= 0) {
+      amazonTx.push({
+        row: t + 1,
+        date: txData[t][1] instanceof Date ? txData[t][1] : new Date(txData[t][1]),
+        desc: desc,
+        amount: Math.abs(parseFloat(txData[t][4]) || 0),
+        category: String(txData[t][3] || ''),
+        matched: false
+      });
+    }
+  }
+
+  var matched = 0;
+  var unmatched = 0;
+  var results = [];
+
+  for (var oid in orders) {
+    var order = orders[oid];
+    var orderDate = order.date instanceof Date ? order.date : new Date(order.date);
+    var orderTotal = Math.round(order.total * 100) / 100;
+    var bestMatch = null;
+    var bestDiff = 999;
+
+    for (var tx = 0; tx < amazonTx.length; tx++) {
+      if (amazonTx[tx].matched) continue;
+      var daysDiff = Math.abs(amazonTx[tx].date.getTime() - orderDate.getTime()) / 86400000;
+      if (daysDiff > 5) continue; // within 5 days
+      var amtDiff = Math.abs(amazonTx[tx].amount - orderTotal);
+      var tolerance = Math.max(2.00, orderTotal * 0.12); // 12% or $2, whichever is larger
+      if (amtDiff < tolerance && amtDiff < bestDiff) {
+        bestDiff = amtDiff;
+        bestMatch = tx;
+      }
+    }
+
+    if (bestMatch !== null) {
+      amazonTx[bestMatch].matched = true;
+      matched++;
+      // Write match info back to Amazon_Detail for each item in this order
+      for (var r = 0; r < order.rows.length; r++) {
+        amzSheet.getRange(order.rows[r], 8).setValue(amazonTx[bestMatch].row);
+        amzSheet.getRange(order.rows[r], 9).setValue(-amazonTx[bestMatch].amount); // negative = expense
+        amzSheet.getRange(order.rows[r], 10).setValue(amazonTx[bestMatch].category);
+      }
+      results.push({
+        orderId: oid,
+        orderTotal: orderTotal,
+        tillerAmount: amazonTx[bestMatch].amount,
+        tillerCategory: amazonTx[bestMatch].category,
+        tillerRow: amazonTx[bestMatch].row,
+        items: order.items.length
+      });
+    } else {
+      unmatched++;
+      results.push({
+        orderId: oid,
+        orderTotal: orderTotal,
+        tillerAmount: null,
+        tillerCategory: 'UNMATCHED',
+        items: order.items.length
+      });
+    }
+  }
+
+  Logger.log('═══ AMAZON → TILLER MATCHING ═══');
+  Logger.log('Amazon orders: ' + Object.keys(orders).length);
+  Logger.log('Tiller Amazon transactions: ' + amazonTx.length);
+  Logger.log('Matched: ' + matched);
+  Logger.log('Unmatched: ' + unmatched);
+  Logger.log('');
+  for (var ri = 0; ri < results.length; ri++) {
+    var r = results[ri];
+    if (r.tillerAmount) {
+      Logger.log('✓ ' + r.orderId + ' | $' + r.orderTotal.toFixed(2) + ' → Tiller row ' + r.tillerRow + ' ($' + r.tillerAmount.toFixed(2) + ') [' + r.tillerCategory + '] — ' + r.items + ' items');
+    } else {
+      Logger.log('✗ ' + r.orderId + ' | $' + r.orderTotal.toFixed(2) + ' → NO MATCH — ' + r.items + ' items');
+    }
+  }
+
+  return { status: 'ok', matched: matched, unmatched: unmatched, total: Object.keys(orders).length, details: results };
+}
+
+// END Utility.js v9

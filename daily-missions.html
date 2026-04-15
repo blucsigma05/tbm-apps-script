@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v18">
+<meta name="tbm-version" content="v19">
 <title>Daily Missions</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
 <style>
@@ -1507,6 +1507,28 @@ function getGreeting() {
   return 'Good ' + timeOfDay + ', Wolfkid. Here\'s today\'s mission briefing.';
 }
 
+function normalizeSparkleActivity(activity) {
+  var map = {
+    'letter-intro': 'letter_intro',
+    'find-letter': 'find_the_letter',
+    'name-builder': 'name_builder',
+    'count': 'count_with_me',
+    'find-number': 'find_the_number',
+    'quantity-match': 'quantity_match',
+    'color-hunt': 'color_hunt',
+    'shape-match': 'shape_match',
+    'pattern': 'pattern_next',
+    'sounds': 'letter_sound',
+    'trace': 'letter_trace',
+    'audio-story': 'audio_story',
+    'challenge': 'sparkle_challenge',
+    'draw': 'free_draw',
+    'celebration': 'star_celebration'
+  };
+  var key = String(activity || '').toLowerCase();
+  return map[key] || key.replace(/-/g, '_');
+}
+
 // ============================================================
 // BUILD LAUNCH URL
 // ============================================================
@@ -1514,7 +1536,10 @@ function buildLaunchUrl(block) {
   var url = '/' + block.page;
   var params = [];
   if (block.activity) {
-    params.push('activity=' + block.activity);
+    var activity = block.page === 'sparkle'
+      ? normalizeSparkleActivity(block.activity)
+      : block.activity;
+    params.push('activity=' + activity);
   }
   if (isJJ()) {
     params.push('child=jj');
