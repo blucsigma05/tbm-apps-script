@@ -1,8 +1,8 @@
-// CurriculumSeed.gs — v9
+// CurriculumSeed.gs — v10
 // Owned by: KidsHub team
 // PURPOSE: One-time seed of curriculum for JJ (8 weeks) and Buggsy (16 weeks).
 // Run seedAllCurriculum() from the Script Editor to populate the Curriculum tab.
-// CurriculumSeed.gs — v9
+// CurriculumSeed.gs — v10
 
 // ════════════════════════════════════════════════════════════════════
 // JJ CURRICULUM — Pre-K (Age 4, KINDLE letter sequence: K,I,N,D,L,E,J,B)
@@ -857,6 +857,14 @@ var BUGGSY_WEEK_1 = {
         title: "Multiplication & Perimeter",
         math: {
           title: "Multiplication & Perimeter Review",
+          strand: "Number and Operations",
+          teks: "4.4D, 4.5D",
+          quickFact: "Multiplication is a shortcut for repeated addition — instead of adding 6 eight times, you can just compute 6x8=48.",
+          passage: [
+            "Multiplication connects to real life every day. When you buy 4 packs of cards with 8 cards each, multiplication finds the total in one step: 4x8=32.",
+            "Perimeter is the distance all the way around a shape. You add up every side length to get it. A rectangle with sides 5 cm and 3 cm has a perimeter of 5+5+3+3=16 cm.",
+            "Knowing your multiplication facts makes perimeter and area problems much faster. Practice your facts until they feel automatic."
+          ],
           questions: [
             { q: "A rectangle is 14 cm long and 9 cm wide. What is the perimeter?", type: "computation", choices: ["46 cm", "36 cm", "126 cm", "23 cm"], correct: 0, standard: "TEKS 4.5D", explanation: "P = 2(14) + 2(9) = 28 + 18 = 46 cm" },
             { q: "Maya has 8 rows of stickers with 12 stickers in each row. How many stickers does she have?", type: "word_problem", choices: ["86", "96", "20", "84"], correct: 1, standard: "TEKS 4.4D", explanation: "8 x 12 = 96 stickers" },
@@ -866,6 +874,14 @@ var BUGGSY_WEEK_1 = {
         },
         science: {
           title: "Earth Materials: Rocks & Minerals",
+          strand: "Earth and Space",
+          teks: "4.7A",
+          quickFact: "Rocks are made of one or more minerals — granite, for example, contains quartz, feldspar, and mica all pressed together.",
+          passage: [
+            "Earth's crust is made of rocks, and rocks are made of minerals. A mineral is a naturally occurring solid with a definite chemical makeup and crystal structure.",
+            "Geologists classify rocks into three types: igneous (cooled from magma), sedimentary (layers of compressed sediment), and metamorphic (changed by heat and pressure).",
+            "Minerals can be identified by properties like hardness, luster, streak color, and cleavage. These clues help scientists figure out what a rock contains."
+          ],
           questions: [
             { q: "Which type of rock is formed when melted rock (magma) cools and hardens?", type: "multiple_choice", choices: ["Sedimentary", "Metamorphic", "Igneous", "Mineral"], correct: 2, standard: "TEKS 4.7A", explanation: "Igneous rocks form from cooled magma or lava." },
             { q: "Sandstone is made of tiny bits of sand pressed together over time. What type of rock is it?", type: "multiple_choice", choices: ["Igneous", "Sedimentary", "Metamorphic", "Crystal"], correct: 1, standard: "TEKS 4.7A", explanation: "Sedimentary rocks form from layers of material pressed together." },
@@ -902,6 +918,14 @@ var BUGGSY_WEEK_1 = {
         title: "Fractions & Weather",
         math: {
           title: "Comparing Fractions",
+          strand: "Number and Operations",
+          teks: "4.3D",
+          quickFact: "To compare fractions, find a common denominator or use benchmark fractions like 1/2 to decide which fraction is larger.",
+          passage: [
+            "Fractions represent parts of a whole. When the denominator is the same, the fraction with the larger numerator is greater: 3/8 > 2/8.",
+            "When denominators differ, find a common denominator. To compare 2/3 and 3/4, convert both to twelfths: 8/12 vs 9/12. So 3/4 > 2/3.",
+            "Benchmark fractions like 0, 1/2, and 1 help you estimate quickly. If one fraction is less than 1/2 and another is greater than 1/2, you already know which is bigger without computing."
+          ],
           questions: [
             { q: "Which fraction is greater: 3/4 or 2/3?", type: "multiple_choice", choices: ["3/4", "2/3", "They are equal", "Cannot tell"], correct: 0, standard: "TEKS 4.3D", explanation: "3/4 = 9/12 and 2/3 = 8/12, so 3/4 is greater." },
             { q: "What fraction is equivalent to 2/6?", type: "computation", choices: ["1/2", "1/3", "2/3", "3/6"], correct: 1, standard: "TEKS 4.3C", explanation: "2/6 simplifies to 1/3 (divide both by 2)." },
@@ -911,6 +935,14 @@ var BUGGSY_WEEK_1 = {
         },
         science: {
           title: "Weather & the Water Cycle",
+          strand: "Earth and Space",
+          teks: "4.8A, 4.8B",
+          quickFact: "The water cycle moves water from Earth's surface into the atmosphere and back again through evaporation, condensation, and precipitation.",
+          passage: [
+            "The water cycle is powered by the sun. Heat energy causes water in oceans, lakes, and rivers to evaporate and rise into the atmosphere as water vapor.",
+            "As water vapor rises, it cools and condenses into tiny droplets that form clouds. When droplets combine and grow heavy enough, they fall as precipitation: rain, snow, sleet, or hail.",
+            "Weather patterns are driven by the water cycle. Understanding how moisture moves helps meteorologists predict storms and track regional climate changes."
+          ],
           questions: [
             { q: "What is the process called when water changes from liquid to gas?", type: "multiple_choice", choices: ["Condensation", "Precipitation", "Evaporation", "Collection"], correct: 2, standard: "TEKS 4.8A", explanation: "Evaporation is when liquid water becomes water vapor (gas)." },
             { q: "What causes rain to fall from clouds?", type: "multiple_choice", choices: ["Wind pushes it down", "Water droplets get too heavy", "The sun pulls it down", "Cold air freezes it"], correct: 1, standard: "TEKS 4.8A", explanation: "When water droplets in clouds become too heavy, they fall as precipitation." },
@@ -952,6 +984,14 @@ var BUGGSY_WEEK_1 = {
         title: "Friday Review & Financial Literacy",
         math: {
           title: "Word Problems & Financial Literacy",
+          strand: "Number and Operations",
+          teks: "4.4H, 4.10A",
+          quickFact: "Financial literacy means understanding how money works — earning, spending, saving, and budgeting are all math skills in real life.",
+          passage: [
+            "Word problems translate real situations into math equations. Reading carefully helps you identify what operation to use: addition, subtraction, multiplication, or division.",
+            "Financial literacy problems often involve money. If you earn $12 per hour and work 5 hours, you multiply: $12x5=$60 earned. If you spend $23, you subtract to find what remains.",
+            "Budgeting means planning how to use money wisely. Setting aside money for savings before spending is called paying yourself first — a habit that builds wealth over time."
+          ],
           questions: [
             { q: "Nathan earns $8.50 per hour mowing lawns. If he works 4 hours, how much does he earn?", type: "word_problem", choices: ["$32.00", "$34.00", "$12.50", "$36.00"], correct: 1, standard: "TEKS 4.10A", explanation: "$8.50 x 4 = $34.00" },
             { q: "A rectangle has an area of 72 square cm and a length of 9 cm. What is the width?", type: "word_problem", choices: ["6 cm", "8 cm", "63 cm", "81 cm"], correct: 1, standard: "TEKS 4.5D", explanation: "A = l x w, so 72 = 9 x w, w = 8 cm" },
@@ -961,6 +1001,14 @@ var BUGGSY_WEEK_1 = {
         },
         science: {
           title: "Weekly Science Review",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.8A",
+          quickFact: "A science review week pulls together key ideas from Earth science, life science, and physical science to reinforce what you have learned.",
+          passage: [
+            "Science review sessions help you connect ideas across topics. Earth science, life science, and physical science all describe different parts of the natural world but often overlap.",
+            "Reviewing vocabulary words, diagrams, and key concepts strengthens long-term memory. The more you revisit information, the more permanent it becomes in your brain.",
+            "Practice answering science questions out loud or in writing. Explaining concepts in your own words is one of the best ways to check your understanding."
+          ],
           questions: [
             { q: "Which step of the water cycle forms clouds?", type: "multiple_choice", choices: ["Evaporation", "Condensation", "Precipitation", "Collection"], correct: 1, standard: "TEKS 4.8A", explanation: "Condensation is when water vapor cools and forms tiny droplets that make clouds." },
             { q: "Marble is formed when limestone is changed by heat and pressure. What type of rock is marble?", type: "multiple_choice", choices: ["Igneous", "Sedimentary", "Metamorphic", "Mineral"], correct: 2, standard: "TEKS 4.7A", explanation: "Metamorphic rocks form when existing rocks are changed by heat and pressure." }
@@ -1003,6 +1051,14 @@ var BUGGSY_WEEK_2 = {
         title: "Division & Animal Adaptations",
         math: {
           title: "Division with Remainders",
+          strand: "Number and Operations",
+          teks: "4.4E, 4.4F",
+          quickFact: "A remainder is what is left over when a number cannot be divided evenly — 17/5=3 remainder 2, because 5x3=15 and 17-15=2.",
+          passage: [
+            "Division splits a total into equal groups. When the total does not divide evenly, the leftover amount is called the remainder.",
+            "For example, 29 cookies shared among 4 friends: 4x7=28, so each friend gets 7 cookies and 1 cookie is left over. The remainder is 1.",
+            "In real life, remainders matter. If you need 29 chairs arranged in rows of 4, you need 8 rows (not 7) to fit everyone — the remainder tells you to round up."
+          ],
           questions: [
             { q: "What is 147 / 7?", type: "computation", choices: ["20", "21", "22", "23"], correct: 1, standard: "TEKS 4.4F", explanation: "147 / 7 = 21" },
             { q: "356 / 4 = ?", type: "computation", choices: ["88", "89", "90", "91"], correct: 1, standard: "TEKS 4.4F", explanation: "356 / 4 = 89" },
@@ -1012,6 +1068,14 @@ var BUGGSY_WEEK_2 = {
         },
         science: {
           title: "Animal Adaptations",
+          strand: "Organisms and Environments",
+          teks: "4.9A",
+          quickFact: "An adaptation is a body feature or behavior that helps an animal survive in its specific environment — like a polar bear's thick fur in Arctic cold.",
+          passage: [
+            "Adaptations are inherited traits that help an organism survive and reproduce in its environment. They develop over many generations through natural selection.",
+            "Physical adaptations include things like a duck's webbed feet for swimming, a cactus's thick skin for storing water, or a cheetah's streamlined body for speed.",
+            "Behavioral adaptations are actions animals take to survive — migrating south in winter, hibernating to save energy, or traveling in herds for protection against predators."
+          ],
           questions: [
             { q: "A cactus stores water in its thick stem. This is an example of what?", type: "multiple_choice", choices: ["Behavior", "A structural adaptation", "Migration", "A life cycle"], correct: 1, standard: "TEKS 4.10A", explanation: "A thick stem that stores water is a structural (physical) adaptation." },
             { q: "Why do some animals hibernate during winter?", type: "multiple_choice", choices: ["They are lazy", "Food is scarce and it's cold", "They want to sleep", "They are scared of snow"], correct: 1, standard: "TEKS 4.10A", explanation: "Hibernation helps animals survive when food is hard to find and temperatures drop." },
@@ -1048,6 +1112,14 @@ var BUGGSY_WEEK_2 = {
         title: "Decimals & Food Chains",
         math: {
           title: "Decimals — Tenths and Hundredths",
+          strand: "Number and Operations",
+          teks: "4.2E, 4.2F",
+          quickFact: "Decimals are another way to write fractions with denominators of 10 or 100 — 0.3 means three tenths, and 0.47 means forty-seven hundredths.",
+          passage: [
+            "The decimal point separates the whole number part from the fractional part. The digit right after the decimal is in the tenths place, and the next digit is in the hundredths place.",
+            "Money is a great example of decimals in real life. $3.75 means 3 dollars, 7 dimes (tenths of a dollar), and 5 pennies (hundredths of a dollar).",
+            "To compare decimals, line up the decimal points and compare digit by digit from left to right. 0.6 is greater than 0.59 because 0.6 = 0.60 and 60 hundredths > 59 hundredths."
+          ],
           questions: [
             { q: "Which decimal is equal to 3/10?", type: "computation", choices: ["0.03", "0.3", "3.0", "0.33"], correct: 1, standard: "TEKS 4.2G", explanation: "3/10 = 0.3" },
             { q: "Order from least to greatest: 0.5, 0.35, 0.7", type: "multiple_choice", choices: ["0.35, 0.5, 0.7", "0.5, 0.35, 0.7", "0.7, 0.5, 0.35", "0.35, 0.7, 0.5"], correct: 0, standard: "TEKS 4.2F", explanation: "0.35 < 0.5 < 0.7" },
@@ -1057,6 +1129,14 @@ var BUGGSY_WEEK_2 = {
         },
         science: {
           title: "Food Chains & Ecosystems",
+          strand: "Organisms and Environments",
+          teks: "4.9B",
+          quickFact: "A food chain shows the path of energy from the sun through producers, primary consumers, secondary consumers, and decomposers.",
+          passage: [
+            "All energy in a food chain originates from the sun. Plants (producers) capture this energy through photosynthesis and store it in their tissues.",
+            "Herbivores (primary consumers) eat plants and transfer that energy up the chain. Carnivores (secondary consumers) eat herbivores. Decomposers break down dead organisms and return nutrients to the soil.",
+            "Ecosystems depend on balance. If one species is removed, every other species in the chain is affected — this is called a trophic cascade."
+          ],
           questions: [
             { q: "In a food chain, what is the role of a producer?", type: "multiple_choice", choices: ["Eats other animals", "Makes its own food from sunlight", "Breaks down dead organisms", "Hunts for prey"], correct: 1, standard: "TEKS 4.9A", explanation: "Producers (like plants) use sunlight to make their own food through photosynthesis." },
             { q: "Grass → Rabbit → Fox. In this food chain, the rabbit is a —", type: "multiple_choice", choices: ["Producer", "Predator only", "Consumer (prey and predator)", "Decomposer"], correct: 2, standard: "TEKS 4.9A", explanation: "The rabbit consumes grass (prey role) and is hunted by the fox (also a predator of grass)." },
@@ -1098,6 +1178,14 @@ var BUGGSY_WEEK_2 = {
         title: "Friday Review — Patterns & Review",
         math: {
           title: "Patterns & Mixed Review",
+          strand: "Algebraic Reasoning",
+          teks: "4.5B, 4.5C",
+          quickFact: "A pattern is a sequence that follows a rule — finding the rule lets you predict future terms without listing every one.",
+          passage: [
+            "Patterns in math can involve numbers, shapes, or operations. An arithmetic pattern adds or subtracts the same value each time: 3, 7, 11, 15 adds 4 each step.",
+            "Geometric patterns multiply or divide by the same value: 2, 6, 18, 54 multiplies by 3 each step. Identifying whether the rule is addition or multiplication is the key first step.",
+            "Mixed review problems combine skills. Read each problem carefully, identify what is being asked, and decide which math tool to apply — pattern recognition, computation, or estimation."
+          ],
           questions: [
             { q: "What is the rule for this pattern? 5, 12, 19, 26, 33, ...", type: "multiple_choice", choices: ["Add 5", "Add 7", "Multiply by 2", "Add 8"], correct: 1, standard: "TEKS 4.5B", explanation: "Each number increases by 7: 5+7=12, 12+7=19, etc." },
             { q: "If the pattern continues, what is the next number? 3, 6, 12, 24, ...", type: "multiple_choice", choices: ["36", "48", "30", "28"], correct: 1, standard: "TEKS 4.5B", explanation: "Each number is multiplied by 2: 24 x 2 = 48" },
@@ -1107,6 +1195,14 @@ var BUGGSY_WEEK_2 = {
         },
         science: {
           title: "Weekly Science Review",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.8A",
+          quickFact: "A science review week pulls together key ideas from Earth science, life science, and physical science to reinforce what you have learned.",
+          passage: [
+            "Science review sessions help you connect ideas across topics. Earth science, life science, and physical science all describe different parts of the natural world but often overlap.",
+            "Reviewing vocabulary words, diagrams, and key concepts strengthens long-term memory. The more you revisit information, the more permanent it becomes in your brain.",
+            "Practice answering science questions out loud or in writing. Explaining concepts in your own words is one of the best ways to check your understanding."
+          ],
           questions: [
             { q: "What is the difference between a predator and prey?", type: "multiple_choice", choices: ["Size", "Predators hunt, prey are hunted", "Color", "Where they live"], correct: 1, standard: "TEKS 4.9A", explanation: "A predator hunts and eats other animals (prey)." },
             { q: "Bears hibernating during winter is an example of —", type: "multiple_choice", choices: ["A structural adaptation", "A behavioral adaptation", "Migration", "Camouflage"], correct: 1, standard: "TEKS 4.10A", explanation: "Hibernation is a behavior that helps bears survive winter." }
@@ -1150,6 +1246,14 @@ var BUGGSY_WEEK_3 = {
         title: "Geometry & Ecosystems",
         math: {
           title: "Lines, Angles & Symmetry",
+          strand: "Geometry and Measurement",
+          teks: "4.6A, 4.6B, 4.6C",
+          quickFact: "An angle is formed when two rays share an endpoint — a right angle measures exactly 90 degrees, and it is the building block of geometry.",
+          passage: [
+            "Geometry begins with points, lines, and rays. Two rays sharing an endpoint form an angle, measured in degrees. A right angle is 90 degrees, an acute angle is less than 90 degrees, and an obtuse angle is between 90 and 180 degrees.",
+            "Parallel lines never intersect no matter how far they extend. Perpendicular lines meet at exactly a 90-degree angle. These relationships appear everywhere in architecture and design.",
+            "A line of symmetry divides a shape so that both halves are mirror images. Squares have 4 lines of symmetry; rectangles have 2; a scalene triangle has none."
+          ],
           questions: [
             { q: "How many lines of symmetry does a square have?", type: "visual", choices: ["1", "2", "4", "0"], correct: 2, standard: "TEKS 4.6B", explanation: "A square has 4 lines of symmetry: vertical, horizontal, and both diagonals." },
             { q: "Which pair of lines will NEVER cross, no matter how far they extend?", type: "multiple_choice", choices: ["Perpendicular lines", "Intersecting lines", "Parallel lines", "Rays"], correct: 2, standard: "TEKS 4.6A", explanation: "Parallel lines run in the same direction and never cross." },
@@ -1159,6 +1263,14 @@ var BUGGSY_WEEK_3 = {
         },
         science: {
           title: "Ecosystems & Habitats",
+          strand: "Organisms and Environments",
+          teks: "4.9B, 4.9C",
+          quickFact: "A habitat provides food, water, shelter, and space — the four things every organism needs to survive and reproduce.",
+          passage: [
+            "An ecosystem includes all living (biotic) and nonliving (abiotic) things in an area and the interactions among them. A forest ecosystem includes trees, animals, soil, water, and sunlight.",
+            "Habitats are specific environments within ecosystems where particular organisms live. A pond habitat supports fish, frogs, and aquatic plants, while a meadow habitat supports deer, rabbits, and grasses.",
+            "When a habitat is damaged or destroyed, the organisms that depend on it are threatened. Habitat loss is the leading cause of species decline worldwide."
+          ],
           questions: [
             { q: "Which is NOT a part of an ecosystem?", type: "multiple_choice", choices: ["Air", "Water", "Living organisms", "A math textbook"], correct: 3, standard: "TEKS 4.9B", explanation: "An ecosystem includes living things (organisms) and non-living things (air, water, soil) — not man-made objects unrelated to the habitat." },
             { q: "If a forest is cleared for buildings, what would MOST LIKELY happen to the animals?", type: "multiple_choice", choices: ["They would grow bigger", "They would lose their habitat", "Nothing would change", "They would build new homes"], correct: 1, standard: "TEKS 4.9B", explanation: "Habitat destruction forces animals to leave or die because they lose food and shelter." },
@@ -1195,6 +1307,14 @@ var BUGGSY_WEEK_3 = {
         title: "Measurement Conversions & Forces",
         math: {
           title: "Measurement Conversions",
+          strand: "Geometry and Measurement",
+          teks: "4.8A, 4.8B, 4.8C",
+          quickFact: "Unit conversion means changing a measurement from one unit to another — knowing that 1 foot = 12 inches lets you convert any foot measurement to inches by multiplying.",
+          passage: [
+            "In the customary system, length is measured in inches, feet, yards, and miles. To convert feet to inches, multiply by 12. To convert yards to feet, multiply by 3.",
+            "The metric system uses a base-10 structure: 1 meter = 100 centimeters = 1,000 millimeters. This makes conversions as simple as moving the decimal point.",
+            "Measurement conversion shows up in cooking, construction, and science. A recipe calls for 2 cups of flour, but you only have a tablespoon — you need to know that 1 cup = 16 tablespoons."
+          ],
           questions: [
             { q: "How many inches are in 3 feet?", type: "computation", choices: ["24", "30", "36", "48"], correct: 2, standard: "TEKS 4.8C", explanation: "1 foot = 12 inches, so 3 x 12 = 36 inches" },
             { q: "A recipe needs 2 quarts of milk. How many cups is that?", type: "word_problem", choices: ["4 cups", "6 cups", "8 cups", "16 cups"], correct: 2, standard: "TEKS 4.8C", explanation: "1 quart = 4 cups, so 2 x 4 = 8 cups" },
@@ -1204,6 +1324,14 @@ var BUGGSY_WEEK_3 = {
         },
         science: {
           title: "Forces & Motion",
+          strand: "Matter and Energy",
+          teks: "4.6C, 4.6D",
+          quickFact: "A force is a push or pull that can change an object's motion — the stronger the force and the lighter the object, the greater the change in motion.",
+          passage: [
+            "Forces can change an object's speed, direction, or shape. Gravity pulls objects toward Earth's center. Friction slows objects by resisting motion between surfaces.",
+            "Net force is the combined effect of all forces acting on an object. If two equal forces push in opposite directions, the net force is zero and the object does not move.",
+            "Newton's second law: force equals mass times acceleration (F=ma). A heavier object requires more force to achieve the same acceleration as a lighter one."
+          ],
           questions: [
             { q: "What happens to an object when balanced forces act on it?", type: "multiple_choice", choices: ["It speeds up", "It slows down", "It stays the same (no change in motion)", "It changes direction"], correct: 2, standard: "TEKS 4.6D", explanation: "Balanced forces cancel each other out, so the object's motion doesn't change." },
             { q: "A soccer ball sitting still on the ground starts rolling when you kick it. This is an example of —", type: "multiple_choice", choices: ["Balanced forces", "An unbalanced force", "Gravity only", "Friction"], correct: 1, standard: "TEKS 4.6D", explanation: "Your kick adds an unbalanced force that changes the ball's motion." },
@@ -1245,6 +1373,14 @@ var BUGGSY_WEEK_3 = {
         title: "Friday Review — Data & Mixed Practice",
         math: {
           title: "Data Analysis & Review",
+          strand: "Data Analysis",
+          teks: "4.9A, 4.9B",
+          quickFact: "Data analysis means collecting, organizing, and interpreting information — graphs and tables make patterns in data much easier to see.",
+          passage: [
+            "Bar graphs compare categories by showing bars of different lengths. The taller the bar, the larger the value. Always read the scale on the axis to interpret values correctly.",
+            "Frequency tables count how many times each value appears in a data set. They are useful for organizing large numbers of observations.",
+            "When interpreting data, look for the highest and lowest values, the range (difference between max and min), and any patterns or trends in the data."
+          ],
           questions: [
             { q: "A dot plot shows test scores: 85, 85, 90, 90, 90, 95, 100. What score appears most often?", type: "multiple_choice", choices: ["85", "90", "95", "100"], correct: 1, standard: "TEKS 4.9A", explanation: "90 appears 3 times, which is more than any other score." },
             { q: "What is the range of these scores: 85, 85, 90, 90, 90, 95, 100?", type: "computation", choices: ["5", "10", "15", "90"], correct: 2, standard: "TEKS 4.9A", explanation: "Range = highest - lowest = 100 - 85 = 15" },
@@ -1254,6 +1390,14 @@ var BUGGSY_WEEK_3 = {
         },
         science: {
           title: "Weekly Review",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.8A",
+          quickFact: "Weekly review is your chance to tie together all the science concepts from this week before they fade from memory.",
+          passage: [
+            "Reviewing science weekly builds a strong foundation. Summarize the main idea of each lesson in one sentence — if you cannot, that is a sign you need to review that topic more.",
+            "Science vocabulary is critical. Terms like ecosystem, adaptation, force, and erosion have precise meanings that differ from everyday use. Study them intentionally.",
+            "Connect new ideas to what you already know. Asking yourself 'How does this relate to something I learned before?' deepens understanding and improves retention."
+          ],
           questions: [
             { q: "What force keeps you from floating off your chair?", type: "multiple_choice", choices: ["Magnetism", "Friction", "Gravity", "Wind"], correct: 2, standard: "TEKS 4.6D", explanation: "Gravity pulls you toward Earth, keeping you in your seat." },
             { q: "Which is an example of a decomposer?", type: "multiple_choice", choices: ["Eagle", "Mushroom", "Oak tree", "Rabbit"], correct: 1, standard: "TEKS 4.9A", explanation: "Mushrooms (fungi) are decomposers that break down dead organic material." }
@@ -1297,6 +1441,14 @@ var BUGGSY_WEEK_4 = {
         title: "Multi-Step Problems & Natural Resources",
         math: {
           title: "Multi-Step Word Problems",
+          strand: "Number and Operations",
+          teks: "4.4H, 4.5A, 4.4D",
+          quickFact: "Multi-step word problems require two or more operations — read the whole problem first, identify each step, then solve them in the right order.",
+          passage: [
+            "Multi-step problems combine skills. A problem might ask you to find a total, then subtract a discount, then multiply by the number of items — each step depends on the previous one.",
+            "Underlining key information and crossing out unnecessary details helps you focus. Write out each equation separately so your work is organized and easy to check.",
+            "Estimation is a powerful check. After solving, ask yourself: 'Does this answer make sense?' Rounding the numbers and computing mentally gives you a ballpark to compare against."
+          ],
           questions: [
             { q: "Sarah has $50. She buys 3 books at $8 each and a notebook for $5. How much money does she have left?", type: "multi_step", choices: ["$21", "$19", "$17", "$13"], correct: 0, standard: "TEKS 4.4H, 4.5A", explanation: "3 x $8 = $24, $24 + $5 = $29 spent. $50 - $29 = $21" },
             { q: "A farmer has 4 fields. Each field has 6 rows of corn with 15 plants in each row. How many corn plants does the farmer have in all?", type: "multi_step", choices: ["360", "240", "96", "300"], correct: 0, standard: "TEKS 4.4D, 4.5A", explanation: "6 x 15 = 90 plants per field. 4 x 90 = 360 plants total." },
@@ -1306,6 +1458,14 @@ var BUGGSY_WEEK_4 = {
         },
         science: {
           title: "Natural Resources",
+          strand: "Earth and Space",
+          teks: "4.7B, 4.7C",
+          quickFact: "Natural resources are materials from Earth that humans use — some are renewable (like sunlight and wind) and some are nonrenewable (like coal and oil).",
+          passage: [
+            "Natural resources include water, air, soil, minerals, fossil fuels, and living things. They support human life and economic activity worldwide.",
+            "Renewable resources replenish naturally within a human lifetime: sunlight, wind, water, and biomass. Nonrenewable resources — fossil fuels and most minerals — take millions of years to form and are used much faster than they are created.",
+            "Conservation means using resources wisely to reduce waste and protect them for future generations. Recycling, energy efficiency, and reforestation are all conservation strategies."
+          ],
           questions: [
             { q: "Which of these is a renewable resource?", type: "multiple_choice", choices: ["Coal", "Natural gas", "Solar energy", "Oil"], correct: 2, standard: "TEKS 4.7C", explanation: "Solar energy comes from the sun, which is constantly available — making it renewable." },
             { q: "Why is it important to conserve nonrenewable resources?", type: "multiple_choice", choices: ["They are ugly", "Once used up, they cannot be replaced", "They are too expensive", "They are dangerous"], correct: 1, standard: "TEKS 4.7C", explanation: "Nonrenewable resources like oil and coal take millions of years to form and will eventually run out." },
@@ -1342,6 +1502,14 @@ var BUGGSY_WEEK_4 = {
         title: "Fractions Review & Energy",
         math: {
           title: "Fractions — Adding, Subtracting & Comparing",
+          strand: "Number and Operations",
+          teks: "4.3C, 4.3D, 4.3E",
+          quickFact: "To add or subtract fractions, the denominators must match — find a common denominator first, then add or subtract the numerators.",
+          passage: [
+            "Adding fractions with the same denominator is straightforward: 2/7 + 3/7 = 5/7. The denominator stays the same; only the numerators combine.",
+            "When denominators differ, find the least common denominator (LCD). To add 1/4 + 1/6, the LCD is 12: convert to 3/12 + 2/12 = 5/12.",
+            "Subtracting fractions follows the same rules. Compare fractions by converting to a common denominator, then determine which numerator is larger."
+          ],
           questions: [
             { q: "5/8 - 2/8 = ?", type: "computation", choices: ["3/0", "3/8", "7/8", "3/16"], correct: 1, standard: "TEKS 4.3E", explanation: "Same denominator: 5 - 2 = 3, so 3/8" },
             { q: "Which fraction is closest to 1/2?", type: "multiple_choice", choices: ["1/8", "3/8", "5/8", "7/8"], correct: 1, standard: "TEKS 4.3D", explanation: "1/2 = 4/8. 3/8 is 1/8 away from 4/8, the closest option." },
@@ -1351,6 +1519,14 @@ var BUGGSY_WEEK_4 = {
         },
         science: {
           title: "Forms of Energy",
+          strand: "Matter and Energy",
+          teks: "4.6A",
+          quickFact: "Energy comes in many forms — kinetic, potential, thermal, light, sound, and electrical — and can change from one form to another.",
+          passage: [
+            "Energy is the ability to do work or cause change. Kinetic energy is the energy of motion; potential energy is stored energy based on position or condition.",
+            "Energy transformations happen constantly. A toaster converts electrical energy to thermal (heat) energy. A solar panel converts light energy to electrical energy. A ball rolling downhill converts potential energy to kinetic energy.",
+            "The law of conservation of energy states that energy cannot be created or destroyed — only transferred or transformed. The total energy in a closed system stays constant."
+          ],
           questions: [
             { q: "A light bulb converts electrical energy into —", type: "multiple_choice", choices: ["Sound energy", "Light and heat energy", "Mechanical energy", "Chemical energy"], correct: 1, standard: "TEKS 4.6A", explanation: "Light bulbs transform electrical energy into light (and some heat)." },
             { q: "Rubbing your hands together quickly makes them warm. This is an example of what type of energy change?", type: "multiple_choice", choices: ["Light to sound", "Mechanical to thermal (heat)", "Chemical to electrical", "Sound to light"], correct: 1, standard: "TEKS 4.6A", explanation: "The motion (mechanical energy) of rubbing creates friction, which produces heat (thermal energy)." },
@@ -1392,6 +1568,14 @@ var BUGGSY_WEEK_4 = {
         title: "Month Review — Mixed Practice",
         math: {
           title: "April Review — All Topics",
+          strand: "Number and Operations",
+          teks: "4.3C, 4.4D, 4.4H, 4.5A",
+          quickFact: "A comprehensive review brings together fractions, decimals, multiplication, division, and word problems — all the skills you have been building.",
+          passage: [
+            "Review sessions work best when you actively test yourself rather than just re-reading notes. Cover your notes and try to recall the key ideas from memory.",
+            "Organize review by topic: fractions, decimals, multiplication/division, patterns, and word problems. Work through one topic at a time and note any areas where you make mistakes.",
+            "After a full review, look back at your errors. Errors are information — they show you exactly which concepts need more attention before a test."
+          ],
           questions: [
             { q: "What is 2,456 x 3?", type: "computation", choices: ["6,368", "7,368", "7,268", "7,468"], correct: 1, standard: "TEKS 4.4D", explanation: "2,456 x 3 = 7,368" },
             { q: "Which fraction is equivalent to 4/8?", type: "computation", choices: ["2/3", "1/2", "3/4", "2/8"], correct: 1, standard: "TEKS 4.3C", explanation: "4/8 = 1/2 (divide both by 4)" },
@@ -1401,6 +1585,14 @@ var BUGGSY_WEEK_4 = {
         },
         science: {
           title: "April Science Review",
+          strand: "Organisms and Environments",
+          teks: "4.9A, 4.9B, 4.9C",
+          quickFact: "The April science review covers ecosystems, food chains, adaptations, and habitats — the core life science concepts for fourth grade.",
+          passage: [
+            "Life science explores living organisms and how they interact with each other and their environment. Fourth-grade topics include organisms, ecosystems, food chains, and adaptations.",
+            "Review key vocabulary: producer, consumer, decomposer, predator, prey, ecosystem, habitat, and adaptation. Each word has a precise definition that you should be able to state and apply.",
+            "Practice answering life science questions using evidence from diagrams and text. Science explanations should always include a claim, evidence, and reasoning."
+          ],
           questions: [
             { q: "Name the 4 stages of the water cycle in order.", type: "multiple_choice", choices: ["Evaporation, Condensation, Precipitation, Collection", "Condensation, Evaporation, Collection, Precipitation", "Precipitation, Collection, Evaporation, Condensation", "Collection, Precipitation, Condensation, Evaporation"], correct: 0, standard: "TEKS 4.8A", explanation: "The water cycle: Evaporation (water becomes gas), Condensation (gas becomes droplets/clouds), Precipitation (water falls), Collection (water gathers in bodies of water)." },
             { q: "An animal that eats BOTH plants and animals is called a —", type: "multiple_choice", choices: ["Herbivore", "Carnivore", "Omnivore", "Decomposer"], correct: 2, standard: "TEKS 4.9A", explanation: "Omnivores eat both plants and animals. Examples: bears, humans, pigs." }
@@ -1466,6 +1658,14 @@ var BUGGSY_WEEK_5 = {
         title: "Place Value & Chemical Changes",
         math: {
           title: "Place Value to Billions",
+          strand: "Number and Operations",
+          teks: "4.2A, 4.2B",
+          quickFact: "Our number system is built on place value — each position is ten times greater than the position to its right, all the way up to billions.",
+          passage: [
+            "Place value means that a digit's value depends on its position in the number. In 3,456,789, the 3 is in the millions place and represents 3,000,000.",
+            "The place value chart extends from ones through billions: ones, tens, hundreds | thousands, ten-thousands, hundred-thousands | millions, ten-millions, hundred-millions | billions.",
+            "Reading large numbers: separate them into groups of three (called periods) with commas. 5,302,174 is read 'five million, three hundred two thousand, one hundred seventy-four.'"
+          ],
           questions: [
             { q: "What is the value of the 5 in 3,562,481?", type: "multiple_choice", choices: ["5,000", "50,000", "500,000", "5,000,000"], correct: 2, standard: "TEKS 4.2A", explanation: "The 5 is in the hundred-thousands place: 5 x 100,000 = 500,000" },
             { q: "Which number is 10 times greater than 40,000?", type: "computation", choices: ["4,000", "44,000", "400,000", "4,000,000"], correct: 2, standard: "TEKS 4.2A", explanation: "10 x 40,000 = 400,000. Each place value is 10 times the one to its right." },
@@ -1476,6 +1676,14 @@ var BUGGSY_WEEK_5 = {
         },
         science: {
           title: "Physical vs Chemical Changes",
+          strand: "Matter and Energy",
+          teks: "4.5C",
+          quickFact: "A physical change alters a substance's form but not its chemical identity — ice melting is physical; wood burning is a chemical change that creates new substances.",
+          passage: [
+            "A physical change does not create new substances. Examples include cutting paper, melting ice, dissolving sugar in water, and bending a wire. The substance is still the same — just in a different form.",
+            "A chemical change produces one or more new substances with different properties. Signs of a chemical change include color change, gas production, light emission, and temperature change.",
+            "Burning, rusting, cooking an egg, and mixing baking soda with vinegar are all chemical changes. The products have different chemical compositions than the starting materials."
+          ],
           questions: [
             { q: "Which is a CHEMICAL change?", type: "multiple_choice", choices: ["Cutting a piece of paper", "Melting ice", "Burning wood", "Crushing a can"], correct: 2, standard: "TEKS 4.6B", explanation: "Burning creates new substances (ash, smoke, gas). You cannot un-burn wood." },
             { q: "Tearing a piece of foil is an example of a —", type: "multiple_choice", choices: ["Chemical change", "Physical change", "Solution", "Chemical reaction"], correct: 1, standard: "TEKS 4.6B", explanation: "The foil is still foil — just a different shape. No new substance is created." },
@@ -1515,6 +1723,14 @@ var BUGGSY_WEEK_5 = {
         title: "Number Lines & Mixtures",
         math: {
           title: "Place Value on Number Lines & Comparing",
+          strand: "Number and Operations",
+          teks: "4.2C, 4.2D",
+          quickFact: "Number lines show where numbers fall in relation to each other — placing a number on a number line is a quick way to compare and order numbers.",
+          passage: [
+            "A number line is a visual tool for understanding the magnitude and order of numbers. Points to the right are always greater than points to the left.",
+            "To plot a large number on a number line, identify the two round numbers it falls between. For example, 4,750 falls between 4,000 and 5,000, closer to 5,000.",
+            "Comparing numbers uses inequality symbols: > (greater than), < (less than), and = (equal to). Always compare the highest place value first when deciding which number is larger."
+          ],
           questions: [
             { q: "Which number goes in the blank on this number line? 2,500 ... 3,000 ... ___ ... 4,000", type: "visual", choices: ["3,250", "3,500", "3,750", "3,100"], correct: 1, standard: "TEKS 4.2C", explanation: "The number line counts by 500s: 2500, 3000, 3500, 4000" },
             { q: "Place 0.7 on a number line from 0 to 1. It falls between which two marks?", type: "visual", choices: ["0 and 0.5", "0.5 and 1.0", "0.6 and 0.8", "0.9 and 1.0"], correct: 2, standard: "TEKS 4.2E", explanation: "0.7 is between 0.6 and 0.8 on a number line divided into tenths." },
@@ -1524,6 +1740,14 @@ var BUGGSY_WEEK_5 = {
         },
         science: {
           title: "Mixtures & Solutions",
+          strand: "Matter and Energy",
+          teks: "4.6B, 4.6C",
+          quickFact: "A mixture combines two or more substances that keep their own properties and can be separated; a solution is a special type of mixture where one substance dissolves completely into another.",
+          passage: [
+            "A mixture is a combination of two or more substances that are not chemically combined. Each substance retains its own properties. Trail mix, salad, and sand-and-water are all mixtures.",
+            "A solution is a homogeneous mixture where one substance (solute) dissolves completely in another (solvent). Saltwater is a solution — the salt is evenly distributed throughout the water.",
+            "Mixtures can be separated by physical means: filtering, evaporating, or using a magnet. Solutions can be separated by evaporation — the solvent evaporates, leaving the dissolved solute behind."
+          ],
           questions: [
             { q: "Which is a MIXTURE that can be easily separated?", type: "multiple_choice", choices: ["Salt dissolved in water", "Sand and pebbles", "Sugar dissolved in tea", "Baking soda and vinegar"], correct: 1, standard: "TEKS 4.6C", explanation: "Sand and pebbles can be separated by size (sifting). Dissolved substances are harder to separate." },
             { q: "What happens when you mix baking soda and vinegar?", type: "multiple_choice", choices: ["Nothing", "They separate into layers", "A chemical reaction produces gas (fizzing/bubbles)", "The vinegar freezes"], correct: 2, standard: "TEKS 4.6B", explanation: "Baking soda + vinegar = chemical change. New substances form (CO2 gas = bubbles)." },
@@ -1578,6 +1802,14 @@ var BUGGSY_WEEK_5 = {
         title: "Friday Review — Place Value & Matter",
         math: {
           title: "Place Value & Comparison Review",
+          strand: "Number and Operations",
+          teks: "4.2A, 4.2B, 4.2C, 4.2D",
+          quickFact: "Place value and comparison skills are the foundation for all arithmetic — knowing the value of each digit helps you compute, round, and compare numbers with confidence.",
+          passage: [
+            "This review covers the full place value system up to billions. Each period (ones, thousands, millions, billions) contains three places: ones, tens, and hundreds within that period.",
+            "Comparing multi-digit numbers: line up the digits by place value and compare from left to right. The first position where the digits differ determines which number is greater.",
+            "Rounding large numbers: identify the place you are rounding to, look at the digit to the right, and round up if it is 5 or more, or keep the digit if it is less than 5."
+          ],
           questions: [
             { q: "Write 6,000,000 + 400,000 + 30,000 + 2,000 + 500 + 10 + 7 in standard form.", type: "computation", choices: ["6,432,517", "6,430,517", "643,2517", "6,432,571"], correct: 0, standard: "TEKS 4.2A", explanation: "Add all values: 6,432,517" },
             { q: "Which digit is in the ten-thousands place of 7,891,234?", type: "multiple_choice", choices: ["8", "9", "1", "2"], correct: 1, standard: "TEKS 4.2A", explanation: "Reading right to left: ones(4), tens(3), hundreds(2), thousands(1), ten-thousands(9)." },
@@ -1587,6 +1819,14 @@ var BUGGSY_WEEK_5 = {
         },
         science: {
           title: "Physical & Chemical Changes Review",
+          strand: "Matter and Energy",
+          teks: "4.5C",
+          quickFact: "Reviewing physical and chemical changes helps you confidently classify any change you observe in science class or everyday life.",
+          passage: [
+            "Physical changes are reversible in most cases. Ice can melt and refreeze. Dissolved sugar can be recovered by evaporating the water. The substance's chemical formula does not change.",
+            "Chemical changes are generally irreversible. A burned piece of paper cannot be 'unburned.' A rusted nail cannot easily return to shiny iron. New chemical bonds have formed.",
+            "Use these clues to classify a change: new smell, color, gas, or light produced means chemical. Shape, size, or state changed but same substance means physical."
+          ],
           questions: [
             { q: "Cooking an egg is a ___ change because you cannot un-cook it.", type: "multiple_choice", choices: ["physical", "chemical", "temporary", "reversible"], correct: 1, standard: "TEKS 4.6B", explanation: "Cooking creates new substances (proteins change structure). It is irreversible — chemical." },
             { q: "Which is NOT a sign of a chemical change?", type: "multiple_choice", choices: ["Change in color", "New smell produced", "Change in shape only", "Gas bubbles formed"], correct: 2, standard: "TEKS 4.6B", explanation: "Changing shape (cutting, folding, breaking) is a physical change. Chemical changes produce new substances." }
@@ -1644,6 +1884,14 @@ var BUGGSY_WEEK_6 = {
         title: "2-Digit Multiplication & Life Cycles",
         math: {
           title: "Multi-Digit Multiplication (2x2)",
+          strand: "Number and Operations",
+          teks: "4.4D",
+          quickFact: "Multiplying a two-digit number by another two-digit number uses the distributive property — break one factor into tens and ones, multiply each part, and add the products.",
+          passage: [
+            "The standard algorithm for 2x2 multiplication: multiply by the ones digit first, then by the tens digit (shifting one place left), and add the partial products together.",
+            "Example: 43x26. First, 43x6=258. Then, 43x20=860. Add: 258+860=1,118. Always include the placeholder zero when multiplying by the tens digit.",
+            "The area model is another strategy. Draw a rectangle split into sections for tens and ones of each factor. Calculate each section's area and add all four products together."
+          ],
           questions: [
             { q: "What is 23 x 15?", type: "computation", choices: ["335", "345", "235", "355"], correct: 1, standard: "TEKS 4.4B", explanation: "23 x 15: (23 x 10) + (23 x 5) = 230 + 115 = 345" },
             { q: "A school has 24 classrooms with 28 desks each. How many desks total?", type: "word_problem", choices: ["652", "672", "572", "682"], correct: 1, standard: "TEKS 4.4B", explanation: "24 x 28 = (24 x 30) - (24 x 2) = 720 - 48 = 672" },
@@ -1654,6 +1902,14 @@ var BUGGSY_WEEK_6 = {
         },
         science: {
           title: "Life Cycles: Complete Metamorphosis",
+          strand: "Organisms and Environments",
+          teks: "4.10A",
+          quickFact: "Complete metamorphosis has four distinct stages — egg, larva, pupa, adult — and the organism looks completely different at each stage.",
+          passage: [
+            "Butterflies, beetles, flies, and ants all undergo complete metamorphosis. The four stages are: egg, larva (caterpillar), pupa (chrysalis), and adult (butterfly).",
+            "During the larval stage, the organism eats constantly to store energy. The pupa stage is a resting phase where the body is completely reorganized inside the chrysalis.",
+            "Metamorphosis allows organisms to occupy different ecological niches at different life stages. A caterpillar eats leaves; an adult butterfly sips nectar — they do not compete for the same food."
+          ],
           questions: [
             { q: "What are the 4 stages of COMPLETE metamorphosis?", type: "multiple_choice", choices: ["Egg, larva, pupa, adult", "Egg, nymph, adult, death", "Birth, growth, reproduction, death", "Egg, tadpole, frog, adult"], correct: 0, standard: "TEKS 4.10B", explanation: "Complete metamorphosis: egg → larva (caterpillar) → pupa (chrysalis) → adult (butterfly)." },
             { q: "Which animal goes through INCOMPLETE metamorphosis?", type: "multiple_choice", choices: ["Butterfly", "Frog", "Grasshopper", "Ladybug"], correct: 2, standard: "TEKS 4.10B", explanation: "Grasshoppers have 3 stages (egg, nymph, adult) — no pupa stage. That is incomplete metamorphosis." },
@@ -1693,6 +1949,14 @@ var BUGGSY_WEEK_6 = {
         title: "Strip Diagrams & Plant Life Cycles",
         math: {
           title: "Strip Diagrams & Fraction Word Problems",
+          strand: "Number and Operations",
+          teks: "4.3B, 4.5A",
+          quickFact: "A strip diagram is a rectangular bar divided into equal parts — it is a visual tool for understanding fraction problems and multi-step word problems.",
+          passage: [
+            "Strip diagrams, also called bar models or tape diagrams, show part-whole relationships visually. Draw a rectangle, divide it into equal sections, and label each section to represent fractions or unknowns.",
+            "For a fraction word problem: if 3/5 of 20 students chose pizza, draw a strip divided into 5 equal parts (each part = 4 students), then shade 3 parts to show 12 students chose pizza.",
+            "Strip diagrams are especially helpful for comparison problems. If Maya has 3 times as many stickers as Leo, draw Leo's strip and Maya's strip with 3 times as many sections."
+          ],
           questions: [
             { q: "Nathan has 3 times as many cards as Buggsy. Together they have 48 cards. How many does Buggsy have? (Draw a strip diagram.)", type: "word_problem", choices: ["12", "16", "36", "24"], correct: 0, standard: "TEKS 4.3G, 4.5B", explanation: "Strip diagram: Buggsy = 1 part, Nathan = 3 parts. Total = 4 parts = 48. Each part = 12. Buggsy has 12." },
             { q: "A bakery sold 3/8 of its muffins in the morning and 2/8 in the afternoon. What fraction is LEFT?", type: "word_problem", choices: ["5/8", "3/8", "1/8", "6/8"], correct: 1, standard: "TEKS 4.3E, 4.3G", explanation: "Sold: 3/8 + 2/8 = 5/8. Left: 8/8 - 5/8 = 3/8." },
@@ -1702,6 +1966,14 @@ var BUGGSY_WEEK_6 = {
         },
         science: {
           title: "Plant Life Cycles & Inherited Traits",
+          strand: "Organisms and Environments",
+          teks: "4.10A, 4.10B",
+          quickFact: "Plants reproduce through seeds, spores, or vegetative reproduction — and offspring inherit traits from parent plants, though they may not be identical.",
+          passage: [
+            "Most flowering plants follow this life cycle: seed germination, seedling, mature plant, flowering, pollination, seed production, dispersal.",
+            "Pollination transfers pollen from one flower to another, enabling fertilization. Pollinators include bees, butterflies, wind, and water. After fertilization, the plant produces seeds.",
+            "Inherited traits in plants include leaf shape, flower color, and fruit size. These traits are passed from parent plants to offspring through genetic information in seeds."
+          ],
           questions: [
             { q: "What is the correct order of a plant's life cycle?", type: "multiple_choice", choices: ["Seed, seedling, adult plant, flower/fruit, seed dispersal", "Flower, seed, root, leaf", "Adult, baby, seed, flower", "Root, stem, leaf, flower"], correct: 0, standard: "TEKS 4.10B", explanation: "Plants cycle: seed → seedling → mature plant → flowers → fruit/seeds → dispersal → new seed." },
             { q: "Which trait is INHERITED (passed from parent to offspring)?", type: "multiple_choice", choices: ["Speaking Spanish", "Eye color", "A broken arm", "Knowing how to ride a bike"], correct: 1, standard: "TEKS 4.10A", explanation: "Eye color comes from DNA (inherited). Languages and skills are learned behaviors." },
@@ -1756,6 +2028,14 @@ var BUGGSY_WEEK_6 = {
         title: "Friday Review — Multiplication & Life Cycles",
         math: {
           title: "Mixed Review: Multiplication & Patterns",
+          strand: "Number and Operations",
+          teks: "4.4D, 4.5B",
+          quickFact: "A mixed review covers multiplication strategies and pattern recognition — two skills that work together when you spot numerical patterns in multiplication tables.",
+          passage: [
+            "Multiplication patterns appear throughout math. The nines multiplication table has a pattern: the digits of each product always add up to 9 (9, 18, 27, 36 — 1+8=9, 2+7=9, 3+6=9).",
+            "Skip counting is a pattern-based strategy for multiplication. Counting by 7s: 7, 14, 21, 28 — each jump adds 7. This helps when multiplying or checking your work.",
+            "Mixed review gives you practice switching between problem types quickly. This mental flexibility is exactly what tests require — you do not know which skill will come next."
+          ],
           questions: [
             { q: "What is 47 x 23?", type: "computation", choices: ["1,081", "1,061", "981", "1,181"], correct: 0, standard: "TEKS 4.4B", explanation: "47 x 23 = (47 x 20) + (47 x 3) = 940 + 141 = 1,081" },
             { q: "Complete the input-output table. Rule: multiply by 6, then add 2.\nInput: 3 → Output: ?\nInput: 5 → Output: ?\nInput: 8 → Output: ?", type: "multiple_choice", choices: ["20, 32, 50", "20, 32, 48", "18, 30, 48", "20, 30, 50"], correct: 0, standard: "TEKS 4.4E, 4.5B", explanation: "3x6+2=20, 5x6+2=32, 8x6+2=50" },
@@ -1765,6 +2045,14 @@ var BUGGSY_WEEK_6 = {
         },
         science: {
           title: "Life Cycles Review",
+          strand: "Organisms and Environments",
+          teks: "4.10A, 4.10B",
+          quickFact: "Every living thing goes through a life cycle from birth through reproduction to death — reviewing these cycles helps you compare organisms across different species.",
+          passage: [
+            "Life cycles vary across organisms. Mammals are born live and grow gradually. Insects may undergo complete or incomplete metamorphosis. Plants cycle from seed to seed.",
+            "Incomplete metamorphosis has only three stages: egg, nymph (a small version of the adult), and adult. Grasshoppers and cockroaches are examples. The nymph looks similar to the adult, just smaller and without wings.",
+            "Life cycle diagrams show the sequence of stages. Understanding these diagrams requires reading them as a cycle — the end connects back to the beginning."
+          ],
           questions: [
             { q: "Which animal has a life cycle that includes a TADPOLE stage?", type: "multiple_choice", choices: ["Butterfly", "Frog", "Grasshopper", "Chicken"], correct: 1, standard: "TEKS 4.10B" },
             { q: "A puppy learning to fetch is an example of a ___ behavior.", type: "multiple_choice", choices: ["Inherited", "Instinctive", "Learned", "Structural"], correct: 2, standard: "TEKS 4.10A" }
@@ -1822,6 +2110,14 @@ var BUGGSY_WEEK_7 = {
         title: "Input-Output Tables & Fossils",
         math: {
           title: "Input-Output Tables & Equations",
+          strand: "Algebraic Reasoning",
+          teks: "4.5B, 4.5C",
+          quickFact: "An input-output table shows how a function rule transforms input values into output values — finding the rule is like solving a puzzle.",
+          passage: [
+            "Input-output tables display pairs of numbers that follow a rule. The rule is applied to every input to produce the corresponding output. Your job is to identify the rule.",
+            "Example: Input 3 gives Output 9; Input 5 gives Output 15; Input 7 gives Output 21. The rule is multiply by 3. Once you find the rule, you can predict any output from any input.",
+            "Rules can involve any operation: addition, subtraction, multiplication, or division. Some rules combine two operations: multiply by 2 then add 1 is a two-step rule."
+          ],
           questions: [
             { q: "Find the rule: Input 2→8, 4→16, 6→24, 9→?", type: "multiple_choice", choices: ["27", "32", "36", "30"], correct: 2, standard: "TEKS 4.4E", explanation: "Rule: multiply by 4. 9 x 4 = 36" },
             { q: "If n x 7 = 84, what is n?", type: "computation", choices: ["11", "12", "13", "14"], correct: 1, standard: "TEKS 4.5A", explanation: "84 / 7 = 12, so n = 12" },
@@ -1832,6 +2128,14 @@ var BUGGSY_WEEK_7 = {
         },
         science: {
           title: "Fossils & Earth's History",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.7B",
+          quickFact: "Fossils are the preserved remains or traces of organisms from the past — they provide evidence that Earth's environments and living things have changed over millions of years.",
+          passage: [
+            "A fossil forms when an organism is buried quickly and its hard parts (bones, shells) are replaced by minerals over millions of years. Imprint fossils preserve the shape of soft-bodied organisms.",
+            "Fossils tell scientists which organisms existed in the past, what they ate, how they moved, and what the environment was like. Fossil evidence shows that ancient seas once covered parts of Texas.",
+            "Index fossils are especially useful — they are from organisms that lived during a specific time period, so their presence helps date the rock layers around them."
+          ],
           questions: [
             { q: "What can scientists learn from fossils?", type: "multiple_choice", choices: ["What the weather is like today", "What kinds of living things existed long ago", "How to build bridges", "What color dinosaurs were"], correct: 1, standard: "TEKS 4.11A", explanation: "Fossils tell us about ancient life — what organisms looked like, where they lived, and how they changed over time." },
             { q: "Fish fossils found on a mountain top suggest that —", type: "multiple_choice", choices: ["Fish can climb mountains", "The area was once covered by water", "Someone put them there", "Mountains grow very fast"], correct: 1, standard: "TEKS 4.11A", explanation: "Marine fossils on land = that area was once an ocean floor. Earth's surface changes over millions of years." },
@@ -1870,6 +2174,14 @@ var BUGGSY_WEEK_7 = {
         title: "Variables & Weathering/Erosion",
         math: {
           title: "Variables in Equations",
+          strand: "Algebraic Reasoning",
+          teks: "4.5A, 4.5B",
+          quickFact: "A variable is a letter that represents an unknown number — solving an equation means finding the value of the variable that makes the equation true.",
+          passage: [
+            "Variables stand in for unknown values in equations. In 3xn=21, the variable n represents the unknown. To solve, ask: what number times 3 equals 21? The answer is n=7.",
+            "Equations are mathematical sentences that show two quantities are equal. The equals sign means both sides have the same value. Any operation performed on one side must be performed on the other.",
+            "Real-world problems become equations. If a book costs $d and you buy 4 books for $28 total, the equation is 4d=28 and d=$7."
+          ],
           questions: [
             { q: "If 3 x n = 45, what is n?", type: "computation", choices: ["13", "14", "15", "16"], correct: 2, standard: "TEKS 4.5A", explanation: "45 / 3 = 15, so n = 15" },
             { q: "Write an equation: 'Six less than a number is 20.'", type: "multiple_choice", choices: ["6 - n = 20", "n - 6 = 20", "n + 6 = 20", "6 x n = 20"], correct: 1, standard: "TEKS 4.5A", explanation: "'Six less than a number' means start with n, subtract 6: n - 6 = 20." },
@@ -1879,6 +2191,14 @@ var BUGGSY_WEEK_7 = {
         },
         science: {
           title: "Weathering, Erosion & Deposition",
+          strand: "Earth and Space",
+          teks: "4.7C",
+          quickFact: "Weathering breaks rocks into smaller pieces, erosion carries those pieces away by water, wind, or ice, and deposition drops them somewhere new.",
+          passage: [
+            "Weathering is the physical or chemical breakdown of rocks at Earth's surface. Physical weathering breaks rocks without changing their chemical composition — frost cracking rocks in winter is an example.",
+            "Erosion transports weathered material from one place to another. Water is the most powerful agent of erosion. Rivers carve valleys, and ocean waves wear away coastlines over thousands of years.",
+            "Deposition occurs when eroded material loses energy and settles. Rivers deposit sediment at their mouths, forming deltas. Wind deposits sand to form dunes. Both create new landforms over time."
+          ],
           questions: [
             { q: "What is the difference between weathering and erosion?", type: "multiple_choice", choices: ["There is no difference", "Weathering breaks rock down; erosion moves the pieces", "Erosion breaks rock; weathering moves pieces", "Both only happen with water"], correct: 1, standard: "TEKS 4.7B", explanation: "Weathering = breaking down in place. Erosion = transporting the broken pieces to a new location." },
             { q: "A river carries sand downstream and drops it on a beach. The dropping part is called —", type: "multiple_choice", choices: ["Weathering", "Erosion", "Deposition", "Evaporation"], correct: 2, standard: "TEKS 4.7B", explanation: "Deposition is when eroded material is dropped/deposited in a new location." },
@@ -1933,6 +2253,14 @@ var BUGGSY_WEEK_7 = {
         title: "Friday Review — Equations & Earth Science",
         math: {
           title: "Mixed Review: Variables, Patterns & Equations",
+          strand: "Algebraic Reasoning",
+          teks: "4.5A, 4.5B, 4.5C",
+          quickFact: "Algebraic reasoning at fourth grade means identifying rules, writing equations, and solving for unknowns — all skills that prepare you for pre-algebra.",
+          passage: [
+            "Variables, patterns, and equations are connected. A pattern rule can be written as an equation: if the pattern adds 5 each time, the equation is Output = Input + 5.",
+            "Mixed review requires you to switch between reading input-output tables, writing equations from word problems, and solving for unknown variables. Read each problem carefully to determine the task.",
+            "Algebra is about relationships between quantities. Whenever you see 'if... then...' thinking in math — that is algebraic reasoning, whether or not variables are explicitly present."
+          ],
           questions: [
             { q: "If the rule is 'multiply by 5, subtract 3,' what is the output when the input is 7?", type: "computation", choices: ["32", "35", "38", "42"], correct: 0, standard: "TEKS 4.4E", explanation: "7 x 5 = 35, then 35 - 3 = 32" },
             { q: "Solve: 156 / n = 12", type: "computation", choices: ["12", "13", "14", "15"], correct: 1, standard: "TEKS 4.5A", explanation: "n = 156 / 12 = 13" },
@@ -1942,6 +2270,14 @@ var BUGGSY_WEEK_7 = {
         },
         science: {
           title: "Earth Science Review",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.7B, 4.7C",
+          quickFact: "Earth science review brings together weathering, erosion, deposition, fossils, rocks, and minerals — the physical world beneath our feet.",
+          passage: [
+            "Earth's surface is constantly changing through weathering, erosion, and deposition. These slow processes reshape mountains, valleys, and coastlines over millions of years.",
+            "Rocks record Earth's history. Sedimentary rock layers form over time, and fossils within them tell us what lived during each period. Older layers are generally deeper.",
+            "Review the rock cycle: igneous rock cools from magma, sedimentary rock forms from compressed sediment, and metamorphic rock forms when existing rock is changed by heat and pressure. Each type can be transformed into another."
+          ],
           questions: [
             { q: "Put these in order from FASTEST to SLOWEST Earth process: earthquake, erosion by a river, mountain building", type: "multiple_choice", choices: ["Earthquake, river erosion, mountain building", "Mountain building, river erosion, earthquake", "River erosion, earthquake, mountain building", "All happen at the same speed"], correct: 0, standard: "TEKS 4.7B, 4.11A", explanation: "Earthquakes = seconds. River erosion = years to centuries. Mountain building = millions of years." },
             { q: "A fossil of a tropical plant found in Alaska suggests that —", type: "multiple_choice", choices: ["Someone planted it recently", "Alaska's climate was once much warmer", "Tropical plants can survive cold", "Fossils can travel"], correct: 1, standard: "TEKS 4.11A" }
@@ -2000,6 +2336,14 @@ var BUGGSY_WEEK_8 = {
         title: "Measuring Angles & Circuits",
         math: {
           title: "Angles: Measuring & Classifying",
+          strand: "Geometry and Measurement",
+          teks: "4.7A, 4.7B, 4.7C, 4.7D",
+          quickFact: "A protractor measures angles in degrees — place the center on the vertex, align one ray with zero, and read where the other ray points.",
+          passage: [
+            "An angle is formed when two rays meet at a common endpoint called the vertex. Angles are measured in degrees. A full rotation is 360 degrees.",
+            "Types of angles: acute (less than 90 degrees), right (exactly 90 degrees), obtuse (between 90 and 180 degrees), and straight (exactly 180 degrees). A right angle is marked with a small square at the vertex.",
+            "To measure an angle with a protractor: align the center hole over the vertex, line one ray up with 0 degrees, and read the number where the other ray crosses the protractor scale."
+          ],
           questions: [
             { q: "An angle that measures exactly 90° is called a —", type: "multiple_choice", choices: ["Acute angle", "Right angle", "Obtuse angle", "Straight angle"], correct: 1, standard: "TEKS 4.7A", explanation: "A right angle is exactly 90°, like the corner of a square." },
             { q: "Classify this angle: 135°", type: "multiple_choice", choices: ["Acute", "Right", "Obtuse", "Straight"], correct: 2, standard: "TEKS 4.7A", explanation: "135° is between 90° and 180°, so it is obtuse." },
@@ -2010,6 +2354,14 @@ var BUGGSY_WEEK_8 = {
         },
         science: {
           title: "Electrical Circuits & Energy Transfer",
+          strand: "Matter and Energy",
+          teks: "4.6B",
+          quickFact: "An electrical circuit is a closed path through which electric current flows — if the path is broken anywhere, the current stops.",
+          passage: [
+            "A complete (closed) circuit allows current to flow from the power source, through the conductors and components, and back to the source. A break anywhere in the circuit stops the flow.",
+            "Series circuits connect components one after another in a single path. If one component fails, the entire circuit stops. Parallel circuits have multiple paths, so if one component fails, current can still flow through the others.",
+            "Energy in a circuit transforms: electrical energy converts to light in a bulb, to heat in a toaster, and to sound in a speaker. This is an energy transformation."
+          ],
           questions: [
             { q: "For a light bulb to work in a circuit, the circuit must be —", type: "multiple_choice", choices: ["Open (with a gap)", "Closed (complete loop)", "Made of wood", "Wet"], correct: 1, standard: "TEKS 4.8B", explanation: "Electricity flows only through a complete (closed) circuit. A gap (open circuit) stops the flow." },
             { q: "What are the 3 parts needed for a simple circuit?", type: "multiple_choice", choices: ["Battery, wire, light bulb", "Battery, switch, magnet", "Wire, light bulb, water", "Battery, rubber band, light bulb"], correct: 0, standard: "TEKS 4.8B", explanation: "A simple circuit needs: energy source (battery), conductor (wire), and load (light bulb)." },
@@ -2048,6 +2400,14 @@ var BUGGSY_WEEK_8 = {
         title: "Classifying Triangles & Sound/Light",
         math: {
           title: "Classifying 2D Figures",
+          strand: "Geometry and Measurement",
+          teks: "4.6D",
+          quickFact: "Two-dimensional figures are classified by the number of sides, angle types, and parallel or perpendicular sides — a square is a special rectangle which is a special parallelogram.",
+          passage: [
+            "Polygons are closed 2D figures made of straight sides. They are classified by number of sides: triangle (3), quadrilateral (4), pentagon (5), hexagon (6), octagon (8).",
+            "Quadrilaterals can be further classified: parallelograms have two pairs of parallel sides. Rectangles are parallelograms with four right angles. Squares are rectangles with all sides equal. Rhombuses are parallelograms with all sides equal.",
+            "Triangles are classified by angles: acute (all angles less than 90 degrees), right (one 90-degree angle), obtuse (one angle greater than 90 degrees). They are also classified by side lengths: equilateral, isosceles, or scalene."
+          ],
           questions: [
             { q: "A triangle with one angle greater than 90° is classified as —", type: "multiple_choice", choices: ["Acute", "Right", "Obtuse", "Equilateral"], correct: 2, standard: "TEKS 4.6D", explanation: "If any angle is greater than 90°, the triangle is obtuse." },
             { q: "How are a square and a rectangle ALIKE?", type: "multiple_choice", choices: ["Both have exactly 4 right angles", "Both have all sides equal", "Both have exactly 2 lines of symmetry", "They are not alike at all"], correct: 0, standard: "TEKS 4.6D", explanation: "Both squares and rectangles have 4 sides and 4 right angles (90°). Squares also have equal sides." },
@@ -2057,6 +2417,14 @@ var BUGGSY_WEEK_8 = {
         },
         science: {
           title: "Sound & Light Energy",
+          strand: "Matter and Energy",
+          teks: "4.6A, 4.6C",
+          quickFact: "Sound travels as a vibration through matter — it cannot travel through a vacuum — and light travels as a wave that can move through empty space.",
+          passage: [
+            "Sound is produced by vibrations. When an object vibrates, it creates pressure waves that travel outward through air, water, or solids. Sound cannot travel through a vacuum (empty space).",
+            "Pitch is determined by frequency — high frequency vibrations produce high-pitched sounds, low frequency vibrations produce low-pitched sounds. Volume is determined by amplitude.",
+            "Light travels in straight lines and at a constant speed (approximately 300,000 km/s in a vacuum). It reflects off shiny surfaces, refracts when passing between materials, and can be absorbed, reflected, or transmitted by different objects."
+          ],
           questions: [
             { q: "Sound travels through vibrations. Which material does sound travel FASTEST through?", type: "multiple_choice", choices: ["Air", "Water", "Solid metal", "A vacuum (empty space)"], correct: 2, standard: "TEKS 4.8A", explanation: "Sound travels fastest through solids (molecules are packed tightly). It cannot travel through a vacuum." },
             { q: "What happens when light hits a mirror?", type: "multiple_choice", choices: ["It is absorbed", "It is reflected", "It passes through", "It disappears"], correct: 1, standard: "TEKS 4.8A", explanation: "Mirrors are smooth and shiny — they reflect light. That is why you can see your reflection." },
@@ -2111,6 +2479,14 @@ var BUGGSY_WEEK_8 = {
         title: "8-Week Comprehensive Review",
         math: {
           title: "Cumulative Review — All Strands",
+          strand: "Number and Operations",
+          teks: "4.2A, 4.3C, 4.4D, 4.5A, 4.6D, 4.7A",
+          quickFact: "A cumulative review covers all math strands — number operations, fractions, geometry, measurement, data, and algebraic reasoning — to prepare you for high-stakes assessments.",
+          passage: [
+            "Cumulative reviews require mental flexibility. You may encounter fractions, geometry, word problems, and patterns all on the same page. Read each question carefully to identify the skill being tested.",
+            "Use process of elimination on multiple-choice questions. Eliminate obviously wrong answers first, then work through the remaining options. Estimate to check if your answer is reasonable.",
+            "Time management is key during reviews and assessments. If a problem is taking too long, mark it, move on, and come back. Spending too long on one problem costs you time on others."
+          ],
           questions: [
             { q: "What is the value of the 8 in 28,345,671?", type: "multiple_choice", choices: ["8,000,000", "800,000", "80,000", "8,000"], correct: 0, standard: "TEKS 4.2A" },
             { q: "56 x 43 = ?", type: "computation", choices: ["2,308", "2,408", "2,508", "2,348"], correct: 1, standard: "TEKS 4.4B", explanation: "56 x 43 = (56 x 40) + (56 x 3) = 2,240 + 168 = 2,408" },
@@ -2122,6 +2498,14 @@ var BUGGSY_WEEK_8 = {
         },
         science: {
           title: "Cumulative Science Review",
+          strand: "Earth and Space",
+          teks: "4.6A, 4.7A, 4.9A, 4.10A",
+          quickFact: "The cumulative science review spans physical science, earth science, and life science — the three major domains of fourth-grade science.",
+          passage: [
+            "Physical science covers matter and energy: states of matter, physical and chemical changes, forms of energy, forces and motion, and circuits.",
+            "Earth science covers earth materials, weathering, erosion, fossils, weather, and the water cycle. Texas TEKS emphasize how Earth's surface changes over time.",
+            "Life science covers organisms, ecosystems, food chains, adaptations, and life cycles. All three science domains connect — energy from the sun flows through ecosystems and drives weather patterns."
+          ],
           questions: [
             { q: "Rusting is a ___ change. Melting is a ___ change.", type: "multiple_choice", choices: ["physical, chemical", "chemical, physical", "chemical, chemical", "physical, physical"], correct: 1, standard: "TEKS 4.6B" },
             { q: "In a closed circuit, what happens if you remove the battery?", type: "multiple_choice", choices: ["The light gets brighter", "Nothing changes", "The circuit breaks and the light goes out", "The light changes color"], correct: 2, standard: "TEKS 4.8B" }
@@ -2222,6 +2606,14 @@ var BUGGSY_WEEK_9 = {
         title: "Place Value & Mixtures",
         math: {
           title: "Place Value — Hundred Thousands & Beyond",
+          strand: "Number and Operations",
+          teks: "4.2A, 4.2B",
+          quickFact: "Numbers in the hundred-thousands and millions are still built on the same place-value system — each position is worth ten times the position to its right.",
+          passage: [
+            "Place value extends infinitely to the left. The hundred-thousands place is the sixth place from the right: 100,000. A number like 847,293 has 8 in the hundred-thousands place.",
+            "Reading numbers in the hundred-thousands: 847,293 = eight hundred forty-seven thousand, two hundred ninety-three. The comma separates the thousands period from the ones period.",
+            "Comparing numbers in the hundred-thousands: start at the highest place value. If two numbers have different digits in the hundred-thousands place, the larger digit indicates the larger number."
+          ],
           questions: [
             { q: "What is the value of the 7 in 573,291?", type: "computation", choices: ["7,000", "70,000", "700", "700,000"], correct: 1, standard: "TEKS 4.2A", explanation: "The 7 is in the ten thousands place, so its value is 70,000." },
             { q: "Which number is 10,000 more than 482,567?", type: "computation", choices: ["483,567", "492,567", "582,567", "482,667"], correct: 1, standard: "TEKS 4.2A", explanation: "482,567 + 10,000 = 492,567" },
@@ -2232,6 +2624,14 @@ var BUGGSY_WEEK_9 = {
         },
         science: {
           title: "Mixtures & Solutions",
+          strand: "Matter and Energy",
+          teks: "4.5A",
+          quickFact: "Revisiting mixtures and solutions deepens your understanding — this time focusing on separating mixtures and explaining solubility in scientific terms.",
+          passage: [
+            "Solubility describes how much of a substance can dissolve in a solvent at a given temperature. Hot water generally dissolves more solute than cold water.",
+            "Not all substances dissolve. Sand does not dissolve in water — it is insoluble. Salt dissolves readily — it is soluble. Oil and water do not mix because oil is nonpolar and water is polar.",
+            "To separate a mixture of sand and salt in water: filter out the sand, then evaporate the water to retrieve the salt. Each separation technique exploits a physical difference."
+          ],
           questions: [
             { q: "Which of these is a mixture?", type: "multiple_choice", choices: ["Pure water", "Trail mix", "A gold ring", "A copper penny"], correct: 1, standard: "TEKS 4.5A", explanation: "Trail mix is a mixture — you can see and separate the different parts." },
             { q: "What happens when you stir salt into water?", type: "multiple_choice", choices: ["Nothing changes", "The salt dissolves and forms a solution", "The salt floats on top", "The water turns into salt"], correct: 1, standard: "TEKS 4.5A", explanation: "Salt dissolves in water, making a solution (a type of mixture)." },
@@ -2270,6 +2670,14 @@ var BUGGSY_WEEK_9 = {
         title: "Rounding & Separating Mixtures",
         math: {
           title: "Rounding & Estimation",
+          strand: "Number and Operations",
+          teks: "4.2D",
+          quickFact: "Rounding simplifies a number to the nearest place value — it is a tool for estimation and for checking whether your exact answer is reasonable.",
+          passage: [
+            "To round a number, identify the place you are rounding to. Look at the digit immediately to the right. If it is 5 or more, round up; if less than 5, keep the digit and replace everything to the right with zeros.",
+            "Estimation uses rounded numbers to get approximate answers quickly. Estimating 47x19: round to 50x20=1,000. The exact answer (893) is close to 1,000, confirming the estimate is reasonable.",
+            "Front-end estimation uses only the leading digit of each number. 483+219: estimate 400+200=600. It is faster than full rounding but less precise."
+          ],
           questions: [
             { q: "Round 7,849 to the nearest hundred.", type: "computation", choices: ["7,800", "7,900", "7,850", "8,000"], correct: 1, standard: "TEKS 4.2B", explanation: "The tens digit is 4 (less than 5), but wait — 49 rounds 7,849 to 7,800. Actually: tens digit is 4, so round down to 7,800. Let me recalculate: 7,849 — hundreds place is 8, tens is 4, so round down: 7,800." },
             { q: "Estimate 489 + 312 by rounding each to the nearest hundred.", type: "computation", choices: ["700", "800", "900", "1,000"], correct: 1, standard: "TEKS 4.4G", explanation: "489 rounds to 500, 312 rounds to 300. 500 + 300 = 800." },
@@ -2279,6 +2687,14 @@ var BUGGSY_WEEK_9 = {
         },
         science: {
           title: "Separating Mixtures",
+          strand: "Matter and Energy",
+          teks: "4.6B",
+          quickFact: "Every mixture separation method works because the components have different physical properties — size, magnetism, density, or solubility.",
+          passage: [
+            "Filtration separates mixtures where one component is too large to pass through a filter. Straining pasta uses filtration — the pasta is caught by the strainer but the water passes through.",
+            "Evaporation separates solutions. Heating a saltwater solution causes the water to evaporate, leaving salt crystals behind. This is how salt is harvested from seawater in some coastal regions.",
+            "Magnetic separation is used when one component is magnetic. Iron filings mixed with sand can be separated with a magnet — the iron clings to the magnet while the sand remains."
+          ],
           questions: [
             { q: "Which method would best separate iron filings from sand?", type: "multiple_choice", choices: ["Filtering", "Evaporation", "Using a magnet", "Freezing"], correct: 2, standard: "TEKS 4.5B", explanation: "Iron is magnetic, so a magnet can pull iron filings out of sand." },
             { q: "To get salt back from salt water, you should —", type: "multiple_choice", choices: ["Filter the water", "Evaporate the water", "Freeze the water", "Add more salt"], correct: 1, standard: "TEKS 4.5B", explanation: "Evaporation removes the water, leaving the salt behind." },
@@ -2331,6 +2747,14 @@ var BUGGSY_WEEK_9 = {
         title: "Friday Review — Place Value & Mixtures",
         math: {
           title: "Place Value & Rounding Review",
+          strand: "Number and Operations",
+          teks: "4.2A, 4.2B, 4.2D",
+          quickFact: "Mastering place value and rounding means you can work confidently with any size number — from ones to billions — and verify your answers with estimation.",
+          passage: [
+            "Place value review: every digit has a face value (the digit itself) and a place value (what it is worth based on position). In 50,836, the 5 has a face value of 5 and a place value of 50,000.",
+            "Rounding to different place values gives different levels of precision. 56,483 rounded to the nearest thousand is 56,000; rounded to the nearest hundred it is 56,500.",
+            "Using estimation in problem-solving: before computing, estimate the answer. After computing, compare your answer to the estimate. If they are far apart, look for an error."
+          ],
           questions: [
             { q: "What is the value of the 3 in 235,891?", type: "computation", choices: ["3,000", "30,000", "300", "300,000"], correct: 1, standard: "TEKS 4.2A", explanation: "The 3 is in the ten thousands place = 30,000." },
             { q: "Round 67,450 to the nearest thousand.", type: "computation", choices: ["67,000", "67,500", "68,000", "70,000"], correct: 0, standard: "TEKS 4.2B", explanation: "The hundreds digit is 4 (less than 5), so round down to 67,000." },
@@ -2340,6 +2764,14 @@ var BUGGSY_WEEK_9 = {
         },
         science: {
           title: "Weekly Science Review",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.8A",
+          quickFact: "A science review week pulls together key ideas from Earth science, life science, and physical science to reinforce what you have learned.",
+          passage: [
+            "Science review sessions help you connect ideas across topics. Earth science, life science, and physical science all describe different parts of the natural world but often overlap.",
+            "Reviewing vocabulary words, diagrams, and key concepts strengthens long-term memory. The more you revisit information, the more permanent it becomes in your brain.",
+            "Practice answering science questions out loud or in writing. Explaining concepts in your own words is one of the best ways to check your understanding."
+          ],
           questions: [
             { q: "Which is a solution?", type: "multiple_choice", choices: ["Gravel in a jar", "Sugar dissolved in water", "A salad", "Sand and iron filings"], correct: 1, standard: "TEKS 4.5A", explanation: "Sugar dissolved in water is a solution — you can't see the separate parts." },
             { q: "Spiral: What type of rock forms from cooled magma?", type: "multiple_choice", choices: ["Sedimentary", "Metamorphic", "Igneous", "Fossil"], correct: 2, standard: "TEKS 4.7A", explanation: "Igneous rocks form when magma or lava cools and hardens." }
@@ -2396,6 +2828,14 @@ var BUGGSY_WEEK_10 = {
         title: "Multi-Step Problems & Weathering",
         math: {
           title: "Multi-Step Word Problems",
+          strand: "Algebraic Reasoning",
+          teks: "4.5A",
+          quickFact: "Strip diagrams are a thinking tool — they force you to visualize the structure of a word problem before you write any equations.",
+          passage: [
+            "A strip diagram, also called a bar model, represents quantities as lengths of a bar. The whole bar represents the total, and sections represent the parts.",
+            "Draw a strip diagram before writing equations. If a problem says Maria has 3 times as many books as Jason and Jason has 12 books, draw Jason's bar (12 units) and Maria's bar (3 times as long). Then you can see that Maria has 36 books.",
+            "Strip diagrams work for addition, subtraction, multiplication, division, and fraction problems. They are especially helpful when a problem has more than one step."
+          ],
           questions: [
             { q: "A store sells notebooks for $3 each and pens for $2 each. Maria buys 4 notebooks and 6 pens. How much does she spend?", type: "word_problem", choices: ["$20", "$24", "$22", "$18"], correct: 1, standard: "TEKS 4.4B", explanation: "(4 x $3) + (6 x $2) = $12 + $12 = $24" },
             { q: "Jake has 156 baseball cards. He gives 28 to his brother and then buys 35 more. How many does he have now?", type: "word_problem", choices: ["163", "149", "191", "119"], correct: 0, standard: "TEKS 4.4B", explanation: "156 - 28 = 128, then 128 + 35 = 163." },
@@ -2406,6 +2846,14 @@ var BUGGSY_WEEK_10 = {
         },
         science: {
           title: "Weathering & Erosion",
+          strand: "Earth and Space",
+          teks: "4.7C",
+          quickFact: "Weathering and erosion work together to reshape Earth's surface — weathering breaks rocks apart, and erosion moves the pieces to a new location.",
+          passage: [
+            "Mechanical weathering physically breaks rocks without changing their chemical composition. Freeze-thaw cycles, root growth, and abrasion are all forms of mechanical weathering.",
+            "Chemical weathering changes the chemical composition of rocks. Acid rain reacts with limestone and marble, dissolving minerals. Oxidation causes iron-containing minerals to rust.",
+            "Erosion by water is responsible for features like the Grand Canyon — carved over millions of years by the Colorado River. Erosion by wind shapes desert landscapes into arches and fins."
+          ],
           questions: [
             { q: "What is weathering?", type: "multiple_choice", choices: ["Moving rocks to a new place", "Breaking down rocks into smaller pieces", "Building mountains", "Predicting rain"], correct: 1, standard: "TEKS 4.7B", explanation: "Weathering is the breaking down of rocks by water, wind, ice, or living things." },
             { q: "Which is an example of erosion?", type: "multiple_choice", choices: ["A rock cracking from ice", "A river carrying sand downstream", "A plant root splitting a boulder", "Acid rain dissolving limestone"], correct: 1, standard: "TEKS 4.7B", explanation: "Erosion is the MOVEMENT of weathered material. A river carrying sand is erosion." },
@@ -2444,6 +2892,14 @@ var BUGGSY_WEEK_10 = {
         title: "Strip Diagrams & Deposition",
         math: {
           title: "Strip Diagrams for Problem Solving",
+          strand: "Algebraic Reasoning",
+          teks: "4.5A",
+          quickFact: "Strip diagrams are a thinking tool — they force you to visualize the structure of a word problem before you write any equations.",
+          passage: [
+            "A strip diagram, also called a bar model, represents quantities as lengths of a bar. The whole bar represents the total, and sections represent the parts.",
+            "Draw a strip diagram before writing equations. If a problem says Maria has 3 times as many books as Jason and Jason has 12 books, draw Jason's bar (12 units) and Maria's bar (3 times as long). Then you can see that Maria has 36 books.",
+            "Strip diagrams work for addition, subtraction, multiplication, division, and fraction problems. They are especially helpful when a problem has more than one step."
+          ],
           questions: [
             { q: "A strip diagram shows a total of 156 split into 4 equal parts. What is the value of each part?", type: "computation", choices: ["38", "39", "40", "42"], correct: 1, standard: "TEKS 4.4C", explanation: "156 / 4 = 39" },
             { q: "A strip diagram shows: Part 1 = 45, Part 2 = 67, Part 3 = ?. Total = 180. What is Part 3?", type: "computation", choices: ["68", "58", "78", "48"], correct: 0, standard: "TEKS 4.4C", explanation: "180 - 45 - 67 = 68" },
@@ -2453,6 +2909,14 @@ var BUGGSY_WEEK_10 = {
         },
         science: {
           title: "Deposition — Where Eroded Material Goes",
+          strand: "Geometry and Measurement",
+          teks: "4.8A, 4.8B",
+          quickFact: "Wait — this is a math module. This week's Wednesday math focuses on applying measurement to real-world problem solving using multi-step calculations.",
+          passage: [
+            "Measurement in real-world contexts requires careful reading of units. A recipe might list ingredients in cups, but your measuring tools are in tablespoons — you need to convert.",
+            "Area and perimeter are real-world measurement skills. A farmer needs to know the perimeter of a field to install fencing and the area to calculate how much seed to buy.",
+            "Multi-step measurement problems combine unit conversion with area or perimeter calculations. Work step by step: convert units first, then apply the formula."
+          ],
           questions: [
             { q: "When a river slows down at the ocean, it drops its sediment. This is called —", type: "multiple_choice", choices: ["Weathering", "Erosion", "Deposition", "Condensation"], correct: 2, standard: "TEKS 4.7B", explanation: "Deposition is when eroded material is dropped in a new location." },
             { q: "A delta forms at the mouth of a river because of —", type: "multiple_choice", choices: ["Fast-moving water picking up rocks", "Slow-moving water depositing sediment", "Volcanoes erupting underwater", "Wind blowing sand"], correct: 1, standard: "TEKS 4.7B", explanation: "As the river enters the ocean, it slows down and deposits sediment, forming a delta." },
@@ -2505,6 +2969,14 @@ var BUGGSY_WEEK_10 = {
         title: "Friday Review — Multi-Step & Erosion",
         math: {
           title: "Week 10 Math Review",
+          strand: "Number and Operations",
+          teks: "4.4H, 4.5A",
+          quickFact: "The Week 10 review consolidates problem-solving strategies — strip diagrams, multi-step equations, and measurement — into a comprehensive practice session.",
+          passage: [
+            "Problem-solving strategies include drawing a picture, making a table, working backwards, and finding a pattern. Choosing the right strategy makes complex problems manageable.",
+            "Review your work after solving each problem. Check: Did I answer the question that was asked? Are my units correct? Does my answer make sense given the context of the problem?",
+            "Building strong problem-solving habits now pays dividends throughout middle and high school math. Accuracy, organization, and checking your work are habits — and habits require consistent practice."
+          ],
           questions: [
             { q: "A school has 24 classrooms with 28 students each. How many students total?", type: "word_problem", choices: ["652", "672", "648", "692"], correct: 1, standard: "TEKS 4.4E", explanation: "24 x 28 = 672" },
             { q: "A strip diagram shows 3 equal groups totaling 891. What is each group?", type: "computation", choices: ["293", "297", "299", "301"], correct: 1, standard: "TEKS 4.4C", explanation: "891 / 3 = 297" },
@@ -2514,6 +2986,14 @@ var BUGGSY_WEEK_10 = {
         },
         science: {
           title: "Weekly Science Review",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.8A",
+          quickFact: "A science review week pulls together key ideas from Earth science, life science, and physical science to reinforce what you have learned.",
+          passage: [
+            "Science review sessions help you connect ideas across topics. Earth science, life science, and physical science all describe different parts of the natural world but often overlap.",
+            "Reviewing vocabulary words, diagrams, and key concepts strengthens long-term memory. The more you revisit information, the more permanent it becomes in your brain.",
+            "Practice answering science questions out loud or in writing. Explaining concepts in your own words is one of the best ways to check your understanding."
+          ],
           questions: [
             { q: "What is the correct order? Weathering → ___ → Deposition", type: "multiple_choice", choices: ["Condensation", "Erosion", "Evaporation", "Precipitation"], correct: 1, standard: "TEKS 4.7B", explanation: "The sequence is: weathering breaks rock down, erosion moves it, deposition drops it." },
             { q: "Spiral: In a food chain, which organism is always at the bottom?", type: "multiple_choice", choices: ["Predator", "Decomposer", "Producer (plant)", "Consumer"], correct: 2, standard: "TEKS 4.9A" }
@@ -2570,6 +3050,14 @@ var BUGGSY_WEEK_11 = {
         title: "Data Analysis & Energy Transfer",
         math: {
           title: "Data Analysis — Frequency Tables & Bar Graphs",
+          strand: "Data Analysis",
+          teks: "4.9A, 4.9B",
+          quickFact: "Scientists collect and display data in tables and graphs to find patterns and draw conclusions — reading these displays is a core science skill.",
+          passage: [
+            "Frequency tables organize data by counting how many times each category or value appears. They are the first step in analyzing a data set before creating a graph.",
+            "Bar graphs display data using bars of different heights or lengths. The height of each bar shows the frequency or quantity for that category. The scale on the y-axis tells you what each unit represents.",
+            "When reading a bar graph, identify the title, labels, and scale first. Then read the data. Look for the highest and lowest bars, compare bars, and draw conclusions based on what you observe."
+          ],
           questions: [
             { q: "A frequency table shows: Red=8, Blue=12, Green=5, Yellow=3. How many total responses?", type: "computation", choices: ["25", "28", "30", "23"], correct: 1, standard: "TEKS 4.8A", explanation: "8 + 12 + 5 + 3 = 28 total responses." },
             { q: "In a bar graph, the tallest bar represents the favorite color 'Blue' at 15 votes. The shortest bar is 'Orange' at 4 votes. What is the difference?", type: "computation", choices: ["9", "11", "19", "10"], correct: 1, standard: "TEKS 4.8A", explanation: "15 - 4 = 11 votes difference." },
@@ -2580,6 +3068,14 @@ var BUGGSY_WEEK_11 = {
         },
         science: {
           title: "Energy — Heat Transfer",
+          strand: "Matter and Energy",
+          teks: "4.6A",
+          quickFact: "Heat transfers from warmer objects to cooler objects through three processes: conduction (direct contact), convection (fluid movement), and radiation (electromagnetic waves).",
+          passage: [
+            "Conduction is heat transfer through direct contact between objects. A metal spoon in hot soup conducts heat to your hand. Metals are good conductors; wood and plastic are poor conductors (insulators).",
+            "Convection transfers heat through the movement of fluids (liquids or gases). Hot air rises, cool air sinks — this creates convection currents that distribute heat in a room.",
+            "Radiation transfers heat through electromagnetic waves, even through empty space. The sun heats Earth by radiation. You feel radiative heat when standing near a campfire without touching it."
+          ],
           questions: [
             { q: "When you hold a cup of hot chocolate, heat moves from the cup to your hands. This is called —", type: "multiple_choice", choices: ["Radiation", "Conduction", "Convection", "Evaporation"], correct: 1, standard: "TEKS 4.6A", explanation: "Conduction is heat transfer through direct contact." },
             { q: "Heat ALWAYS flows from —", type: "multiple_choice", choices: ["Cold to hot", "Hot to cold", "Left to right", "Big objects to small objects"], correct: 1, standard: "TEKS 4.6A", explanation: "Heat energy always flows from warmer objects to cooler objects." },
@@ -2618,6 +3114,14 @@ var BUGGSY_WEEK_11 = {
         title: "Line Plots & Insulators",
         math: {
           title: "Line Plots with Fractions",
+          strand: "Data Analysis",
+          teks: "4.9A",
+          quickFact: "A line plot displays data along a number line — each data point is marked with an X above its position, making it easy to see clusters and the spread of the data.",
+          passage: [
+            "Line plots organize individual data points along a number line. The X marks above each value show frequency — more Xs mean more data points at that value.",
+            "Line plots with fractions use a number line divided into fraction increments (halves, fourths, eighths). Each X represents one measurement. Reading a line plot: look for where most Xs cluster (the mode) and the overall spread (range).",
+            "Line plots help identify outliers — data points far from the cluster. If most measurements are between 2 and 3 inches but one is 5 inches, that one is an outlier worth investigating."
+          ],
           questions: [
             { q: "A line plot shows plant heights: 2 1/4 in.(3 Xs), 2 1/2 in.(5 Xs), 2 3/4 in.(2 Xs). How many plants total?", type: "computation", choices: ["8", "10", "12", "7"], correct: 1, standard: "TEKS 4.8C", explanation: "3 + 5 + 2 = 10 plants total." },
             { q: "Using the line plot above, what is the most common plant height?", type: "multiple_choice", choices: ["2 1/4 inches", "2 1/2 inches", "2 3/4 inches", "3 inches"], correct: 1, standard: "TEKS 4.8C", explanation: "2 1/2 inches has the most Xs (5), making it the mode." },
@@ -2627,6 +3131,14 @@ var BUGGSY_WEEK_11 = {
         },
         science: {
           title: "Conductors & Insulators",
+          strand: "Matter and Energy",
+          teks: "4.6B",
+          quickFact: "Conductors allow electricity or heat to flow easily through them; insulators resist the flow — both are essential in electrical circuits and everyday technology.",
+          passage: [
+            "Conductors are materials that allow electric current or heat to move through them easily. Most metals — copper, silver, aluminum — are excellent conductors. Water is a conductor, which is why you should never use electrical devices near it.",
+            "Insulators prevent the flow of electricity or heat. Rubber, plastic, glass, and wood are common insulators. Electrical wire is copper (conductor) coated in plastic (insulator) for safe handling.",
+            "In a circuit, insulators protect people from electric shock by coating conducting wires. They also prevent short circuits by keeping conductors separated where they should not touch."
+          ],
           questions: [
             { q: "An insulator is a material that —", type: "multiple_choice", choices: ["Lets heat pass through easily", "Slows or stops heat transfer", "Makes things colder", "Only works with electricity"], correct: 1, standard: "TEKS 4.6A", explanation: "Insulators slow down or stop the flow of heat (examples: wood, plastic, foam)." },
             { q: "Why do pot handles often have rubber or wood grips?", type: "multiple_choice", choices: ["They look nicer", "Rubber and wood are insulators that protect your hand from heat", "Metal handles are too heavy", "It makes the pot cook faster"], correct: 1, standard: "TEKS 4.6A", explanation: "Rubber and wood are insulators — they don't conduct heat well, protecting your hands." },
@@ -2679,6 +3191,14 @@ var BUGGSY_WEEK_11 = {
         title: "Friday Review — Data & Energy",
         math: {
           title: "Week 11 Math Review",
+          strand: "Data Analysis",
+          teks: "4.9A, 4.9B",
+          quickFact: "This review consolidates data analysis skills — line plots, bar graphs, frequency tables, and drawing conclusions from data — before the cumulative assessment.",
+          passage: [
+            "Data analysis is a cross-curricular skill used in science, social studies, and math. The ability to read and create graphs is tested in fourth grade and becomes increasingly important each year.",
+            "Review the components of a good graph: clear title, labeled axes, appropriate scale, and accurate data representation. A graph missing any of these components is incomplete.",
+            "Drawing conclusions from data requires evidence. Do not say 'more students preferred pizza' without pointing to the data that shows it. Science and math both require evidence-based reasoning."
+          ],
           questions: [
             { q: "A frequency table shows: Cat=14, Dog=18, Fish=7, Bird=11. What fraction of responses chose Dog?", type: "computation", choices: ["18/50", "18/40", "18/32", "14/50"], correct: 0, standard: "TEKS 4.8A", explanation: "Total = 14+18+7+11 = 50. Dog fraction = 18/50." },
             { q: "Spiral: 24 x 15 = ?", type: "computation", choices: ["350", "360", "340", "320"], correct: 1, standard: "TEKS 4.4E", explanation: "24 x 15 = 24 x 10 + 24 x 5 = 240 + 120 = 360." },
@@ -2688,6 +3208,14 @@ var BUGGSY_WEEK_11 = {
         },
         science: {
           title: "Weekly Science Review",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.8A",
+          quickFact: "A science review week pulls together key ideas from Earth science, life science, and physical science to reinforce what you have learned.",
+          passage: [
+            "Science review sessions help you connect ideas across topics. Earth science, life science, and physical science all describe different parts of the natural world but often overlap.",
+            "Reviewing vocabulary words, diagrams, and key concepts strengthens long-term memory. The more you revisit information, the more permanent it becomes in your brain.",
+            "Practice answering science questions out loud or in writing. Explaining concepts in your own words is one of the best ways to check your understanding."
+          ],
           questions: [
             { q: "Which transfers heat the fastest?", type: "multiple_choice", choices: ["Wool blanket", "Copper wire", "Wooden spoon", "Plastic cup"], correct: 1, standard: "TEKS 4.6A", explanation: "Copper is a metal conductor — it transfers heat very quickly." },
             { q: "Spiral: What separates iron filings from a mixture?", type: "multiple_choice", choices: ["Filtering", "Evaporation", "A magnet", "Heating"], correct: 2, standard: "TEKS 4.5B" }
@@ -2744,6 +3272,14 @@ var BUGGSY_WEEK_12 = {
         title: "ASSESSMENT: Math Checkpoint (Weeks 1-11)",
         math: {
           title: "Cumulative Math Assessment",
+          strand: "Number and Operations",
+          teks: "4.2A, 4.3C, 4.4D, 4.4H, 4.5A",
+          quickFact: "A cumulative math assessment tests every skill learned so far — place value, fractions, multiplication, division, patterns, and word problems all in one sitting.",
+          passage: [
+            "Prepare for a cumulative assessment by reviewing every unit, not just the most recent one. Make a checklist of topics and rate your confidence on each one.",
+            "Assessments test both procedural fluency (can you compute correctly?) and conceptual understanding (do you know why the procedure works?). Study both.",
+            "During the assessment, read every problem fully before solving. Show your work clearly so partial credit is possible even if your final answer contains a small error."
+          ],
           questions: [
             { q: "What is the value of the 6 in 462,815?", type: "computation", choices: ["6,000", "60,000", "600", "600,000"], correct: 1, standard: "TEKS 4.2A", explanation: "The 6 is in the ten thousands place = 60,000." },
             { q: "Add: 2/5 + 2/5 = ?", type: "computation", choices: ["4/10", "4/5", "2/5", "1"], correct: 1, standard: "TEKS 4.3E", explanation: "Same denominator: 2 + 2 = 4, so 4/5." },
@@ -2754,6 +3290,14 @@ var BUGGSY_WEEK_12 = {
         },
         science: {
           title: "Cumulative Science Assessment",
+          strand: "Earth and Space",
+          teks: "4.6A, 4.7A, 4.9A, 4.10A",
+          quickFact: "The cumulative science assessment covers all three science domains — physical, earth, and life science — testing your ability to apply concepts, not just recall facts.",
+          passage: [
+            "Physical science questions may ask you to classify changes as physical or chemical, identify forms of energy, or describe how forces affect motion.",
+            "Earth science questions may ask about rocks and minerals, the water cycle, weathering and erosion, or how fossils provide evidence of past environments.",
+            "Life science questions may ask about food chains, adaptations, life cycles, and how organisms interact with their ecosystems. Use scientific vocabulary in all answers."
+          ],
           questions: [
             { q: "Which type of rock forms from layers of sediment pressed together?", type: "multiple_choice", choices: ["Igneous", "Sedimentary", "Metamorphic", "Volcanic"], correct: 1, standard: "TEKS 4.7A" },
             { q: "What drives the water cycle?", type: "multiple_choice", choices: ["Wind", "Gravity", "The sun's energy", "Ocean currents"], correct: 2, standard: "TEKS 4.8A" },
@@ -2792,6 +3336,14 @@ var BUGGSY_WEEK_12 = {
         title: "ASSESSMENT: Mixed Math & Science",
         math: {
           title: "Mixed Standards Assessment",
+          strand: "Number and Operations",
+          teks: "4.2A, 4.3C, 4.4D, 4.5A, 4.8A",
+          quickFact: "A mixed standards assessment draws from all math strands — approach each problem fresh, identify the skill being tested, and apply the right strategy.",
+          passage: [
+            "Mixed assessments require mental flexibility. You might solve a fraction problem, then a geometry problem, then a word problem — all within a few minutes.",
+            "For each problem: identify the math domain (number sense, fractions, geometry, data, algebra), recall the key rule or formula, then compute carefully.",
+            "Check answers with estimation. If your computed answer is far from your estimate, look for calculation errors. Estimation takes seconds and catches many mistakes."
+          ],
           questions: [
             { q: "Round 8,462 to the nearest hundred.", type: "computation", choices: ["8,400", "8,500", "8,460", "8,000"], correct: 1, standard: "TEKS 4.2B", explanation: "Tens digit is 6 (5+), round up to 8,500." },
             { q: "A strip diagram shows 5 equal parts totaling 425. What is one part?", type: "computation", choices: ["80", "85", "90", "75"], correct: 1, standard: "TEKS 4.4C", explanation: "425 / 5 = 85." },
@@ -2801,6 +3353,14 @@ var BUGGSY_WEEK_12 = {
         },
         science: {
           title: "Mixed Science Assessment",
+          strand: "Matter and Energy",
+          teks: "4.5C, 4.6A, 4.7A, 4.9A",
+          quickFact: "Mixed science assessments test your ability to apply concepts across all science domains — read each question carefully to identify which domain it is testing.",
+          passage: [
+            "Science assessments include multiple question types: multiple choice, short answer, and diagram interpretation. Each requires a different reading strategy.",
+            "For diagram questions, read the title, labels, and legend before trying to answer. Diagrams communicate scientific information visually — every label is a clue.",
+            "Short answer questions require complete sentences. Restate the question in your answer, provide evidence from the text or data, and connect it to the science concept being tested."
+          ],
           questions: [
             { q: "Weathering breaks rock down. What MOVES the broken pieces?", type: "multiple_choice", choices: ["Weathering", "Deposition", "Erosion", "Condensation"], correct: 2, standard: "TEKS 4.7B" },
             { q: "A metal spoon gets hot in soup because metal is a —", type: "multiple_choice", choices: ["Insulator", "Conductor", "Decomposer", "Producer"], correct: 1, standard: "TEKS 4.6A" },
@@ -2853,6 +3413,14 @@ var BUGGSY_WEEK_12 = {
         title: "ASSESSMENT: Friday Cumulative Review",
         math: {
           title: "Cumulative Review",
+          strand: "Number and Operations",
+          teks: "4.2A, 4.3C, 4.4D, 4.5A",
+          quickFact: "The cumulative review is your final preparation — revisit every topic, identify any remaining gaps, and build confidence going into the assessment.",
+          passage: [
+            "Create a self-assessment: list every math unit and rate yourself on a scale of 1 to 3. Focus your final review time on the units rated 1 or 2, not on what you already know well.",
+            "Work through one or two problems from each unit to check your fluency. If a problem type feels rusty, spend 10 minutes reviewing the strategy before moving on.",
+            "Rest before assessments. Cramming the night before is less effective than a good review followed by adequate sleep. Your brain consolidates learning during sleep."
+          ],
           questions: [
             { q: "What is 3/8 + 5/8?", type: "computation", choices: ["8/16", "8/8 = 1", "2/8", "15/8"], correct: 1, standard: "TEKS 4.3E" },
             { q: "A classroom has 6 rows of desks with 5 desks in each row. 3 desks are empty. How many students are seated?", type: "word_problem", choices: ["27", "33", "30", "28"], correct: 0, standard: "TEKS 4.4B", explanation: "6 x 5 = 30 desks total. 30 - 3 empty = 27 students." },
@@ -2862,6 +3430,14 @@ var BUGGSY_WEEK_12 = {
         },
         science: {
           title: "Cumulative Science Review",
+          strand: "Earth and Space",
+          teks: "4.6A, 4.7A, 4.9A, 4.10A",
+          quickFact: "The cumulative science review spans physical, earth, and life science — use it to identify any topic that still feels uncertain before the end-of-unit assessment.",
+          passage: [
+            "Physical science review: states of matter, physical vs chemical changes, forms of energy, forces and motion, electrical circuits, conductors and insulators.",
+            "Earth science review: rocks and minerals, weathering and erosion and deposition, fossils, weather and the water cycle, natural resources.",
+            "Life science review: food chains, ecosystems, adaptations, life cycles (complete and incomplete metamorphosis), inherited traits and learned behaviors."
+          ],
           questions: [
             { q: "Which is NOT a way to separate a mixture?", type: "multiple_choice", choices: ["Filtering", "Evaporating", "Magnetism", "Photosynthesis"], correct: 3, standard: "TEKS 4.5B", explanation: "Photosynthesis is how plants make food — it's not a separation method." },
             { q: "Heat flows from a warm object to a cool object through direct contact. This is —", type: "multiple_choice", choices: ["Convection", "Radiation", "Conduction", "Insulation"], correct: 2, standard: "TEKS 4.6A" }
@@ -2918,6 +3494,14 @@ var BUGGSY_WEEK_13 = {
         title: "Geometry & Life Cycles",
         math: {
           title: "Lines, Angles, and Triangles",
+          strand: "Geometry and Measurement",
+          teks: "4.6A, 4.6B, 4.7A, 4.7B",
+          quickFact: "Triangles are classified by both their angle types and their side lengths — understanding these classifications builds the foundation for all of geometry.",
+          passage: [
+            "Every triangle has three angles that sum to exactly 180 degrees. This fact lets you find a missing angle: if two angles are 60 degrees and 80 degrees, the third is 180-60-80=40 degrees.",
+            "Triangles classified by angles: acute (all angles less than 90 degrees), right (one 90-degree angle), obtuse (one angle greater than 90 degrees).",
+            "Triangles classified by sides: equilateral (all three sides equal), isosceles (exactly two sides equal), scalene (no sides equal). These two classification systems are independent of each other."
+          ],
           questions: [
             { q: "Which angle is ACUTE?", type: "multiple_choice", choices: ["45 degrees", "90 degrees", "120 degrees", "180 degrees"], correct: 0, standard: "TEKS 4.7A", explanation: "An acute angle is less than 90 degrees. 45 < 90, so it is acute." },
             { q: "What type of angle does the corner of a book form?", type: "multiple_choice", choices: ["Acute", "Right (90 degrees)", "Obtuse", "Straight"], correct: 1, standard: "TEKS 4.7A", explanation: "A book corner is a right angle = exactly 90 degrees." },
@@ -2928,6 +3512,14 @@ var BUGGSY_WEEK_13 = {
         },
         science: {
           title: "Life Cycles",
+          strand: "Organisms and Environments",
+          teks: "4.10A, 4.10B",
+          quickFact: "All organisms have a life cycle — the sequence of growth and reproduction that transfers genetic information from one generation to the next.",
+          passage: [
+            "The basic stages of most animal life cycles are: birth (or hatching), growth and development, reproduction, and death. The cycle continues when offspring repeat the process.",
+            "Mammals give birth to live young that are nourished by mother's milk. Birds hatch from eggs. Amphibians begin life in water and transition to land. Each group has unique life cycle features.",
+            "Life cycles ensure species survival. Organisms that reproduce before they die pass their traits to the next generation. This continuity is fundamental to all life on Earth."
+          ],
           questions: [
             { q: "Which shows the correct life cycle of a butterfly?", type: "multiple_choice", choices: ["Egg → larva → pupa → adult", "Egg → pupa → larva → adult", "Larva → egg → adult → pupa", "Adult → egg → larva → pupa"], correct: 0, standard: "TEKS 4.10B", explanation: "Complete metamorphosis: egg → larva (caterpillar) → pupa (chrysalis) → adult." },
             { q: "How is a frog's life cycle different from a butterfly's?", type: "multiple_choice", choices: ["Frogs don't have eggs", "Frogs go through incomplete metamorphosis with a tadpole stage", "Frogs skip the larva stage", "There is no difference"], correct: 1, standard: "TEKS 4.10B", explanation: "Frogs: egg → tadpole → tadpole with legs → adult frog. Tadpoles live in water; adults live on land." },
@@ -2966,6 +3558,14 @@ var BUGGSY_WEEK_13 = {
         title: "Symmetry & Inherited Traits",
         math: {
           title: "Symmetry and Geometric Patterns",
+          strand: "Geometry and Measurement",
+          teks: "4.6C, 4.6D",
+          quickFact: "A figure has line symmetry if one half is the mirror image of the other — finding lines of symmetry develops spatial reasoning and connects geometry to art and nature.",
+          passage: [
+            "A line of symmetry divides a figure into two congruent halves that are mirror images of each other. A square has 4 lines of symmetry; a regular pentagon has 5.",
+            "Rotational symmetry occurs when a figure looks the same after being rotated less than 360 degrees. A square has 90-degree rotational symmetry — it looks the same after rotating 90, 180, or 270 degrees.",
+            "Geometric patterns repeat a shape, color, or rule. Identifying the unit of repeat (the smallest section that repeats) is the key to extending and describing any geometric pattern."
+          ],
           questions: [
             { q: "How many lines of symmetry does a square have?", type: "multiple_choice", choices: ["1", "2", "4", "8"], correct: 2, standard: "TEKS 4.6D", explanation: "A square has 4 lines of symmetry: horizontal, vertical, and 2 diagonal." },
             { q: "Which letter has exactly ONE line of symmetry?", type: "multiple_choice", choices: ["H", "A", "O", "X"], correct: 1, standard: "TEKS 4.6D", explanation: "A has one vertical line of symmetry. H has 2, O has many, X has 2." },
@@ -2975,6 +3575,14 @@ var BUGGSY_WEEK_13 = {
         },
         science: {
           title: "Inherited Traits vs. Learned Behaviors",
+          strand: "Organisms and Environments",
+          teks: "4.10B",
+          quickFact: "Inherited traits are passed through genes from parents to offspring; learned behaviors are acquired through experience — both help organisms survive.",
+          passage: [
+            "Inherited traits are encoded in DNA and passed from parents to offspring. Examples: eye color, fur color, leaf shape, shell pattern. Offspring may not be identical to parents due to the combination of traits from both parents.",
+            "Learned behaviors develop through experience, observation, or practice. A dog learning to sit on command, a bird learning migration routes from experienced birds, and humans learning language are all examples.",
+            "Some behaviors combine both: a bird has an inherited instinct to build a nest, but the specific techniques it uses may be learned by watching other birds. Nature and nurture work together."
+          ],
           questions: [
             { q: "Which is an INHERITED trait?", type: "multiple_choice", choices: ["Speaking English", "Eye color", "Playing piano", "Riding a bike"], correct: 1, standard: "TEKS 4.10A", explanation: "Eye color is passed from parents through genes. Languages and skills are learned." },
             { q: "A dog fetching a ball is an example of —", type: "multiple_choice", choices: ["An inherited trait", "A learned behavior", "A structural adaptation", "A life cycle stage"], correct: 1, standard: "TEKS 4.10A", explanation: "Fetching is taught — it's a learned behavior, not something dogs are born knowing." },
@@ -3027,6 +3635,14 @@ var BUGGSY_WEEK_13 = {
         title: "Friday Review — Geometry & Life Cycles",
         math: {
           title: "Week 13 Review",
+          strand: "Geometry and Measurement",
+          teks: "4.6A, 4.6B, 4.6C, 4.6D",
+          quickFact: "The Week 13 review covers geometry concepts — triangles, angle classification, symmetry, and geometric patterns — consolidating spatial reasoning skills.",
+          passage: [
+            "Geometry review: know the names and properties of basic figures. A right angle is 90 degrees. Parallel lines never meet. Perpendicular lines meet at 90 degrees.",
+            "Triangle properties: angles sum to 180 degrees. Use this to find missing angles. Practice classifying triangles by angles and by sides from diagrams.",
+            "Symmetry: practice finding lines of symmetry in regular and irregular polygons. Remember that not all shapes have symmetry — a scalene triangle has none."
+          ],
           questions: [
             { q: "An angle of 135 degrees is —", type: "multiple_choice", choices: ["Acute", "Right", "Obtuse", "Straight"], correct: 2, standard: "TEKS 4.7A", explanation: "135 > 90 and < 180, so it is obtuse." },
             { q: "Spiral: 36 x 24 = ?", type: "computation", choices: ["864", "844", "824", "884"], correct: 0, standard: "TEKS 4.4E", explanation: "36 x 24 = 36 x 20 + 36 x 4 = 720 + 144 = 864." },
@@ -3036,6 +3652,14 @@ var BUGGSY_WEEK_13 = {
         },
         science: {
           title: "Weekly Science Review",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.8A",
+          quickFact: "A science review week pulls together key ideas from Earth science, life science, and physical science to reinforce what you have learned.",
+          passage: [
+            "Science review sessions help you connect ideas across topics. Earth science, life science, and physical science all describe different parts of the natural world but often overlap.",
+            "Reviewing vocabulary words, diagrams, and key concepts strengthens long-term memory. The more you revisit information, the more permanent it becomes in your brain.",
+            "Practice answering science questions out loud or in writing. Explaining concepts in your own words is one of the best ways to check your understanding."
+          ],
           questions: [
             { q: "Egg → larva → pupa → adult is the life cycle of —", type: "multiple_choice", choices: ["A frog", "A butterfly", "A dog", "A fish"], correct: 1, standard: "TEKS 4.10B" },
             { q: "Spiral: Erosion is the ___ of weathered material.", type: "multiple_choice", choices: ["Breaking down", "Movement", "Creation", "Melting"], correct: 1, standard: "TEKS 4.7B" }
@@ -3092,6 +3716,14 @@ var BUGGSY_WEEK_14 = {
         title: "Measurement Conversion & Fossils",
         math: {
           title: "Customary & Metric Measurement",
+          strand: "Geometry and Measurement",
+          teks: "4.8A, 4.8B, 4.8C",
+          quickFact: "The United States uses both the customary system (inches, pounds, gallons) and the metric system (centimeters, kilograms, liters) — knowing both systems is essential.",
+          passage: [
+            "Customary units for length: 12 inches = 1 foot, 3 feet = 1 yard, 1,760 yards = 1 mile. For weight: 16 ounces = 1 pound, 2,000 pounds = 1 ton.",
+            "Metric units for length: 10 millimeters = 1 centimeter, 100 centimeters = 1 meter, 1,000 meters = 1 kilometer. The metric system is base-10, making conversions simple.",
+            "When converting between systems, use approximate equivalents: 1 inch is about 2.54 centimeters, 1 kilogram is about 2.2 pounds. Science uses metric; everyday U.S. life uses customary."
+          ],
           questions: [
             { q: "How many inches are in 3 feet?", type: "computation", choices: ["24", "30", "36", "48"], correct: 2, standard: "TEKS 4.8A", explanation: "1 foot = 12 inches. 3 x 12 = 36 inches." },
             { q: "Which is longer: 1 meter or 1 yard?", type: "multiple_choice", choices: ["1 meter (it's about 39 inches)", "1 yard (it's 36 inches)", "They are equal", "Cannot compare"], correct: 0, standard: "TEKS 4.8B", explanation: "1 meter ≈ 39.37 inches. 1 yard = 36 inches. A meter is slightly longer." },
@@ -3102,6 +3734,14 @@ var BUGGSY_WEEK_14 = {
         },
         science: {
           title: "Fossils & Earth's History",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.7B",
+          quickFact: "Revisiting fossils in Week 14 deepens understanding of how scientists use fossil evidence to reconstruct ancient environments and track biological change over time.",
+          passage: [
+            "Fossils are found in sedimentary rock. As sediment layers build up over millions of years, organisms buried in lower layers are older than those in upper layers — this is the law of superposition.",
+            "Types of fossils: body fossils (preserved hard parts), trace fossils (tracks, burrows, impressions), and mold and cast fossils (hollow impressions filled with minerals over time).",
+            "Fossil evidence helps scientists reconstruct past climates. Marine fossils found in desert regions tell us those areas were once covered by shallow seas. This is direct evidence of environmental change."
+          ],
           questions: [
             { q: "Fossils are usually found in which type of rock?", type: "multiple_choice", choices: ["Igneous", "Sedimentary", "Metamorphic", "Volcanic"], correct: 1, standard: "TEKS 4.7A", explanation: "Fossils form in sedimentary rock because layers of sediment slowly bury and preserve organisms." },
             { q: "What can fossils tell scientists?", type: "multiple_choice", choices: ["What the weather is today", "What organisms lived long ago and what the environment was like", "How to make new species", "Nothing useful"], correct: 1, standard: "TEKS 4.7A", explanation: "Fossils are evidence of past life and ancient environments." },
@@ -3140,6 +3780,14 @@ var BUGGSY_WEEK_14 = {
         title: "Elapsed Time & Fossil Layers",
         math: {
           title: "Elapsed Time & Unit Conversion",
+          strand: "Geometry and Measurement",
+          teks: "4.8A, 4.8C",
+          quickFact: "Elapsed time is how much time has passed between a start time and an end time — calculating it requires understanding how hours and minutes relate to each other.",
+          passage: [
+            "To find elapsed time, count forward from the start time to the end time. From 9:45 AM to 2:15 PM: count 15 minutes to reach 10:00 AM, then 4 hours and 15 minutes to 2:15 PM. Total: 4 hours 30 minutes.",
+            "Converting time units: 60 seconds = 1 minute, 60 minutes = 1 hour, 24 hours = 1 day, 7 days = 1 week. These conversions are necessary for multi-step elapsed time problems.",
+            "Elapsed time appears in real life constantly: travel time, cooking time, game length, and work schedules all require elapsed time calculations. Practice with a clock face to build fluency."
+          ],
           questions: [
             { q: "A movie starts at 2:45 PM and ends at 5:10 PM. How long is the movie?", type: "word_problem", choices: ["2 hours 15 minutes", "2 hours 25 minutes", "3 hours 25 minutes", "2 hours 35 minutes"], correct: 1, standard: "TEKS 4.8C", explanation: "2:45 to 5:10 = 2 hours 25 minutes." },
             { q: "How many minutes are in 3 hours and 15 minutes?", type: "computation", choices: ["180", "195", "315", "215"], correct: 1, standard: "TEKS 4.8A", explanation: "3 hours = 180 minutes + 15 = 195 minutes." },
@@ -3149,6 +3797,14 @@ var BUGGSY_WEEK_14 = {
         },
         science: {
           title: "Fossil Layers — Relative Age",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.7B",
+          quickFact: "Relative age dating uses the position of rock and fossil layers to determine which is older — older layers are at the bottom, newer layers are at the top.",
+          passage: [
+            "The law of superposition states that in undisturbed rock layers, older layers are on the bottom and newer layers are on top. This allows geologists to determine the relative age of fossils without knowing exact dates.",
+            "Index fossils are from organisms that lived during a specific, well-defined time period and are found widely distributed. Finding the same index fossil in two different locations tells us the rock layers formed at the same time.",
+            "Relative dating gives a sequence (A is older than B) but not an absolute age. Absolute dating uses radioactive decay to determine actual age in years. Both methods together give scientists a complete picture of Earth's timeline."
+          ],
           questions: [
             { q: "In undisturbed rock layers, the oldest fossils are found —", type: "multiple_choice", choices: ["At the top", "In the middle", "At the bottom", "Scattered randomly"], correct: 2, standard: "TEKS 4.7A", explanation: "In undisturbed layers, the bottom layers were deposited first and are the oldest." },
             { q: "Scientist finds Layer A (trilobite fossils) below Layer B (dinosaur fossils). Which is older?", type: "multiple_choice", choices: ["Layer A (trilobites)", "Layer B (dinosaurs)", "They are the same age", "Cannot determine"], correct: 0, standard: "TEKS 4.7A", explanation: "Lower layers are older. Trilobites lived before dinosaurs." },
@@ -3201,6 +3857,14 @@ var BUGGSY_WEEK_14 = {
         title: "Friday Review — Measurement & Fossils",
         math: {
           title: "Week 14 Review",
+          strand: "Geometry and Measurement",
+          teks: "4.8A, 4.8B, 4.8C",
+          quickFact: "Week 14 review consolidates measurement skills — customary and metric conversions, elapsed time, and applying measurement to real-world problems.",
+          passage: [
+            "Measurement review: practice converting within the customary system (inches to feet) and within the metric system (centimeters to meters). Know the key conversion facts.",
+            "Elapsed time practice: draw a timeline from start to end time. Mark key landmarks (the next full hour, noon, etc.) and count the intervals. This visual strategy prevents errors.",
+            "Real-world measurement problems combine multiple skills. A recipe problem might require converting cups to tablespoons AND calculating how much is needed for double the recipe. Work step by step."
+          ],
           questions: [
             { q: "How many cups are in 1 gallon?", type: "computation", choices: ["8", "12", "16", "4"], correct: 2, standard: "TEKS 4.8A", explanation: "1 gallon = 4 quarts = 8 pints = 16 cups." },
             { q: "A basketball game starts at 7:30 PM and lasts 2 hours 15 minutes. What time does it end?", type: "word_problem", choices: ["9:30 PM", "9:45 PM", "10:00 PM", "9:15 PM"], correct: 1, standard: "TEKS 4.8C", explanation: "7:30 + 2 hours = 9:30 + 15 minutes = 9:45 PM." },
@@ -3210,6 +3874,14 @@ var BUGGSY_WEEK_14 = {
         },
         science: {
           title: "Weekly Science Review",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.8A",
+          quickFact: "A science review week pulls together key ideas from Earth science, life science, and physical science to reinforce what you have learned.",
+          passage: [
+            "Science review sessions help you connect ideas across topics. Earth science, life science, and physical science all describe different parts of the natural world but often overlap.",
+            "Reviewing vocabulary words, diagrams, and key concepts strengthens long-term memory. The more you revisit information, the more permanent it becomes in your brain.",
+            "Practice answering science questions out loud or in writing. Explaining concepts in your own words is one of the best ways to check your understanding."
+          ],
           questions: [
             { q: "Fossils help scientists understand —", type: "multiple_choice", choices: ["Future weather", "What life was like long ago", "How to build rockets", "Current animal behavior"], correct: 1, standard: "TEKS 4.7A" },
             { q: "Spiral: Complete metamorphosis stages:", type: "multiple_choice", choices: ["Egg → adult", "Egg → larva → pupa → adult", "Egg → pupa → adult", "Egg → tadpole → adult"], correct: 1, standard: "TEKS 4.10B" }
@@ -3266,6 +3938,14 @@ var BUGGSY_WEEK_15 = {
         title: "Advanced Data & Scientific Inquiry",
         math: {
           title: "Stem-and-Leaf Plots & Mean",
+          strand: "Data Analysis",
+          teks: "4.9A, 4.9B",
+          quickFact: "A stem-and-leaf plot organizes data by splitting each value into a stem (leading digit) and a leaf (trailing digit), making it easy to see distribution and find the mean.",
+          passage: [
+            "A stem-and-leaf plot displays data with stems (tens digits) on the left and leaves (ones digits) on the right. Each row represents a group of values: the stem 4 with leaves 2, 5, 8 represents 42, 45, and 48.",
+            "The mean (average) is found by adding all values and dividing by the number of values. For the data set 12, 15, 18, 20: mean = (12+15+18+20) / 4 = 65 / 4 = 16.25.",
+            "The median is the middle value when data is ordered from least to greatest. The mode is the most frequent value. These three measures of center — mean, median, mode — describe a data set in different ways."
+          ],
           questions: [
             { q: "In a stem-and-leaf plot, the stems are 2,3,4 and the leaves for stem 3 are 1,5,7,9. What numbers does stem 3 represent?", type: "multiple_choice", choices: ["3,1,5,7,9", "31,35,37,39", "21,25,27,29", "13,15,17,19"], correct: 1, standard: "TEKS 4.8C", explanation: "Stem 3 with leaves 1,5,7,9 = 31, 35, 37, 39." },
             { q: "Find the mean (average) of: 10, 20, 30, 40, 50", type: "computation", choices: ["25", "30", "35", "40"], correct: 1, standard: "TEKS 4.8C", explanation: "Sum = 150. Count = 5. Mean = 150/5 = 30." },
@@ -3276,6 +3956,14 @@ var BUGGSY_WEEK_15 = {
         },
         science: {
           title: "Scientific Inquiry — Designing Fair Tests",
+          strand: "Organisms and Environments",
+          teks: "4.2A, 4.2B, 4.2C",
+          quickFact: "A fair test changes only one variable (the independent variable) while keeping all others constant — this ensures that any change in the outcome is caused by what you changed.",
+          passage: [
+            "Scientific inquiry follows a process: question, hypothesis, experiment, data collection, analysis, and conclusion. Each step builds on the previous one.",
+            "A hypothesis is a testable prediction written as an if-then statement. For example: if you add fertilizer to plants, then they will grow taller than plants without fertilizer. It must be testable and falsifiable.",
+            "In a fair test, the independent variable is what you change on purpose. The dependent variable is what you measure. Controlled variables are everything you keep the same. Identifying these three elements is the core of experimental design."
+          ],
           questions: [
             { q: "In an experiment, the variable you CHANGE on purpose is called —", type: "multiple_choice", choices: ["Dependent variable", "Independent variable", "Control variable", "Constant"], correct: 1, standard: "TEKS 4.2A", explanation: "The independent variable is what you change. The dependent variable is what you measure." },
             { q: "Why do scientists repeat experiments multiple times?", type: "multiple_choice", choices: ["Because they forgot the first time", "To make reliable results that can be trusted", "Because teachers require it", "To use more materials"], correct: 1, standard: "TEKS 4.2B", explanation: "Repeating experiments confirms that results are reliable, not just a fluke." },
@@ -3314,6 +4002,14 @@ var BUGGSY_WEEK_15 = {
         title: "Perimeter & Area Review + Controls",
         math: {
           title: "Perimeter, Area, and Mixed Review",
+          strand: "Geometry and Measurement",
+          teks: "4.5D, 4.8A, 4.8B",
+          quickFact: "Perimeter and area measure different things: perimeter is the total distance around a shape; area is the total surface inside the shape — and both are calculated using formulas.",
+          passage: [
+            "Perimeter formula for a rectangle: P = 2l + 2w (or P = 2 times the sum of length and width). For irregular polygons, add all side lengths.",
+            "Area formula for a rectangle: A = l x w (length times width). Area is measured in square units: square inches, square feet, square centimeters.",
+            "A mixed review connects perimeter and area with other measurement skills. A room that is 12 feet by 10 feet has a perimeter of 44 feet (for the baseboard) and an area of 120 square feet (for the carpet). Both values are useful for different purposes."
+          ],
           questions: [
             { q: "A garden is 12 m long and 8 m wide. What is the area?", type: "computation", choices: ["40 sq m", "96 sq m", "20 sq m", "48 sq m"], correct: 1, standard: "TEKS 4.5C", explanation: "Area = 12 x 8 = 96 square meters." },
             { q: "Same garden — what is the perimeter?", type: "computation", choices: ["20 m", "40 m", "96 m", "48 m"], correct: 1, standard: "TEKS 4.5D", explanation: "P = 2(12) + 2(8) = 24 + 16 = 40 meters." },
@@ -3323,6 +4019,14 @@ var BUGGSY_WEEK_15 = {
         },
         science: {
           title: "Control Groups & Fair Testing",
+          strand: "Organisms and Environments",
+          teks: "4.2A, 4.2B",
+          quickFact: "A control group is the baseline — it receives no treatment and serves as the comparison point to show what happens naturally, making experimental results meaningful.",
+          passage: [
+            "The control group is the standard for comparison in an experiment. If you are testing whether sunlight affects plant growth, the control group receives normal sunlight and the experimental group receives no sunlight.",
+            "Without a control group, you cannot know if observed changes are due to your experimental treatment or some other factor. The control group isolates the effect of the independent variable.",
+            "Multiple trials improve reliability. Running an experiment three times and averaging the results reduces the effect of random variation (noise). Scientists repeat experiments to confirm that results are reproducible."
+          ],
           questions: [
             { q: "In an experiment testing if fertilizer helps plants grow, the plant WITHOUT fertilizer is called —", type: "multiple_choice", choices: ["The hypothesis", "The control group", "The variable", "The conclusion"], correct: 1, standard: "TEKS 4.2A", explanation: "The control group is the baseline — it receives no treatment so you can compare results." },
             { q: "A student tests if music helps plants grow. She plays music to Plant A but not Plant B. Plant B is the —", type: "multiple_choice", choices: ["Independent variable", "Control", "Dependent variable", "Hypothesis"], correct: 1, standard: "TEKS 4.2A", explanation: "Plant B (no music) is the control — the standard for comparison." },
@@ -3375,6 +4079,14 @@ var BUGGSY_WEEK_15 = {
         title: "Friday Review — Data & Inquiry",
         math: {
           title: "Week 15 Review",
+          strand: "Data Analysis",
+          teks: "4.9A, 4.9B",
+          quickFact: "Week 15 review covers all data analysis skills — stem-and-leaf plots, mean, median, mode, bar graphs, and line plots — preparing you for the final assessment.",
+          passage: [
+            "Data vocabulary: mean (average), median (middle value), mode (most frequent value), range (max minus min). Know how to calculate each and when each is most useful to report.",
+            "Choose the right display for your data type. Bar graphs compare categories. Line plots show individual measurements. Stem-and-leaf plots show distribution for larger data sets.",
+            "Drawing conclusions from data: use the data to support your claim. A statement like 'most students prefer chocolate' requires pointing to the data that shows it — do not state conclusions without evidence."
+          ],
           questions: [
             { q: "Find the median of {3, 7, 9, 12, 15}.", type: "computation", choices: ["7", "9", "12", "10"], correct: 1, standard: "TEKS 4.8C", explanation: "Already sorted. Middle (3rd) value = 9." },
             { q: "Spiral: A rectangle has area 84 sq cm and width 7 cm. Length?", type: "computation", choices: ["11 cm", "12 cm", "13 cm", "14 cm"], correct: 1, standard: "TEKS 4.5C", explanation: "A = l x w. 84 = l x 7. l = 12 cm." },
@@ -3384,6 +4096,14 @@ var BUGGSY_WEEK_15 = {
         },
         science: {
           title: "Weekly Science Review",
+          strand: "Earth and Space",
+          teks: "4.7A, 4.8A",
+          quickFact: "A science review week pulls together key ideas from Earth science, life science, and physical science to reinforce what you have learned.",
+          passage: [
+            "Science review sessions help you connect ideas across topics. Earth science, life science, and physical science all describe different parts of the natural world but often overlap.",
+            "Reviewing vocabulary words, diagrams, and key concepts strengthens long-term memory. The more you revisit information, the more permanent it becomes in your brain.",
+            "Practice answering science questions out loud or in writing. Explaining concepts in your own words is one of the best ways to check your understanding."
+          ],
           questions: [
             { q: "The independent variable is what you —", type: "multiple_choice", choices: ["Measure", "Keep the same", "Change on purpose", "Observe"], correct: 2, standard: "TEKS 4.2A" },
             { q: "Spiral: Older fossils are found in ___ rock layers.", type: "multiple_choice", choices: ["Upper", "Middle", "Lower", "Any"], correct: 2, standard: "TEKS 4.7A" }
@@ -3440,6 +4160,14 @@ var BUGGSY_WEEK_16 = {
         title: "Financial Literacy & Science Review",
         math: {
           title: "Financial Literacy — Budgets & Expenses",
+          strand: "Number and Operations",
+          teks: "4.10A, 4.10B",
+          quickFact: "Financial literacy is a life skill: understanding income, expenses, and budgeting gives you control over your money and prepares you for real-world decisions.",
+          passage: [
+            "A budget is a plan for how to spend money. Income is money coming in (from a job, allowance, or gift). Expenses are money going out (for food, rent, clothing, or entertainment).",
+            "A balanced budget means income is greater than or equal to expenses. A deficit means you are spending more than you earn — this leads to debt. A surplus means you are spending less than you earn.",
+            "Categories in a family budget typically include housing, food, transportation, healthcare, education, savings, and entertainment. Prioritizing needs over wants is a core budgeting principle."
+          ],
           questions: [
             { q: "Marcus earns $12 per hour and works 8 hours. After spending $45 on supplies, how much does he have left?", type: "word_problem", choices: ["$51", "$41", "$61", "$49"], correct: 0, standard: "TEKS 4.10A", explanation: "$12 x 8 = $96. $96 - $45 = $51." },
             { q: "Which is a VARIABLE expense (changes each month)?", type: "multiple_choice", choices: ["Rent ($1,200/month)", "Grocery bill", "Car payment ($350/month)", "Insurance ($200/month)"], correct: 1, standard: "TEKS 4.10B", explanation: "Grocery spending varies month to month. Rent, car payment, and insurance are fixed." },
@@ -3450,6 +4178,14 @@ var BUGGSY_WEEK_16 = {
         },
         science: {
           title: "ASSESSMENT: Cumulative Science Review (Weeks 9-15)",
+          strand: "Earth and Space",
+          teks: "4.5C, 4.6A, 4.7A, 4.9A, 4.10A",
+          quickFact: "This assessment tests your mastery of all science concepts from Weeks 9 through 15 — matter, earth science, data analysis, and life science are all fair game.",
+          passage: [
+            "Weeks 9-10 review: mixtures and solutions (physical separation), weathering and erosion, data from frequency tables and bar graphs.",
+            "Weeks 11-12 review: electrical circuits, conductors and insulators, sound and light energy, data analysis with line plots.",
+            "Weeks 13-15 review: inherited traits vs learned behaviors, life cycles, fossils and relative age dating, fair testing and experimental design, financial literacy."
+          ],
           questions: [
             { q: "Which is NOT a method to separate a mixture?", type: "multiple_choice", choices: ["Evaporation", "Magnetism", "Filtering", "Photosynthesis"], correct: 3, standard: "TEKS 4.5B" },
             { q: "Heat transfers through direct contact is called —", type: "multiple_choice", choices: ["Convection", "Conduction", "Radiation", "Insulation"], correct: 1, standard: "TEKS 4.6A" },
@@ -3488,6 +4224,14 @@ var BUGGSY_WEEK_16 = {
         title: "ASSESSMENT: Cumulative Math (Weeks 9-15)",
         math: {
           title: "Cumulative Math Assessment",
+          strand: "Number and Operations",
+          teks: "4.2A, 4.3C, 4.4D, 4.4H, 4.5A",
+          quickFact: "The final cumulative math assessment covers all strands from the entire year — this is your opportunity to show everything you have learned in fourth-grade mathematics.",
+          passage: [
+            "A cumulative assessment includes every topic from the year. Organize your review by strand: number and operations, fractions, geometry, measurement, data analysis, and algebraic reasoning.",
+            "Pacing matters on a cumulative assessment. Quickly answer questions you know with confidence, skip difficult questions initially, and return to them with remaining time.",
+            "Check your work systematically. For computation problems, verify using inverse operations: check multiplication with division, check addition with subtraction. For word problems, re-read the question after solving to confirm you answered what was asked."
+          ],
           questions: [
             { q: "Round 78,345 to the nearest thousand.", type: "computation", choices: ["78,000", "78,300", "79,000", "80,000"], correct: 0, standard: "TEKS 4.2B" },
             { q: "567 / 9 = ?", type: "computation", choices: ["61", "62", "63", "64"], correct: 2, standard: "TEKS 4.4F" },
@@ -3497,6 +4241,14 @@ var BUGGSY_WEEK_16 = {
         },
         science: {
           title: "Cumulative Science Assessment",
+          strand: "Earth and Space",
+          teks: "4.5C, 4.6A, 4.7A, 4.9A, 4.10A",
+          quickFact: "The final science assessment is cumulative — it tests knowledge and application across all three science domains taught throughout the year.",
+          passage: [
+            "Physical science domains: matter and its properties, physical and chemical changes, forms of energy, energy transformations, forces and motion, circuits, conductors and insulators.",
+            "Earth science domains: rocks and minerals, weathering and erosion, fossils and relative age, weather and the water cycle, natural and renewable resources.",
+            "Life science domains: ecosystems and food chains, organism adaptations, complete and incomplete metamorphosis, plant and animal life cycles, inherited traits and learned behaviors."
+          ],
           questions: [
             { q: "Weathering → Erosion → ___", type: "multiple_choice", choices: ["Condensation", "Deposition", "Evaporation", "Photosynthesis"], correct: 1, standard: "TEKS 4.7B" },
             { q: "Why is a control group important in an experiment?", type: "multiple_choice", choices: ["It makes the experiment longer", "It provides a baseline for comparison", "It is required by law", "It uses more materials"], correct: 1, standard: "TEKS 4.2A" },
@@ -3549,6 +4301,14 @@ var BUGGSY_WEEK_16 = {
         title: "ASSESSMENT: Cumulative Review (All Standards)",
         math: {
           title: "Semester Assessment",
+          strand: "Number and Operations",
+          teks: "4.2A, 4.3C, 4.4D, 4.5A, 4.8A, 4.9A",
+          quickFact: "The semester assessment is a comprehensive measure of all fourth-grade math skills — strong performance here reflects a full year of consistent effort and practice.",
+          passage: [
+            "A semester assessment covers everything. The strongest preparation is to work problems from every unit — not just the recent ones. Avoid the recency bias of only studying what you just learned.",
+            "Strategic test-taking: mark difficult problems and return to them. Use estimation to check answers. Show all work — partial credit may be awarded for correct reasoning even with a computation error.",
+            "After the assessment, reflect on your performance. Which topics felt strong? Which need more work over the summer? A growth mindset means viewing areas of improvement as opportunities, not failures."
+          ],
           questions: [
             { q: "4/7 + 2/7 = ?", type: "computation", choices: ["6/14", "6/7", "2/7", "8/7"], correct: 1, standard: "TEKS 4.3E" },
             { q: "Estimate 67 x 31.", type: "computation", choices: ["1,800", "2,100", "1,500", "2,400"], correct: 1, standard: "TEKS 4.4G", explanation: "67 rounds to 70, 31 rounds to 30. 70 x 30 = 2,100." },
@@ -3558,6 +4318,14 @@ var BUGGSY_WEEK_16 = {
         },
         science: {
           title: "Semester Science Assessment",
+          strand: "Earth and Space",
+          teks: "4.5C, 4.6A, 4.7A, 4.9A, 4.10A",
+          quickFact: "The semester science assessment tests everything from the year — approaching it with scientific thinking means using evidence, precise vocabulary, and logical reasoning.",
+          passage: [
+            "Before the assessment: review your notes by topic. Create a one-page summary sheet of key vocabulary, formulas, and diagrams for each major unit. The act of summarizing reinforces memory.",
+            "During the assessment: for each question, identify the science domain and the specific concept being tested. Eliminate obviously wrong answers and select the answer that best matches scientific evidence.",
+            "Scientific writing on assessments: claim + evidence + reasoning. A strong science answer states what you believe is true (claim), cites specific data or observations (evidence), and explains how the evidence supports the claim (reasoning)."
+          ],
           questions: [
             { q: "Metal is a good conductor because it —", type: "multiple_choice", choices: ["Is shiny", "Transfers heat quickly", "Is heavy", "Is magnetic"], correct: 1, standard: "TEKS 4.6A" },
             { q: "The CONTROL group in an experiment is —", type: "multiple_choice", choices: ["The group you change", "The group that stays normal for comparison", "The hypothesis", "The conclusion"], correct: 1, standard: "TEKS 4.2A" }
@@ -3579,7 +4347,7 @@ var BUGGSY_WEEK_16 = {
 // MAIN SEED FUNCTION
 // ════════════════════════════════════════════════════════════════════
 
-function getCurriculumSeedVersion() { return 9; }
+function getCurriculumSeedVersion() { return 10; }
 
 /**
  * v9: Replaces a Buggsy week's hardcoded vocabulary arrays with words from SpellingCatalog.
@@ -3757,4 +4525,4 @@ function seedAllCurriculumSafe() {
   });
 }
 
-// CurriculumSeed.gs — v9
+// CurriculumSeed.gs — v10

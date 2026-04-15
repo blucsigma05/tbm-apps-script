@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmSmokeTest.gs v15 — Pre-Deploy Structural + Behavioral Validation
+// tbmSmokeTest.gs v16 — Pre-Deploy Structural + Behavioral Validation
 // WRITES TO: KH_Education (smoke row — written and immediately deleted)
 // READS FROM: All sheets (for schema/wiring validation)
 // ════════════════════════════════════════════════════════════════════
@@ -36,7 +36,7 @@
 // A PASS here means "safe to deploy" not "system works perfectly."
 // ════════════════════════════════════════════════════════════════════
 
-function getSmokeTestVersion() { return 15; }
+function getSmokeTestVersion() { return 16; }
 
 var CANONICAL_SAFE_FUNCTIONS = [
   // KidsHub core
@@ -834,10 +834,34 @@ function checkEducationBehavioral_() {
         result.checks.curriculum_buggsy = 'FAIL — module day but no questions';
       } else if (!isModuleDay && !hasModule) {
         result.checks.curriculum_buggsy = 'OK — non-module day (' + todayName + '), no module questions expected. Keys: ' + Object.keys(c).join(', ');
-      } else {
-        var mathCount = (c.module.math && c.module.math.questions) ? c.module.math.questions.length : 0;
-        var sciCount = (c.module.science && c.module.science.questions) ? c.module.science.questions.length : 0;
-        result.checks.curriculum_buggsy = 'OK — ' + mathCount + ' math, ' + sciCount + ' science questions';
+      } else if (isModuleDay && hasModule) {
+        // v16: Full 6-field shape assertion — prevents silent fallback from masking broken data
+        var shapeFailures = [];
+        var subjects = ['math', 'science'];
+        var required = ['title', 'strand', 'teks', 'quickFact', 'passage', 'questions'];
+        for (var s = 0; s < subjects.length; s++) {
+          for (var r = 0; r < required.length; r++) {
+            var fieldVal = (c.module[subjects[s]]) ? c.module[subjects[s]][required[r]] : undefined;
+            var isArr = (required[r] === 'passage' || required[r] === 'questions');
+            if (isArr) {
+              if (!Array.isArray(fieldVal) || fieldVal.length === 0) {
+                shapeFailures.push(subjects[s] + '.' + required[r] + ' not a non-empty array');
+              }
+            } else {
+              if (!fieldVal) {
+                shapeFailures.push(subjects[s] + '.' + required[r] + ' missing or empty');
+              }
+            }
+          }
+        }
+        if (shapeFailures.length > 0) {
+          failures.push('Curriculum module shape incomplete for Buggsy on ' + todayName + ': ' + shapeFailures.join(', '));
+          result.checks.curriculum_buggsy = 'FAIL — shape: ' + shapeFailures.join(', ');
+        } else {
+          var mathCount = (c.module.math && c.module.math.questions) ? c.module.math.questions.length : 0;
+          var sciCount = (c.module.science && c.module.science.questions) ? c.module.science.questions.length : 0;
+          result.checks.curriculum_buggsy = 'OK — all 6 fields present. ' + mathCount + ' math, ' + sciCount + ' science questions';
+        }
       }
     } else if (!isWeekday) {
       result.checks.curriculum_buggsy = 'OK — weekend, no curriculum expected';
@@ -944,4 +968,4 @@ function checkEducationBehavioral_() {
   return result;
 }
 
-// END OF FILE — tbmSmokeTest.gs v15
+// END OF FILE — tbmSmokeTest.gs v16
