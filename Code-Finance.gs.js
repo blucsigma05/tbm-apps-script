@@ -61,9 +61,9 @@ function runMERGatesSafe(monthLabel) {
     return JSON.stringify(runMERGates(monthLabel));
   });
 }
-function stampCloseMonthSafe(monthLabel) {
+function stampCloseMonthSafe(monthLabel, closeOpts) {
   return withMonitor_('stampCloseMonthSafe', function() {
-    return JSON.stringify(stampCloseMonth(monthLabel));
+    return JSON.stringify(stampCloseMonth(monthLabel, closeOpts));
   });
 }
 function updateFamilyNoteSafe(noteText) {

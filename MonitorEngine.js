@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════
-// MonitorEngine.gs v10
+// MonitorEngine.gs v11
 // WRITES TO: 💻🧮 Close History, 💻🧮 Month-End Review
 // READS FROM: 💻🧮 DebtModel, 💻🧮 Helpers, 🔒 Transactions, 🔒 Balance History
 // ═══════════════════════════════════════════════════
 
-function getMonitorEngineVersion() { return 10; }
+function getMonitorEngineVersion() { return 11; }
 
 // v8: Lazy accessors — avoid parse-time openById for trigger safety
 var _meSS = null;
@@ -73,8 +73,9 @@ function loadMonthTransactions_(startDate, endDate) {
 
 // ══════════════════════════════════════════════════════
 //  stampCloseMonth — seals month in Close History
+//  v11: accepts optional closeOpts for full close record (gate snapshot, proof, note, open items)
 // ══════════════════════════════════════════════════════
-function stampCloseMonth(monthLabel) {
+function stampCloseMonth(monthLabel, closeOpts) {
   monthLabel = me_defaultPriorMonth_(monthLabel);
   var range = parseMonthRange_(monthLabel);
   Logger.log('═══ stampCloseMonth(' + monthLabel + ') ═══');
@@ -149,13 +150,48 @@ function stampCloseMonth(monthLabel) {
     chSheet.getRange(targetRow, 2).setValue('Closed');
     chSheet.getRange(targetRow, 3).setValue(new Date());
     Logger.log('✅ Row ' + targetRow + ': H=$' + debtCurrent.toFixed(2) + ', B=Closed');
+
+    // v11: Extended close record (columns J-P) — all optional, backwards compatible
+    var opts = closeOpts || {};
+    // J (col 10): gate snapshot — compact JSON of gate statuses
+    if (opts.gateSnapshot) {
+      chSheet.getRange(targetRow, 10).setValue(
+        typeof opts.gateSnapshot === 'string' ? opts.gateSnapshot : JSON.stringify(opts.gateSnapshot)
+      );
+    }
+    // K (col 11): proof status — overall proof result
+    if (opts.proofStatus) {
+      chSheet.getRange(targetRow, 11).setValue(opts.proofStatus);
+    }
+    // L (col 12): proof timestamp
+    if (opts.proofTimestamp) {
+      chSheet.getRange(targetRow, 12).setValue(opts.proofTimestamp);
+    }
+    // M (col 13): operator close note
+    if (opts.note) {
+      chSheet.getRange(targetRow, 13).setValue(String(opts.note).substring(0, 500));
+    }
+    // N (col 14): open items — JSON array of unresolved carry-forward items
+    if (opts.openItems) {
+      chSheet.getRange(targetRow, 14).setValue(
+        typeof opts.openItems === 'string' ? opts.openItems : JSON.stringify(opts.openItems)
+      );
+    }
+    // O (col 15): close mode — 'standard' or 'override'
+    chSheet.getRange(targetRow, 15).setValue(opts.closeMode || 'standard');
+    // P (col 16): override rationale — only populated if closeMode is 'override'
+    if (opts.closeMode === 'override' && opts.overrideRationale) {
+      chSheet.getRange(targetRow, 16).setValue(String(opts.overrideRationale).substring(0, 500));
+    }
+    Logger.log('✅ Extended close record written (J-P)');
   } finally {
     lock.releaseLock();
   }
 
   return { success: true, month: displayMonth, monthLabel: monthLabel,
     row: targetRow, debtCurrent: debtCurrent, matched: matched,
-    unmatched: unmatched, timestamp: new Date().toISOString() };
+    unmatched: unmatched, timestamp: new Date().toISOString(),
+    extended: !!(closeOpts) };
 }
 
 // ══════════════════════════════════════════════════════
@@ -550,4 +586,4 @@ function hyg10MonthCloseGate_() {
   );
 }
 
-// EOF — MonitorEngine.gs v10
+// EOF — MonitorEngine.gs v11

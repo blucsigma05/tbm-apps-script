@@ -536,6 +536,7 @@ function serveData(e) {
         'qaExportStateSafe': qaExportStateSafe,
         'getAssetRegistrySafe': getAssetRegistrySafe,
         'getRecentTransactionsSafe': getRecentTransactionsSafe,
+        'getCloseProofSafe': getCloseProofSafe,
         // ComicStudio v4 Day 2 — Drive draft + mode aggregator
         'saveComicDraftSafe': saveComicDraftSafe,
         'loadComicDraftSafe': loadComicDraftSafe,
