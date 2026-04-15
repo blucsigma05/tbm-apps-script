@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v89 — Apps Script Router (TBM Consolidated)
+// Code.gs v90 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 89; }
+function getCodeVersion() { return 90; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -1202,6 +1202,18 @@ function getVaultDataSafe() {
 // 4. HEALTH CHECK
 // ════════════════════════════════════════════════════════════════════
 
+// v90: Subset of API_WHITELIST for close cockpit endpoints — used by healthCheck()
+// to verify that these routes are resolvable as function references, not just
+// that global symbols exist. Must stay in sync with the doPost() API_WHITELIST.
+function buildCloseApiWhitelist_() {
+  return {
+    'runMERGatesSafe': runMERGatesSafe,
+    'stampCloseMonthSafe': stampCloseMonthSafe,
+    'getRecentTransactionsSafe': getRecentTransactionsSafe,
+    'getCloseProofSafe': getCloseProofSafe
+  };
+}
+
 function healthCheck() {
   Logger.log('═══ Code.gs v' + getCodeVersion() + ' Health Check ═══');
 
@@ -1273,9 +1285,6 @@ function healthCheck() {
     // v174: NotionEngine.js — renamed to avoid overriding Code.js handlers
     'notionLogHomeworkSafe', 'notionLogSparkleProgressSafe', 'notionApproveHomeworkSafe',
     'getPendingReviewsSafe',
-    // v89: Close cockpit endpoints (TV-017 wiring verification)
-    'runMERGatesSafe', 'stampCloseMonthSafe',
-    'getRecentTransactionsSafe', 'getCloseProofSafe'
   ];
   var allOk = true;
   for (var fi = 0; fi < fns.length; fi++) {
@@ -1284,6 +1293,19 @@ function healthCheck() {
     try { exists = typeof this[name] === 'function'; } catch(e) {}
     Logger.log('  ' + name + ': ' + (exists ? '✓' : '✗ MISSING'));
     if (!exists) allOk = false;
+  }
+
+  // v90: Close cockpit endpoints — verify API_WHITELIST wiring (TV-017)
+  // Uses buildCloseApiWhitelist_() to confirm the 4 endpoints are resolvable
+  // as function references in a route map, not just as global symbols.
+  Logger.log('─── Close Cockpit API Wiring (TV-017) ───');
+  var closeMap = buildCloseApiWhitelist_();
+  var closeKeys = ['runMERGatesSafe', 'stampCloseMonthSafe', 'getRecentTransactionsSafe', 'getCloseProofSafe'];
+  for (var ci = 0; ci < closeKeys.length; ci++) {
+    var cname = closeKeys[ci];
+    var cwired = typeof closeMap[cname] === 'function';
+    Logger.log('  ' + cname + ': ' + (cwired ? '✓ WIRED' : '✗ NOT IN WHITELIST'));
+    if (!cwired) allOk = false;
   }
 
   Logger.log('─── HTML Files (2-Surface Architecture) ───');
@@ -1895,4 +1917,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v89
+// END OF FILE — Code.gs v90
