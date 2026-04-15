@@ -20,6 +20,13 @@ var EDUCATION_FIXTURES = {
           strand: 'Force and Motion',
           teks: '4.7A',
           title: 'Forces Briefing',
+          quickFact: 'Gravity pulls objects toward Earth and acts at a distance — no contact needed.',
+          passage: [
+            'Forces are pushes or pulls that act on objects. Some forces require direct contact, like friction. Others act at a distance, like gravity and magnetism.',
+            'Gravity is the force that pulls everything toward Earth. It causes dropped objects to fall and keeps us on the ground.',
+            'Friction is a contact force that resists motion between two surfaces. Rough surfaces create more friction than smooth ones.',
+            'Magnetism is a non-contact force. Magnets can attract or repel certain materials without touching them.'
+          ],
           questions: [
             {
               id: 1,
