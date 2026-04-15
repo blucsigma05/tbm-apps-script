@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v94 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v95 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 94; }
+function getDataEngineVersion() { return 95; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -2809,7 +2809,25 @@ function getSubscriptionData(startDate, endDate) {
 
 // ════════════════════════════════════════════════════════════════════
 // getCloseHistoryData() — Monthly Trends for The Vein (v7 addition)
+// TV-012: Extended to read columns J-P (close record metadata) — v95
 // ════════════════════════════════════════════════════════════════════
+// Close History column map (0-indexed):
+//   A [0] month label ("March 2026")
+//   B [1] status ("Closed")
+//   C [2] close timestamp (written by stampCloseMonth)
+//   D [3] earned income (Tiller-populated)
+//   E [4] UNKNOWN — not read; origin unconfirmed; do not write programmatically
+//   F [5] money out (Tiller-populated)
+//   G [6] net cash flow (Tiller-populated)
+//   H [7] debt current (written by stampCloseMonth)
+//   I [8] disc_actual — RESERVED for discretionary spend; written by TV-013
+//   J [9] gate snapshot — compact JSON of MER gate statuses (stampCloseMonth v11)
+//   K [10] proof status — overall proof result string (stampCloseMonth v11)
+//   L [11] proof timestamp (stampCloseMonth v11)
+//   M [12] operator close note, max 500 chars (stampCloseMonth v11)
+//   N [13] open items — JSON array of carry-forward items (stampCloseMonth v11)
+//   O [14] close mode — "standard" or "override" (stampCloseMonth v11)
+//   P [15] override rationale (stampCloseMonth v11)
 
 function getCloseHistoryData() {
   var data = de_readSheet_('Close History');
@@ -2832,6 +2850,15 @@ function getCloseHistoryData() {
     var year = parseInt(parts[1]) || 2026;
     var absMoneyOut = Math.abs(moneyOut);
 
+    // Columns J-P: close record metadata (written by stampCloseMonth v11+)
+    var gateSnapshotRaw = data[i][9] || '';
+    var proofStatus = String(data[i][10] || '');
+    var proofTimestamp = data[i][11] ? String(data[i][11]) : '';
+    var closeNote = String(data[i][12] || '');
+    var openItemsRaw = data[i][13] || '';
+    var closeMode = String(data[i][14] || '');
+    var overrideRationale = String(data[i][15] || '');
+
     months.push({
       month: monthName,
       year: year,
@@ -2840,10 +2867,16 @@ function getCloseHistoryData() {
       netCashFlow: roundTo(ncf, 2),
       operationalCashFlow: roundTo(earned - absMoneyOut, 2),
       debtCurrent: roundTo(debt, 2),
-      // v91: Read discretionary from col I (8) if stampCloseMonth writes it;
-      // falls back to 0 until Close History schema is extended.
-      // TODO: Extend stampCloseMonth() to write discretionary spend to col I.
-      disc_actual: roundTo(parseFloat(data[i][8]) || 0, 2)
+      // col I: reserved for discretionary spend; written when TV-013 ships
+      disc_actual: roundTo(parseFloat(data[i][8]) || 0, 2),
+      // col J-P: close record metadata
+      gateSnapshot: gateSnapshotRaw ? String(gateSnapshotRaw) : '',
+      proofStatus: proofStatus,
+      proofTimestamp: proofTimestamp,
+      closeNote: closeNote,
+      openItems: openItemsRaw ? String(openItemsRaw) : '',
+      closeMode: closeMode,
+      overrideRationale: overrideRationale
     });
   }
 
@@ -3822,4 +3855,4 @@ function getCloseProofSafe(monthLabel) {
   });
 }
 
-// END OF FILE — DataEngine v94
+// END OF FILE — DataEngine v95

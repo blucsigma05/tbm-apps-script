@@ -1,10 +1,10 @@
 // ═══════════════════════════════════════════════════
-// MonitorEngine.gs v11
+// MonitorEngine.gs v12
 // WRITES TO: 💻🧮 Close History, 💻🧮 Month-End Review
 // READS FROM: 💻🧮 DebtModel, 💻🧮 Helpers, 🔒 Transactions, 🔒 Balance History
 // ═══════════════════════════════════════════════════
 
-function getMonitorEngineVersion() { return 11; }
+function getMonitorEngineVersion() { return 12; }
 
 // v8: Lazy accessors — avoid parse-time openById for trigger safety
 var _meSS = null;
@@ -151,8 +151,12 @@ function stampCloseMonth(monthLabel, closeOpts) {
     chSheet.getRange(targetRow, 3).setValue(new Date());
     Logger.log('✅ Row ' + targetRow + ': H=$' + debtCurrent.toFixed(2) + ', B=Closed');
 
-    // v11: Extended close record (columns J-P) — all optional, backwards compatible
+    // v12: Extended close record (columns I-P) — all optional, backwards compatible
     var opts = closeOpts || {};
+    // I (col 9): discretionary spend actual — wired by TV-013; omitted if not provided
+    if (opts.discActual !== undefined && opts.discActual !== null) {
+      chSheet.getRange(targetRow, 9).setValue(parseFloat(opts.discActual) || 0);
+    }
     // J (col 10): gate snapshot — compact JSON of gate statuses
     if (opts.gateSnapshot) {
       chSheet.getRange(targetRow, 10).setValue(
@@ -586,4 +590,4 @@ function hyg10MonthCloseGate_() {
   );
 }
 
-// EOF — MonitorEngine.gs v11
+// EOF — MonitorEngine.gs v12
