@@ -2137,7 +2137,7 @@ function veinLoadProof() {
       html += '</div>';
     }
     if (grid) grid.innerHTML = html;
-    if (ov) { ov.innerHTML = 'Overall: <strong style="color:' + bc + ';">' + data.overall + '</strong>' + (data.blockers && data.blockers.length ? ' | Blockers: ' + data.blockers.join(', ') : '') + (data.warnings && data.warnings.length ? ' | Warnings: ' + data.warnings.join(', ') : ''); }
+    if (ov) { var ovColor = data.overall === 'PASS' ? 'var(--positive)' : (data.overall === 'WARN' ? 'var(--warning)' : 'var(--negative)'); ov.innerHTML = 'Overall: <strong style="color:' + ovColor + ';">' + data.overall + '</strong>' + (data.blockers && data.blockers.length ? ' | Blockers: ' + data.blockers.join(', ') : '') + (data.warnings && data.warnings.length ? ' | Warnings: ' + data.warnings.join(', ') : ''); }
   }).withFailureHandler(function(err) {
     if (btn) { btn.disabled = false; btn.textContent = 'Load Proof'; }
     if (grid) grid.innerHTML = '<div style="grid-column:1/-1;color:var(--negative);font-size:11px;">Proof unavailable: ' + (err.message || 'error') + '</div>';
