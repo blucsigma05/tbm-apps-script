@@ -2112,6 +2112,53 @@ function initCloseControls() {
   }
 }
 
+// v69: Close proof loader + close history renderer
+var _lastProofData = null;
+function veinLoadProof() {
+  var sel = $('closeMonthSelect'); var month = sel ? sel.value : '';
+  var btn = $('loadProofBtn'); var panel = $('proofPanel'); var grid = $('proofGrid'); var ov = $('proofOverall');
+  if (btn) { btn.disabled = true; btn.textContent = 'Loading'; }
+  if (panel) panel.style.display = 'block';
+  if (grid) grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);font-size:11px;padding:12px;">Computing tie-outs</div>';
+  google.script.run.withSuccessHandler(function(raw) {
+    var data = (typeof raw === 'string') ? JSON.parse(raw) : raw;
+    if (btn) { btn.disabled = false; btn.textContent = 'Load Proof'; }
+    if (!data || !data.proofs) { if (grid) grid.innerHTML = '<div style="grid-column:1/-1;color:var(--negative);font-size:11px;">No proof data</div>'; return; }
+    _lastProofData = data;
+    var html = ''; var keys = ['netWorthTieOut','transferNet','debtTieOut','accountCoverage','staleExposure','uncategorized'];
+    for (var pi = 0; pi < keys.length; pi++) {
+      var p = data.proofs[keys[pi]]; if (!p) continue;
+      var bc = p.status === 'PASS' ? 'var(--positive)' : (p.status === 'WARN' ? 'var(--warning)' : 'var(--negative)');
+      html += '<div style="padding:10px;background:var(--surface-2);border-radius:8px;border-left:3px solid ' + bc + ';">';
+      html += '<div style="font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">' + p.status + ' ' + (p.label || keys[pi]) + '</div>';
+      if (p.actual !== undefined) { html += '<div style="font-size:11px;line-height:1.5;">Actual: <strong>$' + fmt(p.actual) + '</strong> | Expected: $' + fmt(p.expected) + ' | Var: $' + fmt(p.variance) + '</div>'; }
+      else if (p.count !== undefined) { html += '<div style="font-size:11px;">' + p.count + (p.total ? '/' + p.total : '') + '</div>'; }
+      else if (p.totalAtRisk !== undefined) { html += '<div style="font-size:11px;">$' + fmt(p.totalAtRisk) + ' at risk</div>'; }
+      html += '</div>';
+    }
+    if (grid) grid.innerHTML = html;
+    if (ov) { ov.innerHTML = 'Overall: <strong style="color:' + bc + ';">' + data.overall + '</strong>' + (data.blockers && data.blockers.length ? ' | Blockers: ' + data.blockers.join(', ') : '') + (data.warnings && data.warnings.length ? ' | Warnings: ' + data.warnings.join(', ') : ''); }
+  }).withFailureHandler(function(err) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Load Proof'; }
+    if (grid) grid.innerHTML = '<div style="grid-column:1/-1;color:var(--negative);font-size:11px;">Proof unavailable: ' + (err.message || 'error') + '</div>';
+  }).getCloseProofSafe(month);
+}
+function toggleCloseHistory() { $('closeHistoryBody').classList.toggle('open'); $('closeHistoryArrow').classList.toggle('open'); }
+function renderCloseHistory(months) {
+  var el = $('closeHistoryGrid'); var countEl = $('closeHistoryCount');
+  if (!el) return;
+  if (!months || !months.length) { el.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:12px;">No close history</div>'; return; }
+  var recent = months.slice(-6).reverse();
+  if (countEl) countEl.textContent = recent.length + ' of ' + months.length + ' months';
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:11px;"><tr style="color:var(--text-dim);border-bottom:1px solid var(--border);font-size:9px;letter-spacing:1px;"><th style="text-align:left;padding:4px 6px;">MONTH</th><th style="text-align:right;padding:4px 6px;">EARNED</th><th style="text-align:right;padding:4px 6px;">SPENT</th><th style="text-align:right;padding:4px 6px;">NET</th><th style="text-align:right;padding:4px 6px;">DEBT</th></tr>';
+  for (var i = 0; i < recent.length; i++) {
+    var m = recent[i]; var nc = m.netCashFlow >= 0 ? 'var(--positive)' : 'var(--negative)';
+    html += '<tr style="border-bottom:1px solid rgba(0,0,0,0.05);"><td style="padding:4px 6px;font-weight:600;">' + escapeHtml(m.month + ' ' + m.year) + '</td><td style="padding:4px 6px;text-align:right;color:var(--positive);">$' + fmt(m.earnedIncome) + '</td><td style="padding:4px 6px;text-align:right;color:var(--negative);">$' + fmt(m.moneyOut) + '</td><td style="padding:4px 6px;text-align:right;color:' + nc + ';">$' + fmt(m.netCashFlow) + '</td><td style="padding:4px 6px;text-align:right;">$' + fmt(m.debtCurrent) + '</td></tr>';
+  }
+  html += '</table>';
+  el.innerHTML = html;
+}
+
 /* ═══ Family Note Editor (v60) ═══ */
 var _fnoteOriginal = '';
 
@@ -2483,7 +2530,7 @@ if(engineData.integrityErrors && engineData.integrityErrors.length > 0){
 var iw=$('dataError');if(iw){iw.innerHTML='⚠ Integrity check: '+engineData.integrityErrors.length+' identity mismatch(es). <a onclick="initDashboard()">Retry</a> <span style="font-size:9px;color:var(--text-muted);display:block;margin-top:4px;">'+engineData.integrityErrors.join(' · ')+'</span>';iw.style.display='block';}
 }
 google.script.run.withSuccessHandler(function(months){if(months && months.length) buildDropdownFromEngine(months);}).withFailureHandler(function(e){console.warn('getMonths failed:',e);}).getMonthsSafe();
-google.script.run.withSuccessHandler(function(historyData){if(historyData && historyData.length){ HISTORY_DATA = historyData; renderTrends(); }}).withFailureHandler(function(e){ console.warn('Close History unavailable:', e); }).getCloseHistoryDataSafe();
+google.script.run.withSuccessHandler(function(historyData){if(historyData && historyData.length){ HISTORY_DATA = historyData; renderTrends(); renderCloseHistory(historyData); }}).withFailureHandler(function(e){ console.warn('Close History unavailable:', e); }).getCloseHistoryDataSafe();
 
 // v68: Load recent transaction feed (#321)
 google.script.run.withSuccessHandler(function(data) {
