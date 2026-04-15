@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="tbm-version" content="v68">
-<title>The Vein v68 — Household Command Center</title>
-<!-- TheVein v68 — Version history tracked in Notion deploy page. No changelogs in this file. -->
+<meta name="tbm-version" content="v69">
+<title>The Vein v69 — Household Command Center</title>
+<!-- TheVein v69 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -1037,7 +1037,7 @@ id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition
 <div class="footer">
 <span id="footerSrc">Source: Tiller BudgetMaster</span>
 <span id="veinReconcileBadge" style="font-size:10px;font-weight:600;letter-spacing:.05em;opacity:0.85;"></span>
-<span id="veinVersionTag">The Vein v68</span>
+<span id="veinVersionTag">The Vein v69</span>
 </div>
 
 </div>
@@ -2248,23 +2248,58 @@ $('trendGrid').innerHTML = html || '<div class="trend-empty">Insufficient data f
 function toggleTrends(){ $('trendBody').classList.toggle('open'); $('trendArrow').classList.toggle('open'); }
 function toggleTxFeed(){ $('txFeedBody').classList.toggle('open'); $('txFeedArrow').classList.toggle('open'); }
 
-// v68: Recent transaction feed renderer (#321)
+// v69: Recent transaction feed renderer — badges + review actions (TV-009, #326)
+var _TX_TRANSFER_PATTERNS = ['transfer','zelle','venmo','paypal','cashapp','cash app','ach','wire','direct dep','direct deposit'];
+function _txReviewKey(row) { return 'txReview_' + row; }
+function _isTxReviewed(row) {
+  try { return sessionStorage.getItem(_txReviewKey(row)) === '1'; } catch(e) { return false; }
+}
+function toggleTxReview(row) {
+  try {
+    var key = _txReviewKey(row);
+    if (sessionStorage.getItem(key) === '1') { sessionStorage.removeItem(key); } else { sessionStorage.setItem(key, '1'); }
+  } catch(e) {}
+  var btn = document.getElementById('txBtn_' + row);
+  if (!btn) return;
+  var reviewed = _isTxReviewed(row);
+  btn.style.color = reviewed ? '#22c55e' : 'var(--text-muted)';
+  btn.title = reviewed ? 'Mark unreviewed' : 'Mark reviewed';
+  btn.textContent = reviewed ? '\u2713' : '\u25cb';
+  var rowEl = btn.parentNode;
+  while (rowEl && rowEl.tagName !== 'TR') { rowEl = rowEl.parentNode; }
+  if (rowEl) { rowEl.style.opacity = reviewed ? '0.55' : '1'; }
+}
+function _isTxTransfer(tx) {
+  var desc = (tx.description || '').toLowerCase();
+  var cat  = (tx.category || '').toLowerCase();
+  for (var p = 0; p < _TX_TRANSFER_PATTERNS.length; p++) {
+    if (desc.indexOf(_TX_TRANSFER_PATTERNS[p]) >= 0 || cat.indexOf(_TX_TRANSFER_PATTERNS[p]) >= 0) return true;
+  }
+  return false;
+}
 function renderTxFeed(data) {
   var el = $('txFeedContent');
   var countEl = $('txFeedCount');
   if (!el) return;
   var txs = data.transactions || [];
   var summary = data.summary || {};
-  countEl.textContent = summary.count + ' transactions · last ' + summary.days + ' days';
+  countEl.textContent = summary.count + ' transactions \xb7 last ' + summary.days + ' days';
 
-  // Summary bar
+  // Merchant-frequency map for new-merchant badge
+  var descCount = {};
+  for (var m = 0; m < txs.length; m++) {
+    var dk = (txs[m].description || '').toLowerCase();
+    descCount[dk] = (descCount[dk] || 0) + 1;
+  }
+
+  // Summary bar (unchanged)
   var html = '<div style="display:flex;gap:16px;margin-bottom:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:4px;">';
   html += '<div><span style="color:#22c55e;font-weight:700;">+$' + fmt(summary.totalIn) + '</span> <span style="color:var(--text-dim);font-size:9px;">IN</span></div>';
   html += '<div><span style="color:#ef4444;font-weight:700;">-$' + fmt(summary.totalOut) + '</span> <span style="color:var(--text-dim);font-size:9px;">OUT</span></div>';
   html += '<div><span style="color:' + (summary.net >= 0 ? '#22c55e' : '#ef4444') + ';font-weight:700;">' + (summary.net >= 0 ? '+' : '-') + '$' + fmt(Math.abs(summary.net)) + '</span> <span style="color:var(--text-dim);font-size:9px;">NET</span></div>';
   html += '</div>';
 
-  // Transaction table
+  // Transaction table — FLAGS and OK columns added
   html += '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
   html += '<tr style="color:var(--text-dim);border-bottom:1px solid var(--glass-border);font-size:9px;letter-spacing:1px;">';
   html += '<th style="text-align:left;padding:4px 6px;">DATE</th>';
@@ -2272,6 +2307,8 @@ function renderTxFeed(data) {
   html += '<th style="text-align:right;padding:4px 6px;">AMOUNT</th>';
   html += '<th style="text-align:left;padding:4px 6px;">CATEGORY</th>';
   html += '<th style="text-align:left;padding:4px 6px;">ACCOUNT</th>';
+  html += '<th style="text-align:left;padding:4px 6px;">FLAGS</th>';
+  html += '<th style="text-align:center;padding:4px 6px;width:28px;">OK</th>';
   html += '</tr>';
 
   var prevDate = '';
@@ -2281,21 +2318,33 @@ function renderTxFeed(data) {
     prevDate = tx.date;
     var amtColor = tx.amount >= 0 ? '#22c55e' : '#e2e8f0';
     var amtStr = tx.amount >= 0 ? '+$' + fmt(tx.amount) : '-$' + fmt(Math.abs(tx.amount));
-    var catStyle = '';
-    if (tx.category.indexOf('Uncategorized') >= 0 || tx.category.indexOf('General Shopping') >= 0) {
-      catStyle = 'color:#f59e0b;font-weight:600;';
-    }
-    html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.03);' + (isNew ? 'border-top:1px solid var(--glass-border);' : '') + '">';
+    var isUncat   = tx.category.indexOf('Uncategorized') >= 0 || tx.category.indexOf('General Shopping') >= 0;
+    var isTransfer = _isTxTransfer(tx);
+    var isLarge   = Math.abs(tx.amount) >= 500;
+    var descKey   = (tx.description || '').toLowerCase();
+    var isNewMerchant = !isTransfer && descCount[descKey] === 1;
+    var reviewed  = _isTxReviewed(tx.row);
+    var catStyle  = isUncat ? 'color:#f59e0b;font-weight:600;' : '';
+
+    var badges = '';
+    if (isUncat)      { badges += '<span style="font-size:8px;font-weight:700;color:#f59e0b;" title="Uncategorized">UNCAT</span> '; }
+    if (isTransfer)   { badges += '<span style="font-size:8px;font-weight:700;color:#818cf8;" title="Likely transfer">XFER</span> '; }
+    if (isLarge)      { badges += '<span style="font-size:8px;font-weight:700;color:#f87171;" title="Large transaction">LARGE</span> '; }
+    if (isNewMerchant){ badges += '<span style="font-size:8px;font-weight:700;color:#34d399;" title="First appearance in feed">NEW</span> '; }
+
+    html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.03);' + (isNew ? 'border-top:1px solid var(--glass-border);' : '') + (reviewed ? 'opacity:0.55;' : '') + '">';
     html += '<td style="padding:3px 6px;color:var(--text-muted);white-space:nowrap;">' + (isNew ? tx.dateDisplay : '') + '</td>';
-    html += '<td style="padding:3px 6px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(tx.description) + '</td>';
+    html += '<td style="padding:3px 6px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(tx.description) + '</td>';
     html += '<td style="padding:3px 6px;text-align:right;color:' + amtColor + ';white-space:nowrap;">' + amtStr + '</td>';
-    html += '<td style="padding:3px 6px;' + catStyle + 'max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(tx.category) + '</td>';
-    html += '<td style="padding:3px 6px;color:var(--text-dim);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(tx.account) + '</td>';
+    html += '<td style="padding:3px 6px;' + catStyle + 'max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(tx.category) + '</td>';
+    html += '<td style="padding:3px 6px;color:var(--text-dim);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(tx.account) + '</td>';
+    html += '<td style="padding:3px 6px;white-space:nowrap;">' + (badges || '<span style="color:var(--text-dim);font-size:9px;">\u2014</span>') + '</td>';
+    html += '<td style="padding:3px 6px;text-align:center;"><button id="txBtn_' + tx.row + '" onclick="toggleTxReview(' + tx.row + ')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:' + (reviewed ? '#22c55e' : 'var(--text-muted)') + ';" title="' + (reviewed ? 'Mark unreviewed' : 'Mark reviewed') + '">' + (reviewed ? '\u2713' : '\u25cb') + '</button></td>';
     html += '</tr>';
   }
   html += '</table>';
 
-  // Top spending categories
+  // Top spending categories (unchanged)
   if (summary.topCategories && summary.topCategories.length > 0) {
     html += '<div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:4px;">';
     html += '<div style="font-size:9px;color:var(--text-dim);letter-spacing:1px;margin-bottom:6px;">TOP SPENDING (LAST ' + summary.days + ' DAYS)</div>';
