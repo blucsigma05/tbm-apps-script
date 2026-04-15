@@ -2655,7 +2655,7 @@ function _kidsApprove(rowIndex, el, taskID) {
   if (rowIndex == null || rowIndex === '') return;
   _kidsOptimistic(el);
   google.script.run
-    .withSuccessHandler(function() { _showKidsToast('\u2713 Approved! Points awarded.'); })
+    .withSuccessHandler(function() { _showKidsToast('\u2713 Approved! Points awarded.'); initKidsWidget(); })
     .withFailureHandler(function(err) {
       console.error('Vein approve failed:', err);
       initKidsWidget();
@@ -2666,7 +2666,7 @@ function _kidsApproveBonus(rowIndex, el, taskID) {
   if (rowIndex == null || rowIndex === '') return;
   _kidsOptimistic(el);
   google.script.run
-    .withSuccessHandler(function() { _showKidsToast('\u2726 2x bonus approved!'); })
+    .withSuccessHandler(function() { _showKidsToast('\u2726 2x bonus approved!'); initKidsWidget(); })
     .withFailureHandler(function(err) {
       console.error('Vein bonus approve failed:', err);
       initKidsWidget();
