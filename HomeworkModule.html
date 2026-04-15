@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v15">
+<meta name="tbm-version" content="v16">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1044,6 +1044,21 @@ var KNOWN_QUESTION_TYPES = [
 // ─── MODULE DATA ───
 var MODULE = null;
 var _usingFallback = false;
+
+// v16 (#345) — Visible signal when surface falls back / fails to load real curriculum.
+// Always-on banner so QA can detect silent fallback without DevTools.
+function _showFallbackBadge_() {
+  if (typeof document === 'undefined' || !document.body) { return; }
+  if (document.getElementById('_tbm_fallback_badge')) { return; }
+  var b = document.createElement('div');
+  b.id = '_tbm_fallback_badge';
+  b.textContent = '\u26A0 PRACTICE MODE \u2014 Today\u2019s lesson didn\u2019t load. Rings won\u2019t be earned.';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f59e0b;color:#000;'
+    + 'padding:6px 12px;font:600 13px/1.4 system-ui,sans-serif;text-align:center;'
+    + 'z-index:99999;box-shadow:0 1px 4px rgba(0,0,0,0.3);';
+  document.body.appendChild(b);
+  document.body.style.paddingTop = '28px';
+}
 
 // v14: FALLBACK_MODULE deleted — redirect to daily-missions instead
 var _FALLBACK_STUB = {
@@ -2254,6 +2269,9 @@ function showLoadError_(reason) {
 // ─── CURRICULUM LOADING ───
 function loadCurriculumContent() {
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: no google.script.run available');
+    _usingFallback = true;
+    _showFallbackBadge_();
     showLoadError_('offline');
     return;
   }
@@ -2290,6 +2308,14 @@ function loadCurriculumContent() {
           MODULE.math.title     = MODULE.math.title     || '';
           MODULE.math.questions = MODULE.math.questions || [];
           MODULE.date = MODULE.date || '';
+          // v16 (#345) — Detect normalized-but-empty case: questions exist but enrichment fields are blank.
+          var mathHasContext = (MODULE.math.passage.length > 0) || MODULE.math.quickFact || MODULE.math.strand || MODULE.math.teks;
+          var sciHasContext  = (MODULE.science.passage.length > 0) || MODULE.science.quickFact || MODULE.science.strand || MODULE.science.teks;
+          if (!mathHasContext || !sciHasContext) {
+            console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: questions present but enrichment fields empty (math context=' + !!mathHasContext + ', sci context=' + !!sciHasContext + ')');
+            _usingFallback = true;
+            _showFallbackBadge_();
+          }
           init();
         } else if (c.review_quiz && c.review_quiz.length > 0) {
           MODULE = { science: { title: 'Review', questions: c.review_quiz }, math: { title: 'Review', questions: [] } };
@@ -2298,15 +2324,20 @@ function loadCurriculumContent() {
           // No module questions today — this is a reading/writing/drill day.
           // Redirect to daily-missions so Buggsy does the correct assignments.
           var keys = Object.keys(c).join(', ');
-          console.warn('No module questions today. Day content keys: ' + keys);
+          console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: no module questions today, redirecting to daily-missions. Day content keys: ' + keys);
           redirectToDailyMissions_();
         }
       } else {
+        console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: getTodayContentSafe returned empty/missing content');
+        _usingFallback = true;
+        _showFallbackBadge_();
         showLoadError_('no-content');
       }
     })
     .withFailureHandler(function(err) {
-      console.log('Curriculum load failed: ' + (err && err.message ? err.message : 'unknown'));
+      console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: getTodayContentSafe failed: ' + (err && err.message ? err.message : 'unknown'));
+      _usingFallback = true;
+      _showFallbackBadge_();
       showLoadError_('load-error');
     })
     .getTodayContentSafe('buggsy');

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="tbm-module" content="writing-module">
-<meta name="tbm-version" content="v7">
+<meta name="tbm-version" content="v8">
 <title>Writing Module - Buggsy</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -967,10 +967,25 @@ function endBrainBreak() {
   if (overlay) overlay.style.display = 'none';
 }
 
-var MODULE_VERSION = 'v6';
+var MODULE_VERSION = 'v8';
 var CHILD = TBM_SANDBOX ? 'sandbox-buggsy' : 'buggsy';
 var TARGET_MINUTES = 12;
 var _usingFallback = false;
+
+// v8 (#345) — Visible signal when surface falls back / fails to load real curriculum.
+// Always-on banner so QA can detect silent fallback without DevTools.
+function _showFallbackBadge_() {
+  if (typeof document === 'undefined' || !document.body) { return; }
+  if (document.getElementById('_tbm_fallback_badge')) { return; }
+  var b = document.createElement('div');
+  b.id = '_tbm_fallback_badge';
+  b.textContent = '\u26A0 PRACTICE MODE \u2014 Today\u2019s lesson didn\u2019t load. Rings won\u2019t be earned.';
+  b.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f59e0b;color:#000;'
+    + 'padding:6px 12px;font:600 13px/1.4 system-ui,sans-serif;text-align:center;'
+    + 'z-index:99999;box-shadow:0 1px 4px rgba(0,0,0,0.3);';
+  document.body.appendChild(b);
+  document.body.style.paddingTop = '28px';
+}
 
 // ─── 4 Writing Formats ───
 var FORMATS = [
@@ -1631,7 +1646,9 @@ function handleSubmit() {
 // ─── CURRICULUM LOADING ───
 function loadWritingContent() {
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    console.warn('[TBM FALLBACK] writing-module \u2014 reason: no google.script.run available');
     _usingFallback = true;
+    _showFallbackBadge_();
     init();
     return;
   }
@@ -1657,16 +1674,22 @@ function loadWritingContent() {
           }
           init();
         } else {
+          console.warn('[TBM FALLBACK] writing-module \u2014 reason: response had content but no quick_write or grammar_sprint fields');
           _usingFallback = true;
+          _showFallbackBadge_();
           init();
         }
       } else {
+        console.warn('[TBM FALLBACK] writing-module \u2014 reason: getTodayContentSafe returned empty/missing content');
         _usingFallback = true;
+        _showFallbackBadge_();
         init();
       }
     })
-    .withFailureHandler(function() {
+    .withFailureHandler(function(err) {
+      console.warn('[TBM FALLBACK] writing-module \u2014 reason: getTodayContentSafe failed: ' + (err && err.message ? err.message : 'unknown'));
       _usingFallback = true;
+      _showFallbackBadge_();
       init();
     })
     .getTodayContentSafe('buggsy');
