@@ -74,13 +74,19 @@ function otBuildInstalledIndex_() {
 }
 
 // ── INSTALL ───────────────────────────────────────────────────────────
+// forceReset=true: removes existing trigger before reinstalling, enforcing
+// the spec schedule. Required when migrating from legacy installers that
+// used different cadences. GAS trigger objects do not expose schedule
+// details, so schedule drift cannot be detected at runtime — forceReset
+// is the only mechanism to guarantee spec alignment.
 
-function installAllOpsTriggersSafe() {
+function installAllOpsTriggersSafe(forceReset) {
   return withMonitor_('installAllOpsTriggersSafe', function() {
     var installed = [];
+    var replaced = [];
     var skipped = [];
     var alreadyPresent = [];
-    var i, entry, fn;
+    var i, entry, fn, existingTriggers, j;
 
     for (i = 0; i < OPS_TRIGGER_SPEC.length; i++) {
       entry = OPS_TRIGGER_SPEC[i];
@@ -93,10 +99,23 @@ function installAllOpsTriggersSafe() {
         continue;
       }
 
-      if (otTriggerInstalled_(fn)) {
+      var isInstalled = otTriggerInstalled_(fn);
+
+      if (isInstalled && !forceReset) {
         alreadyPresent.push(fn);
         Logger.log('SKIP (already installed): ' + fn);
         continue;
+      }
+
+      if (isInstalled && forceReset) {
+        existingTriggers = ScriptApp.getProjectTriggers();
+        for (j = 0; j < existingTriggers.length; j++) {
+          if (existingTriggers[j].getHandlerFunction() === fn) {
+            ScriptApp.deleteTrigger(existingTriggers[j]);
+          }
+        }
+        replaced.push(fn);
+        Logger.log('REMOVED (forceReset): ' + fn);
       }
 
       try {
@@ -111,12 +130,17 @@ function installAllOpsTriggersSafe() {
     }
 
     Logger.log('installAllOpsTriggersSafe complete — installed: ' + installed.length +
-      ', skipped: ' + skipped.length + ', already present: ' + alreadyPresent.length);
-    return { ok: true, installed: installed, skipped: skipped, alreadyPresent: alreadyPresent };
+      ', replaced: ' + replaced.length + ', skipped: ' + skipped.length +
+      ', already present: ' + alreadyPresent.length);
+    return { ok: true, installed: installed, replaced: replaced, skipped: skipped, alreadyPresent: alreadyPresent };
   });
 }
 
 // ── RECONCILE ─────────────────────────────────────────────────────────
+// Detects handler presence drift (missing, orphaned, duplicate count).
+// GAS does not expose trigger schedule details on Trigger objects, so
+// cadence drift cannot be detected at runtime. To force schedule
+// realignment with OPS_TRIGGER_SPEC: installAllOpsTriggersSafe(true).
 
 function reconcileOpsTriggersSafe() {
   return withMonitor_('reconcileOpsTriggersSafe', function() {
