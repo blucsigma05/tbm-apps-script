@@ -63,6 +63,17 @@ function filterRealErrors(errors) {
   });
 }
 
+// Dismiss the catch-up banner (added in #411) if present, then wait for the
+// Plan Your Attack overlay. The banner renders when the server returns fullWeek
+// data with missed days — dismiss before asserting plan overlay visibility.
+async function waitForPlanAttack(page) {
+  var dismissBtn = page.locator('[data-testid="catchup-banner-dismiss"]');
+  if (await dismissBtn.count() > 0) {
+    await dismissBtn.click();
+  }
+  await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
+}
+
 // ---------------------------------------------------------------------------
 // Homework Module
 // ---------------------------------------------------------------------------
@@ -78,7 +89,7 @@ test.describe('Homework: Plan Your Attack → answer flow → completion', funct
 
     // Plan Your Attack screen should be visible — wait for dynamic render (ExecSkills.showPlanYourAttack
     // injects .es-plan-attack into #plan-overlay after getTodayContentSafe returns).
-    await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
+    await waitForPlanAttack(page);
 
     // Click ready button to start session
     await page.locator('.es-ready-btn').click();
@@ -121,7 +132,7 @@ test.describe('Homework: wrong answer shows purple not red', function() {
     await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Wait for Plan Your Attack to render before clicking the ready button.
-    await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
+    await waitForPlanAttack(page);
     // Start the session
     await page.locator('.es-ready-btn').click();
     await page.waitForTimeout(2000);
@@ -242,7 +253,7 @@ test.describe('Homework: brain break fires after 4 answers', function() {
 
     await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
     // Wait for Plan Your Attack to render (replaces fixed 6s timeout)
-    await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
+    await waitForPlanAttack(page);
     await page.locator('.es-ready-btn').click();
     await page.locator('.es-session-timer').waitFor({ state: 'visible', timeout: 10000 });
 
@@ -281,7 +292,7 @@ test.describe('Homework: Monday Error Journal appears', function() {
     await shimGAS(page, FIXTURES);
 
     await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
+    await waitForPlanAttack(page);
     await page.locator('.es-ready-btn').click();
     await page.locator('.es-session-timer').waitFor({ state: 'visible', timeout: 10000 });
 
@@ -315,7 +326,7 @@ test.describe('Homework: Friday Reflection appears', function() {
     await shimGAS(page, FIXTURES);
 
     await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
+    await waitForPlanAttack(page);
     await page.locator('.es-ready-btn').click();
     await page.locator('.es-session-timer').waitFor({ state: 'visible', timeout: 10000 });
 
