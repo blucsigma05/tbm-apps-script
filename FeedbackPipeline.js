@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// FeedbackPipeline.gs v1 — Gemini Triage + Auto-Issue + Weekly Digest
+// FeedbackPipeline.gs v2 — Gemini Triage + Auto-Issue + Weekly Digest
 // WRITES TO: Feedback (Processed, Classification columns)
 // READS FROM: Feedback, Script Properties (GEMINI_API_KEY, GITHUB_PAT)
 // DEPENDENCIES: callGemini_ (ContentEngine.gs), sendPush_ (AlertEngine),
@@ -7,7 +7,7 @@
 // Issue: #231
 // ════════════════════════════════════════════════════════════════════
 
-function getFeedbackPipelineVersion() { return 1; }
+function getFeedbackPipelineVersion() { return 2; }
 
 // ════════════════════════════════════════════════════════════════════
 // LAYER 2: GEMINI TRIAGE — classify unprocessed feedback rows
@@ -355,5 +355,107 @@ function runFeedbackPipeline() {
   Logger.log('=== Pipeline Complete ===');
 }
 
+// ── DIAG + TRIGGER MANAGEMENT (v2, #379) ─────────────────────────
+
+function diagFeedbackPipelineSafe() {
+  try {
+    var ss = SpreadsheetApp.openById(SSID);
+    var tabName = (typeof TAB_MAP !== 'undefined' && TAB_MAP['Feedback']) || '💻 Feedback';
+    var sheet = ss.getSheetByName(tabName);
+    if (!sheet) return { ok: false, error: 'Feedback sheet missing' };
+
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var colMap = {};
+    for (var h = 0; h < headers.length; h++) { colMap[headers[h]] = h; }
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { ok: true, pipelineVersion: getFeedbackPipelineVersion(), totalRows: 0 };
+
+    var data = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    var totalRows = data.length;
+    var unprocessed = 0;
+    var processedToday = 0;
+    var classifications = {};
+    var oldestUnprocessed = null;
+    var todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    for (var i = 0; i < data.length; i++) {
+      var row = data[i];
+      var processed = String(row[colMap['Processed']] || '');
+      var timestamp = new Date(row[colMap['Timestamp']] || 0);
+      var classification = String(row[colMap['Classification']] || '');
+
+      if (!processed) {
+        unprocessed++;
+        if (!oldestUnprocessed || timestamp < new Date(oldestUnprocessed)) {
+          oldestUnprocessed = timestamp.toISOString();
+        }
+      } else if (timestamp >= todayStart) {
+        processedToday++;
+      }
+      if (classification) {
+        classifications[classification] = (classifications[classification] || 0) + 1;
+      }
+    }
+
+    var triggers = ScriptApp.getProjectTriggers();
+    var triageTriggers = [];
+    for (var t = 0; t < triggers.length; t++) {
+      if (triggers[t].getHandlerFunction() === 'triageFeedback') {
+        triageTriggers.push({
+          type: String(triggers[t].getEventType()),
+          source: String(triggers[t].getTriggerSource())
+        });
+      }
+    }
+
+    return {
+      ok: true,
+      pipelineVersion: getFeedbackPipelineVersion(),
+      sheetName: tabName,
+      totalRows: totalRows,
+      unprocessed: unprocessed,
+      processedToday: processedToday,
+      oldestUnprocessed: oldestUnprocessed,
+      classifications: classifications,
+      triggersInstalled: triageTriggers.length,
+      triggerDetails: triageTriggers,
+      triggersHealthy: triageTriggers.length >= 1,
+      checkedAt: new Date().toISOString()
+    };
+  } catch (e) {
+    if (typeof logError_ === 'function') logError_('diagFeedbackPipelineSafe', e);
+    return { ok: false, error: e.message || String(e) };
+  }
+}
+
+function installTriageFeedbackTriggerSafe() {
+  return withMonitor_('installTriageFeedbackTriggerSafe', function() {
+    var triggers = ScriptApp.getProjectTriggers();
+    for (var t = 0; t < triggers.length; t++) {
+      if (triggers[t].getHandlerFunction() === 'triageFeedback') {
+        return { ok: true, installed: false, msg: 'Trigger already installed' };
+      }
+    }
+    ScriptApp.newTrigger('triageFeedback').timeBased().atHour(7).nearMinute(0).everyDays(1).create();
+    return { ok: true, installed: true, msg: 'triageFeedback daily trigger installed at 7 AM' };
+  });
+}
+
+function uninstallTriageFeedbackTriggerSafe() {
+  return withMonitor_('uninstallTriageFeedbackTriggerSafe', function() {
+    var triggers = ScriptApp.getProjectTriggers();
+    var removed = 0;
+    for (var t = 0; t < triggers.length; t++) {
+      if (triggers[t].getHandlerFunction() === 'triageFeedback') {
+        ScriptApp.deleteTrigger(triggers[t]);
+        removed++;
+      }
+    }
+    return { ok: true, removed: removed };
+  });
+}
+
 // Version history tracked in Notion deploy page. Do not add version comments here.
-// FeedbackPipeline.gs v1 — EOF
+// FeedbackPipeline.gs v2 — EOF

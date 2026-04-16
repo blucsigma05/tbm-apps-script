@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v91 — Apps Script Router (TBM Consolidated)
+// Code.gs v93 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 92; }
+function getCodeVersion() { return 93; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -552,17 +552,37 @@ function serveData(e) {
         'getPendingReviewsSafe': getPendingReviewsSafe,
         // ContentEngine.gs v2 — Vocabulary usage grading (#225)
         'gradeVocabUsageSafe': gradeVocabUsageSafe,
-        'diagOpsTriggersSafe': diagOpsTriggersSafe
+        'diagOpsTriggersSafe': diagOpsTriggersSafe,
+        'diagFeedbackPipelineSafe': diagFeedbackPipelineSafe
       };
 
-      if (!fn || !API_WHITELIST[fn]) {
+      // v93 (#414, #379): Write admin functions require OPS_ADMIN_TOKEN shared-secret.
+      var ADMIN_WHITELIST = {
+        'installAllOpsTriggersSafe': installAllOpsTriggersSafe,
+        'reconcileOpsTriggersSafe': reconcileOpsTriggersSafe,
+        'uninstallOpsTriggerSafe': uninstallOpsTriggerSafe,
+        'installTriageFeedbackTriggerSafe': installTriageFeedbackTriggerSafe,
+        'uninstallTriageFeedbackTriggerSafe': uninstallTriageFeedbackTriggerSafe
+      };
+
+      if (!fn || (!API_WHITELIST[fn] && !ADMIN_WHITELIST[fn])) {
         return ContentService.createTextOutput(
           JSON.stringify({ error: 'Unknown or missing function: ' + (fn || 'null') })
         ).setMimeType(ContentService.MimeType.JSON);
       }
 
+      if (ADMIN_WHITELIST[fn]) {
+        var reqToken = e.parameter.token || '';
+        var opsToken = PropertiesService.getScriptProperties().getProperty('OPS_ADMIN_TOKEN') || '';
+        if (!opsToken || reqToken !== opsToken) {
+          return ContentService.createTextOutput(
+            JSON.stringify({ error: 'Unauthorized' })
+          ).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+
       try {
-        var apiResult = API_WHITELIST[fn].apply(null, args);
+        var apiResult = (API_WHITELIST[fn] || ADMIN_WHITELIST[fn]).apply(null, args);
         if (apiResult === undefined) apiResult = null;
         return ContentService.createTextOutput(
           JSON.stringify(apiResult)
@@ -1920,4 +1940,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v91
+// END OF FILE — Code.gs v93
