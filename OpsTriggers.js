@@ -23,8 +23,13 @@ var OPS_TRIGGER_SPEC = [
   { fn: 'pushHealthSnapshot',        cadence: 'daily',   hour: 8,  tz: 'America/Chicago', label: 'Notion health snapshot' },
   { fn: 'runMonthlyMERReport_',      cadence: 'monthly', hour: 9,  day: 1,                 tz: 'America/Chicago', label: 'Monthly MER report' },
   { fn: 'reconcileVeinPulse',        cadence: 'hourly',                                                            label: 'TheVein/ThePulse reconcile' },
-  { fn: 'refreshCascadeTabs',        cadence: 'daily',   hour: 2,  tz: 'America/Chicago', label: 'Cascade tabs refresh' },
-  { fn: 'reconcileOpsTriggersSafe',  cadence: 'daily',   hour: 9,  tz: 'America/Chicago', label: 'Trigger drift reconciler' }
+  { fn: 'refreshCascadeTabs',        cadence: 'daily',    hour: 2,                              tz: 'America/Chicago', label: 'Cascade tabs refresh' },
+  { fn: 'checkTillerSyncHealth',     cadence: 'daily',    hour: 7,                              tz: 'America/Chicago', label: 'Tiller sync health check' },
+  { fn: 'runDailyGateCheck',         cadence: 'daily',    hour: 6,                              tz: 'America/Chicago', label: 'Daily gate check' },
+  { fn: 'monthClosePreflight',       cadence: 'monthly',  hour: 8,  day: 1,                     tz: 'America/Chicago', label: 'Month-close preflight' },
+  { fn: 'writeWeeklySnapshot',       cadence: 'weekly',   hour: 6,  day: 'SATURDAY',             tz: 'America/Chicago', label: 'Weekly snapshot' },
+  { fn: 'pollForNewStories',         cadence: 'minutely', minutes: 5,                            label: 'Story factory poll' },
+  { fn: 'reconcileOpsTriggersSafe',  cadence: 'daily',    hour: 9,                              tz: 'America/Chicago', label: 'Trigger drift reconciler' }
 ];
 
 // ── PRIVATE HELPERS ───────────────────────────────────────────────────
@@ -51,6 +56,8 @@ function otCreateTrigger_(entry) {
     b.onWeekDay(ScriptApp.WeekDay[entry.day]).atHour(entry.hour).inTimezone(entry.tz).create();
   } else if (entry.cadence === 'monthly') {
     b.onMonthDay(entry.day || 1).atHour(entry.hour || 9).inTimezone(entry.tz).create();
+  } else if (entry.cadence === 'minutely') {
+    b.everyMinutes(entry.minutes || 5).create();
   } else {
     throw new Error('Unknown cadence: ' + entry.cadence);
   }
