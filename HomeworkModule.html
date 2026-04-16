@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v15">
+<meta name="tbm-version" content="v17">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1043,166 +1043,9 @@ var KNOWN_QUESTION_TYPES = [
 
 // ─── MODULE DATA ───
 var MODULE = null;
-var _usingFallback = false;
 
-// v14: FALLBACK_MODULE deleted — redirect to daily-missions instead
-var _FALLBACK_STUB = {
-  science: {
-    strand: "deleted",
-    teks: "4.7A \u2014 Forces (gravity, friction, magnetism)",
-    title: "Mission Briefing: The Physics of the Chase",
-    quickFact: "A wolf can run at speeds up to 40 mph, but friction between its paws and the ground is what lets it turn corners without sliding. Without friction, even the fastest wolf would just... keep sliding.",
-    passage: [
-      "Forces are pushes or pulls that act on objects. Some forces require contact \u2014 like when you push a door open or friction slows down a rolling ball. Other forces work at a distance \u2014 gravity pulls you toward Earth even though the ground isn\u2019t touching you, and a magnet can attract a paperclip without touching it.",
-      "Gravity is the force that pulls everything toward the center of Earth. It\u2019s why a basketball comes back down after you throw it, and why you don\u2019t float off the playground. The strength of gravity depends on mass \u2014 Earth has a lot of mass, so its gravitational pull is strong.",
-      "Friction is the force that resists motion when two surfaces rub together. Rough surfaces create more friction than smooth ones. Friction can be helpful \u2014 it lets your shoes grip the floor so you don\u2019t slip. But it can also slow things down, like when a rolling skateboard eventually stops.",
-      "Magnetism is a force that can attract or repel certain materials (like iron and steel) without touching them. Every magnet has a north pole and a south pole. Opposite poles attract each other, and matching poles push apart."
-    ],
-    questions: [
-      {
-        id: 1,
-        type: "multiple_choice",
-        teks: "4.7A",
-        difficulty: "Easy",
-        question: "Which of these is an example of a force acting at a DISTANCE (without contact)?",
-        options: [
-          "A) Kicking a soccer ball",
-          "B) A magnet pulling a paperclip across a table",
-          "C) Pushing a shopping cart",
-          "D) Rubbing your hands together"
-        ],
-        answer: 1,
-        explanation: "Magnetism is a non-contact force \u2014 the magnet can pull the paperclip without touching it. The other options all require direct contact."
-      },
-      {
-        id: 2,
-        type: "multiple_choice",
-        teks: "4.7A",
-        difficulty: "Medium",
-        question: "Wolfkid is chasing Hex across the gym floor. He\u2019s running fast, then hits a patch of water and starts sliding. What happened to the friction?",
-        options: [
-          "A) Friction increased because water is heavier than air",
-          "B) Friction decreased because the water made the surface smoother",
-          "C) Gravity pulled Wolfkid sideways",
-          "D) The magnetic force between his shoes and the floor changed"
-        ],
-        answer: 1,
-        explanation: "Water reduces friction between surfaces. Less friction = less grip = sliding. This is why wet floors have warning signs!"
-      },
-      {
-        id: 3,
-        type: "multiple_choice",
-        teks: "4.7A",
-        difficulty: "Medium",
-        question: "A student drops a ball from a second-floor window. Which force pulls the ball toward the ground?",
-        options: [
-          "A) Friction",
-          "B) Magnetism",
-          "C) Gravity",
-          "D) Air resistance only"
-        ],
-        answer: 2,
-        explanation: "Gravity is the force that pulls objects toward Earth\u2019s center. It acts on everything with mass, which is why dropped objects fall."
-      },
-      {
-        id: 4,
-        type: "short_answer",
-        teks: "4.7A",
-        difficulty: "Medium",
-        question: "Hex slides a book across the table. It slows down and stops. Name the force that stopped it, and explain whether this is a contact or non-contact force.",
-        sampleAnswer: "Friction stopped the book. Friction is a contact force because it happens when two surfaces (the book and the table) rub against each other."
-      },
-      {
-        id: 5,
-        type: "multiple_choice",
-        teks: "4.7A",
-        difficulty: "Medium",
-        question: "Look at this data table:\n\nSurface | Distance ball rolled\nTile floor | 8 feet\nCarpet | 3 feet\nSandpaper | 1 foot\nIce | 15 feet\n\nWhich conclusion is BEST supported by this data?",
-        options: [
-          "A) Gravity is stronger on carpet than ice",
-          "B) Smoother surfaces have less friction, so the ball rolls farther",
-          "C) The ball was pushed harder on the tile floor",
-          "D) Magnetism affected the ball on sandpaper"
-        ],
-        answer: 1,
-        explanation: "The data shows the ball rolled farther on smoother surfaces (ice, tile) and shorter on rougher surfaces (carpet, sandpaper). This pattern supports the conclusion about friction."
-      },
-      {
-        id: 6,
-        type: "why_question",
-        teks: "4.7A",
-        difficulty: "Hard",
-        question: "If you were designing shoes for Wolfkid to wear during a chase scene on a rainy day, would you make the soles smooth or rough? Explain WHY using what you know about friction.",
-        sampleAnswer: "Rough soles, because rough surfaces create more friction. On a rainy day, water reduces friction, so Wolfkid needs extra grip from rougher soles to keep from slipping during the chase."
-      }
-    ]
-  },
-  math: {
-    strand: "Number and Operations \u2014 Fractions",
-    teks: "4.3A-D \u2014 Representing and Comparing Fractions",
-    title: "Code Cracker: Fraction Intelligence",
-    questions: [
-      {
-        id: 7,
-        type: "computation",
-        teks: "4.3C",
-        difficulty: "Easy",
-        question: "What fraction is equivalent to 2/4?",
-        options: ["A) 1/3", "B) 1/2", "C) 3/4", "D) 2/8"],
-        answer: 1,
-        explanation: "2/4 can be simplified by dividing both numerator and denominator by 2: 2\u00f72 = 1, 4\u00f72 = 2. So 2/4 = 1/2."
-      },
-      {
-        id: 8,
-        type: "word_problem",
-        teks: "4.3E",
-        difficulty: "Medium",
-        question: "Wolfkid and Hex are splitting lookout duty. Wolfkid takes 3/8 of the shift. Hex takes 2/8 of the shift. What fraction of the shift have they covered together?",
-        options: ["A) 5/16", "B) 5/8", "C) 1/8", "D) 6/8"],
-        answer: 1,
-        explanation: "When adding fractions with the same denominator, add the numerators: 3/8 + 2/8 = 5/8. The denominator stays the same."
-      },
-      {
-        id: 9,
-        type: "visual",
-        teks: "4.3A",
-        difficulty: "Easy",
-        question: "Which symbol makes this statement true?\n\n    1/3  ___  1/2",
-        options: ["A) >", "B) <", "C) ="],
-        answer: 1,
-        explanation: "1/3 is less than 1/2. Think of it this way: if you cut a pizza into 3 pieces, each piece is smaller than if you cut it into 2 pieces."
-      },
-      {
-        id: 10,
-        type: "error_analysis",
-        teks: "4.3D",
-        difficulty: "Hard",
-        question: "A student said: \"3/4 is less than 5/8 because 4 is less than 8.\"\n\nIs this correct? Explain the mistake.",
-        sampleAnswer: "No, this is wrong. You can\u2019t just compare denominators. 3/4 = 6/8 when you find a common denominator. Since 6/8 > 5/8, the student\u2019s answer is incorrect. A larger denominator actually means smaller pieces, not a bigger fraction."
-      },
-      {
-        id: 11,
-        type: "multi_step",
-        teks: "4.3E,4.3D",
-        difficulty: "Hard",
-        question: "Hex intercepted a coded message. It was split into 3 parts. Part 1 is 2/6 of the message. Part 2 is 1/6 of the message. How much of the message is still missing?",
-        options: ["A) 3/6", "B) 1/6", "C) 4/6", "D) 2/6"],
-        answer: 0,
-        explanation: "First add what they have: 2/6 + 1/6 = 3/6. The whole message = 6/6. Missing = 6/6 - 3/6 = 3/6 (which equals 1/2)."
-      },
-      {
-        id: 12,
-        type: "real_world",
-        teks: "4.3A",
-        difficulty: "Medium",
-        question: "You earned 15 Rings this week. You want to save 1/3 of them and spend the rest. How many Rings do you save?",
-        options: ["A) 3 Rings", "B) 5 Rings", "C) 10 Rings", "D) 7 Rings"],
-        answer: 1,
-        explanation: "1/3 of 15 = 15 \u00f7 3 = 5 Rings saved. This connects fractions to real-world decisions about money! (And yes, this is basically how your Ring economy works.)"
-      }
-    ]
-  }
-};
+// v17 (#348) — Badge removed and _usingFallback dead-code stripped. Curriculum-or-error.
+
 
 // ─── COLORS ───
 var C = {
@@ -1482,13 +1325,6 @@ function getCompletionStatusMarkup_() {
       showRetry: true
     };
   }
-  if (_usingFallback) {
-    return {
-      message: 'Practice mode only. This session is not being sent to the homework queue.',
-      style: 'background:rgba(148,163,184,0.10);border:1px solid rgba(148,163,184,0.25);color:#CBD5E1;',
-      showRetry: false
-    };
-  }
   return {
     message: 'Preparing final save...',
     style: 'background:rgba(148,163,184,0.10);border:1px solid rgba(148,163,184,0.25);color:#CBD5E1;',
@@ -1516,13 +1352,6 @@ function submitHomeworkCompletion_() {
     completionSubmitError = '';
     updateCompletionSaveStatusUi_();
     clearHomeworkDraft_();
-    return;
-  }
-  if (_usingFallback) {
-    completionSubmitState = 'idle';
-    completionSubmitError = '';
-    updateCompletionSaveStatusUi_();
-    saveHomeworkDraft_();
     return;
   }
 
@@ -1833,7 +1662,7 @@ function submitAnswer(qId) {
 
   // Log per-question result to QuestionLog for mastery tracking (#161)
   // Only log MC (auto-graded) questions — open-ended have correct=true hardcoded which inflates accuracy
-  if (isMC && !TBM_TEST_MODE && !_usingFallback && typeof google !== 'undefined' && google.script && google.script.run) {
+  if (isMC && !TBM_TEST_MODE && typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function() {})
       .withFailureHandler(function(err) { console.error('QuestionLog failed:', err); })
@@ -2254,6 +2083,7 @@ function showLoadError_(reason) {
 // ─── CURRICULUM LOADING ───
 function loadCurriculumContent() {
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: no google.script.run available');
     showLoadError_('offline');
     return;
   }
@@ -2290,6 +2120,15 @@ function loadCurriculumContent() {
           MODULE.math.title     = MODULE.math.title     || '';
           MODULE.math.questions = MODULE.math.questions || [];
           MODULE.date = MODULE.date || '';
+          // v17 (#348) — Detect normalized-but-empty case: questions exist but enrichment fields blank.
+          // No badge — render a hard error instead of letting kids see questions with no passage/strand/teks.
+          var mathHasContext = (MODULE.math.passage.length > 0) || MODULE.math.quickFact || MODULE.math.strand || MODULE.math.teks;
+          var sciHasContext  = (MODULE.science.passage.length > 0) || MODULE.science.quickFact || MODULE.science.strand || MODULE.science.teks;
+          if (!mathHasContext || !sciHasContext) {
+            console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: questions present but enrichment fields empty (math context=' + !!mathHasContext + ', sci context=' + !!sciHasContext + ')');
+            showLoadError_('no-content');
+            return;
+          }
           init();
         } else if (c.review_quiz && c.review_quiz.length > 0) {
           MODULE = { science: { title: 'Review', questions: c.review_quiz }, math: { title: 'Review', questions: [] } };
@@ -2298,15 +2137,16 @@ function loadCurriculumContent() {
           // No module questions today — this is a reading/writing/drill day.
           // Redirect to daily-missions so Buggsy does the correct assignments.
           var keys = Object.keys(c).join(', ');
-          console.warn('No module questions today. Day content keys: ' + keys);
+          console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: no module questions today, redirecting to daily-missions. Day content keys: ' + keys);
           redirectToDailyMissions_();
         }
       } else {
+        console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: getTodayContentSafe returned empty/missing content');
         showLoadError_('no-content');
       }
     })
     .withFailureHandler(function(err) {
-      console.log('Curriculum load failed: ' + (err && err.message ? err.message : 'unknown'));
+      console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: getTodayContentSafe failed: ' + (err && err.message ? err.message : 'unknown'));
       showLoadError_('load-error');
     })
     .getTodayContentSafe('buggsy');

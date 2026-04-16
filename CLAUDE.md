@@ -300,6 +300,29 @@ HTML modules served via Cloudflare use the `google.script.run` shim which POSTs 
 | Lock acquisition | `waitLock(30000)` — NEVER `tryLock()` |
 | Smoke + regression | Code.gs → `?action=runTests` returns combined JSON |
 | New `google.script.run` call | Must have `withFailureHandler()`. Must add Safe wrapper to smoke test check. Must run audit-source.sh. |
+| Hygiene finding → Issue | `.github/scripts/file_hygiene_issue.py` via `.github/workflows/hygiene-filer.yml`. Emitter passes structured finding JSON; filer dedups by marker and files or reopens. |
+
+---
+
+## Hygiene Automation — Issue Filer (Phase 1)
+
+Hygiene workflows (HYG-*) that detect findings can file dedup'd GitHub Issues via the shared filer at `.github/workflows/hygiene-filer.yml`. The filer identifies findings by a signature hidden in the Issue body — **never** by title (titles are human-editable):
+
+```
+<!-- auto-finding v=1 check=<check-id> sig=<16-hex> -->
+```
+
+The signature is `sha256` over a canonical `identity` dict (keys and string values stripped + lowercased, keys sorted) — **never** over volatile fields like `age_days` or byte counts. Identity captures the problem, not its current measurement.
+
+**Dedup search order** (open → suppressed → recent closed → new):
+1. Any OPEN Issue matches → no-op
+2. Any CLOSED Issue with `auto:suppressed` label → no-op forever (LT rejected)
+3. Any CLOSED Issue within 7 days without `auto:suppressed` → reopen
+4. Otherwise → create new Issue with `auto:filed` label
+
+**Kill switches** (all ≤60s): `vars.AUTOMATION_ENABLED=false` (master), `vars.HYGIENE_ISSUE_CREATION_ENABLED=false` (filer only), disable `hygiene-filer.yml` workflow in UI. Filer diagnostics post to the pinned filer-status Issue (`vars.STATUS_ISSUE_NUMBER`).
+
+Phase 1 scope: one pilot check (HYG-06 version drift). Phase 2+ is out of scope — this system files Issues only, no auto-PRs.
 
 ---
 

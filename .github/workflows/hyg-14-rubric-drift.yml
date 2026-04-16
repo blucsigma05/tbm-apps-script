@@ -1,0 +1,142 @@
+# .github/workflows/hyg-14-rubric-drift.yml
+# HYG-14: Rubric drift enforcement — Work Doctrine rule 14 drift-control extension.
+#
+# Contract:
+#   If a PR changes any file listed in the tracked_files column of ops/surface-map.md
+#   for a row where mvss_scope is 'education' or 'chore',
+#   the PR must ALSO touch ops/specs/2026-04-15-play-surface-minimum-viable-standard.md
+#   OR ops/play-gate-rubric.v1.json,
+#   OR carry the label 'rubric-n/a'.
+#
+# Parser: reads ops/surface-map.md from the PR's merged state, not from the base branch.
+# Uses the tracked_files and mvss_scope columns (content cols 16 and 17; awk fields $17 and $18
+# because rows start with |, shifting awk field numbers by 1).
+# Does NOT parse the free-form Primary Code column.
+# Finance, ambient, story, parent, qa, and out-of-scope rows are excluded from coupling.
+
+name: HYG-14 Rubric Drift
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  rubric-drift:
+    name: Check rubric coupling
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed
+        run: |
+          CHANGED=$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}" 2>/dev/null || echo "")
+          echo "Changed files:"
+          echo "$CHANGED"
+          # Write to file for use in next step
+          echo "$CHANGED" > /tmp/changed_files.txt
+
+      - name: Parse surface-map tracked files (education + chore scope)
+        id: tracked
+        run: |
+          # Extract tracked_files values from rows where mvss_scope is 'education' or 'chore'
+          # Surface-map column layout (pipe-delimited):
+          # col 1: Surface, col 16: tracked_files, col 17: mvss_scope
+          # Skip header rows (NR <= 2) and empty rows
+
+          TRACKED_RAW=$(awk -F'|' '
+            NR > 2 {
+              # Strip leading/trailing whitespace from scope and tracked_files
+              # Rows start and end with |, so awk field numbers are content-col + 1:
+              # tracked_files = content col 16 = awk $17
+              # mvss_scope    = content col 17 = awk $18
+              scope = $18
+              tracked = $17
+              gsub(/^[[:space:]]+|[[:space:]]+$/, "", scope)
+              gsub(/^[[:space:]]+|[[:space:]]+$/, "", tracked)
+              if ((scope == "education" || scope == "chore") && tracked != "" && tracked != "tracked_files") {
+                print tracked
+              }
+            }
+          ' ops/surface-map.md)
+
+          echo "Raw tracked file entries:"
+          echo "$TRACKED_RAW"
+
+          # Expand comma-separated lists and normalize whitespace, write to file
+          echo "$TRACKED_RAW" | tr ',' '\n' | awk '{gsub(/^[[:space:]]+|[[:space:]]+$/, ""); if ($0 != "") print}' | sort -u > /tmp/tracked_files.txt
+
+          echo "Unique tracked files covered by MVSS v1 rubric:"
+          cat /tmp/tracked_files.txt
+
+      - name: Check rubric coupling contract
+        env:
+          LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          # Check for rubric-n/a label
+          if echo "$LABELS" | grep -q '"rubric-n/a"'; then
+            echo "PR carries label rubric-n/a — rubric coupling waived."
+            exit 0
+          fi
+
+          # Check if any changed file is in the tracked set
+          CHANGED=$(cat /tmp/changed_files.txt)
+          TRACKED=$(cat /tmp/tracked_files.txt)
+
+          INTERSECTION=""
+          while IFS= read -r tracked_file; do
+            if [ -z "$tracked_file" ]; then continue; fi
+            while IFS= read -r changed_file; do
+              # Compare basename of changed file against tracked file name
+              changed_base=$(basename "$changed_file")
+              if [ "$changed_base" = "$tracked_file" ] || [ "$changed_file" = "$tracked_file" ]; then
+                INTERSECTION="$INTERSECTION\n  $changed_file (tracked as $tracked_file)"
+              fi
+            done <<< "$CHANGED"
+          done <<< "$TRACKED"
+
+          if [ -z "$INTERSECTION" ]; then
+            echo "PASS: No tracked surface files changed in this PR. Rubric coupling not required."
+            exit 0
+          fi
+
+          echo "Tracked surface files changed in this PR:"
+          echo -e "$INTERSECTION"
+          echo ""
+
+          # Check if spec or rubric was also touched
+          SPEC_TOUCHED=0
+          RUBRIC_TOUCHED=0
+
+          while IFS= read -r changed_file; do
+            if echo "$changed_file" | grep -q "2026-04-15-play-surface-minimum-viable-standard.md"; then
+              SPEC_TOUCHED=1
+            fi
+            if echo "$changed_file" | grep -q "play-gate-rubric.v1.json"; then
+              RUBRIC_TOUCHED=1
+            fi
+          done <<< "$CHANGED"
+
+          if [ "$SPEC_TOUCHED" -eq 1 ] || [ "$RUBRIC_TOUCHED" -eq 1 ]; then
+            echo "PASS: PR changes tracked surface files AND touches the MVSS spec or rubric. Contract satisfied."
+            exit 0
+          fi
+
+          echo "::error::HYG-14 RUBRIC DRIFT VIOLATION"
+          echo "::error::This PR changes MVSS-tracked surface files but does not update the rubric or spec."
+          echo "::error::Tracked files changed:"
+          echo -e "::error::$INTERSECTION"
+          echo "::error::Required: also touch ops/specs/2026-04-15-play-surface-minimum-viable-standard.md"
+          echo "::error::       OR ops/play-gate-rubric.v1.json"
+          echo "::error::       OR add label 'rubric-n/a' to this PR if the rubric is intentionally unchanged."
+          echo "::error::Work Doctrine rule 14 drift-control extension."
+          exit 1

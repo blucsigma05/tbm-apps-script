@@ -9,6 +9,8 @@ on:
     paths:
       - '.github/workflows/**'
       - '.github/scripts/**'
+      - 'ops/play-gate-rubric.v1.json'
+      - 'ops/schemas/**'
   workflow_dispatch:
 
 permissions:
@@ -123,6 +125,51 @@ jobs:
             exit 1
           fi
           echo "PASS: no pull_request_target workflows check out untrusted head code"
+
+      - name: Validate play-gate rubric JSON schema
+        run: |
+          # Validate ops/play-gate-rubric.v1.json against ops/schemas/play-gate-rubric.schema.json
+          # Uses Python jsonschema (pre-installed on ubuntu-latest runners).
+          # Only runs if either the rubric or the schema was changed (paths filter above).
+          if [ -f "ops/play-gate-rubric.v1.json" ] && [ -f "ops/schemas/play-gate-rubric.schema.json" ]; then
+            echo "--- rubric schema validation ---"
+            pip install --quiet jsonschema 2>&1 | tail -1
+            python3 - <<'PYEOF'
+          import json, jsonschema, sys
+
+          with open('ops/schemas/play-gate-rubric.schema.json') as f:
+              schema = json.load(f)
+          with open('ops/play-gate-rubric.v1.json') as f:
+              rubric = json.load(f)
+
+          try:
+              jsonschema.validate(rubric, schema)
+              criteria = rubric.get('criteria', {})
+              total = sum(len(v) for v in criteria.values() if isinstance(v, list))
+              print("Schema validation PASS: {} total criteria across {} groups".format(
+                  total, len(criteria)))
+              # Check for banned owner values
+              def find_banned(obj, path=""):
+                  if isinstance(obj, dict):
+                      owner = obj.get("owner", "")
+                      if owner not in ("LT", "JT", "education-owner", "finance-owner", "platform-owner", "shared", ""):
+                          print("FAIL: banned owner '{}' at {}".format(owner, path), file=sys.stderr)
+                          sys.exit(1)
+                      for k, v in obj.items():
+                          find_banned(v, path + "." + k)
+                  elif isinstance(obj, list):
+                      for i, v in enumerate(obj):
+                          find_banned(v, path + "[{}]".format(i))
+              find_banned(rubric)
+              print("Owner enum validation PASS")
+          except jsonschema.ValidationError as e:
+              print("Schema validation FAIL: {}".format(e.message), file=sys.stderr)
+              sys.exit(1)
+          PYEOF
+            echo "PASS: rubric schema validation complete"
+          else
+            echo "Rubric or schema file not found — skipping schema validation"
+          fi
 
       - name: Policy — no artifact downloads in workflow_run handlers (F08)
         run: |

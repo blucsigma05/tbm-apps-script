@@ -1,0 +1,70 @@
+# .github/workflows/hygiene-filer.yml
+# Reusable filer workflow — accepts a finding JSON and invokes file_hygiene_issue.py.
+# Called by:
+#   - Hygiene workflows via `gh workflow run hygiene-filer.yml -f finding='<json>'`
+#   - workflow_call from another workflow (same inputs)
+#   - workflow_dispatch for manual testing
+# Concurrency: single-writer across all callers — prevents duplicate Issues
+#   when two hygiene workflows detect the same finding within the same window.
+
+name: Hygiene Filer (reusable)
+
+on:
+  workflow_dispatch:
+    inputs:
+      finding:
+        description: 'Finding JSON string (see file_hygiene_issue.py schema)'
+        required: true
+        type: string
+      dry_run:
+        description: 'If true, render body but do not create/modify Issues'
+        required: false
+        default: 'false'
+        type: string
+  workflow_call:
+    inputs:
+      finding:
+        required: true
+        type: string
+      dry_run:
+        required: false
+        default: 'false'
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: hygiene-issue-filer
+  cancel-in-progress: false
+
+jobs:
+  file-issue:
+    name: File hygiene Issue
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: ${{ vars.AUTOMATION_ENABLED != 'false' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Invoke filer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          AUTOMATION_ENABLED: ${{ vars.AUTOMATION_ENABLED }}
+          HYGIENE_ISSUE_CREATION_ENABLED: ${{ vars.HYGIENE_ISSUE_CREATION_ENABLED }}
+          AUTOMATION_MAX_DAILY_ISSUES: ${{ vars.AUTOMATION_MAX_DAILY_ISSUES }}
+          STATUS_ISSUE_NUMBER: ${{ vars.STATUS_ISSUE_NUMBER }}
+          FINDING_JSON: ${{ inputs.finding }}
+          DRY_RUN_FLAG: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN_FLAG" = "true" ]; then
+            printf '%s' "$FINDING_JSON" | python3 .github/scripts/file_hygiene_issue.py --dry-run
+          else
+            printf '%s' "$FINDING_JSON" | python3 .github/scripts/file_hygiene_issue.py
+          fi
+          # If AUTOMATION_ENABLED=false, this job is skipped entirely by the job-level
+          # `if` guard above — no notice step needed.

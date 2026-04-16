@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="reading-module">
-<meta name="tbm-version" content="v7">
+<meta name="tbm-version" content="v9">
 <title>Wolfkid Reading Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -889,7 +889,7 @@ var ExecSkills = (function() {
   function _submitErrorJournal() {
     var t = document.getElementById('es-ej-textarea');
     var text = t ? t.value.replace(/^\s+|\s+$/g, '') : '';
-    if (text.length < 5) { if (t) { t.style.borderColor = '#ffc107'; t.placeholder = 'Write at least one sentence...'; } return; }
+    if (text.length < 5) { if (t) { t.style.borderColor = '#ffc107'; t.placeholder = 'Write at least one full sentence here.'; } return; }
     ExecSkills._journalData = { questionIndex: _selectedMissedQ, reflection: text, timestamp: new Date().toISOString() };
     var p = document.getElementById('es-ej-prompt'); if (p) p.innerHTML = '&#9989; Logged!';
     if (t) t.style.display = 'none';
@@ -1013,102 +1013,33 @@ function endBrainBreak() {
 
 var _dayOfWeek = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][new Date().getDay()];
 
-var MODULE_VERSION = 'v6';
+var MODULE_VERSION = 'v9';
 var CHILD = 'buggsy';
-var _usingFallback = false;
+
+// v9 (#348) — No fallback content. If curriculum doesn't load we render an error screen, not a fake essay.
+function showLoadError_(reason) {
+  var msg = 'Having trouble loading today\u2019s reading.';
+  if (reason === 'offline') { msg = 'Cannot reach the server right now.'; }
+  var body = document.body;
+  if (!body) { return; }
+  body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;'
+    + 'min-height:100vh;background:#0B0F1A;color:#E2E8F0;font-family:Nunito,sans-serif;'
+    + 'flex-direction:column;gap:16px;padding:20px;text-align:center;">'
+    + '<div style="font-size:48px;">&#9888;&#65039;</div>'
+    + '<div style="font-family:Orbitron,sans-serif;font-size:18px;color:#F59E0B;'
+    + 'letter-spacing:2px;">READING LOAD FAILED</div>'
+    + '<div style="font-size:16px;max-width:400px;">' + msg + '</div>'
+    + '<div style="font-size:13px;color:#94a3b8;max-width:360px;">Tell Mom or Dad. They\u2019ll fix it.</div>'
+    + '<button onclick="window.location.reload()" style="margin-top:12px;padding:12px 32px;'
+    + 'background:#F59E0B;color:#0B0F1A;border:none;border-radius:8px;font-family:Orbitron,sans-serif;'
+    + 'font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;">TRY AGAIN</button>'
+    + '</div>';
+}
 
 // ─── PASSAGE DATA ───
+// v9 (#348) — FALLBACK_PASSAGE + FALLBACK_QUESTIONS deleted. Curriculum-or-error.
 var PASSAGE = null;
 var QUESTIONS = null;
-var FALLBACK_PASSAGE = {
-  title: 'The Deep Ocean',
-  paragraphs: [
-    'The ocean is the largest habitat on Earth, covering more than 70 percent of the planet\'s surface. Most people are familiar with the shallow waters near the shore, where sunlight brightens the sandy bottom and waves lap against the beach. But the ocean is far deeper than most people realize. In some places, it plunges nearly seven miles below the surface. Scientists divide the ocean into distinct zones based on how much sunlight reaches each depth, and the deeper you go, the more alien the world becomes.',
-    'The sunlight zone is the top layer of the ocean, stretching from the surface down to about 656 feet. This is where most ocean life exists. Sunlight floods this zone, allowing tiny plants called phytoplankton to grow. These microscopic organisms produce more than half of the world\'s oxygen through photosynthesis. Fish, dolphins, sea turtles, and sharks all thrive here because food is plentiful. The water is warm and bright, making it the most hospitable part of the ocean.',
-    'Below the sunlight zone lies the twilight zone, which extends from about 656 feet to 3,280 feet deep. Only a faint blue glow of light reaches this region. The water grows colder, and the pressure increases. Many creatures here have developed bioluminescence, meaning they can produce their own light. Lanternfish, jellyfish, and squid use glowing body parts to attract prey, communicate, or confuse predators. Food is scarcer in the twilight zone, so animals must descend to darker waters or wait for scraps to drift down from above.',
-    'The midnight zone begins at about 3,280 feet and extends to roughly 13,000 feet. No sunlight penetrates this deep. The water temperature hovers just above freezing, and the pressure is crushing. Despite these extreme conditions, life persists. Giant squid, anglerfish with their eerie glowing lures, and strange tube worms cluster around hydrothermal vents on the ocean floor. These vents release superheated water and minerals from deep within the Earth, supporting entire ecosystems without any sunlight at all.',
-    'The deepest region is the abyssal zone, found below 13,000 feet. Temperatures here are near freezing, and the pressure is more than 1,000 times what we experience at the surface. Very few creatures can survive in such harsh conditions. Those that do, like certain species of sea cucumbers and microscopic organisms, have adapted to thrive in total darkness with almost no food. Scientists estimate that more than 80 percent of the ocean floor remains unexplored, meaning the abyssal zone may hold secrets we have not yet imagined.'
-  ],
-  vocabWords: ['descend', 'bioluminescence', 'hospitable', 'photosynthesis']
-};
-
-// ─── QUESTIONS DATA ───
-var FALLBACK_QUESTIONS = [
-  {
-    id: 1,
-    type: 'multiple_choice',
-    teks: 'ELA 4.6',
-    difficulty: 'Easy',
-    label: 'Main Idea',
-    question: 'What is the MAIN idea of this passage?',
-    options: [
-      'A) The ocean is too dangerous for humans to explore.',
-      'B) The ocean is divided into zones that get darker, colder, and more extreme as depth increases.',
-      'C) Anglerfish are the most interesting creatures in the deep ocean.',
-      'D) Scientists have already explored every part of the ocean floor.'
-    ],
-    answer: 1,
-    explanation: 'The passage is organized around the different ocean zones and describes how conditions change as depth increases. Each paragraph introduces a deeper zone with harsher conditions, making this the main idea.'
-  },
-  {
-    id: 2,
-    type: 'multiple_choice',
-    teks: 'ELA 4.3B',
-    difficulty: 'Medium',
-    label: 'Vocabulary in Context',
-    question: 'In paragraph 3, the author writes that animals "must descend to darker waters." What does the word "descend" mean as it is used here?',
-    options: [
-      'A) To swim in circles',
-      'B) To move downward to a lower level',
-      'C) To float near the surface',
-      'D) To hide from predators'
-    ],
-    answer: 1,
-    explanation: 'The word "descend" means to move downward. The context clue is "to darker waters" \u2014 since the passage explains that deeper water is darker, descending means moving down to a lower depth.'
-  },
-  {
-    id: 3,
-    type: 'multiple_choice',
-    teks: 'ELA 4.10',
-    difficulty: 'Medium',
-    label: "Author's Purpose",
-    question: "What is the author's MAIN purpose for writing this passage?",
-    options: [
-      'A) To persuade readers to become ocean scientists',
-      'B) To entertain readers with a fictional story about the ocean',
-      'C) To inform readers about the different zones of the ocean and what lives there',
-      'D) To warn readers about the dangers of deep-sea diving'
-    ],
-    answer: 2,
-    explanation: "The author's purpose is to inform. The passage presents factual information about each ocean zone in an organized way. It does not try to persuade, entertain with fiction, or warn about danger."
-  },
-  {
-    id: 4,
-    type: 'multiple_choice',
-    teks: 'ELA 4.9D',
-    difficulty: 'Medium',
-    label: 'Text Structure',
-    question: 'How is this passage MAINLY organized?',
-    options: [
-      'A) Problem and solution \u2014 it describes ocean pollution and how to fix it',
-      'B) Cause and effect \u2014 it explains why the ocean exists',
-      'C) Sequential order \u2014 it describes ocean zones from shallowest to deepest',
-      'D) Compare and contrast \u2014 it only compares two zones side by side'
-    ],
-    answer: 2,
-    explanation: 'The passage follows a sequential (top-to-bottom) order, moving through each ocean zone from the sunlight zone near the surface down to the abyssal zone at the very bottom. Each paragraph introduces the next deeper zone.'
-  },
-  {
-    id: 5,
-    type: 'short_answer',
-    teks: 'ELA 4.6',
-    difficulty: 'Hard',
-    label: 'Inference',
-    question: 'Based on the passage, why do you think FEWER creatures live in the abyssal zone compared to the sunlight zone? Use evidence from the passage to support your answer.',
-    hint: 'Think about what living things need to survive: light, food, comfortable temperature, and manageable pressure. How do these factors differ between the two zones?',
-    sampleAnswer: 'Fewer creatures live in the abyssal zone because the conditions are much harsher. The passage says the sunlight zone has warm water, plentiful food, and sunlight for photosynthesis. In contrast, the abyssal zone has near-freezing temperatures, crushing pressure over 1,000 times what we feel at the surface, total darkness, and almost no food. Most organisms cannot adapt to such extreme conditions, so only a few specialized species survive there.'
-  }
-];
 
 // ─── COLORS ───
 var C = {
@@ -1521,7 +1452,7 @@ function lockInMC(qId) {
   ans.correct = (ans.selected === q.answer);
 
   // Log per-question result to QuestionLog for mastery tracking (#161)
-  if (!TBM_TEST_MODE && !_usingFallback && typeof google !== 'undefined' && google.script && google.script.run) {
+  if (!TBM_TEST_MODE && typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function() {})
       .withFailureHandler(function(err) { console.error('QuestionLog failed:', err); })
@@ -1781,8 +1712,6 @@ function renderResults() {
       console.log('[TEST MODE] awardRingsSafe skipped, rings=' + earnedRings);
       console.log('[TEST MODE] submitHomeworkSafe skipped');
       console.log('[TEST MODE] logHomeworkCompletionSafe skipped');
-    } else if (_usingFallback) {
-      console.log('Practice mode — rings not awarded');
     } else {
       google.script.run
         .withSuccessHandler(function(result) {
@@ -1889,10 +1818,8 @@ function applyPassageVisibility(visibility) {
 // ─── CURRICULUM LOADING ───
 function loadCurriculumContent() {
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
-    _usingFallback = true;
-    PASSAGE = FALLBACK_PASSAGE;
-    QUESTIONS = FALLBACK_QUESTIONS;
-    init();
+    console.warn('[TBM FALLBACK] reading-module \u2014 reason: no google.script.run available');
+    showLoadError_('offline');
     return;
   }
   google.script.run
@@ -1903,24 +1830,26 @@ function loadCurriculumContent() {
         if (adhd.brainBreakAfter) { _brainBreakAfter = adhd.brainBreakAfter; }
         if (adhd.brainBreakPrompt) { _brainBreakPrompt = adhd.brainBreakPrompt; }
       }
-      if (response && response.content && response.content.cold_passage) {
-        var cp = response.content.cold_passage;
-        PASSAGE = { title: cp.title || 'Reading Passage', text: cp.passage || cp.text || '', paragraphs: cp.paragraphs || [], vocabWords: cp.vocabWords || [], passageVisibility: cp.passageVisibility };
-        QUESTIONS = cp.questions || [];
-        init();
-      } else {
-        _usingFallback = true;
-        PASSAGE = FALLBACK_PASSAGE;
-        QUESTIONS = FALLBACK_QUESTIONS;
-        init();
+      if (!response || !response.content || !response.content.cold_passage) {
+        console.warn('[TBM FALLBACK] reading-module \u2014 reason: getTodayContentSafe returned no cold_passage in content');
+        showLoadError_('no-content');
+        return;
       }
+      var cp = response.content.cold_passage;
+      var hasParagraphs = (cp.paragraphs && cp.paragraphs.length > 0) || cp.passage || cp.text;
+      var hasQuestions = (cp.questions && cp.questions.length > 0);
+      if (!hasParagraphs || !hasQuestions) {
+        console.warn('[TBM FALLBACK] reading-module \u2014 reason: cold_passage missing paragraphs or questions (paragraphs=' + !!hasParagraphs + ', questions=' + !!hasQuestions + ')');
+        showLoadError_('no-content');
+        return;
+      }
+      PASSAGE = { title: cp.title || 'Reading Passage', text: cp.passage || cp.text || '', paragraphs: cp.paragraphs || [], vocabWords: cp.vocabWords || [], passageVisibility: cp.passageVisibility };
+      QUESTIONS = cp.questions || [];
+      init();
     })
     .withFailureHandler(function(err) {
-      console.log('Curriculum load failed: ' + (err && err.message ? err.message : 'unknown'));
-      _usingFallback = true;
-      PASSAGE = FALLBACK_PASSAGE;
-      QUESTIONS = FALLBACK_QUESTIONS;
-      init();
+      console.warn('[TBM FALLBACK] reading-module \u2014 reason: getTodayContentSafe failed: ' + (err && err.message ? err.message : 'unknown'));
+      showLoadError_('load-error');
     })
     .getTodayContentSafe('buggsy');
 }

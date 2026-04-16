@@ -1,0 +1,16 @@
+{
+  "check": "version-drift",
+  "check_title": "HYG-06",
+  "title": "Version drift: DataEngine.js",
+  "identity": {
+    "check": "version-drift",
+    "file": "dataengine.js",
+    "direction": "source-ahead"
+  },
+  "evidence": {
+    "Deployed": "42",
+    "Source": "43"
+  },
+  "details": "Source code has version 43 but deployed GAS is at 42. Indicates clasp push without deploy (or a missed deploy step).",
+  "extra_labels": ["area:infra"]
+}

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="tbm-module" content="writing-module">
-<meta name="tbm-version" content="v7">
+<meta name="tbm-version" content="v9">
 <title>Writing Module - Buggsy</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -967,10 +967,29 @@ function endBrainBreak() {
   if (overlay) overlay.style.display = 'none';
 }
 
-var MODULE_VERSION = 'v6';
+var MODULE_VERSION = 'v9';
 var CHILD = TBM_SANDBOX ? 'sandbox-buggsy' : 'buggsy';
 var TARGET_MINUTES = 12;
-var _usingFallback = false;
+
+// v9 (#348) — No fallback content. If curriculum doesn't load we render an error screen, not default prompts.
+function showLoadError_(reason) {
+  var msg = 'Having trouble loading today\u2019s writing assignment.';
+  if (reason === 'offline') { msg = 'Cannot reach the server right now.'; }
+  var body = document.body;
+  if (!body) { return; }
+  body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;'
+    + 'min-height:100vh;background:#0B0F1A;color:#E2E8F0;font-family:Nunito,sans-serif;'
+    + 'flex-direction:column;gap:16px;padding:20px;text-align:center;">'
+    + '<div style="font-size:48px;">&#9888;&#65039;</div>'
+    + '<div style="font-family:Orbitron,sans-serif;font-size:18px;color:#F59E0B;'
+    + 'letter-spacing:2px;">WRITING LOAD FAILED</div>'
+    + '<div style="font-size:16px;max-width:400px;">' + msg + '</div>'
+    + '<div style="font-size:13px;color:#94a3b8;max-width:360px;">Tell Mom or Dad. They\u2019ll fix it.</div>'
+    + '<button onclick="window.location.reload()" style="margin-top:12px;padding:12px 32px;'
+    + 'background:#F59E0B;color:#0B0F1A;border:none;border-radius:8px;font-family:Orbitron,sans-serif;'
+    + 'font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;">TRY AGAIN</button>'
+    + '</div>';
+}
 
 // ─── 4 Writing Formats ───
 var FORMATS = [
@@ -1560,9 +1579,7 @@ function handleSubmit() {
   }
 
   // Submit homework via GAS backend (if available)
-  if (_usingFallback) {
-    console.log('Practice mode — rings not awarded');
-  } else if (!TBM_TEST_MODE) {
+  if (!TBM_TEST_MODE) {
     try {
       if (typeof google !== 'undefined' && google.script && google.script.run) {
         google.script.run
@@ -1586,9 +1603,7 @@ function handleSubmit() {
   }
 
   // Award rings via GAS backend (if available)
-  if (_usingFallback) {
-    // Already logged above
-  } else if (TBM_TEST_MODE) {
+  if (TBM_TEST_MODE) {
     console.log('[TEST MODE] awardRingsSafe skipped, rings=3');
   } else {
     try {
@@ -1631,8 +1646,8 @@ function handleSubmit() {
 // ─── CURRICULUM LOADING ───
 function loadWritingContent() {
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
-    _usingFallback = true;
-    init();
+    console.warn('[TBM FALLBACK] writing-module \u2014 reason: no google.script.run available');
+    showLoadError_('offline');
     return;
   }
   google.script.run
@@ -1643,31 +1658,30 @@ function loadWritingContent() {
         if (adhd.brainBreakAfter) { _brainBreakAfter = adhd.brainBreakAfter; }
         if (adhd.brainBreakPrompt) { _brainBreakPrompt = adhd.brainBreakPrompt; }
       }
-      if (result && result.content) {
-        var c = result.content;
-        if (c.quick_write || c.grammar_sprint) {
-          // Use curriculum content to override default prompts
-          if (c.quick_write && c.quick_write.prompt) {
-            for (var i = 0; i < FORMATS.length; i++) {
-              if (FORMATS[i].id === 'quick_write' || FORMATS[i].id === 'journal') {
-                FORMATS[i].prompt = c.quick_write.prompt;
-                if (c.quick_write.guidance) { FORMATS[i].guidance = c.quick_write.guidance; }
-              }
-            }
-          }
-          init();
-        } else {
-          _usingFallback = true;
-          init();
-        }
-      } else {
-        _usingFallback = true;
-        init();
+      if (!result || !result.content) {
+        console.warn('[TBM FALLBACK] writing-module \u2014 reason: getTodayContentSafe returned empty/missing content');
+        showLoadError_('no-content');
+        return;
       }
-    })
-    .withFailureHandler(function() {
-      _usingFallback = true;
+      var c = result.content;
+      var qw = c.quick_write && c.quick_write.prompt ? c.quick_write : null;
+      if (!qw) {
+        console.warn('[TBM FALLBACK] writing-module \u2014 reason: response had content but no quick_write.prompt');
+        showLoadError_('no-content');
+        return;
+      }
+      // Override default prompts with today's curriculum.
+      for (var i = 0; i < FORMATS.length; i++) {
+        if (FORMATS[i].id === 'quick_write' || FORMATS[i].id === 'journal') {
+          FORMATS[i].prompt = qw.prompt;
+          if (qw.guidance) { FORMATS[i].guidance = qw.guidance; }
+        }
+      }
       init();
+    })
+    .withFailureHandler(function(err) {
+      console.warn('[TBM FALLBACK] writing-module \u2014 reason: getTodayContentSafe failed: ' + (err && err.message ? err.message : 'unknown'));
+      showLoadError_('load-error');
     })
     .getTodayContentSafe('buggsy');
 }
