@@ -3,7 +3,7 @@
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 18
+// Version: 20
 // Pipeline (phased): Idea→Writing→Written→Illustrating→Illustrated→Assembling→Ready
 //   Phase 1 (Write):     Character Fetch → Memory Inject → Gemini Story → Canon Extract → persist JSON to Drive
 //   Phase 2 (Illustrate): Load story JSON → Gemini Images → persist blobs to Drive folder
@@ -11,7 +11,7 @@
 // Each phase runs in a separate poll cycle — any phase failure is isolated and retried independently.
 // ============================================================
 
-function getStoryFactoryVersion() { return 19; }
+function getStoryFactoryVersion() { return 20; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -482,15 +482,25 @@ toneGuide +
 
 var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + CONFIG.STORY_MODEL + ':generateContent?key=' + CONFIG.GEMINI_API_KEY;
 
-var result = safeFetch(url, {
-method: 'POST',
-contentType: 'application/json',
-payload: JSON.stringify({
+var storyPayload = JSON.stringify({
 contents: [{ parts: [{ text: prompt }] }],
 generationConfig: { temperature: 0.8, maxOutputTokens: 4000, responseMimeType: 'application/json' }
-}),
-muteHttpExceptions: true
 });
+var result;
+for (var _storyAttempt = 1; _storyAttempt <= 3; _storyAttempt++) {
+  try {
+    result = safeFetch(url, { method: 'POST', contentType: 'application/json', payload: storyPayload, muteHttpExceptions: true });
+    break;
+  } catch(_se) {
+    var _isTransient = _se.message.indexOf('SERVER_ERROR_503') >= 0 || _se.message.indexOf('RATE_LIMITED') >= 0 || _se.message.indexOf('429') >= 0;
+    if (_isTransient && _storyAttempt < 3) {
+      Logger.log('Story gen attempt ' + _storyAttempt + ' hit transient error — retrying in 30s: ' + _se.message.substring(0, 80));
+      Utilities.sleep(30000);
+    } else {
+      throw _se;
+    }
+  }
+}
 
 if (result.error) throw new Error('Story API error: ' + result.error.message);
 if (!result.candidates || result.candidates.length === 0) {
@@ -1646,7 +1656,7 @@ function sf_findEligibleRow_() {
           { property: 'Status', select: { equals: 'Illustrated' } }
         ]
       },
-      sorts: [{ property: 'Created time', direction: 'ascending' }],
+      sorts: [{ timestamp: 'created_time', direction: 'ascending' }],
       page_size: 5
     };
     if (startCursor) body.start_cursor = startCursor;
@@ -2343,7 +2353,7 @@ function diagStoryFactory_() {
   try {
     var storyResult = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
       filter: { property: 'Status', select: { equals: 'Ready' } },
-      sorts: [{ property: 'Created time', direction: 'descending' }],
+      sorts: [{ timestamp: 'created_time', direction: 'descending' }],
       page_size: 1
     });
     if (storyResult && storyResult.results && storyResult.results.length > 0) {
@@ -2374,5 +2384,5 @@ function diagStoryFactorySafe() {
   });
 }
 
-// END OF FILE — StoryFactory v19
+// END OF FILE — StoryFactory v20
 // ════════════════════════════════════════════════════════════════════
