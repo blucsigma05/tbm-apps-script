@@ -1,4 +1,4 @@
-// Version history tracked in Notion deploy page. Do not add version comments here.
+// StoryFactory.js — v20
 // ============================================================
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
