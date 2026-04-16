@@ -423,26 +423,44 @@ echo "--- Deploy Freeze ---"
 if [[ "${EMERGENCY:-0}" == "1" ]]; then
   echo "  BYPASS -- EMERGENCY=1 set; skipping freeze check"
 else
-  # Use clasp run to read freeze state from Script Properties
-  # jq required; falls back gracefully if clasp run fails
-  if command -v jq >/dev/null 2>&1 && command -v clasp >/dev/null 2>&1; then
+  # Use clasp run to read freeze state from Script Properties.
+  # When tools are present: fail-closed — a clasp error or unparseable response
+  # is treated as FAIL (cannot confirm no freeze). Only active:false passes.
+  # When tools are absent: SKIP — developer environment may lack jq/clasp.
+  if ! command -v jq >/dev/null 2>&1 || ! command -v clasp >/dev/null 2>&1; then
+    echo "  SKIP -- jq or clasp not available; freeze check skipped"
+    echo "  (Install jq + clasp to enable runtime freeze verification)"
+    WARN=$((WARN + 1))
+  else
     FREEZE_JSON=$(clasp run getFreezeState_ 2>/dev/null)
-    FREEZE_ACTIVE=$(echo "$FREEZE_JSON" | jq -r '.active // false' 2>/dev/null)
-    if [[ "$FREEZE_ACTIVE" == "true" ]]; then
-      FREEZE_REASON=$(echo "$FREEZE_JSON" | jq -r '.reason // "unknown reason"' 2>/dev/null)
-      FREEZE_EXPIRY=$(echo "$FREEZE_JSON" | jq -r '.expiresAt // "no expiry set"' 2>/dev/null)
-      echo "  FAIL -- Deploy freeze is ACTIVE"
-      echo "         Reason:  $FREEZE_REASON"
-      echo "         Expires: $FREEZE_EXPIRY"
-      echo "         To bypass (genuine emergency only):"
-      echo "           EMERGENCY=1 bash audit-source.sh"
-      echo "           Commit message must start with: EMERGENCY: <reason>"
+    CLASP_EXIT=$?
+    if [[ $CLASP_EXIT -ne 0 || -z "$FREEZE_JSON" ]]; then
+      echo "  FAIL -- clasp run getFreezeState_ failed (exit $CLASP_EXIT) or returned empty"
+      echo "         Tools are present but could not confirm freeze state — treating as blocked"
+      echo "         To bypass (genuine emergency only): EMERGENCY=1 bash audit-source.sh"
       FAIL=1
     else
-      echo "  OK -- No active deploy freeze"
+      FREEZE_ACTIVE=$(echo "$FREEZE_JSON" | jq -r '.active // empty' 2>/dev/null)
+      JQ_EXIT=$?
+      if [[ $JQ_EXIT -ne 0 || -z "$FREEZE_ACTIVE" ]]; then
+        echo "  FAIL -- Cannot parse freeze state JSON (jq exit $JQ_EXIT)"
+        echo "         Raw output: $FREEZE_JSON"
+        echo "         To bypass (genuine emergency only): EMERGENCY=1 bash audit-source.sh"
+        FAIL=1
+      elif [[ "$FREEZE_ACTIVE" == "true" ]]; then
+        FREEZE_REASON=$(echo "$FREEZE_JSON" | jq -r '.reason // "unknown reason"' 2>/dev/null)
+        FREEZE_EXPIRY=$(echo "$FREEZE_JSON" | jq -r '.expiresAt // "no expiry set"' 2>/dev/null)
+        echo "  FAIL -- Deploy freeze is ACTIVE"
+        echo "         Reason:  $FREEZE_REASON"
+        echo "         Expires: $FREEZE_EXPIRY"
+        echo "         To bypass (genuine emergency only):"
+        echo "           EMERGENCY=1 bash audit-source.sh"
+        echo "           Commit message must start with: EMERGENCY: <reason>"
+        FAIL=1
+      else
+        echo "  OK -- No active deploy freeze"
+      fi
     fi
-  else
-    echo "  SKIP -- clasp or jq not available; freeze check skipped"
   fi
 fi
 

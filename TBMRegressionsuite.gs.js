@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmRegressionSuite.gs v7 — Phase A3: Post-Deploy Behavioral Assertions
+// tbmRegressionSuite.gs v8 — Phase A3: Post-Deploy Behavioral Assertions
 // WRITES TO: (none — read-only assertions)
 // READS FROM: All sheets (for regression assertions)
 // ════════════════════════════════════════════════════════════════════
@@ -20,7 +20,7 @@
 // USAGE: Run tbmRegressionSuite() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getRegressionSuiteVersion() { return 7; }
+function getRegressionSuiteVersion() { return 8; }
 
 /**
  * Main entry point. Run after every deploy.
@@ -1057,9 +1057,15 @@ function regressionEnvOnly() {
 
 /**
  * Run all 5 freeze gate assertions.
- * Tests are non-destructive: any activated freeze is immediately lifted after each test.
+ * Saves any existing freeze state before tests and restores it after, so running
+ * the regression suite during an operational freeze does not clear the live gate.
  */
 function runFreezeGateAssertions_(results) {
+  // Capture raw property so we can restore exactly after all tests complete.
+  var props = PropertiesService.getScriptProperties();
+  var priorFreezeRaw = props.getProperty('DEPLOY_FREEZE');
+
+  try {
 
   // FREEZE-001: setFreeze_ activates; getFreezeState_ returns active:true with reason
   var f1 = { id: 'FREEZE-001', category: 'freeze-gate', description: 'setFreeze_ activates; getFreezeState_ returns active:true', status: 'FAIL', details: '' };
@@ -1166,7 +1172,20 @@ function runFreezeGateAssertions_(results) {
     try { liftFreeze_(); } catch(e2) {}
   }
   results.assertions.push(f5);
+
+  } finally {
+    // Restore pre-test freeze state so a live operational freeze is not destroyed.
+    if (priorFreezeRaw) {
+      props.setProperty('DEPLOY_FREEZE', priorFreezeRaw);
+    } else {
+      props.deleteProperty('DEPLOY_FREEZE');
+    }
+    // Always clean up test-issued emergency tokens and counters.
+    props.deleteProperty('DEPLOY_FREEZE_EMERGENCY');
+    props.deleteProperty('FREEZE_BLOCK_COUNT');
+    props.deleteProperty('FREEZE_LAST_PUSH');
+  }
 }
 
 
-// END OF FILE — tbmRegressionSuite.gs v7
+// END OF FILE — tbmRegressionSuite.gs v8

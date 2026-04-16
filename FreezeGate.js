@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// FreezeGate.js v1 — Deploy Freeze runtime gate (P0-21)
+// FreezeGate.js v2 — Deploy Freeze runtime gate (P0-21)
 // WRITES TO: Script Properties (DEPLOY_FREEZE, DEPLOY_FREEZE_EMERGENCY,
 //            FREEZE_BLOCK_COUNT, FREEZE_LAST_PUSH)
 // READS FROM: Script Properties
@@ -8,7 +8,7 @@
 // ════════════════════════════════════════════════════════════════════
 // Version history tracked in Notion deploy page. Do not add version comments here.
 
-function getFreezeGateVersion() { return 1; }
+function getFreezeGateVersion() { return 2; }
 
 // ── Public API ─────────────────────────────────────────────────────
 
@@ -62,6 +62,7 @@ function liftFreeze_() {
     } catch(e) {}
   }
   PropertiesService.getScriptProperties().deleteProperty('DEPLOY_FREEZE');
+  PropertiesService.getScriptProperties().deleteProperty('DEPLOY_FREEZE_EMERGENCY');
   PropertiesService.getScriptProperties().deleteProperty('FREEZE_BLOCK_COUNT');
   PropertiesService.getScriptProperties().deleteProperty('FREEZE_LAST_PUSH');
   if (typeof logError_ === 'function') {
@@ -220,5 +221,5 @@ function debouncedBlockPushover_(callerName) {
   } catch(e) { Logger.log('FreezeGate: sendPush_ failed: ' + e.message); }
 }
 
-// END OF FILE — FreezeGate.js v1
+// END OF FILE — FreezeGate.js v2
 // ════════════════════════════════════════════════════════════════════
