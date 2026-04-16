@@ -2120,6 +2120,7 @@ function showLoadError_(reason) {
 function renderCatchUpBanner_(fullWeek) {
   var ORDERED_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   var today = new Date();
+  today.setHours(0, 0, 0, 0); // normalize to midnight so dayDate >= today is date-only
   var todayDow = today.getDay(); // 0=Sun
   var mondayOffset = todayDow === 0 ? -6 : 1 - todayDow;
   var mondayBase = new Date(today.getFullYear(), today.getMonth(), today.getDate() + mondayOffset);
