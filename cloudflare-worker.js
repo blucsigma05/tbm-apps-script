@@ -959,6 +959,18 @@ async function handleGitHubWebhook_(request, env) {
 
   console.log('GitHub webhook: PR #' + prNumber + ' merged — delivery ' + delivery);
 
+  // Idempotency: block duplicate sends on GitHub retries and manual redeliveries,
+  // which reuse the same X-GitHub-Delivery ID. Cache miss on a failed Pushover
+  // is intentional — the 500 return lets GitHub retry, and the retry passes this
+  // check because the delivery was never marked as seen.
+  var idempotencyUrl = 'https://tbm-idempotency/webhook-github/' + delivery;
+  var deliveryCache = caches.default;
+  var cachedDelivery = await deliveryCache.match(new Request(idempotencyUrl));
+  if (cachedDelivery) {
+    console.log('GitHub webhook: duplicate delivery ' + delivery + ' — skipped');
+    return jsonResponse({ ok: true, handled: false, reason: 'duplicate_delivery', delivery: delivery });
+  }
+
   var pushResult = await sendPushover_(env, {
     title: 'PR #' + prNumber + ' merged',
     message: prTitle + '\nby ' + prUser + '\nbase: ' + prBase + ' \u2190 ' + prHead,
@@ -971,6 +983,7 @@ async function handleGitHubWebhook_(request, env) {
     // Return 500 so GitHub retries the webhook on transient Pushover failures.
     // A silent 200 here would cause GitHub to mark the delivery as succeeded
     // and never retry, resulting in dropped merge notifications.
+    // Do NOT mark delivery as seen — let the retry through.
     console.error('GitHub webhook: Pushover failed for PR #' + prNumber +
       ' — ' + (pushResult.reason || pushResult.status));
     return jsonResponse({
@@ -982,6 +995,12 @@ async function handleGitHubWebhook_(request, env) {
       delivery: delivery
     }, 500);
   }
+
+  // Mark delivery as seen for 24 hours so redeliveries are no-ops.
+  await deliveryCache.put(
+    new Request(idempotencyUrl),
+    new Response('1', { headers: { 'Cache-Control': 'public, max-age=86400' } })
+  );
 
   return jsonResponse({
     ok: true,
