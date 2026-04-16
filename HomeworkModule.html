@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v18">
+<meta name="tbm-version" content="v19">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -2223,7 +2223,7 @@ function renderFridayProgressBanner_() {
   var totalSteps = _fridayQueue.length;
   var stepDay = _fridayQueue[_fridayQueueIndex].day;
   var stepLabel = isMakeupStep
-    ? 'Day ' + stepNum + ' of ' + totalSteps + ' \u2014 ' + stepDay + ' Catch-Up'
+    ? 'Day ' + stepNum + ' of ' + totalSteps + ' -- ' + stepDay + ' Catch-Up'
     : 'Friday Review (' + stepNum + ' of ' + totalSteps + ')';
 
   var banner = document.createElement('div');
