@@ -1,8 +1,7 @@
 // @ts-check
 import { defineConfig, devices } from '@playwright/test';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const launchConfig = require('./.claude/launch.json');
+import { readFileSync } from 'fs';
+const launchConfig = JSON.parse(readFileSync('./.claude/launch.json', 'utf8'));
 
 /**
  * TBM + MLS Playwright Configuration (Q3 Harness)
