@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v17">
+<meta name="tbm-version" content="v18">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -712,6 +712,63 @@ if (TBM_SANDBOX) {
   document.body.style.paddingTop = '28px';
 }
 
+// ── Makeup Mode (#409) — ?day=<dow> route ──
+// Allows catching up on a missed weekday: /homework?day=wednesday
+var _dayParamRaw = '';
+var _rawSearch = window.location.search;
+var _dIdx = _rawSearch.indexOf('day=');
+if (_dIdx !== -1) {
+  var _dRaw = _rawSearch.substring(_dIdx + 4);
+  var _dAmp = _dRaw.indexOf('&');
+  _dayParamRaw = (_dAmp !== -1 ? _dRaw.substring(0, _dAmp) : _dRaw).toLowerCase();
+}
+var _VALID_MAKEUP_DAYS = { monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5 };
+var MAKEUP_MODE = (_dayParamRaw in _VALID_MAKEUP_DAYS);
+var MAKEUP_DAY = MAKEUP_MODE ? _dayParamRaw.charAt(0).toUpperCase() + _dayParamRaw.slice(1) : '';
+// ISO date for the requested weekday within the current week (Monday-based)
+var MAKEUP_DATE_ISO = '';
+if (MAKEUP_MODE) {
+  var _now = new Date();
+  var _todayDow = _now.getDay(); // 0=Sun
+  var _mondayOffset = _todayDow === 0 ? -6 : 1 - _todayDow;
+  var _monday = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate() + _mondayOffset);
+  var _targetOffset = _VALID_MAKEUP_DAYS[_dayParamRaw] - 1; // 0=Mon … 4=Fri
+  var _targetDate = new Date(_monday.getFullYear(), _monday.getMonth(), _monday.getDate() + _targetOffset);
+  // P1 #409: reject today or future — ?day= is makeup-only, not a preview route
+  var _todayMidnight = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate());
+  if (_targetDate >= _todayMidnight) {
+    MAKEUP_MODE = false;
+    MAKEUP_DAY = '';
+    // Preserve /qa/ prefix and sandbox/test flags — matches redirectToDailyMissions_ pattern
+    var _rPrefix = (window.location.pathname.indexOf('/qa/') === 0) ? '/qa' : '';
+    var _rUrl = (window.location.origin || '') + _rPrefix + '/homework';
+    var _rParams = [];
+    if (window.location.search.indexOf('sandbox=1') !== -1) { _rParams.push('sandbox=1'); }
+    if (window.location.search.indexOf('test=1') !== -1) { _rParams.push('test=1'); }
+    if (_rParams.length > 0) { _rUrl += '?' + _rParams.join('&'); }
+    window.location.replace(_rUrl);
+  } else {
+    var _mm = String(_targetDate.getMonth() + 1);
+    var _dd = String(_targetDate.getDate());
+    MAKEUP_DATE_ISO = _targetDate.getFullYear() + '-' + (_mm.length < 2 ? '0' + _mm : _mm) + '-' + (_dd.length < 2 ? '0' + _dd : _dd);
+  }
+}
+if (MAKEUP_MODE) {
+  var _mbanner = document.createElement('div');
+  _mbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#f97316;color:#fff;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
+  _mbanner.textContent = '\uD83D\uDCC5 MAKEUP MODE \u2014 ' + MAKEUP_DAY + ' (' + MAKEUP_DATE_ISO + ')';
+  document.body.appendChild(_mbanner);
+  document.body.style.paddingTop = '28px';
+}
+
+// ISO for today — used by submit handler to stamp the completion key
+var _todayIso = (function() {
+  var _d = new Date();
+  var _m = String(_d.getMonth() + 1);
+  var _dd = String(_d.getDate());
+  return _d.getFullYear() + '-' + (_m.length < 2 ? '0' + _m : _m) + '-' + (_dd.length < 2 ? '0' + _dd : _dd);
+})();
+
 // ── Audio System (Marco / ElevenLabs) — Lazy Loading ──
 // Loads clips on demand per phase, not all 21 at page load.
 // Follows SparkleLearning.html lazy loader pattern.
@@ -1298,7 +1355,8 @@ function buildHomeworkCompletionPayload_() {
       score: totalMCCorrect,
       responseText: responseText,
       prompt: allOpenEnded.length > 0 ? allOpenEnded.length + ' open-ended question(s)' : '',
-      rings: ringsEarned
+      rings: ringsEarned,
+      makeupDate: MAKEUP_MODE ? MAKEUP_DATE_ISO : ''
     }
   };
 }
@@ -1375,6 +1433,11 @@ function submitHomeworkCompletion_() {
       completionSubmitError = '';
       completionLogged = true;
       clearHomeworkDraft_();
+      // #409: stamp completion so catch-up banner skips this day going forward
+      try {
+        var _doneIso = MAKEUP_MODE ? MAKEUP_DATE_ISO : _todayIso;
+        if (_doneIso) { window.localStorage.setItem('tbm_hw_complete_' + _doneIso, '1'); }
+      } catch(e2) { /* localStorage unavailable */ }
       updateCompletionSaveStatusUi_();
       console.log('Submitted: ' + result.status);
 
@@ -2080,6 +2143,61 @@ function showLoadError_(reason) {
   }
 }
 
+// ─── CATCH-UP BANNER (#409) ───
+// Shows missed weekdays from fullWeek that have module content and haven't been dismissed.
+function renderCatchUpBanner_(fullWeek) {
+  var ORDERED_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  var today = new Date();
+  today.setHours(0, 0, 0, 0); // normalize to midnight so dayDate >= today is date-only
+  var todayDow = today.getDay(); // 0=Sun
+  var mondayOffset = todayDow === 0 ? -6 : 1 - todayDow;
+  var mondayBase = new Date(today.getFullYear(), today.getMonth(), today.getDate() + mondayOffset);
+  var daySource = (fullWeek && fullWeek.days) ? fullWeek.days : fullWeek;
+  var missed = [];
+  for (var i = 0; i < ORDERED_DAYS.length; i++) {
+    var d = ORDERED_DAYS[i];
+    var dayOffset = i; // 0=Mon … 4=Fri
+    var dayDate = new Date(mondayBase.getFullYear(), mondayBase.getMonth(), mondayBase.getDate() + dayOffset);
+    var mm = String(dayDate.getMonth() + 1);
+    var dd = String(dayDate.getDate());
+    var iso = dayDate.getFullYear() + '-' + (mm.length < 2 ? '0' + mm : mm) + '-' + (dd.length < 2 ? '0' + dd : dd);
+    // Only show past days (before today), not today and not future
+    if (dayDate >= today) continue;
+    // Only show if content exists for that day
+    var dayContent = daySource && daySource[d];
+    if (!dayContent) continue;
+    // Skip if homework was completed for this day (confirmed submission)
+    try {
+      if (window.localStorage.getItem('tbm_hw_complete_' + iso) === '1') continue;
+    } catch(e) { /* localStorage unavailable — show anyway */ }
+    // Skip if manually dismissed
+    var dismissKey = 'tbm_catchup_dismiss_' + iso;
+    try {
+      if (window.localStorage.getItem(dismissKey) === '1') continue;
+    } catch(e) { /* localStorage unavailable — show anyway */ }
+    // Skip the currently-active makeup day (already in the top banner)
+    if (MAKEUP_MODE && d === MAKEUP_DAY) continue;
+    missed.push({ day: d, iso: iso, dismissKey: dismissKey });
+  }
+  if (!missed.length) return;
+  var items = '';
+  for (var j = 0; j < missed.length; j++) {
+    var m = missed[j];
+    items += '<a href="/homework?day=' + m.day.toLowerCase() + '" ' +
+      'style="display:inline-block;background:#1e293b;border:1px solid #f97316;border-radius:8px;' +
+      'padding:8px 16px;margin:4px;color:#fdba74;font-family:Orbitron,sans-serif;font-size:12px;' +
+      'font-weight:700;text-decoration:none;letter-spacing:1px;">' +
+      m.day + ' (' + m.iso + ')' + '</a>';
+  }
+  var banner = document.createElement('div');
+  banner.id = 'tbm-catchup-banner';
+  banner.style.cssText = 'background:#1a1200;border-bottom:2px solid #f97316;padding:10px 16px;' +
+    'text-align:center;font-family:Nunito,sans-serif;';
+  banner.innerHTML = '<div style="font-size:13px;color:#fde68a;font-weight:700;margin-bottom:6px;">' +
+    '\uD83D\uDCC5 Missed days this week \u2014 tap to catch up:</div>' + items;
+  document.body.insertBefore(banner, document.body.firstChild);
+}
+
 // ─── CURRICULUM LOADING ───
 function loadCurriculumContent() {
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
@@ -2095,8 +2213,21 @@ function loadCurriculumContent() {
         if (adhd.brainBreakAfter) { _brainBreakAfter = adhd.brainBreakAfter; }
         if (adhd.brainBreakPrompt) { _brainBreakPrompt = adhd.brainBreakPrompt; }
       }
-      if (response && response.content) {
-        var c = response.content;
+      // #409: Makeup mode — show catch-up banner for other missed weekdays
+      if (response && response.fullWeek) {
+        renderCatchUpBanner_(response.fullWeek);
+      }
+      // #409: Makeup mode — load content for requested weekday instead of today
+      var _contentSource = (MAKEUP_MODE && response && response.fullWeek)
+        ? (response.fullWeek.days ? response.fullWeek.days[MAKEUP_DAY] : response.fullWeek[MAKEUP_DAY])
+        : (response && response.content);
+      if (MAKEUP_MODE && !_contentSource) {
+        console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: makeup mode for ' + MAKEUP_DAY + ' but no content found in fullWeek');
+        showLoadError_('no-content');
+        return;
+      }
+      if (MAKEUP_MODE ? _contentSource : (response && response.content)) {
+        var c = _contentSource;
         var hasModuleQuestions = c.module && (
           (c.module.math && c.module.math.questions && c.module.math.questions.length > 0) ||
           (c.module.science && c.module.science.questions && c.module.science.questions.length > 0) ||
