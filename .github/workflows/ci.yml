@@ -12,6 +12,12 @@ on:
     branches-ignore: [main]
   workflow_dispatch:
 
+# GAS PropertiesService is shared across all executions — concurrent test runs
+# stomp each other's freeze state. Serialize globally so only one suite runs at a time.
+concurrency:
+  group: tbm-gas-tests
+  cancel-in-progress: false
+
 permissions:
   actions: write
   contents: read
