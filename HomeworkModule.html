@@ -769,6 +769,12 @@ var _todayIso = (function() {
   return _d.getFullYear() + '-' + (_m.length < 2 ? '0' + _m : _m) + '-' + (_dd.length < 2 ? '0' + _dd : _dd);
 })();
 
+// ── Friday Makeup Queue state (#410) ──
+var _fridayQueue = [];        // [{day, dayISO, content, priority}, ...], last entry = Friday itself
+var _fridayQueueIndex = 0;    // current position in the queue
+var _isFridayMakeupMode = false;
+var _pendingFridayResponse = null;
+
 // ── Audio System (Marco / ElevenLabs) — Lazy Loading ──
 // Loads clips on demand per phase, not all 21 at page load.
 // Follows SparkleLearning.html lazy loader pattern.
@@ -1356,7 +1362,7 @@ function buildHomeworkCompletionPayload_() {
       responseText: responseText,
       prompt: allOpenEnded.length > 0 ? allOpenEnded.length + ' open-ended question(s)' : '',
       rings: ringsEarned,
-      makeupDate: MAKEUP_MODE ? MAKEUP_DATE_ISO : ''
+      makeupDate: MAKEUP_MODE ? MAKEUP_DATE_ISO : (_isFridayMakeupMode && _fridayQueueIndex < _fridayQueue.length - 1 ? _fridayQueue[_fridayQueueIndex].dayISO : '')
     }
   };
 }
@@ -1434,8 +1440,10 @@ function submitHomeworkCompletion_() {
       completionLogged = true;
       clearHomeworkDraft_();
       // #409: stamp completion so catch-up banner skips this day going forward
+      // #410: for Friday queue steps, stamp the original day's ISO, not today
       try {
-        var _doneIso = MAKEUP_MODE ? MAKEUP_DATE_ISO : _todayIso;
+        var _doneIso = MAKEUP_MODE ? MAKEUP_DATE_ISO
+          : (_isFridayMakeupMode && _fridayQueue[_fridayQueueIndex] ? _fridayQueue[_fridayQueueIndex].dayISO : _todayIso);
         if (_doneIso) { window.localStorage.setItem('tbm_hw_complete_' + _doneIso, '1'); }
       } catch(e2) { /* localStorage unavailable */ }
       updateCompletionSaveStatusUi_();
@@ -1454,6 +1462,11 @@ function submitHomeworkCompletion_() {
 
       if (payload.openEndedCount > 0) {
         console.log('Rings deferred — ' + payload.openEndedCount + ' open-ended question(s) pending parent review');
+      }
+
+      // #410: Friday queue — advance to next step after submit; last step (Friday Review) flows to completion screen normally
+      if (_isFridayMakeupMode && _fridayQueueIndex < _fridayQueue.length - 1) {
+        _advanceFridayQueue_();
       }
     })
     .withFailureHandler(function(err) {
@@ -2198,6 +2211,79 @@ function renderCatchUpBanner_(fullWeek) {
   document.body.insertBefore(banner, document.body.firstChild);
 }
 
+// ─── FRIDAY PROGRESS BANNER (#410) ───
+function renderFridayProgressBanner_() {
+  var existing = document.getElementById('friday-queue-banner');
+  if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+  if (!_isFridayMakeupMode || _fridayQueue.length <= 1) return;
+
+  var missedCount = _fridayQueue.length - 1;
+  var isMakeupStep = _fridayQueueIndex < _fridayQueue.length - 1;
+  var stepNum = _fridayQueueIndex + 1;
+  var totalSteps = _fridayQueue.length;
+  var stepDay = _fridayQueue[_fridayQueueIndex].day;
+  var stepLabel = isMakeupStep
+    ? 'Day ' + stepNum + ' of ' + totalSteps + ' \u2014 ' + stepDay + ' Catch-Up'
+    : 'Friday Review (' + stepNum + ' of ' + totalSteps + ')';
+
+  var banner = document.createElement('div');
+  banner.id = 'friday-queue-banner';
+  banner.style.cssText = 'background:rgba(249,115,22,0.10);border:2px solid #f97316;border-radius:10px;' +
+    'padding:12px 16px;margin-bottom:16px;text-align:center;';
+  banner.innerHTML =
+    '<div style="color:#F59E0B;font-family:Orbitron,sans-serif;font-size:12px;font-weight:700;' +
+    'letter-spacing:1px;margin-bottom:4px;">CATCH-UP MODE</div>' +
+    '<div style="color:#E2E8F0;font-size:14px;margin-bottom:4px;">You missed ' +
+    missedCount + ' day' + (missedCount !== 1 ? 's' : '') +
+    ' this week. Let\'s catch up first, then review.</div>' +
+    '<div style="color:#94A3B8;font-size:13px;">' + stepLabel + '</div>';
+
+  var body = document.body;
+  if (body) body.insertBefore(banner, body.firstChild);
+}
+
+// ─── FRIDAY QUEUE ADVANCE (#410) ───
+function _advanceFridayQueue_() {
+  _fridayQueueIndex++;
+  if (_fridayQueueIndex >= _fridayQueue.length) return; // all done
+
+  var step = _fridayQueue[_fridayQueueIndex];
+  MODULE = step.content.module;
+  if (!MODULE.science) MODULE.science = {};
+  MODULE.science.strand    = MODULE.science.strand    || '';
+  MODULE.science.teks      = MODULE.science.teks      || '';
+  MODULE.science.quickFact = MODULE.science.quickFact || '';
+  MODULE.science.passage   = MODULE.science.passage   || [];
+  MODULE.science.title     = MODULE.science.title     || '';
+  MODULE.science.questions = MODULE.science.questions || [];
+  if (!MODULE.math) MODULE.math = {};
+  MODULE.math.strand    = MODULE.math.strand    || '';
+  MODULE.math.teks      = MODULE.math.teks      || '';
+  MODULE.math.quickFact = MODULE.math.quickFact || '';
+  MODULE.math.passage   = MODULE.math.passage   || [];
+  MODULE.math.title     = MODULE.math.title     || '';
+  MODULE.math.questions = MODULE.math.questions || [];
+
+  // Reset per-step state
+  answers = {};
+  completionSubmitState = 'idle';
+  completionSubmitError = '';
+  completionLogged = false;
+  moduleStarted = false;
+  _questionsSinceBrainBreak = 0;
+  scienceQs = MODULE.science.questions;
+  mathQs = MODULE.math.questions;
+  allQs = scienceQs.concat(mathQs);
+
+  renderFridayProgressBanner_();
+  renderOverview();
+  renderScience();
+  renderMath();
+  renderResults();
+  switchTab('overview');
+  updateProgress();
+}
+
 // ─── CURRICULUM LOADING ───
 function loadCurriculumContent() {
   if (typeof google === 'undefined' || !google.script || !google.script.run) {
@@ -2259,6 +2345,45 @@ function loadCurriculumContent() {
             console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: questions present but enrichment fields empty (math context=' + !!mathHasContext + ', sci context=' + !!sciHasContext + ')');
             showLoadError_('no-content');
             return;
+          }
+          // v19 (#410): Friday — check for missed Mon-Thu days and queue them before Friday Review
+          if (_dayOfWeek === 'Friday' && !MAKEUP_MODE) {
+            _pendingFridayResponse = response;
+            google.script.run
+              .withSuccessHandler(function(queue) {
+                if (queue && queue.length > 0) {
+                  var fridayStep = { day: 'Friday', dayISO: _todayIso, content: _pendingFridayResponse.content, priority: 99 };
+                  _fridayQueue = queue.concat([fridayStep]);
+                  _fridayQueueIndex = 0;
+                  _isFridayMakeupMode = true;
+                  // Override MODULE to first missed day and remove the catch-up banner (replaced by progress banner)
+                  var firstStep = _fridayQueue[0];
+                  MODULE = firstStep.content.module;
+                  if (!MODULE.science) MODULE.science = {};
+                  MODULE.science.strand    = MODULE.science.strand    || '';
+                  MODULE.science.teks      = MODULE.science.teks      || '';
+                  MODULE.science.quickFact = MODULE.science.quickFact || '';
+                  MODULE.science.passage   = MODULE.science.passage   || [];
+                  MODULE.science.title     = MODULE.science.title     || '';
+                  MODULE.science.questions = MODULE.science.questions || [];
+                  if (!MODULE.math) MODULE.math = {};
+                  MODULE.math.strand    = MODULE.math.strand    || '';
+                  MODULE.math.teks      = MODULE.math.teks      || '';
+                  MODULE.math.quickFact = MODULE.math.quickFact || '';
+                  MODULE.math.passage   = MODULE.math.passage   || [];
+                  MODULE.math.title     = MODULE.math.title     || '';
+                  MODULE.math.questions = MODULE.math.questions || [];
+                  var existing = document.getElementById('tbm-catchup-banner');
+                  if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+                }
+                init();
+                if (_isFridayMakeupMode) renderFridayProgressBanner_();
+              })
+              .withFailureHandler(function() {
+                init(); // queue fetch failed — fall through to normal Friday
+              })
+              .getFridayMakeupQueueSafe('buggsy');
+            return; // init() called from queue callback, not here
           }
           init();
         } else if (c.review_quiz && c.review_quiz.length > 0) {
