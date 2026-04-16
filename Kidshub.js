@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v72 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v73 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 72; }
+function getKidsHubVersion() { return 73; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -4512,10 +4512,16 @@ function submitHomework_(data) {
   }
 
   // Phase 1: Write row under lock
+  // #409: makeupDate (YYYY-MM-DD ISO string) allows recording makeup completions against the original weekday
+  var rowTimestamp = new Date();
+  if (data.makeupDate && String(data.makeupDate).match(/^\d{4}-\d{2}-\d{2}$/)) {
+    var parsed = new Date(String(data.makeupDate) + 'T12:00:00');
+    if (!isNaN(parsed.getTime())) { rowTimestamp = parsed; }
+  }
   try {
     sheet = ensureKHEducationTab_();
     sheet.appendRow([
-      new Date(),
+      rowTimestamp,
       childLower,
       String(data.module || 'homework'),
       String(data.subject || 'General'),
@@ -5302,5 +5308,5 @@ function checkHomeworkGateSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v72
+// END OF FILE — KidsHub.gs v73
 // ════════════════════════════════════════════════════════════════════
