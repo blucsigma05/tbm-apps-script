@@ -2247,6 +2247,17 @@ function _advanceFridayQueue_() {
   _fridayQueueIndex++;
   if (_fridayQueueIndex >= _fridayQueue.length) return; // all done
 
+  // P1: dismiss completion overlay + injected ExecSkills blocks before rendering next step.
+  // Without this the completion modal floats over the incoming module and the kid is stuck.
+  var _compOverlay = document.getElementById('completion-overlay');
+  if (_compOverlay) _compOverlay.style.display = 'none';
+  var _esComp = document.getElementById('es-completion-block');
+  if (_esComp && _esComp.parentNode) _esComp.parentNode.removeChild(_esComp);
+  var _esJournal = document.getElementById('es-error-journal-block');
+  if (_esJournal && _esJournal.parentNode) _esJournal.parentNode.removeChild(_esJournal);
+  var _esRef = document.getElementById('es-reflection-block');
+  if (_esRef && _esRef.parentNode) _esRef.parentNode.removeChild(_esRef);
+
   var step = _fridayQueue[_fridayQueueIndex];
   MODULE = step.content.module;
   if (!MODULE.science) MODULE.science = {};
@@ -2264,12 +2275,15 @@ function _advanceFridayQueue_() {
   MODULE.math.title     = MODULE.math.title     || '';
   MODULE.math.questions = MODULE.math.questions || [];
 
-  // Reset per-step state
+  // Reset per-step state.
+  // moduleStarted stays true — skip plan-overlay for queue steps so the kid flows straight in.
+  // sessionStartTime resets so the elapsed-time display is correct for this step.
   answers = {};
   completionSubmitState = 'idle';
   completionSubmitError = '';
   completionLogged = false;
-  moduleStarted = false;
+  moduleStarted = true;
+  sessionStartTime = Date.now();
   _questionsSinceBrainBreak = 0;
   scienceQs = MODULE.science.questions;
   mathQs = MODULE.math.questions;
