@@ -1,12 +1,12 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code-Finance.gs v1 — Finance + Script utility Safe wrappers (split from Code.gs #299)
+// Code-Finance.gs v2 — Finance + Script utility Safe wrappers (split from Code.gs #299)
 // WRITES TO: (delegates to DataEngine.js — no direct sheet writes)
 // READS FROM: (delegates to DataEngine.js — no direct sheet reads)
 // DEPENDS ON: Dataengine.js, GASHardening.js (withMonitor_), Code.gs (leftPad2_)
 // ════════════════════════════════════════════════════════════════════
 
-function getCodeFinanceVersion() { return 1; }
+function getCodeFinanceVersion() { return 2; }
 
 // ── Script URL helpers ────────────────────────────────────────────
 function getScriptUrl() {
@@ -68,6 +68,7 @@ function stampCloseMonthSafe(monthLabel, closeOpts) {
 }
 function updateFamilyNoteSafe(noteText) {
   return withMonitor_('updateFamilyNoteSafe', function() {
+    assertNotFrozen_('freeze-critical', 'updateFamilyNoteSafe');
     return updateFamilyNote(noteText);
   });
 }
@@ -110,5 +111,5 @@ function getStoryApiStatsSafe() {
   });
 }
 
-// END OF FILE — Code-Finance.gs v1
+// END OF FILE — Code-Finance.gs v2
 // ════════════════════════════════════════════════════════════════════

@@ -417,6 +417,37 @@ fi
 
 echo ""
 
+# ── CHECK 6: DEPLOY FREEZE ───────────────────────────────────
+echo "--- Deploy Freeze ---"
+
+if [[ "${EMERGENCY:-0}" == "1" ]]; then
+  echo "  BYPASS -- EMERGENCY=1 set; skipping freeze check"
+else
+  # Use clasp run to read freeze state from Script Properties
+  # jq required; falls back gracefully if clasp run fails
+  if command -v jq >/dev/null 2>&1 && command -v clasp >/dev/null 2>&1; then
+    FREEZE_JSON=$(clasp run getFreezeState_ 2>/dev/null)
+    FREEZE_ACTIVE=$(echo "$FREEZE_JSON" | jq -r '.active // false' 2>/dev/null)
+    if [[ "$FREEZE_ACTIVE" == "true" ]]; then
+      FREEZE_REASON=$(echo "$FREEZE_JSON" | jq -r '.reason // "unknown reason"' 2>/dev/null)
+      FREEZE_EXPIRY=$(echo "$FREEZE_JSON" | jq -r '.expiresAt // "no expiry set"' 2>/dev/null)
+      echo "  FAIL -- Deploy freeze is ACTIVE"
+      echo "         Reason:  $FREEZE_REASON"
+      echo "         Expires: $FREEZE_EXPIRY"
+      echo "         To bypass (genuine emergency only):"
+      echo "           EMERGENCY=1 bash audit-source.sh"
+      echo "           Commit message must start with: EMERGENCY: <reason>"
+      FAIL=1
+    else
+      echo "  OK -- No active deploy freeze"
+    fi
+  else
+    echo "  SKIP -- clasp or jq not available; freeze check skipped"
+  fi
+fi
+
+echo ""
+
 # ── SUMMARY ───────────────────────────────────────────────────
 echo "=== SUMMARY ==="
 echo "Failures:  $FAIL"

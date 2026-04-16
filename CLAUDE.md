@@ -162,6 +162,26 @@ Common skills: `thompson-engineer` (GAS architecture), `game-design` (game UI), 
 
 ---
 
+## Deploy Freeze
+
+A deploy freeze halts all 19 freeze-critical mutation paths during risky windows. Full contract: `ops/deploy-freeze.md`.
+
+**Set freeze BEFORE:** schema migrations, finance model changes, parent approval flow changes mid-Sunday, MER close, any PR touching ≥5 freeze-critical sites at once.
+
+**Who can set/lift:** LT only (requires clasp run access).
+
+**Activation:** `clasp run setFreeze_ "reason" "2026-04-17T10:00:00Z"` (or omit expiry for 24h auto-lift)
+
+**Lift:** `clasp run liftFreeze_`
+
+**Emergency bypass:** `clasp run generateEmergencyToken_ "reason" 60` — 1-hour token, per-mutation audit trail, `GATE_BREACH` Pushover on first use.
+
+**audit-source.sh Check 6** blocks push when freeze is active. Override: `EMERGENCY=1 bash audit-source.sh` — commit message MUST start with `EMERGENCY: <reason>`.
+
+**Code rule (work-doctrine rule 14 extension):** Any PR adding a new freeze-critical mutation site MUST add `assertNotFrozen_('freeze-critical', 'funcName')` to the Safe wrapper AND add a row to `ops/mutation-paths.md`.
+
+---
+
 ## Deploy Pipeline (MANDATORY — every deploy)
 Run steps 1–11 autonomously. Report results at end. LT's only action: review PR and approve.
 **EXCEPTION: If any step returns unexpected output, STOP and report before continuing.**

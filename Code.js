@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v90 — Apps Script Router (TBM Consolidated)
+// Code.gs v91 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 90; }
+function getCodeVersion() { return 91; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -960,6 +960,7 @@ function submitFeedbackSafe(payload) {
 // v52: Notion write-backs — log homework and sparkle progress
 function logHomeworkCompletionSafe(data) {
   return withMonitor_('logHomeworkCompletionSafe', function() {
+    assertNotFrozen_('freeze-critical', 'logHomeworkCompletionSafe');
     var apiKey = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
     if (!apiKey) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_API_KEY not set' }));
 
@@ -1013,6 +1014,7 @@ function logHomeworkCompletionSafe(data) {
 
 function logSparkleProgressSafe(data) {
   return withMonitor_('logSparkleProgressSafe', function() {
+    assertNotFrozen_('freeze-critical', 'logSparkleProgressSafe');
     var apiKey = PropertiesService.getScriptProperties().getProperty('NOTION_API_KEY');
     if (!apiKey) return JSON.parse(JSON.stringify({ error: true, message: 'NOTION_API_KEY not set' }));
 
@@ -1917,4 +1919,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v90
+// END OF FILE — Code.gs v91
