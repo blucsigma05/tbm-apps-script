@@ -739,7 +739,14 @@ if (MAKEUP_MODE) {
   if (_targetDate >= _todayMidnight) {
     MAKEUP_MODE = false;
     MAKEUP_DAY = '';
-    window.location.replace('/homework');
+    // Preserve /qa/ prefix and sandbox/test flags — matches redirectToDailyMissions_ pattern
+    var _rPrefix = (window.location.pathname.indexOf('/qa/') === 0) ? '/qa' : '';
+    var _rUrl = (window.location.origin || '') + _rPrefix + '/homework';
+    var _rParams = [];
+    if (window.location.search.indexOf('sandbox=1') !== -1) { _rParams.push('sandbox=1'); }
+    if (window.location.search.indexOf('test=1') !== -1) { _rParams.push('test=1'); }
+    if (_rParams.length > 0) { _rUrl += '?' + _rParams.join('&'); }
+    window.location.replace(_rUrl);
   } else {
     var _mm = String(_targetDate.getMonth() + 1);
     var _dd = String(_targetDate.getDate());
