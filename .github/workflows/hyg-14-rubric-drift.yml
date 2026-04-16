@@ -9,7 +9,8 @@
 #   OR carry the label 'rubric-n/a'.
 #
 # Parser: reads ops/surface-map.md from the PR's merged state, not from the base branch.
-# Uses the tracked_files and mvss_scope columns (cols 16 and 17 in the pipe-delimited table).
+# Uses the tracked_files and mvss_scope columns (content cols 16 and 17; awk fields $17 and $18
+# because rows start with |, shifting awk field numbers by 1).
 # Does NOT parse the free-form Primary Code column.
 # Finance, ambient, story, parent, qa, and out-of-scope rows are excluded from coupling.
 
@@ -55,8 +56,11 @@ jobs:
           TRACKED_RAW=$(awk -F'|' '
             NR > 2 {
               # Strip leading/trailing whitespace from scope and tracked_files
-              scope = $17
-              tracked = $16
+              # Rows start and end with |, so awk field numbers are content-col + 1:
+              # tracked_files = content col 16 = awk $17
+              # mvss_scope    = content col 17 = awk $18
+              scope = $18
+              tracked = $17
               gsub(/^[[:space:]]+|[[:space:]]+$/, "", scope)
               gsub(/^[[:space:]]+|[[:space:]]+$/, "", tracked)
               if ((scope == "education" || scope == "chore") && tracked != "" && tracked != "tracked_files") {
