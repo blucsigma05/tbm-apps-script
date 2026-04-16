@@ -734,9 +734,17 @@ if (MAKEUP_MODE) {
   var _monday = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate() + _mondayOffset);
   var _targetOffset = _VALID_MAKEUP_DAYS[_dayParamRaw] - 1; // 0=Mon … 4=Fri
   var _targetDate = new Date(_monday.getFullYear(), _monday.getMonth(), _monday.getDate() + _targetOffset);
-  var _mm = String(_targetDate.getMonth() + 1);
-  var _dd = String(_targetDate.getDate());
-  MAKEUP_DATE_ISO = _targetDate.getFullYear() + '-' + (_mm.length < 2 ? '0' + _mm : _mm) + '-' + (_dd.length < 2 ? '0' + _dd : _dd);
+  // P1 #409: reject today or future — ?day= is makeup-only, not a preview route
+  var _todayMidnight = new Date(_now.getFullYear(), _now.getMonth(), _now.getDate());
+  if (_targetDate >= _todayMidnight) {
+    MAKEUP_MODE = false;
+    MAKEUP_DAY = '';
+    window.location.replace('/homework');
+  } else {
+    var _mm = String(_targetDate.getMonth() + 1);
+    var _dd = String(_targetDate.getDate());
+    MAKEUP_DATE_ISO = _targetDate.getFullYear() + '-' + (_mm.length < 2 ? '0' + _mm : _mm) + '-' + (_dd.length < 2 ? '0' + _dd : _dd);
+  }
 }
 if (MAKEUP_MODE) {
   var _mbanner = document.createElement('div');
