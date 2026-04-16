@@ -26,15 +26,19 @@ if [[ "${EMERGENCY:-0}" == "1" ]]; then
       continue
     fi
     if [[ "$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
-      range="$local_sha"
+      # New branch: git log <sha> would walk ALL of history reachable from the
+      # tip, including thousands of main commits that pre-date this emergency.
+      # Limit to commits not already present on any remote ref so only the
+      # commits being introduced are validated.
+      LOG_ARGS=("$local_sha" "--not" "--remotes")
     else
-      range="${remote_sha}..${local_sha}"
+      LOG_ARGS=("${remote_sha}..${local_sha}")
     fi
     while IFS= read -r subject; do
       if [[ "$subject" != EMERGENCY:* ]]; then
         MISSING="${MISSING}\n  BAD: $subject"
       fi
-    done < <(git log --format="%s" "$range" 2>/dev/null)
+    done < <(git log --format="%s" "${LOG_ARGS[@]}" 2>/dev/null)
   done
   if [[ -n "$MISSING" ]]; then
     echo ""
