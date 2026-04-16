@@ -1,11 +1,11 @@
 // ════════════════════════════════════════════════════════════════════
-// Preflight.gs v1 — Module Go-Live Readiness Checker
+// Preflight.gs v2 — Module Go-Live Readiness Checker
 // Spec: specs/module-golive-preflight.md
 // READS: Curriculum sheet (via getTodayContent_), HTML sources
 // WRITES: Preflight_Status sheet (24h escalation tracking only)
 // ════════════════════════════════════════════════════════════════════
 
-function getPreflightVersion() { return 1; }
+function getPreflightVersion() { return 2; }
 
 // ── Module registry ──────────────────────────────────────────────────
 // Maps moduleId → HTML filename + expected kid wiring.
@@ -86,10 +86,22 @@ function modulePreflight(moduleId, kid, date) {
   }
   var ready = failures.length === 0;
 
-  if (!ready) { pf_trackFailures_(moduleId, kid, failures); }
+  var result = { module: moduleId, kid: kid, date: date, ready: ready,
+                 checks: checks, failures: failures, duration_ms: Date.now() - startMs };
 
-  return { module: moduleId, kid: kid, date: date, ready: ready,
-           checks: checks, failures: failures, duration_ms: Date.now() - startMs };
+  if (!ready) {
+    pf_trackFailures_(moduleId, kid, failures);
+    if (typeof sendPush_ === 'function') {
+      var failIds = failures.map(function(f) { return f.id; }).join(', ');
+      sendPush_('Preflight BLOCKED: ' + moduleId,
+                kid + ' | ' + date + ' | failed: ' + failIds,
+                'LT', PUSHOVER_PRIORITY.SYSTEM_ERROR);
+    }
+  }
+
+  Logger.log('modulePreflight ' + (ready ? 'PASS' : 'FAIL') + ' — ' + moduleId + ' ' + kid + ' ' + date +
+             (failures.length ? ' | failed: ' + failures.map(function(f) { return f.id; }).join(', ') : ''));
+  return result;
 }
 
 // ── Check #1: seed_exists ─────────────────────────────────────────────
@@ -421,4 +433,4 @@ function pf_trackFailures_(moduleId, kid, failures) {
   }
 }
 
-// END OF FILE — Preflight.gs v1
+// END OF FILE — Preflight.gs v2
