@@ -1,0 +1,851 @@
+{
+  "version": "2026-04-15-play-gate-v1",
+  "updatedAt": "2026-04-16",
+  "decisionStates": [
+    "ship",
+    "ship-with-backlog",
+    "do-not-ship"
+  ],
+  "failureStates": [
+    "config_drift",
+    "preconditions_not_met"
+  ],
+  "preconditions": [
+    {
+      "id": "PRE-1",
+      "name": "es5-clean-fire-os-only",
+      "description": "ES5 compliance check applies ONLY to Fire OS ambient surfaces (TheSpine, TheSoul). Education surfaces on Surface Pro 5 and S10 FE are modern-JS-tier — ES5 check is not run for them.",
+      "scope": "fire-os-ambient",
+      "measurement_method": "grep -n 'const \\|let \\|=>\\|`' TheSpine.html TheSoul.html",
+      "failure_action": "emit preconditions_not_met and abort run"
+    },
+    {
+      "id": "PRE-2",
+      "name": "failure-handler-coverage",
+      "description": "Every google.script.run.<fn>Safe() call has a matching .withFailureHandler() that is non-empty (not function(){}).",
+      "scope": "all-play-surfaces",
+      "measurement_method": "grep -n 'withFailureHandler(function(){}\\|withFailureHandler(function() {})' <surface.html>",
+      "failure_action": "emit preconditions_not_met and abort run"
+    },
+    {
+      "id": "PRE-3",
+      "name": "theme-palette-declared",
+      "description": "Sparkle Kingdom (JJ) or Wolfdome (Buggsy) palette hex values in surface CSS match the canonical registry at ops/themes/palettes.md.",
+      "scope": "all-play-surfaces",
+      "measurement_method": "Extract --bg-primary and key brand hex from surface CSS; assert match against palettes.md entry for the surface's theme",
+      "failure_action": "emit preconditions_not_met and abort run"
+    },
+    {
+      "id": "PRE-4",
+      "name": "safe-wrapper-chain-intact",
+      "description": "Every server-call chain uses a Safe wrapper function. No direct non-Safe delegation to module functions.",
+      "scope": "all-play-surfaces",
+      "measurement_method": "grep -n 'google.script.run\\.' <surface.html> | assert all callee names end in 'Safe'",
+      "failure_action": "emit preconditions_not_met and abort run"
+    }
+  ],
+  "criteria": {
+    "universalMustPass": [
+      {
+        "id": "U1",
+        "name": "correct-device",
+        "description": "Test at the mapped viewport for the real device profile. If the device profile is ambiguous or missing from ops/surface-map.md, the run fails as config_drift.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "Viewport matches device profile in ops/surface-map.md; config_drift if missing",
+        "measurement_method": "Assert Playwright viewport equals device profile viewport. Cross-check ops/surface-map.md Device column for the route being tested.",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "platform-owner",
+        "source": "ops/surface-map.md device profiles; ops/play-gate-rubric.v1.json deviceProfiles"
+      },
+      {
+        "id": "U2",
+        "name": "loads-cleanly",
+        "description": "Route returns 200, no blank screen, no blocking console error, no endless spinner.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "HTTP 200; no visible text 'undefined' or 'null'; console error count = 0 (blocking level); spinner resolves within 10s",
+        "measurement_method": "Playwright: assert response.status() === 200; assert no blocking console errors; screenshot shows non-blank content within 10s",
+        "evidence_type": "screenshot + console-log",
+        "failure_mode": "critical",
+        "owner": "platform-owner",
+        "source": "ops/verification-matrix.md smoke checks"
+      },
+      {
+        "id": "U3",
+        "name": "correct-child-context",
+        "description": "The route clearly shows the right child theme, data, and copy — not another child's view or a blank template.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "Child name or avatar visible; theme matches child (Sparkle Kingdom for JJ, Wolfdome for Buggsy); no wrong-child data visible",
+        "measurement_method": "Screenshot inspection; assert child-specific CSS class (e.g. sparkle-body or wolfdome-body) present in DOM",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "ops/themes/palettes.md; KidsHub.html child-context logic"
+      },
+      {
+        "id": "U4",
+        "name": "core-loop-starts-fast",
+        "description": "The child can begin the intended action within 2 interactions and about 5 seconds of orientation.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "≤2 taps/clicks to reach the first interactive state AND child can begin action within ~5s of route ready",
+        "measurement_method": "Manual walkthrough: count interactions from route-ready to first intentional child action. Playwright trace for automated timing (requires instrumentation #360).",
+        "evidence_type": "video + screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "ADHD accommodation standards; child UX research — attention span 5-7s for task onset"
+      },
+      {
+        "id": "U5",
+        "name": "core-loop-completes",
+        "description": "One real task, mission, lesson, or draft can be completed end-to-end.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "At least one full task cycle completes without error, freeze, or corruption",
+        "measurement_method": "Manual walkthrough: complete one full task cycle (answer a question, finish a mission, save a comic panel, etc.). Playwright click sequence for automation.",
+        "evidence_type": "video + screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "MVSS v1 play gate flow step 5"
+      },
+      {
+        "id": "U6",
+        "name": "save-reload-holds",
+        "description": "Progress, draft, submission, or completion state survives reload or resume when the surface promises it.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "After completing an action, reload the route — the completed state is visible. Applies only to surfaces with persistence_contract = 'submitted' or 'draft' in ops/surface-map.md.",
+        "measurement_method": "Complete action, reload URL, assert state is preserved. Ephemeral surfaces (persistence_contract = 'ephemeral') are exempt from this criterion.",
+        "evidence_type": "screenshot-before-reload + screenshot-after-reload",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "ops/surface-map.md persistence_contract column"
+      },
+      {
+        "id": "U7",
+        "name": "no-silent-failure",
+        "description": "Missing data, audio, or backend responses show an explicit fallback state instead of doing nothing.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "Introduce a simulated failure (bad data, slow response). Assert a visible fallback element is shown — not a blank, not an un-handled console error.",
+        "measurement_method": "Playwright: intercept the API call and return error response; assert a fallback element is rendered in the surface HTML. grep for withFailureHandler(function(){}) as a pre-check (PRE-2).",
+        "evidence_type": "screenshot + console-log",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "MVSS v1 blocker issues #355 (JJHome), #356 (ComicStudio)"
+      },
+      {
+        "id": "U8",
+        "name": "feedback-understandable",
+        "description": "Taps, clicks, answers, and saves produce visible or audible confirmation appropriate for the child's age.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "Interactive element produces feedback within 500ms. Feedback is visible (color change, animation, message) or audible (sound effect). Silent completion is a failure.",
+        "measurement_method": "Tap each interactive element type; assert visible state change within 500ms. Screenshot before-and-after.",
+        "evidence_type": "screenshot-pair",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Child UX standards; WCAG 2.1 SC 4.1.3 Status Messages"
+      },
+      {
+        "id": "U9",
+        "name": "controls-fit-device",
+        "description": "Buttons, cards, input fields, and drawing areas are reachable and usable on the target device.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "Touch targets ≥44px on standard surfaces; ≥60px on JJ tablet (per prek-milestones.md:93). No controls are clipped or outside viewport.",
+        "measurement_method": "Playwright: measure all interactive element bounding boxes at device viewport. Assert min-size thresholds per child profile.",
+        "evidence_type": "screenshot + dom-measurement",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "WCAG 2.2 SC 2.5.8 Target Size Minimum; prek-milestones.md:93"
+      },
+      {
+        "id": "U10",
+        "name": "no-dead-ends",
+        "description": "The child can recover from an error, back out, continue, or finish without needing adult intervention.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "From any non-entry state, the child can reach a known good state (back to hub, retry, or finish) without adult help.",
+        "measurement_method": "Navigate to an error state or mid-task state; assert a recovery path (back button, retry CTA, or close action) is visible and functional.",
+        "evidence_type": "screenshot + navigation-trace",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "ops/surface-map.md back_destination column"
+      },
+      {
+        "id": "U11",
+        "name": "truthful-promise",
+        "description": "The UI does not claim a reward, save, unlock, or completion that the backend does not honor.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "Complete an action that should trigger a backend write (save, submit, earn reward). Assert the backend record was created via API call verification.",
+        "measurement_method": "Perform save/submit action; verify backend state via getTodayContentSafe or KH mutation confirmation. Assert UI success message matches backend truth.",
+        "evidence_type": "api-response + screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "MVSS v1 blocker issue #356 (gate-check bypass)"
+      },
+      {
+        "id": "U12",
+        "name": "written-judgment",
+        "description": "The run produces a named decision: ship, ship-with-backlog, or do-not-ship with evidence.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "Run output file contains exactly one of: 'ship', 'ship-with-backlog', 'do-not-ship', 'config_drift', 'preconditions_not_met'. Evidence artifacts (screenshots, findings list) are committed.",
+        "measurement_method": "Assert run output JSON has field 'ship_decision' with allowed value. Assert evidence directory has ≥1 screenshot.",
+        "evidence_type": "written-finding",
+        "failure_mode": "critical",
+        "owner": "platform-owner",
+        "source": "MVSS v1 decision rules; ops/work-doctrine.md rule 9"
+      },
+      {
+        "id": "U13",
+        "name": "empty-state-defined",
+        "description": "The surface declares and renders a specific empty state with a CTA. A blank screen or bare error text does not qualify.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "When the primary data source returns empty (no questions, no tasks, no content), the surface shows a designed empty-state element with a clear CTA (e.g. 'No homework today — all done!' or 'Come back tomorrow').",
+        "measurement_method": "Inject empty data response via Playwright intercept. Assert empty-state element is present in DOM with visible CTA text.",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "MVSS v1 plan section C — unhappy-path promotion"
+      },
+      {
+        "id": "U14",
+        "name": "error-has-retry-path",
+        "description": "Errors surface through a designed element with a retry or recovery path. Native alert() banned as primary error UX. Empty withFailureHandler is banned. Gate-check bypass that lets the user through on failure is banned.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "All error paths use in-surface UI elements (toast, banner, or inline message). No native alert() or confirm() for primary errors. No empty withFailureHandler(function(){}). No gate-check 'pass-through' on failure.",
+        "measurement_method": "grep -n 'alert(' <surface.html>; grep -n 'withFailureHandler(function(){}' <surface.html>; simulate gate failure and assert block is shown. Blockers filed as #355, #357.",
+        "evidence_type": "grep-output + screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "MVSS v1 plan section C; blocker issues #355 (JJHome), #356 (ComicStudio), #357 (DesignDashboard)"
+      },
+      {
+        "id": "U15",
+        "name": "loading-has-max-time",
+        "description": "Loading state has a declared maximum wait before a fallback message appears. No endless spinner.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "Loading spinner or state resolves within 10s; if it does not, a fallback message is shown (e.g. 'Taking too long — try again'). No loading state is uncapped.",
+        "measurement_method": "Playwright: intercept API to delay 12s. Assert fallback message appears before 12s. If spinner persists indefinitely, criterion fails.",
+        "evidence_type": "screenshot + timing-log",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "MVSS v1 plan section C — unhappy-path promotion"
+      },
+      {
+        "id": "U16",
+        "name": "offline-behavior-declared",
+        "description": "The surface declares its offline behavior: queue, read-only, or refuse-clearly. Silent broken state is not allowed.",
+        "tier": "universal-must-pass",
+        "surface_family": "all",
+        "threshold": "Surface has documented offline behavior (in source comment or ops spec) AND the behavior is verifiable: either renders read-only content, shows a clear offline message, or queues the action with visible status.",
+        "measurement_method": "Playwright: block all network requests. Assert surface shows a recognizable offline state (not blank, not broken JS errors).",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "MVSS v1 plan section C — unhappy-path promotion"
+      }
+    ],
+    "jjMustPass": [
+      {
+        "id": "J1",
+        "name": "theme-integrity",
+        "description": "The route visually matches Sparkle Kingdom promise — not a generic worksheet inside a bright frame.",
+        "tier": "jj-must-pass",
+        "surface_family": "jj",
+        "threshold": "Sparkle Kingdom background, palette, and character/mascot elements are present. Background is deep purple (per ops/themes/palettes.md Sparkle Kingdom set). No plain white or generic card layout.",
+        "measurement_method": "Screenshot at jj-learning-tablet viewport; assert sparkle-body CSS class or equivalent background is applied. Assert theme palette hex values match palettes.md.",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "ops/themes/palettes.md; JJHome.html sparkle-body definition"
+      },
+      {
+        "id": "J2",
+        "name": "audio-consistency",
+        "description": "Instruction and celebration audio remain consistent within the session. No confusing voice switching if better audio is available.",
+        "tier": "jj-must-pass",
+        "surface_family": "jj",
+        "threshold": "Audio does not switch voices mid-session. Celebration sound plays on correct action. No audio loop or overlap on fast interactions.",
+        "measurement_method": "Manual walkthrough with audio enabled. Log audio play events via browser devtools. Assert no voice-switching events within a single session.",
+        "evidence_type": "video",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "PRE-4 voice ID check; phrases.json Nia voice ID"
+      },
+      {
+        "id": "J3",
+        "name": "delighted-success",
+        "description": "Correct actions produce friendly delight — sparkle, star, celebration, or clear positive feedback.",
+        "tier": "jj-must-pass",
+        "surface_family": "jj",
+        "threshold": "Correct answer or completed action triggers a celebration animation or audio event visible within 500ms.",
+        "measurement_method": "Submit correct answer; screenshot at T+500ms; assert celebration element is visible (star count increase, sparkle animation, celebration banner).",
+        "evidence_type": "screenshot-pair",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "ABCmouse joy standard; Khan Academy Kids feedback patterns"
+      },
+      {
+        "id": "J4",
+        "name": "gentle-failure",
+        "description": "Wrong answers redirect gently — no punishing copy, harsh red-state, or ambiguous 'nothing happened' outcome.",
+        "tier": "jj-must-pass",
+        "surface_family": "jj",
+        "threshold": "Incorrect answer shows a gentle redirect (try again prompt or soft animation). No harsh red flash, no negative copy ('Wrong!', 'No.'). No silent state where nothing visible happens.",
+        "measurement_method": "Submit incorrect answer; screenshot at T+500ms; assert gentle redirect element is visible and copy is age-appropriate.",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Early childhood learning standards; ABCmouse gentle-failure patterns"
+      },
+      {
+        "id": "J5",
+        "name": "age-fit-content",
+        "description": "Content, text density, and number of choices fit early-learning attention span and reading level.",
+        "tier": "jj-must-pass",
+        "surface_family": "jj",
+        "threshold": "Question text is ≤15 words for JJ surfaces. Answer choices ≤4 options. No instruction wall (>3 sentences in a single screen).",
+        "measurement_method": "Count words in question text and instruction strings. Count answer option elements. Assert thresholds.",
+        "evidence_type": "screenshot + dom-measurement",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "prek-milestones.md reading level criteria; Khan Academy Kids content standards"
+      },
+      {
+        "id": "J6",
+        "name": "adult-confidence-signal",
+        "description": "Parent or teacher can infer progress from saved state, star count, or logged completion even if the child is playing independently.",
+        "tier": "jj-must-pass",
+        "surface_family": "jj",
+        "threshold": "After session completion, ProgressReport or KH parent view shows a record of the activity. Star count or lesson run is visible in parent-facing data.",
+        "measurement_method": "Complete a session; check ProgressReport or KidsHub parent view; assert activity record is visible.",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "ABCmouse parent section; Khan parent reports; MVSS v1 plan section E"
+      }
+    ],
+    "buggsyMustPass": [
+      {
+        "id": "B1",
+        "name": "mission-clarity",
+        "description": "The goal is clear without a wall of text.",
+        "tier": "buggsy-must-pass",
+        "surface_family": "buggsy",
+        "threshold": "Mission or task goal is stated in ≤2 sentences or displayed as a visual objective. Child can state the goal without reading a paragraph.",
+        "measurement_method": "Count words in primary mission/task instruction. Assert ≤30 words for the initial goal statement.",
+        "evidence_type": "screenshot + dom-measurement",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Prodigy quest clarity standard; MVSS v1 plan section 5"
+      },
+      {
+        "id": "B2",
+        "name": "progress-reward-clarity",
+        "description": "XP, rings, completion, progress, or unlock state is visible and believable.",
+        "tier": "buggsy-must-pass",
+        "surface_family": "buggsy",
+        "threshold": "Reward/progress indicator is visible in the UI during or after task completion. Completion changes the indicator visibly. No 'earned X rings' with no visible ring count.",
+        "measurement_method": "Complete a task; assert progress indicator changes state. Screenshot before and after.",
+        "evidence_type": "screenshot-pair",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Prodigy reward momentum; KH reward system (rings, XP)"
+      },
+      {
+        "id": "B3",
+        "name": "creation-usability",
+        "description": "Typing, drawing, choosing panels, or submitting work feels usable on the primary device.",
+        "tier": "buggsy-must-pass",
+        "surface_family": "buggsy",
+        "threshold": "Text input is focusable and accepts typing on Surface Pro 5 keyboard. Drawing/panel tools are operable via touch or trackpad. Submit button is reachable without scrolling off-screen.",
+        "measurement_method": "At buggsy-workstation viewport (1368×912): interact with primary creation control (text input, canvas, or panel picker). Assert input is accepted without errors.",
+        "evidence_type": "screenshot + interaction-log",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Pixton Education usability; Book Creator Comics panel creation"
+      },
+      {
+        "id": "B4",
+        "name": "resume-integrity",
+        "description": "Drafts, submissions, or completion states resume correctly when the surface promises resume.",
+        "tier": "buggsy-must-pass",
+        "surface_family": "buggsy",
+        "threshold": "For surfaces with persistence_contract = 'draft' or 'submitted' in surface-map.md: navigate away, return, assert the saved state is restored. No missing panels, blank editors, or lost question position.",
+        "measurement_method": "Create or submit content; navigate to another route; return; assert state matches pre-navigation state.",
+        "evidence_type": "screenshot-before-navigate + screenshot-after-return",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "ops/surface-map.md persistence_contract column"
+      },
+      {
+        "id": "B5",
+        "name": "challenge-fit",
+        "description": "Tasks feel age-appropriate — not babyish, not needlessly frustrating.",
+        "tier": "buggsy-must-pass",
+        "surface_family": "buggsy",
+        "threshold": "Content difficulty is aligned with Buggsy's curriculum level. No kindergarten-level tasks on a 3rd-4th grade module. No tasks that require knowledge clearly beyond grade level.",
+        "measurement_method": "Review 3 questions or task prompts from the current content set. Assert difficulty is grade-appropriate per Curriculum tab TEKS alignment.",
+        "evidence_type": "written-finding + screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Curriculum tab TEKS fields; Prodigy curriculum-aligned challenge standard"
+      },
+      {
+        "id": "B6",
+        "name": "artifact-or-accomplishment",
+        "description": "The child leaves with a saved artifact, submitted answer, completed mission, or explicit earned progress.",
+        "tier": "buggsy-must-pass",
+        "surface_family": "buggsy",
+        "threshold": "Completing a session produces a durable record (submitted answer in KH_Education, saved comic in KH_StoryProgress, completed mission in KH_MissionState, or earned rings in KH_Rewards).",
+        "measurement_method": "Complete a session; verify backend record exists via Safe wrapper API call. Assert record is non-empty.",
+        "evidence_type": "api-response + screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "MVSS v1 plan section 5; KH mutation paths"
+      }
+    ],
+    "shouldPass": [
+      {
+        "id": "S1",
+        "name": "entry-transition",
+        "description": "Entry animation or transition helps the child understand a mode change.",
+        "tier": "should-pass",
+        "surface_family": "all",
+        "threshold": "Route load includes a visible transition or loading animation (not a hard-cut blank-to-content). Duration ≥300ms and ≤2s.",
+        "measurement_method": "Record route load; assert transition animation is present in first 2s of video.",
+        "evidence_type": "video",
+        "failure_mode": "major",
+        "owner": "education-owner",
+        "source": "MVSS v1 plan section 6"
+      },
+      {
+        "id": "S2",
+        "name": "success-rewarding",
+        "description": "The success state feels rewarding enough to invite one more action.",
+        "tier": "should-pass",
+        "surface_family": "all",
+        "threshold": "Post-completion state shows a distinct reward/celebration element. Child can see a clear 'you did it' signal before being returned to the hub.",
+        "measurement_method": "Complete final task in session; screenshot success state; assert reward element is present.",
+        "evidence_type": "screenshot",
+        "failure_mode": "major",
+        "owner": "education-owner",
+        "source": "MVSS v1 plan section 6"
+      },
+      {
+        "id": "S3",
+        "name": "copy-concise",
+        "description": "Copy remains concise and readable at the target age.",
+        "tier": "should-pass",
+        "surface_family": "all",
+        "threshold": "No instruction block exceeds 50 words. Error and success messages use tokens from ops/copy-patterns.md.",
+        "measurement_method": "grep all text content strings in surface HTML; assert max length. Check error/success copy against ops/copy-patterns.md allowed token set.",
+        "evidence_type": "grep-output",
+        "failure_mode": "major",
+        "owner": "education-owner",
+        "source": "ops/copy-patterns.md; MVSS v1 criterion X4/X5"
+      },
+      {
+        "id": "S4",
+        "name": "progress-visible",
+        "description": "There is a visible progress indicator during a multi-step activity.",
+        "tier": "should-pass",
+        "surface_family": "all",
+        "threshold": "For activities with ≥3 steps: a step counter, progress bar, or question number indicator is visible in the surface.",
+        "measurement_method": "Count steps in core loop. If ≥3, assert progress indicator element exists in DOM.",
+        "evidence_type": "screenshot + dom-measurement",
+        "failure_mode": "major",
+        "owner": "education-owner",
+        "source": "MVSS v1 plan section 6"
+      },
+      {
+        "id": "S5",
+        "name": "performance-smooth",
+        "description": "Performance feels smooth on target hardware during the core loop. No obvious jank.",
+        "tier": "should-pass",
+        "surface_family": "all",
+        "threshold": "Frame rate ≥30fps during core loop interaction on target device. No visual jank lasting >500ms.",
+        "measurement_method": "Playwright trace: record frame timing during core loop interaction. Assert average frame time ≤33ms (30fps). Automated measurement requires instrumentation.",
+        "evidence_type": "trace-json",
+        "failure_mode": "major",
+        "owner": "platform-owner",
+        "source": "MVSS v1 plan section J perf criteria",
+        "blocked_on": "#360"
+      }
+    ],
+    "crossSurface": [
+      {
+        "id": "X1",
+        "name": "nav-placement",
+        "description": "Primary navigation is at an identical selector across the child's surface set.",
+        "tier": "cross-surface",
+        "surface_family": "all",
+        "threshold": "DOM selector for the primary nav element matches across all surfaces in the same child's surface set.",
+        "measurement_method": "For each surface in the child's family, assert the primary nav selector (e.g. '.kh-nav', '.sk-nav') is present and at the same DOM location.",
+        "evidence_type": "dom-measurement",
+        "failure_mode": "major",
+        "owner": "platform-owner",
+        "source": "MVSS v1 plan section F"
+      },
+      {
+        "id": "X2",
+        "name": "back-behavior",
+        "description": "Back destination is declared per-route in ops/surface-map.md back_destination column and verified.",
+        "tier": "cross-surface",
+        "surface_family": "all",
+        "threshold": "Back action (back button or escape gesture) navigates to the route declared in ops/surface-map.md back_destination. If back_destination = 'none', no back button should be visible.",
+        "measurement_method": "Read back_destination from ops/surface-map.md for the route. Click back button; assert URL matches declared destination.",
+        "evidence_type": "navigation-trace",
+        "failure_mode": "major",
+        "owner": "platform-owner",
+        "source": "ops/surface-map.md back_destination column"
+      },
+      {
+        "id": "X3",
+        "name": "save-indicator",
+        "description": "Save status uses only allowed tokens: 'Saved', 'Saving...', 'Unsaved changes'.",
+        "tier": "cross-surface",
+        "surface_family": "all",
+        "threshold": "All save-state text in the surface matches exactly one of the allowed tokens. No custom or variant copy.",
+        "measurement_method": "grep -n 'Saved\\|Saving\\|Unsaved\\|saved\\|saving\\|unsaved' <surface.html> | assert only allowed tokens present",
+        "evidence_type": "grep-output",
+        "failure_mode": "minor",
+        "owner": "education-owner",
+        "source": "ops/copy-patterns.md save-indicator tokens"
+      },
+      {
+        "id": "X4",
+        "name": "success-copy",
+        "description": "Success copy uses patterns from ops/copy-patterns.md success token set.",
+        "tier": "cross-surface",
+        "surface_family": "all",
+        "threshold": "Success messages match approved patterns in ops/copy-patterns.md. No one-off copy that does not follow the pattern.",
+        "measurement_method": "grep success-message elements in surface HTML; cross-reference against ops/copy-patterns.md approved success tokens.",
+        "evidence_type": "grep-output",
+        "failure_mode": "minor",
+        "owner": "education-owner",
+        "source": "ops/copy-patterns.md success tokens"
+      },
+      {
+        "id": "X5",
+        "name": "error-copy",
+        "description": "Error copy follows the pattern: [what failed] + [user-actionable next step].",
+        "tier": "cross-surface",
+        "surface_family": "all",
+        "threshold": "Error messages contain both (a) a statement of what failed and (b) a specific next step the child can take. No generic 'Error occurred' without context.",
+        "measurement_method": "Identify all error message strings in surface HTML. Assert each string matches pattern: '[failure description]. [action step].'",
+        "evidence_type": "grep-output + screenshot",
+        "failure_mode": "minor",
+        "owner": "education-owner",
+        "source": "ops/copy-patterns.md error pattern"
+      }
+    ],
+    "comicStudio": [
+      {
+        "id": "C1",
+        "name": "panel-layout-library",
+        "description": "At least 6 panel layouts are available and usable without freeform drawing.",
+        "tier": "comic-studio",
+        "surface_family": "buggsy-creation",
+        "threshold": "Count panel layout options in the comic creation UI. Assert ≥6 distinct layouts are selectable.",
+        "measurement_method": "Open ComicStudio panel picker; count layout options; assert ≥6.",
+        "evidence_type": "screenshot + dom-measurement",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Book Creator Comics panel library; MVSS v1 plan section G"
+      },
+      {
+        "id": "C2",
+        "name": "dialogue-affordance",
+        "description": "Speech bubble placement and text entry works on Surface Pro 5. Dialogue is a first-class creation action.",
+        "tier": "comic-studio",
+        "surface_family": "buggsy-creation",
+        "threshold": "Can add a speech bubble to a panel and type dialogue text. Speech bubble is moveable. Text is readable at buggsy-workstation viewport.",
+        "measurement_method": "At buggsy-workstation (1368×912): add speech bubble, type text, move bubble, assert text is readable in screenshot.",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Book Creator Comics dialogue affordance; MVSS v1 plan section G"
+      },
+      {
+        "id": "C3",
+        "name": "character-placement",
+        "description": "Drag-drop character or image onto a panel works. No character rigging is required.",
+        "tier": "comic-studio",
+        "surface_family": "buggsy-creation",
+        "threshold": "Character or image asset can be placed onto a panel via drag-drop or tap-to-place. No rigging, skeleton, or animation setup is required to place a character.",
+        "measurement_method": "Open character picker; place character onto panel; assert character is visible in panel screenshot.",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Pixton character placement standard; MVSS v1 plan section G"
+      },
+      {
+        "id": "C4",
+        "name": "canvas-freeform",
+        "description": "Freeform drawing and image import work as panel layer actions.",
+        "tier": "comic-studio",
+        "surface_family": "buggsy-creation",
+        "threshold": "User can draw freeform strokes on a panel canvas. User can import an image as a panel layer.",
+        "measurement_method": "Draw a stroke on a panel; assert stroke is visible. Import an image; assert it appears as a layer.",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Book Creator canvas; MVSS v1 plan section G"
+      },
+      {
+        "id": "C5",
+        "name": "artifact-export",
+        "description": "Saves and exports a single comic as PNG or PDF. The exported artifact is restorable.",
+        "tier": "comic-studio",
+        "surface_family": "buggsy-creation",
+        "threshold": "Can save a comic (writes to KH_StoryProgress). Can export as PNG or PDF. Saved comic can be reopened and viewed.",
+        "measurement_method": "Create a 1-panel comic; save; export; reopen from StoryLibrary; assert panels are intact.",
+        "evidence_type": "screenshot + api-response",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Book Creator export standard; KH_StoryProgress write contract"
+      },
+      {
+        "id": "C6",
+        "name": "multi-comic-library",
+        "description": "Library of past comics persists and each comic is reopenable.",
+        "tier": "comic-studio",
+        "surface_family": "buggsy-creation",
+        "threshold": "StoryLibrary shows ≥1 past comic (if any have been saved). Each listed comic opens correctly. Reopened comic matches the saved state.",
+        "measurement_method": "Save ≥1 comic; navigate to StoryLibrary; assert comics are listed; open each; assert panels match saved state.",
+        "evidence_type": "screenshot",
+        "failure_mode": "critical",
+        "owner": "education-owner",
+        "source": "Book Creator multi-book library; KH_StoryProgress list contract"
+      }
+    ]
+  },
+  "benchmarkSets": {
+    "jj": [
+      {
+        "name": "ABCmouse",
+        "url": "https://www.abcmouse.com/learn/program/early-childhood-learning-programs-online",
+        "reason": "Guided early-learning path, safe navigation, and progress framing."
+      },
+      {
+        "name": "Khan Academy Kids",
+        "url": "https://www.khanacademy.org/kids?pStoreID=epp.%2F",
+        "reason": "Playful academic experience plus social-emotional and progress features."
+      },
+      {
+        "name": "PBS KIDS",
+        "url": "https://pbskids.org/",
+        "reason": "Age-appropriate delight and approachable kid-first interaction patterns."
+      }
+    ],
+    "buggsy": [
+      {
+        "name": "Prodigy Math",
+        "url": "https://www.prodigygame.com/main-en/prodigy-math",
+        "reason": "Quest clarity, reward momentum, and curriculum-aligned challenge."
+      },
+      {
+        "name": "Pixton Education",
+        "url": "https://www.pixton.com/proven-impacts",
+        "reason": "Comic creation with literacy, engagement, and comprehension framing."
+      },
+      {
+        "name": "Book Creator Comics",
+        "url": "https://bookcreator.com/features/comics/",
+        "reason": "Student-friendly comic creation, multimodal output, and accessibility cues."
+      }
+    ]
+  },
+  "benchmarkCategories": {
+    "jj": [
+      "onboarding-clarity",
+      "joy-delight",
+      "guided-learning",
+      "session-safety",
+      "progress-visibility"
+    ],
+    "buggsy": [
+      "goal-clarity",
+      "reward-momentum",
+      "creation-depth",
+      "accessibility-usability",
+      "standards-learning-fit"
+    ]
+  },
+  "deviceProfiles": [
+    {
+      "id": "jj-board-tablet",
+      "child": "jj",
+      "viewport": "800x1340",
+      "device": "A7 Tablet",
+      "gateType": "full",
+      "routes": [
+        "/jj"
+      ]
+    },
+    {
+      "id": "jj-learning-tablet",
+      "child": "jj",
+      "viewport": "1200x1920",
+      "device": "Samsung S10 FE",
+      "gateType": "full",
+      "routes": [
+        "/sparkle",
+        "/daily-adventures",
+        "/sparkle-kingdom"
+      ]
+    },
+    {
+      "id": "buggsy-board-tablet",
+      "child": "buggsy",
+      "viewport": "800x1340",
+      "device": "A9 Tablet",
+      "gateType": "full",
+      "routes": [
+        "/buggsy",
+        "/wolfdome"
+      ]
+    },
+    {
+      "id": "buggsy-workstation",
+      "child": "buggsy",
+      "viewport": "1368x912",
+      "device": "Surface Pro 5",
+      "gateType": "full",
+      "routes": [
+        "/daily-missions",
+        "/homework",
+        "/reading",
+        "/writing",
+        "/wolfkid",
+        "/facts",
+        "/investigation",
+        "/comic-studio"
+      ]
+    },
+    {
+      "id": "buggsy-secondary-tablet",
+      "child": "buggsy",
+      "viewport": "800x1340",
+      "device": "A9 Tablet (secondary)",
+      "gateType": "functional-smoke",
+      "routes": [
+        "/homework",
+        "/reading",
+        "/writing",
+        "/wolfkid",
+        "/comic-studio",
+        "/baseline"
+      ]
+    }
+  ],
+  "automationFlow": [
+    {
+      "step": 1,
+      "name": "resolve-run-context",
+      "description": "Resolve route into child, device profile, and core loop. Fail as config_drift if device profile is missing or ambiguous in ops/surface-map.md."
+    },
+    {
+      "step": 2,
+      "name": "load-benchmark-set",
+      "description": "Load the benchmark set assigned to the child."
+    },
+    {
+      "step": 3,
+      "name": "fail-closed-on-config-drift",
+      "description": "Fail as config_drift if the device profile is missing or disputed."
+    },
+    {
+      "step": 4,
+      "name": "run-preflight-preconditions",
+      "description": "Run PRE-1 through PRE-4. Fail as preconditions_not_met if any precondition fails. This does not count toward the competitive ship decision."
+    },
+    {
+      "step": 5,
+      "name": "run-preflight-technical",
+      "description": "Confirm route responds, sandbox or fixture mode is chosen, and evidence capture (screenshots, console log) is active."
+    },
+    {
+      "step": 6,
+      "name": "run-universal-checks",
+      "description": "Run universal must-pass criteria U1 through U16."
+    },
+    {
+      "step": 7,
+      "name": "run-child-specific-checks",
+      "description": "Run JJ must-pass (J1-J6) or Buggsy must-pass (B1-B6) criteria as appropriate."
+    },
+    {
+      "step": 8,
+      "name": "run-cross-surface-checks",
+      "description": "Run cross-surface consistency criteria X1-X5."
+    },
+    {
+      "step": 9,
+      "name": "run-comic-studio-checks",
+      "description": "For /comic-studio route only: run C1-C6 criteria."
+    },
+    {
+      "step": 10,
+      "name": "run-benchmark-comparison",
+      "description": "Compare the surface against the child benchmark categories."
+    },
+    {
+      "step": 11,
+      "name": "count-should-pass-weaknesses",
+      "description": "Count should-pass misses (S1-S5) and note non-critical benchmark gaps."
+    },
+    {
+      "step": 12,
+      "name": "emit-decision",
+      "description": "Emit ship, ship-with-backlog, or do-not-ship."
+    },
+    {
+      "step": 13,
+      "name": "emit-findings",
+      "description": "Emit route, device_profile, criterion_id, severity, and evidence for each finding."
+    }
+  ],
+  "severityMapping": [
+    {
+      "when": "any universal or child-specific or cross-surface or comic-studio must-pass criterion fails",
+      "severity": "critical"
+    },
+    {
+      "when": "two or more should-pass criteria fail",
+      "severity": "major"
+    },
+    {
+      "when": "one should-pass criterion fails or one non-critical benchmark category is behind",
+      "severity": "minor"
+    },
+    {
+      "when": "benchmark note exists without a direct product gap",
+      "severity": "observation"
+    }
+  ],
+  "defaultOutputs": [
+    "route",
+    "child",
+    "device_profile",
+    "benchmark_set",
+    "ship_decision",
+    "precondition_results",
+    "must_pass_failures",
+    "should_pass_weaknesses",
+    "cross_surface_findings",
+    "benchmark_comparison",
+    "recommended_next_action"
+  ]
+}
