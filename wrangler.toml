@@ -25,6 +25,7 @@ period = 10
 [[kv_namespaces]]
 binding = "WEBHOOK_IDEMPOTENCY"
 id = "860f4a79a285468a8899c0ef68c85f6c"
+preview_id = "b57a11e2408247d9871a8c462977817f"
 
 # QA Route Isolation secrets (issue #219)
 # Set via: wrangler secret put QA_HMAC_SECRET

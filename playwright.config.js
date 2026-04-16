@@ -1,5 +1,8 @@
 // @ts-check
 import { defineConfig, devices } from '@playwright/test';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const launchConfig = require('./.claude/launch.json');
 
 /**
  * TBM + MLS Playwright Configuration (Q3 Harness)
@@ -70,6 +73,30 @@ export default defineConfig({
       name: 'webkit',
       testDir: './tests/tbm',
       use: { ...devices['Desktop Safari'] },
+    },
+
+    // ── Perf / frame-budget projects (Issue #360) ──
+    {
+      name: 'perf-surface-pro5',
+      testDir: './tests/tbm',
+      testMatch: 'perf-frame-budget.spec.js',
+      use: {
+        ...launchConfig.playwright.devices['surface-pro-5'],
+        trace: 'on',
+        video: 'off',
+        baseURL: process.env.TBM_BASE_URL || 'https://thompsonfams.com',
+      },
+    },
+    {
+      name: 'perf-s10-fe',
+      testDir: './tests/tbm',
+      testMatch: 'perf-frame-budget.spec.js',
+      use: {
+        ...launchConfig.playwright.devices['samsung-s10-fe'],
+        trace: 'on',
+        video: 'off',
+        baseURL: process.env.TBM_BASE_URL || 'https://thompsonfams.com',
+      },
     },
   ],
 });
