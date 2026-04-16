@@ -144,7 +144,7 @@ function reconcileOpsTriggersSafe() {
       if (orphaned.length)  lines.push('Orphaned: ' + orphaned.join(', '));
       if (duplicate.length) lines.push('Duplicate: ' + duplicate.join(', '));
       var msg = lines.join('\n');
-      sendPush_('TBM Trigger Drift', msg, 'LT', ALERT_TIERS.GATE_BREACH, '');
+      sendPush_('TBM Trigger Drift', msg, 'LT', PUSHOVER_PRIORITY.GATE_BREACH, '');
       logError_('reconcileOpsTriggersSafe', new Error(msg), 0);
       Logger.log('TRIGGER_DRIFT: ' + msg);
     } else {

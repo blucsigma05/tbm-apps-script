@@ -87,7 +87,9 @@ var CANONICAL_SAFE_FUNCTIONS = [
   // QA Operator
   'qaGetEnvStatusSafe', 'qaListScenariosSafe', 'qaLoadScenarioSafe', 'qaSetClockSafe',
   'qaClearClockSafe', 'qaSnapshotSafe', 'qaRestoreSafe', 'qaListSnapshotsSafe',
-  'qaRunPersistenceTestsSafe', 'qaClearTestDataSafe', 'qaResetDataSafe', 'qaExportStateSafe'
+  'qaRunPersistenceTestsSafe', 'qaClearTestDataSafe', 'qaResetDataSafe', 'qaExportStateSafe',
+  // OpsTriggers
+  'installAllOpsTriggersSafe', 'reconcileOpsTriggersSafe', 'uninstallOpsTriggerSafe', 'diagOpsTriggersSafe'
 ];
 
 /**

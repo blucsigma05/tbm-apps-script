@@ -5,7 +5,7 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 11; }
+function getGASHardeningVersion() { return 12; }
 
 // v6: openById migration — trigger-safe spreadsheet accessor
 var _ghSS = null;
@@ -1175,7 +1175,8 @@ function getDeployedVersions() {
     ['SpellingCatalog',   'getSpellingCatalogVersion'],
     ['SmokeTest',         'getSmokeTestVersion'],
     ['RegressionSuite',   'getRegressionSuiteVersion'],
-    ['Utility',           'getUtilityVersion']
+    ['Utility',           'getUtilityVersion'],
+    ['OpsTriggers',       'getOpsTriggersVersion']
   ];
   for (var i = 0; i < checks.length; i++) {
     var label = checks[i][0];
