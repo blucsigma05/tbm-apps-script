@@ -1,17 +1,18 @@
 // ═══════════════════════════════════════════════════════════════
-// Utility.js v9 — Run-once utility functions
+// Utility.js v10 — Run-once utility functions
 // ═══════════════════════════════════════════════════════════════
 // The isStaleDaily_ and isStaleWeekly_ fixes are already in
 // KidsHub.gs v6 Full Deploy. These utilities handle cleanup.
 // ═══════════════════════════════════════════════════════════════
 
-function getUtilityVersion() { return 9; }
+function getUtilityVersion() { return 10; }
 
 
 // ── FIX 3: Add Parent_PIN column to KH_Children ─────────────
 // Run once from Apps Script editor.
 
 function fixParentPINColumn() {
+  assertNotFrozen_('freeze-critical', 'fixParentPINColumn');
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
   var ss = SpreadsheetApp.openById(SSID);
@@ -50,6 +51,7 @@ function fixParentPINColumn() {
 // Run once after deploying the isStaleDaily_ fix.
 
 function fixStaleDuplicates() {
+  assertNotFrozen_('freeze-critical', 'fixStaleDuplicates');
   Logger.log('═══ Cleaning up stale duplicate entries ═══');
 
   var choresSheet = getKHSheet_('KH_Chores');
@@ -466,6 +468,7 @@ function diagTransferPairing() {
  * Run once, then use matchAmazonToTiller() to cross-reference.
  */
 function seedAmazonOrderHistory() {
+  assertNotFrozen_('freeze-critical', 'seedAmazonOrderHistory');
   var ss = SpreadsheetApp.openById(SSID);
   var tabName = 'Amazon_Detail';
   var sheet = ss.getSheetByName(tabName);
@@ -563,6 +566,7 @@ function seedAmazonOrderHistory() {
  * Writes matched Tiller row number, amount, and category back to Amazon_Detail.
  */
 function matchAmazonToTiller() {
+  assertNotFrozen_('freeze-critical', 'matchAmazonToTiller');
   var ss = SpreadsheetApp.openById(SSID);
   var amzSheet = ss.getSheetByName('Amazon_Detail');
   if (!amzSheet) return { error: 'Run seedAmazonOrderHistory() first' };
@@ -674,4 +678,4 @@ function matchAmazonToTiller() {
   return { status: 'ok', matched: matched, unmatched: unmatched, total: Object.keys(orders).length, details: results };
 }
 
-// END Utility.js v9
+// END Utility.js v10

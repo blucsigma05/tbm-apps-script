@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmRegressionSuite.gs v6 — Phase A3: Post-Deploy Behavioral Assertions
+// tbmRegressionSuite.gs v10 — Phase A3: Post-Deploy Behavioral Assertions
 // WRITES TO: (none — read-only assertions)
 // READS FROM: All sheets (for regression assertions)
 // ════════════════════════════════════════════════════════════════════
@@ -20,7 +20,14 @@
 // USAGE: Run tbmRegressionSuite() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getRegressionSuiteVersion() { return 6; }
+function getRegressionSuiteVersion() { return 10; }
+
+// v10 (#377): Global flag used by FreezeGate.js to suppress logError_/sendPush_
+// side effects during FREEZE regression tests. Without this, 5 FREEZE tests fire
+// ~14 Pushover API calls + ~16 sheet writes per ?action=runTests run, pushing
+// GAS execution past its 30s limit and silently killing the HTTP response.
+// FreezeGate._isFreezeTestMode_() reads this var directly (shared global scope).
+var _FREEZE_TEST_MODE = false;
 
 /**
  * Main entry point. Run after every deploy.
@@ -46,6 +53,8 @@ function tbmRegressionSuite() {
   // v6: Finance audit — golden-month identity checks + tolerance checks
   runFinanceIdentityAssertions_(results);
   runFinanceToleranceAssertions_(results);
+  // v7: Freeze gate assertions (P0-23)
+  runFreezeGateAssertions_(results);
 
   // ── Compute totals ──
   results.total = results.assertions.length;
@@ -1049,4 +1058,155 @@ function regressionEnvOnly() {
 }
 
 
-// END OF FILE — tbmRegressionSuite.gs v6
+// ════════════════════════════════════════════════════════════════════
+// FREEZE GATE ASSERTIONS (P0-23 — 5 tests)
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Run all 5 freeze gate assertions.
+ * Saves any existing freeze state before tests and restores it after, so running
+ * the regression suite during an operational freeze does not clear the live gate.
+ */
+function runFreezeGateAssertions_(results) {
+  // Suppress logError_/sendPush_ side effects in FreezeGate for the duration of
+  // these tests. Prevents ~14 Pushover API calls + ~16 sheet writes that would
+  // push ?action=runTests past GAS's 30s execution limit. See FreezeGate.js v4.
+  _FREEZE_TEST_MODE = true;
+  // Capture ALL freeze-related properties so a live operational freeze is fully
+  // preserved — including any active bypass token, block counter, and debounce ts.
+  var props = PropertiesService.getScriptProperties();
+  var priorFreezeRaw      = props.getProperty('DEPLOY_FREEZE');
+  var priorEmergencyRaw   = props.getProperty('DEPLOY_FREEZE_EMERGENCY');
+  var priorBlockCount     = props.getProperty('FREEZE_BLOCK_COUNT');
+  var priorLastPush       = props.getProperty('FREEZE_LAST_PUSH');
+
+  try {
+
+  // FREEZE-001: setFreeze_ activates; getFreezeState_ returns active:true with reason
+  var f1 = { id: 'FREEZE-001', category: 'freeze-gate', description: 'setFreeze_ activates; getFreezeState_ returns active:true', status: 'FAIL', details: '' };
+  try {
+    setFreeze_('regression-test', new Date(new Date().getTime() + 60000).toISOString());
+    var s1 = getFreezeState_();
+    if (s1.active === true && s1.reason === 'regression-test') {
+      f1.status = 'PASS';
+      f1.details = 'state.active=true, state.reason=regression-test';
+    } else {
+      f1.details = 'Expected active:true reason:regression-test, got: ' + JSON.stringify(s1);
+    }
+  } catch(e) {
+    f1.details = 'threw: ' + e.message;
+  } finally {
+    try { liftFreeze_(); } catch(e2) {}
+  }
+  results.assertions.push(f1);
+
+  // FREEZE-002: liftFreeze_ clears state; getFreezeState_ returns active:false
+  var f2 = { id: 'FREEZE-002', category: 'freeze-gate', description: 'liftFreeze_ clears state; getFreezeState_ returns active:false', status: 'FAIL', details: '' };
+  try {
+    setFreeze_('regression-test-lift', new Date(new Date().getTime() + 60000).toISOString());
+    liftFreeze_();
+    var s2 = getFreezeState_();
+    if (s2.active === false) {
+      f2.status = 'PASS';
+      f2.details = 'state.active=false after lift';
+    } else {
+      f2.details = 'Expected active:false after lift, got: ' + JSON.stringify(s2);
+    }
+  } catch(e) {
+    f2.details = 'threw: ' + e.message;
+  } finally {
+    try { liftFreeze_(); } catch(e2) {}
+  }
+  results.assertions.push(f2);
+
+  // FREEZE-003: assertNotFrozen_ throws when freeze is active and no bypass token
+  var f3 = { id: 'FREEZE-003', category: 'freeze-gate', description: 'assertNotFrozen_ throws when freeze active (no bypass)', status: 'FAIL', details: '' };
+  try {
+    setFreeze_('regression-test-block', new Date(new Date().getTime() + 60000).toISOString());
+    var threw = false;
+    try {
+      assertNotFrozen_('freeze-critical', 'regressionTestCaller');
+    } catch(blockErr) {
+      threw = true;
+      if (blockErr.message.indexOf('FROZEN') === 0) {
+        f3.status = 'PASS';
+        f3.details = 'Threw FROZEN error as expected: ' + blockErr.message.substring(0, 60);
+      } else {
+        f3.details = 'Threw non-FROZEN error: ' + blockErr.message;
+      }
+    }
+    if (!threw) {
+      f3.details = 'assertNotFrozen_ did NOT throw — gate did not block';
+    }
+  } catch(e) {
+    f3.details = 'setup threw: ' + e.message;
+  } finally {
+    try { liftFreeze_(); } catch(e2) {}
+  }
+  results.assertions.push(f3);
+
+  // FREEZE-004: assertNotFrozen_ does NOT throw when valid emergency token is present
+  var f4 = { id: 'FREEZE-004', category: 'freeze-gate', description: 'assertNotFrozen_ bypasses with valid emergency token', status: 'FAIL', details: '' };
+  try {
+    setFreeze_('regression-test-bypass', new Date(new Date().getTime() + 60000).toISOString());
+    generateEmergencyToken_('regression-bypass-test', 1);
+    var bypassThrew = false;
+    try {
+      assertNotFrozen_('freeze-critical', 'regressionBypassCaller');
+    } catch(e) {
+      bypassThrew = true;
+      f4.details = 'Threw despite valid bypass token: ' + e.message;
+    }
+    if (!bypassThrew) {
+      f4.status = 'PASS';
+      f4.details = 'assertNotFrozen_ allowed through with valid emergency token';
+    }
+  } catch(e) {
+    f4.details = 'setup threw: ' + e.message;
+  } finally {
+    try { liftFreeze_(); } catch(e2) {}
+    try { PropertiesService.getScriptProperties().deleteProperty('DEPLOY_FREEZE_EMERGENCY'); } catch(e2) {}
+  }
+  results.assertions.push(f4);
+
+  // FREEZE-005: getFreezeState_ auto-expires past-expiresAt freeze
+  var f5 = { id: 'FREEZE-005', category: 'freeze-gate', description: 'getFreezeState_ auto-expires when expiresAt is in the past', status: 'FAIL', details: '' };
+  try {
+    // Set freeze with expiry 1 second in the past
+    setFreeze_('regression-test-expiry', new Date(new Date().getTime() - 1000).toISOString());
+    var s5 = getFreezeState_();
+    if (s5.active === false && s5.autoExpired === true) {
+      f5.status = 'PASS';
+      f5.details = 'state.active=false, state.autoExpired=true — auto-expired correctly';
+    } else {
+      f5.details = 'Expected active:false autoExpired:true, got: ' + JSON.stringify(s5);
+    }
+  } catch(e) {
+    f5.details = 'threw: ' + e.message;
+  } finally {
+    try { liftFreeze_(); } catch(e2) {}
+  }
+  results.assertions.push(f5);
+
+  } finally {
+    // Always restore side-effect mode before restoring properties so any
+    // exception during property restore doesn't leave test mode silently active.
+    _FREEZE_TEST_MODE = false;
+    // Restore all four freeze properties to pre-test state.
+    // Each is set if it existed before, deleted if it didn't.
+    if (priorFreezeRaw)    { props.setProperty('DEPLOY_FREEZE', priorFreezeRaw); }
+    else                   { props.deleteProperty('DEPLOY_FREEZE'); }
+
+    if (priorEmergencyRaw) { props.setProperty('DEPLOY_FREEZE_EMERGENCY', priorEmergencyRaw); }
+    else                   { props.deleteProperty('DEPLOY_FREEZE_EMERGENCY'); }
+
+    if (priorBlockCount)   { props.setProperty('FREEZE_BLOCK_COUNT', priorBlockCount); }
+    else                   { props.deleteProperty('FREEZE_BLOCK_COUNT'); }
+
+    if (priorLastPush)     { props.setProperty('FREEZE_LAST_PUSH', priorLastPush); }
+    else                   { props.deleteProperty('FREEZE_LAST_PUSH'); }
+  }
+}
+
+
+// END OF FILE — tbmRegressionSuite.gs v10
