@@ -422,7 +422,6 @@ echo "--- Deploy Freeze ---"
 
 if [[ "${EMERGENCY:-0}" == "1" ]]; then
   echo "  BYPASS -- EMERGENCY=1 set; skipping freeze check"
-  echo "  NOTE: commit-msg hook enforces EMERGENCY: prefix; pre-push hook re-checks freeze at push time"
 else
   # Use clasp run to read freeze state from Script Properties.
   # When tools are present: fail-closed — a clasp error or unparseable response
