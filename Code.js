@@ -553,7 +553,8 @@ function serveData(e) {
         // ContentEngine.gs v2 — Vocabulary usage grading (#225)
         'gradeVocabUsageSafe': gradeVocabUsageSafe,
         'diagOpsTriggersSafe': diagOpsTriggersSafe,
-        'diagFeedbackPipelineSafe': diagFeedbackPipelineSafe
+        'diagFeedbackPipelineSafe': diagFeedbackPipelineSafe,
+        'diagStoryFactorySafe': diagStoryFactorySafe
       };
 
       // v93 (#414, #379): Write admin functions require OPS_ADMIN_TOKEN shared-secret.

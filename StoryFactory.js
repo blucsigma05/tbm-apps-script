@@ -1,9 +1,9 @@
-// Version history tracked in Notion deploy page. Do not add version comments here.
+// StoryFactory.js — v20
 // ============================================================
 // STORY FACTORY — Google Apps Script Agent
 // WRITES TO: (Notion + Google Drive — no sheet writes)
 // READS FROM: (Notion DBs for character/story data, Script Properties for stored stories)
-// Version: 18
+// Version: 20
 // Pipeline (phased): Idea→Writing→Written→Illustrating→Illustrated→Assembling→Ready
 //   Phase 1 (Write):     Character Fetch → Memory Inject → Gemini Story → Canon Extract → persist JSON to Drive
 //   Phase 2 (Illustrate): Load story JSON → Gemini Images → persist blobs to Drive folder
@@ -11,7 +11,7 @@
 // Each phase runs in a separate poll cycle — any phase failure is isolated and retried independently.
 // ============================================================
 
-function getStoryFactoryVersion() { return 18; }
+function getStoryFactoryVersion() { return 20; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -482,15 +482,25 @@ toneGuide +
 
 var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + CONFIG.STORY_MODEL + ':generateContent?key=' + CONFIG.GEMINI_API_KEY;
 
-var result = safeFetch(url, {
-method: 'POST',
-contentType: 'application/json',
-payload: JSON.stringify({
+var storyPayload = JSON.stringify({
 contents: [{ parts: [{ text: prompt }] }],
 generationConfig: { temperature: 0.8, maxOutputTokens: 4000, responseMimeType: 'application/json' }
-}),
-muteHttpExceptions: true
 });
+var result;
+for (var _storyAttempt = 1; _storyAttempt <= 3; _storyAttempt++) {
+  try {
+    result = safeFetch(url, { method: 'POST', contentType: 'application/json', payload: storyPayload, muteHttpExceptions: true });
+    break;
+  } catch(_se) {
+    var _isTransient = _se.message.indexOf('SERVER_ERROR_503') >= 0 || _se.message.indexOf('RATE_LIMITED') >= 0 || _se.message.indexOf('429') >= 0;
+    if (_isTransient && _storyAttempt < 3) {
+      Logger.log('Story gen attempt ' + _storyAttempt + ' hit transient error — retrying in 30s: ' + _se.message.substring(0, 80));
+      Utilities.sleep(30000);
+    } else {
+      throw _se;
+    }
+  }
+}
 
 if (result.error) throw new Error('Story API error: ' + result.error.message);
 if (!result.candidates || result.candidates.length === 0) {
@@ -1646,7 +1656,7 @@ function sf_findEligibleRow_() {
           { property: 'Status', select: { equals: 'Illustrated' } }
         ]
       },
-      sorts: [{ property: 'Created time', direction: 'ascending' }],
+      sorts: [{ timestamp: 'created_time', direction: 'ascending' }],
       page_size: 5
     };
     if (startCursor) body.start_cursor = startCursor;
@@ -2293,5 +2303,86 @@ function sf_getFailureSummary_(days) {
   };
 }
 
-// END OF FILE — StoryFactory v18
+// ── Remote diagnostic endpoint (v19) ─────────────────────────────────────────
+// Exposes full circuit-breaker + backoff + error state via API so Mastermind
+// can diagnose the pipeline without requiring LT to open the GAS editor.
+function diagStoryFactory_() {
+  var props = PropertiesService.getScriptProperties();
+  var now = Date.now();
+
+  // Circuit breaker state
+  var consecutiveFails = parseInt(props.getProperty('SF_CONSECUTIVE_FAILS') || '0') || 0;
+  var pausedUntilMs = parseInt(props.getProperty('SF_PAUSED_UNTIL') || '0') || 0;
+  var currentlyPaused = pausedUntilMs > 0 && now < pausedUntilMs;
+
+  // Backoff map — count active entries, find oldest expiry
+  var backoffMap = sf_getBackoffMap_();
+  var backoffKeys = Object.keys(backoffMap);
+  var backoffCount = backoffKeys.length;
+  var oldestBackoffExpiry = null;
+  for (var i = 0; i < backoffKeys.length; i++) {
+    if (oldestBackoffExpiry === null || backoffMap[backoffKeys[i]] < oldestBackoffExpiry) {
+      oldestBackoffExpiry = backoffMap[backoffKeys[i]];
+    }
+  }
+
+  // API usage
+  var apiCalls24h = parseInt(props.getProperty('SF_API_CALLS') || '0') || 0;
+
+  // Last successful story — scan ErrorLog for StoryFactory entries
+  var recentErrors = [];
+  try {
+    var ss = SpreadsheetApp.openById(SSID);
+    var errSheet = ss.getSheetByName(TAB_MAP['ErrorLog']);
+    if (errSheet && errSheet.getLastRow() > 1) {
+      var errData = errSheet.getDataRange().getValues();
+      for (var r = 1; r < errData.length; r++) {
+        var fnName = String(errData[r][1] || '');
+        if (fnName.indexOf('StoryFactory') !== -1 || fnName.indexOf('sf_') !== -1 || fnName.indexOf('pollForNewStories') !== -1) {
+          recentErrors.push({ at: errData[r][0], fn: fnName, msg: String(errData[r][2] || '').substring(0, 120) });
+        }
+      }
+    }
+  } catch (e) {
+    recentErrors = [{ error: 'ErrorLog read failed: ' + e.message }];
+  }
+  var last5Errors = recentErrors.slice(-5);
+
+  // Last story created — check Notion Story DB (last item with status=Ready)
+  var lastStoryAt = null;
+  try {
+    var storyResult = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
+      filter: { property: 'Status', select: { equals: 'Ready' } },
+      sorts: [{ timestamp: 'created_time', direction: 'descending' }],
+      page_size: 1
+    });
+    if (storyResult && storyResult.results && storyResult.results.length > 0) {
+      lastStoryAt = storyResult.results[0].created_time || null;
+    }
+  } catch (e) {
+    lastStoryAt = 'error: ' + e.message;
+  }
+
+  return {
+    ok: true,
+    version: getStoryFactoryVersion(),
+    apiCalls24h: apiCalls24h,
+    consecutiveFails: consecutiveFails,
+    pausedUntil: pausedUntilMs > 0 ? new Date(pausedUntilMs).toISOString() : null,
+    currentlyPaused: currentlyPaused,
+    backoffPageCount: backoffCount,
+    oldestBackoffExpiry: oldestBackoffExpiry ? new Date(oldestBackoffExpiry).toISOString() : null,
+    lastSuccessfulStory: lastStoryAt,
+    recentErrors: last5Errors,
+    checkedAt: new Date(now).toISOString()
+  };
+}
+
+function diagStoryFactorySafe() {
+  return withMonitor_('diagStoryFactorySafe', function() {
+    return diagStoryFactory_();
+  });
+}
+
+// END OF FILE — StoryFactory v20
 // ════════════════════════════════════════════════════════════════════
