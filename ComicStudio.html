@@ -993,6 +993,14 @@ main {
 </head>
 <body>
 
+<!-- v14: Gate error overlay — shown when gate check fails (network/server error) -->
+<div id="gate-error" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#0B0F1A;color:#E2E8F0;font-family:Nunito,sans-serif;text-align:center;padding-top:20vh;">
+  <div style="font-size:64px;margin-bottom:16px;">&#x26A0;&#xFE0F;</div>
+  <div style="font-family:Orbitron,sans-serif;font-size:22px;font-weight:900;color:#F87171;letter-spacing:2px;margin-bottom:12px;">CAN'T CHECK HOMEWORK</div>
+  <div style="font-size:15px;color:#94A3B8;max-width:320px;margin:0 auto 24px;line-height:1.6;">Something went wrong checking your homework status. Ask a grown-up for help.</div>
+  <a href="/kidshub" style="display:inline-block;padding:14px 32px;background:#3B82F6;color:#fff;border-radius:10px;font-family:Orbitron,sans-serif;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:1px;">RETURN TO HOME</a>
+</div>
+
 <!-- v14: Homework gate overlay — blocks Comic Studio until daily homework is done (weekdays only) -->
 <div id="hw-gate" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#0B0F1A;color:#E2E8F0;font-family:Nunito,sans-serif;text-align:center;padding-top:20vh;">
   <div style="font-size:64px;margin-bottom:16px;">&#128218;</div>
@@ -1157,24 +1165,24 @@ main {
 
 <script>
 // ── ComicStudio v5 — Day 2: F3 Drive Draft/Resume + F4 Mission/Free Mode
-// ES6 EXEMPT: Surface Pro 5 / Chrome — see specs/comicstudio-v4.md §3
+// ES5 MIGRATED: Fire OS / Fully Kiosk Browser — see specs/comicstudio-v4.md §3
 // tbm-version: v15
 
-const COMIC_STUDIO_VERSION = 12; // v12: gallery autosave guard + sticker overlay in viewer
+var COMIC_STUDIO_VERSION = 12; // v12: gallery autosave guard + sticker overlay in viewer
 
 // ── Test Mode Detection ──
-const TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
+var TBM_TEST_MODE = window.location.search.indexOf('test=1') !== -1;
 if (TBM_TEST_MODE) {
-  const _tbanner = document.createElement('div');
+  var _tbanner = document.createElement('div');
   _tbanner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#fbbf24;color:#000;text-align:center;padding:4px;font-size:12px;font-weight:700;z-index:99999;letter-spacing:1px';
   _tbanner.textContent = 'TEST MODE — Nothing saves';
   document.body.appendChild(_tbanner);
   document.body.style.paddingTop = '28px';
 }
 
-const MODULE_NAME = 'comic-studio';
-const MODULE_VERSION = 'v4';
-const CHILD = 'buggsy';
+var MODULE_NAME = 'comic-studio';
+var MODULE_VERSION = 'v4';
+var CHILD = 'buggsy';
 
 function escapeHtml(s) {
   return String(s == null ? '' : s)
@@ -1186,24 +1194,24 @@ function escapeHtml(s) {
 }
 
 // ── State ──
-let panelCount = 2;
-let activePanel = 0;
-let activeBrush = 'pencil';  // F2: current brush
-let activeColor = '#000000';
-let brushSize = 4;
-let captions = ['', '', '', ''];
-let panelCanvases = [];
-let panelContexts = [];
-let isDrawing = false;
-let lastX = 0;
-let lastY = 0;
-let ringsEarned = 0;
-let isFinished = false;
-let activeTab = 'draw';
+var panelCount = 2;
+var activePanel = 0;
+var activeBrush = 'pencil';  // F2: current brush
+var activeColor = '#000000';
+var brushSize = 4;
+var captions = ['', '', '', ''];
+var panelCanvases = [];
+var panelContexts = [];
+var isDrawing = false;
+var lastX = 0;
+var lastY = 0;
+var ringsEarned = 0;
+var isFinished = false;
+var activeTab = 'draw';
 
 // F3: stroke history for autosave payload
-const strokeHistory = [];  // [{panelIdx, type, color, size, points:[]}]
-let currentStroke = null;
+var strokeHistory = [];  // [{panelIdx, type, color, size, points:[]}]
+var currentStroke = null;
 
 // F7: replay buffer (richer format — includes timing for time-lapse playback)
 var replayBuffer = [];
@@ -1244,36 +1252,36 @@ function recordFill(panelIdx, x, y, colorHex) {
 }
 
 // F3 Day 2: Drive draft state
-let hasDrawnAnything = false;
-let currentMode = 'free';    // 'mission' | 'free'
-let ringsCap = 30;           // set by getComicStudioContextSafe
-let currentEpisodeId = null;
-let pendingDraft = null;     // draft loaded from Drive, awaiting context
-let studioCtx = null;        // full context from server
+var hasDrawnAnything = false;
+var currentMode = 'free';    // 'mission' | 'free'
+var ringsCap = 30;           // set by getComicStudioContextSafe
+var currentEpisodeId = null;
+var pendingDraft = null;     // draft loaded from Drive, awaiting context
+var studioCtx = null;        // full context from server
 
 // v9: Speech bubbles — [{id, panel, xPct, yPct, text, tail}]
 // xPct/yPct = 0-100 percentage of panel-slot display area (center of bubble)
 // tail = 'bottom'|'top'|'right'|'left'
-let bubbles = [];
-let _replayBubbles = []; // Snapshot taken in finishComic() before bubbles is cleared.
-const BUBBLE_MAX_PER_PANEL = 3;
-const BUBBLE_TAILS = ['bottom', 'right', 'top', 'left'];
-let _bubbleIdSeq = 0;
+var bubbles = [];
+var _replayBubbles = []; // Snapshot taken in finishComic() before bubbles is cleared.
+var BUBBLE_MAX_PER_PANEL = 3;
+var BUBBLE_TAILS = ['bottom', 'right', 'top', 'left'];
+var _bubbleIdSeq = 0;
 
 // v11: Character stickers — [{id, charId, panel, xPct, yPct}]
-const STICKER_CATALOG = [
+var STICKER_CATALOG = [
   { id: 'wolfkid', emoji: '\uD83D\uDC3A', label: 'Wolfkid', locked: false },
   { id: 'turbo',   emoji: '\uD83E\uDD94', label: 'Turbo',   locked: false },
   { id: 'buggsy',  emoji: '\uD83D\uDC30', label: 'Buggsy',  locked: false },
   { id: 'hex',     emoji: '\u26A1',       label: 'Hex',      locked: false },
   { id: 'crush',   emoji: '\uD83D\uDC8E', label: 'Crush',   locked: true  }
 ];
-let stickers = [];
-const STICKER_MAX_PER_PANEL = 3;
-let _stickerId = 0;
+var stickers = [];
+var STICKER_MAX_PER_PANEL = 3;
+var _stickerId = 0;
 
 // F3 Day 2: two-phase init gate (context + draft must both resolve before resume/fresh)
-let _initPending = 2;
+var _initPending = 2;
 function _initReady() {
   _initPending--;
   if (_initPending > 0) return;
@@ -1281,7 +1289,7 @@ function _initReady() {
 }
 
 // ── F2: Brush definitions ──
-const BRUSHES = [
+var BRUSHES = [
   { id: 'pencil',  label: 'Pencil',  icon: '✏️', minW: 1, maxW: 4,  opacity: 1.0,  scatter: false, eraser: false, bucket: false },
   { id: 'ink',     label: 'Ink',     icon: '🖊️', minW: 3, maxW: 8,  opacity: 1.0,  scatter: false, eraser: false, bucket: false },
   { id: 'marker',  label: 'Marker',  icon: '🖍️', minW: 6, maxW: 16, opacity: 0.6,  scatter: false, eraser: false, bucket: false },
@@ -1291,32 +1299,34 @@ const BRUSHES = [
 ];
 
 function getBrushDef(id) {
-  return BRUSHES.find(b => b.id === id) || BRUSHES[0];
+  return BRUSHES.find(function(b) { return b.id === id; }) || BRUSHES[0];
 }
 
 // ── F1: Pressure-to-width mapping ──
 // Exponential ease: Math.pow(pressure || 0.5, 1.6) → scalar
 function pressureToWidth(pressure, brushDef) {
-  const p = pressure || 0.5;
-  const scalar = Math.pow(p, 1.6);
-  const base = brushDef.minW + (brushDef.maxW - brushDef.minW) * scalar;
+  var p = pressure || 0.5;
+  var scalar = Math.pow(p, 1.6);
+  var base = brushDef.minW + (brushDef.maxW - brushDef.minW) * scalar;
   return base * (brushSize / 4);
 }
 
 function fireRingBurst(cx, cy) {
-  for (let i = 0; i < 12; i++) {
-    setTimeout(() => {
-      const r = document.createElement('div');
-      r.className = 'b-ring-particle';
-      const angle = (i / 12) * Math.PI * 2;
-      const dist = 50 + Math.random() * 40;
-      r.style.left = cx + 'px';
-      r.style.top = cy + 'px';
-      r.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(0) + 'px');
-      r.style.setProperty('--ty', (Math.sin(angle) * dist).toFixed(0) + 'px');
-      document.body.appendChild(r);
-      setTimeout(() => { if (r.parentNode) r.parentNode.removeChild(r); }, 900);
-    }, i * 40);
+  for (var i = 0; i < 12; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var r = document.createElement('div');
+        r.className = 'b-ring-particle';
+        var angle = (idx / 12) * Math.PI * 2;
+        var dist = 50 + Math.random() * 40;
+        r.style.left = cx + 'px';
+        r.style.top = cy + 'px';
+        r.style.setProperty('--tx', (Math.cos(angle) * dist).toFixed(0) + 'px');
+        r.style.setProperty('--ty', (Math.sin(angle) * dist).toFixed(0) + 'px');
+        document.body.appendChild(r);
+        setTimeout(function() { if (r.parentNode) r.parentNode.removeChild(r); }, 900);
+      }, idx * 40);
+    })(i);
   }
 }
 
@@ -1434,71 +1444,75 @@ function closeReplayModal() {
   document.getElementById('replay-modal').classList.add('hidden');
 }
 
-const COLORS = ['#000000', '#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC4899', '#FFFFFF'];
+var COLORS = ['#000000', '#EF4444', '#3B82F6', '#22C55E', '#F59E0B', '#A855F7', '#EC4899', '#FFFFFF'];
 
-const FALLBACK_VOCAB = [
+var FALLBACK_VOCAB = [
   { word: 'VALIANT', def: 'Showing courage or determination.', prompt: 'Use "valiant" in one of your captions to describe Wolfkid!' },
   { word: 'LURKING', def: 'Waiting in hiding, ready to attack.', prompt: 'Use "lurking" to describe a villain or danger in your comic!' },
   { word: 'TRIUMPH', def: 'A great victory or achievement.', prompt: 'Use "triumph" in a caption about Wolfkid winning!' },
   { word: 'PERILOUS', def: 'Full of danger or risk.', prompt: 'Use "perilous" to describe the setting or mission!' },
   { word: 'CUNNING', def: 'Having skill in achieving goals by deceit or cleverness.', prompt: 'Use "cunning" to describe a plan or a character!' }
 ];
-let todayVocab = FALLBACK_VOCAB[new Date().getDay() % FALLBACK_VOCAB.length];
+var todayVocab = FALLBACK_VOCAB[new Date().getDay() % FALLBACK_VOCAB.length];
 
-const LAYOUTS = [
+var LAYOUTS = [
   { count: 2, label: '2 Panels', icon: '||' },
   { count: 3, label: '3 Panels', icon: '|||' },
   { count: 4, label: '4 Panels', icon: '||||' }
 ];
 
 // ── F3 Day 2: serverCall Promise wrapper ──
-function serverCall(fn, ...args) {
-  return new Promise((resolve, reject) => {
+function serverCall(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function(resolve, reject) {
     if (typeof google === 'undefined' || !google.script || !google.script.run) {
       reject(new Error('google.script.run unavailable'));
       return;
     }
-    google.script.run
+    var runner = google.script.run
       .withSuccessHandler(resolve)
-      .withFailureHandler(reject)[fn](...args);
+      .withFailureHandler(reject);
+    runner[fn].apply(runner, args);
   });
 }
 
 function getTodayDateKey() {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${mm}-${dd}`;
+  var d = new Date();
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var dd = String(d.getDate()).padStart(2, '0');
+  return d.getFullYear() + '-' + mm + '-' + dd;
 }
 
 function serializeDraft() {
   return {
     version: COMIC_STUDIO_VERSION,
     timestamp: new Date().toISOString(),
-    panelCount,
+    panelCount: panelCount,
     captions: captions.slice(0, panelCount),
-    strokeHistory,
-    replayBuffer,
+    strokeHistory: strokeHistory,
+    replayBuffer: replayBuffer,
     bubbles: bubbles.slice(), // v9: persist speech bubble state
     stickers: stickers.slice(), // v11: persist character sticker state
-    panels: panelCanvases.map((canvas, idx) => ({
-      idx,
-      dataUrl: canvas ? canvas.toDataURL('image/jpeg', 0.7) : null
-    }))
+    panels: panelCanvases.map(function(canvas, idx) {
+      return {
+        idx: idx,
+        dataUrl: canvas ? canvas.toDataURL('image/jpeg', 0.7) : null
+      };
+    })
   };
 }
 
 // ── Stars ──
 function createStars() {
-  const el = document.getElementById('starfield');
-  let html = '';
-  for (let i = 0; i < 60; i++) {
-    const size = Math.floor(Math.random() * 3) + 1;
-    const x = Math.floor(Math.random() * 100);
-    const y = Math.floor(Math.random() * 100);
-    const dur = (Math.random() * 4 + 2).toFixed(1);
-    const delay = (Math.random() * 3).toFixed(1);
-    html += `<div class="star" style="width:${size}px;height:${size}px;left:${x}%;top:${y}%;animation:twinkle ${dur}s ${delay}s infinite"></div>`;
+  var el = document.getElementById('starfield');
+  var html = '';
+  for (var i = 0; i < 60; i++) {
+    var size = Math.floor(Math.random() * 3) + 1;
+    var x = Math.floor(Math.random() * 100);
+    var y = Math.floor(Math.random() * 100);
+    var dur = (Math.random() * 4 + 2).toFixed(1);
+    var delay = (Math.random() * 3).toFixed(1);
+    html += '<div class="star" style="width:' + size + 'px;height:' + size + 'px;left:' + x + '%;top:' + y + '%;animation:twinkle ' + dur + 's ' + delay + 's infinite"></div>';
   }
   el.innerHTML = html;
 }
@@ -1510,10 +1524,10 @@ function dismissPlan() {
 // ── Tab switching ──
 function switchTab(tab) {
   activeTab = tab;
-  const tabs = ['draw', 'caption', 'vocab', 'preview', 'gallery'];
-  const btns = document.getElementById('nav-bar').getElementsByTagName('button');
-  for (let i = 0; i < tabs.length; i++) {
-    const el = document.getElementById(`tab-${tabs[i]}`);
+  var tabs = ['draw', 'caption', 'vocab', 'preview', 'gallery'];
+  var btns = document.getElementById('nav-bar').getElementsByTagName('button');
+  for (var i = 0; i < tabs.length; i++) {
+    var el = document.getElementById('tab-' + tabs[i]);
     if (el) {
       if (tabs[i] === tab) {
         el.classList.remove('hidden');
@@ -1532,10 +1546,11 @@ function switchTab(tab) {
 
 // ── Layout picker ──
 function buildLayoutPicker() {
-  let html = '';
-  for (const l of LAYOUTS) {
-    const cls = l.count === panelCount ? 'layout-btn active' : 'layout-btn';
-    html += `<button class="${cls}" onclick="setLayout(${l.count})">${l.icon} ${l.label}</button>`;
+  var html = '';
+  for (var i = 0; i < LAYOUTS.length; i++) {
+    var l = LAYOUTS[i];
+    var cls = l.count === panelCount ? 'layout-btn active' : 'layout-btn';
+    html += '<button class="' + cls + '" onclick="setLayout(' + l.count + ')">' + l.icon + ' ' + l.label + '</button>';
   }
   document.getElementById('layout-picker').innerHTML = html;
 }
@@ -1554,10 +1569,11 @@ function setLayout(count) {
 
 // ── F2: Brush selector UI ──
 function buildBrushSelector() {
-  let html = '';
-  for (const b of BRUSHES) {
-    const cls = b.id === activeBrush ? 'brush-btn active' : 'brush-btn';
-    html += `<button class="${cls}" onclick="setBrush('${b.id}')" title="${b.label}">${b.icon} ${b.label}</button>`;
+  var html = '';
+  for (var i = 0; i < BRUSHES.length; i++) {
+    var b = BRUSHES[i];
+    var cls = b.id === activeBrush ? 'brush-btn active' : 'brush-btn';
+    html += '<button class="' + cls + '" onclick="setBrush(\'' + b.id + '\')" title="' + b.label + '">' + b.icon + ' ' + b.label + '</button>';
   }
   document.getElementById('brush-selector').innerHTML = html;
 }
@@ -1570,28 +1586,30 @@ function setBrush(brushId) {
 
 // ── Toolbar (color + size + clear) ──
 function buildToolbar() {
-  let html = '';
+  var html = '';
   // Size slider — hidden for bucket
   if (activeBrush !== 'bucket') {
-    html += `<input type="range" class="size-slider" min="1" max="20" value="${brushSize}" onchange="setBrushSize(this.value)">`;
+    html += '<input type="range" class="size-slider" min="1" max="20" value="' + brushSize + '" onchange="setBrushSize(this.value)">';
   }
   // Color swatches — hidden for eraser and bucket
   if (activeBrush !== 'eraser' && activeBrush !== 'bucket') {
-    for (const col of COLORS) {
-      const ccls = col === activeColor ? 'color-swatch active' : 'color-swatch';
-      const border = col === '#FFFFFF' ? 'border:1px solid #CBD5E1;' : '';
-      html += `<div class="${ccls}" style="background:${col};${border}" onclick="setColor('${col}')"></div>`;
+    for (var ci = 0; ci < COLORS.length; ci++) {
+      var col = COLORS[ci];
+      var ccls = col === activeColor ? 'color-swatch active' : 'color-swatch';
+      var border = col === '#FFFFFF' ? 'border:1px solid #CBD5E1;' : '';
+      html += '<div class="' + ccls + '" style="background:' + col + ';' + border + '" onclick="setColor(\'' + col + '\')"></div>';
     }
   }
-  html += `<button class="tool-btn" onclick="clearPanel()" title="Clear Panel">&#128465;</button>`;
-  html += `<button class="tool-btn" onclick="addBubble()" title="Add Speech Bubble (max ${BUBBLE_MAX_PER_PANEL} per panel)" style="font-size:16px;">&#128172;</button>`;
+  html += '<button class="tool-btn" onclick="clearPanel()" title="Clear Panel">&#128465;</button>';
+  html += '<button class="tool-btn" onclick="addBubble()" title="Add Speech Bubble (max ' + BUBBLE_MAX_PER_PANEL + ' per panel)" style="font-size:16px;">&#128172;</button>';
   // v11: sticker palette row
   html += '<div class="sticker-palette-row"><span class="sticker-palette-label">STICKERS</span>';
-  for (const c of STICKER_CATALOG) {
+  for (var si = 0; si < STICKER_CATALOG.length; si++) {
+    var c = STICKER_CATALOG[si];
     if (c.locked) {
-      html += `<button class="sticker-btn locked" title="${c.label} (unlock in rewards)" disabled>${c.emoji}<span class="lock-badge">&#128274;</span></button>`;
+      html += '<button class="sticker-btn locked" title="' + c.label + ' (unlock in rewards)" disabled>' + c.emoji + '<span class="lock-badge">&#128274;</span></button>';
     } else {
-      html += `<button class="sticker-btn" title="Add ${c.label}" onclick="addSticker('${c.id}')">${c.emoji}</button>`;
+      html += '<button class="sticker-btn" title="Add ' + c.label + '" onclick="addSticker(\'' + c.id + '\')">' + c.emoji + '</button>';
     }
   }
   html += '</div>';
@@ -1610,7 +1628,7 @@ function setBrushSize(val) {
 function clearPanel() {
   if (!panelContexts[activePanel]) return;
   if (!confirm('Clear Panel ' + (activePanel + 1) + '? This will erase your drawing.')) return;
-  const c = panelCanvases[activePanel];
+  var c = panelCanvases[activePanel];
   panelContexts[activePanel].clearRect(0, 0, c.width, c.height);
   panelContexts[activePanel].fillStyle = '#FFFFFF';
   panelContexts[activePanel].fillRect(0, 0, c.width, c.height);
@@ -1627,17 +1645,17 @@ function _bubblesForPanel(panelIdx) {
 
 // Adds a bubble centered in the active panel (max BUBBLE_MAX_PER_PANEL per panel).
 function addBubble() {
-  const existing = _bubblesForPanel(activePanel);
+  var existing = _bubblesForPanel(activePanel);
   if (existing.length >= BUBBLE_MAX_PER_PANEL) {
     return; // silently cap — no alert, just prevent
   }
-  const id = 'bubble-' + (++_bubbleIdSeq);
+  var id = 'bubble-' + (++_bubbleIdSeq);
   bubbles.push({ id: id, panel: activePanel, xPct: 50, yPct: 40, text: '', tail: 'bottom' });
   renderBubbles();
   // Focus the contenteditable text span inside the new bubble immediately
-  const el = document.getElementById(id);
+  var el = document.getElementById(id);
   if (el) {
-    const textSpan = el.querySelector('.bubble-text');
+    var textSpan = el.querySelector('.bubble-text');
     if (textSpan) textSpan.focus();
   }
   if (!hasDrawnAnything) { hasDrawnAnything = true; startAutosaveTimer(); }
@@ -1646,13 +1664,13 @@ function addBubble() {
 // Renders all bubbles for all panels by injecting divs into their panel-slot elements.
 function renderBubbles() {
   // Remove all existing bubble elements
-  const existing = document.querySelectorAll('.speech-bubble');
-  for (let i = 0; i < existing.length; i++) existing[i].remove();
+  var existing = document.querySelectorAll('.speech-bubble');
+  for (var i = 0; i < existing.length; i++) existing[i].remove();
   // Re-create each bubble in its panel-slot
-  for (let i = 0; i < bubbles.length; i++) {
-    const b = bubbles[i];
+  for (var j = 0; j < bubbles.length; j++) {
+    var b = bubbles[j];
     if (b.panel >= panelCount) continue; // panel was removed by layout change
-    const slot = document.querySelector(`.panel-slot[data-panel="${b.panel}"]`);
+    var slot = document.querySelector('.panel-slot[data-panel="' + b.panel + '"]');
     if (!slot) continue;
     slot.appendChild(createBubbleElement(b));
   }
@@ -1662,7 +1680,7 @@ function renderBubbles() {
 // contenteditable is placed on a child <span class="bubble-text"> so that
 // div.textContent never picks up the × and ↓ button glyphs on input events.
 function createBubbleElement(b) {
-  const div = document.createElement('div');
+  var div = document.createElement('div');
   div.id = b.id;
   div.className = 'speech-bubble';
   div.setAttribute('data-tail', b.tail);
@@ -1670,12 +1688,12 @@ function createBubbleElement(b) {
   div.style.top = b.yPct + '%';
 
   // Text span — contenteditable lives here, not on the outer div.
-  const textSpan = document.createElement('span');
+  var textSpan = document.createElement('span');
   textSpan.className = 'bubble-text';
   textSpan.setAttribute('contenteditable', 'true');
   textSpan.textContent = b.text;
   textSpan.addEventListener('input', function() {
-    const found = bubbles.find(function(x) { return x.id === b.id; });
+    var found = bubbles.find(function(x) { return x.id === b.id; });
     if (found) found.text = textSpan.textContent || '';
   });
   div.appendChild(textSpan);
@@ -1686,7 +1704,7 @@ function createBubbleElement(b) {
   });
 
   // Delete button (×)
-  const del = document.createElement('button');
+  var del = document.createElement('button');
   del.className = 'bubble-delete';
   del.textContent = '×';
   del.title = 'Delete bubble';
@@ -1698,7 +1716,7 @@ function createBubbleElement(b) {
   div.appendChild(del);
 
   // Tail direction toggle button
-  const tailBtn = document.createElement('button');
+  var tailBtn = document.createElement('button');
   tailBtn.className = 'bubble-tail-btn';
   tailBtn.title = 'Rotate tail direction';
   tailBtn.textContent = _tailIcon(b.tail);
@@ -1720,9 +1738,9 @@ function _tailIcon(tail) {
 
 // Attaches pointer-based drag to reposition a bubble within its panel-slot.
 function attachBubbleDrag(el, b) {
-  let dragging = false;
-  let dragOffsetX = 0;
-  let dragOffsetY = 0;
+  var dragging = false;
+  var dragOffsetX = 0;
+  var dragOffsetY = 0;
 
   el.addEventListener('pointerdown', function(e) {
     // Only drag from the bubble background, not from buttons or contenteditable text selection
@@ -1732,7 +1750,7 @@ function attachBubbleDrag(el, b) {
     dragging = true;
     el.setPointerCapture(e.pointerId);
     el.style.cursor = 'grabbing';
-    const rect = el.getBoundingClientRect();
+    var rect = el.getBoundingClientRect();
     dragOffsetX = e.clientX - (rect.left + rect.width / 2);
     dragOffsetY = e.clientY - (rect.top + rect.height / 2);
   });
@@ -1740,16 +1758,16 @@ function attachBubbleDrag(el, b) {
   el.addEventListener('pointermove', function(e) {
     if (!dragging) return;
     e.preventDefault();
-    const slot = el.parentElement;
+    var slot = el.parentElement;
     if (!slot) return;
-    const slotRect = slot.getBoundingClientRect();
-    const newXPx = (e.clientX - dragOffsetX) - slotRect.left;
-    const newYPx = (e.clientY - dragOffsetY) - slotRect.top;
-    const xPct = Math.max(5, Math.min(95, (newXPx / slotRect.width) * 100));
-    const yPct = Math.max(5, Math.min(95, (newYPx / slotRect.height) * 100));
+    var slotRect = slot.getBoundingClientRect();
+    var newXPx = (e.clientX - dragOffsetX) - slotRect.left;
+    var newYPx = (e.clientY - dragOffsetY) - slotRect.top;
+    var xPct = Math.max(5, Math.min(95, (newXPx / slotRect.width) * 100));
+    var yPct = Math.max(5, Math.min(95, (newYPx / slotRect.height) * 100));
     el.style.left = xPct + '%';
     el.style.top = yPct + '%';
-    const found = bubbles.find(function(x) { return x.id === b.id; });
+    var found = bubbles.find(function(x) { return x.id === b.id; });
     if (found) { found.xPct = xPct; found.yPct = yPct; }
   });
 
@@ -1762,14 +1780,14 @@ function attachBubbleDrag(el, b) {
 
 // Cycles the tail direction of a bubble: bottom → right → top → left → bottom.
 function cycleBubbleTail(bubbleId) {
-  const found = bubbles.find(function(b) { return b.id === bubbleId; });
+  var found = bubbles.find(function(b) { return b.id === bubbleId; });
   if (!found) return;
-  const idx = BUBBLE_TAILS.indexOf(found.tail);
+  var idx = BUBBLE_TAILS.indexOf(found.tail);
   found.tail = BUBBLE_TAILS[(idx + 1) % BUBBLE_TAILS.length];
-  const el = document.getElementById(bubbleId);
+  var el = document.getElementById(bubbleId);
   if (el) {
     el.setAttribute('data-tail', found.tail);
-    const tailBtn = el.querySelector('.bubble-tail-btn');
+    var tailBtn = el.querySelector('.bubble-tail-btn');
     if (tailBtn) tailBtn.textContent = _tailIcon(found.tail);
   }
 }
@@ -1777,35 +1795,35 @@ function cycleBubbleTail(bubbleId) {
 // Removes a bubble by id from state and DOM.
 function deleteBubble(bubbleId) {
   bubbles = bubbles.filter(function(b) { return b.id !== bubbleId; });
-  const el = document.getElementById(bubbleId);
+  var el = document.getElementById(bubbleId);
   if (el) el.remove();
 }
 
 // Composites all bubbles onto their panel canvases.
 // Called from finishComic() to bake bubbles into the final canvas images before export.
 function compositeBubblesOnPanels() {
-  for (let i = 0; i < bubbles.length; i++) {
-    const b = bubbles[i];
+  for (var i = 0; i < bubbles.length; i++) {
+    var b = bubbles[i];
     if (b.panel >= panelCount) continue;
-    const canvas = panelCanvases[b.panel];
-    const ctx = panelContexts[b.panel];
+    var canvas = panelCanvases[b.panel];
+    var ctx = panelContexts[b.panel];
     if (!canvas || !ctx) continue;
-    const cw = canvas.width;
-    const ch = canvas.height;
+    var cw = canvas.width;
+    var ch = canvas.height;
 
     // Bubble center in canvas coords
-    const cx = (b.xPct / 100) * cw;
-    const cy = (b.yPct / 100) * ch;
+    var cx = (b.xPct / 100) * cw;
+    var cy = (b.yPct / 100) * ch;
 
     // Measure text to size the bubble box
     ctx.font = 'bold 18px Nunito, sans-serif';
-    const text = b.text || '';
-    const words = text.split(' ');
-    const maxLineWidth = 140;
-    const lines = [];
-    let line = '';
-    for (let w = 0; w < words.length; w++) {
-      const test = line ? line + ' ' + words[w] : words[w];
+    var text = b.text || '';
+    var words = text.split(' ');
+    var maxLineWidth = 140;
+    var lines = [];
+    var line = '';
+    for (var w = 0; w < words.length; w++) {
+      var test = line ? line + ' ' + words[w] : words[w];
       if (ctx.measureText(test).width > maxLineWidth && line) {
         lines.push(line);
         line = words[w];
@@ -1816,14 +1834,14 @@ function compositeBubblesOnPanels() {
     if (line) lines.push(line);
     if (lines.length === 0) lines.push('');
 
-    const lineH = 22;
-    const padX = 14;
-    const padY = 10;
-    const boxW = Math.max(80, Math.min(180, maxLineWidth + padX * 2));
-    const boxH = lines.length * lineH + padY * 2;
-    const bx = cx - boxW / 2;
-    const by = cy - boxH / 2;
-    const r = 14;
+    var lineH = 22;
+    var padX = 14;
+    var padY = 10;
+    var boxW = Math.max(80, Math.min(180, maxLineWidth + padX * 2));
+    var boxH = lines.length * lineH + padY * 2;
+    var bx = cx - boxW / 2;
+    var by = cy - boxH / 2;
+    var r = 14;
 
     // Draw rounded rect fill
     ctx.save();
@@ -1845,7 +1863,7 @@ function compositeBubblesOnPanels() {
     ctx.stroke();
 
     // Draw tail triangle
-    const tSize = 10;
+    var tSize = 10;
     ctx.fillStyle = '#00f0ff';
     ctx.beginPath();
     if (b.tail === 'bottom') {
@@ -1872,7 +1890,7 @@ function compositeBubblesOnPanels() {
     ctx.fillStyle = '#E2E8F0';
     ctx.font = 'bold 18px Nunito, sans-serif';
     ctx.textBaseline = 'top';
-    for (let li = 0; li < lines.length; li++) {
+    for (var li = 0; li < lines.length; li++) {
       ctx.fillText(lines[li], bx + padX, by + padY + li * lineH);
     }
     ctx.restore();
@@ -1883,33 +1901,33 @@ function compositeBubblesOnPanels() {
 // Called at the end of playReplay() so bubbles appear on the replay canvas as they did on screen.
 function _compositeReplayBubbles_(ctx, panels, panelW, panelH) {
   if (!_replayBubbles || _replayBubbles.length === 0) return;
-  for (let i = 0; i < _replayBubbles.length; i++) {
-    const b = _replayBubbles[i];
+  for (var i = 0; i < _replayBubbles.length; i++) {
+    var b = _replayBubbles[i];
     if (b.panel >= panels.length) continue;
-    const panel = panels[b.panel];
-    const cx = panel.x + (b.xPct / 100) * panelW;
-    const cy = panel.y + (b.yPct / 100) * panelH;
+    var panel = panels[b.panel];
+    var cx = panel.x + (b.xPct / 100) * panelW;
+    var cy = panel.y + (b.yPct / 100) * panelH;
     ctx.font = 'bold 11px Nunito, sans-serif';
-    const text = b.text || '';
-    const words = text.split(' ');
-    const maxLineW = 75;
-    const lines = [];
-    let line = '';
-    for (let w = 0; w < words.length; w++) {
-      const test = line ? line + ' ' + words[w] : words[w];
+    var text = b.text || '';
+    var words = text.split(' ');
+    var maxLineW = 75;
+    var lines = [];
+    var line = '';
+    for (var w = 0; w < words.length; w++) {
+      var test = line ? line + ' ' + words[w] : words[w];
       if (ctx.measureText(test).width > maxLineW && line) { lines.push(line); line = words[w]; }
       else { line = test; }
     }
     if (line) lines.push(line);
     if (lines.length === 0) lines.push('');
-    const lineH = 13;
-    const padX = 6;
-    const padY = 4;
-    const boxW = Math.max(35, Math.min(95, maxLineW + padX * 2));
-    const boxH = lines.length * lineH + padY * 2;
-    const bx = cx - boxW / 2;
-    const by = cy - boxH / 2;
-    const r = 6;
+    var lineH = 13;
+    var padX = 6;
+    var padY = 4;
+    var boxW = Math.max(35, Math.min(95, maxLineW + padX * 2));
+    var boxH = lines.length * lineH + padY * 2;
+    var bx = cx - boxW / 2;
+    var by = cy - boxH / 2;
+    var r = 6;
     ctx.save();
     ctx.fillStyle = '#1a1a2e';
     ctx.strokeStyle = '#00f0ff';
@@ -1926,7 +1944,7 @@ function _compositeReplayBubbles_(ctx, panels, panelW, panelH) {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    const tSize = 5;
+    var tSize = 5;
     ctx.fillStyle = '#00f0ff';
     ctx.beginPath();
     if (b.tail === 'bottom') {
@@ -1943,7 +1961,7 @@ function _compositeReplayBubbles_(ctx, panels, panelW, panelH) {
     ctx.fillStyle = '#E2E8F0';
     ctx.font = 'bold 11px Nunito, sans-serif';
     ctx.textBaseline = 'top';
-    for (let li = 0; li < lines.length; li++) {
+    for (var li = 0; li < lines.length; li++) {
       ctx.fillText(lines[li], bx + padX, by + padY + li * lineH);
     }
     ctx.restore();
@@ -1952,23 +1970,23 @@ function _compositeReplayBubbles_(ctx, panels, panelW, panelH) {
 
 // ── Panel grid ──
 function buildPanelGrid() {
-  const grid = document.getElementById('panel-grid');
-  grid.className = `panel-grid layout-${panelCount}`;
-  let html = '';
-  for (let i = 0; i < panelCount; i++) {
-    const cls = i === activePanel ? 'panel-slot active' : 'panel-slot';
-    html += `<div class="${cls}" data-panel="${i}" onclick="selectPanel(${i})">`;
-    html += `<div class="panel-label">Panel ${i + 1}</div>`;
-    html += `<canvas id="canvas-${i}" width="400" height="400"></canvas>`;
+  var grid = document.getElementById('panel-grid');
+  grid.className = 'panel-grid layout-' + panelCount;
+  var html = '';
+  for (var i = 0; i < panelCount; i++) {
+    var cls = i === activePanel ? 'panel-slot active' : 'panel-slot';
+    html += '<div class="' + cls + '" data-panel="' + i + '" onclick="selectPanel(' + i + ')">';
+    html += '<div class="panel-label">Panel ' + (i + 1) + '</div>';
+    html += '<canvas id="canvas-' + i + '" width="400" height="400"></canvas>';
     html += '</div>';
   }
   grid.innerHTML = html;
 
   panelCanvases = [];
   panelContexts = [];
-  for (let j = 0; j < panelCount; j++) {
-    const canvas = document.getElementById(`canvas-${j}`);
-    const ctx = canvas.getContext('2d');
+  for (var j = 0; j < panelCount; j++) {
+    var canvas = document.getElementById('canvas-' + j);
+    var ctx = canvas.getContext('2d');
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     panelCanvases.push(canvas);
@@ -1978,11 +1996,11 @@ function buildPanelGrid() {
   // Resize canvases to match actual display size after layout computes.
   // Contexts are already valid above so rehydratePanels() can run immediately.
   requestAnimationFrame(function() {
-    for (let k = 0; k < panelCanvases.length; k++) {
-      const c = panelCanvases[k];
-      const rect = c.getBoundingClientRect();
-      const w = Math.round(rect.width) || 400;
-      const h = Math.round(rect.height) || 400;
+    for (var k = 0; k < panelCanvases.length; k++) {
+      var c = panelCanvases[k];
+      var rect = c.getBoundingClientRect();
+      var w = Math.round(rect.width) || 400;
+      var h = Math.round(rect.height) || 400;
       if (c.width !== w || c.height !== h) {
         // Save current drawing, resize, restore
         var imgData = panelContexts[k].getImageData(0, 0, c.width, c.height);
@@ -1998,8 +2016,8 @@ function buildPanelGrid() {
 
 function selectPanel(idx) {
   activePanel = idx;
-  const slots = document.getElementById('panel-grid').getElementsByClassName('panel-slot');
-  for (let i = 0; i < slots.length; i++) {
+  var slots = document.getElementById('panel-grid').getElementsByClassName('panel-slot');
+  for (var i = 0; i < slots.length; i++) {
     slots[i].className = i === idx ? 'panel-slot active' : 'panel-slot';
   }
 }
@@ -2007,16 +2025,16 @@ function selectPanel(idx) {
 // ── F1: Pointer Events drawing engine ──
 function attachPointerEvents(canvas, panelIdx) {
   function getPos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / rect.width;
+    var scaleY = canvas.height / rect.height;
     return {
       x: (e.clientX - rect.left) * scaleX,
       y: (e.clientY - rect.top) * scaleY
     };
   }
 
-  canvas.addEventListener('pointerdown', (e) => {
+  canvas.addEventListener('pointerdown', function(e) {
     e.preventDefault();
 
     // F1: pen detection badge
@@ -2032,26 +2050,26 @@ function attachPointerEvents(canvas, panelIdx) {
     activePanel = panelIdx;
     selectPanel(panelIdx);
 
-    const brushDef = getBrushDef(activeBrush);
+    var brushDef = getBrushDef(activeBrush);
 
     // F2: Paint Bucket — flood fill on pointerdown
     if (brushDef.bucket) {
-      const pos = getPos(e);
-      const bx = Math.min(Math.floor(pos.x), canvas.width - 1);
-      const by = Math.min(Math.floor(pos.y), canvas.height - 1);
+      var pos = getPos(e);
+      var bx = Math.min(Math.floor(pos.x), canvas.width - 1);
+      var by = Math.min(Math.floor(pos.y), canvas.height - 1);
       floodFill(panelIdx, bx, by, activeColor);
       if (!hasDrawnAnything) { hasDrawnAnything = true; startAutosaveTimer(); }
       return;
     }
 
     isDrawing = true;
-    const pos = getPos(e);
+    var pos = getPos(e);
     lastX = pos.x;
     lastY = pos.y;
 
     // F3: start tracking stroke
     currentStroke = {
-      panelIdx,
+      panelIdx: panelIdx,
       brushId: activeBrush,
       color: activeBrush === 'eraser' ? null : activeColor,
       size: brushSize,
@@ -2070,16 +2088,16 @@ function attachPointerEvents(canvas, panelIdx) {
     }
   });
 
-  canvas.addEventListener('pointermove', (e) => {
+  canvas.addEventListener('pointermove', function(e) {
     e.preventDefault();
     if (!isDrawing) return;
 
-    const ctx = panelContexts[panelIdx];
-    const pos = getPos(e);
-    const brushDef = getBrushDef(activeBrush);
+    var ctx = panelContexts[panelIdx];
+    var pos = getPos(e);
+    var brushDef = getBrushDef(activeBrush);
 
     // F1: pressure-to-width mapping
-    const lineW = pressureToWidth(e.pressure, brushDef);
+    var lineW = pressureToWidth(e.pressure, brushDef);
 
     // F2: apply brush-specific rendering
     applyBrushStroke(ctx, brushDef, pos, lineW, e.pressure);
@@ -2098,7 +2116,7 @@ function attachPointerEvents(canvas, panelIdx) {
     lastY = pos.y;
   });
 
-  canvas.addEventListener('pointerup', (e) => {
+  canvas.addEventListener('pointerup', function(e) {
     if (!isDrawing) return;
     isDrawing = false;
 
@@ -2111,7 +2129,7 @@ function attachPointerEvents(canvas, panelIdx) {
     }
   });
 
-  canvas.addEventListener('pointercancel', () => {
+  canvas.addEventListener('pointercancel', function() {
     isDrawing = false;
     if (currentStroke && currentStroke._replayId) { recordStrokeEnd(currentStroke._replayId); }
     currentStroke = null;
@@ -2122,7 +2140,7 @@ function attachPointerEvents(canvas, panelIdx) {
 function applyBrushStroke(ctx, brushDef, pos, lineW, pressure) {
   if (brushDef.eraser) {
     // Eraser: destination-out compositing
-    const prevOp = ctx.globalCompositeOperation;
+    var prevOp = ctx.globalCompositeOperation;
     ctx.globalCompositeOperation = 'destination-out';
     ctx.beginPath();
     ctx.moveTo(lastX, lastY);
@@ -2138,15 +2156,15 @@ function applyBrushStroke(ctx, brushDef, pos, lineW, pressure) {
 
   if (brushDef.scatter) {
     // Chalk: particle scatter — 8–12 dots per move event
-    const count = 8 + Math.floor(Math.random() * 5);
-    const radius = lineW * 0.8;
-    const prevAlpha = ctx.globalAlpha;
+    var count = 8 + Math.floor(Math.random() * 5);
+    var radius = lineW * 0.8;
+    var prevAlpha = ctx.globalAlpha;
     ctx.globalAlpha = brushDef.opacity * (0.3 + Math.random() * 0.4);
     ctx.fillStyle = activeColor;
-    for (let i = 0; i < count; i++) {
-      const dx = (Math.random() - 0.5) * radius * 2;
-      const dy = (Math.random() - 0.5) * radius * 2;
-      const dotR = 0.5 + Math.random() * 1.5;
+    for (var i = 0; i < count; i++) {
+      var dx = (Math.random() - 0.5) * radius * 2;
+      var dy = (Math.random() - 0.5) * radius * 2;
+      var dotR = 0.5 + Math.random() * 1.5;
       ctx.beginPath();
       ctx.arc(pos.x + dx, pos.y + dy, dotR, 0, Math.PI * 2);
       ctx.fill();
@@ -2156,7 +2174,7 @@ function applyBrushStroke(ctx, brushDef, pos, lineW, pressure) {
   }
 
   // Standard stroke (pencil, ink, marker)
-  const prevAlpha = ctx.globalAlpha;
+  var prevAlpha = ctx.globalAlpha;
   ctx.globalAlpha = brushDef.opacity;
   ctx.beginPath();
   ctx.moveTo(lastX, lastY);
@@ -2171,25 +2189,25 @@ function applyBrushStroke(ctx, brushDef, pos, lineW, pressure) {
 
 // ── F2: Flood fill (Paint Bucket) ──
 function floodFill(panelIdx, startX, startY, fillColorHex) {
-  const canvas = panelCanvases[panelIdx];
-  const ctx = panelContexts[panelIdx];
-  const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const data = imgData.data;
-  const w = canvas.width;
-  const h = canvas.height;
+  var canvas = panelCanvases[panelIdx];
+  var ctx = panelContexts[panelIdx];
+  var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  var data = imgData.data;
+  var w = canvas.width;
+  var h = canvas.height;
 
   // Parse fill color
-  const fillR = parseInt(fillColorHex.slice(1, 3), 16);
-  const fillG = parseInt(fillColorHex.slice(3, 5), 16);
-  const fillB = parseInt(fillColorHex.slice(5, 7), 16);
-  const fillA = 255;
+  var fillR = parseInt(fillColorHex.slice(1, 3), 16);
+  var fillG = parseInt(fillColorHex.slice(3, 5), 16);
+  var fillB = parseInt(fillColorHex.slice(5, 7), 16);
+  var fillA = 255;
 
   // Get target color at start pixel
-  const startIdx = (startY * w + startX) * 4;
-  const targetR = data[startIdx];
-  const targetG = data[startIdx + 1];
-  const targetB = data[startIdx + 2];
-  const targetA = data[startIdx + 3];
+  var startIdx = (startY * w + startX) * 4;
+  var targetR = data[startIdx];
+  var targetG = data[startIdx + 1];
+  var targetB = data[startIdx + 2];
+  var targetA = data[startIdx + 3];
 
   // Already the fill color — nothing to do
   if (targetR === fillR && targetG === fillG && targetB === fillB && targetA === fillA) return;
@@ -2209,13 +2227,15 @@ function floodFill(panelIdx, startX, startY, fillColorHex) {
   }
 
   // Scanline flood fill
-  const stack = [[startX, startY]];
-  const visited = new Uint8Array(w * h);
+  var stack = [[startX, startY]];
+  var visited = new Uint8Array(w * h);
 
   while (stack.length > 0) {
-    const [x, y] = stack.pop();
+    var xy = stack.pop();
+    var x = xy[0];
+    var y = xy[1];
     if (x < 0 || x >= w || y < 0 || y >= h) continue;
-    const idx = (y * w + x) * 4;
+    var idx = (y * w + x) * 4;
     if (visited[y * w + x]) continue;
     if (!colorsMatch(idx)) continue;
 
@@ -2237,12 +2257,12 @@ function floodFill(panelIdx, startX, startY, fillColorHex) {
 
 // ── Captions ──
 function renderCaptions() {
-  let html = '';
-  for (let i = 0; i < panelCount; i++) {
+  var html = '';
+  for (var i = 0; i < panelCount; i++) {
     html += '<div class="caption-editor">';
-    html += `<h3>PANEL ${i + 1} CAPTION</h3>`;
-    html += `<textarea class="caption-input" id="caption-${i}" placeholder="Write what happens in this panel..." oninput="updateCaption(${i}, this.value)">${escapeHtml(captions[i] || '')}</textarea>`;
-    html += `<div class="word-count" id="wc-${i}">${countWords(captions[i] || '')} words</div>`;
+    html += '<h3>PANEL ' + (i + 1) + ' CAPTION</h3>';
+    html += '<textarea class="caption-input" id="caption-' + i + '" placeholder="Write what happens in this panel..." oninput="updateCaption(' + i + ', this.value)">' + escapeHtml(captions[i] || '') + '</textarea>';
+    html += '<div class="word-count" id="wc-' + i + '">' + countWords(captions[i] || '') + ' words</div>';
     html += '</div>';
   }
   document.getElementById('caption-list').innerHTML = html;
@@ -2250,25 +2270,25 @@ function renderCaptions() {
 
 function updateCaption(idx, val) {
   captions[idx] = val;
-  const wc = document.getElementById(`wc-${idx}`);
+  var wc = document.getElementById('wc-' + idx);
   if (wc) wc.textContent = countWords(val) + ' words';
   checkVocabUsage();
   if (val && !hasDrawnAnything) { hasDrawnAnything = true; startAutosaveTimer(); }
 }
 
 function countWords(str) {
-  const trimmed = str.replace(/^\s+|\s+$/g, '');
+  var trimmed = str.replace(/^\s+|\s+$/g, '');
   if (trimmed === '') return 0;
   return trimmed.split(/\s+/).length;
 }
 
 // ── Vocab ──
 function renderVocab() {
-  const used = checkVocabInCaptions();
-  let html = '<h3>BONUS VOCABULARY CHALLENGE</h3>';
-  html += `<div class="vocab-word">${escapeHtml(todayVocab.word)}</div>`;
-  html += `<div class="vocab-def">${escapeHtml(todayVocab.def)}</div>`;
-  html += `<div class="vocab-prompt">${escapeHtml(todayVocab.prompt)}</div>`;
+  var used = checkVocabInCaptions();
+  var html = '<h3>BONUS VOCABULARY CHALLENGE</h3>';
+  html += '<div class="vocab-word">' + escapeHtml(todayVocab.word) + '</div>';
+  html += '<div class="vocab-def">' + escapeHtml(todayVocab.def) + '</div>';
+  html += '<div class="vocab-prompt">' + escapeHtml(todayVocab.prompt) + '</div>';
   if (used) {
     html += '<div class="vocab-status used">&#10003; Used in captions! +10 bonus rings</div>';
   } else {
@@ -2278,8 +2298,8 @@ function renderVocab() {
 }
 
 function checkVocabInCaptions() {
-  const word = todayVocab.word.toLowerCase();
-  for (let i = 0; i < panelCount; i++) {
+  var word = todayVocab.word.toLowerCase();
+  for (var i = 0; i < panelCount; i++) {
     if ((captions[i] || '').toLowerCase().indexOf(word) !== -1) {
       return true;
     }
@@ -2295,12 +2315,12 @@ function checkVocabUsage() {
 
 // ── Preview ──
 function renderPreview() {
-  let html = '<div style="background:#FFFFFF;border-radius:12px;padding:16px;display:flex;gap:8px;flex-wrap:wrap;">';
-  for (let i = 0; i < panelCount; i++) {
-    const dataUrl = panelCanvases[i] ? panelCanvases[i].toDataURL('image/png') : '';
-    const w = '48%';
-    html += `<div style="flex:0 0 ${w};border:2px solid #1E2A4A;border-radius:6px;overflow:hidden;">`;
-    html += `<img src="${dataUrl}" style="width:100%;display:block;">`;
+  var html = '<div style="background:#FFFFFF;border-radius:12px;padding:16px;display:flex;gap:8px;flex-wrap:wrap;">';
+  for (var i = 0; i < panelCount; i++) {
+    var dataUrl = panelCanvases[i] ? panelCanvases[i].toDataURL('image/png') : '';
+    var w = '48%';
+    html += '<div style="flex:0 0 ' + w + ';border:2px solid #1E2A4A;border-radius:6px;overflow:hidden;">';
+    html += '<img src="' + dataUrl + '" style="width:100%;display:block;">';
     html += '<div style="background:#0B0F1A;color:#E2E8F0;padding:8px;font-size:12px;min-height:40px;">';
     html += captions[i] ? escapeHtml(captions[i]) : '<span style="color:#64748B;font-style:italic;">No caption</span>';
     html += '</div></div>';
@@ -2323,45 +2343,45 @@ function finishComic() {
     });
     compositeBubblesOnPanels();
     // Remove DOM bubble overlays (now baked into canvas)
-    const bEls = document.querySelectorAll('.speech-bubble');
-    for (let bi = 0; bi < bEls.length; bi++) bEls[bi].remove();
+    var bEls = document.querySelectorAll('.speech-bubble');
+    for (var bi = 0; bi < bEls.length; bi++) bEls[bi].remove();
     bubbles = [];
   }
 
-  let totalWords = 0;
-  let captionedPanels = 0;
-  for (let i = 0; i < panelCount; i++) {
-    const wc = countWords(captions[i] || '');
+  var totalWords = 0;
+  var captionedPanels = 0;
+  for (var i = 0; i < panelCount; i++) {
+    var wc = countWords(captions[i] || '');
     totalWords += wc;
     if (wc > 0) captionedPanels++;
   }
 
   // v5 (#225): base rings — vocab bonus handled separately via Gemini
-  let rings = 15;
+  var rings = 15;
   if (captionedPanels === panelCount) rings += 10;
   if (totalWords >= 20) rings += 5;
   rings = Math.min(rings, ringsCap);
   ringsEarned = rings;
 
-  const vocabUsed = currentMode === 'mission' && checkVocabInCaptions();
+  var vocabUsed = currentMode === 'mission' && checkVocabInCaptions();
 
   document.getElementById('tab-preview').classList.add('hidden');
   document.getElementById('nav-bar').style.display = 'none';
 
-  const comp = document.getElementById('completion-area');
+  var comp = document.getElementById('completion-area');
   comp.className = '';
-  let html = '<div class="completion-card">';
+  var html = '<div class="completion-card">';
   html += '<div class="trophy">&#127942;</div>';
   html += '<h2>COMIC COMPLETE!</h2>';
-  html += `<div class="ring-award"><span>+${rings}</span> Rings Earned!</div>`;
-  html += `<p>${panelCount} panels drawn`;
+  html += '<div class="ring-award"><span>+' + rings + '</span> Rings Earned!</div>';
+  html += '<p>' + panelCount + ' panels drawn';
   if (captionedPanels === panelCount) html += ' &bull; All panels captioned';
   if (vocabUsed) {
-    html += ` &bull; Vocab word "${escapeHtml(todayVocab.word)}" used!`;
+    html += ' &bull; Vocab word "' + escapeHtml(todayVocab.word) + '" used!';
     html += '<div id="vocab-grade-status" style="margin-top:10px;font-size:12px;color:#94A3B8">Checking vocab with Wolfkid AI&#8230;</div>';
   }
   html += '</p>';
-  html += `<p style="margin-top:12px;color:#64748B;font-size:12px;">Total words written: ${totalWords}</p>`;
+  html += '<p style="margin-top:12px;color:#64748B;font-size:12px;">Total words written: ' + totalWords + '</p>';
   html += '<div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">';
   html += '<button style="padding:12px 28px;background:#00F0FF;color:#0B0F1A;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Orbitron,sans-serif" onclick="playReplay()">&#9654; REPLAY</button>';
   html += '<button style="padding:12px 28px;background:#3B82F6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:Nunito,sans-serif" onclick="window.location.href=\'/daily-missions\'">Back to Missions</button>';
@@ -2369,12 +2389,12 @@ function finishComic() {
   html += '</div>';
   comp.innerHTML = html;
 
-  setTimeout(() => {
-    const cx = window.innerWidth / 2;
-    const cy = window.innerHeight / 3;
+  setTimeout(function() {
+    var cx = window.innerWidth / 2;
+    var cy = window.innerHeight / 3;
     fireRingBurst(cx, cy);
-    setTimeout(() => { fireRingBurst(cx - 60, cy + 40); }, 250);
-    setTimeout(() => { fireRingBurst(cx + 60, cy + 40); }, 500);
+    setTimeout(function() { fireRingBurst(cx - 60, cy + 40); }, 250);
+    setTimeout(function() { fireRingBurst(cx + 60, cy + 40); }, 500);
   }, 300);
 
   document.getElementById('ring-badge').textContent = rings + ' Rings';
@@ -2383,7 +2403,7 @@ function finishComic() {
   if (TBM_TEST_MODE) {
     console.log('[TEST MODE] awardRings skipped, rings=' + rings);
     if (vocabUsed) {
-      const el = document.getElementById('vocab-grade-status');
+      var el = document.getElementById('vocab-grade-status');
       if (el) el.textContent = '[TEST] Vocab grading skipped';
     }
   } else if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -2396,10 +2416,10 @@ function finishComic() {
     if (vocabUsed) {
       google.script.run
         .withSuccessHandler(function(result) {
-          const el = document.getElementById('vocab-grade-status');
+          var el = document.getElementById('vocab-grade-status');
           if (!el) return;
           if (result && result.autoApproved) {
-            el.innerHTML = `<span style="color:#22C55E">&#10003; Vocab approved! +${result.ringsAwarded} bonus rings</span>`;
+            el.innerHTML = '<span style="color:#22C55E">&#10003; Vocab approved! +' + (result.ringsAwarded) + ' bonus rings</span>';
           } else if (result && result.status === 'pending_review') {
             el.innerHTML = '<span style="color:#F59E0B">&#9888; Vocab sent to parent for review &mdash; rings coming!</span>';
           } else {
@@ -2407,7 +2427,7 @@ function finishComic() {
           }
         })
         .withFailureHandler(function() {
-          const el = document.getElementById('vocab-grade-status');
+          var el = document.getElementById('vocab-grade-status');
           if (el) el.textContent = 'Vocab check unavailable — check back later.';
         })
         .gradeVocabUsageSafe({
@@ -2426,14 +2446,16 @@ function loadCurriculumVocab() {
   google.script.run
     .withSuccessHandler(function(result) {
       try {
-        const data = (typeof result === 'string') ? JSON.parse(result) : result;
-        const vocabArr = data && data.vocabulary;
+        var data = (typeof result === 'string') ? JSON.parse(result) : result;
+        var vocabArr = data && data.vocabulary;
         if (vocabArr && vocabArr.length > 0) {
-          const mapped = vocabArr.map(v => ({
-            word: (v.word || '').toUpperCase(),
-            def: v.definition || v.def || '',
-            prompt: `Use "${v.word || ''}" in one of your comic captions!`
-          }));
+          var mapped = vocabArr.map(function(v) {
+            return {
+              word: (v.word || '').toUpperCase(),
+              def: v.definition || v.def || '',
+              prompt: 'Use "' + (v.word || '') + '" in one of your comic captions!'
+            };
+          });
           todayVocab = mapped[new Date().getDay() % mapped.length];
           renderVocab();
         }
@@ -2444,31 +2466,31 @@ function loadCurriculumVocab() {
 }
 
 // ── F3 Day 2: Drive-based autosave ──
-let _autosaveTimer = null;
+var _autosaveTimer = null;
 
 function setAutosaveIndicator(state) {
-  const indicator = document.getElementById('autosave-indicator');
+  var indicator = document.getElementById('autosave-indicator');
   if (!indicator) return;
-  const labels = {
+  var labels = {
     saving:   { text: 'SAVING…',  cls: 'saving' },
     saved:    { text: 'SAVED',    cls: 'saved'   },
     failed:   { text: 'SAVE ERR', cls: 'failed'  },
     restored: { text: 'RESTORED', cls: 'saved'   }
   };
-  const conf = labels[state] || { text: 'AUTOSAVE', cls: '' };
+  var conf = labels[state] || { text: 'AUTOSAVE', cls: '' };
   indicator.textContent = conf.text;
   indicator.className = conf.cls;
 }
 
 // v12: read-only gallery guard — autosave is suspended while gallery/viewer is open
 // to prevent an in-progress timer from clobbering today's slot with historical data.
-let _galleryOpen = false;
+var _galleryOpen = false;
 
 function autosaveDraft() {
   if (TBM_TEST_MODE || !hasDrawnAnything || _galleryOpen) return;
   if (typeof google === 'undefined' || !google.script || !google.script.run) return;
   setAutosaveIndicator('saving');
-  const payload = serializeDraft();
+  var payload = serializeDraft();
   google.script.run
     .withSuccessHandler(function(result) { if (result && result.success === false) { setAutosaveIndicator('failed'); } else { setAutosaveIndicator('saved'); } })
     .withFailureHandler(function() { setAutosaveIndicator('failed'); })
@@ -2483,25 +2505,27 @@ function startAutosaveTimer() {
 }
 
 function rehydratePanels(draft) {
-  return new Promise(resolve => {
-    const validPanels = Array.isArray(draft.panels)
-      ? draft.panels.filter(p => p && typeof p.idx === 'number' && p.dataUrl)
+  return new Promise(function(resolve) {
+    var validPanels = Array.isArray(draft.panels)
+      ? draft.panels.filter(function(p) { return p && typeof p.idx === 'number' && p.dataUrl; })
       : [];
     if (validPanels.length === 0) { resolve(); return; }
-    let remaining = validPanels.length;
-    validPanels.forEach(p => {
-      const canvas = panelCanvases[p.idx];
-      const ctx = panelContexts[p.idx];
-      if (!canvas || !ctx) { remaining--; if (remaining === 0) resolve(); return; }
-      const img = new Image();
-      img.onload = () => {
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        remaining--;
-        if (remaining === 0) resolve();
-      };
-      img.onerror = () => { remaining--; if (remaining === 0) resolve(); };
-      img.src = p.dataUrl;
-    });
+    var remaining = validPanels.length;
+    for (var i = 0; i < validPanels.length; i++) {
+      (function(p) {
+        var canvas = panelCanvases[p.idx];
+        var ctx = panelContexts[p.idx];
+        if (!canvas || !ctx) { remaining--; if (remaining === 0) resolve(); return; }
+        var img = new Image();
+        img.onload = function() {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          remaining--;
+          if (remaining === 0) resolve();
+        };
+        img.onerror = function() { remaining--; if (remaining === 0) resolve(); };
+        img.src = p.dataUrl;
+      })(validPanels[i]);
+    }
   });
 }
 
@@ -2510,13 +2534,13 @@ function applyDraftState(draft) {
     panelCount = draft.panelCount;
   }
   if (Array.isArray(draft.captions)) {
-    for (let i = 0; i < draft.captions.length && i < captions.length; i++) {
+    for (var i = 0; i < draft.captions.length && i < captions.length; i++) {
       captions[i] = String(draft.captions[i] || '');
     }
   }
   if (Array.isArray(draft.strokeHistory)) {
     strokeHistory.length = 0;
-    draft.strokeHistory.forEach(s => strokeHistory.push(s));
+    draft.strokeHistory.forEach(function(s) { strokeHistory.push(s); });
   }
   if (Array.isArray(draft.replayBuffer)) {
     replayBuffer = draft.replayBuffer.slice();
@@ -2525,17 +2549,17 @@ function applyDraftState(draft) {
   if (Array.isArray(draft.bubbles)) {
     bubbles = draft.bubbles.slice();
     // Resync id sequence so new bubbles don't collide with restored ids
-    for (let bi = 0; bi < bubbles.length; bi++) {
-      const n = parseInt((bubbles[bi].id || '').replace('bubble-', ''), 10);
-      if (!isNaN(n) && n > _bubbleIdSeq) _bubbleIdSeq = n;
+    for (var bi = 0; bi < bubbles.length; bi++) {
+      var bn = parseInt((bubbles[bi].id || '').replace('bubble-', ''), 10);
+      if (!isNaN(bn) && bn > _bubbleIdSeq) _bubbleIdSeq = bn;
     }
   }
   // v11: restore stickers (backward compat — old drafts without stickers get empty array)
   if (Array.isArray(draft.stickers)) {
     stickers = draft.stickers.slice();
-    for (let si = 0; si < stickers.length; si++) {
-      const n = parseInt((stickers[si].id || '').replace('sticker-', ''), 10);
-      if (!isNaN(n) && n > _stickerId) _stickerId = n;
+    for (var si = 0; si < stickers.length; si++) {
+      var sn = parseInt((stickers[si].id || '').replace('sticker-', ''), 10);
+      if (!isNaN(sn) && sn > _stickerId) _stickerId = sn;
     }
   }
   buildLayoutPicker();
@@ -2544,10 +2568,10 @@ function applyDraftState(draft) {
 }
 
 function showResumePrompt(draft) {
-  const desc = document.getElementById('resume-desc');
+  var desc = document.getElementById('resume-desc');
   if (desc && draft.timestamp) {
-    const d = new Date(draft.timestamp);
-    desc.textContent = `You left off on ${d.toLocaleDateString()}. Resume or start fresh?`;
+    var d = new Date(draft.timestamp);
+    desc.textContent = 'You left off on ' + d.toLocaleDateString() + '. Resume or start fresh?';
   }
   document.getElementById('resume-overlay').classList.remove('hidden');
 }
@@ -2555,7 +2579,7 @@ function showResumePrompt(draft) {
 function resumeDraft() {
   document.getElementById('resume-overlay').classList.add('hidden');
   applyDraftState(pendingDraft);
-  rehydratePanels(pendingDraft).then(() => {
+  rehydratePanels(pendingDraft).then(function() {
     setAutosaveIndicator('restored');
     hasDrawnAnything = true;
     startAutosaveTimer();
@@ -2566,8 +2590,8 @@ function startFresh() {
   document.getElementById('resume-overlay').classList.add('hidden');
   if (!TBM_TEST_MODE && typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
-      .withSuccessHandler(() => {})
-      .withFailureHandler(() => {})
+      .withSuccessHandler(function() {})
+      .withFailureHandler(function() {})
       .deleteComicDraftSafe(CHILD, null); /* Server derives date via getTodayISO_() — avoids client/server timezone mismatch */
   }
   buildPanelGrid();
@@ -2576,7 +2600,7 @@ function startFresh() {
 
 // ── Gallery: list and view saved comics ──
 function loadGallery() {
-  const list = document.getElementById('gallery-list');
+  var list = document.getElementById('gallery-list');
   list.innerHTML = '<div style="color:#94a3b8;font-size:14px;">Loading your comics...</div>';
   google.script.run
     .withSuccessHandler(function(drafts) {
@@ -2584,12 +2608,12 @@ function loadGallery() {
         list.innerHTML = '<div style="color:#94a3b8;font-size:14px;padding:20px;">No saved comics yet. Draw one and it auto-saves!</div>';
         return;
       }
-      let html = '';
-      for (let i = 0; i < drafts.length; i++) {
-        const d = drafts[i];
-        const parts = d.date.split('-');
-        const label = parts.length === 3 ? (parseInt(parts[1]) + '/' + parseInt(parts[2]) + '/' + parts[0]) : d.date;
-        const isToday = d.date === new Date().toISOString().slice(0, 10);
+      var html = '';
+      for (var i = 0; i < drafts.length; i++) {
+        var d = drafts[i];
+        var parts = d.date.split('-');
+        var label = parts.length === 3 ? (parseInt(parts[1]) + '/' + parseInt(parts[2]) + '/' + parts[0]) : d.date;
+        var isToday = d.date === new Date().toISOString().slice(0, 10);
         html += '<div onclick="viewComic(\'' + d.date + '\')" style="' +
           'background:#1E293B;border:2px solid ' + (isToday ? '#F59E0B' : '#334155') + ';border-radius:8px;' +
           'padding:16px;cursor:pointer;min-width:120px;text-align:center;'  +
@@ -2608,7 +2632,7 @@ function loadGallery() {
 }
 
 function viewComic(dateKey) {
-  const today = new Date().toISOString().slice(0, 10);
+  var today = new Date().toISOString().slice(0, 10);
   if (dateKey === today) {
     switchTab('draw');
     return;
@@ -2637,14 +2661,14 @@ function viewComic(dateKey) {
 
 // ── F4 Day 2: Mode brief rendering ──
 function renderMissionBrief(ctx) {
-  const title = ctx.episode ? (ctx.episode.title || 'Wolfkid Mission') : 'Wolfkid Mission';
-  let html = '<div class="mode-brief-card mission">';
+  var title = ctx.episode ? (ctx.episode.title || 'Wolfkid Mission') : 'Wolfkid Mission';
+  var html = '<div class="mode-brief-card mission">';
   html += '<h3>MISSION MODE</h3>';
-  html += `<p>${escapeHtml(title)}</p>`;
+  html += '<p>' + escapeHtml(title) + '</p>';
   if (ctx.studentCER) {
-    const cerText = ctx.studentCER.responseText || ctx.studentCER.claim || '';
-    const excerpt = cerText.substring(0, 120);
-    html += `<div class="cer-excerpt">"${escapeHtml(excerpt)}${excerpt.length >= 120 ? '…' : ''}"</div>`;
+    var cerText = ctx.studentCER.responseText || ctx.studentCER.claim || '';
+    var excerpt = cerText.substring(0, 120);
+    html += '<div class="cer-excerpt">"' + escapeHtml(excerpt) + (excerpt.length >= 120 ? '\u2026' : '') + '"</div>';
   }
   html += '</div>';
   document.getElementById('mode-brief-wrap').innerHTML = html;
@@ -2652,13 +2676,13 @@ function renderMissionBrief(ctx) {
 }
 
 function renderFreeBrief(ctx) {
-  const prompts = ctx && ctx.freePrompts ? ctx.freePrompts : [];
-  const picked = prompts.length
+  var prompts = ctx && ctx.freePrompts ? ctx.freePrompts : [];
+  var picked = prompts.length
     ? prompts[Math.floor(Math.random() * prompts.length)]
     : { text: 'Draw your own Wolfkid story!' };
-  let html = '<div class="mode-brief-card free">';
+  var html = '<div class="mode-brief-card free">';
   html += '<h3>FREE CREATE</h3>';
-  html += `<p>${escapeHtml(picked.text)}</p>`;
+  html += '<p>' + escapeHtml(picked.text) + '</p>';
   html += '</div>';
   document.getElementById('mode-brief-wrap').innerHTML = html;
   document.getElementById('mode-brief-wrap').classList.remove('hidden');
@@ -2673,7 +2697,7 @@ function onContextLoaded(ctx) {
       todayVocab = {
         word: (ctx.vocab[0].word || '').toUpperCase(),
         def: ctx.vocab[0].definition || ctx.vocab[0].def || '',
-        prompt: `Use "${ctx.vocab[0].word || ''}" in one of your comic captions!`
+        prompt: 'Use "' + (ctx.vocab[0].word || '') + '" in one of your comic captions!'
       };
       renderVocab();
     }
@@ -2683,8 +2707,8 @@ function onContextLoaded(ctx) {
     ringsCap = ctx && typeof ctx.ringsCap === 'number' ? ctx.ringsCap : 30;
     renderFreeBrief(ctx);
   }
-  const note = document.getElementById('rings-cap-note');
-  if (note) note.textContent = `Up to ${ringsCap} rings this session`;
+  var note = document.getElementById('rings-cap-note');
+  if (note) note.textContent = 'Up to ' + ringsCap + ' rings this session';
   _initReady();
 }
 
@@ -2698,9 +2722,9 @@ function _onBothLoaded() {
 }
 
 // ── v11: Main-scope toast (#282) ─────────────────────────────────────────────
-let _comicToastTimer = null;
+var _comicToastTimer = null;
 function _comicToast(msg) {
-  const el = document.getElementById('_comic-toast');
+  var el = document.getElementById('_comic-toast');
   if (!el) return;
   clearTimeout(_comicToastTimer);
   el.textContent = msg;
@@ -2713,7 +2737,7 @@ function _comicToast(msg) {
 function openGallery() {
   _galleryOpen = true; // suspend autosave while gallery is open (read-only mode)
   document.getElementById('gallery-overlay').classList.remove('hidden');
-  const body = document.getElementById('gallery-body');
+  var body = document.getElementById('gallery-body');
   body.innerHTML = '<div class="gallery-empty">Loading your comics...</div>';
   if (TBM_TEST_MODE) {
     renderGalleryList([
@@ -2735,19 +2759,19 @@ function closeGallery() {
 }
 
 function renderGalleryList(drafts) {
-  const body = document.getElementById('gallery-body');
+  var body = document.getElementById('gallery-body');
   if (!drafts || drafts.length === 0) {
     body.innerHTML = '<div class="gallery-empty">No saved comics yet.<br>Finish a session to save your work!</div>';
     return;
   }
-  let html = '<div class="gallery-list">';
-  for (let i = 0; i < drafts.length; i++) {
-    const d = drafts[i];
-    const safeDate = escapeHtml(d.label || d.dateKey);
-    html += `<div class="gallery-card" onclick="openComicViewer('${d.dateKey}', '${safeDate}')">`;
+  var html = '<div class="gallery-list">';
+  for (var i = 0; i < drafts.length; i++) {
+    var d = drafts[i];
+    var safeDate = escapeHtml(d.label || d.dateKey);
+    html += '<div class="gallery-card" onclick="openComicViewer(\'' + d.dateKey + '\', \'' + safeDate + '\')">';
     html += '<div class="gallery-card-icon">&#128225;</div>';
     html += '<div class="gallery-card-meta">';
-    html += `<div class="gallery-card-date">${safeDate}</div>`;
+    html += '<div class="gallery-card-date">' + safeDate + '</div>';
     html += '<div class="gallery-card-sub">Tap to view</div>';
     html += '</div>';
     html += '<div class="gallery-card-arrow">&#8250;</div>';
@@ -2779,41 +2803,41 @@ function closeViewer() {
 }
 
 function renderViewerPanels(draft) {
-  const container = document.getElementById('viewer-panels');
+  var container = document.getElementById('viewer-panels');
   if (!draft || !Array.isArray(draft.panels) || draft.panels.length === 0) {
     container.innerHTML = '<div class="viewer-loading">No panels saved in this comic.</div>';
     return;
   }
   // Build sticker lookup by panel index
-  const stickersByPanel = {};
+  var stickersByPanel = {};
   if (Array.isArray(draft.stickers)) {
-    for (let si = 0; si < draft.stickers.length; si++) {
-      const s = draft.stickers[si];
+    for (var si = 0; si < draft.stickers.length; si++) {
+      var s = draft.stickers[si];
       if (!stickersByPanel[s.panel]) stickersByPanel[s.panel] = [];
       stickersByPanel[s.panel].push(s);
     }
   }
-  let html = '';
-  for (let i = 0; i < draft.panels.length; i++) {
-    const p = draft.panels[i];
-    const caption = Array.isArray(draft.captions) && draft.captions[i]
+  var html = '';
+  for (var i = 0; i < draft.panels.length; i++) {
+    var p = draft.panels[i];
+    var caption = Array.isArray(draft.captions) && draft.captions[i]
       ? escapeHtml(draft.captions[i]) : '';
     html += '<div class="viewer-panel-card">';
     // Panel image wrapper — position:relative so sticker overlays work
     html += '<div style="position:relative;background:#FFFFFF;">';
     if (p && p.dataUrl) {
-      html += `<img class="viewer-panel-img" src="${p.dataUrl}" alt="Panel ${i + 1}">`;
+      html += '<img class="viewer-panel-img" src="' + p.dataUrl + '" alt="Panel ' + (i + 1) + '">';
     } else {
-      html += `<div style="height:160px;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:13px;">Panel ${i + 1} — no drawing</div>`;
+      html += '<div style="height:160px;display:flex;align-items:center;justify-content:center;color:#94A3B8;font-size:13px;">Panel ' + (i + 1) + ' \u2014 no drawing</div>';
     }
     // Overlay stickers at saved positions (read-only, non-draggable)
-    const panelStickers = stickersByPanel[i] || [];
-    for (let si2 = 0; si2 < panelStickers.length; si2++) {
-      const s = panelStickers[si2];
-      const def = STICKER_CATALOG.find(function(c) { return c.id === s.charId; });
-      const emoji = def ? def.emoji : '';
+    var panelStickers = stickersByPanel[i] || [];
+    for (var si2 = 0; si2 < panelStickers.length; si2++) {
+      var s = panelStickers[si2];
+      var def = STICKER_CATALOG.find(function(c) { return c.id === s.charId; });
+      var emoji = def ? def.emoji : '';
       if (!emoji) continue;
-      html += `<span style="position:absolute;font-size:44px;line-height:1;left:${s.xPct}%;top:${s.yPct}%;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));">${emoji}</span>`;
+      html += '<span style="position:absolute;font-size:44px;line-height:1;left:' + s.xPct + '%;top:' + s.yPct + '%;transform:translate(-50%,-50%);pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));">' + emoji + '</span>';
     }
     html += '</div>'; // end panel wrapper
     html += '<div class="viewer-panel-caption">';
@@ -2830,12 +2854,12 @@ function _stickersForPanel(panelIdx) {
 }
 
 function addSticker(charId) {
-  const existing = _stickersForPanel(activePanel);
+  var existing = _stickersForPanel(activePanel);
   if (existing.length >= STICKER_MAX_PER_PANEL) {
     _comicToast('Max ' + STICKER_MAX_PER_PANEL + ' stickers per panel');
     return;
   }
-  const def = STICKER_CATALOG.find(function(c) { return c.id === charId; });
+  var def = STICKER_CATALOG.find(function(c) { return c.id === charId; });
   if (!def || def.locked) return;
   _stickerId++;
   stickers.push({ id: 'sticker-' + _stickerId, charId: charId, panel: activePanel, xPct: 50, yPct: 50 });
@@ -2849,16 +2873,16 @@ function deleteSticker(id) {
 }
 
 function renderStickers() {
-  const existing = document.querySelectorAll('.sticker');
-  for (let i = 0; i < existing.length; i++) existing[i].remove();
-  for (let i = 0; i < stickers.length; i++) {
-    const s = stickers[i];
+  var existing = document.querySelectorAll('.sticker');
+  for (var i = 0; i < existing.length; i++) existing[i].remove();
+  for (var j = 0; j < stickers.length; j++) {
+    var s = stickers[j];
     if (s.panel >= panelCount) continue;
-    const slot = document.querySelector(`.panel-slot[data-panel="${s.panel}"]`);
+    var slot = document.querySelector('.panel-slot[data-panel="' + s.panel + '"]');
     if (!slot) continue;
-    const def = STICKER_CATALOG.find(function(c) { return c.id === s.charId; });
-    const emoji = def ? def.emoji : '?';
-    const el = document.createElement('div');
+    var def = STICKER_CATALOG.find(function(c) { return c.id === s.charId; });
+    var emoji = def ? def.emoji : '?';
+    var el = document.createElement('div');
     el.className = 'sticker';
     el.setAttribute('data-sticker-id', s.id);
     el.style.left = s.xPct + '%';
@@ -2870,7 +2894,7 @@ function renderStickers() {
 }
 
 function attachStickerDrag(el, s) {
-  let dragging = false, dragOffsetX = 0, dragOffsetY = 0;
+  var dragging = false, dragOffsetX = 0, dragOffsetY = 0;
   el.addEventListener('pointerdown', function(e) {
     if (e.target.classList.contains('sticker-del')) return;
     e.preventDefault();
@@ -2878,23 +2902,23 @@ function attachStickerDrag(el, s) {
     dragging = true;
     el.setPointerCapture(e.pointerId);
     el.style.cursor = 'grabbing';
-    const rect = el.getBoundingClientRect();
+    var rect = el.getBoundingClientRect();
     dragOffsetX = e.clientX - (rect.left + rect.width / 2);
     dragOffsetY = e.clientY - (rect.top + rect.height / 2);
   });
   el.addEventListener('pointermove', function(e) {
     if (!dragging) return;
     e.preventDefault();
-    const slot = el.parentElement;
+    var slot = el.parentElement;
     if (!slot) return;
-    const slotRect = slot.getBoundingClientRect();
-    const xPx = (e.clientX - dragOffsetX) - slotRect.left;
-    const yPx = (e.clientY - dragOffsetY) - slotRect.top;
-    const xPct = Math.max(5, Math.min(95, (xPx / slotRect.width) * 100));
-    const yPct = Math.max(5, Math.min(95, (yPx / slotRect.height) * 100));
+    var slotRect = slot.getBoundingClientRect();
+    var xPx = (e.clientX - dragOffsetX) - slotRect.left;
+    var yPx = (e.clientY - dragOffsetY) - slotRect.top;
+    var xPct = Math.max(5, Math.min(95, (xPx / slotRect.width) * 100));
+    var yPct = Math.max(5, Math.min(95, (yPx / slotRect.height) * 100));
     el.style.left = xPct + '%';
     el.style.top = yPct + '%';
-    const found = stickers.find(function(x) { return x.id === s.id; });
+    var found = stickers.find(function(x) { return x.id === s.id; });
     if (found) { found.xPct = xPct; found.yPct = yPct; }
   });
   el.addEventListener('pointerup', function() {
@@ -2913,14 +2937,14 @@ function init() {
   renderVocab();
   if (TBM_TEST_MODE) { buildPanelGrid(); renderCaptions(); return; }
   serverCall('getComicStudioContextSafe', CHILD)
-    .then(ctx => { onContextLoaded(ctx); })
-    .catch(() => { onContextLoaded(null); });
+    .then(function(ctx) { onContextLoaded(ctx); })
+    .catch(function() { onContextLoaded(null); });
   serverCall('loadComicDraftSafe', CHILD)
-    .then(draft => {
+    .then(function(draft) {
       if (draft && draft.version >= 8) { pendingDraft = draft; } // v10: accept v8+ drafts (bubbles default to [])
       _initReady();
     })
-    .catch(() => { _initReady(); });
+    .catch(function() { _initReady(); });
 }
 
 // v14: Homework gate — check before allowing Comic Studio
@@ -2939,8 +2963,7 @@ function checkHomeworkGateAndInit() {
       }
     })
     .withFailureHandler(function() {
-      // Gate check failed — let them through rather than block on error
-      init();
+      document.getElementById('gate-error').style.display = 'block';
     })
     .checkHomeworkGateSafe(CHILD);
 }
