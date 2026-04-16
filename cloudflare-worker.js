@@ -960,15 +960,19 @@ async function handleGitHubWebhook_(request, env) {
   console.log('GitHub webhook: PR #' + prNumber + ' merged — delivery ' + delivery);
 
   // Idempotency: block duplicate sends on GitHub retries and manual redeliveries,
-  // which reuse the same X-GitHub-Delivery ID. Cache miss on a failed Pushover
-  // is intentional — the 500 return lets GitHub retry, and the retry passes this
-  // check because the delivery was never marked as seen.
-  var idempotencyUrl = 'https://tbm-idempotency/webhook-github/' + delivery;
-  var deliveryCache = caches.default;
-  var cachedDelivery = await deliveryCache.match(new Request(idempotencyUrl));
-  if (cachedDelivery) {
-    console.log('GitHub webhook: duplicate delivery ' + delivery + ' — skipped');
-    return jsonResponse({ ok: true, handled: false, reason: 'duplicate_delivery', delivery: delivery });
+  // which reuse the same X-GitHub-Delivery ID. KV is globally replicated so this
+  // holds across all Cloudflare colos, unlike caches.default (per-datacenter only).
+  // If KV binding is absent (not yet provisioned), degrade gracefully and send.
+  // Cache miss on a failed Pushover is intentional — 500 lets GitHub retry, and
+  // the retry passes this check because the delivery was never marked as seen.
+  if (env.WEBHOOK_IDEMPOTENCY) {
+    var seen = await env.WEBHOOK_IDEMPOTENCY.get('delivery:' + delivery);
+    if (seen) {
+      console.log('GitHub webhook: duplicate delivery ' + delivery + ' — skipped');
+      return jsonResponse({ ok: true, handled: false, reason: 'duplicate_delivery', delivery: delivery });
+    }
+  } else {
+    console.warn('GitHub webhook: WEBHOOK_IDEMPOTENCY KV not bound — idempotency check skipped');
   }
 
   var pushResult = await sendPushover_(env, {
@@ -997,10 +1001,9 @@ async function handleGitHubWebhook_(request, env) {
   }
 
   // Mark delivery as seen for 24 hours so redeliveries are no-ops.
-  await deliveryCache.put(
-    new Request(idempotencyUrl),
-    new Response('1', { headers: { 'Cache-Control': 'public, max-age=86400' } })
-  );
+  if (env.WEBHOOK_IDEMPOTENCY) {
+    await env.WEBHOOK_IDEMPOTENCY.put('delivery:' + delivery, '1', { expirationTtl: 86400 });
+  }
 
   return jsonResponse({
     ok: true,

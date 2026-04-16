@@ -30,3 +30,11 @@ period = 10
 # Webhook URL: https://thompsonfams.com/webhook/github
 # Events: Pull requests only
 # PUSHOVER_APP_TOKEN and PUSHOVER_USER_KEY already set — no re-setup needed
+
+# Webhook idempotency store — globally replicated KV, prevents duplicate Pushover
+# alerts on GitHub retries and manual redeliveries (issue #373).
+# Setup (one-time, run as LT): wrangler kv:namespace create WEBHOOK_IDEMPOTENCY
+# Then replace REPLACE_WITH_NAMESPACE_ID below with the id from that output.
+[[kv_namespaces]]
+binding = "WEBHOOK_IDEMPOTENCY"
+id = "REPLACE_WITH_NAMESPACE_ID"
