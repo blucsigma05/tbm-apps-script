@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v70 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v72 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 70; }
+function getKidsHubVersion() { return 72; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2615,8 +2615,26 @@ function ensureCurriculumTab_() {
 }
 
 
-// v69: Ensures module shape always has all 6 required fields.
-// Applies || defaults so clients never receive undefined for strand/teks/quickFact/passage.
+// v71 (#350): Translates per-question fields from seed shape to UI shape.
+// Seed uses {q, choices, correct, standard}; UI reads {question, options, answer, teks, id, difficulty}.
+function normalizeQuestions_(arr, subjectTeks, idOffset) {
+  if (!arr || !arr.length) return arr;
+  for (var i = 0; i < arr.length; i++) {
+    var q = arr[i];
+    q.question    = q.question || q.q || '';
+    q.options     = q.options  || q.choices || null;
+    q.answer      = (q.answer != null) ? q.answer : q.correct;
+    q.teks        = q.teks || (q.standard ? String(q.standard).replace(/^TEKS\s+/i, '') : (subjectTeks || ''));
+    q.id          = q.id || (idOffset + i + 1);
+    q.difficulty  = q.difficulty || 'Medium';
+    q.type        = q.type || 'multiple_choice';
+    q.explanation = q.explanation || '';
+    q.sampleAnswer = q.sampleAnswer || '';
+  }
+  return arr;
+}
+
+// v69+v71: Ensures module shape always has all required fields at subject AND question level.
 function normalizeModule_(mod) {
   if (!mod) return mod;
   var subjects = ['math', 'science'];
@@ -2629,6 +2647,8 @@ function normalizeModule_(mod) {
     mod[s].passage   = mod[s].passage   || [];
     mod[s].title     = mod[s].title     || '';
     mod[s].questions = mod[s].questions || [];
+    var offset = (s === 'science') ? 0 : 6;
+    normalizeQuestions_(mod[s].questions, mod[s].teks, offset);
   }
   return mod;
 }
@@ -2654,6 +2674,13 @@ function validateHomeworkShape_(child) {
         result.missing.push(subjects[s] + '.' + required[r]);
       }
     }
+    // v71 (#350): validate per-question fields (catches the seed→UI shape mismatch).
+    var qs = mod[subjects[s]] ? mod[subjects[s]].questions : [];
+    for (var qi = 0; qi < qs.length; qi++) {
+      if (!qs[qi].question) { result.valid = false; result.missing.push(subjects[s] + '.questions[' + qi + '].question'); }
+      if (!qs[qi].options && !qs[qi].sampleAnswer) { result.valid = false; result.missing.push(subjects[s] + '.questions[' + qi + '].options'); }
+      if (!qs[qi].teks) { result.valid = false; result.missing.push(subjects[s] + '.questions[' + qi + '].teks'); }
+    }
   }
   return result;
 }
@@ -2678,6 +2705,16 @@ function validateReadingShape_(child) {
   if (!hasParagraphs) { result.valid = false; result.missing.push('cold_passage.paragraphs (or passage/text)'); }
   var hasQuestions = (cp.questions && cp.questions.length > 0);
   if (!hasQuestions) { result.valid = false; result.missing.push('cold_passage.questions'); }
+  // v71 (#350): validate per-question fields on cold_passage (same seed→UI shape mismatch).
+  // v72 (#350): make `options` check conditional on type — short-answer questions
+  // legitimately omit options (reading-module.html buildShortAnswer path).
+  if (hasQuestions) {
+    for (var qi = 0; qi < cp.questions.length; qi++) {
+      if (!cp.questions[qi].question) { result.valid = false; result.missing.push('cold_passage.questions[' + qi + '].question'); }
+      var qType = cp.questions[qi].type || 'multiple_choice';
+      if (qType === 'multiple_choice' && !cp.questions[qi].options) { result.valid = false; result.missing.push('cold_passage.questions[' + qi + '].options'); }
+    }
+  }
   return result;
 }
 
@@ -2781,6 +2818,14 @@ function getTodayContent_(child, _testDateOverride) {
     // v69: Normalize module shape — clients never receive undefined for strand/teks/quickFact/passage.
     if (dayContent && dayContent.module) {
       dayContent.module = normalizeModule_(dayContent.module);
+    }
+    // v71 (#350): Normalize cold_passage questions (same seed→UI shape mismatch as module).
+    if (dayContent && dayContent.cold_passage && dayContent.cold_passage.questions) {
+      normalizeQuestions_(dayContent.cold_passage.questions, '', 1);
+    }
+    // v71 (#350): Alias writing → quick_write so writing-module.html can read content.quick_write.prompt.
+    if (dayContent && dayContent.writing && !dayContent.quick_write) {
+      dayContent.quick_write = dayContent.writing;
     }
     return { content: dayContent, fullWeek: weekContent, day: todayName, week: bestRow[weekCol] || 0, child: childLower };
   } catch (e) {
@@ -5257,5 +5302,5 @@ function checkHomeworkGateSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v70
+// END OF FILE — KidsHub.gs v72
 // ════════════════════════════════════════════════════════════════════
