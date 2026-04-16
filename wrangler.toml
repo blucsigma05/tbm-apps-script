@@ -12,12 +12,9 @@ compatibility_date = "2024-09-01"
 crons = ["0 12 * * *"]   # HYG-09: Tiller freshness check — daily 12:00 UTC
 
 [[ratelimits]]
-name = "PIN_RATE_LIMITER"
+binding = "PIN_RATE_LIMITER"
 namespace_id = "1001"
-
-[ratelimits.simple]
-limit = 2
-period = 10
+simple = { limit = 2, period = 10 }
 
 # Webhook idempotency store — globally replicated KV, prevents duplicate Pushover
 # alerts on GitHub retries and manual redeliveries (issue #373).
