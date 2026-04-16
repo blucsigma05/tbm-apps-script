@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmRegressionSuite.gs v10 — Phase A3: Post-Deploy Behavioral Assertions
+// tbmRegressionSuite.gs v11 — Phase A3: Post-Deploy Behavioral Assertions
 // WRITES TO: (none — read-only assertions)
 // READS FROM: All sheets (for regression assertions)
 // ════════════════════════════════════════════════════════════════════
@@ -20,7 +20,7 @@
 // USAGE: Run tbmRegressionSuite() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getRegressionSuiteVersion() { return 10; }
+function getRegressionSuiteVersion() { return 11; }
 
 // v10 (#377): Global flag used by FreezeGate.js to suppress logError_/sendPush_
 // side effects during FREEZE regression tests. Without this, 5 FREEZE tests fire
@@ -1080,6 +1080,11 @@ function runFreezeGateAssertions_(results) {
   var priorBlockCount     = props.getProperty('FREEZE_BLOCK_COUNT');
   var priorLastPush       = props.getProperty('FREEZE_LAST_PUSH');
 
+  // v11 (#418): Lift any live operational freeze before starting tests so each
+  // FREEZE-00x starts from a known clean state. The outer finally restores the
+  // prior state unconditionally, so this is safe to do even with an active freeze.
+  try { liftFreeze_(); } catch(e) {}
+
   try {
 
   // FREEZE-001: setFreeze_ activates; getFreezeState_ returns active:true with reason
@@ -1209,4 +1214,4 @@ function runFreezeGateAssertions_(results) {
 }
 
 
-// END OF FILE — tbmRegressionSuite.gs v10
+// END OF FILE — tbmRegressionSuite.gs v11
