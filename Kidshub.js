@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v71 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v72 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 71; }
+function getKidsHubVersion() { return 72; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -2706,10 +2706,13 @@ function validateReadingShape_(child) {
   var hasQuestions = (cp.questions && cp.questions.length > 0);
   if (!hasQuestions) { result.valid = false; result.missing.push('cold_passage.questions'); }
   // v71 (#350): validate per-question fields on cold_passage (same seed→UI shape mismatch).
+  // v72 (#350): make `options` check conditional on type — short-answer questions
+  // legitimately omit options (reading-module.html buildShortAnswer path).
   if (hasQuestions) {
     for (var qi = 0; qi < cp.questions.length; qi++) {
       if (!cp.questions[qi].question) { result.valid = false; result.missing.push('cold_passage.questions[' + qi + '].question'); }
-      if (!cp.questions[qi].options) { result.valid = false; result.missing.push('cold_passage.questions[' + qi + '].options'); }
+      var qType = cp.questions[qi].type || 'multiple_choice';
+      if (qType === 'multiple_choice' && !cp.questions[qi].options) { result.valid = false; result.missing.push('cold_passage.questions[' + qi + '].options'); }
     }
   }
   return result;
@@ -5299,5 +5302,5 @@ function checkHomeworkGateSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v71
+// END OF FILE — KidsHub.gs v72
 // ════════════════════════════════════════════════════════════════════
