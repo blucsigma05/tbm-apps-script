@@ -67,7 +67,7 @@ Visual + audio + redirect. Per LT decision 2026-04-16:
 
 Empty-legitimate state for all six: "Nothing assigned today — free time!" with link to free-play or dashboard.
 
-Preventive: 6AM validator (per PR #349 server changes) pages LT if any curriculum shape is broken before kids touch devices.
+Preventive: 6AM validator (per PR #349 server changes) pages LT if `/homework`, `/reading`, or `/writing` curriculum shape is broken before kids touch devices. Extension to `/wolfkid`, `/facts`, `/investigation` is a P0-105 build TODO — not yet implemented.
 
 ### JJ learning surfaces
 
@@ -216,7 +216,7 @@ Every pattern maps to MVSS v1 universal must-pass rules:
 
 Fallback is the last line of defense. Upstream checks prevent getting there:
 
-1. **6AM curriculum preflight** (PR #349) — pages LT if any of `/homework`, `/reading`, `/writing` would fail on shape. Extends in P0-105 implementation to `/wolfkid`, `/facts`, `/investigation`.
+1. **6AM curriculum preflight** (PR #349) — pages LT if any of `/homework`, `/reading`, `/writing` would fail on shape. Does not yet cover `/wolfkid`, `/facts`, `/investigation` — that extension is a P0-105 build TODO.
 2. **Cache heartbeat** (KH_CACHE_KEY + heartbeat in Helpers:Z1) — surfaces detect stale cache and refresh proactively before user sees stale.
 3. **Tiller freshness gate** (CF Worker) — interactive finance surfaces get a freshness banner before the page even loads if Tiller is stale.
 
