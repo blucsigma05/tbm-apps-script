@@ -90,8 +90,9 @@ For `buggsy.creation` (ComicStudio only):
 - C6 multi-comic-library: past comics persist, reopenable
 
 For `buggsy.hub`:
-- Focus on U4 (core-loop-starts-fast), X1-X5 (consistency), less emphasis on U5/U6 (hubs don't complete loops themselves)
-- Navigation to all gated surfaces is functional
+- **Skip U5 and U6 entirely** — hub surfaces do not own a completable loop or a persistence contract, so evaluating core-loop-completes or save-reload-holds will produce false failures. Mark both as `not_applicable` in the verdict.
+- Focus evaluation on U1-U4, U7-U16, B1/B2, X1-X5.
+- Navigation to all gated surfaces is functional.
 
 For `buggsy.diagnostic`:
 - B5 challenge-fit: critical (diagnostic must calibrate to actual grade-level)
