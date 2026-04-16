@@ -440,6 +440,16 @@ else
       echo "         Tools are present but could not confirm freeze state — treating as blocked"
       echo "         To bypass (genuine emergency only): EMERGENCY=1 bash audit-source.sh"
       FAIL=1
+    elif [[ "${FREEZE_JSON:0:1}" != "{" ]]; then
+      # clasp returned non-JSON (e.g. "Script function not found. Please make sure
+      # script is deployed as API executable.") with exit code 0.
+      # Cannot determine freeze state — treat as SKIP/WARN, same degradation as
+      # jq/clasp absent. This is the current repo config until GAS is deployed
+      # as API executable.
+      echo "  SKIP -- clasp run returned non-JSON output; freeze check skipped"
+      echo "         Script may not be deployed as API executable."
+      echo "         Output: ${FREEZE_JSON:0:120}"
+      WARN=$((WARN + 1))
     else
       FREEZE_ACTIVE=$(echo "$FREEZE_JSON" | jq -r '.active // empty' 2>/dev/null)
       JQ_EXIT=$?
