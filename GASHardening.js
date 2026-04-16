@@ -5,7 +5,7 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
 
-function getGASHardeningVersion() { return 10; }
+function getGASHardeningVersion() { return 11; }
 
 // v6: openById migration — trigger-safe spreadsheet accessor
 var _ghSS = null;
@@ -1216,43 +1216,6 @@ function replaceDailyTrigger_(functionName, hour) {
     .everyDays(1)
     .inTimezone('America/Chicago')
     .create();
-}
-
-/**
- * One-time setup: install daily triggers for health check and snapshot.
- * Run from the Apps Script editor. Checks that target functions exist first.
- *
- * NOTE: resetDailyTasksAuto is NOT wired — function does not exist yet.
- *       Add it here once KidsHub implements daily task reset.
- */
-function setupDailyTriggers() {
-  var plan = [
-    // {fn: 'resetDailyTasksAuto', hour: 5, label: 'Daily chore reset'},  // NOT YET — function missing
-    {fn: 'dailyHealthCheck', hour: 6, label: 'Morning health check'},
-    {fn: 'runSnapshot', hour: 6, label: 'Code snapshot to Drive'}
-  ];
-
-  var installed = 0;
-  for (var i = 0; i < plan.length; i++) {
-    var entry = plan[i];
-    var exists = false;
-    try { exists = typeof this[entry.fn] === 'function'; } catch(e) {}
-    if (!exists) {
-      Logger.log('SKIP: ' + entry.fn + ' — function not found in project');
-      continue;
-    }
-    replaceDailyTrigger_(entry.fn, entry.hour);
-    Logger.log('INSTALLED: ' + entry.fn + ' at ' + entry.hour + ':00 CST — ' + entry.label);
-    installed++;
-  }
-
-  var total = ScriptApp.getProjectTriggers().length;
-  Logger.log('');
-  Logger.log('Triggers installed this run: ' + installed);
-  Logger.log('Total triggers now: ' + total + '/20');
-  if (total >= 18) {
-    Logger.log('WARNING: Approaching 20-trigger GAS limit!');
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 91; }
+function getCodeVersion() { return 92; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -551,7 +551,8 @@ function serveData(e) {
         'notionApproveHomeworkSafe': notionApproveHomeworkSafe,
         'getPendingReviewsSafe': getPendingReviewsSafe,
         // ContentEngine.gs v2 — Vocabulary usage grading (#225)
-        'gradeVocabUsageSafe': gradeVocabUsageSafe
+        'gradeVocabUsageSafe': gradeVocabUsageSafe,
+        'diagOpsTriggersSafe': diagOpsTriggersSafe
       };
 
       if (!fn || !API_WHITELIST[fn]) {

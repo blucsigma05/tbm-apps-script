@@ -639,12 +639,8 @@ All `sendPush_()` calls must use a named constant from `PUSHOVER_PRIORITY` in Al
 
 ---
 
-## GAS Triggers (reference — LT installs these)
-| Time | Function | Purpose |
-|------|----------|---------|
-| 5:00 AM CST | `resetDailyTasksAuto()` | Reset daily chores |
-| 6:00 AM CST | `dailyHealthCheck()` | Smoke + error scan + heartbeat |
-| 6:30 AM CST | `runSnapshot()` | Code snapshot to Drive |
+## GAS Triggers
+Installed via `installAllOpsTriggersSafe()`. Health via `diagOpsTriggersSafe()`. Drift surfaced by `reconcileOpsTriggersSafe()` running daily. Spec lives in `OpsTriggers.js:OPS_TRIGGER_SPEC` — add a row there (+ create the handler) for any new recurring function.
 
 ---
 
