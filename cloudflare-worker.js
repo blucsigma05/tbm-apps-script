@@ -110,6 +110,11 @@ export default {
       });
     }
 
+    // Route: /webhook/github → GitHub PR-merged Pushover alert receiver (issue #367)
+    if (url.pathname === '/webhook/github') {
+      return handleGitHubWebhook_(request, env);
+    }
+
     // Route: /api/verify-pin → PIN gate handler
     if (url.pathname === '/api/verify-pin' && request.method === 'POST') {
       return handleVerifyPin(request, env);
@@ -173,16 +178,11 @@ export default {
       if (!resp.ok) { throw new Error('GAS returned HTTP ' + resp.status); }
       const data = await resp.json();
       if (!data.fresh && data.hoursSince > data.threshold) {
-        if (env.PUSHOVER_USER_KEY && env.PUSHOVER_APP_TOKEN) {
-          const body = new URLSearchParams({
-            token: env.PUSHOVER_APP_TOKEN,
-            user: env.PUSHOVER_USER_KEY,
-            title: 'HYG-09: Tiller Stale',
-            message: 'Latest transaction is ' + Math.round(data.hoursSince) + 'h old (threshold: ' + data.threshold + 'h). Check Tiller sync.',
-            priority: '1'
-          });
-          await fetch('https://api.pushover.net/1/messages.json', { method: 'POST', body });
-        }
+        await sendPushover_(env, {
+          title: 'HYG-09: Tiller Stale',
+          message: 'Latest transaction is ' + Math.round(data.hoursSince) + 'h old (threshold: ' + data.threshold + 'h). Check Tiller sync.',
+          priority: 1
+        });
       }
     } catch (e) {
       console.error('HYG-09 Tiller freshness check failed: ' + e.message);
@@ -875,6 +875,176 @@ async function computeQAHmac_(message, secret) {
   var sig = await crypto.subtle.sign('HMAC', keyMaterial, enc.encode(message));
   var hashArr = Array.from(new Uint8Array(sig));
   return hashArr.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// PUSHOVER HELPER — shared by HYG-09 and GitHub webhook (issue #367)
+// ═══════════════════════════════════════════════════════════════════
+
+async function sendPushover_(env, opts) {
+  // opts: { title, message, url, urlTitle, priority }
+  if (!env.PUSHOVER_APP_TOKEN || !env.PUSHOVER_USER_KEY) {
+    console.error('Pushover secrets missing; skipping notification');
+    return { ok: false, reason: 'secrets_missing' };
+  }
+  var body = new URLSearchParams({
+    token: env.PUSHOVER_APP_TOKEN,
+    user: env.PUSHOVER_USER_KEY,
+    title: opts.title || '',
+    message: opts.message || '',
+    priority: String(opts.priority == null ? 0 : opts.priority)
+  });
+  if (opts.url) body.set('url', opts.url);
+  if (opts.urlTitle) body.set('url_title', opts.urlTitle);
+  try {
+    var res = await fetch('https://api.pushover.net/1/messages.json', { method: 'POST', body: body });
+    return { ok: res.ok, status: res.status };
+  } catch (e) {
+    console.error('Pushover fetch failed: ' + e.message);
+    return { ok: false, reason: 'fetch_error' };
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════
+// GITHUB WEBHOOK — PR-merged Pushover alert (issue #367)
+// ═══════════════════════════════════════════════════════════════════
+
+async function handleGitHubWebhook_(request, env) {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error: 'method_not_allowed' }, 405);
+  }
+
+  // Verify HMAC signature before parsing body
+  if (!env.GITHUB_WEBHOOK_SECRET) {
+    console.error('GITHUB_WEBHOOK_SECRET not configured');
+    return jsonResponse({ error: 'invalid_signature' }, 401);
+  }
+  var sigResult = await verifyGitHubSignature_(request, env.GITHUB_WEBHOOK_SECRET);
+  if (!sigResult.valid) {
+    return jsonResponse({ error: 'invalid_signature' }, 401);
+  }
+
+  // Parse raw body returned by verifier (verify consumed request stream)
+  var payload;
+  try {
+    payload = JSON.parse(sigResult.body);
+  } catch (e) {
+    return jsonResponse({ error: 'bad_request', detail: 'invalid JSON payload' }, 400);
+  }
+
+  var event = request.headers.get('X-GitHub-Event') || '';
+  var delivery = request.headers.get('X-GitHub-Delivery') || 'unknown';
+
+  // Only handle pull_request events
+  if (event !== 'pull_request') {
+    return jsonResponse({ ok: true, handled: false, reason: 'event_not_pull_request', event: event, delivery: delivery });
+  }
+
+  var action = payload.action || '';
+  var pr = payload.pull_request || {};
+
+  // Only handle merged PRs
+  if (action !== 'closed' || !pr.merged) {
+    return jsonResponse({ ok: true, handled: false, reason: 'pr_not_merged', action: action, delivery: delivery });
+  }
+
+  var prNumber = pr.number;
+  var prTitle = pr.title || '';
+  var prUser = (pr.user && pr.user.login) || 'unknown';
+  var prBase = (pr.base && pr.base.ref) || 'unknown';
+  var prHead = (pr.head && pr.head.ref) || 'unknown';
+  var prUrl = pr.html_url || '';
+
+  console.log('GitHub webhook: PR #' + prNumber + ' merged — delivery ' + delivery);
+
+  // Idempotency: block duplicate sends on GitHub retries and manual redeliveries,
+  // which reuse the same X-GitHub-Delivery ID. KV is globally replicated so this
+  // holds across all Cloudflare colos, unlike caches.default (per-datacenter only).
+  // If KV binding is absent (not yet provisioned), degrade gracefully and send.
+  // Cache miss on a failed Pushover is intentional — 500 lets GitHub retry, and
+  // the retry passes this check because the delivery was never marked as seen.
+  if (env.WEBHOOK_IDEMPOTENCY) {
+    var seen = await env.WEBHOOK_IDEMPOTENCY.get('delivery:' + delivery);
+    if (seen) {
+      console.log('GitHub webhook: duplicate delivery ' + delivery + ' — skipped');
+      return jsonResponse({ ok: true, handled: false, reason: 'duplicate_delivery', delivery: delivery });
+    }
+  } else {
+    console.warn('GitHub webhook: WEBHOOK_IDEMPOTENCY KV not bound — idempotency check skipped');
+  }
+
+  var pushResult = await sendPushover_(env, {
+    title: 'PR #' + prNumber + ' merged',
+    message: prTitle + '\nby ' + prUser + '\nbase: ' + prBase + ' \u2190 ' + prHead,
+    url: prUrl,
+    urlTitle: 'View PR',
+    priority: 0
+  });
+
+  if (!pushResult.ok) {
+    // Return 500 so GitHub retries the webhook on transient Pushover failures.
+    // A silent 200 here would cause GitHub to mark the delivery as succeeded
+    // and never retry, resulting in dropped merge notifications.
+    // Do NOT mark delivery as seen — let the retry through.
+    console.error('GitHub webhook: Pushover failed for PR #' + prNumber +
+      ' — ' + (pushResult.reason || pushResult.status));
+    return jsonResponse({
+      ok: false,
+      handled: false,
+      error: 'pushover_failed',
+      detail: pushResult.reason || String(pushResult.status),
+      pr: prNumber,
+      delivery: delivery
+    }, 500);
+  }
+
+  // Mark delivery as seen for 24 hours so redeliveries are no-ops.
+  if (env.WEBHOOK_IDEMPOTENCY) {
+    await env.WEBHOOK_IDEMPOTENCY.put('delivery:' + delivery, '1', { expirationTtl: 86400 });
+  }
+
+  return jsonResponse({
+    ok: true,
+    handled: true,
+    event: event,
+    action: action,
+    pr: prNumber,
+    delivery: delivery,
+    pushover: pushResult
+  });
+}
+
+
+async function verifyGitHubSignature_(request, secret) {
+  var sigHeader = request.headers.get('X-Hub-Signature-256') || '';
+  if (!sigHeader.startsWith('sha256=')) {
+    return { valid: false, reason: 'missing_sig' };
+  }
+  var expected = sigHeader.slice(7); // strip 'sha256='
+  var body = await request.text(); // raw body — verify BEFORE parsing JSON
+  var enc = new TextEncoder();
+  var key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  );
+  var sigBytes = await crypto.subtle.sign('HMAC', key, enc.encode(body));
+  var computedHex = Array.from(new Uint8Array(sigBytes))
+    .map(function(b) { return b.toString(16).padStart(2, '0'); })
+    .join('');
+  // Constant-time compare
+  if (computedHex.length !== expected.length) {
+    return { valid: false, reason: 'length_mismatch' };
+  }
+  var diff = 0;
+  for (var i = 0; i < computedHex.length; i++) {
+    diff |= computedHex.charCodeAt(i) ^ expected.charCodeAt(i);
+  }
+  return { valid: diff === 0, body: body };
 }
 
 

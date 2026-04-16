@@ -1,0 +1,103 @@
+#!/bin/bash
+# TBM pre-push hook — re-runs deploy freeze gate before push.
+# Install once per clone: bash scripts/setup-hooks.sh
+#
+# Adds a second enforcement layer on top of pre-commit: a commit made
+# BEFORE a freeze was activated can still be blocked at push time.
+#
+# Override (genuine emergency only): EMERGENCY=1 git push
+# All commits being pushed must carry EMERGENCY: prefix — this hook validates
+# the outgoing commit subjects, not just the current HEAD.
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Skip in CI — the GAS smoke test is the authoritative check there.
+if [[ "${CI:-}" == "true" ]]; then
+  exit 0
+fi
+
+if [[ "${EMERGENCY:-0}" == "1" ]]; then
+  # Validate that every commit being pushed carries the EMERGENCY: prefix.
+  # stdin format (per git-hooks(5)): <local-ref> <local-sha> <remote-ref> <remote-sha>
+  MISSING=""
+  while read -r local_ref local_sha remote_ref remote_sha; do
+    # Branch deletion — nothing to validate.
+    if [[ "$local_sha" == "0000000000000000000000000000000000000000" ]]; then
+      continue
+    fi
+    if [[ "$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
+      # New branch: git log <sha> would walk ALL of history reachable from the
+      # tip, including thousands of main commits that pre-date this emergency.
+      # Limit to commits not already present on any remote ref so only the
+      # commits being introduced are validated.
+      LOG_ARGS=("$local_sha" "--not" "--remotes")
+    else
+      LOG_ARGS=("${remote_sha}..${local_sha}")
+    fi
+    while IFS= read -r subject; do
+      if [[ "$subject" != EMERGENCY:* ]]; then
+        MISSING="${MISSING}\n  BAD: $subject"
+      fi
+    done < <(git log --format="%s" "${LOG_ARGS[@]}" 2>/dev/null)
+  done
+  if [[ -n "$MISSING" ]]; then
+    echo ""
+    echo "❌  pre-push: BLOCKED -- EMERGENCY=1 bypass requires ALL pushed commits"
+    echo "    to start with 'EMERGENCY: <reason>' for the audit trail."
+    echo ""
+    echo -e "    Commits missing the prefix:${MISSING}"
+    echo ""
+    echo "    Amend each commit or squash into a new 'EMERGENCY: <reason>' commit"
+    echo "    before pushing."
+    exit 1
+  fi
+  echo "⚠️  pre-push: EMERGENCY=1 — freeze gate bypassed."
+  echo "   All pushed commits carry EMERGENCY: prefix — bypass approved."
+  exit 0
+fi
+
+if ! command -v jq >/dev/null 2>&1 || ! command -v clasp >/dev/null 2>&1; then
+  echo "pre-push: WARN -- jq or clasp not available; freeze check skipped at push time."
+  exit 0
+fi
+
+FREEZE_JSON=$(clasp run getFreezeState_ 2>/dev/null)
+CLASP_EXIT=$?
+if [[ $CLASP_EXIT -ne 0 || -z "$FREEZE_JSON" ]]; then
+  echo "pre-push: BLOCKED -- clasp run getFreezeState_ failed (exit $CLASP_EXIT) or returned empty."
+  echo "          Cannot confirm no active freeze — push rejected."
+  echo "          To bypass (emergency only): EMERGENCY=1 git push"
+  exit 1
+fi
+
+# If clasp returned non-JSON (e.g. "Script function not found. Please make sure
+# script is deployed as API executable."), we cannot determine freeze state.
+# Treat as SKIP/WARN rather than FAIL — same degradation as tools being absent.
+if [[ "${FREEZE_JSON:0:1}" != "{" ]]; then
+  echo "pre-push: WARN -- clasp run returned non-JSON output; freeze check skipped."
+  echo "          Script may not be deployed as API executable."
+  echo "          Output: ${FREEZE_JSON:0:120}"
+  exit 0
+fi
+
+FREEZE_ACTIVE=$(echo "$FREEZE_JSON" | jq -r '.active // empty' 2>/dev/null)
+JQ_EXIT=$?
+if [[ $JQ_EXIT -ne 0 || -z "$FREEZE_ACTIVE" ]]; then
+  echo "pre-push: BLOCKED -- cannot parse freeze state JSON."
+  echo "          Raw: $FREEZE_JSON"
+  echo "          To bypass (emergency only): EMERGENCY=1 git push"
+  exit 1
+fi
+
+if [[ "$FREEZE_ACTIVE" == "true" ]]; then
+  FREEZE_REASON=$(echo "$FREEZE_JSON" | jq -r '.reason // "unknown"' 2>/dev/null)
+  FREEZE_EXPIRY=$(echo "$FREEZE_JSON" | jq -r '.expiresAt // "no expiry set"' 2>/dev/null)
+  echo "pre-push: BLOCKED -- deploy freeze is ACTIVE"
+  echo "  Reason:  $FREEZE_REASON"
+  echo "  Expires: $FREEZE_EXPIRY"
+  echo "  To bypass (emergency only): EMERGENCY=1 git push"
+  echo "  Commit messages must start with: EMERGENCY: <reason>"
+  exit 1
+fi
+
+exit 0

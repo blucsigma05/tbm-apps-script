@@ -21,11 +21,20 @@ period = 10
 
 # Webhook idempotency store — globally replicated KV, prevents duplicate Pushover
 # alerts on GitHub retries and manual redeliveries (issue #373).
+# Created via: wrangler kv namespace create WEBHOOK_IDEMPOTENCY
 [[kv_namespaces]]
 binding = "WEBHOOK_IDEMPOTENCY"
 id = "860f4a79a285468a8899c0ef68c85f6c"
+preview_id = "b57a11e2408247d9871a8c462977817f"
 
 # QA Route Isolation secrets (issue #219)
 # Set via: wrangler secret put QA_HMAC_SECRET
 # Must match GAS Script Property QA_HMAC_SECRET (same value, both sides)
 # Prerequisite: TBM_QA_SSID Script Property set in GAS to QA workbook ID
+
+# GitHub webhook receiver secret (issue #367)
+# Set via: wrangler secret put GITHUB_WEBHOOK_SECRET
+# Must match the "Secret" field in GitHub webhook settings for this repo
+# Webhook URL: https://thompsonfams.com/webhook/github
+# Events: Pull requests only
+# PUSHOVER_APP_TOKEN and PUSHOVER_USER_KEY already set — no re-setup needed
