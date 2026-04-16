@@ -521,6 +521,7 @@ input::placeholder { color: #64748B; }
 <div id="wizard-view" style="display:none">
   <button id="wizard-back-btn" onclick="onWizardBack()">&#x2190; HOME</button>
   <div id="dd-app"></div>
+  <div id="wd-save-error" style="display:none;font-size:12px;color:#EF4444;margin:10px 16px 0;font-weight:700;letter-spacing:1px;text-align:center;"></div>
 </div>
 
 <!-- PIN overlay -->
@@ -1086,10 +1087,19 @@ function lockItIn() {
     console.log('[TEST MODE] saveDesignChoicesSafe skipped', payload);
     state.submitted = true; render(); return;
   }
+  var saveErrEl = document.getElementById('wd-save-error');
+  if (saveErrEl) { saveErrEl.style.display = 'none'; }
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
-      .withSuccessHandler(function() { state.submitted = true; render(); })
-      .withFailureHandler(function(err) { alert('Save failed — ' + (err && err.message ? err.message : 'unknown error') + '. Try again.'); })
+      .withSuccessHandler(function() {
+        var el = document.getElementById('wd-save-error');
+        if (el) { el.style.display = 'none'; }
+        state.submitted = true; render();
+      })
+      .withFailureHandler(function(err) {
+        var el = document.getElementById('wd-save-error');
+        if (el) { el.textContent = 'Save failed — ' + (err && err.message ? err.message : 'unknown error') + '. Try again.'; el.style.display = 'block'; }
+      })
       .saveDesignChoicesSafe(payload);
   } else {
     state.submitted = true; render();
