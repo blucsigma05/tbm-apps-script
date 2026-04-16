@@ -1,7 +1,25 @@
 // @ts-check
 import { defineConfig, devices } from '@playwright/test';
-import { readFileSync } from 'fs';
-const launchConfig = JSON.parse(readFileSync('./.claude/launch.json', 'utf8'));
+
+// Device profiles for perf projects — kept in sync with .claude/launch.json playwright.devices.
+// Inlined here to avoid dynamic loading at config-parse time; createRequire/readFileSync in an
+// ESM config triggers "exports is not defined" in Playwright's esbuild vm context.
+const PERF_DEVICES = {
+  'surface-pro-5': {
+    viewport: { width: 1368, height: 912 },
+    deviceScaleFactor: 2,
+    isMobile: false,
+    hasTouch: false,
+    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0',
+  },
+  'samsung-s10-fe': {
+    viewport: { width: 1200, height: 1920 },
+    deviceScaleFactor: 2.625,
+    isMobile: true,
+    hasTouch: true,
+    userAgent: 'Mozilla/5.0 (Linux; Android 13; SM-G770F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+  },
+};
 
 /**
  * TBM + MLS Playwright Configuration (Q3 Harness)
@@ -80,7 +98,7 @@ export default defineConfig({
       testDir: './tests/tbm',
       testMatch: 'perf-frame-budget.spec.js',
       use: {
-        ...launchConfig.playwright.devices['surface-pro-5'],
+        ...PERF_DEVICES['surface-pro-5'],
         trace: 'on',
         video: 'off',
         baseURL: process.env.TBM_BASE_URL || 'https://thompsonfams.com',
@@ -91,7 +109,7 @@ export default defineConfig({
       testDir: './tests/tbm',
       testMatch: 'perf-frame-budget.spec.js',
       use: {
-        ...launchConfig.playwright.devices['samsung-s10-fe'],
+        ...PERF_DEVICES['samsung-s10-fe'],
         trace: 'on',
         video: 'off',
         baseURL: process.env.TBM_BASE_URL || 'https://thompsonfams.com',

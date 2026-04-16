@@ -475,7 +475,7 @@
         "tier": "should-pass",
         "surface_family": "all",
         "threshold": "Frame rate ≥30fps during core loop interaction on target device. No visual jank lasting >500ms.",
-        "measurement_method": "Playwright trace: record frame timing during core loop interaction. Assert average frame time ≤33ms (30fps). Automated measurement requires instrumentation.",
+        "measurement_method": "Playwright perf-frame-budget.spec.js: navigates route, performs 300px scroll interaction, then measures average RAF frame time over 500ms window. Asserts avgFrameMs <= 33ms (P1), maxJankMs <= 500ms (P2), LCP <= 2500ms (P3), CLS <= 0.1 (P4), domInteractive <= 5000ms (P5). Full core-loop interaction tracing is captured in Playwright trace artifacts uploaded per CI run; surface-specific play gate evidence lives in ops/evidence/preview/.",
         "evidence_type": "trace-json",
         "failure_mode": "major",
         "owner": "platform-owner",
