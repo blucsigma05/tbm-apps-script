@@ -761,6 +761,14 @@ if (MAKEUP_MODE) {
   document.body.style.paddingTop = '28px';
 }
 
+// ISO for today — used by submit handler to stamp the completion key
+var _todayIso = (function() {
+  var _d = new Date();
+  var _m = String(_d.getMonth() + 1);
+  var _dd = String(_d.getDate());
+  return _d.getFullYear() + '-' + (_m.length < 2 ? '0' + _m : _m) + '-' + (_dd.length < 2 ? '0' + _dd : _dd);
+})();
+
 // ── Audio System (Marco / ElevenLabs) — Lazy Loading ──
 // Loads clips on demand per phase, not all 21 at page load.
 // Follows SparkleLearning.html lazy loader pattern.
@@ -1425,6 +1433,11 @@ function submitHomeworkCompletion_() {
       completionSubmitError = '';
       completionLogged = true;
       clearHomeworkDraft_();
+      // #409: stamp completion so catch-up banner skips this day going forward
+      try {
+        var _doneIso = MAKEUP_MODE ? MAKEUP_DATE_ISO : _todayIso;
+        if (_doneIso) { window.localStorage.setItem('tbm_hw_complete_' + _doneIso, '1'); }
+      } catch(e2) { /* localStorage unavailable */ }
       updateCompletionSaveStatusUi_();
       console.log('Submitted: ' + result.status);
 
@@ -2153,7 +2166,11 @@ function renderCatchUpBanner_(fullWeek) {
     // Only show if content exists for that day
     var dayContent = daySource && daySource[d];
     if (!dayContent) continue;
-    // Skip if already dismissed via localStorage
+    // Skip if homework was completed for this day (confirmed submission)
+    try {
+      if (window.localStorage.getItem('tbm_hw_complete_' + iso) === '1') continue;
+    } catch(e) { /* localStorage unavailable — show anyway */ }
+    // Skip if manually dismissed
     var dismissKey = 'tbm_catchup_dismiss_' + iso;
     try {
       if (window.localStorage.getItem(dismissKey) === '1') continue;
