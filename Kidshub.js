@@ -5,7 +5,7 @@
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 73; }
+function getKidsHubVersion() { return 74; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3511,6 +3511,65 @@ function getTodayContentSafe(child) {
       setCachedPayload_(cacheKey, result, 300);
     }
     return result;
+  });
+}
+
+// ─── v74: Friday Makeup Queue (#410) ────────────────────────────────────────
+
+function isStaarWindow_() {
+  var mmdd = getTodayISO_().slice(5);
+  return (mmdd >= '12-01' && mmdd <= '12-11') || (mmdd >= '04-06' && mmdd <= '04-30');
+}
+
+function hasScience_(dayContent) {
+  return !!(dayContent && dayContent.module && dayContent.module.science &&
+    dayContent.module.science.questions && dayContent.module.science.questions.length > 0);
+}
+
+function buildFridayMakeupQueue_(child) {
+  var bounds = _computeWeekBounds_();
+  var eduData = readSheet_('KH_Education');
+  var attendance = _aggregateKHEducation_(child, bounds, eduData);
+  var weekLog = attendance.weekLog; // index 0=Mon … 3=Thu (first 4 of 5)
+
+  var todayContent = getTodayContent_(child);
+  if (!todayContent || !todayContent.fullWeek) return [];
+  var days = todayContent.fullWeek.days || todayContent.fullWeek;
+
+  var dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday'];
+  var staarBoost = isStaarWindow_();
+  var monday = bounds.monday;
+  var queue = [];
+
+  for (var i = 0; i < 4; i++) {
+    var wlEntry = weekLog[i];
+    if (!wlEntry || wlEntry.status !== 'missed') continue;
+
+    var dayDate = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    var dayISO = _isoDate_(dayDate);
+
+    var capName = dayNames[i];
+    var lcName = capName.toLowerCase();
+    var dayContent = days[lcName] !== undefined ? days[lcName] : (days[capName] !== undefined ? days[capName] : null);
+    if (!dayContent || !dayContent.module) continue;
+
+    if (typeof normalizeModule_ === 'function') {
+      dayContent.module = normalizeModule_(dayContent.module);
+    }
+
+    var priority = i;
+    if (staarBoost && hasScience_(dayContent)) priority = i - 10;
+
+    queue.push({ day: capName, dayISO: dayISO, content: dayContent, priority: priority });
+  }
+
+  queue.sort(function(a, b) { return a.priority - b.priority; });
+  return queue;
+}
+
+function getFridayMakeupQueueSafe(child) {
+  return withMonitor_('getFridayMakeupQueueSafe', function() {
+    return buildFridayMakeupQueue_(String(child || 'buggsy').toLowerCase());
   });
 }
 
