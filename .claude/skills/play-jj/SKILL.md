@@ -28,12 +28,12 @@ JJ is 4 years old. Pre-reader. Short attention span. Needs:
 ### Step 1 — Resolve the surface
 
 Read `ops/surface-map.md`. Find the row for the input route. Extract:
-- Primary device (expected: Samsung S10 FE 1200×1920 for JJ Personal surfaces)
+- Primary device
 - Primary code files
 - Data sources
 - `persistence_contract`, `product_class`, `primary_competitor`, `comparison_anchor_url`, `back_destination`
 
-If device is not S10 FE and surface is a Personal/education one, emit `config_drift` immediately.
+**Device assertion (child-aware):** `/baseline` is a shared row covering both children. When `child=jj`, assert the S10 FE device column is present — do NOT emit `config_drift` just because the row also lists Surface Pro 5 for Buggsy. For all other JJ routes (JJ Personal surfaces), the row should list S10 FE exclusively; emit `config_drift` if the device is not S10 FE.
 
 ### Step 2 — Run preconditions (PRE-1..PRE-4)
 
@@ -158,7 +158,7 @@ Print the verdict JSON. One paragraph of prose summary. Stop.
 
 ## Guardrails
 
-- Do NOT modify any code or surface during evaluation. Read-only + preview tools only.
+- Do NOT modify product code or surface files during evaluation. Writing evidence artifacts under `ops/evidence/` is required and permitted; editing anything else is not.
 - Do NOT fill in `unmeasuredCriteria` with invented answers. If you can't measure, flag it.
 - Do NOT skip preconditions even if they feel obviously fine. Run each.
 - If preview_start fails to load the route, emit `config_drift` not `do-not-ship`. Distinguish environment problem from surface problem.
