@@ -518,6 +518,30 @@ LT applies branch protection in GitHub Settings > Branches > Branch protection r
 
 **Auto-merge policy:** Currently **manual review required**. Auto-merge can be enabled when the pipeline runs cleanly on 5 consecutive PRs without false negatives. Status: not yet enabled.
 
+### Cloudflare Worker Deploy Verification (issue #403)
+
+There are two separate Cloudflare integrations on this repo — do not confuse them:
+
+| Integration | What it does | Authoritative? |
+|-------------|--------------|----------------|
+| `deploy-worker.yml` (TBM-owned GitHub Action) | Runs `wrangler deploy` on push to main — **this is what actually deploys the worker** | ✅ Yes |
+| Cloudflare GitHub App "Workers Build" status | Posts a CI status badge to PRs — cosmetic signal only, does not gate anything | ❌ No |
+
+**When a Cloudflare worker change is pushed, the correct verification sequence is:**
+
+```bash
+# Verify HTTP 200 and body — -f causes non-zero exit on 4xx/5xx
+curl -sf https://thompsonfams.com/version
+
+# Verify the correct run succeeded — --json exposes headSha and conclusion
+gh run list --workflow=deploy-worker.yml --branch main --limit 1 --json headSha,conclusion,status
+# expect: conclusion=="success", headSha matches the SHA you pushed
+```
+
+**Never ask LT to check the Cloudflare dashboard.** If `deploy-worker.yml` shows success and `curl -sf /version` exits 0, the worker is live — regardless of whether the "Workers Build" badge appears in the PR.
+
+If the Cloudflare GitHub App badge is missing or stale, ignore it. It is a reliability issue with Cloudflare's external integration, not a deploy failure.
+
 ### Workflow Safety Rules
 1. **Workflow YAML should orchestrate only.** Real logic (Python, bash) belongs in `.github/scripts/`. No embedded heredocs. Each script gets a header comment: purpose, calling workflow, env vars expected.
 2. **New workflow files CANNOT review their own introduction** — they require manual lint plus one sacrificial test PR before becoming a required check.
