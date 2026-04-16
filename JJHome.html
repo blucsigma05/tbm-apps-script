@@ -213,6 +213,7 @@ body {
     <div class="sk-today-card" onclick="window.location.href='/daily-missions?child=jj'">
       <div class="sk-today-main" id="sk-today-text">LET'S PLAY! &#x2728;</div>
       <div class="sk-today-sub">Tap to see today's missions</div>
+      <div id="schedule-error" style="display:none;font-size:12px;color:#F87171;margin-top:6px;">Schedule unavailable. Try again.</div>
     </div>
     <div class="sk-nav-cards">
       <button class="sk-card" onclick="window.location.href='/daily-missions?child=jj'">
@@ -529,7 +530,10 @@ function loadHomeData() {
 
     google.script.run
       .withSuccessHandler(onDailySchedule)
-      .withFailureHandler(function() {})
+      .withFailureHandler(function() {
+        var el = document.getElementById('schedule-error');
+        if (el) { el.style.display = 'block'; }
+      })
       .getDailyScheduleSafe('jj');
   } else {
     setTimeout(function() { showHomeView(); }, 400);
