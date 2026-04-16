@@ -19,6 +19,12 @@ namespace_id = "1001"
 limit = 2
 period = 10
 
+# Webhook idempotency store — globally replicated KV, prevents duplicate Pushover
+# alerts on GitHub retries and manual redeliveries (issue #373).
+[[kv_namespaces]]
+binding = "WEBHOOK_IDEMPOTENCY"
+id = "860f4a79a285468a8899c0ef68c85f6c"
+
 # QA Route Isolation secrets (issue #219)
 # Set via: wrangler secret put QA_HMAC_SECRET
 # Must match GAS Script Property QA_HMAC_SECRET (same value, both sides)
