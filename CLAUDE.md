@@ -530,11 +530,16 @@ There are two separate Cloudflare integrations on this repo — do not confuse t
 **When a Cloudflare worker change is pushed, the correct verification sequence is:**
 
 ```bash
-curl -s https://thompsonfams.com/version            # expect HTTP 200 + version JSON
-gh run list --workflow=deploy-worker.yml --limit 1   # expect success
+# Verify HTTP 200 and body — -f causes non-zero exit on 4xx/5xx
+curl -sf https://thompsonfams.com/version
+
+# Verify the deploy-worker.yml run succeeded AND matches the expected branch/commit
+gh run list --workflow=deploy-worker.yml --branch main --limit 1
 ```
 
-**Never ask LT to check the Cloudflare dashboard.** If `deploy-worker.yml` shows success and `curl /version` returns 200, the worker is live — regardless of whether the "Workers Build" badge appears in the PR.
+Confirm the `gh run list` SHA matches the commit you pushed before treating it as proof.
+
+**Never ask LT to check the Cloudflare dashboard.** If `deploy-worker.yml` shows success and `curl -sf /version` exits 0, the worker is live — regardless of whether the "Workers Build" badge appears in the PR.
 
 If the Cloudflare GitHub App badge is missing or stale, ignore it. It is a reliability issue with Cloudflare's external integration, not a deploy failure.
 
