@@ -23,3 +23,10 @@ period = 10
 # Set via: wrangler secret put QA_HMAC_SECRET
 # Must match GAS Script Property QA_HMAC_SECRET (same value, both sides)
 # Prerequisite: TBM_QA_SSID Script Property set in GAS to QA workbook ID
+
+# GitHub webhook receiver secret (issue #367)
+# Set via: wrangler secret put GITHUB_WEBHOOK_SECRET
+# Must match the "Secret" field in GitHub webhook settings for this repo
+# Webhook URL: https://thompsonfams.com/webhook/github
+# Events: Pull requests only
+# PUSHOVER_APP_TOKEN and PUSHOVER_USER_KEY already set — no re-setup needed
