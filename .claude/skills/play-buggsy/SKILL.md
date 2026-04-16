@@ -45,7 +45,9 @@ Buggsy route set is heterogeneous. Apply the family-specific benchmark + subset 
 
 Read `ops/surface-map.md`. Identify route's family (from `product_class` column). Extract device, code, persistence contract, primary competitor, comparison anchor.
 
-If `product_class` is `curriculum-module` / `hub` / `diagnostic` / `creation-tool`, map to family above.
+**Family override — `/wolfdome`:** The surface map currently labels `/wolfdome` as `creation-tool`, but it is a hub surface. Treat `/wolfdome` as `buggsy.hub` regardless of what `product_class` says in the map. Apply hub criteria (U-set minus U5/U6, B1/B2 emphasis) and skip ComicStudio C1-C6 subfamily.
+
+For all other routes: if `product_class` is `curriculum-module` → `buggsy.curriculum`; `hub` → `buggsy.hub`; `diagnostic` → `buggsy.diagnostic`; `creation-tool` → `buggsy.creation`.
 
 ### Step 2 — Preconditions
 
