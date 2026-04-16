@@ -15,9 +15,9 @@
 | Class | Count |
 |---|---:|
 | freeze-critical | 18 |
-| freeze-safe | 59 |
+| freeze-safe | 62 |
 | freeze-ambiguous | 0 |
-| **Total** | **77** |
+| **Total** | **80** |
 
 ## By mutation class
 
@@ -27,7 +27,7 @@
 | property-set | 16 |
 | notion-write | 9 |
 | trigger-create | 14 |
-| external-post | 4 |
+| external-post | 7 |
 | cache-put / cache-remove | 8 |
 
 ## By trigger path
@@ -35,7 +35,7 @@
 | Path | Count |
 |---|---:|
 | scheduled-trigger | 28 |
-| manual-run | 20 |
+| manual-run | 23 |
 | parent-action-surface | 8 |
 | library-helper | 4 |
 | kid-action-surface | 2 |
@@ -66,7 +66,7 @@
 | 17 | Utility.js:548 | sheet-write | Amazon_Detail:rows | manual-run |
 | 18 | Utility.js:635-636 | sheet-write | Amazon_Detail:col8-9 | manual-run |
 
-### freeze-safe (59)
+### freeze-safe (62)
 
 **Observability / heartbeats (7):**
 | # | File:line | Mutation | Target | Trigger |
@@ -129,7 +129,7 @@
 | 62 | GASHardening.js:1790 | cache-put | diagnostic testKey (self-cleaning) | manual-run |
 | 63 | GASHardening.js:1792 | cache-remove | diagnostic testKey | manual-run |
 
-**External-state / other (14):** (story content, external APIs, library helpers)
+**External-state / other (17):** (story content, external APIs, library helpers, Drive snapshots)
 | # | File:line | Mutation | Target | Trigger |
 |---|---|---|---|---|
 | 64 | Alertenginev1.js:95 | external-post | api.pushover.net | scheduled-trigger |
@@ -144,6 +144,9 @@
 | 73 | StoryFactory.js:927 | external-post | googleapis.com/upload/drive | scheduled-trigger |
 | 74 | StoryFactory.js:1107 | notion-write | api.notion.com (Story DB final) | scheduled-trigger |
 | 75 | StoryFactory.js:1136 | notion-write | api.notion.com (Story DB PATCH final) | scheduled-trigger |
+| 76 | CodeSnapshot.js:30 | external-post | googleapis.com/drive (ThompsonLib.snapshotSplit) | manual-run |
+| 77 | CodeSnapshot.js:37 | external-post | googleapis.com/drive (ThompsonLib.snapshotCodeToGDrive) | manual-run |
+| 78 | CodeSnapshot.js:44 | external-post | googleapis.com/drive (ThompsonLib.snapshotToSingleDoc) | manual-run |
 
 ## Deploy freeze contract
 
@@ -161,7 +164,8 @@ Any PR that adds a new mutation call site (sheet write, property set, cache put,
 ## Notes and limits
 
 - **Coverage method:** grep sweep of `*.js` on `origin/main` HEAD at 2026-04-16, excluding `.claude/worktrees/`, `tests/`, `.github/`. Cross-verified cache and ErrorLog/PerfLog sites directly to close a gap from the initial automated sweep.
-- **What this does NOT capture:** mutation paths introduced via `Library.*` calls to ThompsonLib (library code is not in this repo) — flagged for a follow-up pass if ThompsonLib grows writes.
+- **ThompsonLib wrappers in this repo:** `CodeSnapshot.js:30,37,44` call `ThompsonLib.snapshotSplit/snapshotCodeToGDrive/snapshotToSingleDoc` — all write to Google Drive only (not production sheets); classified freeze-safe and added as entries 76-78. No other ThompsonLib write paths identified in this repo at 2026-04-16.
+- **What this does NOT capture:** mutation paths inside ThompsonLib's own source (not in this repo). If ThompsonLib grows additional write paths, a follow-up pass is required.
 - **Reviewed by:** LT 2026-04-16 (all prior `freeze-ambiguous` items resolved to `freeze-safe`).
 
 ## Change log
@@ -169,3 +173,4 @@ Any PR that adds a new mutation call site (sheet write, property set, cache put,
 | Date | Version | Change |
 |---|---|---|
 | 2026-04-16 | 1.0 | Initial inventory. 77 sites. 18 critical, 59 safe, 0 ambiguous. |
+| 2026-04-16 | 1.1 | Added CodeSnapshot.js ThompsonLib Drive-write paths (entries 76-78, freeze-safe). Total 80. Codex finding F001 from PR #363. |
