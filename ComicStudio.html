@@ -993,6 +993,14 @@ main {
 </head>
 <body>
 
+<!-- v14: Gate error overlay — shown when gate check fails (network/server error) -->
+<div id="gate-error" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#0B0F1A;color:#E2E8F0;font-family:Nunito,sans-serif;text-align:center;padding-top:20vh;">
+  <div style="font-size:64px;margin-bottom:16px;">&#x26A0;&#xFE0F;</div>
+  <div style="font-family:Orbitron,sans-serif;font-size:22px;font-weight:900;color:#F87171;letter-spacing:2px;margin-bottom:12px;">CAN'T CHECK HOMEWORK</div>
+  <div style="font-size:15px;color:#94A3B8;max-width:320px;margin:0 auto 24px;line-height:1.6;">Something went wrong checking your homework status. Ask a grown-up for help.</div>
+  <a href="/kidshub" style="display:inline-block;padding:14px 32px;background:#3B82F6;color:#fff;border-radius:10px;font-family:Orbitron,sans-serif;font-size:14px;font-weight:700;text-decoration:none;letter-spacing:1px;">RETURN TO HOME</a>
+</div>
+
 <!-- v14: Homework gate overlay — blocks Comic Studio until daily homework is done (weekdays only) -->
 <div id="hw-gate" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:99999;background:#0B0F1A;color:#E2E8F0;font-family:Nunito,sans-serif;text-align:center;padding-top:20vh;">
   <div style="font-size:64px;margin-bottom:16px;">&#128218;</div>
@@ -2955,8 +2963,7 @@ function checkHomeworkGateAndInit() {
       }
     })
     .withFailureHandler(function() {
-      // Gate check failed — let them through rather than block on error
-      init();
+      document.getElementById('gate-error').style.display = 'block';
     })
     .checkHomeworkGateSafe(CHILD);
 }
