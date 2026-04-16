@@ -11,7 +11,7 @@
 // Each phase runs in a separate poll cycle — any phase failure is isolated and retried independently.
 // ============================================================
 
-function getStoryFactoryVersion() { return 18; }
+function getStoryFactoryVersion() { return 19; }
 
 // v30: API cost tracking — returns counts for parent dashboard
 function getStoryApiStats() {
@@ -2293,5 +2293,86 @@ function sf_getFailureSummary_(days) {
   };
 }
 
-// END OF FILE — StoryFactory v18
+// ── Remote diagnostic endpoint (v19) ─────────────────────────────────────────
+// Exposes full circuit-breaker + backoff + error state via API so Mastermind
+// can diagnose the pipeline without requiring LT to open the GAS editor.
+function diagStoryFactory_() {
+  var props = PropertiesService.getScriptProperties();
+  var now = Date.now();
+
+  // Circuit breaker state
+  var consecutiveFails = parseInt(props.getProperty('SF_CONSECUTIVE_FAILS') || '0') || 0;
+  var pausedUntilMs = parseInt(props.getProperty('SF_PAUSED_UNTIL') || '0') || 0;
+  var currentlyPaused = pausedUntilMs > 0 && now < pausedUntilMs;
+
+  // Backoff map — count active entries, find oldest expiry
+  var backoffMap = sf_getBackoffMap_();
+  var backoffKeys = Object.keys(backoffMap);
+  var backoffCount = backoffKeys.length;
+  var oldestBackoffExpiry = null;
+  for (var i = 0; i < backoffKeys.length; i++) {
+    if (oldestBackoffExpiry === null || backoffMap[backoffKeys[i]] < oldestBackoffExpiry) {
+      oldestBackoffExpiry = backoffMap[backoffKeys[i]];
+    }
+  }
+
+  // API usage
+  var apiCalls24h = parseInt(props.getProperty('SF_API_CALLS') || '0') || 0;
+
+  // Last successful story — scan ErrorLog for StoryFactory entries
+  var recentErrors = [];
+  try {
+    var ss = SpreadsheetApp.openById(SSID);
+    var errSheet = ss.getSheetByName(TAB_MAP['ErrorLog']);
+    if (errSheet && errSheet.getLastRow() > 1) {
+      var errData = errSheet.getDataRange().getValues();
+      for (var r = 1; r < errData.length; r++) {
+        var fnName = String(errData[r][1] || '');
+        if (fnName.indexOf('StoryFactory') !== -1 || fnName.indexOf('sf_') !== -1 || fnName.indexOf('pollForNewStories') !== -1) {
+          recentErrors.push({ at: errData[r][0], fn: fnName, msg: String(errData[r][2] || '').substring(0, 120) });
+        }
+      }
+    }
+  } catch (e) {
+    recentErrors = [{ error: 'ErrorLog read failed: ' + e.message }];
+  }
+  var last5Errors = recentErrors.slice(-5);
+
+  // Last story created — check Notion Story DB (last item with status=Ready)
+  var lastStoryAt = null;
+  try {
+    var storyResult = notionPost('databases/' + CONFIG.STORY_DB_ID + '/query', {
+      filter: { property: 'Status', select: { equals: 'Ready' } },
+      sorts: [{ property: 'Created time', direction: 'descending' }],
+      page_size: 1
+    });
+    if (storyResult && storyResult.results && storyResult.results.length > 0) {
+      lastStoryAt = storyResult.results[0].created_time || null;
+    }
+  } catch (e) {
+    lastStoryAt = 'error: ' + e.message;
+  }
+
+  return {
+    ok: true,
+    version: getStoryFactoryVersion(),
+    apiCalls24h: apiCalls24h,
+    consecutiveFails: consecutiveFails,
+    pausedUntil: pausedUntilMs > 0 ? new Date(pausedUntilMs).toISOString() : null,
+    currentlyPaused: currentlyPaused,
+    backoffPageCount: backoffCount,
+    oldestBackoffExpiry: oldestBackoffExpiry ? new Date(oldestBackoffExpiry).toISOString() : null,
+    lastSuccessfulStory: lastStoryAt,
+    recentErrors: last5Errors,
+    checkedAt: new Date(now).toISOString()
+  };
+}
+
+function diagStoryFactorySafe() {
+  return withMonitor_('diagStoryFactorySafe', function() {
+    return diagStoryFactory_();
+  });
+}
+
+// END OF FILE — StoryFactory v19
 // ════════════════════════════════════════════════════════════════════
