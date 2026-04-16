@@ -3,7 +3,7 @@
 // Measures P1-P5 frame budget criteria on Surface Pro 5 and Samsung S10 FE.
 // Evidence artifacts (traces + baseline JSON) uploaded per CI run — not committed.
 //
-// P1: avg frame time <=33ms (>=30fps)  — captured via trace; asserted in CI summary
+// P1: avg frame time <=33ms (>=30fps)  — RAF timing during simulated scroll interaction
 // P2: no jank event >500ms             — LongTask API
 // P3: LCP <=2500ms                     — LargestContentfulPaint observer
 // P4: CLS <=0.1                        — LayoutShift observer
@@ -45,8 +45,7 @@ Object.keys(ROUTES_BY_PROJECT).forEach(function(proj) {
 });
 
 // Inject CF Worker PIN cookie for finance-gated surfaces
-test.beforeEach(async function(_ref) {
-  var context = _ref.context;
+test.beforeEach(async function({ context }) {
   if (TBM_PIN) {
     await context.addCookies([{
       name: 'tbm_pin',
@@ -65,9 +64,7 @@ ALL_ROUTES.forEach(function(entry) {
   var expectedProject = entry.project;
 
   test('P1-P5 baseline: ' + route.name + ' (' + route.path + ') [' + expectedProject + ']',
-    async function(_ref, testInfo) {
-      var page = _ref.page;
-
+    async function({ page }, testInfo) {
       // Skip routes that don't belong to the running project
       if (testInfo.project.name !== expectedProject) {
         test.skip();
@@ -119,7 +116,10 @@ ALL_ROUTES.forEach(function(entry) {
 
       var maxJank = longTasksMs.length ? Math.max.apply(null, longTasksMs) : 0;
 
-      // P1: average frame time over a 500ms RAF window (measures rendering cadence post-load)
+      // P1: simulate a surface interaction (scroll 300px) then measure average frame time
+      // over a 500ms RAF window. Scroll triggers scroll handlers, lazy-load, and repaint
+      // work — a closer proxy to "core loop interaction" than pure idle measurement.
+      await page.mouse.wheel(0, 300);
       var avgFrameMs = await page.evaluate(function(windowMs) {
         return new Promise(function(resolve) {
           var timestamps = [];
