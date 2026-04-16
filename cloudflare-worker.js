@@ -967,6 +967,22 @@ async function handleGitHubWebhook_(request, env) {
     priority: 0
   });
 
+  if (!pushResult.ok) {
+    // Return 500 so GitHub retries the webhook on transient Pushover failures.
+    // A silent 200 here would cause GitHub to mark the delivery as succeeded
+    // and never retry, resulting in dropped merge notifications.
+    console.error('GitHub webhook: Pushover failed for PR #' + prNumber +
+      ' — ' + (pushResult.reason || pushResult.status));
+    return jsonResponse({
+      ok: false,
+      handled: false,
+      error: 'pushover_failed',
+      detail: pushResult.reason || String(pushResult.status),
+      pr: prNumber,
+      delivery: delivery
+    }, 500);
+  }
+
   return jsonResponse({
     ok: true,
     handled: true,
