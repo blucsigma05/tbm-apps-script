@@ -1087,9 +1087,15 @@ function lockItIn() {
     console.log('[TEST MODE] saveDesignChoicesSafe skipped', payload);
     state.submitted = true; render(); return;
   }
+  var saveErrEl = document.getElementById('wd-save-error');
+  if (saveErrEl) { saveErrEl.style.display = 'none'; }
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
-      .withSuccessHandler(function() { state.submitted = true; render(); })
+      .withSuccessHandler(function() {
+        var el = document.getElementById('wd-save-error');
+        if (el) { el.style.display = 'none'; }
+        state.submitted = true; render();
+      })
       .withFailureHandler(function(err) {
         var el = document.getElementById('wd-save-error');
         if (el) { el.textContent = 'Save failed — ' + (err && err.message ? err.message : 'unknown error') + '. Try again.'; el.style.display = 'block'; }
