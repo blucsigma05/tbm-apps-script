@@ -434,6 +434,12 @@ ChoreBoard routes (`/buggsy`, `/jj`) are smoke-only — not in the MVSS competit
 **MVSS v1 requires 16 worked evaluations** (10 Buggsy + 4 JJ + 2 for `/baseline`).
 Evidence path: `ops/evidence/preview/<route-slug>/<child>/<yyyy-mm-dd>/`.
 
+> **Definition vs. application:** This PR (closing backlog items 101 + 102) defines the standard.
+> The 16 evaluations are executed during Play gate runs (backlog items 14–15) and are not
+> required for the standard to be adopted — they are required before a ship judgment can be issued
+> per surface. The `ops/evidence/preview/` directories committed here are scaffolding for those runs.
+> Current state: all 16 are `PENDING` (Preview MCP tools not available at definition time).
+
 ### M. Worked-example evidence pipeline
 
 Preview capture via Claude Preview MCP tools:
