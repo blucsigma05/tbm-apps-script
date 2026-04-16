@@ -224,7 +224,7 @@ Fallback policy activates only when these upstream checks have been bypassed or 
 
 ## Update rule
 
-Any PR that adds a new surface or changes an existing surface's failure-handling must update the per-surface table in the same PR. Enforced by `hyg-14-rubric-drift.yml` (per MVSS v1 section K — same workflow covers this policy since both consume `ops/surface-map.md` tracked_files).
+Any PR that adds a new surface or changes an existing surface's failure-handling must update the per-surface table in the same PR. Enforced by PR convention — no CI gate exists yet. `hyg-14-rubric-drift.yml` only checks rubric/spec coupling; it does not currently verify `ops/fallback-policy.md`. Extension tracked as a follow-up.
 
 ## Change log
 
