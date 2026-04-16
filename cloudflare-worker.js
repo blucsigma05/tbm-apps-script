@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TBM Smart Proxy v3.6 — thompsonfams.com — Front Door + PIN Gate + QA Route Isolation
+// TBM Smart Proxy v3.7 — thompsonfams.com — Front Door + PIN Gate + QA Route Isolation
 // Clean URLs + GAS API shim + goog stub
 // ═══════════════════════════════════════════════════════════════════
 
@@ -303,10 +303,12 @@ async function handleApi(request, url, env, envOverride) {
     args = url.searchParams.get('args') || '[]';
   }
 
+  var token = url.searchParams.get('token') || '';
   var target = GAS_URL + '?action=api&fn=' + encodeURIComponent(fn)
-    + '&args=' + encodeURIComponent(args);
+    + '&args=' + encodeURIComponent(args)
+    + (token ? '&token=' + encodeURIComponent(token) : '');
 
-  // v3.6: QA finance denylist — block finance-only functions at the proxy layer.
+  // v3.7: QA finance denylist — block finance-only functions at the proxy layer.
   // Matches QA_DENIED route policy: pulse/vein pages denied → their backing API calls denied too.
   if (envOverride === 'qa' && QA_FINANCE_DENIED[fn]) {
     return jsonResponse({ error: 'Finance function not available in QA mode: ' + fn }, 403);
