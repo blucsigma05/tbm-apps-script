@@ -533,11 +533,10 @@ There are two separate Cloudflare integrations on this repo — do not confuse t
 # Verify HTTP 200 and body — -f causes non-zero exit on 4xx/5xx
 curl -sf https://thompsonfams.com/version
 
-# Verify the deploy-worker.yml run succeeded AND matches the expected branch/commit
-gh run list --workflow=deploy-worker.yml --branch main --limit 1
+# Verify the correct run succeeded — --json exposes headSha and conclusion
+gh run list --workflow=deploy-worker.yml --branch main --limit 1 --json headSha,conclusion,status
+# expect: conclusion=="success", headSha matches the SHA you pushed
 ```
-
-Confirm the `gh run list` SHA matches the commit you pushed before treating it as proof.
 
 **Never ask LT to check the Cloudflare dashboard.** If `deploy-worker.yml` shows success and `curl -sf /version` exits 0, the worker is live — regardless of whether the "Workers Build" badge appears in the PR.
 
