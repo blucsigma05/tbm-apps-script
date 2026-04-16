@@ -11,11 +11,6 @@ compatibility_date = "2024-09-01"
 [triggers]
 crons = ["0 12 * * *"]   # HYG-09: Tiller freshness check — daily 12:00 UTC
 
-[[ratelimits]]
-name = "PIN_RATE_LIMITER"
-namespace_id = "1001"
-simple = { limit = 2, period = 10 }
-
 # Webhook idempotency store — globally replicated KV, prevents duplicate Pushover
 # alerts on GitHub retries and manual redeliveries (issue #373).
 # Created via: wrangler kv namespace create WEBHOOK_IDEMPOTENCY
