@@ -1,12 +1,12 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code-KidsHub.gs v1 — KidsHub domain Safe wrappers (split from Code.gs #299)
+// Code-KidsHub.gs v2 — KidsHub domain Safe wrappers (split from Code.gs #299)
 // WRITES TO: (delegates to Kidshub.js — no direct sheet writes)
 // READS FROM: (delegates to Kidshub.js — no direct sheet reads)
 // DEPENDS ON: Kidshub.js, GASHardening.js (withMonitor_), Code.gs (SSID, TAB_MAP)
 // ════════════════════════════════════════════════════════════════════
 
-function getCodeKidsHubVersion() { return 1; }
+function getCodeKidsHubVersion() { return 2; }
 
 // ── KidsHub diagnostics helper ────────────────────────────────────
 // Appends an error row to KH_History when a task write Safe wrapper throws.
@@ -24,18 +24,21 @@ function _khDiag_(label, args, e) {
 // ── Task completion wrappers ──────────────────────────────────────
 function khCompleteTaskSafe(rowIndex, expectedTaskID) {
   return withMonitor_('khCompleteTaskSafe', function() {
+    assertNotFrozen_('freeze-critical', 'khCompleteTaskSafe');
     try { return JSON.parse(khCompleteTask(rowIndex, expectedTaskID)); }
     catch(e) { _khDiag_('khCompleteTaskSafe', {rowIndex: rowIndex, expectedTaskID: expectedTaskID}, e); throw e; }
   });
 }
 function khCompleteTaskWithBonusSafe(rowIndex, multiplier, expectedTaskID) {
   return withMonitor_('khCompleteTaskWithBonusSafe', function() {
+    assertNotFrozen_('freeze-critical', 'khCompleteTaskWithBonusSafe');
     try { return JSON.parse(khCompleteTaskWithBonus(rowIndex, multiplier, expectedTaskID)); }
     catch(e) { _khDiag_('khCompleteTaskWithBonusSafe', {rowIndex: rowIndex, multiplier: multiplier, expectedTaskID: expectedTaskID}, e); throw e; }
   });
 }
 function khApproveTaskSafe(rowIndex, expectedTaskID) {
   return withMonitor_('khApproveTaskSafe', function() {
+    assertNotFrozen_('freeze-critical', 'khApproveTaskSafe');
     try { return JSON.parse(khApproveTask(rowIndex, expectedTaskID)); }
     catch(e) { _khDiag_('khApproveTaskSafe', {rowIndex: rowIndex, expectedTaskID: expectedTaskID}, e); throw e; }
   });
@@ -158,6 +161,7 @@ function khDenyRequestSafe(requestUID, parentNote) {
 // ── Grade / meal wrappers ─────────────────────────────────────────
 function khSubmitGradeSafe(params) {
   return withMonitor_('khSubmitGradeSafe', function() {
+    assertNotFrozen_('freeze-critical', 'khSubmitGradeSafe');
     try { return JSON.parse(khSubmitGrade(params)); }
     catch(e) { _khDiag_('khSubmitGradeSafe', params, e); throw e; }
   });
@@ -183,5 +187,5 @@ function updateMealPlanSafe(meal, cook, notes, kidMeal) {
   });
 }
 
-// END OF FILE — Code-KidsHub.gs v1
+// END OF FILE — Code-KidsHub.gs v2
 // ════════════════════════════════════════════════════════════════════
