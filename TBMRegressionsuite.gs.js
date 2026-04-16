@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmRegressionSuite.gs v9 — Phase A3: Post-Deploy Behavioral Assertions
+// tbmRegressionSuite.gs v10 — Phase A3: Post-Deploy Behavioral Assertions
 // WRITES TO: (none — read-only assertions)
 // READS FROM: All sheets (for regression assertions)
 // ════════════════════════════════════════════════════════════════════
@@ -20,7 +20,14 @@
 // USAGE: Run tbmRegressionSuite() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getRegressionSuiteVersion() { return 9; }
+function getRegressionSuiteVersion() { return 10; }
+
+// v10 (#377): Global flag used by FreezeGate.js to suppress logError_/sendPush_
+// side effects during FREEZE regression tests. Without this, 5 FREEZE tests fire
+// ~14 Pushover API calls + ~16 sheet writes per ?action=runTests run, pushing
+// GAS execution past its 30s limit and silently killing the HTTP response.
+// FreezeGate._isFreezeTestMode_() reads this var directly (shared global scope).
+var _FREEZE_TEST_MODE = false;
 
 /**
  * Main entry point. Run after every deploy.
@@ -1061,6 +1068,10 @@ function regressionEnvOnly() {
  * the regression suite during an operational freeze does not clear the live gate.
  */
 function runFreezeGateAssertions_(results) {
+  // Suppress logError_/sendPush_ side effects in FreezeGate for the duration of
+  // these tests. Prevents ~14 Pushover API calls + ~16 sheet writes that would
+  // push ?action=runTests past GAS's 30s execution limit. See FreezeGate.js v4.
+  _FREEZE_TEST_MODE = true;
   // Capture ALL freeze-related properties so a live operational freeze is fully
   // preserved — including any active bypass token, block counter, and debounce ts.
   var props = PropertiesService.getScriptProperties();
@@ -1178,6 +1189,9 @@ function runFreezeGateAssertions_(results) {
   results.assertions.push(f5);
 
   } finally {
+    // Always restore side-effect mode before restoring properties so any
+    // exception during property restore doesn't leave test mode silently active.
+    _FREEZE_TEST_MODE = false;
     // Restore all four freeze properties to pre-test state.
     // Each is set if it existed before, deleted if it didn't.
     if (priorFreezeRaw)    { props.setProperty('DEPLOY_FREEZE', priorFreezeRaw); }
@@ -1195,4 +1209,4 @@ function runFreezeGateAssertions_(results) {
 }
 
 
-// END OF FILE — tbmRegressionSuite.gs v9
+// END OF FILE — tbmRegressionSuite.gs v10

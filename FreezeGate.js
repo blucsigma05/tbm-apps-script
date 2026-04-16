@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// FreezeGate.js v3 — Deploy Freeze runtime gate (P0-21)
+// FreezeGate.js v4 — Deploy Freeze runtime gate (P0-21)
 // WRITES TO: Script Properties (DEPLOY_FREEZE, DEPLOY_FREEZE_EMERGENCY,
 //            FREEZE_BLOCK_COUNT, FREEZE_LAST_PUSH)
 // READS FROM: Script Properties
@@ -8,7 +8,16 @@
 // ════════════════════════════════════════════════════════════════════
 // Version history tracked in Notion deploy page. Do not add version comments here.
 
-function getFreezeGateVersion() { return 3; }
+function getFreezeGateVersion() { return 4; }
+
+// v4 (#377): Suppress logError_ and sendPush_ side effects when the regression
+// suite sets _FREEZE_TEST_MODE = true. Prevents the 5 FREEZE regression tests
+// from firing ~14 Pushover API calls + ~16 sheet writes per ?action=runTests
+// run, which pushed total execution past GAS's 30s limit and silently killed
+// the response — manifesting as a comic-studio page timeout in the CI smoke check.
+function _isFreezeTestMode_() {
+  return typeof _FREEZE_TEST_MODE !== 'undefined' && _FREEZE_TEST_MODE === true;
+}
 
 // ── Public API ─────────────────────────────────────────────────────
 
@@ -35,12 +44,12 @@ function setFreeze_(reason, expiresAt) {
   // Clear any prior bypass token — a token from a previous freeze must not
   // silently authorize mutations under a newly activated freeze.
   PropertiesService.getScriptProperties().deleteProperty('DEPLOY_FREEZE_EMERGENCY');
-  if (typeof logError_ === 'function') {
+  if (!_isFreezeTestMode_() && typeof logError_ === 'function') {
     logError_('FREEZE_ACTIVATED', new Error(JSON.stringify({
       reason: reason, activatedBy: 'LT', expiresAt: expiry.toISOString()
     })));
   }
-  if (typeof sendPush_ === 'function') {
+  if (!_isFreezeTestMode_() && typeof sendPush_ === 'function') {
     try {
       sendPush_('Deploy Freeze ACTIVE', 'Freeze activated: ' + reason + ' | Expires: ' + expiry.toISOString(), 'LT', PUSHOVER_PRIORITY.GATE_BREACH);
     } catch(e) { Logger.log('FreezeGate: sendPush_ failed: ' + e.message); }
@@ -68,12 +77,12 @@ function liftFreeze_() {
   PropertiesService.getScriptProperties().deleteProperty('DEPLOY_FREEZE_EMERGENCY');
   PropertiesService.getScriptProperties().deleteProperty('FREEZE_BLOCK_COUNT');
   PropertiesService.getScriptProperties().deleteProperty('FREEZE_LAST_PUSH');
-  if (typeof logError_ === 'function') {
+  if (!_isFreezeTestMode_() && typeof logError_ === 'function') {
     logError_('FREEZE_LIFTED', new Error(JSON.stringify({
       liftedBy: 'LT', blockedCount: blockedCount, durationMinutes: durationMin
     })));
   }
-  if (typeof sendPush_ === 'function') {
+  if (!_isFreezeTestMode_() && typeof sendPush_ === 'function') {
     try {
       sendPush_('Deploy Freeze lifted', 'Duration: ' + durationMin + 'min | Blocked: ' + blockedCount + ' mutations', 'LT', PUSHOVER_PRIORITY.HYGIENE_REPORT_LOW);
     } catch(e) { Logger.log('FreezeGate: sendPush_ failed: ' + e.message); }
@@ -111,14 +120,14 @@ function assertNotFrozen_(tag, callerName) {
   var state = getFreezeState_();
   if (!state.active) return;
   if (state.dryRun) {
-    if (typeof logError_ === 'function') {
+    if (!_isFreezeTestMode_() && typeof logError_ === 'function') {
       logError_('FROZEN_DRY_RUN', new Error(JSON.stringify({ caller: callerName, tag: tag, reason: state.reason })));
     }
     return;
   }
   var emergency = validateEmergencyToken_();
   if (emergency.valid) {
-    if (typeof logError_ === 'function') {
+    if (!_isFreezeTestMode_() && typeof logError_ === 'function') {
       logError_('FROZEN_BYPASS', new Error(JSON.stringify({
         caller: callerName, tag: tag, tokenId: emergency.tokenId, reason: emergency.reason
       })));
@@ -126,7 +135,7 @@ function assertNotFrozen_(tag, callerName) {
     return;
   }
   incrementBlockCounter_();
-  if (typeof logError_ === 'function') {
+  if (!_isFreezeTestMode_() && typeof logError_ === 'function') {
     logError_('FROZEN_BLOCK', new Error(JSON.stringify({ caller: callerName, tag: tag, freezeReason: state.reason })));
   }
   debouncedBlockPushover_(callerName);
@@ -153,10 +162,10 @@ function generateEmergencyToken_(reason, minutes) {
     expiresAt: expiry.toISOString()
   };
   PropertiesService.getScriptProperties().setProperty('DEPLOY_FREEZE_EMERGENCY', JSON.stringify(token));
-  if (typeof logError_ === 'function') {
+  if (!_isFreezeTestMode_() && typeof logError_ === 'function') {
     logError_('EMERGENCY_TOKEN_ISSUED', new Error(JSON.stringify({ tokenId: tokenId, reason: reason, expiresAt: expiry.toISOString() })));
   }
-  if (typeof sendPush_ === 'function') {
+  if (!_isFreezeTestMode_() && typeof sendPush_ === 'function') {
     try {
       sendPush_('Emergency bypass ACTIVE', 'Token: ' + tokenId + ' | ' + reason + ' | Expires: ' + expiry.toISOString(), 'LT', PUSHOVER_PRIORITY.GATE_BREACH);
     } catch(e) { Logger.log('FreezeGate: sendPush_ failed: ' + e.message); }
@@ -192,7 +201,7 @@ function validateEmergencyToken_() {
   if (!token || !token.tokenId) return { valid: false };
   if (new Date(token.expiresAt) < new Date()) {
     PropertiesService.getScriptProperties().deleteProperty('DEPLOY_FREEZE_EMERGENCY');
-    if (typeof logError_ === 'function') {
+    if (!_isFreezeTestMode_() && typeof logError_ === 'function') {
       logError_('EMERGENCY_TOKEN_EXPIRED', new Error(JSON.stringify({ tokenId: token.tokenId })));
     }
     return { valid: false };
@@ -214,6 +223,7 @@ function incrementBlockCounter_() {
  * @param {string} callerName
  */
 function debouncedBlockPushover_(callerName) {
+  if (_isFreezeTestMode_()) return;
   if (typeof sendPush_ !== 'function') return;
   var props = PropertiesService.getScriptProperties();
   var lastPush = props.getProperty('FREEZE_LAST_PUSH');
@@ -224,5 +234,5 @@ function debouncedBlockPushover_(callerName) {
   } catch(e) { Logger.log('FreezeGate: sendPush_ failed: ' + e.message); }
 }
 
-// END OF FILE — FreezeGate.js v3
+// END OF FILE — FreezeGate.js v4
 // ════════════════════════════════════════════════════════════════════
