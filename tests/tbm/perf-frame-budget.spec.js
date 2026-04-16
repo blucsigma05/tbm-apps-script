@@ -110,7 +110,7 @@ ALL_ROUTES.forEach(function(entry) {
       domInteractiveMs = navTiming.domInteractive || 0;
 
       // Settle observers
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(500);
       var perfData = await page.evaluate(function() { return window.__perfData; });
 
       lcpValue = perfData.lcp || 0;
@@ -119,10 +119,35 @@ ALL_ROUTES.forEach(function(entry) {
 
       var maxJank = longTasksMs.length ? Math.max.apply(null, longTasksMs) : 0;
 
+      // P1: average frame time over a 500ms RAF window (measures rendering cadence post-load)
+      var avgFrameMs = await page.evaluate(function(windowMs) {
+        return new Promise(function(resolve) {
+          var timestamps = [];
+          var startTs = 0;
+          function tick(ts) {
+            if (!startTs) {
+              startTs = ts;
+              requestAnimationFrame(tick);
+              return;
+            }
+            timestamps.push(ts);
+            if (ts - startTs < windowMs) {
+              requestAnimationFrame(tick);
+            } else {
+              if (timestamps.length < 2) { resolve(0); return; }
+              var elapsed = timestamps[timestamps.length - 1] - timestamps[0];
+              resolve(Math.round((elapsed / (timestamps.length - 1)) * 10) / 10);
+            }
+          }
+          requestAnimationFrame(tick);
+        });
+      }, 500);
+
       var result = {
         route: route.path,
         project: testInfo.project.name,
         timestamp: new Date().toISOString(),
+        avg_frame_ms: avgFrameMs,
         lcp_ms: Math.round(lcpValue),
         cls: parseFloat(clsValue.toFixed(4)),
         max_jank_ms: Math.round(maxJank),
@@ -142,6 +167,9 @@ ALL_ROUTES.forEach(function(entry) {
       } catch (e) {}
 
       // Assertions — skip metric if browser did not fire it (PIN gate blocked, etc.)
+      if (avgFrameMs > 0) {
+        expect(avgFrameMs, 'P1 avg frame time on ' + route.name).toBeLessThanOrEqual(BUDGET.maxFrameMs);
+      }
       if (lcpValue > 0) {
         expect(lcpValue, 'P3 LCP on ' + route.name).toBeLessThanOrEqual(BUDGET.maxLcpMs);
       }
