@@ -213,3 +213,80 @@ jobs:
         run: |
           echo "Education workflow tests failed — merge blocked."
           exit 1
+
+  # ── Perf trace job — MVSS v1 S5 instrumentation (Issue #360) ──
+  # Baseline measurement: does NOT block merge. Traces uploaded as artifacts.
+  perf-trace:
+    name: Frame Budget Trace (S5 baseline)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.draft == false &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install -D @playwright/test
+          npx playwright install --with-deps chromium
+
+      - name: Run Surface Pro 5 frame budget
+        id: perf_surface
+        env:
+          TBM_BASE_URL: https://thompsonfams.com
+          TBM_PIN: ${{ secrets.TBM_PIN }}
+        run: |
+          npx playwright test tests/tbm/perf-frame-budget.spec.js \
+            --project=perf-surface-pro5 \
+            --reporter=json \
+            --output=test-results/perf-surface \
+            2>&1 | tee perf-surface-output.txt || true
+          echo "surface_exit=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Run Samsung S10 FE frame budget
+        id: perf_s10
+        env:
+          TBM_BASE_URL: https://thompsonfams.com
+          TBM_PIN: ${{ secrets.TBM_PIN }}
+        run: |
+          npx playwright test tests/tbm/perf-frame-budget.spec.js \
+            --project=perf-s10-fe \
+            --reporter=json \
+            --output=test-results/perf-s10 \
+            2>&1 | tee perf-s10-output.txt || true
+          echo "s10_exit=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload perf traces — Surface Pro 5
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-traces-surface-pro5-${{ github.run_id }}
+          path: test-results/perf-surface/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload perf traces — Samsung S10 FE
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-traces-s10-fe-${{ github.run_id }}
+          path: test-results/perf-s10/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Upload frame budget evidence JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frame-budget-evidence-${{ github.run_id }}
+          path: ops/evidence/preview/
+          retention-days: 30
+          if-no-files-found: ignore

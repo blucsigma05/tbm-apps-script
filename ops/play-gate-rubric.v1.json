@@ -479,8 +479,7 @@
         "evidence_type": "trace-json",
         "failure_mode": "major",
         "owner": "platform-owner",
-        "source": "MVSS v1 plan section J perf criteria",
-        "blocked_on": "#360"
+        "source": "MVSS v1 plan section J perf criteria"
       }
     ],
     "crossSurface": [

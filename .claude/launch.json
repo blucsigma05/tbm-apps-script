@@ -1,5 +1,5 @@
 {
-  "version": "0.0.1",
+  "version": "1",
   "configurations": [
     {
       "name": "tbm-preview",
@@ -7,5 +7,31 @@
       "runtimeArgs": ["preview-proxy.js"],
       "port": 3456
     }
-  ]
+  ],
+  "playwright": {
+    "devices": {
+      "surface-pro-5": {
+        "viewport": { "width": 1368, "height": 912 },
+        "deviceScaleFactor": 2,
+        "isMobile": false,
+        "hasTouch": false,
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0"
+      },
+      "samsung-s10-fe": {
+        "viewport": { "width": 1200, "height": 1920 },
+        "deviceScaleFactor": 2.625,
+        "isMobile": true,
+        "hasTouch": true,
+        "userAgent": "Mozilla/5.0 (Linux; Android 13; SM-G770F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+      }
+    },
+    "frameBudget": {
+      "minFps": 30,
+      "maxFrameMs": 33,
+      "maxJankMs": 500,
+      "maxLcpMs": 2500,
+      "maxCls": 0.1,
+      "maxTtiMs": 5000
+    }
+  }
 }
