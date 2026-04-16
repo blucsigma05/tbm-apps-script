@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tbm-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["preview-proxy.js"],
+      "port": 3456
+    }
+  ]
+}

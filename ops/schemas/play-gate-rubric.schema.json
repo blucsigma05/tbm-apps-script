@@ -1,0 +1,258 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "play-gate-rubric.schema.json",
+  "title": "TBM Play Gate Rubric",
+  "description": "Schema for ops/play-gate-rubric.v1.json — validated by workflow-lint.yml",
+  "type": "object",
+  "required": ["version", "updatedAt", "decisionStates", "failureStates", "criteria", "deviceProfiles"],
+  "additionalProperties": true,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Rubric version identifier. Format: YYYY-MM-DD-play-gate-vN"
+    },
+    "updatedAt": {
+      "type": "string",
+      "description": "Date last updated. Format: YYYY-MM-DD"
+    },
+    "decisionStates": {
+      "type": "array",
+      "description": "Allowed ship decision values emitted by a Play gate run.",
+      "items": { "type": "string" },
+      "minItems": 3,
+      "contains": { "const": "ship" }
+    },
+    "failureStates": {
+      "type": "array",
+      "description": "Allowed abort/failure states (not ship decisions).",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "contains": { "const": "config_drift" }
+    },
+    "preconditions": {
+      "type": "array",
+      "description": "Preconditions checked before any criterion is scored.",
+      "items": { "$ref": "#/definitions/precondition" }
+    },
+    "criteria": {
+      "type": "object",
+      "description": "Criterion sets grouped by type.",
+      "required": ["universalMustPass", "jjMustPass", "buggsyMustPass", "shouldPass"],
+      "properties": {
+        "universalMustPass": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/criterion" },
+          "minItems": 12
+        },
+        "jjMustPass": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/criterion" },
+          "minItems": 6
+        },
+        "buggsyMustPass": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/criterion" },
+          "minItems": 6
+        },
+        "shouldPass": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/criterion" },
+          "minItems": 4
+        },
+        "crossSurface": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/criterion" }
+        },
+        "comicStudio": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/criterion" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "benchmarkSets": {
+      "type": "object",
+      "description": "Benchmark competitor sets keyed by child name.",
+      "properties": {
+        "jj": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/benchmark" },
+          "minItems": 1
+        },
+        "buggsy": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/benchmark" },
+          "minItems": 1
+        }
+      }
+    },
+    "benchmarkCategories": {
+      "type": "object",
+      "properties": {
+        "jj": { "type": "array", "items": { "type": "string" } },
+        "buggsy": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "deviceProfiles": {
+      "type": "array",
+      "description": "Device profiles used for Play gate runs.",
+      "items": { "$ref": "#/definitions/deviceProfile" },
+      "minItems": 1
+    },
+    "automationFlow": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step", "name", "description"],
+        "properties": {
+          "step": { "type": "integer" },
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "severityMapping": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["when", "severity"],
+        "properties": {
+          "when": { "type": "string" },
+          "severity": { "type": "string", "enum": ["critical", "major", "minor", "observation"] }
+        }
+      }
+    },
+    "defaultOutputs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 5
+    }
+  },
+  "definitions": {
+    "criterion": {
+      "type": "object",
+      "required": ["id", "name", "description", "tier", "surface_family", "threshold", "measurement_method", "evidence_type", "failure_mode", "owner", "source"],
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Criterion ID. Pattern: U|J|B|S|X|C followed by digits, or PRE-N.",
+          "pattern": "^(U|J|B|S|X|C)\\d+$|^PRE-\\d+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Kebab-case criterion name."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what this criterion checks."
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "universal-must-pass",
+            "jj-must-pass",
+            "buggsy-must-pass",
+            "should-pass",
+            "cross-surface",
+            "comic-studio"
+          ]
+        },
+        "surface_family": {
+          "type": "string",
+          "description": "Which surface family this applies to.",
+          "enum": ["all", "jj", "buggsy", "buggsy-creation"]
+        },
+        "threshold": {
+          "type": "string",
+          "description": "Specific, measurable pass condition."
+        },
+        "measurement_method": {
+          "type": "string",
+          "description": "How this criterion is measured (Playwright, grep, manual walkthrough, etc.)."
+        },
+        "evidence_type": {
+          "type": "string",
+          "description": "Type of evidence required.",
+          "enum": [
+            "screenshot",
+            "screenshot-pair",
+            "screenshot-before-reload + screenshot-after-reload",
+            "screenshot-before-navigate + screenshot-after-return",
+            "screenshot + console-log",
+            "screenshot + dom-measurement",
+            "screenshot + api-response",
+            "screenshot + interaction-log",
+            "screenshot + navigation-trace",
+            "screenshot + timing-log",
+            "api-response + screenshot",
+            "video",
+            "video + screenshot",
+            "dom-measurement",
+            "navigation-trace",
+            "grep-output",
+            "grep-output + screenshot",
+            "trace-json",
+            "written-finding",
+            "written-finding + screenshot",
+            "console-log"
+          ]
+        },
+        "failure_mode": {
+          "type": "string",
+          "enum": ["critical", "major", "minor", "observation"]
+        },
+        "owner": {
+          "type": "string",
+          "description": "Who is responsible for this criterion passing.",
+          "enum": ["LT", "JT", "education-owner", "finance-owner", "platform-owner", "shared"]
+        },
+        "source": {
+          "type": "string",
+          "description": "URL or file path reference for this criterion's authority."
+        },
+        "blocked_on": {
+          "type": "string",
+          "description": "Optional. GitHub Issue number blocking automated measurement. Format: #NNN"
+        }
+      }
+    },
+    "precondition": {
+      "type": "object",
+      "required": ["id", "name", "description", "scope", "measurement_method", "failure_action"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^PRE-\\d+$" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "scope": { "type": "string" },
+        "measurement_method": { "type": "string" },
+        "failure_action": { "type": "string" }
+      }
+    },
+    "benchmark": {
+      "type": "object",
+      "required": ["name", "url", "reason"],
+      "properties": {
+        "name": { "type": "string" },
+        "url": { "type": "string", "format": "uri" },
+        "reason": { "type": "string" }
+      }
+    },
+    "deviceProfile": {
+      "type": "object",
+      "required": ["id", "child", "viewport", "gateType", "routes"],
+      "properties": {
+        "id": { "type": "string" },
+        "child": { "type": "string", "enum": ["jj", "buggsy"] },
+        "viewport": { "type": "string", "pattern": "^\\d+x\\d+$" },
+        "device": { "type": "string" },
+        "gateType": { "type": "string", "enum": ["full", "functional-smoke"] },
+        "routes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        }
+      }
+    }
+  }
+}

@@ -16,7 +16,7 @@
 11. Branch-only must be labeled branch-only.
 12. Spec not built = Issue stays open.
 13. Map + doctrine + verification = foundation. Audits = backstop.
-14. Every PR touching a mapped surface updates the map. The implementing thread updates the map in the same PR. If the map is incomplete after the PR, the PR is not done.
+14. Every PR touching a mapped surface updates the map. The implementing thread updates the map in the same PR. If the map is incomplete after the PR, the PR is not done. **Drift-control extension (MVSS v1):** If a PR's changed files intersect any value in the `tracked_files` column of `ops/surface-map.md` where `mvss_scope` is `education` or `chore`, the PR must also touch `ops/specs/2026-04-15-play-surface-minimum-viable-standard.md` or `ops/play-gate-rubric.v1.json`, or carry the label `rubric-n/a`. Enforced by `.github/workflows/hyg-14-rubric-drift.yml`.
 15. No unmapped change to a mapped surface. If a PR changes behavior for a mapped surface, the relevant map entries must be reviewed and updated in the same PR.
 16. Chat Claude (Opus) cannot verify repo/deployed/device truth. If in chat: say "I can't verify from chat" — no performing confidence. TACT applies.
 
