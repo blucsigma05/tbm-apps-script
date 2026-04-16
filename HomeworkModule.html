@@ -2160,7 +2160,14 @@ function showLoadError_(reason) {
 // Shows missed weekdays from fullWeek that have module content and haven't been dismissed.
 function dismissCatchUpBanner_() {
   var b = document.getElementById('tbm-catchup-banner');
-  if (b && b.parentNode) b.parentNode.removeChild(b);
+  if (!b) return;
+  var keys = (b.getAttribute('data-dismiss-keys') || '').split(',');
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i]) {
+      try { window.localStorage.setItem(keys[i], '1'); } catch(e) {}
+    }
+  }
+  if (b.parentNode) b.parentNode.removeChild(b);
 }
 
 function renderCatchUpBanner_(fullWeek) {
@@ -2199,8 +2206,10 @@ function renderCatchUpBanner_(fullWeek) {
   }
   if (!missed.length) return;
   var items = '';
+  var dismissKeys = [];
   for (var j = 0; j < missed.length; j++) {
     var m = missed[j];
+    dismissKeys.push(m.dismissKey);
     items += '<a href="/homework?day=' + m.day.toLowerCase() + '" ' +
       'style="display:inline-block;background:#1e293b;border:1px solid #f97316;border-radius:8px;' +
       'padding:8px 16px;margin:4px;color:#fdba74;font-family:Orbitron,sans-serif;font-size:12px;' +
@@ -2209,6 +2218,7 @@ function renderCatchUpBanner_(fullWeek) {
   }
   var banner = document.createElement('div');
   banner.id = 'tbm-catchup-banner';
+  banner.setAttribute('data-dismiss-keys', dismissKeys.join(','));
   banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#1a1200;border-bottom:2px solid #f97316;' +
     'padding:10px 16px;text-align:center;font-family:Nunito,sans-serif;z-index:200;';
   banner.innerHTML = '<div style="font-size:13px;color:#fde68a;font-weight:700;margin-bottom:6px;">' +
