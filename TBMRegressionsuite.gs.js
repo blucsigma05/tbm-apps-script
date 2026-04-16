@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// tbmRegressionSuite.gs v8 — Phase A3: Post-Deploy Behavioral Assertions
+// tbmRegressionSuite.gs v9 — Phase A3: Post-Deploy Behavioral Assertions
 // WRITES TO: (none — read-only assertions)
 // READS FROM: All sheets (for regression assertions)
 // ════════════════════════════════════════════════════════════════════
@@ -20,7 +20,7 @@
 // USAGE: Run tbmRegressionSuite() from Apps Script editor → View → Logs
 // ════════════════════════════════════════════════════════════════════
 
-function getRegressionSuiteVersion() { return 8; }
+function getRegressionSuiteVersion() { return 9; }
 
 /**
  * Main entry point. Run after every deploy.
@@ -1061,9 +1061,13 @@ function regressionEnvOnly() {
  * the regression suite during an operational freeze does not clear the live gate.
  */
 function runFreezeGateAssertions_(results) {
-  // Capture raw property so we can restore exactly after all tests complete.
+  // Capture ALL freeze-related properties so a live operational freeze is fully
+  // preserved — including any active bypass token, block counter, and debounce ts.
   var props = PropertiesService.getScriptProperties();
-  var priorFreezeRaw = props.getProperty('DEPLOY_FREEZE');
+  var priorFreezeRaw      = props.getProperty('DEPLOY_FREEZE');
+  var priorEmergencyRaw   = props.getProperty('DEPLOY_FREEZE_EMERGENCY');
+  var priorBlockCount     = props.getProperty('FREEZE_BLOCK_COUNT');
+  var priorLastPush       = props.getProperty('FREEZE_LAST_PUSH');
 
   try {
 
@@ -1174,18 +1178,21 @@ function runFreezeGateAssertions_(results) {
   results.assertions.push(f5);
 
   } finally {
-    // Restore pre-test freeze state so a live operational freeze is not destroyed.
-    if (priorFreezeRaw) {
-      props.setProperty('DEPLOY_FREEZE', priorFreezeRaw);
-    } else {
-      props.deleteProperty('DEPLOY_FREEZE');
-    }
-    // Always clean up test-issued emergency tokens and counters.
-    props.deleteProperty('DEPLOY_FREEZE_EMERGENCY');
-    props.deleteProperty('FREEZE_BLOCK_COUNT');
-    props.deleteProperty('FREEZE_LAST_PUSH');
+    // Restore all four freeze properties to pre-test state.
+    // Each is set if it existed before, deleted if it didn't.
+    if (priorFreezeRaw)    { props.setProperty('DEPLOY_FREEZE', priorFreezeRaw); }
+    else                   { props.deleteProperty('DEPLOY_FREEZE'); }
+
+    if (priorEmergencyRaw) { props.setProperty('DEPLOY_FREEZE_EMERGENCY', priorEmergencyRaw); }
+    else                   { props.deleteProperty('DEPLOY_FREEZE_EMERGENCY'); }
+
+    if (priorBlockCount)   { props.setProperty('FREEZE_BLOCK_COUNT', priorBlockCount); }
+    else                   { props.deleteProperty('FREEZE_BLOCK_COUNT'); }
+
+    if (priorLastPush)     { props.setProperty('FREEZE_LAST_PUSH', priorLastPush); }
+    else                   { props.deleteProperty('FREEZE_LAST_PUSH'); }
   }
 }
 
 
-// END OF FILE — tbmRegressionSuite.gs v8
+// END OF FILE — tbmRegressionSuite.gs v9

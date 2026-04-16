@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════
-// FreezeGate.js v2 — Deploy Freeze runtime gate (P0-21)
+// FreezeGate.js v3 — Deploy Freeze runtime gate (P0-21)
 // WRITES TO: Script Properties (DEPLOY_FREEZE, DEPLOY_FREEZE_EMERGENCY,
 //            FREEZE_BLOCK_COUNT, FREEZE_LAST_PUSH)
 // READS FROM: Script Properties
@@ -8,7 +8,7 @@
 // ════════════════════════════════════════════════════════════════════
 // Version history tracked in Notion deploy page. Do not add version comments here.
 
-function getFreezeGateVersion() { return 2; }
+function getFreezeGateVersion() { return 3; }
 
 // ── Public API ─────────────────────────────────────────────────────
 
@@ -32,6 +32,9 @@ function setFreeze_(reason, expiresAt) {
   };
   PropertiesService.getScriptProperties().setProperty('DEPLOY_FREEZE', JSON.stringify(state));
   PropertiesService.getScriptProperties().setProperty('FREEZE_BLOCK_COUNT', '0');
+  // Clear any prior bypass token — a token from a previous freeze must not
+  // silently authorize mutations under a newly activated freeze.
+  PropertiesService.getScriptProperties().deleteProperty('DEPLOY_FREEZE_EMERGENCY');
   if (typeof logError_ === 'function') {
     logError_('FREEZE_ACTIVATED', new Error(JSON.stringify({
       reason: reason, activatedBy: 'LT', expiresAt: expiry.toISOString()
@@ -221,5 +224,5 @@ function debouncedBlockPushover_(callerName) {
   } catch(e) { Logger.log('FreezeGate: sendPush_ failed: ' + e.message); }
 }
 
-// END OF FILE — FreezeGate.js v2
+// END OF FILE — FreezeGate.js v3
 // ════════════════════════════════════════════════════════════════════
