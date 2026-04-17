@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v93 — Apps Script Router (TBM Consolidated)
+// Code.gs v95 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 93; }
+function getCodeVersion() { return 95; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -337,6 +337,18 @@ function servePage(page, e) {
         .setTitle(title)
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
+    // v94 (#426): Homework — server-inject today's content to eliminate client round-trip
+    if (page === 'homework') {
+      var hwTmpl = HtmlService.createTemplateFromFile('HomeworkModule');
+      try {
+        hwTmpl.moduleDataJson = JSON.stringify(getTodayContentSafe('buggsy'));
+      } catch(e) {
+        hwTmpl.moduleDataJson = 'null';
+      }
+      return hwTmpl.evaluate()
+        .setTitle(route.title)
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
     // v88: SparkleLearning inlined (split reverted — template include boundary bugs)
     return HtmlService.createHtmlOutputFromFile(route.file)
       .setTitle(route.title)
@@ -434,6 +446,21 @@ function serveData(e) {
           var tmpl = HtmlService.createTemplateFromFile('Vault');
           tmpl.sheetData = JSON.stringify(getAllVaultData());
           content = tmpl.evaluate().getContent();
+        } else if (page === 'homework') {
+          // v95 (#436): server-inject today's content here too — CF htmlSource path
+          // must mirror the servePage homework branch (Code.js:341-350) so
+          // <?= moduleDataJson ?> gets evaluated. Previously this page fell through
+          // to createHtmlOutputFromFile, which does NOT evaluate templates, so
+          // HomeworkModule.html was served with the raw template tag and the
+          // inline <script> crashed at parse time. That broke every Playwright
+          // education test waiting on .es-plan-attack.
+          var hwTmpl2 = HtmlService.createTemplateFromFile('HomeworkModule');
+          try {
+            hwTmpl2.moduleDataJson = JSON.stringify(getTodayContentSafe('buggsy'));
+          } catch (e) {
+            hwTmpl2.moduleDataJson = 'null';
+          }
+          content = hwTmpl2.evaluate().getContent();
         } else {
           content = HtmlService.createHtmlOutputFromFile(filename).getContent();
         }
@@ -1941,4 +1968,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v93
+// END OF FILE — Code.gs v95

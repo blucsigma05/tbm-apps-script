@@ -85,7 +85,9 @@ test.describe('Homework: Plan Your Attack → answer flow → completion', funct
     await page.setViewportSize(DEVICES.a9);
     await shimGAS(page, FIXTURES);
 
-    await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
+    // ?testMode=1 tells HomeworkModule to skip its SSR fast path so shimGAS's
+    // google.script.run interceptor can serve fixture content. See HomeworkModule v26.
+    await page.goto(BASE_URL + '/homework?testMode=1', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Plan Your Attack screen should be visible — wait for dynamic render (ExecSkills.showPlanYourAttack
     // injects .es-plan-attack into #plan-overlay after getTodayContentSafe returns).
@@ -129,7 +131,9 @@ test.describe('Homework: wrong answer shows purple not red', function() {
     await page.setViewportSize(DEVICES.a9);
     await shimGAS(page, FIXTURES);
 
-    await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
+    // ?testMode=1 tells HomeworkModule to skip its SSR fast path so shimGAS's
+    // google.script.run interceptor can serve fixture content. See HomeworkModule v26.
+    await page.goto(BASE_URL + '/homework?testMode=1', { waitUntil: 'domcontentloaded', timeout: 60000 });
 
     // Wait for Plan Your Attack to render before clicking the ready button.
     await waitForPlanAttack(page);
@@ -251,7 +255,9 @@ test.describe('Homework: brain break fires after 4 answers', function() {
     await page.setViewportSize(DEVICES.a9);
     await shimGAS(page, FIXTURES);
 
-    await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
+    // ?testMode=1 tells HomeworkModule to skip its SSR fast path so shimGAS's
+    // google.script.run interceptor can serve fixture content. See HomeworkModule v26.
+    await page.goto(BASE_URL + '/homework?testMode=1', { waitUntil: 'domcontentloaded', timeout: 60000 });
     // Wait for Plan Your Attack to render (replaces fixed 6s timeout)
     await waitForPlanAttack(page);
     await page.locator('.es-ready-btn').click();
@@ -291,7 +297,9 @@ test.describe('Homework: Monday Error Journal appears', function() {
     await clockOverride(page, '2026-04-06T08:00:00');
     await shimGAS(page, FIXTURES);
 
-    await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
+    // ?testMode=1 tells HomeworkModule to skip its SSR fast path so shimGAS's
+    // google.script.run interceptor can serve fixture content. See HomeworkModule v26.
+    await page.goto(BASE_URL + '/homework?testMode=1', { waitUntil: 'domcontentloaded', timeout: 60000 });
     await waitForPlanAttack(page);
     await page.locator('.es-ready-btn').click();
     await page.locator('.es-session-timer').waitFor({ state: 'visible', timeout: 10000 });
@@ -325,7 +333,9 @@ test.describe('Homework: Friday Reflection appears', function() {
     await clockOverride(page, '2026-04-10T08:00:00');
     await shimGAS(page, FIXTURES);
 
-    await page.goto(BASE_URL + '/homework', { waitUntil: 'domcontentloaded', timeout: 60000 });
+    // ?testMode=1 tells HomeworkModule to skip its SSR fast path so shimGAS's
+    // google.script.run interceptor can serve fixture content. See HomeworkModule v26.
+    await page.goto(BASE_URL + '/homework?testMode=1', { waitUntil: 'domcontentloaded', timeout: 60000 });
     await waitForPlanAttack(page);
     await page.locator('.es-ready-btn').click();
     await page.locator('.es-session-timer').waitFor({ state: 'visible', timeout: 10000 });

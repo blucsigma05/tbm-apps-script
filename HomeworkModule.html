@@ -4,9 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v22">
+<meta name="tbm-version" content="v26">
 <title>Wolfkid Training Module</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -812,7 +814,7 @@ function loadAudioForPhase(phase, onReady) {
     return;
   }
   google.script.run
-    .withSuccessHandler(function(batch) {
+    .withFailureHandler(function(err){console.error(err);}).withSuccessHandler(function(batch) {
       if (batch) {
         for (var k in batch) {
           if (batch.hasOwnProperty(k)) {
@@ -1106,6 +1108,10 @@ var KNOWN_QUESTION_TYPES = [
 
 // ─── MODULE DATA ───
 var MODULE = null;
+// v24 (#426): server-injected at serve time by Code.gs doGet(); null when served
+// without template (local testing or non-GAS context). If non-null, loadCurriculumContent
+// uses this directly and skips the client-side google.script.run round-trip (~2000ms).
+var _INJECTED_RESPONSE = <?= moduleDataJson ?>;
 
 // v17 (#348) — Badge removed and _usingFallback dead-code stripped. Curriculum-or-error.
 
@@ -1426,7 +1432,7 @@ function submitHomeworkCompletion_() {
   saveHomeworkDraft_();
 
   google.script.run
-    .withSuccessHandler(function(result) {
+    .withFailureHandler(function(err){console.error(err);}).withSuccessHandler(function(result) {
       if (!result || result.status !== 'ok') {
         completionSubmitState = 'failed';
         completionSubmitError = result && result.status ? 'server returned ' + result.status : 'server returned an empty response';
@@ -2318,14 +2324,7 @@ function _advanceFridayQueue_() {
 }
 
 // ─── CURRICULUM LOADING ───
-function loadCurriculumContent() {
-  if (typeof google === 'undefined' || !google.script || !google.script.run) {
-    console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: no google.script.run available');
-    showLoadError_('offline');
-    return;
-  }
-  google.script.run
-    .withSuccessHandler(function(response) {
+function onCurriculumLoaded_(response) {
       // #170 — Read ADHD scaffold config for brain breaks
       if (response && response.scaffoldConfig && response.scaffoldConfig.adhd) {
         var adhd = response.scaffoldConfig.adhd;
@@ -2337,7 +2336,7 @@ function loadCurriculumContent() {
       if (response && response.fullWeek) {
         var _fullWeekForBanner = response.fullWeek;
         google.script.run
-          .withSuccessHandler(function(weekProgress) {
+          .withFailureHandler(function(err){console.error(err);}).withSuccessHandler(function(weekProgress) {
             if (_isFridayMakeupMode) return;
             var completedDays = (weekProgress && weekProgress.completedDays) ? weekProgress.completedDays : {};
             renderCatchUpBanner_(_fullWeekForBanner, completedDays);
@@ -2395,7 +2394,7 @@ function loadCurriculumContent() {
           if (_dayOfWeek === 'Friday' && !MAKEUP_MODE) {
             _pendingFridayResponse = response;
             google.script.run
-              .withSuccessHandler(function(queue) {
+              .withFailureHandler(function(err){console.error(err);}).withSuccessHandler(function(queue) {
                 if (queue && queue.length > 0) {
                   var fridayStep = { day: 'Friday', dayISO: _todayIso, content: _pendingFridayResponse.content, priority: 99 };
                   _fridayQueue = queue.concat([fridayStep]);
@@ -2445,7 +2444,38 @@ function loadCurriculumContent() {
         console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: getTodayContentSafe returned empty/missing content');
         showLoadError_('no-content');
       }
-    })
+}
+
+// v26 (#436): Test-mode opt-out for Playwright. When ?testMode=1 is present,
+// skip the SSR fast path so gas-shim's google.script.run interceptor can
+// return fixtures instead of whatever prod content the current day actually
+// has. ES5 — manual query-string parse, no URLSearchParams.
+function _isTestMode_() {
+  var search = window.location.search || '';
+  if (search.length < 2) return false;
+  var pairs = search.substring(1).split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var kv = pairs[i].split('=');
+    if (kv[0] === 'testMode' && kv[1] === '1') return true;
+  }
+  return false;
+}
+
+function loadCurriculumContent() {
+  // v24 (#426): fast path — content injected at serve time by Code.gs, skip GAS round-trip.
+  // v26 (#436): testMode URL param bypasses fast path so Playwright's shimGAS
+  // interceptor can serve fixture content regardless of today's curriculum shape.
+  if (typeof _INJECTED_RESPONSE !== 'undefined' && _INJECTED_RESPONSE !== null && !MAKEUP_MODE && _dayOfWeek !== 'Friday' && !_isTestMode_()) {
+    onCurriculumLoaded_(_INJECTED_RESPONSE);
+    return;
+  }
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: no google.script.run available');
+    showLoadError_('offline');
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(onCurriculumLoaded_)
     .withFailureHandler(function(err) {
       console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: getTodayContentSafe failed: ' + (err && err.message ? err.message : 'unknown'));
       showLoadError_('load-error');

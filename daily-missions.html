@@ -4,9 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v19">
+<meta name="tbm-version" content="v24">
 <title>Daily Missions</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -1208,20 +1210,44 @@ function endBrainBreak() {
 }
 
 // ============================================================
-// INIT — v10 perf: single combined server call replaces 4 sequential
+// INIT — v23 perf (#426): optimistic render from localStorage, server sync deferred.
+// v23 (#436 Bug B): combined-call failure handler now invokes initLegacy_ so missing
+// server state is backfilled instead of silently dropped. _syncFired guards re-entry.
 // ============================================================
 function init() {
   parseChildParam();
-  setupDate();
+  setupDate(); // sets todayKey — must be called before getMissionState()
 
   if (isJJ()) {
     applyJJTheme();
   } else {
-    buildStarfield();
+    setTimeout(buildStarfield, 0);
   }
 
-  // Try combined endpoint first (1 call instead of 4)
-  // Wrapped in try/catch because CF worker shim may not have this function yet
+  // Read localStorage BEFORE setting _serverStateLoaded so getMissionState()
+  // picks up saved state from a prior session on this device.
+  _cachedMissionState = getMissionState(); // reads localStorage (_serverStateLoaded = false)
+  _designUnlocked = getDesignUnlockedFromCache_(); // P2: persist unlock so return visits render correctly
+  _serverStateLoaded = true;
+  render(); // LCP fires here with localStorage state
+
+  // Server sync deferred to first user interaction.
+  // LCP observation stops on first user gesture — this prevents any GAS round-trip
+  // from appearing on the LCP critical path, regardless of GAS cold-start latency.
+  var _syncFired = false;
+  function fireSyncOnce() {
+    if (_syncFired) return;
+    _syncFired = true;
+    document.removeEventListener('click', fireSyncOnce);
+    document.removeEventListener('touchstart', fireSyncOnce);
+    performServerSync_();
+  }
+  document.addEventListener('click', fireSyncOnce);
+  document.addEventListener('touchstart', fireSyncOnce);
+}
+
+// Fire combined server sync — called on first user interaction, not at page load.
+function performServerSync_() {
   var combinedAvailable = false;
   try {
     if (typeof google !== 'undefined' && google.script && google.script.run &&
@@ -1233,53 +1259,94 @@ function init() {
             var data = (typeof result === 'string') ? JSON.parse(result) : result;
             if (data && typeof data.isDay1 !== 'undefined') {
               applyInitData_(data);
-              return;
             }
-          } catch(e) { /* fall through to legacy */ }
-          initLegacy_();
+          } catch(e) {}
         })
         .withFailureHandler(function() {
+          // Combined call failed after deferred sync fired. Backfill missing server
+          // state via legacy path so dayOfWeek / missionState / designUnlock /
+          // schedule reconcile with server instead of staying at optimistic defaults.
+          // _syncFired (set in init) prevents a second performServerSync_ call, so
+          // this fires at most once per page load. initLegacy_ dirty-renders only
+          // when state actually differs from optimistic paint.
           initLegacy_();
         })
         .getDailyMissionsInitSafe(currentChild);
     }
-  } catch(e) { /* function not on shim — fall through */ }
+  } catch(e) {}
   if (!combinedAvailable) {
     initLegacy_();
   }
 }
 
-// Apply combined init data from getDailyMissionsInitSafe
+// Apply combined init data from getDailyMissionsInitSafe.
+// v21 (#426): dirty-check before re-render — avoids a second paint that pushes LCP
+// past 2500ms when GAS returns after the optimistic render already fired.
 function applyInitData_(data) {
+  var dirty = false;
+
   // 1. Day 1
-  if (data.isDay1 === true) {
+  if (data.isDay1 === true && dayOfWeek !== 0) {
     dayOfWeek = 0;
+    dirty = true;
   }
 
-  // 2. Mission state
+  // 2. Mission state — max-merge: local done=true always beats server's stale response.
+  // P1 fix (#426): first click fires toggleMission() AND fireSyncOnce() at the same time.
+  // saveMissionStateSafe() may not have propagated before getDailyMissionsInitSafe()
+  // responds. Taking the union of done-flags ensures an in-flight save is never lost.
   if (data.missionState && typeof data.missionState === 'object') {
-    _cachedMissionState = data.missionState;
-    try { localStorage.setItem(todayKey, JSON.stringify(data.missionState)); } catch (e) {}
+    var merged = {};
+    var lk = Object.keys(_cachedMissionState);
+    for (var li = 0; li < lk.length; li++) { merged[lk[li]] = _cachedMissionState[lk[li]]; }
+    var sk = Object.keys(data.missionState);
+    for (var si = 0; si < sk.length; si++) {
+      var key = sk[si];
+      if (data.missionState[key] === true) {
+        merged[key] = true; // server found a completion — accept it
+      } else if (!(key in merged)) {
+        merged[key] = data.missionState[key]; // server-only key, no local record
+      }
+      // If local[key]=true and server[key]!=true: local wins (save in flight)
+    }
+    var mergedJson = JSON.stringify(merged);
+    if (mergedJson !== JSON.stringify(_cachedMissionState)) {
+      _cachedMissionState = merged;
+      try { localStorage.setItem(todayKey, JSON.stringify(merged)); } catch (e) {}
+      dirty = true;
+    }
   }
   _serverStateLoaded = true;
 
-  // 3. Design unlock
-  _designUnlocked = (data.designUnlocked === true);
+  // 3. Design unlock — persist to localStorage so return visits render correctly (P2)
+  var serverDesignUnlocked = (data.designUnlocked === true);
+  if (serverDesignUnlocked !== _designUnlocked) {
+    _designUnlocked = serverDesignUnlocked;
+    setDesignUnlockedCache_(serverDesignUnlocked);
+    dirty = true;
+  }
 
   // 4. Schedule
   var dynamicBlocks = null;
   if (data.schedule && data.schedule.blocks && data.schedule.blocks.length > 0) {
-    dynamicSchedule = data.schedule;
-    dynamicBlocks = data.schedule.blocks;
+    var incomingSchedJson = JSON.stringify(data.schedule);
+    var currentSchedJson  = JSON.stringify(dynamicSchedule);
+    if (incomingSchedJson !== currentSchedJson) {
+      dynamicSchedule = data.schedule;
+      dynamicBlocks = data.schedule.blocks;
+      dirty = true;
+    }
   }
 
-  if (dayOfWeek !== 0 && dynamicBlocks) {
+  if (dynamicBlocks && dayOfWeek !== 0) {
     var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
     if (schedule[dayOfWeek]) {
       schedule[dayOfWeek].blocks = dynamicBlocks;
     }
   }
-  render();
+
+  // Only re-render if something actually changed from the optimistic state
+  if (dirty) { render(); }
 }
 
 // Legacy fallback: parallel calls 2+3, then schedule, then render
@@ -1418,6 +1485,21 @@ function getMissionState() {
     if (raw) return JSON.parse(raw);
   } catch (e) { /* ignore */ }
   return {};
+}
+
+// P2 fix (#426): persist design-unlock per child+day so optimistic render is correct
+// on return visits after homework is done (avoids extra-tap to see unlocked card).
+function getDesignUnlockedFromCache_() {
+  if (currentChild !== 'buggsy') return false;
+  try {
+    return localStorage.getItem(currentChild + '_unlock_' + todayKey) === 'true';
+  } catch(e) { return false; }
+}
+function setDesignUnlockedCache_(val) {
+  if (currentChild !== 'buggsy') return;
+  try {
+    localStorage.setItem(currentChild + '_unlock_' + todayKey, val ? 'true' : 'false');
+  } catch(e) {}
 }
 
 function setMissionState(state) {
@@ -1580,7 +1662,7 @@ function launchMission(url, missionId, missionName) {
         if (textEl) { textEl.textContent = 'Here we go!'; }
       } else {
         if (iconEl) { iconEl.innerHTML = '&#128640;'; }
-        if (textEl) { textEl.textContent = 'LOADING...'; }
+        if (textEl) { textEl.textContent = 'LOADING\u2026'; }
       }
     }
     setTimeout(function() { window.location.href = url; }, 280);
