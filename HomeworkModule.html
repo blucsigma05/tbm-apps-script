@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v21">
+<meta name="tbm-version" content="v22">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -2338,10 +2338,12 @@ function loadCurriculumContent() {
         var _fullWeekForBanner = response.fullWeek;
         google.script.run
           .withSuccessHandler(function(weekProgress) {
+            if (_isFridayMakeupMode) return;
             var completedDays = (weekProgress && weekProgress.completedDays) ? weekProgress.completedDays : {};
             renderCatchUpBanner_(_fullWeekForBanner, completedDays);
           })
           .withFailureHandler(function() {
+            if (_isFridayMakeupMode) return;
             renderCatchUpBanner_(_fullWeekForBanner, {});
           })
           .getWeekProgressSafe(SANDBOX_CHILD);
