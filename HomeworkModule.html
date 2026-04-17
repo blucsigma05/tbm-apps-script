@@ -576,6 +576,16 @@ main {
   </div>
 </div>
 
+<!-- Same-Type Micro-Pause Overlay (#437) -->
+<div id="same-type-pause-overlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,26,0.97);z-index:9001;">
+  <div style="position:absolute;top:50%;left:50%;-webkit-transform:translate(-50%,-50%);transform:translate(-50%,-50%);text-align:center;padding:0 24px;width:100%;max-width:480px;">
+    <div style="font-size:56px;margin-bottom:16px;">&#x1F4AA;</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:20px;color:#f59e0b;letter-spacing:2px;margin-bottom:12px;">NICE STREAK!</div>
+    <div id="stp-message" style="font-size:16px;color:#E2E8F0;margin-bottom:28px;line-height:1.6;"></div>
+    <button onclick="endSameTypePause()" style="background:#f59e0b;color:#0b0f1a;border:none;border-radius:12px;padding:14px 36px;font-size:16px;font-family:'Orbitron',sans-serif;font-weight:700;letter-spacing:1px;cursor:pointer;">READY &#x2014; KEEP GOING</button>
+  </div>
+</div>
+
 <!-- Footer -->
 <div id="app-footer">
   <!-- footer-nav: inactive tabs fire showNavBlock(), active tab has no onclick -->
@@ -1067,6 +1077,7 @@ var ExecSkills = (function() {
 var _brainBreakAfter = 4;
 var _brainBreakPrompt = 'Stand up and do 10 jumping jacks!';
 var _questionsSinceBrainBreak = 0;
+var _answerHistory = []; // submission-order type log for 3-2-1 streak detection (#437)
 var _brainBreakTimerInterval = null;
 
 function checkBrainBreak() {
@@ -1096,6 +1107,36 @@ function showBrainBreak() {
 function endBrainBreak() {
   if (_brainBreakTimerInterval) { clearInterval(_brainBreakTimerInterval); _brainBreakTimerInterval = null; }
   var overlay = document.getElementById('brain-break-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+// ─── SAME-TYPE MICRO-PAUSE (#437 — 3-2-1 ADHD rule) ───
+// Uses _answerHistory (submission order) so the streak is accurate when
+// the student answers questions out of order across Science/Math tabs.
+
+function countSameTypeRunFromHistory_(type) {
+  var run = 0;
+  for (var i = _answerHistory.length - 1; i >= 0; i--) {
+    if (_answerHistory[i] === type) { run++; } else { break; }
+  }
+  return run;
+}
+
+function checkSameTypePause_(type) {
+  var run = countSameTypeRunFromHistory_(type);
+  if (run > 0 && run % 3 === 0) { showSameTypePause_(); }
+}
+
+function showSameTypePause_() {
+  var overlay = document.getElementById('same-type-pause-overlay');
+  if (!overlay) return;
+  var msg = document.getElementById('stp-message');
+  if (msg) { msg.textContent = 'You just crushed 3 in a row! Shake it out for a sec, then keep going.'; }
+  overlay.style.display = 'block';
+}
+
+function endSameTypePause() {
+  var overlay = document.getElementById('same-type-pause-overlay');
   if (overlay) overlay.style.display = 'none';
 }
 
@@ -1774,6 +1815,9 @@ function submitAnswer(qId) {
 
   // #170 — check brain break threshold
   checkBrainBreak();
+  // #437 — record submission type, then check 3-2-1 streak on history tail
+  _answerHistory.push(q.type);
+  checkSameTypePause_(q.type);
 
   updateProgress();
   saveHomeworkDraft_();

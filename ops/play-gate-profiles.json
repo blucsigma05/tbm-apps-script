@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "description": "Canonical device/viewport/voice/theme profiles for TBM Play-Gate. Single source of truth replacing inline device maps in: playwright.config.js PERF_DEVICES, tests/shared/helpers.js DEVICES, tests/tbm/education-workflows.spec.js DEVICES, tests/tbm/screenshots.spec.js ROUTE_VIEWPORTS, .claude/launch.json playwright.devices. See Issue #440 (P1/P2/P3 prerequisite prototype) and EPIC #439.",
+  "notes": {
+    "canonicalSource": "CLAUDE.md Device Viewport Map",
+    "driftResolution": "Where consumers disagree, the value in this file is canonical. Consumers are updated to match, not the other way around.",
+    "permanentInlineExceptions": [
+      "playwright.config.js — ESM config requires inline PERF_DEVICES (esbuild vm context cannot dynamic-load JSON at parse time); CI-validated against this file on every PR",
+      ".claude/launch.json — IDE config consumed by preview-proxy; CI-validated against this file on every PR"
+    ]
+  },
+  "devices": {
+    "surface-pro-5": {
+      "viewport": { "width": 1368, "height": 912 },
+      "deviceScaleFactor": 2,
+      "isMobile": false,
+      "hasTouch": false,
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36 Edg/124.0.0.0",
+      "label": "Surface Pro 5 (Buggsy homework tablet)",
+      "aliases": {
+        "playwright.config.js:PERF_DEVICES": "surface-pro-5",
+        ".claude/launch.json:playwright.devices": "surface-pro-5",
+        "tests/shared/helpers.js:DEVICES": "SurfacePro",
+        "tests/tbm/education-workflows.spec.js:DEVICES": "surface_pro",
+        "tests/tbm/screenshots.spec.js:ROUTE_VIEWPORTS.devices": "Surface Pro"
+      }
+    },
+    "samsung-s10-fe": {
+      "viewport": { "width": 1200, "height": 1920 },
+      "deviceScaleFactor": 2.625,
+      "isMobile": true,
+      "hasTouch": true,
+      "userAgent": "Mozilla/5.0 (Linux; Android 13; SM-G770F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36",
+      "label": "Samsung S10 FE (JJ SparkleLearn tablet, portrait)",
+      "aliases": {
+        "playwright.config.js:PERF_DEVICES": "samsung-s10-fe",
+        ".claude/launch.json:playwright.devices": "samsung-s10-fe",
+        "tests/shared/helpers.js:DEVICES": "S10FE",
+        "tests/tbm/education-workflows.spec.js:DEVICES": "s10fe",
+        "tests/tbm/screenshots.spec.js:ROUTE_VIEWPORTS.devices": "S10 FE (portrait)"
+      },
+      "driftNotes": [
+        "tests/shared/helpers.js currently has 400x800 — DRIFTED; must update to 1200x1920 in PR 1"
+      ]
+    },
+    "galaxy-s25": {
+      "viewport": { "width": 412, "height": 915 },
+      "label": "Galaxy S25 (JT ThePulse / /parent)",
+      "aliases": {
+        "tests/shared/helpers.js:DEVICES": "S25",
+        "tests/tbm/education-workflows.spec.js:DEVICES": "s25",
+        "tests/tbm/screenshots.spec.js:ROUTE_VIEWPORTS.devices": "JT S25"
+      },
+      "driftNotes": [
+        "tests/shared/helpers.js has 390x844 — DRIFTED (CLAUDE.md canonical is 412x915)",
+        "tests/tbm/education-workflows.spec.js has 390x844 — DRIFTED",
+        "screenshots.spec.js /parent and /pulse use 412x915 — matches canonical"
+      ]
+    },
+    "ipad-air": {
+      "viewport": { "width": 800, "height": 1280 },
+      "label": "iPad Air class (kid A9/A7 tablets)",
+      "aliases": {
+        "tests/shared/helpers.js:DEVICES": "iPadAir",
+        "tests/tbm/education-workflows.spec.js:DEVICES": "a9"
+      }
+    },
+    "fire-stick-full": {
+      "viewport": { "width": 1920, "height": 1080 },
+      "label": "Fire Stick full-HD (reference)",
+      "aliases": {
+        "tests/shared/helpers.js:DEVICES": "FireStick"
+      }
+    },
+    "omnibook": {
+      "viewport": { "width": 1920, "height": 1200 },
+      "label": "HP Omnibook (LT TheVein desktop)",
+      "aliases": {
+        "tests/shared/helpers.js:DEVICES": "Omnibook"
+      }
+    }
+  },
+  "routeViewports": {
+    "/spine":                    { "width": 980,  "height": 551,  "device": "Office Fire Stick" },
+    "/soul":                     { "width": 980,  "height": 551,  "device": "Kitchen Fire Stick" },
+    "/parent":                   { "width": 412,  "height": 915,  "device": "JT S25" },
+    "/pulse":                    { "width": 412,  "height": 915,  "device": "JT S25" },
+    "/vein":                     { "width": 1920, "height": 1080, "device": "LT Desktop" },
+    "/buggsy":                   { "width": 800,  "height": 1340, "device": "A9 Tablet (portrait)" },
+    "/jj":                       { "width": 800,  "height": 1340, "device": "A7 Tablet (portrait)" },
+    "/daily-missions":           { "width": 1368, "height": 912,  "device": "Surface Pro" },
+    "/daily-missions?child=jj":  { "width": 1200, "height": 1920, "device": "S10 FE (portrait)" },
+    "/wolfdome":                 { "width": 800,  "height": 1340, "device": "A9 Tablet (portrait)" },
+    "/sparkle-kingdom":          { "width": 800,  "height": 1340, "device": "A7 Tablet (portrait)" }
+  },
+  "frameBudget": {
+    "minFps": 30,
+    "maxFrameMs": 33,
+    "maxJankMs": 500,
+    "maxLcpMs": 2500,
+    "maxCls": 0.1,
+    "maxTtiMs": 5000
+  },
+  "voices": {
+    "nia": {
+      "label": "Nia (JJ)",
+      "elevenLabsVoiceId": "A2YMjtICNQnO93UAZ8l6",
+      "model": "eleven_v3",
+      "usedBy": ["/sparkle", "/sparkle-kingdom", "/daily-adventures", "/sparkle-free", "/baseline"]
+    },
+    "marco": {
+      "label": "Marco (Buggsy)",
+      "elevenLabsVoiceId": "RYPzpPBmugfktRI79EC9",
+      "model": "eleven_v3",
+      "usedBy": ["/homework", "/reading", "/writing", "/wolfkid", "/facts", "/investigation", "/wolfdome", "/power-scan", "/comic-studio"]
+    }
+  },
+  "themes": {
+    "sparkle-kingdom": {
+      "child": "jj",
+      "paletteRef": "ops/themes/palettes.md#sparkle-kingdom"
+    },
+    "wolfdome": {
+      "child": "buggsy",
+      "paletteRef": "ops/themes/palettes.md#wolfdome"
+    }
+  }
+}
