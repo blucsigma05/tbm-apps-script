@@ -25,6 +25,13 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 ---
 
 ## Session Start
+
+**Mandatory first command for any Sonnet build thread (run before anything else):**
+```
+cd "$(git rev-parse --show-toplevel)"
+```
+This loads `.claude/settings.local.json` (repo-scoped MCP + Bash allowances). Without it, every MCP tool call prompts for approval scoped to the wrong directory (`C:\Program Files\Git`). Any "don't ask again" approval saved from the wrong directory is wasted — it won't apply here. See #420 + #391 for the full Sonnet environment context.
+
 1. Read this file fully
 2. Run `clasp deployments` to confirm deployment ID
 3. Fetch PM Active Versions (Notion `2c8cea3cd9e8818eaf53df73cb5c2eee`) for current state
