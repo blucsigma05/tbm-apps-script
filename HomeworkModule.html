@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v23">
+<meta name="tbm-version" content="v24">
 <title>Wolfkid Training Module</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -560,15 +560,7 @@ main {
 
 <!-- Main Content -->
 <main>
-  <div id="section-overview" style="padding-top:16px;animation:fadeSlide 0.3s ease;">
-    <!-- LCP anchor (#426): large block painted synchronously — becomes LCP candidate before
-         getTodayContentSafe returns. renderOverview() replaces this via innerHTML. -->
-    <div id="hw-lcp-skeleton" style="min-height:500px;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;text-align:center;padding:40px 24px;">
-      <div style="font-size:48px;margin-bottom:20px;">&#x2699;&#xFE0F;</div>
-      <div style="font-family:Orbitron,monospace;font-size:20px;font-weight:900;color:#60A5FA;letter-spacing:2px;margin-bottom:12px;">WOLFKID TRAINING MODULE</div>
-      <div style="font-size:14px;color:#64748B;line-height:1.6;">Loading today&#x2019;s assignments&#x2026;</div>
-    </div>
-  </div>
+  <div id="section-overview" style="padding-top:16px;animation:fadeSlide 0.3s ease;"></div>
   <div id="section-science" style="padding-top:16px;display:none;"></div>
   <div id="section-math" style="padding-top:16px;display:none;"></div>
   <div id="section-results" style="padding-top:16px;display:none;"></div>
@@ -1117,6 +1109,10 @@ var KNOWN_QUESTION_TYPES = [
 
 // ─── MODULE DATA ───
 var MODULE = null;
+// v24 (#426): server-injected at serve time by Code.gs doGet(); null when served
+// without template (local testing or non-GAS context). If non-null, loadCurriculumContent
+// uses this directly and skips the client-side google.script.run round-trip (~2000ms).
+var _INJECTED_RESPONSE = <?= moduleDataJson ?>;
 
 // v17 (#348) — Badge removed and _usingFallback dead-code stripped. Curriculum-or-error.
 
@@ -2329,14 +2325,7 @@ function _advanceFridayQueue_() {
 }
 
 // ─── CURRICULUM LOADING ───
-function loadCurriculumContent() {
-  if (typeof google === 'undefined' || !google.script || !google.script.run) {
-    console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: no google.script.run available');
-    showLoadError_('offline');
-    return;
-  }
-  google.script.run
-    .withSuccessHandler(function(response) {
+function onCurriculumLoaded_(response) {
       // #170 — Read ADHD scaffold config for brain breaks
       if (response && response.scaffoldConfig && response.scaffoldConfig.adhd) {
         var adhd = response.scaffoldConfig.adhd;
@@ -2456,7 +2445,21 @@ function loadCurriculumContent() {
         console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: getTodayContentSafe returned empty/missing content');
         showLoadError_('no-content');
       }
-    })
+}
+
+function loadCurriculumContent() {
+  // v24 (#426): fast path — content injected at serve time by Code.gs, skip GAS round-trip
+  if (typeof _INJECTED_RESPONSE !== 'undefined' && _INJECTED_RESPONSE !== null && !MAKEUP_MODE && _dayOfWeek !== 'Friday') {
+    onCurriculumLoaded_(_INJECTED_RESPONSE);
+    return;
+  }
+  if (typeof google === 'undefined' || !google.script || !google.script.run) {
+    console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: no google.script.run available');
+    showLoadError_('offline');
+    return;
+  }
+  google.script.run
+    .withSuccessHandler(onCurriculumLoaded_)
     .withFailureHandler(function(err) {
       console.warn('[TBM FALLBACK] HomeworkModule \u2014 reason: getTodayContentSafe failed: ' + (err && err.message ? err.message : 'unknown'));
       showLoadError_('load-error');

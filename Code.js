@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v93 — Apps Script Router (TBM Consolidated)
+// Code.gs v94 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 93; }
+function getCodeVersion() { return 94; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -335,6 +335,18 @@ function servePage(page, e) {
       if (view.toLowerCase()  === 'parent') title = '⚙ Kids Hub — Parent Dashboard';
       return tmpl.evaluate()
         .setTitle(title)
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
+    // v94 (#426): Homework — server-inject today's content to eliminate client round-trip
+    if (page === 'homework') {
+      var hwTmpl = HtmlService.createTemplateFromFile('HomeworkModule');
+      try {
+        hwTmpl.moduleDataJson = JSON.stringify(getTodayContentSafe('buggsy'));
+      } catch(e) {
+        hwTmpl.moduleDataJson = 'null';
+      }
+      return hwTmpl.evaluate()
+        .setTitle(route.title)
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
     // v88: SparkleLearning inlined (split reverted — template include boundary bugs)

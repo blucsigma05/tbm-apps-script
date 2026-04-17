@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v20">
+<meta name="tbm-version" content="v21">
 <title>Daily Missions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1254,37 +1254,58 @@ function init() {
   }
 }
 
-// Apply combined init data from getDailyMissionsInitSafe
+// Apply combined init data from getDailyMissionsInitSafe.
+// v21 (#426): dirty-check before re-render — avoids a second paint that pushes LCP
+// past 2500ms when GAS returns after the optimistic render already fired.
 function applyInitData_(data) {
+  var dirty = false;
+
   // 1. Day 1
-  if (data.isDay1 === true) {
+  if (data.isDay1 === true && dayOfWeek !== 0) {
     dayOfWeek = 0;
+    dirty = true;
   }
 
-  // 2. Mission state
+  // 2. Mission state — only re-render if server state differs from optimistic
   if (data.missionState && typeof data.missionState === 'object') {
-    _cachedMissionState = data.missionState;
-    try { localStorage.setItem(todayKey, JSON.stringify(data.missionState)); } catch (e) {}
+    var serverJson = JSON.stringify(data.missionState);
+    var localJson  = JSON.stringify(_cachedMissionState);
+    if (serverJson !== localJson) {
+      _cachedMissionState = data.missionState;
+      try { localStorage.setItem(todayKey, JSON.stringify(data.missionState)); } catch (e) {}
+      dirty = true;
+    }
   }
   _serverStateLoaded = true;
 
   // 3. Design unlock
-  _designUnlocked = (data.designUnlocked === true);
+  var serverDesignUnlocked = (data.designUnlocked === true);
+  if (serverDesignUnlocked !== _designUnlocked) {
+    _designUnlocked = serverDesignUnlocked;
+    dirty = true;
+  }
 
   // 4. Schedule
   var dynamicBlocks = null;
   if (data.schedule && data.schedule.blocks && data.schedule.blocks.length > 0) {
-    dynamicSchedule = data.schedule;
-    dynamicBlocks = data.schedule.blocks;
+    var incomingSchedJson = JSON.stringify(data.schedule);
+    var currentSchedJson  = JSON.stringify(dynamicSchedule);
+    if (incomingSchedJson !== currentSchedJson) {
+      dynamicSchedule = data.schedule;
+      dynamicBlocks = data.schedule.blocks;
+      dirty = true;
+    }
   }
 
-  if (dayOfWeek !== 0 && dynamicBlocks) {
+  if (dynamicBlocks && dayOfWeek !== 0) {
     var schedule = currentChild === 'jj' ? JJ_SCHEDULE : BUGGSY_SCHEDULE;
     if (schedule[dayOfWeek]) {
       schedule[dayOfWeek].blocks = dynamicBlocks;
     }
   }
-  render();
+
+  // Only re-render if something actually changed from the optimistic state
+  if (dirty) { render(); }
 }
 
 // Legacy fallback: parallel calls 2+3, then schedule, then render
