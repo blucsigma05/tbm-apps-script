@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v23">
+<meta name="tbm-version" content="v24">
 <title>Daily Missions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1227,6 +1227,7 @@ function init() {
   // Read localStorage BEFORE setting _serverStateLoaded so getMissionState()
   // picks up saved state from a prior session on this device.
   _cachedMissionState = getMissionState(); // reads localStorage (_serverStateLoaded = false)
+  _designUnlocked = getDesignUnlockedFromCache_(); // P2: persist unlock so return visits render correctly
   _serverStateLoaded = true;
   render(); // LCP fires here with localStorage state
 
@@ -1290,22 +1291,38 @@ function applyInitData_(data) {
     dirty = true;
   }
 
-  // 2. Mission state — only re-render if server state differs from optimistic
+  // 2. Mission state — max-merge: local done=true always beats server's stale response.
+  // P1 fix (#426): first click fires toggleMission() AND fireSyncOnce() at the same time.
+  // saveMissionStateSafe() may not have propagated before getDailyMissionsInitSafe()
+  // responds. Taking the union of done-flags ensures an in-flight save is never lost.
   if (data.missionState && typeof data.missionState === 'object') {
-    var serverJson = JSON.stringify(data.missionState);
-    var localJson  = JSON.stringify(_cachedMissionState);
-    if (serverJson !== localJson) {
-      _cachedMissionState = data.missionState;
-      try { localStorage.setItem(todayKey, JSON.stringify(data.missionState)); } catch (e) {}
+    var merged = {};
+    var lk = Object.keys(_cachedMissionState);
+    for (var li = 0; li < lk.length; li++) { merged[lk[li]] = _cachedMissionState[lk[li]]; }
+    var sk = Object.keys(data.missionState);
+    for (var si = 0; si < sk.length; si++) {
+      var key = sk[si];
+      if (data.missionState[key] === true) {
+        merged[key] = true; // server found a completion — accept it
+      } else if (!(key in merged)) {
+        merged[key] = data.missionState[key]; // server-only key, no local record
+      }
+      // If local[key]=true and server[key]!=true: local wins (save in flight)
+    }
+    var mergedJson = JSON.stringify(merged);
+    if (mergedJson !== JSON.stringify(_cachedMissionState)) {
+      _cachedMissionState = merged;
+      try { localStorage.setItem(todayKey, JSON.stringify(merged)); } catch (e) {}
       dirty = true;
     }
   }
   _serverStateLoaded = true;
 
-  // 3. Design unlock
+  // 3. Design unlock — persist to localStorage so return visits render correctly (P2)
   var serverDesignUnlocked = (data.designUnlocked === true);
   if (serverDesignUnlocked !== _designUnlocked) {
     _designUnlocked = serverDesignUnlocked;
+    setDesignUnlockedCache_(serverDesignUnlocked);
     dirty = true;
   }
 
@@ -1468,6 +1485,21 @@ function getMissionState() {
     if (raw) return JSON.parse(raw);
   } catch (e) { /* ignore */ }
   return {};
+}
+
+// P2 fix (#426): persist design-unlock per child+day so optimistic render is correct
+// on return visits after homework is done (avoids extra-tap to see unlocked card).
+function getDesignUnlockedFromCache_() {
+  if (currentChild !== 'buggsy') return false;
+  try {
+    return localStorage.getItem(currentChild + '_unlock_' + todayKey) === 'true';
+  } catch(e) { return false; }
+}
+function setDesignUnlockedCache_(val) {
+  if (currentChild !== 'buggsy') return;
+  try {
+    localStorage.setItem(currentChild + '_unlock_' + todayKey, val ? 'true' : 'false');
+  } catch(e) {}
 }
 
 function setMissionState(state) {
