@@ -814,7 +814,7 @@ function loadAudioForPhase(phase, onReady) {
     return;
   }
   google.script.run
-    .withSuccessHandler(function(batch) {
+    .withFailureHandler(function(err){console.error(err);}).withSuccessHandler(function(batch) {
       if (batch) {
         for (var k in batch) {
           if (batch.hasOwnProperty(k)) {
@@ -1432,7 +1432,7 @@ function submitHomeworkCompletion_() {
   saveHomeworkDraft_();
 
   google.script.run
-    .withSuccessHandler(function(result) {
+    .withFailureHandler(function(err){console.error(err);}).withSuccessHandler(function(result) {
       if (!result || result.status !== 'ok') {
         completionSubmitState = 'failed';
         completionSubmitError = result && result.status ? 'server returned ' + result.status : 'server returned an empty response';
@@ -2336,7 +2336,7 @@ function onCurriculumLoaded_(response) {
       if (response && response.fullWeek) {
         var _fullWeekForBanner = response.fullWeek;
         google.script.run
-          .withSuccessHandler(function(weekProgress) {
+          .withFailureHandler(function(err){console.error(err);}).withSuccessHandler(function(weekProgress) {
             if (_isFridayMakeupMode) return;
             var completedDays = (weekProgress && weekProgress.completedDays) ? weekProgress.completedDays : {};
             renderCatchUpBanner_(_fullWeekForBanner, completedDays);
@@ -2394,7 +2394,7 @@ function onCurriculumLoaded_(response) {
           if (_dayOfWeek === 'Friday' && !MAKEUP_MODE) {
             _pendingFridayResponse = response;
             google.script.run
-              .withSuccessHandler(function(queue) {
+              .withFailureHandler(function(err){console.error(err);}).withSuccessHandler(function(queue) {
                 if (queue && queue.length > 0) {
                   var fridayStep = { day: 'Friday', dayISO: _todayIso, content: _pendingFridayResponse.content, priority: 99 };
                   _fridayQueue = queue.concat([fridayStep]);
