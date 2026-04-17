@@ -1,5 +1,6 @@
 # .github/workflows/codex-finding-listener.yml
 # Codex Finding Listener — detects finding markers in PR comments and applies labels.
+# Extended (#384): auto-files GitHub Issues for severity:blocker (P1) findings.
 # Logic lives in .github/scripts/parse_finding_comment.py (no heredocs in YAML).
 #
 # Supports ALL three comment surfaces:
@@ -9,6 +10,7 @@
 #
 # Whitelisted authors: blucsigma05, chatgpt-codex-connector.
 # Loop prevention: skips github-actions[bot] comments.
+# Kill switches: repo vars AUTOMATION_ENABLED, CODEX_BLOCKER_AUTOFILE_ENABLED.
 
 name: Codex Finding Listener
 
@@ -44,6 +46,9 @@ jobs:
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           COMMENT_AUTHOR: ${{ github.event.comment.user.login || github.event.review.user.login }}
           COMMENT_BODY: ${{ github.event.comment.body || github.event.review.body }}
+          COMMENT_ID: ${{ github.event.comment.id || github.event.review.id || '0' }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          AUTOMATION_ENABLED: ${{ vars.AUTOMATION_ENABLED || 'true' }}
+          CODEX_BLOCKER_AUTOFILE_ENABLED: ${{ vars.CODEX_BLOCKER_AUTOFILE_ENABLED || 'true' }}
         run: python3 .github/scripts/parse_finding_comment.py
