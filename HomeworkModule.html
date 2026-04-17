@@ -1077,6 +1077,7 @@ var ExecSkills = (function() {
 var _brainBreakAfter = 4;
 var _brainBreakPrompt = 'Stand up and do 10 jumping jacks!';
 var _questionsSinceBrainBreak = 0;
+var _answerHistory = []; // submission-order type log for 3-2-1 streak detection (#437)
 var _brainBreakTimerInterval = null;
 
 function checkBrainBreak() {
@@ -1110,37 +1111,27 @@ function endBrainBreak() {
 }
 
 // ─── SAME-TYPE MICRO-PAUSE (#437 — 3-2-1 ADHD rule) ───
-// Fires when 3 consecutive same-type questions are answered; shows a brief
-// acknowledgment overlay before the next question of the same type.
+// Uses _answerHistory (submission order) so the streak is accurate when
+// the student answers questions out of order across Science/Math tabs.
 
-function countSameTypeRun_(type, endIdx) {
+function countSameTypeRunFromHistory_(type) {
   var run = 0;
-  for (var i = endIdx; i >= 0; i--) {
-    if (allQs[i].type === type) { run++; } else { break; }
+  for (var i = _answerHistory.length - 1; i >= 0; i--) {
+    if (_answerHistory[i] === type) { run++; } else { break; }
   }
   return run;
 }
 
-function checkSameTypePause_(q, idx) {
-  var run = countSameTypeRun_(q.type, idx);
-  // Trigger when run hits a multiple of 3 AND the next question is the same type
-  if (run % 3 !== 0) return;
-  var next = allQs[idx + 1];
-  if (!next || next.type !== q.type) return;
-  var remaining = 0;
-  for (var j = idx + 1; j < allQs.length; j++) {
-    if (allQs[j].type === q.type) remaining++;
-  }
-  showSameTypePause_(remaining);
+function checkSameTypePause_(type) {
+  var run = countSameTypeRunFromHistory_(type);
+  if (run > 0 && run % 3 === 0) { showSameTypePause_(); }
 }
 
-function showSameTypePause_(remaining) {
+function showSameTypePause_() {
   var overlay = document.getElementById('same-type-pause-overlay');
   if (!overlay) return;
   var msg = document.getElementById('stp-message');
-  if (msg) {
-    msg.textContent = 'You just crushed 3 in a row! Take a breath before the next ' + remaining + ' question' + (remaining !== 1 ? 's' : '') + ' like that.';
-  }
+  if (msg) { msg.textContent = 'You just crushed 3 in a row! Shake it out for a sec, then keep going.'; }
   overlay.style.display = 'block';
 }
 
@@ -1824,8 +1815,9 @@ function submitAnswer(qId) {
 
   // #170 — check brain break threshold
   checkBrainBreak();
-  // #437 — 3-2-1 same-type micro-pause
-  checkSameTypePause_(q, i);
+  // #437 — record submission type, then check 3-2-1 streak on history tail
+  _answerHistory.push(q.type);
+  checkSameTypePause_(q.type);
 
   updateProgress();
   saveHomeworkDraft_();
