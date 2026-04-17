@@ -219,4 +219,83 @@ The rule that makes this stick: **if Claude tells LT a thing will happen, the Is
 
 ---
 
-_Last updated: 2026-04-09 — initial version authored by Opus following LT's "stop underutilizing the tools" direction._
+## Two-Lane Handoff Rules
+
+**What this is.** TBM runs on one shared repo with two distinct roles. Builders and auditors do NOT share authority — they share filesystem only. This section is the canonical, detailed home for the rules. Short rule mirrors live in `AGENTS.md § Two-Lane Roles` and `CLAUDE.md § Two-Lane Roles`; this is where the nuance, examples, and command contract live.
+
+### Role boundaries
+
+- **Builder lane** — Claude / Opus / Sonnet. Owns scoping, specs, implementation, bug fixes, and the PR.
+- **Audit lane** — Codex. Inspects ONE named PR or ONE named current state as an independent reviewer. Does not continue the builder's train of thought; does not silently extend scope.
+- **LT (operator)** — names the work in plain English, reviews results, approves or redirects. Does not own git terminology.
+
+### Plain-English command contract
+
+LT speaks in plain English. Agents translate to repo state. The contract:
+
+| LT says | Audit lane reads this as |
+|---|---|
+| `audit 443` | PR #443 at its current HEAD. Nothing stacked, nothing nearby. |
+| `re-audit 443` | PR #443 at its newest HEAD. Treat all prior findings as potentially stale until re-anchored. |
+| `audit the latest version of 443` | Same as `re-audit 443`. |
+| `audit only this PR` | The PR currently under discussion. Scope = that PR alone. |
+| `audit 443 stacked` | PR #443 plus the branches/PRs it explicitly depends on. |
+| `audit 443 after 444 lands` | PR #443, but wait until #444 is merged so the base is stable. |
+| `ignore the old review and check what it is now` | Drop prior findings; re-anchor to current state. |
+
+If LT's phrasing does not match a row above, ask a single-sentence clarifying question. Do NOT guess stacked scope.
+
+### Audit scope rules (MANDATORY)
+
+- A PR audit is ONE inspection packet for ONE job. Review the named packet, not nearby work.
+- Ambient repo clutter (`.claude/`, `.agents/`, scratch files, nearby branches, unrelated worktrees) is context only, not audit scope.
+- Separate three things explicitly in any finding: code bug, PR-description drift, environment limitation. Do not collapse them into one.
+- If a prior finding may already be fixed, re-anchor to the current named PR state before repeating it.
+
+### Boardroom conversations become operating memos
+
+Not every important conversation is code work. Architecture, process, role boundaries, workflow changes, and team operating decisions are boardroom conversations. Raw chat is NOT the system of record for these.
+
+**Trigger phrases LT uses to promote a conversation to a memo:**
+
+- `make an operating memo`
+- `turn this into a boardroom summary`
+- `promote this to policy`
+- `capture this decision`
+- `make this a process rule`
+
+**When any trigger fires, agents must:**
+
+1. Draft a memo in `ops/operating-memos/YYYY-MM-DD-<topic>.md` using `ops/operating-memo-template.md`.
+2. Include `## Canonical Rule Location` pointing at where the rule lives (usually this file or `AGENTS.md` / `CLAUDE.md`).
+3. Include `## What Stays Flexible` naming the parts that are intentionally not rules (wording, per-PR context, timing).
+4. If the memo creates actual work, open the follow-up Issue(s). Do not bury action items in the memo body.
+5. If the memo changes repo behavior, mirror the short rule into `AGENTS.md` and `CLAUDE.md` (hard rules only — nuance stays here).
+
+### Handoff comments (optional aid)
+
+The Issue and the Project board are the canonical status surface. A handoff comment on a PR is an OPTIONAL aid, not a status layer.
+
+**Use `<!-- tbm-handoff -->` markers when:**
+
+- A PR changes hands mid-flight (builder → builder, or builder ↔ auditor for a specific round trip).
+- A PR is paused with a clear next action that the next owner needs named.
+
+**Marker contract:**
+
+- At most ONE active `<!-- tbm-handoff -->` comment per PR.
+- Edit in place when state changes. Do NOT append a new comment for each update — that reintroduces the mandatory-status-layer problem.
+- The template lives at `.github/PR_COMMENT_TEMPLATES/handoff.md`. Copy-paste into a new PR comment when needed.
+- Inline PR review comments remain the evidence. Handoff comments do NOT replace findings.
+- Decision records belong on Issues with `kind:decision`, not in transient PR summaries or handoff comments.
+
+### Cross-references
+
+- Short rule mirrors: `AGENTS.md § Two-Lane Roles` and `CLAUDE.md § Two-Lane Roles` (identical ~12-line blocks, hard rules only).
+- Visual companion: `ops/diagrams/two-lane-model.md` (Mermaid diagram + house/contractor legend).
+- Seed example operating memo: `ops/operating-memos/2026-04-17-agent-roles-and-audit-scope.md`.
+- Shared-workspace hygiene baseline (worktree rules, scratch-dir policy, branch-prune cadence): follow-up Issue #446.
+
+---
+
+_Last updated: 2026-04-17 — added Two-Lane Handoff Rules section per operating memo `ops/operating-memos/2026-04-17-agent-roles-and-audit-scope.md`._

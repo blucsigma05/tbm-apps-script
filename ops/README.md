@@ -18,6 +18,12 @@ These are **not** architecture docs or code docs. They are **management instrume
 | [WEEKLY-CADENCE.md](WEEKLY-CADENCE.md) | Mon/Wed/Fri operating rhythm | Reference |
 | [HANDLER-GAP-AUDIT.md](HANDLER-GAP-AUDIT.md) | withFailureHandler() coverage audit and fix plan | Until resolved |
 | [specs/](specs) | Build specs using the Pipeline Operating Mode template | Before work starts |
+| [WORKFLOW.md](WORKFLOW.md) | Issue / PR / label / board workflow — canonical home for process rules, including `§ Two-Lane Handoff Rules` | Reference |
+| [operating-memo-template.md](operating-memo-template.md) | Template for capturing boardroom conversations (process, architecture, role decisions) as durable memos | Copy when needed |
+| [operating-memos/](operating-memos) | Dated operating memos produced from boardroom conversations; `2026-04-17-agent-roles-and-audit-scope.md` is the seed example | Appended per memo |
+| [diagrams/two-lane-model.md](diagrams/two-lane-model.md) | Mermaid visual + house/contractor legend for the two-lane builder/auditor model | Reference |
+
+> **Where the rules live.** Detailed process policy lives in [WORKFLOW.md](WORKFLOW.md); diagrams and templates are navigation aids, not separate rule sources. Short hard-rule mirrors sit in `AGENTS.md` and `CLAUDE.md` with pointers back to this directory.
 
 ## How To Use
 

@@ -99,10 +99,10 @@ After 10+ messages in a session, re-read any file before editing it. Do not trus
 
 **Codex findings:**
 - In-PR review comments stay in the PR (that's the evidence)
-- For any blocking finding, Claude (or LT, during audit) **manually opens** a dedicated Issue with `kind:bug` + `severity:blocker` + a link to the PR comment. Process rule, NOT automation today (Codex pipeline posts comments and `pipeline:*` labels only). The manual Issue exists so the finding survives PR close/merge. Future automation (Orchestration Loop Phase 3+, issue #111) may promote this.
+- For any blocking finding, Codex (or LT, during audit) **manually opens** a dedicated Issue with `kind:bug` + `severity:blocker` + a link to the PR comment. Process rule, NOT automation today (Codex pipeline posts comments and `pipeline:*` labels only). The manual Issue exists so the finding survives PR close/merge. Future automation (Orchestration Loop Phase 3+, issue #111) may promote this.
 
 **When LT says "PR" but means "Issue" (or vice versa):**
-- Claude MUST redirect and confirm: "You said PR — did you mean the Issue, or is this actually a code change?"
+- Codex MUST redirect and confirm: "You said PR — did you mean the Issue, or is this actually a code change?"
 - Do not silently create the wrong object.
 - One sentence, no back-and-forth. If ambiguous after one confirmation, default to Issue.
 
@@ -169,7 +169,7 @@ See `ops/WORKFLOW.md § Two-Lane Handoff Rules` for the command contract, trigge
 20. Guessing at versions — read the actual file header
 21. Starting a big refactor without a Step 0 cleanup commit
 22. Trusting a grep that returned suspiciously few results without re-running narrower
-23. Running multiple PRs that touch hot files (workflows, CLAUDE.md, audit-source.sh) in parallel
+23. Running multiple PRs that touch hot files (workflows, AGENTS.md, audit-source.sh) in parallel
 
 > Code-style anti-patterns (`tryLock` vs `waitLock`, `getActiveSpreadsheet` vs `openById`, double-emoji Notion bug) are in **Pattern Registry** below. Do not duplicate them here.
 
@@ -282,7 +282,7 @@ Skeleton parity check across HTML surfaces. Catches drift between sibling module
 
 ## QA Operator Mode
 
-> **Documentation pending.** This section is flagged TODO from the 2026-04-13 claude-md-review.
+> **Documentation pending.** This section is flagged TODO from the 2026-04-13 Codex-md-review.
 > The relevant code: `QAOperatorSafe.gs`. Pattern: per-request QA SSID override, signed token contract, `/qa/*` route isolation.
 > Before working in this area, read `QAOperatorSafe.gs` and the QA Test Plan Notion page (`32ccea3cd9e8818f9e30f317dea0fed7`).
 > When you understand the contract, replace this stub with the actual documentation.
@@ -429,7 +429,7 @@ Phase 1 scope: one pilot check (HYG-06 version drift). Phase 2+ is out of scope 
 | cloudflare-worker.js | CF Worker: smart proxy, PIN gate, Tiller freshness |
 | uptime-worker.js | CF Worker: uptime monitoring |
 | playwright.config.js | Playwright test configuration |
-| CLAUDE.md | This file |
+| AGENTS.md | This file |
 
 ### CI/CD scripts (.github/scripts/)
 | Script | Called by | Purpose |
@@ -440,7 +440,7 @@ Phase 1 scope: one pilot check (HYG-06 version drift). Phase 2+ is out of scope 
 | `parse_finding_comment.py` | codex-pr-review.yml | Parse PR comment for finding markers, apply labels |
 | `triage_review.py` | codex-pr-review.yml | Classify PR into skip/light/medium/full before review |
 | `check_version_drift.py` | hygiene.yml | Compare deployed GAS versions against source constants |
-| `check_claude_md.py` | hygiene.yml | Detect CLAUDE.md bloat, dead refs, duplicate phrases |
+| `check_claude_md.py` | hygiene.yml | Detect AGENTS.md bloat, dead refs, duplicate phrases |
 | `check_dead_workflows.py` | hygiene.yml | Flag workflows with no recent runs |
 | `check_integration_map_drift.py` | hygiene.yml | Flag Notion Integration Map entries past review date |
 | `check_knowledge_graph_diff.py` | hygiene.yml | Diff knowledge files across push range |
@@ -587,8 +587,8 @@ When Codex is asked to audit PRs:
 1. **Sync before push.** Mandatory `git fetch origin main` and rebase before any push. The staleness gate in audit-source.sh enforces this.
 2. **Branch from latest.** New branches must be created from `origin/main` after a fresh fetch.
 3. **No merge if behind.** Rebase on current main, then rerun checks before requesting merge.
-4. **No broad "take ours" on shared files.** During conflict resolution on workflow YAML, CLAUDE.md, audit-source.sh, or UI files, rebuild each conflicted file from intent. Inspect the final diff.
-5. **Hot file lock.** When a PR touches `.github/workflows/**`, `.github/scripts/**`, `CLAUDE.md`, or `audit-source.sh`, only ONE such PR may be in flight. Others wait, then rebase.
+4. **No broad "take ours" on shared files.** During conflict resolution on workflow YAML, AGENTS.md, audit-source.sh, or UI files, rebuild each conflicted file from intent. Inspect the final diff.
+5. **Hot file lock.** When a PR touches `.github/workflows/**`, `.github/scripts/**`, `AGENTS.md`, or `audit-source.sh`, only ONE such PR may be in flight. Others wait, then rebase.
 6. **Pre-flight conflict check.** Run `git merge-tree origin/main HEAD` before opening a PR. Resolve conflicts locally.
 
 ### Merge Order
@@ -608,7 +608,7 @@ All `sendPush_()` calls must use a named constant from `PUSHOVER_PRIORITY` in Al
 | `HYGIENE_REPORT_LOW` | -1 | Quiet delivery | Weekly stale sweeps, diagnostics |
 | `CHORE_APPROVAL` | 0 | Normal sound | Chore/ask/approval notifications |
 | `BACKLOG_STALE` | 0 | Normal sound | Backlog age warnings |
-| `CLAUDE_MD_BLOAT` | 0 | Normal sound | CLAUDE.md growth trigger (HYG-04) |
+| `CLAUDE_MD_BLOAT` | 0 | Normal sound | AGENTS.md growth trigger (HYG-04) |
 | `TILLER_STALE` | 1 | Vibrate (high) | Tiller freshness breach |
 | `CLOSE_OVERDUE` | 1 | Vibrate (high) | Month-close gate day 6–20 (escalates to 2 on day 21+) |
 | `SECRET_EXPIRING` | 1 | Vibrate (high) | Secrets audit |
@@ -632,7 +632,7 @@ All `sendPush_()` calls must use a named constant from `PUSHOVER_PRIORITY` in Al
 | QA Framework (7 Gates + 2 Audits) | `336cea3cd9e881798061e9032cee48c3` |
 | Education Platform | `331cea3cd9e8816aa07feec250328cf8` |
 | Parking Lot — Code Queue + Idea Pad | `32ccea3cd9e881809257fd5e7973c6d7` |
-| Claude Code Scheduled Tasks | `334cea3cd9e8812a95bdcea2786b50d6` |
+| Codex Scheduled Tasks | `334cea3cd9e8812a95bdcea2786b50d6` |
 | Integration Map DB | `33acea3cd9e881888295e3ab98be3fc4` |
 | Trust Backlog DB | `338cea3cd9e8814a8cd6e1e04ecb4748` |
 
