@@ -264,27 +264,27 @@ function testDeterminism() {
   Object.keys(v).reverse().forEach(function(k) { reordered[k] = v[k]; });
   fs.writeFileSync(b, JSON.stringify(reordered, null, 2));
 
-  var r = spawnSync('node', [CANONICAL_JS, a, b], { encoding: 'utf8' });
+  var r = spawnSync(process.execPath, [CANONICAL_JS, a, b], { encoding: 'utf8' });
   if (r.status === 0) pass('canonical-verdict MATCH on key-reordered copy');
-  else fail('canonical-verdict MATCH on key-reordered copy', 'exit ' + r.status + ' stderr: ' + r.stderr);
+  else fail('canonical-verdict MATCH on key-reordered copy', 'exit ' + r.status + ' stderr: ' + r.stderr + (r.error ? ' spawn-error: ' + r.error.message : ''));
 
   // Also prove the canonicalizer strips volatile fields (timestamp).
   var v2 = sampleVerdict();
   v2.timestamp = '2026-04-17T23:59:59Z';  // different time
   var c = path.join(tmp, 'play-gate-determinism-c.json');
   fs.writeFileSync(c, JSON.stringify(v2, null, 2));
-  var r2 = spawnSync('node', [CANONICAL_JS, a, c], { encoding: 'utf8' });
+  var r2 = spawnSync(process.execPath, [CANONICAL_JS, a, c], { encoding: 'utf8' });
   if (r2.status === 0) pass('canonical-verdict MATCH despite different timestamp');
-  else fail('canonical-verdict MATCH despite different timestamp', 'exit ' + r2.status + ' stderr: ' + r2.stderr);
+  else fail('canonical-verdict MATCH despite different timestamp', 'exit ' + r2.status + ' stderr: ' + r2.stderr + (r2.error ? ' spawn-error: ' + r2.error.message : ''));
 
   // And the canonicalizer rejects actually-divergent verdicts (fence check so
   // the determinism test doesn't silently pass on a broken normalizer).
   var v3 = sampleVerdict({ ship_decision: 'do-not-ship' });
   var d = path.join(tmp, 'play-gate-determinism-d.json');
   fs.writeFileSync(d, JSON.stringify(v3, null, 2));
-  var r3 = spawnSync('node', [CANONICAL_JS, a, d], { encoding: 'utf8' });
+  var r3 = spawnSync(process.execPath, [CANONICAL_JS, a, d], { encoding: 'utf8' });
   if (r3.status === 3) pass('canonical-verdict MISMATCH detected on ship_decision drift');
-  else fail('canonical-verdict MISMATCH detected on ship_decision drift', 'expected exit 3, got ' + r3.status);
+  else fail('canonical-verdict MISMATCH detected on ship_decision drift', 'expected exit 3, got ' + r3.status + (r3.error ? ' spawn-error: ' + r3.error.message : ''));
 
   // Clean up
   [a, b, c, d].forEach(function(p) { try { fs.unlinkSync(p); } catch (e) {} });

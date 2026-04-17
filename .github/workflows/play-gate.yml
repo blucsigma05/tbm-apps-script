@@ -76,7 +76,7 @@ jobs:
         id: verdict
         run: |
           DATE=$(date -u +%Y-%m-%d)
-          SLUG=$(echo "${{ inputs.route }}" | sed 's|^/||; s|?|__|g; s|=|-|g; s|&|_|g')
+          SLUG=$(echo "${{ inputs.route }}" | sed 's|^/||; s|?|__|g; s|=|-|g; s|&|__|g')
           DIR="ops/evidence/play-gate/${SLUG}/${{ inputs.child }}/${DATE}"
           echo "dir=$DIR" >> "$GITHUB_OUTPUT"
           echo "Evidence directory: $DIR"
