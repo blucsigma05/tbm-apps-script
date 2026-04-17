@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v20">
+<meta name="tbm-version" content="v21">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -2170,7 +2170,7 @@ function dismissCatchUpBanner_() {
   if (b.parentNode) b.parentNode.removeChild(b);
 }
 
-function renderCatchUpBanner_(fullWeek) {
+function renderCatchUpBanner_(fullWeek, completedDays) {
   var ORDERED_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   var today = new Date();
   today.setHours(0, 0, 0, 0); // normalize to midnight so dayDate >= today is date-only
@@ -2191,7 +2191,8 @@ function renderCatchUpBanner_(fullWeek) {
     // Only show if content exists for that day
     var dayContent = daySource && daySource[d];
     if (!dayContent) continue;
-    // Skip if homework was completed for this day (confirmed submission)
+    // Skip if homework was completed (server-authoritative first, localStorage fallback)
+    if (completedDays && completedDays[iso]) continue;
     try {
       if (window.localStorage.getItem('tbm_hw_complete_' + iso) === '1') continue;
     } catch(e) { /* localStorage unavailable — show anyway */ }
@@ -2332,8 +2333,18 @@ function loadCurriculumContent() {
         if (adhd.brainBreakPrompt) { _brainBreakPrompt = adhd.brainBreakPrompt; }
       }
       // #409: Makeup mode — show catch-up banner for other missed weekdays
+      // #434: Fetch server-authoritative completion before rendering banner
       if (response && response.fullWeek) {
-        renderCatchUpBanner_(response.fullWeek);
+        var _fullWeekForBanner = response.fullWeek;
+        google.script.run
+          .withSuccessHandler(function(weekProgress) {
+            var completedDays = (weekProgress && weekProgress.completedDays) ? weekProgress.completedDays : {};
+            renderCatchUpBanner_(_fullWeekForBanner, completedDays);
+          })
+          .withFailureHandler(function() {
+            renderCatchUpBanner_(_fullWeekForBanner, {});
+          })
+          .getWeekProgressSafe(SANDBOX_CHILD);
       }
       // #409: Makeup mode — load content for requested weekday instead of today
       var _contentSource = (MAKEUP_MODE && response && response.fullWeek)

@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v73 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v75 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 74; }
+function getKidsHubVersion() { return 75; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3953,7 +3953,7 @@ function getWeekProgress_(child) {
     if (daysSet.hasOwnProperty(d)) count++;
   }
 
-  return { daysCompleted: count, goalMet: count >= 5 };
+  return { daysCompleted: count, goalMet: count >= 5, completedDays: daysSet };
 }
 
 function getWeekProgressSafe(child) {
@@ -5367,5 +5367,5 @@ function checkHomeworkGateSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v73
+// END OF FILE — KidsHub.gs v75
 // ════════════════════════════════════════════════════════════════════
