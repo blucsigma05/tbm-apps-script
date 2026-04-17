@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v22">
+<meta name="tbm-version" content="v23">
 <title>Daily Missions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1210,7 +1210,9 @@ function endBrainBreak() {
 }
 
 // ============================================================
-// INIT — v22 perf (#426): optimistic render from localStorage, server sync deferred
+// INIT — v23 perf (#426): optimistic render from localStorage, server sync deferred.
+// v23 (#436 Bug B): combined-call failure handler now invokes initLegacy_ so missing
+// server state is backfilled instead of silently dropped. _syncFired guards re-entry.
 // ============================================================
 function init() {
   parseChildParam();
@@ -1259,7 +1261,15 @@ function performServerSync_() {
             }
           } catch(e) {}
         })
-        .withFailureHandler(function() {})
+        .withFailureHandler(function() {
+          // Combined call failed after deferred sync fired. Backfill missing server
+          // state via legacy path so dayOfWeek / missionState / designUnlock /
+          // schedule reconcile with server instead of staying at optimistic defaults.
+          // _syncFired (set in init) prevents a second performServerSync_ call, so
+          // this fires at most once per page load. initLegacy_ dirty-renders only
+          // when state actually differs from optimistic paint.
+          initLegacy_();
+        })
         .getDailyMissionsInitSafe(currentChild);
     }
   } catch(e) {}
