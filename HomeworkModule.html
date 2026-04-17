@@ -4,9 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v22">
+<meta name="tbm-version" content="v23">
 <title>Wolfkid Training Module</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap"></noscript>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -557,7 +560,15 @@ main {
 
 <!-- Main Content -->
 <main>
-  <div id="section-overview" style="padding-top:16px;animation:fadeSlide 0.3s ease;"></div>
+  <div id="section-overview" style="padding-top:16px;animation:fadeSlide 0.3s ease;">
+    <!-- LCP anchor (#426): large block painted synchronously — becomes LCP candidate before
+         getTodayContentSafe returns. renderOverview() replaces this via innerHTML. -->
+    <div id="hw-lcp-skeleton" style="min-height:500px;display:-webkit-flex;display:flex;-webkit-flex-direction:column;flex-direction:column;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;text-align:center;padding:40px 24px;">
+      <div style="font-size:48px;margin-bottom:20px;">&#x2699;&#xFE0F;</div>
+      <div style="font-family:Orbitron,monospace;font-size:20px;font-weight:900;color:#60A5FA;letter-spacing:2px;margin-bottom:12px;">WOLFKID TRAINING MODULE</div>
+      <div style="font-size:14px;color:#64748B;line-height:1.6;">Loading today&#x2019;s assignments&#x2026;</div>
+    </div>
+  </div>
   <div id="section-science" style="padding-top:16px;display:none;"></div>
   <div id="section-math" style="padding-top:16px;display:none;"></div>
   <div id="section-results" style="padding-top:16px;display:none;"></div>

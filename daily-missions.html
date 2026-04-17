@@ -4,9 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v19">
+<meta name="tbm-version" content="v20">
 <title>Daily Missions</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap"></noscript>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -1208,7 +1211,7 @@ function endBrainBreak() {
 }
 
 // ============================================================
-// INIT — v10 perf: single combined server call replaces 4 sequential
+// INIT — v20 perf (#426): optimistic render from localStorage, server sync in background
 // ============================================================
 function init() {
   parseChildParam();
@@ -1217,11 +1220,17 @@ function init() {
   if (isJJ()) {
     applyJJTheme();
   } else {
-    buildStarfield();
+    setTimeout(buildStarfield, 0); // defer — not LCP critical
   }
 
-  // Try combined endpoint first (1 call instead of 4)
-  // Wrapped in try/catch because CF worker shim may not have this function yet
+  // Render immediately using localStorage cache or empty defaults — LCP fires here.
+  // _serverStateLoaded=true routes getMissionState() through _cachedMissionState
+  // (localStorage read already done by getMissionState below).
+  _serverStateLoaded = true;
+  _cachedMissionState = getMissionState();
+  render();
+
+  // Background sync: fire combined endpoint; applyInitData_ re-renders if state changes.
   var combinedAvailable = false;
   try {
     if (typeof google !== 'undefined' && google.script && google.script.run &&
@@ -1233,17 +1242,13 @@ function init() {
             var data = (typeof result === 'string') ? JSON.parse(result) : result;
             if (data && typeof data.isDay1 !== 'undefined') {
               applyInitData_(data);
-              return;
             }
-          } catch(e) { /* fall through to legacy */ }
-          initLegacy_();
+          } catch(e) { /* silent — already rendered */ }
         })
-        .withFailureHandler(function() {
-          initLegacy_();
-        })
+        .withFailureHandler(function() { /* silent — already rendered */ })
         .getDailyMissionsInitSafe(currentChild);
     }
-  } catch(e) { /* function not on shim — fall through */ }
+  } catch(e) { /* function not on shim */ }
   if (!combinedAvailable) {
     initLegacy_();
   }
@@ -1580,7 +1585,7 @@ function launchMission(url, missionId, missionName) {
         if (textEl) { textEl.textContent = 'Here we go!'; }
       } else {
         if (iconEl) { iconEl.innerHTML = '&#128640;'; }
-        if (textEl) { textEl.textContent = 'LOADING...'; }
+        if (textEl) { textEl.textContent = 'LOADING\u2026'; }
       }
     }
     setTimeout(function() { window.location.href = url; }, 280);
