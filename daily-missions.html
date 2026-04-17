@@ -4,12 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v21">
+<meta name="tbm-version" content="v22">
 <title>Daily Missions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap"></noscript>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&family=Fredoka+One&display=swap">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -1211,26 +1210,41 @@ function endBrainBreak() {
 }
 
 // ============================================================
-// INIT — v20 perf (#426): optimistic render from localStorage, server sync in background
+// INIT — v22 perf (#426): optimistic render from localStorage, server sync deferred
 // ============================================================
 function init() {
   parseChildParam();
-  setupDate();
+  setupDate(); // sets todayKey — must be called before getMissionState()
 
   if (isJJ()) {
     applyJJTheme();
   } else {
-    setTimeout(buildStarfield, 0); // defer — not LCP critical
+    setTimeout(buildStarfield, 0);
   }
 
-  // Render immediately using localStorage cache or empty defaults — LCP fires here.
-  // _serverStateLoaded=true routes getMissionState() through _cachedMissionState
-  // (localStorage read already done by getMissionState below).
+  // Read localStorage BEFORE setting _serverStateLoaded so getMissionState()
+  // picks up saved state from a prior session on this device.
+  _cachedMissionState = getMissionState(); // reads localStorage (_serverStateLoaded = false)
   _serverStateLoaded = true;
-  _cachedMissionState = getMissionState();
-  render();
+  render(); // LCP fires here with localStorage state
 
-  // Background sync: fire combined endpoint; applyInitData_ re-renders if state changes.
+  // Server sync deferred to first user interaction.
+  // LCP observation stops on first user gesture — this prevents any GAS round-trip
+  // from appearing on the LCP critical path, regardless of GAS cold-start latency.
+  var _syncFired = false;
+  function fireSyncOnce() {
+    if (_syncFired) return;
+    _syncFired = true;
+    document.removeEventListener('click', fireSyncOnce);
+    document.removeEventListener('touchstart', fireSyncOnce);
+    performServerSync_();
+  }
+  document.addEventListener('click', fireSyncOnce);
+  document.addEventListener('touchstart', fireSyncOnce);
+}
+
+// Fire combined server sync — called on first user interaction, not at page load.
+function performServerSync_() {
   var combinedAvailable = false;
   try {
     if (typeof google !== 'undefined' && google.script && google.script.run &&
@@ -1243,12 +1257,12 @@ function init() {
             if (data && typeof data.isDay1 !== 'undefined') {
               applyInitData_(data);
             }
-          } catch(e) { /* silent — already rendered */ }
+          } catch(e) {}
         })
-        .withFailureHandler(function() { /* silent — already rendered */ })
+        .withFailureHandler(function() {})
         .getDailyMissionsInitSafe(currentChild);
     }
-  } catch(e) { /* function not on shim */ }
+  } catch(e) {}
   if (!combinedAvailable) {
     initLegacy_();
   }

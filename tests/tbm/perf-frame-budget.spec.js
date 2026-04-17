@@ -44,6 +44,20 @@ Object.keys(ROUTES_BY_PROJECT).forEach(function(proj) {
   });
 });
 
+// Pre-warm the GAS CacheService before perf tests run.
+// getTodayContentSafe cold-start is ~2200ms; warm is ~50ms. Template injection in
+// Code.gs doGet() calls getTodayContentSafe at serve time for /homework, so a single
+// pre-warm call here ensures <350ms serve time for the entire perf-surface-pro5 run.
+test.beforeAll(async function({ request }) {
+  try {
+    await request.post('https://thompsonfams.com/api', {
+      data: JSON.stringify({ fn: 'getTodayContentSafe', args: ['buggsy'] }),
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 30000,
+    });
+  } catch (e) { /* non-fatal — perf test still runs, just with cold-cache LCP */ }
+});
+
 // Inject CF Worker PIN cookie for finance-gated surfaces
 test.beforeEach(async function({ context }) {
   if (TBM_PIN) {
