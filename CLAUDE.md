@@ -28,9 +28,9 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 
 **Mandatory first command for any Sonnet build thread (run before anything else):**
 ```
-cd "$(git rev-parse --show-toplevel)"
+cd "C:/Dev/tbm-apps-script"
 ```
-This loads `.claude/settings.local.json` (repo-scoped MCP + Bash allowances). Without it, every MCP tool call prompts for approval scoped to the wrong directory (`C:\Program Files\Git`). Any "don't ask again" approval saved from the wrong directory is wasted — it won't apply here. See #420 + #391 for the full Sonnet environment context.
+This loads `.claude/settings.local.json` (repo-scoped MCP + Bash allowances). Without it, every MCP tool call prompts for approval scoped to the wrong directory (`C:\Program Files\Git`). Any "don't ask again" approval saved from the wrong directory is wasted — it won't apply here. Use the hardcoded path rather than `git rev-parse --show-toplevel` — that command fails when the shell starts outside any git worktree. See #420 + #391 for the full Sonnet environment context.
 
 1. Read this file fully
 2. Run `clasp deployments` to confirm deployment ID
