@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v25">
+<meta name="tbm-version" content="v26">
 <title>Wolfkid Training Module</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2446,9 +2446,26 @@ function onCurriculumLoaded_(response) {
       }
 }
 
+// v26 (#436): Test-mode opt-out for Playwright. When ?testMode=1 is present,
+// skip the SSR fast path so gas-shim's google.script.run interceptor can
+// return fixtures instead of whatever prod content the current day actually
+// has. ES5 — manual query-string parse, no URLSearchParams.
+function _isTestMode_() {
+  var search = window.location.search || '';
+  if (search.length < 2) return false;
+  var pairs = search.substring(1).split('&');
+  for (var i = 0; i < pairs.length; i++) {
+    var kv = pairs[i].split('=');
+    if (kv[0] === 'testMode' && kv[1] === '1') return true;
+  }
+  return false;
+}
+
 function loadCurriculumContent() {
-  // v24 (#426): fast path — content injected at serve time by Code.gs, skip GAS round-trip
-  if (typeof _INJECTED_RESPONSE !== 'undefined' && _INJECTED_RESPONSE !== null && !MAKEUP_MODE && _dayOfWeek !== 'Friday') {
+  // v24 (#426): fast path — content injected at serve time by Code.gs, skip GAS round-trip.
+  // v26 (#436): testMode URL param bypasses fast path so Playwright's shimGAS
+  // interceptor can serve fixture content regardless of today's curriculum shape.
+  if (typeof _INJECTED_RESPONSE !== 'undefined' && _INJECTED_RESPONSE !== null && !MAKEUP_MODE && _dayOfWeek !== 'Friday' && !_isTestMode_()) {
     onCurriculumLoaded_(_INJECTED_RESPONSE);
     return;
   }
