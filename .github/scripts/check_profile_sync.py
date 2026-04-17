@@ -242,8 +242,12 @@ def main():
             continue
 
         # Migrated consumer path: parser identified the target as dynamically
-        # derived (CallExpression). Confirm the file imports profiles.json
-        # and mark as in-sync-by-construction.
+        # derived (CallExpression). Confirm (a) the file imports profiles.json,
+        # (b) the file references its own alias-lookup key, and (c) profiles.json
+        # actually contains that alias key with the expected local-alias value
+        # for every canonical device in the consumer's mapping. Catches typos
+        # in the JS alias string and missing/renamed entries in profiles.json
+        # that would otherwise silently produce an empty DEVICES map at runtime.
         if parsed.get('source') == 'js:migrated-callexpr':
             abs_path = os.path.join(REPO_ROOT, entry['file'])
             with open(abs_path, 'r', encoding='utf-8') as fh:
@@ -255,8 +259,37 @@ def main():
                     'detail': 'Either add the import or revert to a static map the parser can validate.',
                 })
                 continue
+
+            alias_key = entry['file'] + ':' + entry['target']
+            if alias_key not in src:
+                drifts.append({
+                    'file': entry['file'],
+                    'problem': 'migrated consumer does not reference its alias-lookup key',
+                    'detail': "source must contain the literal string '" + alias_key + "' so the buildDevices() lookup matches profiles.json aliases",
+                })
+                continue
+
+            mismatches = []
+            for local_alias, canonical_device in entry.get('mapping', {}).items():
+                device = profiles.get('devices', {}).get(canonical_device, {})
+                aliases = device.get('aliases', {}) or {}
+                actual = aliases.get(alias_key)
+                if actual != local_alias:
+                    mismatches.append({
+                        'canonical_device': canonical_device,
+                        'expected_alias': local_alias,
+                        'actual_alias': actual,
+                    })
+            if mismatches:
+                drifts.append({
+                    'file': entry['file'],
+                    'problem': 'migrated consumer alias mapping drift in profiles.json',
+                    'detail': mismatches,
+                })
+                continue
+
             migrated.append(entry['file'])
-            parsed_consumers[entry['file']] = {'__migrated': True}
+            parsed_consumers[entry['file']] = {'__migrated': True, 'alias_key': alias_key}
             continue
 
         consumer_data = parsed.get('data', {})

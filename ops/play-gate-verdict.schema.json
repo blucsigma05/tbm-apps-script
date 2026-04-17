@@ -41,8 +41,8 @@
     },
     "route": {
       "type": "string",
-      "pattern": "^/[a-z0-9\\-/]*$",
-      "description": "Route path being tested (e.g. /sparkle, /homework)."
+      "pattern": "^/[a-z0-9\\-/]+(\\?[a-z0-9][a-z0-9\\-=&_]*)?$",
+      "description": "Route path being tested (e.g. /sparkle, /homework, /daily-missions?child=jj). Optional query string allowed because ops/play-gate-profiles.json routeViewports keys query-bearing routes."
     },
     "child": {
       "type": "string",
