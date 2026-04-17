@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v73 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v76 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 74; }
+function getKidsHubVersion() { return 76; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -3920,40 +3920,28 @@ function logScaffoldEventSafe(data) {
 }
 
 function getWeekProgress_(child) {
-  var data = readSheet_('KH_History');
-  if (!data || data.length < 2) return { daysCompleted: 0, goalMet: false };
-  var h = data[0].map(String);
-  var hChild = h.indexOf('Child');
-  var hType = h.indexOf('Event_Type');
-  var hDate = h.indexOf('Date');
-
-  var today = new Date();
-  var dayOfWeek = today.getDay();
-  var mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  var monday = new Date(today);
-  monday.setDate(today.getDate() + mondayOffset);
-  monday.setHours(0, 0, 0, 0);
-  var mondayStr = monday.getFullYear() + '-' + (monday.getMonth() + 1 < 10 ? '0' : '') + (monday.getMonth() + 1) + '-' + (monday.getDate() < 10 ? '0' : '') + monday.getDate();
-  var todayStr = getTodayISO_();
-  var daysSet = {};
-
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    if (String(row[hChild] || '').toLowerCase() !== child.toLowerCase()) continue;
-    var evType = String(row[hType] || '');
-    if (evType !== 'education' && evType !== 'education_progress') continue;
-    var rowDate = String(row[hDate] || '');
-    if (rowDate >= mondayStr && rowDate <= todayStr) {
-      daysSet[rowDate] = true;
+  // Source from KH_Education (not KH_History) so that makeup completions are
+  // resolved against the original weekday. logHomeworkCompletionSafe sets
+  // Timestamp = makeupDate when submitting catch-up work, and
+  // _aggregateKHEducation_ uses Timestamp as the date key — so a Tuesday
+  // assignment completed on Friday correctly populates Tuesday's slot.
+  var bounds = _computeWeekBounds_();
+  var eduData = readSheet_('KH_Education');
+  var agg = _aggregateKHEducation_(String(child).toLowerCase(), bounds, eduData);
+  var completedDays = {};
+  var checkDate = new Date(bounds.monday);
+  for (var i = 0; i < agg.weekLog.length; i++) {
+    var status = agg.weekLog[i].status;
+    if (status === 'done' || status === 'pending') {
+      completedDays[_isoDate_(checkDate)] = true;
     }
+    checkDate.setDate(checkDate.getDate() + 1);
   }
-
   var count = 0;
-  for (var d in daysSet) {
-    if (daysSet.hasOwnProperty(d)) count++;
+  for (var d in completedDays) {
+    if (completedDays.hasOwnProperty(d)) count++;
   }
-
-  return { daysCompleted: count, goalMet: count >= 5 };
+  return { daysCompleted: count, goalMet: count >= 5, completedDays: completedDays };
 }
 
 function getWeekProgressSafe(child) {
@@ -5367,5 +5355,5 @@ function checkHomeworkGateSafe(child) {
   });
 }
 
-// END OF FILE — KidsHub.gs v73
+// END OF FILE — KidsHub.gs v76
 // ════════════════════════════════════════════════════════════════════

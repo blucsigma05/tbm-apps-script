@@ -165,6 +165,10 @@ var EDUCATION_FIXTURES = {
   logScaffoldEventSafe: { success: true },
   getAudioBatchSafe: {},
 
+  // getWeekProgressSafe: empty completedDays so the catch-up banner renders all
+  // missed days in tests (no server-side completions assumed in test fixtures).
+  getWeekProgressSafe: { daysCompleted: 0, goalMet: false, completedDays: {} },
+
   // getFridayMakeupQueueSafe: return empty queue so the Friday clock test
   // enters init() directly without hitting the real GAS backend.
   // Empty array = no makeup days queued → _isFridayMakeupMode stays false.
