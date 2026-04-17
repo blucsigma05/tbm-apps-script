@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v19">
+<meta name="tbm-version" content="v20">
 <title>Wolfkid Training Module</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -2158,6 +2158,18 @@ function showLoadError_(reason) {
 
 // ─── CATCH-UP BANNER (#409) ───
 // Shows missed weekdays from fullWeek that have module content and haven't been dismissed.
+function dismissCatchUpBanner_() {
+  var b = document.getElementById('tbm-catchup-banner');
+  if (!b) return;
+  var keys = (b.getAttribute('data-dismiss-keys') || '').split(',');
+  for (var i = 0; i < keys.length; i++) {
+    if (keys[i]) {
+      try { window.localStorage.setItem(keys[i], '1'); } catch(e) {}
+    }
+  }
+  if (b.parentNode) b.parentNode.removeChild(b);
+}
+
 function renderCatchUpBanner_(fullWeek) {
   var ORDERED_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   var today = new Date();
@@ -2194,8 +2206,10 @@ function renderCatchUpBanner_(fullWeek) {
   }
   if (!missed.length) return;
   var items = '';
+  var dismissKeys = [];
   for (var j = 0; j < missed.length; j++) {
     var m = missed[j];
+    dismissKeys.push(m.dismissKey);
     items += '<a href="/homework?day=' + m.day.toLowerCase() + '" ' +
       'style="display:inline-block;background:#1e293b;border:1px solid #f97316;border-radius:8px;' +
       'padding:8px 16px;margin:4px;color:#fdba74;font-family:Orbitron,sans-serif;font-size:12px;' +
@@ -2204,10 +2218,14 @@ function renderCatchUpBanner_(fullWeek) {
   }
   var banner = document.createElement('div');
   banner.id = 'tbm-catchup-banner';
-  banner.style.cssText = 'background:#1a1200;border-bottom:2px solid #f97316;padding:10px 16px;' +
-    'text-align:center;font-family:Nunito,sans-serif;';
+  banner.setAttribute('data-dismiss-keys', dismissKeys.join(','));
+  banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#1a1200;border-bottom:2px solid #f97316;' +
+    'padding:10px 16px;text-align:center;font-family:Nunito,sans-serif;z-index:200;';
   banner.innerHTML = '<div style="font-size:13px;color:#fde68a;font-weight:700;margin-bottom:6px;">' +
-    '\uD83D\uDCC5 Missed days this week \u2014 tap to catch up:</div>' + items;
+    '\uD83D\uDCC5 Missed days this week \u2014 tap to catch up:</div>' + items +
+    '<button data-testid="catchup-banner-dismiss" onclick="dismissCatchUpBanner_()" ' +
+    'style="position:absolute;top:6px;right:10px;background:none;border:none;color:#fde68a;' +
+    'font-size:16px;cursor:pointer;padding:4px 8px;line-height:1;">\u2715</button>';
   document.body.insertBefore(banner, document.body.firstChild);
 }
 

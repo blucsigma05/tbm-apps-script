@@ -165,6 +165,11 @@ var EDUCATION_FIXTURES = {
   logScaffoldEventSafe: { success: true },
   getAudioBatchSafe: {},
 
+  // getFridayMakeupQueueSafe: return empty queue so the Friday clock test
+  // enters init() directly without hitting the real GAS backend.
+  // Empty array = no makeup days queued → _isFridayMakeupMode stays false.
+  getFridayMakeupQueueSafe: [],
+
   // getAssetRegistrySafe: not yet in Cloudflare FNS list — shimGAS injects it
   // so SparkleLearning.html doesn't throw "is not a function".
   getAssetRegistrySafe: {}

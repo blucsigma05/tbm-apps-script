@@ -1,0 +1,86 @@
+# .github/workflows/post-deploy-closeout.yml
+# Post-deploy closeout — runs after deploy-and-notify.yml on every main deploy.
+# Automates the manual steps from CLAUDE.md deploy pipeline (steps 7-7b):
+#   - Pull deployed versions from /api probe
+#   - Update Notion PM Active Versions DB
+#   - Sweep all CF routes (ops/routes.json); Pushover on non-200
+#   - Append thread handoff to Notion Thread Handoff Archive
+#
+# Closes #383.
+
+name: Post-Deploy Closeout
+
+on:
+  workflow_run:
+    workflows: ["Deploy and Notify"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Print actions without writing to Notion'
+        required: false
+        default: 'false'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  closeout:
+    name: Notion + CF route sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Only run if the triggering deploy workflow succeeded (or manual dispatch).
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check required secrets
+        id: secrets-check
+        run: |
+          missing=""
+          [ -z "${{ secrets.NOTION_API_KEY }}" ]       && missing="$missing NOTION_API_KEY"
+          [ -z "${{ secrets.PUSHOVER_APP_TOKEN }}" ]   && missing="$missing PUSHOVER_APP_TOKEN"
+          [ -z "${{ secrets.PUSHOVER_USER_KEY }}" ]    && missing="$missing PUSHOVER_USER_KEY"
+          if [ -n "$missing" ]; then
+            echo "DEPLOY_BLOCKED: missing secrets:$missing"
+            echo "blocked=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "blocked=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Resolve PR metadata
+        id: pr-meta
+        if: github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          pr=$(gh pr list --state merged --search "$SHA" --json number,title --limit 1 2>/dev/null || echo '[]')
+          pr_number=$(echo "$pr" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['number'] if d else '')" 2>/dev/null || echo '')
+          pr_title=$(echo  "$pr" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['title']  if d else '')" 2>/dev/null || echo '')
+          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "pr_title=$pr_title"   >> "$GITHUB_OUTPUT"
+
+      - name: Run post-deploy closeout
+        if: steps.secrets-check.outputs.blocked != 'true'
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          PM_VERSIONS_DB_ID: ${{ secrets.PM_VERSIONS_DB_ID }}
+          DEPLOY_PAGE_ID: ${{ secrets.DEPLOY_PAGE_ID }}
+          THREAD_ARCHIVE_ID: "322cea3cd9e881bb8afcd560fe772481"
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          TBM_BASE_URL: "https://thompsonfams.com"
+          GITHUB_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          GITHUB_REF_NAME: ${{ github.event.workflow_run.head_branch || github.ref_name }}
+          PR_NUMBER: ${{ steps.pr-meta.outputs.pr_number }}
+          PR_TITLE: ${{ steps.pr-meta.outputs.pr_title }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          ROUTES_JSON_PATH: "ops/routes.json"
+        run: python3 .github/scripts/post_deploy_closeout.py

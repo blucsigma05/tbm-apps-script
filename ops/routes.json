@@ -1,0 +1,33 @@
+{
+  "base": "https://thompsonfams.com",
+  "routes": [
+    "/buggsy",
+    "/jj",
+    "/parent",
+    "/pulse",
+    "/vein",
+    "/spine",
+    "/soul",
+    "/vault",
+    "/homework",
+    "/sparkle",
+    "/sparkle-free",
+    "/wolfkid",
+    "/wolfdome",
+    "/dashboard",
+    "/sparkle-kingdom",
+    "/facts",
+    "/reading",
+    "/writing",
+    "/story-library",
+    "/comic-studio",
+    "/progress",
+    "/story",
+    "/investigation",
+    "/daily-missions",
+    "/daily-adventures",
+    "/baseline",
+    "/power-scan"
+  ],
+  "api_probe": "/api?fn=getDeployedVersionsSafe&args=%5B%5D"
+}
