@@ -90,11 +90,17 @@ function extractJsConstant(src, target, file) {
     var node = body[i];
     if (node.type === 'VariableDeclaration') {
       var found = tryExtractFromDeclarations(node.declarations, target);
-      if (found !== null) return wrap(file, target, 'js:variable', found);
+      if (found !== null) {
+        if (found && found.__dynamic) return wrap(file, target, 'js:migrated-callexpr', found);
+        return wrap(file, target, 'js:variable', found);
+      }
     }
     if (node.type === 'ExportNamedDeclaration' && node.declaration && node.declaration.type === 'VariableDeclaration') {
       var found2 = tryExtractFromDeclarations(node.declaration.declarations, target);
-      if (found2 !== null) return wrap(file, target, 'js:export-variable', found2);
+      if (found2 !== null) {
+        if (found2 && found2.__dynamic) return wrap(file, target, 'js:migrated-callexpr', found2);
+        return wrap(file, target, 'js:export-variable', found2);
+      }
     }
     if (target === 'default' && node.type === 'ExportDefaultDeclaration') {
       if (node.declaration && node.declaration.type === 'ObjectExpression') {
@@ -116,6 +122,13 @@ function tryExtractFromDeclarations(declarations, target) {
     var decl = declarations[i];
     if (decl.id && decl.id.type === 'Identifier' && decl.id.name === target) {
       if (!decl.init) return null;
+      // Dynamically-derived (migrated) consumer: the target is built from a
+      // function call, not a literal. Return a sentinel instead of crashing —
+      // the Python driver will verify the file imports profiles.json and
+      // treat it as in-sync by construction.
+      if (decl.init.type === 'CallExpression' || decl.init.type === 'NewExpression') {
+        return { __dynamic: true, reason: 'init is ' + decl.init.type + ' — consumer derives from runtime source' };
+      }
       return astToJs(decl.init);
     }
   }

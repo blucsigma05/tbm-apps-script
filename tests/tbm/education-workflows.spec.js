@@ -17,12 +17,23 @@ var FIXTURES = gasShim.EDUCATION_FIXTURES;
 
 var BASE_URL = process.env.TBM_BASE_URL || '';
 
-var DEVICES = {
-  s25: { width: 390, height: 844 },
-  a9: { width: 800, height: 1280 },
-  surface_pro: { width: 1368, height: 912 },
-  s10fe: { width: 1200, height: 1920 }
-};
+// DEVICES derived from ops/play-gate-profiles.json (canonical per EPIC #439).
+// Aliases map names the key each consumer uses. CI script
+// .github/scripts/check_profile_sync.py enforces no drift.
+var path = require('path');
+var PROFILES = require(path.join(__dirname, '..', '..', 'ops', 'play-gate-profiles.json'));
+var DEVICES = (function buildDevices() {
+  var out = {};
+  var deviceKeys = Object.keys(PROFILES.devices);
+  for (var i = 0; i < deviceKeys.length; i++) {
+    var device = PROFILES.devices[deviceKeys[i]];
+    var alias = device.aliases && device.aliases['tests/tbm/education-workflows.spec.js:DEVICES'];
+    if (alias) {
+      out[alias] = { width: device.viewport.width, height: device.viewport.height };
+    }
+  }
+  return out;
+})();
 
 // Screenshot helper — saves to test-results/screenshots/education/ so the
 // existing CI upload-artifact step picks them up automatically.
