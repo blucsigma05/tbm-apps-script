@@ -1,0 +1,53 @@
+# .github/workflows/codex-rereview-handoff.yml
+# Phase 3 of the Codex <-> Claude event router (#468).
+# When a PR's body or commit messages reference "Closes #<inbox-issue>" (or
+# Fixes / Resolves), post a <!-- tbm-handoff --> marker on the PR to
+# document the Claude -> Codex handoff and cue Codex's next re-review.
+# Complements Phase 1 (filer) and Phase 2 (auto-close) which live inline
+# in codex-pr-review.yml. This router is deliberately a SEPARATE workflow:
+# it posts only a PR comment (no downstream workflow triggers needed),
+# so the GITHUB_TOKEN recursive-run restriction does not apply.
+# Logic lives in .github/scripts/post_tbm_handoff_marker.py (no heredocs).
+
+name: Codex Re-review Handoff (Phase 3)
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: Pull request number to process
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+concurrency:
+  # Per-PR. Rapid pushes collapse to the final state; the marker is
+  # idempotent (update-or-create) so cancelled runs leave nothing stale.
+  group: codex-rereview-handoff-pr-${{ github.event.pull_request.number || github.event.inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  post-handoff-marker:
+    name: Post tbm-handoff marker
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout base branch code
+        uses: actions/checkout@v4
+
+      - name: Post handoff marker
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr }}
+          REPO: ${{ github.repository }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTOMATION_ENABLED: ${{ vars.AUTOMATION_ENABLED || 'true' }}
+          TBM_HANDOFF_ROUTER_ENABLED: ${{ vars.TBM_HANDOFF_ROUTER_ENABLED || 'true' }}
+        run: python3 .github/scripts/post_tbm_handoff_marker.py
