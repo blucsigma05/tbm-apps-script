@@ -10,9 +10,21 @@ Purpose:   Convert automated Codex PR review findings into durable claude:inbox
            handles human-authored finding markers via a separate trust domain
            and separate dedup mechanism (_finding_dedup.py comment-ID markers).
 
-Called by: .github/workflows/codex-review-filer.yml
-Trust:     github-actions[bot] author only. Human-authored findings are NOT
-           handled here — they stay on the manual listener path.
+Called by: .github/workflows/codex-pr-review.yml (INLINE filer step, runs in
+           the same job immediately after the review comment is posted).
+           Inline rather than a separate issue_comment-triggered workflow
+           because GITHUB_TOKEN-authored events don't trigger other workflow
+           runs — GitHub's recursive-loop prevention. See #456.
+
+           A synthetic COMMENT_BODY is constructed in the workflow step from
+           review-report.json wrapped in <!-- codex-pr-review --> and
+           <!-- codex-review-report --> markers, so extract_json_block() below
+           works unchanged.
+
+Trust:     github-actions[bot] author only. The inline caller asserts this
+           via COMMENT_AUTHOR env. Human-authored findings are NOT handled
+           here — they stay on the manual listener path
+           (codex-finding-listener.yml + parse_finding_comment.py).
 
 Env vars:
   Required:
