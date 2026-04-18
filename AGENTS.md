@@ -1,8 +1,11 @@
 # TBM Agent Instructions
 
-**This file is a thin pointer. The canonical project rules live in [CLAUDE.md](CLAUDE.md).** Any agent working in this repo — Claude family, Codex, or other tool-agnostic agents — should read `CLAUDE.md` first; that is the single source of truth for architecture, deploy pipeline, QA gates, ES5 enforcement, pattern registry, file map, CI rules, and everything else about how TBM is built and operated.
+**This file is a thin pointer.** TBM splits canonical rules across two files by domain — neither one is a catch-all SSOT:
 
-This file exists because the AGENTS.md convention is the ecosystem-standard entrypoint some tools check first. Rather than duplicate `CLAUDE.md` here (which would drift), we keep this short and load-bearing.
+- **[CLAUDE.md](CLAUDE.md)** — canonical for **code / architecture / deploy / QA** rules: architecture, deploy pipeline, QA gates, ES5 enforcement, pattern registry, file map, CI rules, verify-before-assert, hooks.
+- **[ops/WORKFLOW.md](ops/WORKFLOW.md)** — canonical for **process / workflow / two-lane** rules: Issue/PR hierarchy, label families (`kind:*`, `severity:*`, `area:*`, `model:*`), Project board flows, Two-Lane Handoff Rules (command contract, trigger phrases, handoff-marker contract).
+
+This file exists because the AGENTS.md convention is the ecosystem-standard entrypoint some tools check first. Rather than duplicate either canonical file here (which would drift), this file stays short and points to whichever domain the reader needs. If your question is "how do I build / deploy / test," read CLAUDE.md. If your question is "how does work move through Issues, PRs, and the board," read ops/WORKFLOW.md.
 
 ## Two-Lane Roles (MANDATORY)
 
@@ -29,4 +32,8 @@ See [ops/WORKFLOW.md § Two-Lane Handoff Rules](ops/WORKFLOW.md) for the command
 
 ## Dual-maintenance rule
 
-When a hard rule changes, update [CLAUDE.md](CLAUDE.md) first. This file only needs updating if the Two-Lane Roles contract itself changes, or if a new top-level pointer belongs in the "Where to find things" table. Do not mirror full rule text here.
+When a hard rule changes, update the canonical file for that rule's domain:
+- **Code / architecture / deploy / QA rule** → update [CLAUDE.md](CLAUDE.md).
+- **Process / workflow / label / two-lane rule** → update [ops/WORKFLOW.md](ops/WORKFLOW.md).
+
+This file only needs updating if the Two-Lane Roles contract itself changes, or if a new top-level pointer belongs in the "Where to find things" table. Do not mirror full rule text here.
