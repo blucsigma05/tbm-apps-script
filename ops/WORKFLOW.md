@@ -163,10 +163,13 @@ Two paths, both producing durable Issues. They differ in trust domain and dedup 
 1. Codex (auto or manual) reviews a PR, posts findings
 
 2a. AUTO path — bot comment with <!-- codex-review-report --> JSON:
-    codex-review-filer.yml (fires on issue_comment:created+edited)
-      -> file_codex_review_findings.py parses JSON
-      -> per blocker/critical finding, invokes file_hygiene_issue.py
+    codex-pr-review.yml posts the review comment, then its INLINE filer step
+    (run in the same job) invokes file_codex_review_findings.py
+      -> parses the review-report.json produced by codex_review.py
+      -> per blocker/critical finding, invokes file_hygiene_issue.py subprocess
       -> claude:inbox Issue filed (signature dedup on rule+file+evidence_hash+pr)
+    Inline rather than a separate issue_comment-triggered workflow because
+    GITHUB_TOKEN-authored events don't trigger other workflow runs (see #456).
     Kill switches: AUTOMATION_ENABLED, CODEX_REVIEW_FILER_ENABLED,
                    CLAUDE_INBOX_MAJOR_ENABLED.
 
