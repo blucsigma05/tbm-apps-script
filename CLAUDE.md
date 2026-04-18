@@ -134,6 +134,19 @@ Common skills: `thompson-engineer` (GAS architecture), `game-design` (game UI), 
 
 ---
 
+## Two-Lane Roles (MANDATORY)
+
+- **Builder lane** (Claude/Opus/Sonnet): scope, spec, implement, fix.
+- **Audit lane** (Codex): inspects the named PR or named current state only.
+- **PR-scoped audits**: when LT names a PR, audit that PR alone unless LT explicitly says `stacked` or `after PR M`.
+- **Plain-English commands**: agents translate LT's natural-language instructions into repo state. LT does not own git terminology.
+- **Boardroom conversations become operating memos** in `ops/operating-memos/YYYY-MM-DD-<topic>.md` when they change how TBM operates.
+- **Handoff comments are optional**: use `<!-- tbm-handoff -->` only when a PR changes hands mid-flight or pauses with a clear next action. At most one active comment per PR, edited in place.
+
+See `ops/WORKFLOW.md § Two-Lane Handoff Rules` for the command contract, trigger phrases, and full examples.
+
+---
+
 ## Never Do This
 
 ### Tier 1 — Causes Regressions
