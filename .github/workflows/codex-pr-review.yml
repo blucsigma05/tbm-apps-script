@@ -402,10 +402,13 @@ jobs:
           fi
           # Wrap the structured report in the marker envelope the filer script
           # expects, so it can reuse its extract_json_block() logic unchanged.
-          printf '%s\n' '<!-- codex-pr-review -->' > /tmp/synthetic_comment_body.md
-          printf '%s\n' '<!-- codex-review-report -->' >> /tmp/synthetic_comment_body.md
-          cat review-report.json >> /tmp/synthetic_comment_body.md
-          printf '\n%s\n' '<!-- /codex-review-report -->' >> /tmp/synthetic_comment_body.md
+          # Grouped redirect satisfies shellcheck SC2129 (one open/close vs 4).
+          {
+            printf '%s\n' '<!-- codex-pr-review -->'
+            printf '%s\n' '<!-- codex-review-report -->'
+            cat review-report.json
+            printf '\n%s\n' '<!-- /codex-review-report -->'
+          } > /tmp/synthetic_comment_body.md
           COMMENT_BODY="$(cat /tmp/synthetic_comment_body.md)" \
             python3 .github/scripts/file_codex_review_findings.py
 
