@@ -157,13 +157,39 @@ Cards move based on labels and PR state:
 
 ### Flow 4 — Codex PR audit with findings
 
+Two paths, both producing durable Issues. They differ in trust domain and dedup mechanism — do not merge them.
+
 ```
-1. Codex reviews a PR, posts findings as inline comments
-2. For each blocker finding, Codex also opens Issue with kind:bug + severity:blocker
-3. The Issue body references the PR comment URL
+1. Codex (auto or manual) reviews a PR, posts findings
+
+2a. AUTO path — bot comment with <!-- codex-review-report --> JSON:
+    codex-review-filer.yml (fires on issue_comment:created+edited)
+      -> file_codex_review_findings.py parses JSON
+      -> per blocker/critical finding, invokes file_hygiene_issue.py
+      -> claude:inbox Issue filed (signature dedup on rule+file+evidence_hash+pr)
+    Kill switches: AUTOMATION_ENABLED, CODEX_REVIEW_FILER_ENABLED,
+                   CLAUDE_INBOX_MAJOR_ENABLED.
+
+2b. MANUAL path — whitelisted human posts "Codex finding: FIX/HOLD/BLOCK":
+    codex-finding-listener.yml (fires on issue_comment / review / review_comment)
+      -> parse_finding_comment.py (authors: blucsigma05, chatgpt-codex-connector)
+      -> applies pipeline:* labels, files severity:blocker Issues via _finding_dedup.py
+         (comment-ID dedup)
+    Kill switches: AUTOMATION_ENABLED, CODEX_BLOCKER_AUTOFILE_ENABLED.
+
+3. Issue body includes exact PR-comment URL and a ## Build Skills section
 4. If the PR merges without fixing, the Issue stays open and blocks downstream work
-5. Fix comes as a follow-up PR closing the Issue
+5. Fix comes as a follow-up PR closing the Issue (builder lane = model:sonnet default)
 ```
+
+**Dedup semantics.** Re-reviews or comment edits on the same PR hitting the same
+underlying finding dedup to the same Issue signature. Open matches no-op;
+recent closed matches (≤7 days) reopen; no duplicate Issue is ever created.
+See `file_hygiene_issue.py:307–342` for the authoritative flow.
+
+**INCONCLUSIVE verdicts** (Codex CI truncated or errored) do NOT create
+Issues — they stay on the PR-check state surface handled by `review-watcher.js`.
+LT resolves them via a manual `audit N` in ChatGPT or an explicit waive.
 
 ---
 
