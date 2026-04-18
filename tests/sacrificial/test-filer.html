@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sacrificial test — codex-review-filer #450</title>
+</head>
+<body>
+<!--
+  SACRIFICIAL TEST FILE — #450 Phase 1 filer verification.
+
+  Intentionally contains an ES5 violation (object destructuring in HTML) so
+  that the automated Codex PR review flags it as a P1 blocker per CLAUDE.md
+  § ES5 Enforcement. The point is to prove that codex-review-filer.yml
+  (landed in PR #451) auto-files a claude:inbox Issue when Codex returns
+  FAIL with a blocker/critical finding.
+
+  This file lives in tests/sacrificial/ (not repo root) so audit-source.sh's
+  top-level *.html glob doesn't catch it — Codex reviews the full PR diff
+  regardless of path, so the bot will still flag it.
+
+  After the sacrificial test completes, this file and the PR are deleted.
+  Do NOT reference this file from anywhere else. Do NOT route a CF worker
+  to it. It has no runtime purpose.
+-->
+<h1>Sacrificial test — do not ship</h1>
+<script>
+  // Intentional ES5 violation — object destructuring is banned in .html files
+  // per CLAUDE.md § ES5 Enforcement: "Destructuring `{a, b} = obj` → Use `var a = obj.a`".
+  // Fire Stick / Fully Kiosk WebView does not support ES6 destructuring.
+  var sacrificialPayload = { a: "this triggers", b: "the codex-review-filer" };
+  var { a, b } = sacrificialPayload;
+  document.write(a + " " + b);
+</script>
+</body>
+</html>
