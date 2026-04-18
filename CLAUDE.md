@@ -542,6 +542,51 @@ LT applies branch protection in GitHub Settings > Branches > Branch protection r
 
 **Auto-merge policy:** Currently **manual review required**. Auto-merge can be enabled when the pipeline runs cleanly on 5 consecutive PRs without false negatives. Status: not yet enabled.
 
+### Autonomous Merge Authority
+
+Distinct from "Auto-merge policy" above (which concerns GitHub's CI-triggered auto-merge feature). This section governs when Claude Code may run `gh pr merge` directly during an interactive session.
+
+**Merge autonomously (green = go).** All of the following must hold:
+- Both CI AND Codex have explicit PASS verdicts on the PR
+- The PR matches one of these shapes:
+  - `CHORE:` / `DOCS:` / `CONFIG:` non-sensitive prefixed changes
+  - `severity:minor` feature work with no mutation-path changes
+  - Review-fix commits on a PR LT already saw the diff of
+  - Any PR where LT said "ship it" / "merge" / "let's go" in the same session
+- The PR does NOT touch any file in the "always confirm" list below
+- No active deploy freeze
+
+**Always confirm merge first (non-negotiable, no override).**
+- Hot files: `.github/workflows/**`, `.github/scripts/**`, `CLAUDE.md`, `audit-source.sh`, `cloudflare-worker.js`
+- Freeze-critical paths (enumerated in `ops/mutation-paths.md`)
+- Schema migrations or `TAB_MAP` changes
+- Financial model changes (DataEngine calculators, debt cascade, close logic)
+- Any PR with `severity:blocker` or `severity:critical`
+- Any PR where CI is yellow/red or Codex verdict is FAIL / INCONCLUSIVE
+- Kid-visible UI changes without a visual diff shown to LT in session
+- During an active deploy freeze (any merge)
+- PRs opened by a non-interactive agent lane (e.g. the nightly grinder — see #454)
+
+**Gray zone (ask first time, remember the call).**
+- First PR of a new pattern or area
+- New scheduled tasks / cron triggers
+- Changes to alert tier thresholds (`PUSHOVER_PRIORITY.*`)
+- First PR after a CI workflow change
+
+**Autonomous overnight work is a separate contract.** The nightly grinder (#454) and any future unsupervised automation **merges nothing**. That is a different trust tier — no interactive LT to catch subtle wrongness. Interactive session authority above does not extend to lanes LT is not watching.
+
+**Evidence standard for "Claude says green."** Before an autonomous merge, Claude must have VERIFIED (not assumed):
+- `gh pr checks <N>` shows all required checks passing (not just "workflow_run success")
+- `gh api repos/<owner>/<repo>/issues/<N>/comments --jq '.[] | select(.body | contains("codex-pr-review"))'` shows a Codex comment with explicit `**Verdict:** PASS` AND `**Files Reviewed:**` section
+- **Unresolved review threads = 0**, queried via GraphQL (NOT `gh pr view` — that does not expose thread-level resolution state; it only surfaces `reviewDecision` / `reviews`, which summarize differently):
+  ```bash
+  gh api graphql -f query='{ repository(owner:"<owner>",name:"<repo>") { pullRequest(number:<N>) { reviewThreads(first:50) { nodes { isResolved } } } } }' \
+    --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
+  ```
+  Output must be `0`. Any other number blocks autonomous merge.
+
+"Looks green in the UI" is not evidence. Read the API response.
+
 ### Cloudflare Worker Deploy Verification (issue #403)
 
 There are two separate Cloudflare integrations on this repo — do not confuse them:
