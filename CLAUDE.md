@@ -107,7 +107,7 @@ After 10+ messages in a session, re-read any file before editing it. Do not trus
 
 **Codex findings:**
 - In-PR review comments stay in the PR (that's the evidence).
-- **Automated path (bot):** For blocker/critical findings in the `<!-- codex-review-report -->` JSON emitted by `codex-pr-review.yml`, `codex-review-filer.yml` auto-files a durable Issue labeled `claude:inbox` + `kind:bug` + `severity:*` + `model:sonnet` (default) + `area:*` + `type:*`, with body including a `## Build Skills` section and the exact `#issuecomment-<id>` URL. Dedup is signature-based on `rule + file + evidence_hash + pr_number` — re-reviews on the same PR dedup to the same Issue signature: open matches no-op, recent closed matches (≤7 days) reopen, no duplicate is created. Kill switches: `AUTOMATION_ENABLED`, `CODEX_REVIEW_FILER_ENABLED`, `CLAUDE_INBOX_MAJOR_ENABLED`. `model:codex` is used instead of `model:sonnet` when the finding is in review-pipeline code itself.
+- **Automated path (bot):** For blocker/critical findings in the `<!-- codex-review-report -->` JSON emitted by `codex-pr-review.yml`, the **inline filer step inside that same workflow** runs `file_codex_review_findings.py` immediately after posting the review comment. It auto-files a durable Issue labeled `claude:inbox` + `kind:bug` + `severity:*` + `model:sonnet` (default) + `area:*` + `type:*`, with body including a `## Build Skills` section and the exact `#issuecomment-<id>` URL. (Inline rather than a separate workflow with an `issue_comment` trigger because `GITHUB_TOKEN`-authored events don't trigger other workflow runs — GitHub's recursive-loop prevention. See #456.) Dedup is signature-based on `rule + file + evidence_hash + pr_number` — re-reviews on the same PR dedup to the same Issue signature: open matches no-op, recent closed matches (≤7 days) reopen, no duplicate is created. Kill switches: `AUTOMATION_ENABLED`, `CODEX_REVIEW_FILER_ENABLED`, `CLAUDE_INBOX_MAJOR_ENABLED`. `model:codex` is used instead of `model:sonnet` when the finding is in review-pipeline code itself.
 - **Manual path (human):** Codex (or LT, during a manual audit via "audit N" in ChatGPT) posts freeform PR comments with `Codex finding: FIX/HOLD/BLOCK` markers. `codex-finding-listener.yml` picks these up via `parse_finding_comment.py` under the `{blucsigma05, chatgpt-codex-connector}` author whitelist and auto-files durable Issues for `severity:blocker` via `_finding_dedup.py` (comment-ID dedup). This path is unchanged.
 - Both paths produce durable Issues; they differ in trust domain and dedup mechanism. Do not merge them.
 
@@ -448,7 +448,7 @@ Phase 1 scope: one pilot check (HYG-06 version drift). Phase 2+ is out of scope 
 | `parse_test_results.py` | ci.yml | Parse GAS smoke+regression JSON into PR comment |
 | `parse_playwright_results.py` | playwright-regression.yml | Parse Playwright JSON into PR comment |
 | `parse_finding_comment.py` | codex-finding-listener.yml | Parse PR comment for human-authored finding markers (manual path), apply labels, file blocker Issues via `_finding_dedup.py` |
-| `file_codex_review_findings.py` | codex-review-filer.yml | Parse automated Codex review JSON (bot-authored), file blocker/critical findings as durable `claude:inbox` Issues via `file_hygiene_issue.py` |
+| `file_codex_review_findings.py` | codex-pr-review.yml (inline filer step) | Parse automated Codex review JSON (bot-authored), file blocker/critical findings as durable `claude:inbox` Issues via `file_hygiene_issue.py` |
 | `triage_review.py` | codex-pr-review.yml | Classify PR into skip/light/medium/full before review |
 | `check_version_drift.py` | hygiene.yml | Compare deployed GAS versions against source constants |
 | `check_claude_md.py` | hygiene.yml | Detect CLAUDE.md bloat, dead refs, duplicate phrases |
@@ -536,8 +536,7 @@ thompsonfams.com/api/verify-pin   → PIN verification for finance surfaces
 | 1 | Workflow Lint | `workflow-lint.yml` | actionlint + py_compile + shellcheck — runs first |
 | 2 | TBM Smoke + Regression | `ci.yml` | GAS smoke + regression tests |
 | 2 | Playwright Regression | `playwright-regression.yml` | E2E + viewport screenshots |
-| 2 | Codex PR Review | `codex-pr-review.yml` | gpt-4o code review — has `needs: lint-gate` |
-| async | Codex Review Filer | `codex-review-filer.yml` | Auto-file durable `claude:inbox` Issues for blocker/critical findings from automated Codex reviews (fires on `issue_comment` — not a PR gate) |
+| 2 | Codex PR Review | `codex-pr-review.yml` | gpt-4o code review — has `needs: lint-gate`. Inlines the claude:inbox filer step after posting its review comment (#450 Phase 1 — runs `file_codex_review_findings.py`). |
 
 LT applies branch protection in GitHub Settings > Branches > Branch protection rules (UI action).
 

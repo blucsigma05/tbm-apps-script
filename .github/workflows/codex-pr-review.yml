@@ -20,6 +20,12 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  # issues:write required by the inline Codex Review Filer step below (#456).
+  # Without this, file_hygiene_issue.py's `gh issue create`/`reopen` calls
+  # return 403 and the Phase 1 durable-issue path silently stops working.
+  # The deleted codex-review-filer.yml carried this permission; preserving it
+  # here prevents a functional regression in the claude:inbox auto-filing flow.
+  issues: write
 
 concurrency:
   # Shared group serializes reviews so only one OpenAI call runs at a time.
@@ -268,6 +274,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Post review comment on PR
+        id: post_review
         if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true' && steps.triage.outputs.mode != 'skip'
         uses: actions/github-script@v7
         with:
@@ -286,6 +293,7 @@ jobs:
             const existing = comments.find(c =>
               c.user.type === 'Bot' && c.body.includes('<!-- codex-pr-review -->')
             );
+            let commentId;
             if (existing) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
@@ -293,14 +301,19 @@ jobs:
                 comment_id: existing.id,
                 body,
               });
+              commentId = existing.id;
             } else {
-              await github.rest.issues.createComment({
+              const { data: created } = await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issueNumber,
                 body,
               });
+              commentId = created.id;
             }
+            // Exposed to the inline Codex Review Filer step below. Used to build
+            // the #issuecomment-<id> URL in the filed claude:inbox Issue body.
+            core.setOutput('comment_id', String(commentId));
 
       - name: Apply finding labels
         if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true' && steps.triage.outputs.mode != 'skip'
@@ -355,6 +368,46 @@ jobs:
                 core.warning('Could not add finding labels: ' + e.message);
               }
             }
+
+      # Phase 1 of the Codex -> Claude event router (#450). Invokes the filer
+      # INLINE rather than via a separate workflow with an issue_comment trigger,
+      # because issue_comment events fired by GITHUB_TOKEN don't trigger other
+      # workflow runs (loop prevention). See #456 for the root-cause analysis.
+      # Trust boundary still lives in file_codex_review_findings.py — it gates
+      # on COMMENT_AUTHOR == 'github-actions[bot]' (asserted here) + verdict
+      # FAIL + severity policy before invoking file_hygiene_issue.py subprocess.
+      - name: File Codex review findings (claude:inbox router, Phase 1)
+        if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true' && steps.triage.outputs.mode != 'skip' && steps.post_review.outputs.comment_id != ''
+        env:
+          # Trust-domain assertion — this is the AUTOMATED bot path.
+          COMMENT_AUTHOR: 'github-actions[bot]'
+          COMMENT_ID: ${{ steps.post_review.outputs.comment_id }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          REPO: ${{ github.repository }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Our kill switches.
+          AUTOMATION_ENABLED: ${{ vars.AUTOMATION_ENABLED || 'true' }}
+          CODEX_REVIEW_FILER_ENABLED: ${{ vars.CODEX_REVIEW_FILER_ENABLED || 'true' }}
+          CLAUDE_INBOX_MAJOR_ENABLED: ${{ vars.CLAUDE_INBOX_MAJOR_ENABLED || 'false' }}
+          # Forwarded to file_hygiene_issue.py per its env contract.
+          # HYGIENE_ISSUE_CREATION_ENABLED is intentionally NOT forwarded —
+          # that belongs to the paused hygiene-filer.yml wrapper.
+          STATUS_ISSUE_NUMBER: ${{ vars.STATUS_ISSUE_NUMBER || '' }}
+          AUTOMATION_MAX_DAILY_ISSUES: ${{ vars.AUTOMATION_MAX_DAILY_ISSUES || '5' }}
+        run: |
+          if [ ! -f review-report.json ]; then
+            echo "review-report.json not found (review step produced no structured output); skipping filer"
+            exit 0
+          fi
+          # Wrap the structured report in the marker envelope the filer script
+          # expects, so it can reuse its extract_json_block() logic unchanged.
+          printf '%s\n' '<!-- codex-pr-review -->' > /tmp/synthetic_comment_body.md
+          printf '%s\n' '<!-- codex-review-report -->' >> /tmp/synthetic_comment_body.md
+          cat review-report.json >> /tmp/synthetic_comment_body.md
+          printf '\n%s\n' '<!-- /codex-review-report -->' >> /tmp/synthetic_comment_body.md
+          COMMENT_BODY="$(cat /tmp/synthetic_comment_body.md)" \
+            python3 .github/scripts/file_codex_review_findings.py
 
       - name: Integrity check — detect rubber-stamped audits
         if: always() && steps.override.outputs.overridden != 'true' && steps.pr.outputs.same_repo == 'true' && steps.pr.outputs.draft != 'true' && steps.triage.outputs.mode != 'skip'
