@@ -52,22 +52,29 @@ Behavior:
   2. Gate on COMMENT_AUTHOR == 'github-actions[bot]'. Silent exit otherwise.
   3. Locate <!-- codex-review-report --> ... <!-- /codex-review-report --> block.
      Extract JSON. Silent exit if absent or unparseable.
-  4. Gate on verdict == 'FAIL'. PASS and INCONCLUSIVE exit silently —
-     INCONCLUSIVE is handled by review-watcher.js as PR-check state, not a
-     work-queue item.
-  5. For each finding in findings[]:
+  4. Gate on verdict. PASS and FAIL both proceed (PASS triggers auto-close of
+     all open claude:inbox Issues for the PR; FAIL files + auto-closes diff).
+     INCONCLUSIVE skips entirely (review-watcher.js handles that as PR-check
+     state, not a work-queue item).
+  5. Compute signatures for ALL findings in the current review (not just ones
+     that would be filed). This is the "current_sigs" set used by Phase 2
+     auto-close to decide which previously-filed Issues are still live.
+  6. For each finding in findings[] — file if severity policy matches:
        - severity in {'blocker','critical'}: always file
        - severity == 'major': file iff CLAUDE_INBOX_MAJOR_ENABLED=true
        - severity == 'minor': skip
-  6. Build identity dict via build_identity(): evidence_hash primary,
-     title_hash fallback when evidence is empty.
-  7. Derive area:* label via AREA_PREFIX_MAP (first match wins; JJ/Buggsy
-     before generic area:education).
-  8. Derive model:* label: model:sonnet by default (fix work per
-     ops/WORKFLOW.md:65). model:codex when finding.file matches a
-     review-pipeline path.
-  9. Invoke file_hygiene_issue.py per finding with the constructed finding-JSON.
- 10. Structured JSON-line logging to stdout.
+     Build identity dict via build_identity(): evidence_hash primary,
+     title_hash fallback when evidence is empty. Derive area:* via
+     AREA_PREFIX_MAP (first match wins; JJ/Buggsy before area:education).
+     Derive model:* — model:sonnet by default (fix work per
+     ops/WORKFLOW.md:65); model:codex when finding.file matches a
+     review-pipeline path. Invoke file_hygiene_issue.py per finding.
+  7. Phase 2 — auto-close resolved Issues (#462). List open claude:inbox
+     Issues whose body carries this PR's ref marker. For each whose embedded
+     signature is NOT in current_sigs, add auto-close:resolved label, post
+     closing comment, close the Issue. Respects auto:suppressed (permanent
+     dismissal — never close nor reopen those).
+  8. Structured JSON-line logging to stdout for every filed/skipped/closed.
 
 Exit: 0 success (one or more findings processed, or intentional skip).
       1 validation error (bad input, unexpected shape).
@@ -88,6 +95,19 @@ REPORT_END = '<!-- /codex-review-report -->'
 
 DEFAULT_SEVERITIES = {'blocker', 'critical'}
 OPTIONAL_SEVERITIES = {'major'}  # gated by CLAUDE_INBOX_MAJOR_ENABLED
+
+# Phase 2 — Auto-close on fix (#462). Markers added to the Issue body so that
+# future re-review runs can find the Issues associated with a given PR and
+# close those whose signature is no longer in the current findings list.
+PR_REF_MARKER_RE = re.compile(r'<!--\s*tbm-pr-ref:\s*(\d+)\s*-->')
+SIG_MARKER_RE = re.compile(
+    r'<!--\s*auto-finding\s+v=1\s+check=([^\s]+)\s+sig=([0-9a-f]+)\s*-->'
+)
+
+
+def pr_ref_marker(pr_number):
+    """HTML-comment marker embedded in filed Issue bodies. Phase 2 search anchor."""
+    return '<!-- tbm-pr-ref: {0} -->'.format(pr_number)
 
 # finding.type -> repo label (pre-existing repo labels only)
 TYPE_LABEL_MAP = {
@@ -293,7 +313,11 @@ def render_issue_details(finding, pr_number, repo, comment_id, confidence):
         repo, pr_number, comment_id
     )
     pr_url = 'https://github.com/{0}/pull/{1}'.format(repo, pr_number)
+    # Phase 2 search anchor — embed PR number as an HTML-comment marker so
+    # close_resolved_issues() can find this Issue on later re-review runs.
+    pr_ref = pr_ref_marker(pr_number)
     return (
+        '{pr_ref}\n\n'
         '### From Codex PR Review\n\n'
         '- **PR:** [#{pr}]({pr_url})\n'
         '- **Source comment:** [Codex review on #{pr}]({comment_url})\n'
@@ -312,6 +336,7 @@ def render_issue_details(finding, pr_number, repo, comment_id, confidence):
         'on every Issue)`. The picking Claude session may add more skills '
         'based on the specific file / module involved.)'
     ).format(
+        pr_ref=pr_ref,
         pr=pr_number, pr_url=pr_url, comment_url=comment_url,
         file=file_path, line=line, conf=(confidence or 'unknown'),
         snippet=snippet, fix=fix_hint,
@@ -372,6 +397,149 @@ def invoke_filer(payload):
     return proc.returncode, proc.stdout, proc.stderr
 
 
+# ──────────────────────────────────────────────────────────────────────
+# Phase 2 — Auto-close resolved Issues (#462).
+# When a PR re-review no longer lists a previously-filed finding, close
+# the corresponding claude:inbox Issue with auto-close:resolved.
+# ──────────────────────────────────────────────────────────────────────
+
+def compute_finding_sig(pr_number, finding):
+    """Replicate file_hygiene_issue.py:compute_sig on the identity we'd build
+    for this finding. Lets us decide which filed Issues still have live
+    findings without re-invoking the filer subprocess. Must stay in lockstep
+    with file_hygiene_issue.py's normalization rules.
+    """
+    identity = build_identity(pr_number, finding)
+    normalized = {}
+    for k, v in identity.items():
+        key = str(k).strip().lower()
+        if isinstance(v, str):
+            normalized[key] = v.strip().lower()
+        elif isinstance(v, bool) or isinstance(v, (int, float)) or v is None:
+            normalized[key] = v
+        else:
+            # build_identity only emits str values — defensive skip.
+            continue
+    payload = json.dumps(normalized, sort_keys=True, ensure_ascii=True).encode('utf-8')
+    return hashlib.sha256(payload).hexdigest()[:16]
+
+
+def list_inbox_issues_for_pr(repo, pr_number):
+    """Return open claude:inbox Issues whose body carries this PR's ref marker.
+    Client-side body filter because GitHub search indexing has latency on
+    recent creates (gh issue list is consistent; search is eventual).
+    """
+    marker = pr_ref_marker(pr_number)
+    proc = subprocess.run(
+        ['gh', 'issue', 'list',
+         '-R', repo,
+         '-l', 'claude:inbox',
+         '--state', 'open',
+         '--limit', '200',
+         '--json', 'number,body,labels'],
+        capture_output=True, text=True, encoding='utf-8',
+    )
+    if proc.returncode != 0:
+        log('close-list-error', stderr=(proc.stderr or '').strip()[:300])
+        return []
+    try:
+        items = json.loads(proc.stdout or '[]')
+    except (json.JSONDecodeError, ValueError):
+        return []
+    out = []
+    for it in items:
+        body = it.get('body') or ''
+        if marker not in body:
+            continue
+        labels = [L['name'] for L in (it.get('labels') or [])]
+        out.append({'number': it['number'], 'body': body, 'labels': labels})
+    return out
+
+
+def extract_issue_sig(body):
+    """Return the 16-hex signature embedded in the filer's marker, else None."""
+    m = SIG_MARKER_RE.search(body or '')
+    if m and m.group(1) == 'codex-review-finding':
+        return m.group(2)
+    return None
+
+
+def close_issue_as_resolved(repo, issue_number, pr_number, review_url):
+    """Add auto-close:resolved label, post closing comment, close the Issue.
+    Returns True iff the close API call succeeded. Label + comment failures
+    are logged but non-blocking — we still want to close the Issue even if
+    label/comment APIs throttle.
+    """
+    comment = (
+        'Auto-closed by the Codex review filer (Phase 2, #462) — the '
+        'associated finding is no longer present in the most recent Codex '
+        'review of [PR #{pr}]({url}).\n\n'
+        'If this closes in error, reopen the Issue and the filer will respect '
+        'it. The 7-day recent-closed reopen window from file_hygiene_issue.py '
+        'still applies — if the same finding reappears on the next review, '
+        'this Issue reopens automatically.'
+    ).format(pr=pr_number, url=review_url)
+    subprocess.run(
+        ['gh', 'issue', 'edit', str(issue_number),
+         '-R', repo,
+         '--add-label', 'auto-close:resolved'],
+        capture_output=True, text=True, encoding='utf-8',
+    )
+    subprocess.run(
+        ['gh', 'issue', 'comment', str(issue_number),
+         '-R', repo,
+         '--body', comment],
+        capture_output=True, text=True, encoding='utf-8',
+    )
+    proc = subprocess.run(
+        ['gh', 'issue', 'close', str(issue_number),
+         '-R', repo,
+         '--reason', 'completed'],
+        capture_output=True, text=True, encoding='utf-8',
+    )
+    if proc.returncode != 0:
+        log('close-error', issue=issue_number,
+            stderr=(proc.stderr or '').strip()[:300])
+        return False
+    return True
+
+
+def close_resolved_issues(repo, pr_number, current_sigs, review_url):
+    """For every open claude:inbox Issue associated with this PR, close it if
+    its signature is no longer present in the current review's findings.
+    Respects auto:suppressed (permanent LT dismissal) and skips Issues that
+    already carry auto-close:resolved.
+    """
+    closed = 0
+    skipped = 0
+    issues = list_inbox_issues_for_pr(repo, pr_number)
+    for issue in issues:
+        num = issue['number']
+        labels = issue['labels']
+        if 'auto:suppressed' in labels:
+            log('close-skip', issue=num, reason='suppressed')
+            skipped += 1
+            continue
+        if 'auto-close:resolved' in labels:
+            log('close-skip', issue=num, reason='already-resolved')
+            skipped += 1
+            continue
+        sig = extract_issue_sig(issue['body'])
+        if sig is None:
+            log('close-skip', issue=num, reason='no-signature-marker')
+            skipped += 1
+            continue
+        if sig in current_sigs:
+            log('close-skip', issue=num, reason='still-present', sig=sig)
+            skipped += 1
+            continue
+        ok = close_issue_as_resolved(repo, num, pr_number, review_url)
+        if ok:
+            closed += 1
+            log('closed', issue=num, sig=sig)
+    return closed, skipped
+
+
 def main():
     # 1. Master kill switches.
     if not env_flag('AUTOMATION_ENABLED', default=True):
@@ -394,18 +562,23 @@ def main():
         log('skip', reason='no-report-block')
         return 0
 
-    # 4. Verdict gate.
+    # 4. Verdict gate. PASS and FAIL both proceed (PASS triggers auto-close of
+    # all open Issues for this PR; FAIL files new + closes resolved ones).
+    # INCONCLUSIVE skips — we don't know the actual state, so don't touch
+    # existing Issues. review-watcher.js handles INCONCLUSIVE as PR-check state.
     verdict = str(report.get('verdict') or '').strip().upper()
-    if verdict != 'FAIL':
-        log('skip', reason='verdict-not-fail', verdict=verdict)
+    if verdict == 'INCONCLUSIVE':
+        log('skip', reason='verdict-inconclusive', verdict=verdict)
+        return 0
+    if verdict not in ('PASS', 'FAIL'):
+        log('skip', reason='verdict-unknown', verdict=verdict)
         return 0
 
     findings = report.get('findings') or []
-    if not isinstance(findings, list) or not findings:
-        log('skip', reason='no-findings', verdict=verdict)
-        return 0
+    if not isinstance(findings, list):
+        findings = []
 
-    # Required inputs for constructing payloads.
+    # Required inputs for constructing payloads + auto-close lookups.
     repo = os.environ.get('REPO') or os.environ.get('GITHUB_REPOSITORY') or ''
     pr_number = os.environ.get('PR_NUMBER', '').strip()
     comment_id = os.environ.get('COMMENT_ID', '').strip() or '0'
@@ -415,7 +588,24 @@ def main():
         log('error', reason='missing-required-env', repo=bool(repo), pr=bool(pr_number))
         return 1
 
-    # 5. Severity policy + per-finding file.
+    review_url = 'https://github.com/{0}/pull/{1}#issuecomment-{2}'.format(
+        repo, pr_number, comment_id
+    )
+
+    # 5. Compute current signatures for auto-close diff. This covers ALL
+    # findings in the review regardless of severity policy — an Issue whose
+    # finding is still listed should stay open even if MAJOR policy toggled.
+    current_sigs = set()
+    for f in findings:
+        if isinstance(f, dict):
+            try:
+                current_sigs.add(compute_finding_sig(pr_number, f))
+            except Exception as exc:
+                log('sig-compute-error', error=str(exc))
+
+    # 6. Severity policy + per-finding file. PASS verdict → findings list is
+    # typically empty (or advisory minor); no filing happens. FAIL with
+    # blocker/critical findings → file.
     major_enabled = env_flag('CLAUDE_INBOX_MAJOR_ENABLED', default=False)
     filed = 0
     skipped = 0
@@ -449,8 +639,15 @@ def main():
             log('filer-error', index=idx, code=code,
                 stderr=(stderr or '').strip()[:500])
 
+    # 7. Phase 2 auto-close. Close open claude:inbox Issues for this PR whose
+    # signature is no longer present in the current review.
+    closed, close_skipped = close_resolved_issues(
+        repo, pr_number, current_sigs, review_url,
+    )
+
     log('done', pr=pr_number, verdict=verdict,
         findings_total=len(findings), filed=filed, skipped=skipped, errors=errors,
+        closed=closed, close_skipped=close_skipped,
         major_enabled=major_enabled)
     return 2 if errors else 0
 

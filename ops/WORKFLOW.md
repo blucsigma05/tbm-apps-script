@@ -190,6 +190,17 @@ underlying finding dedup to the same Issue signature. Open matches no-op;
 recent closed matches (≤7 days) reopen; no duplicate Issue is ever created.
 See `file_hygiene_issue.py:307–342` for the authoritative flow.
 
+**Auto-close semantics (Phase 2, #462).** When a re-review runs through the
+AUTO path and a previously-filed finding is no longer in the current findings
+list (fix landed, signature gone), the filer closes the corresponding Issue
+with `auto-close:resolved` + a closing comment citing the current review URL.
+PASS verdict closes ALL filed Issues for the PR (no findings → everything
+resolved). INCONCLUSIVE never touches existing Issues (unknown state).
+`auto:suppressed` Issues (LT manually dismissed) are never touched by either
+reopen or auto-close. If a fix is reverted within 7 days, the next review
+will re-open the Issue via the existing recent-closed reopen path — so the
+fix-and-regression case is covered.
+
 **INCONCLUSIVE verdicts** (Codex CI truncated or errored) do NOT create
 Issues — they stay on the PR-check state surface handled by `review-watcher.js`.
 LT resolves them via a manual `audit N` in ChatGPT or an explicit waive.
@@ -299,7 +310,49 @@ Not every important conversation is code work. Architecture, process, role bound
 2. Include `## Canonical Rule Location` pointing at where the rule lives (usually this file or `AGENTS.md` / `CLAUDE.md`).
 3. Include `## What Stays Flexible` naming the parts that are intentionally not rules (wording, per-PR context, timing).
 4. If the memo creates actual work, open the follow-up Issue(s). Do not bury action items in the memo body.
-5. If the memo changes repo behavior, mirror the short rule into `AGENTS.md` and `CLAUDE.md` (hard rules only — nuance stays here).
+5. If the memo changes repo behavior, mirror the short rule into `AGENTS.md` and `CLAUDE.md` (hard rules only - nuance stays here).
+
+### Thread continuity and auditor's pass
+
+Threads are disposable. Durable work is not.
+
+When LT says any version of:
+
+- `make this permanent`
+- `save this for the next thread`
+- `make this a template`
+- `make this a standard`
+- `make this a skill`
+- `give me an auditor's pass`
+
+agents must treat that as an instruction to do more than answer in chat.
+
+**Continuity rule:**
+
+- If the next thread will need it, save it in the same thread.
+- Name the exact durable file path in the final handoff.
+- If the process is reusable, promote it immediately into the right repo artifact instead of leaving it as chat-only know-how.
+
+**Promotion targets:**
+
+- Reusable execution behavior -> repo-local skill in `.claude/skills/`
+- Repo workflow or policy rule -> this file, with short mirrors in `AGENTS.md` and `CLAUDE.md`
+- Boardroom/process decision -> `ops/operating-memos/YYYY-MM-DD-<topic>.md`
+- One-off artifact for follow-on work -> durable repo file with an explicit path
+
+**Auditor's pass rule:**
+
+- Before handing off a reusable prompt, plan, template, memo, or handoff artifact, run a real self-audit.
+- Define the rubric before giving a score.
+- Tie every material criticism to evidence, omission, or a concrete contract gap.
+- Revise the artifact after the audit instead of handing over the first draft plus commentary.
+- If the user asks for a 10/10, push to the strongest defensible version and state what still prevents 10/10 if anything remains.
+
+**Anti-theater rule:**
+
+- No bare `6.5/10` or `9/10` without visible criteria.
+- No "auditor's pass" that is just opinion dressed as rigor.
+- If a required source artifact is missing, stop and say so plainly.
 
 ### Handoff comments (optional aid)
 
@@ -327,4 +380,4 @@ The Issue and the Project board are the canonical status surface. A handoff comm
 
 ---
 
-_Last updated: 2026-04-17 — added Two-Lane Handoff Rules section per operating memo `ops/operating-memos/2026-04-17-agent-roles-and-audit-scope.md`._
+_Last updated: 2026-04-18 - added thread continuity and auditor's pass rules per operating memo `ops/operating-memos/2026-04-18-auditors-pass-and-thread-continuity.md`._
