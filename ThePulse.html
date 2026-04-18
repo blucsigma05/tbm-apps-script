@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="tbm-module" content="the-pulse">
-<meta name="tbm-version" content="v64">
-<title>The Pulse v64 — Thompson Household</title>
+<meta name="tbm-version" content="v65">
+<title>The Pulse v65 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -549,7 +549,7 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
 <div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 
 <script>
-var TBM_VERSION = 'v64';
+var TBM_VERSION = 'v65';
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 var _lastFetchTime = null;
 var _lastGoodSim = null;
@@ -611,7 +611,7 @@ var _sim=null,_tracker=null,_trackerError=null,DEBTS=[],EXCL=[],
 DEBT_CONFIG={BREATHING_ROOM:0,BUDGET_BREATHING_ROOM:0,BONUS_AMOUNT:0,ESTIMATED_PEAK:0},
 extra=0,wf=0,strat='hybrid',baseResult=null,currentView='weekly',selectedMonthIdx=new Date().getMonth(),
 _debtLookup={},
-_gbAccordion={},_debtGroupAccordion={},_plOpen=false,_moreCatsOpen=false,_wfTimer=null,_availableMonths=[],customRange=null,_customRangeData=null,_serverMonths=null,_selectedYM=null,_debtSectionOpen=true,_cashSectionOpen=false;
+_gbAccordion={},_debtGroupAccordion={},_plOpen=false,_moreCatsOpen=false,_wfTimer=null,_availableMonths=[],customRange=null,_customRangeData=null,_serverMonths=null,_selectedYM=null,_debtSectionOpen=true,_cashSectionOpen=false,_plannerOpen=false;
 
 function isMinOnly(a){return !a.strategy||a.strategy==='Minimum Only'||a.strategy==='Minimum'||a.strategy==='Excluded';}
 function simulate(debts,ext,windfall,strategy){
@@ -783,6 +783,8 @@ function render(){
   var intBurn=Math.round(DEBT_CONFIG._canonicalInterestBurn||((DEBT_CONFIG._interestBurn||{}).monthly||0)),
       cfpStr='---',cfp=DEBT_CONFIG._cashFlowPositiveDate;if(cfp){var cpd=parseTargetDate(cfp);if(cpd){if((extra>0||wf>0)&&monthsSaved>0){cpd=shiftTarget(cpd,monthsSaved);}cfpStr=targetToStr(cpd);}}
   if(!showingCurrent){heroDate='N/A';heroMonths='—';cfpStr='N/A';}
+  var _ps=DEBT_CONFIG._pulseSummary;
+  var jtGap=Math.round(opCF+bridgeCash);
   var html='';
   // HEADER
   html+='<div class="header"><div class="h-eyebrow">The Pulse \u00B7 '+TBM_VERSION+'</div><div class="h-title">Thompson Household</div>';
@@ -790,9 +792,8 @@ function render(){
   html+='<div class="h-sub">'+_headerDate+'</div>';
   html+='<div class="h-actions"><button class="refresh-btn" onclick="loadData()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></button><div class="h-pulse"></div></div></div>';
 
-  // v58: PULSE SUMMARY — informational narrative block
-  var _ps = DEBT_CONFIG._pulseSummary;
-  if (_ps && _ps.headline) {
+  // v65: PULSE SUMMARY — informational narrative block (operator mode only)
+  if (!_isPartnerMode && _ps && _ps.headline) {
     html += '<div id="summaryBlock" style="background:var(--card);border-left:4px solid var(--gold-soft);padding:14px 16px;margin:0 16px 16px;border-radius:0 8px 8px 0;">';
     html += '<div style="font-weight:600;font-size:15px;color:var(--ink);margin-bottom:4px;">' + escapeHtml(_ps.headline) + '</div>';
     if (_ps.detail) {
@@ -802,6 +803,30 @@ function render(){
       html += '<div style="font-size:12px;color:var(--amber);margin-top:6px;padding:6px 10px;background:var(--amber-bg);border-radius:6px;">' + escapeHtml(_ps.alert) + '</div>';
     }
     html += '</div>';
+  }
+  // v65: JT SUMMARY PANEL — partner mode, current month only
+  if (_isPartnerMode && showingCurrent) {
+    var _jtBadge,_jtBadgeColor,_jtBadgeBg;
+    var _jtHeadline=(_ps&&_ps.headline)?_ps.headline:'';
+    if(_jtHeadline==='On track this month.'){_jtBadge='Okay';_jtBadgeColor='var(--green)';_jtBadgeBg='var(--green-bg)';}
+    else if(_jtHeadline==='Tracking close to budget.'){_jtBadge='Watch';_jtBadgeColor='var(--amber)';_jtBadgeBg='var(--amber-bg)';}
+    else{_jtBadge='Hold';_jtBadgeColor='var(--red)';_jtBadgeBg='var(--red-bg)';}
+    if(opCF<0&&_jtBadge!=='Hold'){_jtBadge='Hold';_jtBadgeColor='var(--red)';_jtBadgeBg='var(--red-bg)';}
+    var _jtDetail=(_ps&&_ps.detail)?jtTranslateDetail(_ps.detail):'';
+    var _jtGapStr=(jtGap>=0?'+$':'\u2212$')+commas(Math.abs(jtGap))+'/mo';
+    var _jtGapColor=jtGap>=0?'var(--green)':'var(--red)';
+    var _jtLiquid=DEBT_CONFIG._liquidCash||0;
+    html+='<div class="sec a1" style="margin-bottom:14px"><div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--r);padding:18px 16px;">';
+    html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">';
+    html+='<span style="font-size:12px;font-weight:800;letter-spacing:.8px;padding:4px 12px;border-radius:20px;background:'+_jtBadgeBg+';color:'+_jtBadgeColor+';border:1px solid '+_jtBadgeColor+'">'+_jtBadge+'</span>';
+    if(_jtHeadline){html+='<span style="font-size:13px;color:var(--ink2)">'+escapeHtml(_jtHeadline)+'</span>';}
+    html+='</div>';
+    if(_jtDetail){html+='<div style="font-size:12px;color:var(--ink2);margin-bottom:12px;line-height:1.55">'+escapeHtml(_jtDetail)+'</div>';}
+    html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">';
+    html+='<div style="text-align:center;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 6px"><div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Safe for extra</div><div style="font-size:14px;font-weight:800;color:'+_jtGapColor+'">'+_jtGapStr+'</div></div>';
+    html+='<div style="text-align:center;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 6px"><div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Finish line</div><div style="font-size:14px;font-weight:800;color:var(--gold)">'+escapeHtml(heroDate)+'</div></div>';
+    html+='<div style="text-align:center;background:rgba(255,255,255,0.04);border-radius:8px;padding:10px 6px"><div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px">Cash on hand</div><div style="font-size:14px;font-weight:800;color:var(--green)">'+F(_jtLiquid)+'</div></div>';
+    html+='</div></div></div>';
   }
 
   // 1. KIDS HUB
@@ -865,13 +890,19 @@ function render(){
 
   html+='<div class="sec a2"><div class="pulse-grid">';
   html+=cfCardHTML;
-  html+='<div class="pulse-card"><div class="pc-label">Debt-Free Date</div><div class="pc-value gold" style="font-size:20px">'+heroDate+'</div><div class="pc-sub">'+(showingCurrent?(heroMonths+' months to go'):'Current planner only')+'</div></div>';
-  html+='<div class="pulse-card"><div class="pc-label">Cash Flow Positive Date</div><div class="pc-value gold" style="font-size:20px">'+cfpStr+'</div><div class="pc-sub">'+(showingCurrent?((extra>0||wf>0)?'Slider active — interest burn hidden':'Interest burn: '+F(intBurn)+'/mo'):'Current planner only')+'</div></div>';
+  if(_isPartnerMode){
+    html+='<div class="pulse-card"><div class="pc-label">Plan finish line</div><div class="pc-value gold" style="font-size:20px">'+heroDate+'</div><div class="pc-sub">'+(showingCurrent?(heroMonths+' months to go'):'Current planner only')+'</div></div>';
+    var _sfxStr=(jtGap>=0?'+$':'\u2212$')+commas(Math.abs(jtGap))+'/mo';
+    html+='<div class="pulse-card"><div class="pc-label">Safe for extra payoff</div><div class="pc-value '+(jtGap>=0?'pos':'neg')+'" style="font-size:20px">'+_sfxStr+'</div><div class="pc-sub">'+(showingCurrent?'Left after bills + minimums':'Current planner only')+'</div></div>';
+  } else {
+    html+='<div class="pulse-card"><div class="pc-label">Debt-Free Date</div><div class="pc-value gold" style="font-size:20px">'+heroDate+'</div><div class="pc-sub">'+(showingCurrent?(heroMonths+' months to go'):'Current planner only')+'</div></div>';
+    html+='<div class="pulse-card"><div class="pc-label">Cash Flow Positive Date</div><div class="pc-value gold" style="font-size:20px">'+cfpStr+'</div><div class="pc-sub">'+(showingCurrent?((extra>0||wf>0)?'Slider active — interest burn hidden':'Interest burn: '+F(intBurn)+'/mo'):'Current planner only')+'</div></div>';
+  }
   html+='</div></div>';
 
   // 2. DEBT ROAD
   // v64: Total Debt section — collapsible, default expanded
-  html+='<div class="sec a3"><div class="sec-label" onclick="toggleDebtSection()" style="cursor:pointer;user-select:none">Total Debt (excl. mortgage) <span id="debt-sec-chev" style="font-size:10px;opacity:.6;margin-left:4px">'+(_debtSectionOpen?'▼':'▶')+'</span></div>';
+  html+='<div class="sec a3"><div class="sec-label" onclick="toggleDebtSection()" style="cursor:pointer;user-select:none">'+(_isPartnerMode?'Debt progress':'Total Debt (excl. mortgage)')+' <span id="debt-sec-chev" style="font-size:10px;opacity:.6;margin-left:4px">'+(_debtSectionOpen?'▼':'▶')+'</span></div>';
   html+='<div id="debt-sec-body" style="display:'+(_debtSectionOpen?'block':'none')+'">';
   html+='<div class="road-wrap">';
   html+='<div class="road-label">'+(netChange>=0?'Debt Erased Since Jan 2026':'Debt Added Since Jan 2026')+'</div>';
@@ -907,10 +938,18 @@ function render(){
   }
   html+='</div></div>';
 
-  // 3. PLAY WITH NUMBERS
+  // 3. PLAY WITH NUMBERS / WHAT IF WE PAY MORE (v65: collapsible in JT mode)
   var budgetMargin=DEBT_CONFIG.BUDGET_BREATHING_ROOM||0,showWarn=extra>0&&extra>budgetMargin&&budgetMargin>0;
+  var _plannerLabel=_isPartnerMode?'What if we pay more?':'Play with the numbers';
+  html+='<div class="sec a4">';
+  if(_isPartnerMode){
+    html+='<div class="sec-label" onclick="togglePlannerSection()" style="cursor:pointer;user-select:none">'+_plannerLabel+' <span id="planner-sec-chev" style="font-size:10px;opacity:.6;margin-left:4px">'+(_plannerOpen?'▼':'▶')+'</span></div>';
+    html+='<div id="planner-sec-body" style="display:'+(_plannerOpen?'block':'none')+'">';
+  } else {
+    html+='<div class="sec-label">'+_plannerLabel+'</div>';
+  }
   if(showingCurrent){
-    html+='<div class="sec a4"><div class="sec-label">Play with the numbers</div><div class="card">';
+    html+='<div class="card">';
     html+='<div class="ctrl-block"><div class="ctrl-head"><span class="ctrl-name">Extra monthly payment</span><span class="ctrl-val">'+(extra>0?F(extra):'$0')+'</span></div>';
     html+='<div class="slider-wrap"><input type="range" id="extra-slider" min="0" max="5000" step="50" value="'+extra+'" style="--pct:'+(extra/5000*100).toFixed(1)+'%" oninput="onSlider(this.value)"></div>';
     html+='<div class="milestones">'+(extra>0?'<span class="ms-pill" onclick="setExtra(0)" style="background:var(--red-bg);color:var(--red);border-color:rgba(201,72,91,0.3)">↺ Reset</span>':'')+'<span class="ms-pill'+(extra===250?' active':'')+'\" onclick="setExtra(250)">$250</span><span class="ms-pill'+(extra===500?' active':'')+'\" onclick="setExtra(500)">$500</span><span class="ms-pill'+(extra===1000?' active':'')+'\" onclick="setExtra(1000)">$1K</span><span class="ms-pill'+(extra===2500?' active':'')+'\" onclick="setExtra(2500)">$2.5K</span><span class="ms-pill'+(extra===5000?' active':'')+'\" onclick="setExtra(5000)">$5K</span></div>';
@@ -930,10 +969,12 @@ function render(){
     srs.forEach(function(r){var diff=Math.round(r.interest-best.interest);html+='<div class="sc-item'+(r.name===strat?' active':'')+'\" onclick="setStrat(\''+r.name+'\')"><div class="sc-name">'+r.label+'</div><div class="sc-date">'+r.date+'</div><div class="sc-saved">'+(diff===0?'Lowest interest':'+'+F(diff)+' more')+'</div></div>';});
     html+='</div>';
     if(extra===0&&wf===0)html+='<div style="font-size:10px;color:var(--ink3);margin-top:6px;text-align:center">Move the slider to compare</div>';
-    html+='</div></div></div>';
+    html+='</div></div>';
   } else {
-    html+='<div class="sec a4"><div class="sec-label">Play with the numbers</div><div class="card"><div style="font-size:12px;color:var(--ink2);line-height:1.6">Planner controls are hidden in historical view so prior-month screens do not simulate current debt balances or payoff dates.</div></div></div>';
+    html+='<div class="card"><div style="font-size:12px;color:var(--ink2);line-height:1.6">Planner controls are hidden in historical view so prior-month screens do not simulate current debt balances or payoff dates.</div></div>';
   }
+  if(_isPartnerMode){html+='</div>';}
+  html+='</div>';
 
   // 4. FOCUS HERE
   var debtGroups=(DEBT_CONFIG._debtByType||[]).filter(function(g){return g&&g.type&&g.type!=='Mortgage'&&(Number(g.total)||0)>0;});
@@ -985,7 +1026,7 @@ function render(){
   // incomeThrottle is earned-only; the CF card includes loan proceeds in Money In, so gap needs it too.
   var inc=earnedIncome,mins=DEBT_CONFIG._minimums||0,dpInOpex=Math.round(DEBT_CONFIG._debtPaymentsInOpex||0),gap=Math.round(opCF+bridgeCash),mxB=Math.max(inc,1),isW=currentView==='weekly',tAccts=DEBTS.length+EXCL.length;
   var iBgt=DEBT_CONFIG._incomeBudget||0;
-  html+='<div class="sec a5"><div class="sec-label">Where we stand</div><div class="card">';
+  html+='<div class="sec a5"><div class="sec-label">'+(_isPartnerMode?'Month breakdown':'Where we stand')+'</div><div class="card">';
   html+='<div class="gb-top"><div class="gb-headline">Income → Spending → Minimums = <em>what\'s left</em></div><div class="gb-sub">Click any bucket to expand. '+tAccts+' debts (excl. mortgage).</div></div>';
   if(_trackerError){
     html+='<div style="margin-bottom:12px;padding:10px 14px;background:var(--amber-bg);border:1px solid rgba(232,168,56,0.3);border-radius:10px;font-size:12px;color:var(--ink)"><strong>⚠️ Budget details unavailable</strong> — tracker endpoint failed. <span style="text-decoration:underline;cursor:pointer" onclick="loadData()">Retry</span><br><span style="font-size:10px;color:var(--ink3)">Error: '+(_trackerError.message||_trackerError)+'</span></div>';}
@@ -1022,7 +1063,7 @@ function render(){
   if(lp>0)html+='<div class="gb-acc-row" style="border-top:1px dashed var(--border);padding-top:6px;margin-top:4px"><div class="gb-acc-name"><span class="gb-acc-icon">📄</span>Loan Proceeds <span style="font-size:9px;color:var(--ink3)">(not earned)</span></div><div class="gb-acc-vals"><span class="gb-acc-amt" style="color:var(--ink3)">'+F(lp)+'</span></div></div>';
   html+='</div></div>';
   var bDefs=[{key:'fixedExpenses',label:'Fixed bills',color:'#78909C',catPrefix:'expenses.fixed_expenses'},{key:'necessaryLiving',label:'Living essentials',color:'#9CA3AF',catPrefix:'expenses.necessary_living'},{key:'discretionary',label:'Discretionary',color:'var(--amber)',catPrefix:'expenses.discretionary'},{key:'debtCost',label:'Interest & fees',color:'var(--red)',catPrefix:'expenses.debt_cost'},{key:'other',label:'Unmapped spending',color:'#A1887F',catPrefix:null,hideIfZero:true}];
-  bDefs.forEach(function(b){var amt=Math.round(bk[b.key]||0);if(b.hideIfZero&&amt<1)return;html+=gbRow(b.label,b.key,amt,b.color,mxB,b.catPrefix,bBgt[b.key]||0);
+  bDefs.forEach(function(b){var amt=Math.round(bk[b.key]||0);if(b.hideIfZero&&amt<1)return;if(_isPartnerMode&&b.key==='debtCost')return;html+=gbRow(b.label,b.key,amt,b.color,mxB,b.catPrefix,bBgt[b.key]||0);
     html+='<div id="gb-acc-'+b.key+'" style="display:'+(_gbAccordion[b.key]?'block':'none')+'">';
     if(b.catPrefix&&monthData){var cats=ALL_CAPS.filter(function(c){return c.budgetKey.indexOf(b.catPrefix)===0;});html+='<div class="gb-accordion">';
       cats.forEach(function(c){
@@ -1035,7 +1076,8 @@ function render(){
         if(ac<0.01&&bu<0.01)return;var pf=bu>0?Math.min(100,(ac/bu)*100):(ac>0?100:0),bc=(pf>100||(bu<=0&&ac>0))?'var(--red)':pf>90?'var(--amber)':b.color;
         html+='<div class="gb-acc-row" onclick="toggleCatDrill(this,\''+c.name+'\')"><div class="gb-acc-name"><span class="gb-acc-icon">'+c.icon+'</span>'+c.name+'</div><div class="gb-acc-vals"><div class="gb-acc-bar"><div class="gb-acc-fill" style="width:'+Math.min(100,pf)+'%;background:'+bc+'"></div></div><span class="gb-acc-amt">'+F(ac)+'</span><span class="gb-acc-budget">/ '+F(bu)+'</span></div></div>';});
       html+='</div>';}else{html+='<div class="gb-accordion"><div style="font-size:11px;color:var(--ink3);padding:8px;text-align:center">No breakdown available</div></div>';}html+='</div>';});
-  html+=gbRow(_dpAvail?('Debt payments MTD ('+tAccts+' debts)'):'Debt payments MTD (N/A)','debtpay',_dpAvail?debtPaid:0,'var(--amber)',mxB,'_debtpay',_dpAvail?mins:0);
+  var _dpLabel=_isPartnerMode?'Minimums paid so far':(_dpAvail?('Debt payments MTD ('+tAccts+' debts)'):'Debt payments MTD (N/A)');
+  html+=gbRow(_dpLabel,'debtpay',_dpAvail?debtPaid:0,'var(--amber)',mxB,'_debtpay',_dpAvail?mins:0);
   html+='<div id="gb-acc-debtpay" style="display:'+(_gbAccordion['debtpay']?'block':'none')+'">';
   var dpd=dpd_display;
   var dpKeys=Object.keys(dpd).filter(function(k){return k!=='__ccAccounts'&&k!=='__locAccounts'&&k!=='__loanAccounts';});
@@ -1066,7 +1108,7 @@ function render(){
   }
   html+='</div>';
   var gc=gap>=0?'var(--green)':'var(--red)';
-  html+='<div class="gbf-row"><div class="gbf-meta"><span class="gbf-name" style="font-weight:700">What\'s left for extra debt payments</span><span class="gbf-amt" style="color:'+gc+';font-weight:900">'+(gap>=0?'+$':'−$')+commas(Math.abs(gap))+'/mo</span></div></div></div>';
+  html+='<div class="gbf-row"><div class="gbf-meta"><span class="gbf-name" style="font-weight:700">'+(_isPartnerMode?'Safe for extra payoff':'What\'s left for extra debt payments')+'</span><span class="gbf-amt" style="color:'+gc+';font-weight:900">'+(gap>=0?'+$':'−$')+commas(Math.abs(gap))+'/mo</span></div></div></div>';
   html+='</div></div>';
 
   // 7. END CARD
@@ -1086,7 +1128,7 @@ function debtGroupId(type){return 'debt-group-'+String(type||'').replace(/[^a-z0
 function debtTypeMeta(type){var map={'Credit Cards':{icon:'💳',color:'#B76E79'},'Personal Loans':{icon:'💰',color:'#C28B4B'},'Lines of Credit':{icon:'🏦',color:'#8A7DBA'},'Student Loans':{icon:'🎓',color:'#6B9D7D'},'Auto':{icon:'🚗',color:'#6C8FB8'},'Solar':{icon:'☀️',color:'#E8A838'},'Mortgage':{icon:'🏠',color:'#8B6B61'}};return map[type]||{icon:'📦',color:'#BCA9A9'};}
 function fmtAPR(v){var n=Number(v)||0,pct=n*100,s=(Math.round(pct*100)/100).toFixed(2);s=s.replace(/\.00$/,'').replace(/(\.\d)0$/,'$1');return s+'%';}
 function debtPromoBadge(acct,now){if(acct==null||acct.promoEnd==null||acct.promoEnd==='')return '';var end=parsePromoDate(acct.promoEnd);if(!end)return '';var days=Math.ceil((end.getTime()-now.getTime())/86400000);if(days<0)return '<span class="debt-acct-promo exp">EXPIRED</span>';if(days<=60)return '<span class="debt-acct-promo warn">'+days+'d left</span>';return '<span class="debt-acct-promo">'+Math.ceil(days/30)+'mo left</span>';}
-function debtGroupRow(group,totalDebt){var meta=debtTypeMeta(group.type),count=Number(group.count)||((group.accounts||[]).length||0),total=Number(group.total)||0,open=!!_debtGroupAccordion[group.type],weighted=0,weightedBase=0;(group.accounts||[]).forEach(function(acct){var bal=Number(acct.balance)||0,apr=Number(acct.apr)||0;if(bal>0&&apr>0){weighted+=bal*apr;weightedBase+=bal;}});var avgApr=weightedBase>0?fmtAPR(weighted/weightedBase):'—';var share=totalDebt>0?(total/totalDebt*100):0;var gid=debtGroupId(group.type);var toggleKey=String(group.type||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<div class="debt-group-row" onclick="toggleDebtGroup(\''+toggleKey+'\')"><div class="debt-group-top"><div class="debt-group-icon" style="background:'+meta.color+'1A;color:'+meta.color+'"><span id="'+gid+'-arrow" style="font-size:11px;margin-right:4px">'+(open?'▼':'▶')+'</span>'+meta.icon+'</div><div class="debt-group-main"><div class="debt-group-name-row"><div><div class="debt-group-name">'+group.type+'</div><div class="debt-group-count">'+count+' acct'+(count===1?'':'s')+'</div></div><div class="debt-group-balance">'+F(total)+'</div></div><div class="debt-group-meta">Avg APR '+avgApr+'</div><div class="debt-group-bar"><div class="debt-group-bar-fill" style="width:'+Math.max(share,4).toFixed(1)+'%;background:'+meta.color+'"></div></div></div></div></div>';}
+function debtGroupRow(group,totalDebt){var meta=debtTypeMeta(group.type),count=Number(group.count)||((group.accounts||[]).length||0),total=Number(group.total)||0,open=!!_debtGroupAccordion[group.type],weighted=0,weightedBase=0;(group.accounts||[]).forEach(function(acct){var bal=Number(acct.balance)||0,apr=Number(acct.apr)||0;if(bal>0&&apr>0){weighted+=bal*apr;weightedBase+=bal;}});var avgApr=weightedBase>0?fmtAPR(weighted/weightedBase):'—';var share=totalDebt>0?(total/totalDebt*100):0;var gid=debtGroupId(group.type);var toggleKey=String(group.type||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");return '<div class="debt-group-row" onclick="toggleDebtGroup(\''+toggleKey+'\')"><div class="debt-group-top"><div class="debt-group-icon" style="background:'+meta.color+'1A;color:'+meta.color+'"><span id="'+gid+'-arrow" style="font-size:11px;margin-right:4px">'+(open?'▼':'▶')+'</span>'+meta.icon+'</div><div class="debt-group-main"><div class="debt-group-name-row"><div><div class="debt-group-name">'+group.type+'</div><div class="debt-group-count">'+count+' acct'+(count===1?'':'s')+'</div></div><div class="debt-group-balance">'+F(total)+'</div></div>'+(_isPartnerMode?'':'<div class="debt-group-meta">Avg APR '+avgApr+'</div>')+'<div class="debt-group-bar"><div class="debt-group-bar-fill" style="width:'+Math.max(share,4).toFixed(1)+'%;background:'+meta.color+'"></div></div></div></div></div>';}
 function debtAccountRow(acct,now){var promoHtml=debtPromoBadge(acct,now),excluded=!!acct.excluded,strategy=acct.strategy||'Minimum',aprTxt=(acct.promo!=null&&acct.promo!==''?fmtAPR(acct.promo)+'→'+fmtAPR(acct.apr):fmtAPR(acct.apr)),minTxt=Number(acct.min)||0;return '<div class="debt-acct-row'+(excluded?' debt-acct-excl':'')+'"><div class="debt-acct-main"><div class="debt-acct-head"><div class="debt-acct-name">'+(acct.name||'Unnamed account')+'</div><div class="debt-acct-balance">'+F(acct.balance||0)+'</div></div><div class="debt-acct-meta">'+aprTxt+' · '+F(minTxt)+'/mo</div><div class="debt-acct-tags">'+promoHtml+'<span class="debt-acct-strategy">'+strategy+'</span>'+(excluded?'<span class="debt-acct-minonly">min only</span>':'')+'</div></div></div>';}
 function plRow(a,i,mx,pm,now){
   var orig=_debtLookup[a.name]||{};var dispBal=orig.balance||0;if(!dispBal&&a.bal>0)dispBal=a.bal;if(!dispBal&&a.balance>0)dispBal=a.balance;
@@ -1119,8 +1161,9 @@ function toggleGBAccordion(k){
 }
 function toggleDebtGroup(type){_debtGroupAccordion[type]=!_debtGroupAccordion[type];var gid=debtGroupId(type),body=document.getElementById(gid),arrow=document.getElementById(gid+'-arrow');if(body)body.style.display=_debtGroupAccordion[type]?'block':'none';if(arrow)arrow.textContent=_debtGroupAccordion[type]?'▼':'▶';}
 // v64: Section-level collapse toggles
-function toggleDebtSection(){_debtSectionOpen=!_debtSectionOpen;localStorage.setItem('pulse_debtSectionOpen',String(_debtSectionOpen));var b=document.getElementById('debt-sec-body'),c=document.getElementById('debt-sec-chev');if(b)b.style.display=_debtSectionOpen?'block':'none';if(c)c.textContent=_debtSectionOpen?'▼':'▶';if(_debtSectionOpen){setTimeout(function(){var bar=document.getElementById('dpBar');if(bar)bar.style.width=bar.dataset.pct+'%';},200);}}
-function toggleCashSection(){_cashSectionOpen=!_cashSectionOpen;localStorage.setItem('pulse_cashSectionOpen',String(_cashSectionOpen));var b=document.getElementById('cash-sec-body'),c=document.getElementById('cash-sec-chev');if(b)b.style.display=_cashSectionOpen?'block':'none';if(c)c.textContent=_cashSectionOpen?'▼':'▶';}
+function toggleDebtSection(){_debtSectionOpen=!_debtSectionOpen;var _dKey=_isPartnerMode?'pulse_jt_debtSectionOpen':'pulse_debtSectionOpen';localStorage.setItem(_dKey,String(_debtSectionOpen));var b=document.getElementById('debt-sec-body'),c=document.getElementById('debt-sec-chev');if(b)b.style.display=_debtSectionOpen?'block':'none';if(c)c.textContent=_debtSectionOpen?'▼':'▶';if(_debtSectionOpen){setTimeout(function(){var bar=document.getElementById('dpBar');if(bar)bar.style.width=bar.dataset.pct+'%';},200);}}
+function toggleCashSection(){_cashSectionOpen=!_cashSectionOpen;var _cKey=_isPartnerMode?'pulse_jt_cashSectionOpen':'pulse_cashSectionOpen';localStorage.setItem(_cKey,String(_cashSectionOpen));var b=document.getElementById('cash-sec-body'),c=document.getElementById('cash-sec-chev');if(b)b.style.display=_cashSectionOpen?'block':'none';if(c)c.textContent=_cashSectionOpen?'▼':'▶';}
+function togglePlannerSection(){_plannerOpen=!_plannerOpen;localStorage.setItem('pulse_jt_plannerOpen',String(_plannerOpen));var b=document.getElementById('planner-sec-body'),c=document.getElementById('planner-sec-chev');if(b)b.style.display=_plannerOpen?'block':'none';if(c)c.textContent=_plannerOpen?'▼':'▶';}
 function toggleMoreCats(){_moreCatsOpen=!_moreCatsOpen;var e=document.getElementById('more-cats'),t=document.getElementById('more-cats-text');if(e)e.style.display=_moreCatsOpen?'block':'none';if(t)t.textContent=_moreCatsOpen?'Hide extras ▲':t.textContent.replace('▲','▼');}
 function switchView(v){currentView=v;render();}
 function onMonthSelect(v){selectedMonthIdx=parseInt(v);customRange=null;render();}
@@ -1161,6 +1204,7 @@ function escapeHtml(s) {
     .replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;');
 }
+function jtTranslateDetail(s){return String(s||'').replace(/Fixed Expenses/g,'Fixed bills').replace(/Necessary Living/g,'Living essentials');}
 
 // v49: Debounced wrapper — both onSimData and onTrackerData call render()→initKidsWidget().
 // Without debounce, two server fetches fire back-to-back causing visible double-render.
@@ -1420,12 +1464,21 @@ function _renderKidsWidget(data) {
 // Auto-refresh kids every 3 minutes
 setInterval(function() { initKidsWidget(); }, 3 * 60 * 1000);
 
-// v64: Load section collapse prefs from localStorage
+// v65: Load section collapse prefs from localStorage (JT-mode uses separate keys + different defaults)
 (function(){
-  var ds = localStorage.getItem('pulse_debtSectionOpen');
-  if(ds !== null) _debtSectionOpen = ds === 'true';
-  var cs = localStorage.getItem('pulse_cashSectionOpen');
-  if(cs !== null) _cashSectionOpen = cs === 'true';
+  if(_isPartnerMode){
+    var ds=localStorage.getItem('pulse_jt_debtSectionOpen');
+    _debtSectionOpen=(ds!==null)?(ds==='true'):false;
+    var cs=localStorage.getItem('pulse_jt_cashSectionOpen');
+    _cashSectionOpen=(cs!==null)?(cs==='true'):true;
+    var ps=localStorage.getItem('pulse_jt_plannerOpen');
+    _plannerOpen=(ps!==null)?(ps==='true'):false;
+  } else {
+    var ds=localStorage.getItem('pulse_debtSectionOpen');
+    if(ds!==null)_debtSectionOpen=ds==='true';
+    var cs=localStorage.getItem('pulse_cashSectionOpen');
+    if(cs!==null)_cashSectionOpen=cs==='true';
+  }
 })();
 
 loadData();
