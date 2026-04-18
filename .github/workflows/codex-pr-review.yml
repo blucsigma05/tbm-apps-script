@@ -20,6 +20,12 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  # issues:write required by the inline Codex Review Filer step below (#456).
+  # Without this, file_hygiene_issue.py's `gh issue create`/`reopen` calls
+  # return 403 and the Phase 1 durable-issue path silently stops working.
+  # The deleted codex-review-filer.yml carried this permission; preserving it
+  # here prevents a functional regression in the claude:inbox auto-filing flow.
+  issues: write
 
 concurrency:
   # Shared group serializes reviews so only one OpenAI call runs at a time.
