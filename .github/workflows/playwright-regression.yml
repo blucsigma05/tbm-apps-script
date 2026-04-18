@@ -27,6 +27,12 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  # issues:write is required by the Playwright Failure Filer step below
+  # (#465 Phase 2 automation). The filer shells out to file_hygiene_issue.py
+  # which calls `gh issue create` / reopen. Without this permission the
+  # dedup'd-Issue path silently fails with 403 and Playwright flakes
+  # continue to evaporate with the PR.
+  issues: write
 
 concurrency:
   group: playwright-regression-${{ github.event.pull_request.number || github.run_id }}
@@ -122,6 +128,30 @@ jobs:
           path: test-results/education/
           retention-days: 7
           if-no-files-found: ignore
+
+      # Phase 2 automation (#465): file dedup'd Issues for each unique
+      # Playwright failure via file_hygiene_issue.py. Defaults OFF — LT
+      # flips vars.PLAYWRIGHT_FILER_ENABLED=true after a canary run.
+      # Runs on every Playwright job outcome (the filer short-circuits if
+      # no failures are detected), so the decision is in the script, not
+      # in the `if:` expression here.
+      - name: File Playwright failures (Phase 2, dedup'd Issues)
+        if: always()
+        env:
+          PW_OUTPUT_FILE: playwright-output.txt
+          EDU_OUTPUT_FILE: education-output.txt
+          PW_EXIT: ${{ steps.playwright.outputs.pw_exit }}
+          EDU_EXIT: ${{ steps.education.outputs.edu_exit }}
+          PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          REPO: ${{ github.repository }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTOMATION_ENABLED: ${{ vars.AUTOMATION_ENABLED || 'true' }}
+          PLAYWRIGHT_FILER_ENABLED: ${{ vars.PLAYWRIGHT_FILER_ENABLED || 'false' }}
+          AUTOMATION_MAX_DAILY_ISSUES: ${{ vars.AUTOMATION_MAX_DAILY_ISSUES || '5' }}
+          STATUS_ISSUE_NUMBER: ${{ vars.STATUS_ISSUE_NUMBER || '' }}
+        run: python3 .github/scripts/file_playwright_failure_issue.py
 
       - name: Detect changed UI files
         id: changed
