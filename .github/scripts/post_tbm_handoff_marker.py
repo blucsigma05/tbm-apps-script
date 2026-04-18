@@ -146,7 +146,12 @@ def lookup_inbox_issue(repo, issue_number):
             return (False, None)
         data = json.loads(stdout)
         labels = [lbl.get('name', '') for lbl in data.get('labels') or []]
-        if INBOX_LABEL in labels:
+        # Require OPEN state. A closed claude:inbox Issue referenced in
+        # older commit history should not surface as a live handoff target
+        # and retrigger Codex re-review of an already-resolved finding.
+        # (Caught by Codex review on PR #469 -- P2 finding.)
+        state = (data.get('state') or '').upper()
+        if INBOX_LABEL in labels and state == 'OPEN':
             return (True, data.get('title') or '')
         return (False, None)
     except (json.JSONDecodeError, RuntimeError) as exc:
@@ -184,19 +189,30 @@ def build_comment_body(inbox_refs):
 
 
 def find_existing_marker_comment(repo, pr_number):
-    """Return comment id for an existing tbm-handoff comment, or None."""
+    """Return comment id for an existing tbm-handoff comment, or None.
+
+    Uses `gh api --paginate --slurp` so all pages arrive as a single JSON
+    array of arrays. Without --slurp, `gh api --paginate` emits each page
+    as its own top-level JSON document; `json.loads` fails on the
+    concatenated stream for any PR with >100 comments, the function
+    silently returns None, and the upsert path creates a NEW comment on
+    every run (duplicate tbm-handoff markers on busy PRs).
+    (Caught by Codex review on PR #469 -- P1 finding.)
+    """
     stdout, _ = gh([
         'api', 'repos/{0}/issues/{1}/comments'.format(repo, pr_number),
-        '--paginate',
+        '--paginate', '--slurp',
     ])
     try:
-        comments = json.loads(stdout)
+        pages = json.loads(stdout)
     except json.JSONDecodeError:
         log('comments-parse-error')
         return None
-    for comment in comments:
-        if MARKER in (comment.get('body') or ''):
-            return comment.get('id')
+    # --slurp produces [[page1_comments], [page2_comments], ...]; flatten.
+    for page in pages or []:
+        for comment in page or []:
+            if MARKER in (comment.get('body') or ''):
+                return comment.get('id')
     return None
 
 
