@@ -577,8 +577,13 @@ Distinct from "Auto-merge policy" above (which concerns GitHub's CI-triggered au
 
 **Evidence standard for "Claude says green."** Before an autonomous merge, Claude must have VERIFIED (not assumed):
 - `gh pr checks <N>` shows all required checks passing (not just "workflow_run success")
-- `gh pr view <N>` shows a Codex comment with explicit `**Verdict:** PASS` AND `**Files Reviewed:**` section
-- `gh pr view <N>` shows no unresolved review threads from LT or other reviewers
+- `gh api repos/<owner>/<repo>/issues/<N>/comments --jq '.[] | select(.body | contains("codex-pr-review"))'` shows a Codex comment with explicit `**Verdict:** PASS` AND `**Files Reviewed:**` section
+- **Unresolved review threads = 0**, queried via GraphQL (NOT `gh pr view` — that does not expose thread-level resolution state; it only surfaces `reviewDecision` / `reviews`, which summarize differently):
+  ```bash
+  gh api graphql -f query='{ repository(owner:"<owner>",name:"<repo>") { pullRequest(number:<N>) { reviewThreads(first:50) { nodes { isResolved } } } } }' \
+    --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
+  ```
+  Output must be `0`. Any other number blocks autonomous merge.
 
 "Looks green in the UI" is not evidence. Read the API response.
 
