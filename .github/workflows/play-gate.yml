@@ -1,0 +1,102 @@
+# .github/workflows/play-gate.yml
+# Play-Gate MVSS v1 — on-demand quality check for a single education route.
+# Invokes scripts/play-gate.js which spawns tests/tbm/play-gate/play-gate.spec.js.
+# Uploads ops/evidence/play-gate/<route>/<child>/<date>/ artifacts.
+# PR-1 scope: fixture mode only. Live mode lands in PR 3 after LIVE_SMOKE_SSID exists.
+
+name: Play-Gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      route:
+        description: 'Route slug (e.g. /sparkle, /homework)'
+        required: true
+        default: '/sparkle'
+      child:
+        description: 'Child identifier'
+        required: true
+        default: 'jj'
+        type: choice
+        options:
+          - jj
+          - buggsy
+      mode:
+        description: 'fixture (PR-1) or live (PR-3+, not yet wired)'
+        required: true
+        default: 'fixture'
+        type: choice
+        options:
+          - fixture
+          - live
+
+permissions:
+  contents: read
+
+concurrency:
+  group: play-gate-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  play-gate:
+    name: Play-Gate (${{ inputs.route }} / ${{ inputs.child }} / ${{ inputs.mode }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright + Chromium
+        run: |
+          npm install -D @playwright/test @babel/parser
+          npx playwright install --with-deps chromium
+
+      - name: Reject live mode in PR-1
+        if: inputs.mode == 'live'
+        run: |
+          echo "::error::Live mode is not wired in PR-1 (architecture spike scope). See v8 plan B1 non-goals."
+          exit 1
+
+      - name: Run Play-Gate
+        id: run
+        run: |
+          node scripts/play-gate.js \
+            --route "${{ inputs.route }}" \
+            --child "${{ inputs.child }}" \
+            --mode "${{ inputs.mode }}"
+
+      - name: Locate verdict path
+        if: always()
+        id: verdict
+        run: |
+          DATE=$(date -u +%Y-%m-%d)
+          SLUG=$(echo "${{ inputs.route }}" | sed 's|^/||; s|?|__|g; s|=|-|g; s|&|__|g')
+          DIR="ops/evidence/play-gate/${SLUG}/${{ inputs.child }}/${DATE}"
+          echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+          echo "Evidence directory: $DIR"
+          ls -la "$DIR" || echo "(directory not present — play-gate likely failed before writing)"
+
+      - name: Upload verdict + evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: play-gate-verdict-${{ github.run_id }}
+          path: ${{ steps.verdict.outputs.dir }}
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Summarize verdict
+        if: always()
+        run: |
+          VERDICT="${{ steps.verdict.outputs.dir }}/verdict.json"
+          if [ -f "$VERDICT" ]; then
+            { echo "### Play-Gate verdict"; echo '```json'; cat "$VERDICT"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::Verdict file not written — play-gate failed before emit."
+          fi

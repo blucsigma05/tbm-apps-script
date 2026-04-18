@@ -25,6 +25,12 @@ VERBOSE = os.environ.get('VERBOSE', '0') == '1'
 PROFILES_PATH = os.path.join(REPO_ROOT, 'ops', 'play-gate-profiles.json')
 PARSER_PATH = os.path.join(REPO_ROOT, 'scripts', 'parse-profile-consumer.js')
 
+# Substring that migrated consumers must contain to prove they derive their
+# device data from the canonical source. Kept as a substring match so consumers
+# can format the require path however makes sense in their own code style
+# (path.join(), direct string, etc.).
+PROFILES_IMPORT_MARKER = 'play-gate-profiles.json'
+
 # Sync manifest: each entry maps one consumer to its kind + alias->canonical mapping.
 # kind=perf_devices  — compare all rich fields (viewport, dSF, isMobile, hasTouch, UA)
 # kind=basic_devices — compare viewport.width/height only (consumer has {width, height})
@@ -228,11 +234,64 @@ def main():
     drifts = []
     parsed_consumers = {}
 
+    migrated = []
     for entry in SYNC_MANIFEST:
         parsed, err = parse_consumer(entry['file'], entry['target'])
         if err:
             drifts.append({'file': entry['file'], 'problem': 'parser error', 'detail': err})
             continue
+
+        # Migrated consumer path: parser identified the target as dynamically
+        # derived (CallExpression). Confirm (a) the file imports profiles.json,
+        # (b) the file references its own alias-lookup key, and (c) profiles.json
+        # actually contains that alias key with the expected local-alias value
+        # for every canonical device in the consumer's mapping. Catches typos
+        # in the JS alias string and missing/renamed entries in profiles.json
+        # that would otherwise silently produce an empty DEVICES map at runtime.
+        if parsed.get('source') == 'js:migrated-callexpr':
+            abs_path = os.path.join(REPO_ROOT, entry['file'])
+            with open(abs_path, 'r', encoding='utf-8') as fh:
+                src = fh.read()
+            if PROFILES_IMPORT_MARKER not in src:
+                drifts.append({
+                    'file': entry['file'],
+                    'problem': 'consumer uses dynamic init but does not import play-gate-profiles.json',
+                    'detail': 'Either add the import or revert to a static map the parser can validate.',
+                })
+                continue
+
+            alias_key = entry['file'] + ':' + entry['target']
+            if alias_key not in src:
+                drifts.append({
+                    'file': entry['file'],
+                    'problem': 'migrated consumer does not reference its alias-lookup key',
+                    'detail': "source must contain the literal string '" + alias_key + "' so the buildDevices() lookup matches profiles.json aliases",
+                })
+                continue
+
+            mismatches = []
+            for local_alias, canonical_device in entry.get('mapping', {}).items():
+                device = profiles.get('devices', {}).get(canonical_device, {})
+                aliases = device.get('aliases', {}) or {}
+                actual = aliases.get(alias_key)
+                if actual != local_alias:
+                    mismatches.append({
+                        'canonical_device': canonical_device,
+                        'expected_alias': local_alias,
+                        'actual_alias': actual,
+                    })
+            if mismatches:
+                drifts.append({
+                    'file': entry['file'],
+                    'problem': 'migrated consumer alias mapping drift in profiles.json',
+                    'detail': mismatches,
+                })
+                continue
+
+            migrated.append(entry['file'])
+            parsed_consumers[entry['file']] = {'__migrated': True, 'alias_key': alias_key}
+            continue
+
         consumer_data = parsed.get('data', {})
         parsed_consumers[entry['file']] = consumer_data
 
@@ -248,6 +307,7 @@ def main():
     report = {
         'canonical': os.path.relpath(PROFILES_PATH, REPO_ROOT).replace(os.sep, '/'),
         'consumers_checked': [e['file'] for e in SYNC_MANIFEST],
+        'migrated_consumers': migrated,
         'drift_count': len(drifts),
         'drifts': drifts,
     }

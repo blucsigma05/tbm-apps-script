@@ -1,0 +1,139 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://thompsonfams.com/schemas/play-gate-verdict/v1",
+  "title": "Play-Gate Verdict",
+  "description": "Canonical verdict shape emitted by scripts/play-gate.js for one route/child run. Ajv-validated. The required 'ship_decision' field is the D1 regression fence — legacy 'verdict' field is forbidden via additionalProperties:false at the root.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "rubricVersion",
+    "ship_decision",
+    "route",
+    "child",
+    "profile",
+    "mode",
+    "timestamp",
+    "commitSha",
+    "preconditions",
+    "criteria"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1,
+      "description": "Verdict schema version. Bumped only with a migration plan."
+    },
+    "rubricVersion": {
+      "type": "string",
+      "description": "Value of 'version' field in ops/play-gate-rubric.v1.json at runtime.",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+$"
+    },
+    "ship_decision": {
+      "type": "string",
+      "enum": ["ship", "ship-with-backlog", "do-not-ship"],
+      "description": "Canonical decision. D1 regression: ajv rejects 'verdict' or any alias."
+    },
+    "failure_state": {
+      "type": ["string", "null"],
+      "enum": ["config_drift", "preconditions_not_met", null],
+      "description": "Set when the run aborted before criteria could complete. When present, ship_decision MUST be 'do-not-ship'."
+    },
+    "route": {
+      "type": "string",
+      "pattern": "^/[a-z0-9\\-/]+(\\?[a-z0-9][a-z0-9\\-=&_]*)?$",
+      "description": "Route path being tested (e.g. /sparkle, /homework, /daily-missions?child=jj). Optional query string allowed because ops/play-gate-profiles.json routeViewports keys query-bearing routes."
+    },
+    "child": {
+      "type": "string",
+      "enum": ["jj", "buggsy", "both"],
+      "description": "Child identity for the run. 'both' reserved for hub surfaces."
+    },
+    "profile": {
+      "type": "string",
+      "description": "Device profile key from ops/play-gate-profiles.json (e.g. 'surface-pro-5', 'samsung-s10-fe')."
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["fixture", "live"],
+      "description": "fixture = GAS shim; live = seeded sandbox (requires live-smoke infra, PR 3+)."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 UTC timestamp of the run (e.g. 2026-04-17T12:34:56Z)."
+    },
+    "commitSha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{7,40}$",
+      "description": "Git commit SHA at which the run was executed."
+    },
+    "preconditions": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/checkResult" },
+      "description": "PRE-* results. If any fails with failure_action=abort, criteria array is empty and failure_state is set."
+    },
+    "criteria": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/checkResult" },
+      "description": "Per-criterion results. Empty iff preconditions aborted the run."
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "screenshots": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths relative to the verdict directory."
+        },
+        "consoleLog": { "type": "string" },
+        "networkLog": { "type": "string" },
+        "traceZip": { "type": "string" }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional human-readable context (surrogate approvals, inherited tests, etc.)."
+    }
+  },
+  "definitions": {
+    "checkResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(PRE-[0-9]+|[UJBCPD][0-9]+)$",
+          "description": "Criterion ID from ops/play-gate-rubric.v1.json (PRE-1..4, U1..16, J1..n, B1..n, C1..6, etc.)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pass", "fail", "skip", "blocked", "surrogate"],
+          "description": "blocked = rubric marks criterion blocked_on; surrogate = measurement used an LT-approved surrogate."
+        },
+        "measurement": {
+          "type": ["string", "number", "boolean", "object", "array", "null"],
+          "description": "Raw measurement output. Shape is criterion-specific (e.g. viewport dimensions, match count, duration ms)."
+        },
+        "expected": {
+          "type": ["string", "number", "boolean", "object", "array", "null"]
+        },
+        "evidence": {
+          "type": "string",
+          "description": "Path to criterion-specific evidence relative to verdict directory."
+        },
+        "surrogateNote": {
+          "type": "string",
+          "description": "Required when status=surrogate. Must name the LT approval (Issue # + approval date)."
+        },
+        "reducedMotionInheritsFrom": {
+          "type": "string",
+          "description": "When a route inherits reduced-motion proof from a family-shared component, name the component here (e.g. 'shared/SparkleCelebration.html')."
+        }
+      }
+    }
+  }
+}

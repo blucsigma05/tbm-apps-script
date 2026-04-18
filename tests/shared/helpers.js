@@ -1,16 +1,26 @@
 /**
  * Shared test helpers for TBM + MLS Playwright suites
+ *
+ * DEVICES viewport map is derived from ops/play-gate-profiles.json (canonical source per EPIC #439).
+ * The per-device `aliases["tests/shared/helpers.js:DEVICES"]` field names the key used here, so when
+ * profiles.json changes the viewport, this map picks it up automatically. CI script
+ * .github/scripts/check_profile_sync.py enforces no drift.
  */
+const path = require('path');
+const PROFILES = require(path.join(__dirname, '..', '..', 'ops', 'play-gate-profiles.json'));
 
-// Device viewport presets matching actual TBM target devices
-const DEVICES = {
-  S25:        { width: 390, height: 844 },   // Galaxy S25 (JT ThePulse)
-  iPadAir:    { width: 800, height: 1280 },  // iPad Air (kid tablets)
-  FireStick:  { width: 1920, height: 1080 }, // Fire Stick (Soul/Spine)
-  Omnibook:   { width: 1920, height: 1200 }, // HP Omnibook (LT TheVein)
-  SurfacePro: { width: 1368, height: 912 },  // Surface Pro 5 (Buggsy homework)
-  S10FE:      { width: 400, height: 800 },   // Galaxy S10 FE (JJ SparkleLearn)
-};
+const DEVICES = (function buildDevices() {
+  const out = {};
+  const deviceKeys = Object.keys(PROFILES.devices);
+  for (let i = 0; i < deviceKeys.length; i++) {
+    const device = PROFILES.devices[deviceKeys[i]];
+    const alias = device.aliases && device.aliases['tests/shared/helpers.js:DEVICES'];
+    if (alias) {
+      out[alias] = { width: device.viewport.width, height: device.viewport.height };
+    }
+  }
+  return out;
+})();
 
 // GAS pages can be slow — use this instead of default waitUntil
 const GAS_TIMEOUT = 25000;
