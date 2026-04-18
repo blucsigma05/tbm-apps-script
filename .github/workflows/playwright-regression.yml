@@ -1,6 +1,15 @@
 # .github/workflows/playwright-regression.yml
 # Playwright E2E Regression — runs Chromium tests against thompsonfams.com.
 # Result parsing lives in .github/scripts/parse_playwright_results.py.
+#
+# Path filter (#464): skip E2E on PRs that only touch docs / specs / Issue
+# templates. Doc edits cannot affect live-site rendering, so running the full
+# 30-min suite against thompsonfams.com on a CLAUDE.md-only PR is wasted time
+# AND exposes the PR to pre-existing Homework flakes that have nothing to do
+# with the change under review.
+#
+# GitHub behavior: `paths-ignore` skips the workflow iff EVERY changed file
+# matches at least one pattern. Mixed PRs (docs + code) still run the suite.
 
 name: Playwright Regression
 
@@ -8,6 +17,11 @@ on:
   pull_request:
     branches: [main]
     types: [opened, reopened, synchronize, ready_for_review]
+    paths-ignore:
+      - '**/*.md'
+      - 'ops/**'
+      - 'specs/**'
+      - '.github/ISSUE_TEMPLATE/**'
   workflow_dispatch:
 
 permissions:
