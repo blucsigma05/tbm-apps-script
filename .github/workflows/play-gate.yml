@@ -96,10 +96,7 @@ jobs:
         run: |
           VERDICT="${{ steps.verdict.outputs.dir }}/verdict.json"
           if [ -f "$VERDICT" ]; then
-            echo "### Play-Gate verdict" >> "$GITHUB_STEP_SUMMARY"
-            echo '```json' >> "$GITHUB_STEP_SUMMARY"
-            cat "$VERDICT" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            { echo "### Play-Gate verdict"; echo '```json'; cat "$VERDICT"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           else
             echo "::warning::Verdict file not written — play-gate failed before emit."
           fi
