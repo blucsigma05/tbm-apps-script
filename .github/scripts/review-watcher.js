@@ -5,6 +5,40 @@ const ACTION_MARKER = '<!-- pipeline-action: ';
 const USER_AGENT = 'tbm-pipeline-review-watcher';
 const PIPELINE_LABEL_PREFIX = 'pipeline:';
 const MAX_FIX_CYCLES = 3;
+
+// Playwright workflow paths-ignore patterns (#464). MUST stay in sync with
+// .github/workflows/playwright-regression.yml. If all of a PR's changed
+// files match at least one pattern, the Playwright workflow is skipped by
+// design and no run record exists. Without this, the watcher would treat
+// the missing run as WAITING and the PR would never reach READY_TO_MERGE.
+const PLAYWRIGHT_PATHS_IGNORE = [
+  '**/*.md',
+  'ops/**',
+  'specs/**',
+  '.github/ISSUE_TEMPLATE/**',
+];
+
+function fileMatchesPattern(file, pattern) {
+  if (!file || !pattern) return false;
+  if (pattern === '**/*.md') return file.endsWith('.md');
+  if (pattern.endsWith('/**')) {
+    const prefix = pattern.slice(0, -3);
+    return file.startsWith(prefix + '/');
+  }
+  return file === pattern;
+}
+
+function allFilesMatchIgnore(files, patterns) {
+  if (!files || files.length === 0) return false;
+  for (const file of files) {
+    var matched = false;
+    for (var i = 0; i < patterns.length; i++) {
+      if (fileMatchesPattern(file, patterns[i])) { matched = true; break; }
+    }
+    if (!matched) return false;
+  }
+  return true;
+}
 const PIPELINE_LABELS = {
   WAITING: {
     name: 'pipeline:waiting',
@@ -479,6 +513,10 @@ async function main() {
           isDraft
           reviewDecision
           headRefOid
+          files(first: 100) {
+            nodes { path }
+            pageInfo { hasNextPage }
+          }
           reviewThreads(first: 100, after: $after) {
             nodes {
               isResolved
@@ -565,9 +603,38 @@ async function main() {
 
   // Playwright E2E must also pass for READY_TO_MERGE
   var playwrightWorkflowName = getEnv('PLAYWRIGHT_WORKFLOW_NAME', '');
-  var playwrightState = playwrightWorkflowName
-    ? formatWorkflowState(latestRunByName(playwrightWorkflowName))
-    : { label: 'N/A', pass: true, failed: false, url: '' };
+  var playwrightState;
+  if (!playwrightWorkflowName) {
+    playwrightState = { label: 'N/A', pass: true, failed: false, url: '' };
+  } else {
+    var playwrightRun = latestRunByName(playwrightWorkflowName);
+    if (!playwrightRun) {
+      // No run exists for this head SHA. Distinguish between (a) the
+      // workflow was skipped by design via paths-ignore (#464) and (b)
+      // the workflow simply has not started yet. Use the PR's changed
+      // file list: if EVERY file matches a paths-ignore pattern AND the
+      // file list is complete (not truncated at 100), treat as passing.
+      // Otherwise fall through to WAITING. (#465/#477 P1 Codex finding.)
+      var prFiles = (pr.files && pr.files.nodes)
+        ? pr.files.nodes.map(function (n) { return n.path; })
+        : [];
+      var filesTruncated = !!(pr.files && pr.files.pageInfo
+        && pr.files.pageInfo.hasNextPage);
+      if (!filesTruncated
+          && allFilesMatchIgnore(prFiles, PLAYWRIGHT_PATHS_IGNORE)) {
+        playwrightState = {
+          label: 'SKIPPED-PATH',
+          pass: true,
+          failed: false,
+          url: ''
+        };
+      } else {
+        playwrightState = formatWorkflowState(null);
+      }
+    } else {
+      playwrightState = formatWorkflowState(playwrightRun);
+    }
+  }
 
   var codexState = buildActorReviewState(reviews, isCodexSignal, pr.headRefOid, parseExplicitOutcome);
 
