@@ -685,6 +685,16 @@ body.jj-theme #launch-overlay .ov-sub { color: rgba(255,200,240,0.55) !important
 .mf-actions{display:-webkit-flex;display:flex;gap:12px;-webkit-justify-content:center;justify-content:center;}
 .mf-submit-btn{background:#f59e0b;color:#0b0f1a;border:none;border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Orbitron',sans-serif;}
 .mf-skip-btn{background:transparent;border:1px solid rgba(255,255,255,0.2);color:#94a3b8;border-radius:10px;padding:12px 20px;font-size:13px;cursor:pointer;}
+
+  /* WCAG 2.1 Animation from Interactions — respect OS reduced motion (#438) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 </style>
 </head>
 <body>
