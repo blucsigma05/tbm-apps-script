@@ -14,8 +14,9 @@ Eligibility (Issue #454 acceptance criteria):
     - state:open
     - label:model:opus AND label:needs:implementation
       (override via GRINDER_LABEL_FILTER — see env vars)
-    - body contains a '## Build Skills' section (filed issues without skills
-      are silently ignored — enforces the per-Issue skill-tagging rule)
+    - body OR first comment contains a '## Build Skills' section
+      (filed issues without skills anywhere are silently ignored —
+      enforces the per-Issue skill-tagging rule from CLAUDE.md)
   MUST NOT have:
     - label:needs:lt-decision
     - label:status:draft
@@ -115,25 +116,66 @@ def _gh(args: list[str]) -> str:
 
 
 def list_candidate_issues(repo: str, required_labels: tuple[str, ...]) -> list[dict]:
-    """Fetch open issues matching ALL required labels. Returns list of dicts
-    with number, title, body, labels[], createdAt. Empty list on no match."""
+    """Fetch ALL open issues matching ALL required labels via REST pagination.
+
+    Uses `gh api --paginate /repos/{repo}/issues` instead of `gh issue list
+    --limit N` so the queue depth has no silent ceiling. The REST endpoint
+    returns issues + PRs combined; we drop entries with a `pull_request` key.
+    Output is normalized to the same shape `gh issue list --json` produces:
+        {number, title, body, labels:[{name}], createdAt}
+    """
+    label_param = ','.join(required_labels)
     args = [
-        'issue', 'list',
-        '-R', repo,
-        '--state', 'open',
-        '--limit', '200',
-        '--json', 'number,title,body,labels,createdAt',
+        'api', '--paginate', '-X', 'GET',
+        '/repos/' + repo + '/issues',
+        '-f', 'state=open',
+        '-f', 'labels=' + label_param,
+        '-f', 'per_page=100',
     ]
-    for label in required_labels:
-        args.extend(['--label', label])
     raw = _gh(args)
+    # --paginate concatenates JSON arrays back-to-back as `][` between pages.
+    # Normalize into a single list by splitting on the join seam.
     try:
-        data = json.loads(raw or '[]')
+        if not raw.strip():
+            data: list = []
+        else:
+            normalized = '[' + raw.strip().lstrip('[').rstrip(']').replace('][', ',') + ']'
+            data = json.loads(normalized)
     except json.JSONDecodeError as exc:
-        raise RuntimeError('gh issue list returned non-JSON: ' + str(exc))
+        raise RuntimeError('gh api --paginate returned non-JSON: ' + str(exc))
     if not isinstance(data, list):
-        raise RuntimeError('gh issue list returned non-list payload')
-    return data
+        raise RuntimeError('gh api returned non-list payload')
+    out = []
+    for item in data:
+        # REST `/issues` includes PRs; filter them out.
+        if 'pull_request' in item:
+            continue
+        out.append({
+            'number': item.get('number'),
+            'title': item.get('title'),
+            'body': item.get('body'),
+            'labels': item.get('labels') or [],
+            'createdAt': item.get('created_at'),
+        })
+    return out
+
+
+def fetch_first_comment_body(repo: str, issue_number: int) -> str | None:
+    """Return the body of the first comment on the Issue (oldest), or None."""
+    raw = _gh([
+        'api', '-X', 'GET',
+        '/repos/' + repo + '/issues/' + str(issue_number) + '/comments',
+        '-f', 'per_page=1',
+        '-f', 'sort=created',
+        '-f', 'direction=asc',
+    ])
+    try:
+        comments = json.loads(raw or '[]')
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(comments, list) or not comments:
+        return None
+    return comments[0].get('body')
 
 
 def has_open_closing_pr(repo: str, issue_number: int) -> bool:
@@ -206,8 +248,12 @@ def select(repo: str,
             log('skip_excluded', issue=number, reason=hit)
             continue
         if require_build_skills and not has_build_skills_section(issue.get('body')):
-            log('skip_no_build_skills', issue=number)
-            continue
+            # Per CLAUDE.md: section may live in body OR first comment.
+            first_comment = fetch_first_comment_body(repo, number)
+            if not has_build_skills_section(first_comment):
+                log('skip_no_build_skills', issue=number)
+                continue
+            log('build_skills_in_first_comment', issue=number)
         if has_open_closing_pr(repo, number):
             log('skip_has_closing_pr', issue=number)
             continue

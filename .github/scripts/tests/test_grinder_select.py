@@ -80,7 +80,7 @@ def test_not_excluded_when_no_overlap():
 
 @pytest.fixture
 def fake_gh(monkeypatch):
-    state = {'issues': [], 'prs': {}}
+    state = {'issues': [], 'prs': {}, 'first_comments': {}}
 
     def _fake_list(repo, required_labels):
         # Return issues that carry ALL required labels (case-insensitive)
@@ -95,8 +95,12 @@ def fake_gh(monkeypatch):
     def _fake_has_pr(repo, n):
         return state['prs'].get(n, False)
 
+    def _fake_first_comment(repo, n):
+        return state['first_comments'].get(n)
+
     monkeypatch.setattr(gsi, 'list_candidate_issues', _fake_list)
     monkeypatch.setattr(gsi, 'has_open_closing_pr', _fake_has_pr)
+    monkeypatch.setattr(gsi, 'fetch_first_comment_body', _fake_first_comment)
     return state
 
 
@@ -172,3 +176,45 @@ def test_select_require_build_skills_false_bypasses_body_check(fake_gh):
                       ('model:opus', 'needs:implementation'),
                       gsi.DEFAULT_EXCLUDE_LABELS,
                       require_build_skills=False) == 601
+
+
+# ---------- Codex P1: Build Skills in first comment ----------
+
+def test_select_accepts_build_skills_in_first_comment(fake_gh):
+    """CLAUDE.md: section may live in body OR first comment."""
+    fake_gh['issues'] = [
+        _issue(701, ['model:opus', 'needs:implementation', 'severity:major'],
+               body='Body has no skills section.'),
+    ]
+    fake_gh['first_comments'][701] = '## Build Skills\n- thompson-engineer'
+    assert gsi.select('owner/repo',
+                      ('model:opus', 'needs:implementation'),
+                      gsi.DEFAULT_EXCLUDE_LABELS) == 701
+
+
+def test_select_skips_when_neither_body_nor_first_comment_has_skills(fake_gh):
+    fake_gh['issues'] = [
+        _issue(801, ['model:opus', 'needs:implementation', 'severity:blocker'],
+               body='no skills here'),
+        _issue(802, ['model:opus', 'needs:implementation', 'severity:minor']),
+    ]
+    fake_gh['first_comments'][801] = 'just a follow-up comment, no skills'
+    # 801 fails both checks; 802 has skills in body (default _issue body)
+    assert gsi.select('owner/repo',
+                      ('model:opus', 'needs:implementation'),
+                      gsi.DEFAULT_EXCLUDE_LABELS) == 802
+
+
+def test_select_body_skills_short_circuits_no_comment_fetch(fake_gh, monkeypatch):
+    """If body already has the section, the first-comment fetch must not
+    be called — keeps the API budget tight when the common case wins."""
+    fake_gh['issues'] = [
+        _issue(901, ['model:opus', 'needs:implementation', 'severity:major']),
+    ]
+    calls = []
+    monkeypatch.setattr(gsi, 'fetch_first_comment_body',
+                        lambda r, n: calls.append(n) or None)
+    assert gsi.select('owner/repo',
+                      ('model:opus', 'needs:implementation'),
+                      gsi.DEFAULT_EXCLUDE_LABELS) == 901
+    assert calls == [], 'must not fetch comments when body already has skills'
