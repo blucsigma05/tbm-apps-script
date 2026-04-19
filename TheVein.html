@@ -2270,7 +2270,9 @@ var metrics = [
 { title: 'Total Debt',       key: 'debtCurrent',   direction: 'down' },
 { title: 'Discretionary',    key: 'disc_actual',   direction: 'down' }
 ];
-var html = '<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:JetBrains Mono,monospace;">';
+// grid-column:1/-1 forces the table to span both columns of .trend-grid
+// (the container is grid-template-columns:1fr 1fr — meant for the old card layout).
+var html = '<table style="grid-column:1/-1;width:100%;border-collapse:collapse;font-size:11px;font-family:JetBrains Mono,monospace;">';
 html += '<tr style="border-bottom:1px solid var(--glass-border);color:var(--text-dim);font-size:9px;letter-spacing:1px;">';
 html += '<th style="text-align:left;padding:6px 8px;">METRIC</th>';
 for (var hi = 0; hi < months.length; hi++) {
