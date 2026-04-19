@@ -537,6 +537,16 @@
 /* ExecSkills plan overlay */
 #es-plan-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(11,15,26,0.97);z-index:200;display:-webkit-flex;display:flex;-webkit-align-items:center;align-items:center;-webkit-justify-content:center;justify-content:center;padding:24px;}
 #es-plan-inner{max-width:520px;width:100%;}
+
+  /* WCAG 2.1 Animation from Interactions — respect OS reduced motion (#438) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 </style>
 </head>
 <body>

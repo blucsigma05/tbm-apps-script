@@ -583,7 +583,17 @@
       -webkit-animation: pulseSlot 1.2s ease-in-out infinite;
       animation: pulseSlot 1.2s ease-in-out infinite;
     }
-  </style>
+  
+  /* WCAG 2.1 Animation from Interactions — respect OS reduced motion (#438) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+</style>
 </head>
 <body style="background:#1a0533;">
 

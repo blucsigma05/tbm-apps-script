@@ -482,6 +482,16 @@ main {
   font-family: 'Nunito', sans-serif;
 }
 .mission-card:hover { border-color: #3B82F6; }
+
+  /* WCAG 2.1 Animation from Interactions — respect OS reduced motion (#438) */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 </style>
 </head>
 <body>
