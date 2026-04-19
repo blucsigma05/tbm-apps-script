@@ -2252,45 +2252,64 @@ function saveDinner() {
     .updateMealPlanSafe({ meal: meal, cook: cookEl.value, notes: notesEl.value.trim(), kidMeal: kidMeal });
 }
 
-/* ——— TREND CHARTS ——— */
+/* ——— MONTHLY TRENDS — CPA NUMBER TABLE (#322) ——— */
+// Replaces line-graph cards with rows = metrics, columns = months. MoM $ and %
+// at right, color-coded by direction (per-metric: 'up' = bigger is better).
+// Debt Payments + Net Worth deferred until Close History captures those columns.
 var HISTORY_DATA = [];
-function buildTrendChart(data, color, h, w) {
-if (!data.length) return ''; w = w || 280; h = h || 60;
-var pad = 16; var vals = data.map(function(d){return d.v;});
-var min = Math.min.apply(null, vals) * (Math.min.apply(null, vals) < 0 ? 1.1 : 0.9);
-var max = Math.max.apply(null, vals) * 1.1; var range = max - min || 1;
-function sx(i){return pad + i * ((w - 2 * pad) / (data.length - 1 || 1));}
-function sy(v){return h - pad/2 - ((v - min) / range) * (h - pad);}
-var svg = '<svg class="trend-svg" viewBox="0 0 ' + w + ' ' + (h + 16) + '">';
-if (min < 0 && max > 0) { var zy = sy(0); svg += '<line x1="' + pad + '" y1="' + zy + '" x2="' + (w-pad) + '" y2="' + zy + '" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="3,3"/>'; }
-var pts = data.map(function(d, i){return sx(i) + ',' + sy(d.v);}).join(' ');
-svg += '<polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linejoin="round"/>';
-data.forEach(function(d, i) { svg += '<circle cx="' + sx(i) + '" cy="' + sy(d.v) + '" r="2.5" fill="' + color + '"/>'; svg += '<text x="' + sx(i) + '" y="' + (h + 12) + '" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="7" fill="#9CA3AF">' + d.l + '</text>'; });
-svg += '</svg>'; return svg;
-}
 function renderTrends() {
 if (!HISTORY_DATA.length) { $('trendGrid').innerHTML = '<div class="trend-empty">No history data yet — trends populate after first month close.</div>'; $('trendMonthCount').textContent = 'No data'; return; }
 $('trendMonthCount').textContent = HISTORY_DATA.length + ' months';
-var last = HISTORY_DATA[HISTORY_DATA.length - 1];
-var prev = HISTORY_DATA.length > 1 ? HISTORY_DATA[HISTORY_DATA.length - 2] : null;
-function deltaCls(curr, prevV, inverted) { if (!prev) return ''; return (inverted ? (curr < prevV) : (curr > prevV)) ? 'up' : 'dn'; }
-var charts = [
-{ title: 'Earned Income', key: 'earnedIncome', color: 'var(--positive)', cls: 'tc-pos', inverted: false },
-{ title: 'Total Debt', key: 'debtCurrent', color: 'var(--negative)', cls: 'tc-neg', inverted: true },
-{ title: 'Cash Flow', key: 'operationalCashFlow', color: 'var(--gold)', cls: 'tc-gold', inverted: false },
-{ title: 'Discretionary Spend', key: 'disc_actual', color: 'var(--blue)', cls: 'tc-rose', inverted: true },
+var months = HISTORY_DATA;
+var lastIdx = months.length - 1;
+// direction: 'up' = bigger is better (green when ↑); 'down' = bigger is worse (red when ↑)
+var metrics = [
+{ title: 'Earned Income',    key: 'earnedIncome',  direction: 'up' },
+{ title: 'Operating Expenses', key: 'moneyOut',    direction: 'down' },
+{ title: 'Net Cash Flow',    key: 'netCashFlow',   direction: 'up' },
+{ title: 'Total Debt',       key: 'debtCurrent',   direction: 'down' },
+{ title: 'Discretionary',    key: 'disc_actual',   direction: 'down' }
 ];
-var html = '';
-for (var ci = 0; ci < charts.length; ci++) { var c = charts[ci];
-var chartData = HISTORY_DATA.map(function(m){return { v: m[c.key] || 0, l: (m.month || '').substring(0, 3) };}).filter(function(d){return d.v !== 0;});
-if (!chartData.length) continue;
-var currVal = chartData[chartData.length - 1].v;
-var prevVal = chartData.length > 1 ? chartData[chartData.length - 2].v : null;
-var dCls = prevVal !== null ? deltaCls(currVal, prevVal, c.inverted) : '';
-var dTxt = prevVal !== null ? (currVal >= prevVal ? '+' : '') + fmt(currVal - prevVal) + ' MoM' : '';
-html += '<div class="trend-card ' + c.cls + '"><div class="trend-title">' + c.title + '</div><div class="trend-val" style="color:' + c.color + '">' + fmt(currVal) + '</div><div class="trend-delta ' + dCls + '">' + dTxt + '</div>' + buildTrendChart(chartData, c.color) + '</div>';
+var html = '<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:JetBrains Mono,monospace;">';
+html += '<tr style="border-bottom:1px solid var(--glass-border);color:var(--text-dim);font-size:9px;letter-spacing:1px;">';
+html += '<th style="text-align:left;padding:6px 8px;">METRIC</th>';
+for (var hi = 0; hi < months.length; hi++) {
+var monShort = (months[hi].month || '').substring(0, 3);
+var yrShort = String(months[hi].year || '').substring(2);
+html += '<th style="text-align:right;padding:6px 8px;">' + escapeHtml(monShort) + ' \u2019' + escapeHtml(yrShort) + '</th>';
 }
-$('trendGrid').innerHTML = html || '<div class="trend-empty">Insufficient data for trends</div>';
+html += '<th style="text-align:right;padding:6px 8px;">MoM $</th>';
+html += '<th style="text-align:right;padding:6px 8px;">MoM %</th>';
+html += '</tr>';
+for (var mi = 0; mi < metrics.length; mi++) {
+var m = metrics[mi];
+html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">';
+html += '<td style="padding:5px 8px;color:var(--text-primary);font-weight:600;">' + escapeHtml(m.title) + '</td>';
+for (var ci = 0; ci < months.length; ci++) {
+var v = months[ci][m.key] || 0;
+html += '<td style="padding:5px 8px;text-align:right;color:var(--text-primary);">' + fmt(v) + '</td>';
+}
+var curr = months[lastIdx][m.key] || 0;
+var hasPrev = lastIdx > 0;
+var prevV = hasPrev ? (months[lastIdx - 1][m.key] || 0) : 0;
+var deltaStr = '\u2014';
+var pctStr = '\u2014';
+var color = 'var(--text-dim)';
+if (hasPrev) {
+var delta = curr - prevV;
+var same = delta === 0;
+var improving = m.direction === 'up' ? (delta > 0) : (delta < 0);
+color = same ? 'var(--text-dim)' : (improving ? '#22c55e' : '#ef4444');
+deltaStr = (delta >= 0 ? '+' : '\u2212') + '$' + fmt(Math.abs(delta));
+var pct = prevV !== 0 ? (delta / Math.abs(prevV)) * 100 : 0;
+pctStr = (pct >= 0 ? '+' : '\u2212') + Math.abs(pct).toFixed(1) + '%';
+}
+html += '<td style="padding:5px 8px;text-align:right;color:' + color + ';font-weight:600;">' + deltaStr + '</td>';
+html += '<td style="padding:5px 8px;text-align:right;color:' + color + ';font-weight:600;">' + pctStr + '</td>';
+html += '</tr>';
+}
+html += '</table>';
+$('trendGrid').innerHTML = html;
 }
 function toggleTrends(){ $('trendBody').classList.toggle('open'); $('trendArrow').classList.toggle('open'); }
 function toggleTxFeed(){ $('txFeedBody').classList.toggle('open'); $('txFeedArrow').classList.toggle('open'); }
