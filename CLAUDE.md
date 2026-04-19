@@ -715,6 +715,23 @@ Installed via `installAllOpsTriggersSafe()`. Health via `diagOpsTriggersSafe()`.
 
 ---
 
+## Scheduled Automations (claude.ai)
+
+claude.ai web-app Automations are separate from GAS Triggers. They run in the web app, have **no local filesystem access**, and use only connector tools (GitHub / Notion / Drive). To prevent run-to-run drift, every Automation prompt is one line that fetches a versioned `SKILL.md` from the repo and executes it exactly.
+
+- Canonical schema + the one-line prompt template: `ops/automations/AUTOMATION-TEMPLATE.md`
+- Existing automations: `.claude/scheduled-tasks/<name>/SKILL.md` (10 active)
+- One-line prompt format:
+  ```
+  Fetch https://raw.githubusercontent.com/blucsigma05/tbm-apps-script/main/.claude/scheduled-tasks/<name>/SKILL.md via the GitHub connector and execute it exactly. Do not improvise. If a step requires capability not available in this thread, send a Pushover SYSTEM_ERROR (1) and stop.
+  ```
+
+When adding a new Automation: write the SKILL.md per the template, then hand LT the one-line prompt to paste in claude.ai. Do not touch claude.ai prompts directly except via this swap.
+
+Output of an Automation goes to one of four destinations: Alert (Pushover), Persistent finding (dedup'd Issue via `hygiene-filer.yml`), Digest (comment on pinned status Issue), or Archive (Notion page append). See template for the full tier table.
+
+---
+
 ## Context Management
 
 - **Step 0 cleanup:** Before any refactor on a file >300 LOC, do a cleanup-only pass first (dead functions, unused variables, stale comments, debug logs). Commit separately. Then start real work. This prevents context compaction from firing mid-task.
