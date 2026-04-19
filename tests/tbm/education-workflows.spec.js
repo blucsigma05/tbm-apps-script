@@ -74,15 +74,24 @@ function filterRealErrors(errors) {
   });
 }
 
-// Dismiss the catch-up banner (added in #411) if present, then wait for the
-// Plan Your Attack overlay. The banner renders when the server returns fullWeek
-// data with missed days — dismiss before asserting plan overlay visibility.
+// Wait for the Plan Your Attack overlay, dismissing the catch-up banner if it
+// renders first. The banner (#411) and plan-attack overlay race — the banner
+// renders after getFridayMakeupQueueSafe returns, the overlay after
+// getTodayContentSafe; either may win. Old code checked banner.count() once
+// immediately, which fired before the banner had a chance to render at all.
+//
+// Pattern: wait for *either* element to appear (CSS comma selector resolves
+// to whichever renders first), then dismiss the banner if that's what showed
+// up, then wait for the plan-attack overlay proper.
 async function waitForPlanAttack(page) {
-  var dismissBtn = page.locator('[data-testid="catchup-banner-dismiss"]');
-  if (await dismissBtn.count() > 0) {
-    await dismissBtn.click();
+  var bannerSel = '[data-testid="catchup-banner-dismiss"]';
+  var planSel = '.es-plan-attack';
+  await page.locator(bannerSel + ', ' + planSel).first()
+    .waitFor({ state: 'visible', timeout: 20000 });
+  if (await page.locator(bannerSel).isVisible()) {
+    await page.locator(bannerSel).click();
   }
-  await page.locator('.es-plan-attack').waitFor({ state: 'visible', timeout: 20000 });
+  await page.locator(planSel).waitFor({ state: 'visible', timeout: 20000 });
 }
 
 // ---------------------------------------------------------------------------
