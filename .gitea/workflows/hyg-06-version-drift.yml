@@ -1,8 +1,14 @@
-# .github/workflows/hyg-06-version-drift.yml
+# .gitea/workflows/hyg-06-version-drift.yml
 # Version Drift Check — compares deployed GAS versions against source constants.
 # Catches "clasp push without clasp deploy" drift. Sends Pushover at priority=1.
 # Called by: after Deploy and Notify completes + nightly cron + workflow_dispatch
 # Env vars required: GAS_DEPLOY_URL, PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN
+# Ported from .github/workflows 2026-04-20 (PORT wave Batch 4h, Refs #7).
+#
+# This workflow is platform-agnostic — no token env, no forge API calls.
+# workflow_run matches by name ("Deploy and Notify"), which remains stable
+# after Batch 5a moved that workflow to .gitea/workflows/. Port is a pure
+# file-relocation + path-comment update.
 
 name: HYG-06 Version Drift Check
 
