@@ -1,4 +1,4 @@
-# .github/workflows/codex-rereview-handoff.yml
+# .gitea/workflows/codex-rereview-handoff.yml
 # Phase 3 of the Codex <-> Claude event router (#468).
 # When a PR's body or commit messages reference "Closes #<inbox-issue>" (or
 # Fixes / Resolves), post a <!-- tbm-handoff --> marker on the PR to
@@ -6,8 +6,9 @@
 # Complements Phase 1 (filer) and Phase 2 (auto-close) which live inline
 # in codex-pr-review.yml. This router is deliberately a SEPARATE workflow:
 # it posts only a PR comment (no downstream workflow triggers needed),
-# so the GITHUB_TOKEN recursive-run restriction does not apply.
+# so the GITEA_TOKEN recursive-run restriction does not apply.
 # Logic lives in .github/scripts/post_tbm_handoff_marker.py (no heredocs).
+# Ported from .github/workflows 2026-04-20 (PORT wave Batch 4f, Refs #7).
 
 name: Codex Re-review Handoff (Phase 3)
 
@@ -47,7 +48,8 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr }}
           REPO: ${{ github.repository }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_API_URL: ${{ github.server_url }}/api/v1
           AUTOMATION_ENABLED: ${{ vars.AUTOMATION_ENABLED || 'true' }}
           TBM_HANDOFF_ROUTER_ENABLED: ${{ vars.TBM_HANDOFF_ROUTER_ENABLED || 'true' }}
         run: python3 .github/scripts/post_tbm_handoff_marker.py

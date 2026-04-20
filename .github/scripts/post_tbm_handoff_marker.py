@@ -10,7 +10,7 @@ Purpose:   Phase 3 of the Codex <-> Claude event router (#468). Post a
            on `pull_request_target: synchronize`) and does NOT close any
            Issues (Phase 2 does that when Codex re-reviews).
 
-Called by: .github/workflows/codex-rereview-handoff.yml (pull_request_target
+Called by: .gitea/workflows/codex-rereview-handoff.yml (pull_request_target
            opened/reopened/synchronize + workflow_dispatch).
 
 Trust:     Low-trust. This script only POSTS a single PR comment; it does
@@ -20,10 +20,11 @@ Trust:     Low-trust. This script only POSTS a single PR comment; it does
 
 Env vars:
   Required:
-    GITHUB_TOKEN / GH_TOKEN           auth (auto in Actions)
-    GITHUB_REPOSITORY                 owner/repo (auto in Actions)
-    REPO                              owner/repo (workflow-supplied mirror)
-    PR_NUMBER                         the PR number
+    GITEA_TOKEN / GITHUB_TOKEN / GH_TOKEN  auth (auto in Gitea Actions)
+    GITEA_API_URL                          base (defaults to ${GITHUB_SERVER_URL}/api/v1)
+    GITHUB_REPOSITORY                      owner/repo (auto in Actions)
+    REPO                                   owner/repo (workflow-supplied mirror)
+    PR_NUMBER                              the PR number
   Kill switches (both default ON):
     AUTOMATION_ENABLED                master off for all automation
     TBM_HANDOFF_ROUTER_ENABLED        off for this router only
@@ -31,12 +32,13 @@ Env vars:
 Behavior:
   1. Gate on AUTOMATION_ENABLED AND TBM_HANDOFF_ROUTER_ENABLED. Silent exit
      on either false.
-  2. Fetch PR body + all commit messages via `gh pr view --json body,commits`.
+  2. Fetch PR body via /repos/{repo}/pulls/{n} + commit messages via
+     /repos/{repo}/pulls/{n}/commits.
   3. Parse `Close[sd]? | Fix(e[sd])? | Resolve[sd]? #N` patterns (case
      insensitive). GitHub's closing-keyword set, not every mention.
-  4. For each unique referenced issue, query `gh issue view --json labels,title`.
+  4. For each unique referenced issue, query /repos/{repo}/issues/{n}.
      Silently skip issues that do not exist or that return an error.
-  5. Keep only issues carrying the `claude:inbox` label.
+  5. Keep only issues carrying the `claude:inbox` label AND state=open.
   6. If the filtered set is non-empty, build the canonical comment body and
      upsert: search existing PR comments for the marker, PATCH if present,
      POST if not.
@@ -47,14 +49,21 @@ Behavior:
 
 Exit: 0 success (posted / updated / no-op all count as success).
       1 validation error (missing required env var).
-      2 unexpected error (API / subprocess failure that prevents completion).
+      2 unexpected error (API failure that prevents completion).
+
+Ported 2026-04-20 from gh CLI subprocess to Gitea REST stdlib urllib
+(PORT wave Batch 4f, Refs #7). Transport-only; logic preserved. Gitea
+state values are lowercase ("open") where gh returned uppercase ("OPEN") —
+updated comparison accordingly.
 """
 
 import json
 import os
 import re
-import subprocess
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 
 
@@ -71,7 +80,7 @@ ISSUE_REF_RE = re.compile(
 
 
 def log(event, **fields):
-    """Structured JSON-line logging. Mirrors file_codex_review_findings.py."""
+    """Structured JSON-line logging."""
     fields['event'] = event
     sys.stdout.write(json.dumps(fields, sort_keys=True) + '\n')
     sys.stdout.flush()
@@ -92,37 +101,69 @@ def env_required(name):
     return value
 
 
-def gh(args, check=True):
-    """Run gh CLI. Return (stdout, returncode). Raise on check=True failure."""
-    proc = subprocess.run(
-        ['gh'] + list(args),
-        capture_output=True,
-        text=True,
-    )
-    if check and proc.returncode != 0:
-        log('gh-error', args=list(args), rc=proc.returncode,
-            stderr=proc.stderr.strip()[:500])
-        raise RuntimeError('gh ' + args[0] + ' failed rc=' + str(proc.returncode))
-    return proc.stdout, proc.returncode
+def gitea_base_url():
+    explicit = os.environ.get('GITEA_API_URL', '').strip().rstrip('/')
+    if explicit:
+        return explicit
+    server = os.environ.get('GITHUB_SERVER_URL', '').strip().rstrip('/')
+    if server:
+        return server + '/api/v1'
+    return 'https://git.thompsonfams.com/api/v1'
+
+
+def gitea_token():
+    return (os.environ.get('GITEA_TOKEN')
+            or os.environ.get('GITHUB_TOKEN')
+            or os.environ.get('GH_TOKEN')
+            or '').strip()
+
+
+def gitea_api(method, path, body=None, query=None, timeout=15):
+    """Gitea REST call. Returns parsed JSON (or None on 204). Raises on non-2xx."""
+    url = gitea_base_url() + path
+    if query:
+        url = url + '?' + urllib.parse.urlencode(query, doseq=True)
+    data = None
+    if body is not None:
+        data = json.dumps(body).encode('utf-8')
+    req = urllib.request.Request(url, data=data, method=method)
+    token = gitea_token()
+    if token:
+        req.add_header('Authorization', 'token ' + token)
+    req.add_header('Accept', 'application/json')
+    if body is not None:
+        req.add_header('Content-Type', 'application/json')
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        text = resp.read()
+        if not text:
+            return None
+        return json.loads(text)
 
 
 def fetch_pr_text(repo, pr_number):
-    """Return PR body + all commit headlines/bodies concatenated for regex scan."""
-    stdout, _ = gh([
-        'pr', 'view', str(pr_number),
-        '--repo', repo,
-        '--json', 'body,commits',
-    ])
-    data = json.loads(stdout)
-    parts = [data.get('body') or '']
-    for commit in data.get('commits') or []:
-        parts.append(commit.get('messageHeadline') or '')
-        parts.append(commit.get('messageBody') or '')
+    """Return PR body + all commit messages concatenated for regex scan.
+
+    Uses two Gitea endpoints:
+      GET /repos/{repo}/pulls/{n}           -> body
+      GET /repos/{repo}/pulls/{n}/commits   -> list of commits with commit.message
+    """
+    pr = gitea_api('GET', '/repos/' + repo + '/pulls/' + str(pr_number)) or {}
+    parts = [pr.get('body') or '']
+    try:
+        commits = gitea_api('GET', '/repos/' + repo + '/pulls/' + str(pr_number) + '/commits',
+                            query={'limit': '50'}) or []
+    except urllib.error.HTTPError as exc:
+        log('pr-commits-fetch-error', code=exc.code)
+        commits = []
+    for commit in commits:
+        inner = commit.get('commit') or {}
+        # Gitea returns a single `message` field (GitHub split it into
+        # messageHeadline/messageBody). Scan the whole thing.
+        parts.append(inner.get('message') or commit.get('message') or '')
     return '\n'.join(parts)
 
 
 def extract_closing_refs(text):
-    """Return sorted unique issue numbers from closing-keyword patterns."""
     nums = set()
     for match in ISSUE_REF_RE.finditer(text or ''):
         try:
@@ -133,30 +174,28 @@ def extract_closing_refs(text):
 
 
 def lookup_inbox_issue(repo, issue_number):
-    """Return (True, title) if the issue has claude:inbox, else (False, None).
-    Returns (False, None) on any lookup error (nonexistent, API failure, etc.)."""
+    """Return (True, title) if the issue has claude:inbox AND is open,
+    else (False, None). Returns (False, None) on any lookup error.
+    """
     try:
-        stdout, rc = gh([
-            'issue', 'view', str(issue_number),
-            '--repo', repo,
-            '--json', 'labels,title,state',
-        ], check=False)
-        if rc != 0:
-            log('issue-lookup-skip', issue=issue_number, rc=rc)
-            return (False, None)
-        data = json.loads(stdout)
-        labels = [lbl.get('name', '') for lbl in data.get('labels') or []]
-        # Require OPEN state. A closed claude:inbox Issue referenced in
-        # older commit history should not surface as a live handoff target
-        # and retrigger Codex re-review of an already-resolved finding.
-        # (Caught by Codex review on PR #469 -- P2 finding.)
-        state = (data.get('state') or '').upper()
-        if INBOX_LABEL in labels and state == 'OPEN':
-            return (True, data.get('title') or '')
+        data = gitea_api('GET', '/repos/' + repo + '/issues/' + str(issue_number))
+    except urllib.error.HTTPError as exc:
+        log('issue-lookup-skip', issue=issue_number, code=exc.code)
         return (False, None)
-    except (json.JSONDecodeError, RuntimeError) as exc:
+    except (urllib.error.URLError, json.JSONDecodeError) as exc:
         log('issue-lookup-error', issue=issue_number, error=str(exc)[:200])
         return (False, None)
+
+    if not data:
+        return (False, None)
+
+    labels = [lbl.get('name', '') for lbl in (data.get('labels') or [])]
+    # Gitea states are lowercase ("open"/"closed"). GitHub via gh CLI
+    # returned uppercase ("OPEN"/"CLOSED"). Normalize before compare.
+    state = (data.get('state') or '').lower()
+    if INBOX_LABEL in labels and state == 'open':
+        return (True, data.get('title') or '')
+    return (False, None)
 
 
 def build_comment_body(inbox_refs):
@@ -191,63 +230,54 @@ def build_comment_body(inbox_refs):
 def find_existing_marker_comment(repo, pr_number):
     """Return comment id for an existing tbm-handoff comment, or None.
 
-    Uses `gh api --paginate --slurp` so all pages arrive as a single JSON
-    array of arrays. Without --slurp, `gh api --paginate` emits each page
-    as its own top-level JSON document; `json.loads` fails on the
-    concatenated stream for any PR with >100 comments, the function
-    silently returns None, and the upsert path creates a NEW comment on
-    every run (duplicate tbm-handoff markers on busy PRs).
-    (Caught by Codex review on PR #469 -- P1 finding.)
+    Paginates through /repos/{repo}/issues/{n}/comments until an empty page.
+    Gitea's comments list is a flat array per page (no "slurp" wrapper like
+    gh --paginate --slurp). We walk pages manually.
     """
-    stdout, _ = gh([
-        'api', 'repos/{0}/issues/{1}/comments'.format(repo, pr_number),
-        '--paginate', '--slurp',
-    ])
-    try:
-        pages = json.loads(stdout)
-    except json.JSONDecodeError:
-        log('comments-parse-error')
-        return None
-    # --slurp produces [[page1_comments], [page2_comments], ...]; flatten.
-    for page in pages or []:
-        for comment in page or []:
+    page = 1
+    while True:
+        try:
+            data = gitea_api(
+                'GET',
+                '/repos/' + repo + '/issues/' + str(pr_number) + '/comments',
+                query={'limit': '50', 'page': str(page)},
+            ) or []
+        except urllib.error.HTTPError as exc:
+            log('comments-fetch-error', page=page, code=exc.code)
+            return None
+        if not data:
+            return None
+        for comment in data:
             if MARKER in (comment.get('body') or ''):
                 return comment.get('id')
-    return None
+        if len(data) < 50:
+            return None
+        page += 1
 
 
 def upsert_marker_comment(repo, pr_number, body):
     """Update existing tbm-handoff comment or create a new one."""
     existing_id = find_existing_marker_comment(repo, pr_number)
     if existing_id:
-        # PATCH via gh api. Pass body via stdin to avoid shell escaping.
-        proc = subprocess.run(
-            ['gh', 'api',
-             'repos/{0}/issues/comments/{1}'.format(repo, existing_id),
-             '--method', 'PATCH',
-             '--input', '-'],
-            input=json.dumps({'body': body}),
-            text=True,
-            capture_output=True,
-        )
-        if proc.returncode != 0:
-            log('comment-update-error', rc=proc.returncode,
-                stderr=proc.stderr.strip()[:500])
+        try:
+            gitea_api(
+                'PATCH',
+                '/repos/' + repo + '/issues/comments/' + str(existing_id),
+                body={'body': body},
+            )
+        except urllib.error.HTTPError as exc:
+            log('comment-update-error', code=exc.code)
             raise RuntimeError('failed to update handoff comment')
         log('comment-updated', pr=pr_number, comment_id=existing_id)
         return
-    # Create. `gh issue comment` handles the PR case too (PRs are issues).
-    proc = subprocess.run(
-        ['gh', 'issue', 'comment', str(pr_number),
-         '--repo', repo,
-         '--body-file', '-'],
-        input=body,
-        text=True,
-        capture_output=True,
-    )
-    if proc.returncode != 0:
-        log('comment-create-error', rc=proc.returncode,
-            stderr=proc.stderr.strip()[:500])
+    try:
+        gitea_api(
+            'POST',
+            '/repos/' + repo + '/issues/' + str(pr_number) + '/comments',
+            body={'body': body},
+        )
+    except urllib.error.HTTPError as exc:
+        log('comment-create-error', code=exc.code)
         raise RuntimeError('failed to create handoff comment')
     log('comment-created', pr=pr_number)
 
@@ -264,10 +294,14 @@ def main():
     repo = os.environ.get('REPO', '').strip() or env_required('GITHUB_REPOSITORY')
     pr_number = env_required('PR_NUMBER')
 
+    if not gitea_token():
+        log('error', reason='missing-token')
+        return 1
+
     # 2. Fetch PR body + commits.
     try:
         pr_text = fetch_pr_text(repo, pr_number)
-    except (json.JSONDecodeError, RuntimeError) as exc:
+    except (urllib.error.HTTPError, urllib.error.URLError, json.JSONDecodeError) as exc:
         log('pr-fetch-failed', error=str(exc)[:200])
         return 2
 
