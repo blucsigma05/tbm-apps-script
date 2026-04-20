@@ -39,8 +39,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install Python deps
-        run: python3 -m pip install --quiet requests
+      - name: Verify Python deps (requests installed via apt on runner host)
+        run: python3 -c "import requests; print('requests', requests.__version__)"
 
       - name: Build PR diff + changed file list
         env:
