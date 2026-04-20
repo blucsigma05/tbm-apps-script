@@ -1,23 +1,46 @@
 #!/usr/bin/env python3
 """check_orphaned_prs.py
 Purpose:   Find open PRs with no activity for ORPHAN_DAYS. Sends Pushover.
-Called by: .github/workflows/hyg-02-orphaned-prs.yml
-Env vars:  GH_TOKEN          GitHub token (required)
-           GITHUB_REPOSITORY owner/repo (set by Actions runner)
+Called by: .gitea/workflows/hyg-02-orphaned-prs.yml
+Env vars:  GITEA_TOKEN       Gitea token (preferred)
+           GITHUB_TOKEN      Fallback (Gitea Actions auto-provides this as compat alias)
+           GH_TOKEN          Legacy alias, still accepted
+           GITEA_API_URL     e.g. https://git.thompsonfams.com/api/v1 (optional;
+                             defaults to ${GITHUB_SERVER_URL}/api/v1)
+           GITHUB_REPOSITORY owner/repo (set by Gitea Actions runner)
            ORPHAN_DAYS       Days without update before orphaned (default: 5)
            GITHUB_OUTPUT     Set by Actions runner; used to pass step outputs
+
+Ported from GitHub REST to Gitea REST 2026-04-20 (PORT wave Batch 4b, Refs #7).
+Gitea's /pulls endpoint returns the same shape we consume: number, title,
+html_url, updated_at. No schema differences beyond the transport.
 """
 
 import json
 import os
 import sys
+import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone, timedelta
 
-GH_TOKEN = os.environ.get('GH_TOKEN', '')
-REPO = os.environ.get('GITHUB_REPOSITORY', '')
+TOKEN = (os.environ.get('GITEA_TOKEN')
+         or os.environ.get('GITHUB_TOKEN')
+         or os.environ.get('GH_TOKEN')
+         or '').strip()
+REPO = os.environ.get('GITHUB_REPOSITORY', '').strip()
 ORPHAN_DAYS = int(os.environ.get('ORPHAN_DAYS', '5'))
 GITHUB_OUTPUT = os.environ.get('GITHUB_OUTPUT', '')
+
+
+def gitea_base_url():
+    explicit = os.environ.get('GITEA_API_URL', '').strip().rstrip('/')
+    if explicit:
+        return explicit
+    server = os.environ.get('GITHUB_SERVER_URL', '').strip().rstrip('/')
+    if server:
+        return server + '/api/v1'
+    return 'https://git.thompsonfams.com/api/v1'
 
 
 def set_output(key, value):
@@ -28,37 +51,37 @@ def set_output(key, value):
         print('[output] ' + key + '=' + value)
 
 
-def gh_get_all(path):
+def gitea_get_all(path, limit=50):
     results = []
     page = 1
-    sep = '&' if '?' in path else '?'
+    base = gitea_base_url()
     while True:
-        url = 'https://api.github.com' + path + sep + 'per_page=100&page=' + str(page)
-        req = urllib.request.Request(url, headers={
-            'Authorization': 'Bearer ' + GH_TOKEN,
-            'Accept': 'application/vnd.github+json',
-            'X-GitHub-Api-Version': '2022-11-28',
-        })
-        with urllib.request.urlopen(req) as resp:
-            data = json.loads(resp.read())
+        sep = '&' if '?' in path else '?'
+        url = base + path + sep + 'limit=' + str(limit) + '&page=' + str(page)
+        req = urllib.request.Request(url)
+        if TOKEN:
+            req.add_header('Authorization', 'token ' + TOKEN)
+        req.add_header('Accept', 'application/json')
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read() or b'[]')
         if not data:
             break
         results.extend(data)
-        if len(data) < 100:
+        if len(data) < limit:
             break
         page += 1
     return results
 
 
 def main():
-    if not GH_TOKEN:
-        print('ERROR: GH_TOKEN not set')
+    if not TOKEN:
+        print('ERROR: no token set (GITEA_TOKEN / GITHUB_TOKEN / GH_TOKEN)')
         return 1
     if not REPO:
         print('ERROR: GITHUB_REPOSITORY not set')
         return 1
 
-    prs = gh_get_all('/repos/' + REPO + '/pulls?state=open')
+    prs = gitea_get_all('/repos/' + REPO + '/pulls?state=open')
 
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(days=ORPHAN_DAYS)
@@ -68,14 +91,19 @@ def main():
         updated_str = pr.get('updated_at', '')
         if not updated_str:
             continue
-        updated = datetime.fromisoformat(updated_str.replace('Z', '+00:00'))
+        try:
+            updated = datetime.fromisoformat(updated_str.replace('Z', '+00:00'))
+        except ValueError:
+            continue
+        if updated.tzinfo is None:
+            updated = updated.replace(tzinfo=timezone.utc)
         if updated < cutoff:
             age = (now - updated).days
             orphaned.append({
-                'number': pr['number'],
-                'title': pr['title'],
+                'number': pr.get('number'),
+                'title': pr.get('title', ''),
                 'age_days': age,
-                'url': pr['html_url'],
+                'url': pr.get('html_url', ''),
             })
 
     orphaned.sort(key=lambda x: x['age_days'], reverse=True)
