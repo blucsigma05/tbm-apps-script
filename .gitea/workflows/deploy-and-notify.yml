@@ -1,4 +1,4 @@
-# .github/workflows/deploy-and-notify.yml
+# .gitea/workflows/deploy-and-notify.yml
 # GAS Deploy + Smoke + Pushover — deploys on merge to main, verifies via HTTP, notifies.
 # Pushover includes deployment proof: deploy ID, HTTP status, smoke status, version.
 #
@@ -6,6 +6,10 @@
 #   - WARN is advisory (e.g. TAB_MAP drift, row growth). Deploy succeeds, release created.
 #   - FAIL is blocking. Deploy already happened but release is skipped, notification is honest.
 #   - smoke_response.txt is always uploaded so category breakdowns are visible.
+#
+# Ported from .github/workflows 2026-04-20 (PORT wave Batch 5a, Refs #7).
+# Only transport change: gh release create -> curl POST to Gitea releases API.
+# paths-ignore updated to cover .gitea/ in addition to .github/.
 
 name: Deploy and Notify
 
@@ -17,10 +21,12 @@ on:
       - 'wrangler.toml'
       - '**.md'
       - '.github/**'
+      - '.gitea/**'
+      - 'ops/**'
   workflow_dispatch:
 
 permissions:
-  contents: write   # required for gh release create
+  contents: write   # required for Gitea release creation
 
 # Serialize all production-mutation lanes. Same group applies to deploy-worker.yml (F03/F04).
 # cancel-in-progress: false ensures a queued deploy is never silently dropped.
@@ -176,10 +182,12 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
-      - name: Create GitHub release
+      - name: Create Gitea release
         if: success()
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_API_URL: ${{ github.server_url }}/api/v1
+          REPO: ${{ github.repository }}
           CODE_VERSION: ${{ steps.smoke.outputs.code_version }}
           SMOKE_STATUS: ${{ steps.smoke.outputs.smoke_status }}
         run: |
@@ -188,22 +196,46 @@ jobs:
             exit 0
           fi
           TAG="v${CODE_VERSION}"
-          # Skip if tag already exists (re-run protection)
-          if gh release view "$TAG" > /dev/null 2>&1; then
+          # Skip if release for this tag already exists (re-run protection).
+          # Gitea: GET /repos/{repo}/releases/tags/{tag} -> 200 if exists, 404 otherwise.
+          HTTP_GET=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Accept: application/json" \
+            "${GITEA_API_URL}/repos/${REPO}/releases/tags/${TAG}")
+          if [ "$HTTP_GET" = "200" ]; then
             echo "Release $TAG already exists — skipping."
             exit 0
           fi
           SHA_SHORT="${GITHUB_SHA:0:7}"
-          # Honest smoke status in release notes
           if [ "$SMOKE_STATUS" = "WARN" ]; then
             SMOKE_NOTE="Smoke test: WARN (advisory — see run artifacts for category breakdown)."
           else
             SMOKE_NOTE="Smoke test: PASS."
           fi
-          gh release create "$TAG" \
-            --title "TBM ${TAG}" \
-            --notes "Deployed from commit ${SHA_SHORT}. ${SMOKE_NOTE}" \
-            --target "$GITHUB_SHA"
+          # JSON-encode payload safely via python3 (stdlib).
+          PAYLOAD=$(python3 -c "
+          import json, os
+          print(json.dumps({
+              'tag_name':          os.environ['TAG'],
+              'target_commitish':  os.environ['GITHUB_SHA'],
+              'name':              'TBM ' + os.environ['TAG'],
+              'body':              'Deployed from commit ' + os.environ['SHA_SHORT'] + '. ' + os.environ['SMOKE_NOTE'],
+              'draft':             False,
+              'prerelease':        False,
+          }))
+          " TAG="$TAG" SHA_SHORT="$SHA_SHORT" SMOKE_NOTE="$SMOKE_NOTE")
+          HTTP_POST=$(curl -sS -o release_response.json -w '%{http_code}' \
+            -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            "${GITEA_API_URL}/repos/${REPO}/releases" \
+            -d "$PAYLOAD")
+          if [ "$HTTP_POST" != "201" ]; then
+            echo "::error::Gitea release POST returned HTTP $HTTP_POST"
+            cat release_response.json
+            exit 1
+          fi
           echo "Release $TAG created at ${SHA_SHORT}."
 
       - name: Pushover — deploy success
