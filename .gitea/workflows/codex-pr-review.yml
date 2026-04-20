@@ -1,0 +1,106 @@
+# .gitea/workflows/codex-pr-review.yml
+# MVP port of the GitHub Codex PR review workflow (.github/workflows/codex-pr-review.yml).
+# Runs on tbm-runner-1 (host mode) attached to git.thompsonfams.com.
+#
+# Scope — this MVP:
+#   - fetch PR diff + changed files
+#   - call OpenAI gpt-4o via .github/scripts/codex_review.py (reused as-is —
+#     script is environment-agnostic, reads env vars, writes files)
+#   - post the review comment back to the PR via Gitea API
+#
+# Scope — NOT in this MVP, port later if needed:
+#   - triage_review.py pre-filter (medium/full/skip decisions)
+#   - inline file_codex_review_findings.py claude:inbox filer
+#   - auto-requeue on 429 rate limits
+#   - integrity check for rubber-stamped audits
+#   - triage + severity labels
+#
+# Secrets required on the repo (Settings → Actions → Secrets):
+#   OPENAI_API_KEY — OpenAI API token with chat.completions access
+#
+# Gitea auto-provides ${{ secrets.GITHUB_TOKEN }} — same name as GitHub, has
+# repo write access for the workflow run. Used here to post the review comment.
+
+name: Codex PR Review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize]
+
+jobs:
+  review:
+    name: Codex PR Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Python deps
+        run: python3 -m pip install --quiet requests
+
+      - name: Build PR diff + changed file list
+        env:
+          BASE: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch origin "$BASE"
+          git diff "origin/${BASE}...${HEAD_SHA}" > pr_diff.txt
+          git diff --name-only "origin/${BASE}...${HEAD_SHA}" > changed_files.txt
+          echo "diff bytes: $(wc -c < pr_diff.txt)"
+          echo "changed count: $(wc -l < changed_files.txt)"
+
+      - name: Detect empty diff
+        id: diff
+        run: |
+          DIFF_BYTES=$(wc -c < pr_diff.txt)
+          CHANGED=$(wc -l < changed_files.txt)
+          if [ "$CHANGED" -gt 0 ] && [ "$DIFF_BYTES" -eq 0 ]; then
+            echo "empty_diff=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "empty_diff=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run codex_review.py
+        id: review
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DIFF_FILE: pr_diff.txt
+          CHANGED_FILES_FILE: changed_files.txt
+          EMPTY_DIFF: ${{ steps.diff.outputs.empty_diff }}
+          REVIEW_MODE: medium
+        run: python3 .github/scripts/codex_review.py
+
+      - name: Post review comment to Gitea PR
+        if: always()
+        env:
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+          GITEA_HOST: https://git.thompsonfams.com
+        run: |
+          if [ ! -f review_comment.md ]; then
+            echo "No review_comment.md — nothing to post"
+            exit 0
+          fi
+          # JSON-encode body via Python for safety (handles quotes, backticks, etc.)
+          PAYLOAD=$(python3 -c "
+          import json, sys
+          body = open('review_comment.md').read()
+          print(json.dumps({'body': body}))
+          ")
+          curl -sS -f -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${GITEA_HOST}/api/v1/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            -d "${PAYLOAD}" > /dev/null
+          echo "Posted review comment to ${REPO}#${PR_NUMBER}"
+
+      - name: Fail check on FAIL or INCONCLUSIVE verdict
+        if: steps.review.outputs.verdict == 'FAIL' || steps.review.outputs.verdict == 'INCONCLUSIVE'
+        run: |
+          echo "Codex verdict: ${{ steps.review.outputs.verdict }} — blocking merge."
+          exit 1
