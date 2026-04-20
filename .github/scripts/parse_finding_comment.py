@@ -1,29 +1,37 @@
 #!/usr/bin/env python3
 """
 Codex Finding Comment Listener — parse PR comment for finding markers and apply labels.
-Extended (#384): auto-file GitHub Issues for severity:blocker findings.
+Extended (#384): auto-file Gitea Issues for severity:blocker findings.
 
-Called by: .github/workflows/codex-finding-listener.yml
+Called by: .gitea/workflows/codex-finding-listener.yml
 Env vars expected:
-  GITHUB_TOKEN      — GitHub token with issues:write and pull-requests:write (required)
-  REPO              — owner/repo slug, e.g. blucsigma05/tbm-apps-script (required)
-  GITHUB_EVENT_NAME — 'issue_comment', 'pull_request_review_comment', or 'pull_request_review' (required)
+  GITEA_TOKEN       — Gitea token with issues:write + pull-requests:write (preferred)
+  GITHUB_TOKEN      — fallback (Gitea Actions auto-provides as compat alias)
+  GITEA_API_URL     — base (defaults to ${GITHUB_SERVER_URL}/api/v1)
+  REPO              — owner/repo slug (required)
+  GITHUB_EVENT_NAME — 'issue_comment', 'pull_request_review_comment', or 'pull_request_review'
   COMMENT_AUTHOR    — login of the comment author (required)
   COMMENT_BODY      — full body of the comment (required)
-  COMMENT_ID        — numeric ID of the comment (for blocker dedup key) (optional)
+  COMMENT_ID        — numeric ID of the comment (for blocker dedup key)
   ISSUE_NUMBER      — issue/PR number from issue_comment event (may be empty)
-  PR_NUMBER         — PR number from pull_request_review_comment event (may be empty)
+  PR_NUMBER         — PR number from pull_request_review_* events (may be empty)
 
-Kill switches (repo vars):
+Kill switches (Gitea repo vars):
   AUTOMATION_ENABLED             — set 'false' to disable all automation
   CODEX_BLOCKER_AUTOFILE_ENABLED — set 'false' to disable blocker Issue auto-filing only
+
+Ported 2026-04-20 from GitHub REST to Gitea REST (PORT wave Batch 4e, Refs #7).
+Identity changes (per LT 2026-04-20): AUTHOR_WHITELIST = {'LT'} and
+BOT_LOGINS includes 'gitea-actions'. The old GitHub values blucsigma05
+(that was an org namespace on Gitea, not a user) and chatgpt-codex-connector
+(no equivalent on Gitea — Codex CLI posts via gitea-actions) are dropped.
 
 Behavior:
   - For issue_comment events: verifies via API that the issue is actually a PR; skips plain Issues.
   - Skips bot's own comments (loop prevention).
   - Rejects authors not in AUTHOR_WHITELIST; silent exit.
   - Scans body for visible-text OR HTML-comment finding markers.
-  - If found: adds pipeline:fix-needed (created if absent) + type-specific label (created if absent).
+  - If found: adds pipeline:fix-needed + type-specific label.
   - If severity:blocker detected: auto-files a durable Issue via _finding_dedup.py.
   - Prevents duplicate replies via COMMENT_MARKER check.
   - If no marker: silent exit (no labels, no reply).
@@ -33,14 +41,19 @@ import json
 import os
 import re
 import sys
-import urllib.request
 import urllib.error
+import urllib.parse
+import urllib.request
 
 # Whitelisted comment authors. Only these logins can trigger finding actions.
-AUTHOR_WHITELIST = {'blucsigma05', 'chatgpt-codex-connector'}
+# Updated for Gitea 2026-04-20: LT is the user on this Gitea instance.
+AUTHOR_WHITELIST = {'LT'}
 
 # These logins are the bot's own identity — skip to prevent infinite loops.
-BOT_LOGINS = {'github-actions[bot]', 'github-actions'}
+# Gitea Actions posts as 'gitea-actions'. GitHub legacy names kept as a
+# belt-and-suspenders: harmless if the bot identity ever differs in a future
+# version, they just won't match anything on Gitea.
+BOT_LOGINS = {'gitea-actions', 'github-actions[bot]', 'github-actions'}
 
 # HTML marker appended to confirmation replies; used to detect existing replies.
 COMMENT_MARKER = '<!-- codex-finding-listener -->'
@@ -59,7 +72,6 @@ HTML_PATTERN = re.compile(
 )
 
 # Map finding types to existing repo labels only — never auto-create labels.
-# Uses pipeline:* labels that already exist in the repo.
 TYPE_LABELS = {
     'HOLD':  'pipeline:stalled',
     'FIX':   'pipeline:fix-needed',
@@ -73,38 +85,63 @@ BLOCKER_BADGE_PATTERN = re.compile(
     re.IGNORECASE
 )
 
-# Kill switch env vars (set by GitHub repo vars via workflow env)
+# Kill switch env vars
 AUTOMATION_ENABLED = os.environ.get('AUTOMATION_ENABLED', 'true').lower() != 'false'
 BLOCKER_AUTOFILE_ENABLED = os.environ.get('CODEX_BLOCKER_AUTOFILE_ENABLED', 'true').lower() != 'false'
 
 
-def gh_api(path, method='GET', body=None, token=None):
-    """Call GitHub REST API. Returns parsed JSON or None on error."""
-    url = 'https://api.github.com' + path
+def gitea_base_url():
+    explicit = os.environ.get('GITEA_API_URL', '').strip().rstrip('/')
+    if explicit:
+        return explicit
+    server = os.environ.get('GITHUB_SERVER_URL', '').strip().rstrip('/')
+    if server:
+        return server + '/api/v1'
+    return 'https://git.thompsonfams.com/api/v1'
+
+
+def gitea_token():
+    return (os.environ.get('GITEA_TOKEN')
+            or os.environ.get('GITHUB_TOKEN')
+            or os.environ.get('GH_TOKEN')
+            or '').strip()
+
+
+def gitea_api(path, method='GET', body=None, token=None):
+    """Call Gitea REST API. Returns parsed JSON or None on error."""
+    url = gitea_base_url() + path
     headers = {
-        'Authorization': 'Bearer ' + token,
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'Content-Type': 'application/json',
+        'Accept': 'application/json',
     }
+    if token:
+        headers['Authorization'] = 'token ' + token
+    if body is not None:
+        headers['Content-Type'] = 'application/json'
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req) as resp:
-            return json.loads(resp.read())
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            text = resp.read()
+            if not text:
+                return {}
+            return json.loads(text)
     except urllib.error.HTTPError as e:
-        print('API %s %s -> %d' % (method, path, e.code), file=sys.stderr)
+        err_body = ''
         try:
-            print(e.read().decode(), file=sys.stderr)
+            err_body = e.read().decode('utf-8', errors='replace')[:300]
         except Exception:
             pass
+        print('API %s %s -> %d: %s' % (method, path, e.code, err_body), file=sys.stderr)
         return None
 
 
 def add_label_(repo, pr_number, label_name, token):
-    """Apply a label to the issue/PR. Returns True only if the API call succeeds."""
+    """Apply a label to the issue/PR by NAME. Gitea's /issues/{n}/labels
+    endpoint accepts {"labels": ["name1"]} (names or int IDs since Gitea 1.19).
+    Returns True only if the API call succeeds.
+    """
     path = '/repos/%s/issues/%s/labels' % (repo, pr_number)
-    result = gh_api(path, method='POST', body={'labels': [label_name]}, token=token)
+    result = gitea_api(path, method='POST', body={'labels': [label_name]}, token=token)
     if result is not None:
         print('Label applied: %s' % label_name)
         return True
@@ -153,23 +190,28 @@ def create_issue_if_blocker_(repo, pr_number, comment_id, comment_body, token):
         'If this is a false positive, close with `false-positive` reason and add label `auto:suppressed`.'
     ) % (dedup_marker, pr_number, comment_body[:2000], pr_number, comment_id)
 
-    result = gh_api('/repos/%s/issues' % repo, method='POST', body={
+    # Two-step create on Gitea: POST /issues without labels (Gitea issue-create
+    # body traditionally requires int IDs), then POST /issues/{n}/labels with
+    # names — which the labels endpoint accepts.
+    created = gitea_api('/repos/%s/issues' % repo, method='POST', body={
         'title': 'blocker: %s (from PR #%s)' % (first_line or 'Codex blocker finding', pr_number),
         'body': issue_body,
-        'labels': ['kind:bug', 'severity:blocker', 'auto-filed', 'codex-finding'],
     }, token=token)
 
-    if result:
-        issue_num = result['number']
-        print('Auto-filed blocker as Issue #%d' % issue_num)
-        return issue_num
-    else:
+    if not created:
         print('ERROR: failed to create blocker Issue', file=sys.stderr)
         return None
 
+    issue_num = created.get('number')
+    for lab in ('kind:bug', 'severity:blocker', 'auto-filed', 'codex-finding'):
+        add_label_(repo, issue_num, lab, token)
+
+    print('Auto-filed blocker as Issue #%s' % issue_num)
+    return issue_num
+
 
 def main():
-    token = os.environ.get('GITHUB_TOKEN', '')
+    token = gitea_token()
     repo = os.environ.get('REPO', '')
     event_name = os.environ.get('GITHUB_EVENT_NAME', '')
     author = os.environ.get('COMMENT_AUTHOR', '')
@@ -188,16 +230,14 @@ def main():
         if not issue_number:
             print('No issue number — skipping')
             return
-        issue = gh_api('/repos/%s/issues/%s' % (repo, issue_number), token=token)
+        issue = gitea_api('/repos/%s/issues/%s' % (repo, issue_number), token=token)
         if issue is None or 'pull_request' not in issue:
             print('issue_comment on plain issue #%s — skipping' % issue_number)
             return
         pr_number = issue_number
     elif event_name == 'pull_request_review':
-        # pull_request_review is always on a PR — no API verification needed
         pr_number = pr_number_raw
     else:
-        # pull_request_review_comment — PR number from workflow env
         pr_number = pr_number_raw
 
     if not pr_number:
@@ -253,7 +293,7 @@ def main():
 
     # Check for existing confirmation to prevent duplicates
     comments_path = '/repos/%s/issues/%s/comments' % (repo, pr_number)
-    existing = gh_api(comments_path, token=token) or []
+    existing = gitea_api(comments_path, token=token) or []
     for c in existing:
         if COMMENT_MARKER in (c.get('body') or ''):
             print('Confirmation reply already exists — skipping duplicate')
@@ -265,14 +305,14 @@ def main():
 
     blocker_note = ''
     if blocker_issue_num and blocker_issue_num > 0:
-        blocker_note = ' Auto-filed as Issue #%d for durability.' % blocker_issue_num
+        blocker_note = ' Auto-filed as Issue #%s for durability.' % blocker_issue_num
 
     reply = (
         COMMENT_MARKER + '\n'
         '\U0001f916 Finding detected (type: **%s**). '
         '%s label(s) applied.%s'
     ) % (finding_type, ' + '.join(labels_applied), blocker_note)
-    gh_api(comments_path, method='POST', body={'body': reply}, token=token)
+    gitea_api(comments_path, method='POST', body={'body': reply}, token=token)
     print('Confirmation reply posted.')
 
 

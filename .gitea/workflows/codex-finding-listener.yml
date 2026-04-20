@@ -1,6 +1,6 @@
-# .github/workflows/codex-finding-listener.yml
+# .gitea/workflows/codex-finding-listener.yml
 # Codex Finding Listener — detects finding markers in PR comments and applies labels.
-# Extended (#384): auto-files GitHub Issues for severity:blocker (P1) findings.
+# Extended (#384): auto-files Gitea Issues for severity:blocker (P1) findings.
 # Logic lives in .github/scripts/parse_finding_comment.py (no heredocs in YAML).
 #
 # Supports ALL three comment surfaces:
@@ -8,9 +8,13 @@
 #   pull_request_review_comment — inline diff comments
 #   pull_request_review         — submitted review body (HOLD/APPROVE/etc.)
 #
-# Whitelisted authors: blucsigma05, chatgpt-codex-connector.
-# Loop prevention: skips github-actions[bot] comments.
+# Whitelisted authors: LT.  (Updated per LT 2026-04-20: old GitHub values
+#   'blucsigma05' was an org namespace on Gitea not a user, and
+#   'chatgpt-codex-connector' has no Gitea equivalent since the Codex CLI
+#   posts via gitea-actions instead of an external connector account.)
+# Loop prevention: skips gitea-actions + legacy github-actions[bot] comments.
 # Kill switches: repo vars AUTOMATION_ENABLED, CODEX_BLOCKER_AUTOFILE_ENABLED.
+# Ported from .github/workflows 2026-04-20 (PORT wave Batch 4e, Refs #7).
 
 name: Codex Finding Listener
 
@@ -41,7 +45,8 @@ jobs:
 
       - name: Parse finding comment
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_API_URL: ${{ github.server_url }}/api/v1
           REPO: ${{ github.repository }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           COMMENT_AUTHOR: ${{ github.event.comment.user.login || github.event.review.user.login }}
