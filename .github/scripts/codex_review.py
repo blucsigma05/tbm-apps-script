@@ -54,7 +54,7 @@ REPORT_JSON_START = "<!-- codex-review-report -->"
 REPORT_JSON_END = "<!-- /codex-review-report -->"
 
 # ── context limits ───────────────────────────────────────────────────
-MAX_DIFF_CHARS = 40000       # cap raw diff
+MAX_DIFF_CHARS = 80000       # cap raw diff (2026-04-20: bumped from 40000 to reduce truncation-triggered INCONCLUSIVEs on doc-heavy and multi-file PRs; stays safely within gpt-4o 128K context budget given other sub-caps below)
 PER_FILE_CAP = 30000         # cap per changed file
 MAX_CONTEXT_CHARS = 140000   # cap changed-file context
 RELATED_CONTEXT_CAP = 40000  # additional budget for caller/consumer context
