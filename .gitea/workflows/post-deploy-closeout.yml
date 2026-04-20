@@ -1,4 +1,4 @@
-# .github/workflows/post-deploy-closeout.yml
+# .gitea/workflows/post-deploy-closeout.yml
 # Post-deploy closeout — runs after deploy-and-notify.yml on every main deploy.
 # Automates the manual steps from CLAUDE.md deploy pipeline (steps 7-7b):
 #   - Pull deployed versions from /api probe
@@ -7,6 +7,10 @@
 #   - Append thread handoff to Notion Thread Handoff Archive
 #
 # Closes #383.
+# Ported from .github/workflows 2026-04-20 (PORT wave Batch 5d, Refs #7).
+# The `workflows:` list in the workflow_run trigger matches by workflow NAME
+# (not file path), so "Deploy and Notify" continues to resolve correctly
+# after Batch 5a moved the workflow to .gitea/workflows/.
 
 name: Post-Deploy Closeout
 
@@ -58,12 +62,29 @@ jobs:
         id: pr-meta
         if: github.event_name == 'workflow_run'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_API_URL: ${{ github.server_url }}/api/v1
+          REPO: ${{ github.repository }}
           SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          pr=$(gh pr list --state merged --search "$SHA" --json number,title --limit 1 2>/dev/null || echo '[]')
-          pr_number=$(echo "$pr" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['number'] if d else '')" 2>/dev/null || echo '')
-          pr_title=$(echo  "$pr" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d[0]['title']  if d else '')" 2>/dev/null || echo '')
+          # Gitea has a direct "which PR merged this commit?" endpoint:
+          #   GET /repos/{owner}/{repo}/commits/{sha}/pull
+          # Returns the PR object or 404 if the commit isn't associated with one.
+          HTTP_CODE=$(curl -sS -o pr_meta.json -w '%{http_code}' \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Accept: application/json" \
+            "${GITEA_API_URL}/repos/${REPO}/commits/${SHA}/pull" || echo "000")
+          if [ "$HTTP_CODE" = "200" ]; then
+            pr_number=$(python3 -c "import json; d=json.load(open('pr_meta.json')); print(d.get('number') or '')")
+            pr_title=$(python3 -c "import json; d=json.load(open('pr_meta.json')); print(d.get('title') or '')")
+          else
+            # Non-200 = no associated PR (direct push to main, or commit
+            # older than Gitea's indexing window). Silent empty fallback —
+            # downstream script tolerates empty PR metadata.
+            pr_number=""
+            pr_title=""
+            echo "No PR found for commit ${SHA} (HTTP ${HTTP_CODE}) — proceeding without PR metadata"
+          fi
           echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
           echo "pr_title=$pr_title"   >> "$GITHUB_OUTPUT"
 
