@@ -1,24 +1,53 @@
 #!/usr/bin/env python3
 """check_dead_workflows.py
 Purpose:   List all repo workflows, flag any with no run in DEAD_DAYS.
-Called by: .github/workflows/hyg-08-dead-workflows.yml
-Env vars:  GH_TOKEN          GitHub token (required)
-           GITHUB_REPOSITORY owner/repo (set by Actions runner)
+Called by: .gitea/workflows/hyg-08-dead-workflows.yml
+Env vars:  GITEA_TOKEN       Gitea token (preferred)
+           GITHUB_TOKEN      Fallback (Gitea Actions compat alias)
+           GH_TOKEN          Legacy alias, still accepted
+           GITEA_API_URL     e.g. https://git.thompsonfams.com/api/v1 (optional;
+                             defaults to ${GITHUB_SERVER_URL}/api/v1)
+           GITHUB_REPOSITORY owner/repo (set by Gitea Actions runner)
            DEAD_DAYS         Days without a run before flagged (default: 30)
            GITHUB_OUTPUT     Set by Actions runner; used to pass step outputs
+
+Ported from GitHub Actions API to Gitea Actions API 2026-04-20 (PORT wave
+Batch 4d, Refs #7).
+
+Gitea Actions API shape (compat with GitHub for these endpoints):
+  GET /repos/{repo}/actions/workflows           -> {"workflows":[{id,name,path,state}]}
+  GET /repos/{repo}/actions/workflows/{id}/runs -> {"workflow_runs":[{updated_at,created_at,status}]}
+
+Gitea returns workflow id as a filename-ish string in some versions and an
+integer in others. The endpoint accepts whatever comes out of the list
+endpoint's `id` field unchanged, so we just pass it through.
 """
 
 import json
 import os
 import sys
-import urllib.request
 import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone, timedelta
 
-GH_TOKEN = os.environ.get('GH_TOKEN', '')
-REPO = os.environ.get('GITHUB_REPOSITORY', '')
+TOKEN = (os.environ.get('GITEA_TOKEN')
+         or os.environ.get('GITHUB_TOKEN')
+         or os.environ.get('GH_TOKEN')
+         or '').strip()
+REPO = os.environ.get('GITHUB_REPOSITORY', '').strip()
 DEAD_DAYS = int(os.environ.get('DEAD_DAYS', '30'))
 GITHUB_OUTPUT = os.environ.get('GITHUB_OUTPUT', '')
+
+
+def gitea_base_url():
+    explicit = os.environ.get('GITEA_API_URL', '').strip().rstrip('/')
+    if explicit:
+        return explicit
+    server = os.environ.get('GITHUB_SERVER_URL', '').strip().rstrip('/')
+    if server:
+        return server + '/api/v1'
+    return 'https://git.thompsonfams.com/api/v1'
 
 
 def set_output(key, value):
@@ -29,32 +58,42 @@ def set_output(key, value):
         print('[output] ' + key + '=' + value)
 
 
-def gh_get(path):
-    url = 'https://api.github.com' + path
-    req = urllib.request.Request(url, headers={
-        'Authorization': 'Bearer ' + GH_TOKEN,
-        'Accept': 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-    })
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read())
+def gitea_get(path, query=None):
+    url = gitea_base_url() + path
+    if query:
+        sep = '&' if '?' in url else '?'
+        url = url + sep + urllib.parse.urlencode(query)
+    req = urllib.request.Request(url)
+    if TOKEN:
+        req.add_header('Authorization', 'token ' + TOKEN)
+    req.add_header('Accept', 'application/json')
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        return json.loads(resp.read() or b'{}')
 
 
 def list_workflows():
-    result = gh_get('/repos/' + REPO + '/actions/workflows?per_page=100')
+    result = gitea_get('/repos/' + REPO + '/actions/workflows', {'limit': '100'})
     return result.get('workflows', [])
 
 
 def get_latest_run(workflow_id):
-    result = gh_get('/repos/' + REPO + '/actions/workflows/' + str(workflow_id) +
-                    '/runs?per_page=1&status=completed')
-    runs = result.get('workflow_runs', [])
+    try:
+        result = gitea_get(
+            '/repos/' + REPO + '/actions/workflows/' + str(workflow_id) + '/runs',
+            {'limit': '1'},
+        )
+    except urllib.error.HTTPError as e:
+        # Gitea returns 404 for workflows that have never run
+        if e.code == 404:
+            return None
+        raise
+    runs = result.get('workflow_runs', []) or []
     return runs[0] if runs else None
 
 
 def main():
-    if not GH_TOKEN:
-        print('ERROR: GH_TOKEN not set')
+    if not TOKEN:
+        print('ERROR: no token set (GITEA_TOKEN / GITHUB_TOKEN / GH_TOKEN)')
         return 1
     if not REPO:
         print('ERROR: GITHUB_REPOSITORY not set')
@@ -67,27 +106,37 @@ def main():
 
     dead = []
     for wf in workflows:
-        if wf.get('state') != 'active':
+        state = wf.get('state') or 'active'
+        if state != 'active':
             continue
 
-        name = wf.get('name', wf.get('path', ''))
-        wf_id = wf['id']
+        name = wf.get('name') or wf.get('path') or ''
+        wf_id = wf.get('id')
+        if wf_id is None:
+            continue
 
         latest = get_latest_run(wf_id)
         if latest is None:
             dead.append({'name': name, 'last_run': 'never', 'age_days': 'never'})
             continue
 
-        run_date_str = latest.get('updated_at', latest.get('created_at', ''))
+        run_date_str = latest.get('updated_at') or latest.get('created_at') or ''
         if not run_date_str:
             continue
 
-        run_dt = datetime.fromisoformat(run_date_str.replace('Z', '+00:00'))
+        try:
+            run_dt = datetime.fromisoformat(run_date_str.replace('Z', '+00:00'))
+        except ValueError:
+            continue
+        if run_dt.tzinfo is None:
+            run_dt = run_dt.replace(tzinfo=timezone.utc)
         if run_dt < cutoff:
             age = (now - run_dt).days
             dead.append({'name': name, 'last_run': run_date_str, 'age_days': age})
 
-    dead.sort(key=lambda x: 9999 if x['age_days'] == 'never' else x['age_days'], reverse=True)
+    def sort_key(x):
+        return 9999 if x['age_days'] == 'never' else x['age_days']
+    dead.sort(key=sort_key, reverse=True)
 
     has_findings = len(dead) > 0
     set_output('has_findings', 'true' if has_findings else 'false')

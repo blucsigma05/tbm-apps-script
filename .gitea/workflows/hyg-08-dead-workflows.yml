@@ -1,8 +1,9 @@
-# .github/workflows/hyg-08-dead-workflows.yml
+# .gitea/workflows/hyg-08-dead-workflows.yml
 # Dead Workflow Detector — runs monthly 1st at 9am Central (15:00 UTC).
-# Flags workflows with no successful run in 30 days.
+# Flags workflows with no run in 30 days.
 # Called by: cron 1st 15:00 UTC + workflow_dispatch
-# Env vars required: GH_TOKEN (auto), PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN
+# Env vars required: GITEA_TOKEN (auto), PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN
+# Ported from .github/workflows 2026-04-20 (PORT wave Batch 4d, Refs #7).
 
 name: HYG-08 Dead Workflow Detector
 
@@ -33,7 +34,8 @@ jobs:
       - name: Run dead workflow check
         id: check
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_API_URL: ${{ github.server_url }}/api/v1
           GITHUB_REPOSITORY: ${{ github.repository }}
           DEAD_DAYS: ${{ inputs.dead_days || '30' }}
         run: python3 .github/scripts/check_dead_workflows.py
