@@ -1,4 +1,4 @@
-# .github/workflows/hyg-13-knowledge-graph-diff.yml
+# .gitea/workflows/hyg-13-knowledge-graph-diff.yml
 # Knowledge Graph Diff — triggered on push to main touching knowledge files.
 # Posts a diff summary to Notion changelog.
 # Called by: push to main (filtered paths) + workflow_dispatch

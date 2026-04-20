@@ -1,4 +1,4 @@
-# .github/workflows/pr-linked-issue.yml
+# .gitea/workflows/pr-linked-issue.yml
 # Enforces that every PR body contains a linked issue keyword.
 # Blocks merge if no "Closes #NNN", "Fixes #NNN", or "Resolves #NNN" is found.
 # Exempt: PRs whose title starts with "chore" or "docs" or has the "skip-issue-link" label.

@@ -1,4 +1,4 @@
-# .github/workflows/hyg-14-rubric-drift.yml
+# .gitea/workflows/hyg-14-rubric-drift.yml
 # HYG-14: Rubric drift enforcement — Work Doctrine rule 14 drift-control extension.
 #
 # Contract:

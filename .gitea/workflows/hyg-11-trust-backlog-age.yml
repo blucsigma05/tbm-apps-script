@@ -1,27 +1,27 @@
-# .github/workflows/hyg-05-parking-lot-age.yml
-# Parking Lot Age Sweep — runs 1st and 15th of each month at 7am Central (13:00 UTC).
-# Reads Notion Parking Lot page, flags items older than STALE_DAYS.
-# Called by: cron 1st/15th 13:00 UTC + workflow_dispatch
-# Env vars required: NOTION_API_KEY, PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN
+# .gitea/workflows/hyg-11-trust-backlog-age.yml
+# Trust Backlog Age Sweep — runs every Sunday at 8am Central (14:00 UTC).
+# Flags active sprint items with last_verified > 7 days.
+# Called by: cron Sunday 14:00 UTC + workflow_dispatch
+# Env vars required: NOTION_API_KEY, NOTION_TRUST_BACKLOG_DB, PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN
 
-name: HYG-05 Parking Lot Age Sweep
+name: HYG-11 Trust Backlog Age Sweep
 
 on:
   schedule:
-    - cron: '0 13 1,15 * *'   # 1st & 15th 07:00 Central (13:00 UTC)
+    - cron: '0 14 * * 0'   # Sunday 08:00 Central (14:00 UTC)
   workflow_dispatch:
     inputs:
       stale_days:
-        description: 'Days before a parking lot item is flagged (default: 14)'
+        description: 'Days since last_verified before flagged (default: 7)'
         required: false
-        default: '14'
+        default: '7'
 
 permissions:
   contents: read
 
 jobs:
-  parking-lot-sweep:
-    name: Parking Lot Age Sweep
+  trust-backlog-sweep:
+    name: Trust Backlog Age Sweep
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -29,13 +29,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run parking lot age check
+      - name: Run trust backlog age check
         id: check
         env:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          NOTION_PARKING_LOT_ID: '32ccea3cd9e881809257fd5e7973c6d7'
-          STALE_DAYS: ${{ inputs.stale_days || '14' }}
-        run: python3 .github/scripts/check_parking_lot_age.py
+          NOTION_TRUST_BACKLOG_DB: ${{ secrets.NOTION_TRUST_BACKLOG_DB }}
+          STALE_DAYS: ${{ inputs.stale_days || '7' }}
+        run: python3 .github/scripts/check_trust_backlog_age.py
 
       - name: Pushover — stale items found
         if: steps.check.outputs.has_findings == 'true'
@@ -47,12 +47,12 @@ jobs:
             echo "Pushover secrets not set — skipping notification."
             exit 0
           fi
-          MSG=$(cat hyg05-message.txt 2>/dev/null || echo "Stale Parking Lot items found — see Actions log.")
+          MSG=$(cat hyg11-message.txt 2>/dev/null || echo "Stale trust backlog items found — see Actions log.")
           RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
           curl -sS \
             --form-string "token=${PUSHOVER_APP_TOKEN}" \
             --form-string "user=${PUSHOVER_USER_KEY}" \
-            --form-string "title=HYG-05: Parking Lot Stale" \
+            --form-string "title=HYG-11: Trust Backlog Stale" \
             --form-string "message=${MSG}" \
             --form-string "url=${RUN_URL}" \
             --form-string "url_title=View run" \

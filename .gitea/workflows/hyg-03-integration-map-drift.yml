@@ -1,4 +1,4 @@
-# .github/workflows/hyg-03-integration-map-drift.yml
+# .gitea/workflows/hyg-03-integration-map-drift.yml
 # Integration Map Drift Detector — runs every Sunday at 7am Central (13:00 UTC).
 # Reads Notion Integration Map DB, flags entries with last_reviewed > 30 days.
 # Called by: cron Sunday 13:00 UTC + workflow_dispatch
