@@ -1,4 +1,4 @@
-# .github/workflows/playwright-regression.yml
+# .gitea/workflows/playwright-regression.yml
 # Playwright E2E Regression — runs Chromium tests against thompsonfams.com.
 # Result parsing lives in .github/scripts/parse_playwright_results.py.
 #
@@ -8,8 +8,26 @@
 # AND exposes the PR to pre-existing Homework flakes that have nothing to do
 # with the change under review.
 #
-# GitHub behavior: `paths-ignore` skips the workflow iff EVERY changed file
-# matches at least one pattern. Mixed PRs (docs + code) still run the suite.
+# paths-ignore behavior (both GitHub and Gitea): the workflow is skipped iff
+# EVERY changed file matches at least one pattern. Mixed PRs (docs + code)
+# still run the suite.
+#
+# Ported from .github/workflows 2026-04-20 (PORT wave Batch 6b, Refs #7).
+# Runtime prereq: the tbm-runner-1 act_runner user has a scoped sudoers
+# grant (`act_runner ALL=(ALL) NOPASSWD: /usr/bin/apt-get`) installed in
+# Phase C so `npx playwright install --with-deps chromium` can install
+# browser deps. LT confirmed on 2026-04-20 to keep the grant rather than
+# pre-bake Playwright deps into the VPS image — lowest-risk path, grant
+# is narrowly scoped to apt-get only.
+#
+# Changes vs the GitHub version:
+#   - `Post results comment on PR`: actions/github-script -> inline python3
+#     stdlib urllib, same marker-find-or-create pattern as Batch 6a ci.yml.
+#   - All actions/upload-artifact@v4 usages kept as-is (Gitea runner's
+#     action mirror surfaces this action; if-no-files-found: ignore makes
+#     them silent no-ops if the mirror disagrees).
+#   - paths-ignore unchanged (Gitea evaluates paths-ignore with the same
+#     "every changed file must match at least one pattern" semantics).
 
 name: Playwright Regression
 
@@ -184,37 +202,53 @@ jobs:
 
       - name: Post results comment on PR
         if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            let body = 'Playwright results could not be read. Check workflow logs.';
-            try { body = fs.readFileSync('playwright-comment.md', 'utf8'); } catch (e) {}
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_API_URL: ${{ github.server_url }}/api/v1
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Inline python3 stdlib replaces actions/github-script. Marker
+          # match is "Playwright Regression" in the comment body.
+          python3 - <<'PYEOF'
+          import json, os, urllib.request
+          api = os.environ['GITEA_API_URL'].rstrip('/')
+          token = os.environ['GITEA_TOKEN']
+          repo = os.environ['REPO']
+          pr = os.environ['PR_NUMBER']
+          try:
+              with open('playwright-comment.md', 'r', encoding='utf-8') as fh:
+                  body = fh.read()
+          except Exception as exc:
+              body = 'Playwright results could not be read. Check workflow logs. (' + str(exc) + ')'
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              per_page: 100,
-            });
-            const existing = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('Playwright Regression')
-            );
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body,
-              });
-            }
+          def call(method, path, payload=None):
+              url = api + path
+              data = json.dumps(payload).encode('utf-8') if payload is not None else None
+              req = urllib.request.Request(url, data=data, method=method)
+              req.add_header('Authorization', 'token ' + token)
+              req.add_header('Accept', 'application/json')
+              if payload is not None:
+                  req.add_header('Content-Type', 'application/json')
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  text = resp.read().decode('utf-8')
+                  return json.loads(text) if text else None
+
+          comments = call('GET', '/repos/' + repo + '/issues/' + pr + '/comments') or []
+          existing = None
+          for c in comments:
+              if 'Playwright Regression' in (c.get('body') or ''):
+                  existing = c.get('id')
+                  break
+          if existing:
+              call('PATCH', '/repos/' + repo + '/issues/comments/' + str(existing),
+                   payload={'body': body})
+              print('Updated comment ' + str(existing))
+          else:
+              call('POST', '/repos/' + repo + '/issues/' + pr + '/comments',
+                   payload={'body': body})
+              print('Created new comment on PR #' + pr)
+          PYEOF
 
       - name: Fail check on test failures
         if: steps.playwright.outputs.verdict == 'FAIL'
