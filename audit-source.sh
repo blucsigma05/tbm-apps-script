@@ -13,12 +13,20 @@ echo ""
 # ── BRANCH STALENESS CHECK ───────────────────────────────────
 echo "--- Branch Staleness ---"
 
-git fetch origin main --quiet 2>/dev/null
-if git merge-base --is-ancestor origin/main HEAD 2>/dev/null; then
-  echo "  OK -- Branch is up to date with origin/main"
+# Canonical remote: prefer gitea (post-migration), fall back to origin
+# for historical checkouts that predate the migration.
+if git remote | grep -qx gitea; then
+  CANON_REMOTE=gitea
 else
-  echo "  FAIL -- Branch is behind origin/main"
-  echo "  Run: git fetch origin main && git rebase origin/main"
+  CANON_REMOTE=origin
+fi
+
+git fetch "$CANON_REMOTE" main --quiet 2>/dev/null
+if git merge-base --is-ancestor "$CANON_REMOTE/main" HEAD 2>/dev/null; then
+  echo "  OK -- Branch is up to date with $CANON_REMOTE/main"
+else
+  echo "  FAIL -- Branch is behind $CANON_REMOTE/main"
+  echo "  Run: git fetch $CANON_REMOTE main && git rebase $CANON_REMOTE/main"
   echo "  Resolve any conflicts before pushing."
   FAIL=1
 fi
