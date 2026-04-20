@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """file_hygiene_issue.py
-Purpose:   Dedup'd GitHub Issue filer for hygiene findings.
+Purpose:   Dedup'd Gitea Issue filer for hygiene findings.
            Reads a finding JSON from stdin, computes an identity signature,
            searches for existing Issues, and either no-ops, reopens, or creates.
-Called by: .github/workflows/hygiene-filer.yml
+Called by: .gitea/workflows/hygiene-filer.yml
 Input:     Finding JSON on stdin. Schema:
              {
                "check":        "version-drift",      required, check-id
@@ -14,16 +14,23 @@ Input:     Finding JSON on stdin. Schema:
                "details":      "Optional prose",     optional, shown in body
                "extra_labels": ["area:infra", ...],  optional
              }
-Env vars:  GITHUB_TOKEN / GH_TOKEN           auth (auto in Actions)
-           GITHUB_REPOSITORY                 owner/repo (auto in Actions)
-           AUTOMATION_ENABLED                "false" short-circuits (default true)
-           HYGIENE_ISSUE_CREATION_ENABLED    "false" short-circuits (default true)
-           AUTOMATION_MAX_DAILY_ISSUES       integer cap (default 5)
-           STATUS_ISSUE_NUMBER               pinned filer-status Issue (optional)
-Args:      --dry-run  print rendered body; no GitHub API calls
+Env vars:  GITEA_TOKEN (preferred) or GITHUB_TOKEN  auth (auto in Gitea Actions)
+           GITEA_API_URL                            e.g. https://git.thompsonfams.com/api/v1
+                                                    (defaults to ${GITHUB_SERVER_URL}/api/v1
+                                                    which Gitea sets to its own base)
+           GITHUB_REPOSITORY                        owner/repo (auto in Gitea Actions)
+           AUTOMATION_ENABLED                       "false" short-circuits (default true)
+           HYGIENE_ISSUE_CREATION_ENABLED           "false" short-circuits (default true)
+           AUTOMATION_MAX_DAILY_ISSUES              integer cap (default 5)
+           STATUS_ISSUE_NUMBER                      pinned filer-status Issue (optional)
+Args:      --dry-run  print rendered body; no Gitea API calls
 Exit:      0 success (created, reopened, dedup no-op, or rate-limited no-op)
            1 validation error
-           2 unexpected error (GitHub API failure)
+           2 unexpected error (Gitea API failure)
+
+Ported from GitHub gh-CLI implementation 2026-04-20 (PORT wave Batch 4a, Refs #7).
+Behavior preserved: marker-based dedup, 7-day reopen window, suppress label,
+daily rate cap, pre-create recheck. Only the transport (gh -> Gitea REST) changed.
 """
 
 import argparse
@@ -31,12 +38,14 @@ import hashlib
 import json
 import os
 import re
-import subprocess
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 
-SIG_LENGTH = 16  # DECISION 2 = (b): 16 hex chars
-REOPEN_WINDOW_DAYS = 7  # DECISION 3 = (a)
+SIG_LENGTH = 16
+REOPEN_WINDOW_DAYS = 7
 SUPPRESSED_WINDOW_DAYS = 90
 MARKER_PREFIX = '<!-- auto-finding v=1 '
 MARKER_RE = re.compile(
@@ -132,64 +141,97 @@ def validate_finding(finding):
         raise ValueError('identity must be a dict')
 
 
-def gh_run(args, check=True):
-    """Run `gh` CLI and return parsed JSON stdout."""
-    proc = subprocess.run(
-        ['gh'] + args,
-        capture_output=True,
-        text=True,
-        encoding='utf-8',
-    )
-    if check and proc.returncode != 0:
-        log('gh command failed: ' + ' '.join(args))
-        log('stderr: ' + (proc.stderr or '').strip())
-        raise RuntimeError('gh exit ' + str(proc.returncode))
-    return proc
+def gitea_base_url():
+    explicit = os.environ.get('GITEA_API_URL', '').strip().rstrip('/')
+    if explicit:
+        return explicit
+    server = os.environ.get('GITHUB_SERVER_URL', '').strip().rstrip('/')
+    if server:
+        return server + '/api/v1'
+    return 'https://git.thompsonfams.com/api/v1'
 
 
-def gh_list_issues(repo, state, labels=None, limit=200):
-    """List Issues via REST `gh issue list` (consistent — no search-index lag).
-    Returns list of dicts with number, body, closedAt, labels.
-    GraphQL `search` was tried first and rejected: newly-created Issues are not
-    immediately searchable (private repo indexing lag of 30s+ caused a duplicate
-    Issue when the filer was invoked twice in quick succession during sandbox
-    drill 2026-04-15). REST list is consistent and bounded for Phase 1 volumes.
+def gitea_token():
+    return (os.environ.get('GITEA_TOKEN') or os.environ.get('GITHUB_TOKEN') or '').strip()
+
+
+def gitea_api(method, path, body=None, query=None, timeout=30):
+    """Gitea REST call. Returns parsed JSON (None on 204). Raises on non-2xx."""
+    url = gitea_base_url() + path
+    if query:
+        url = url + '?' + urllib.parse.urlencode(query, doseq=True)
+    data = None
+    if body is not None:
+        data = json.dumps(body).encode('utf-8')
+    req = urllib.request.Request(url, data=data, method=method)
+    token = gitea_token()
+    if token:
+        req.add_header('Authorization', 'token ' + token)
+    req.add_header('Accept', 'application/json')
+    if body is not None:
+        req.add_header('Content-Type', 'application/json')
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            status = resp.getcode()
+            text = resp.read().decode('utf-8') if resp.length != 0 else ''
+            if not text:
+                return None
+            try:
+                return json.loads(text)
+            except ValueError:
+                return text
+    except urllib.error.HTTPError as e:
+        err_body = ''
+        try:
+            err_body = e.read().decode('utf-8', errors='replace')[:500]
+        except Exception:
+            pass
+        log('gitea API ' + method + ' ' + path + ' -> HTTP ' + str(e.code) + ': ' + err_body)
+        raise
+    except urllib.error.URLError as e:
+        log('gitea API ' + method + ' ' + path + ' -> network error: ' + str(e.reason))
+        raise
+
+
+def list_issues(repo, state, labels=None, limit=200):
+    """List Issues via Gitea REST. Returns list of dicts: number, body, closedAt, labels, createdAt.
+    Replaces `gh issue list ... --json number,body,closedAt,labels`.
+    Gitea `/repos/{repo}/issues` returns both issues and PRs — filter with type=issues.
+    Labels are AND-joined on the server when passed as comma-separated names.
     """
-    args = ['issue', 'list', '-R', repo, '--state', state, '--limit', str(limit),
-            '--json', 'number,body,closedAt,labels']
-    for lab in (labels or []):
-        args.extend(['--label', lab])
-    proc = gh_run(args)
-    issues = json.loads(proc.stdout or '[]')
+    query = {
+        'state': state,
+        'type': 'issues',
+        'limit': str(limit),
+        'page': '1',
+    }
+    if labels:
+        query['labels'] = ','.join(labels)
+    items = gitea_api('GET', '/repos/' + repo + '/issues', query=query) or []
     out = []
-    for it in issues:
+    for it in items:
         out.append({
-            'number': it['number'],
+            'number': it.get('number'),
             'body': it.get('body') or '',
-            'closedAt': it.get('closedAt'),
-            'labels': [L['name'] for L in (it.get('labels') or [])],
+            'closedAt': it.get('closed_at'),
+            'createdAt': it.get('created_at'),
+            'labels': [L.get('name', '') for L in (it.get('labels') or [])],
         })
     return out
 
 
 def issue_marker_matches(issue, check_id, sig):
-    """True iff the issue body contains the v=1 marker for this check + sig."""
     m = MARKER_RE.search(issue['body'] or '')
     return bool(m and m.group(1) == check_id and m.group(2) == sig)
 
 
 def daily_issue_count(repo):
-    """Count Issues created with label auto:filed in the last 24h.
-    REST list (consistent) + client-side date filter on createdAt.
+    """Count Issues created with label auto:filed in the last 24h (UTC date match).
+    Gitea list-issues is paginated; we take the first 200 most-recent matches.
     """
     cutoff = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     try:
-        proc = gh_run([
-            'issue', 'list', '-R', repo, '--state', 'all',
-            '--label', 'auto:filed', '--limit', '200',
-            '--json', 'number,createdAt',
-        ])
-        items = json.loads(proc.stdout or '[]')
+        items = list_issues(repo, 'all', labels=['auto:filed'], limit=200)
         return sum(1 for it in items if (it.get('createdAt') or '').startswith(cutoff))
     except Exception as e:
         log('daily count failed (not blocking): ' + str(e))
@@ -203,31 +245,29 @@ def post_status(repo, message, status_issue):
     stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')
     body = '[' + stamp + '] ' + message
     try:
-        gh_run(['issue', 'comment', str(status_issue), '-R', repo, '-b', body])
+        gitea_api('POST', '/repos/' + repo + '/issues/' + str(status_issue) + '/comments',
+                  body={'body': body})
     except Exception as e:
         log('status post failed (not blocking): ' + str(e))
 
 
 def find_open_match(repo, check_id, sig):
-    """Open Issues with label auto:filed whose body marker matches."""
-    issues = gh_list_issues(repo, 'open', labels=['auto:filed'])
+    issues = list_issues(repo, 'open', labels=['auto:filed'])
     return [it for it in issues if issue_marker_matches(it, check_id, sig)]
 
 
 def find_suppressed(repo, check_id, sig):
-    """Closed Issues with label auto:suppressed whose body marker matches.
-    Must also have auto:filed label (to scope; suppress is a complement, not standalone).
-    """
-    issues = gh_list_issues(repo, 'closed', labels=['auto:filed', 'auto:suppressed'])
+    """Closed Issues with BOTH auto:filed AND auto:suppressed labels whose marker matches."""
+    issues = list_issues(repo, 'closed', labels=['auto:filed', 'auto:suppressed'])
     return [it for it in issues if issue_marker_matches(it, check_id, sig)]
 
 
 def find_recent_closed(repo, check_id, sig, days):
-    """Closed Issues with auto:filed (NOT auto:suppressed) whose body marker matches
+    """Closed Issues with auto:filed (NOT auto:suppressed) whose marker matches
     AND closedAt is within `days` of now. Suppressed exclusion is client-side.
     """
     cutoff_ts = datetime.now(timezone.utc).timestamp() - (days * 86400)
-    issues = gh_list_issues(repo, 'closed', labels=['auto:filed'])
+    issues = list_issues(repo, 'closed', labels=['auto:filed'])
     out = []
     for it in issues:
         if 'auto:suppressed' in it['labels']:
@@ -237,8 +277,14 @@ def find_recent_closed(repo, check_id, sig, days):
         closed_at = it.get('closedAt')
         if not closed_at:
             continue
+        # Gitea returns ISO 8601 with offset (e.g. "2026-04-20T19:12:58Z" or "...+00:00").
+        # Normalize for fromisoformat.
+        normalized = closed_at.replace('Z', '+00:00')
         try:
-            closed_ts = datetime.strptime(closed_at, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc).timestamp()
+            closed_dt = datetime.fromisoformat(normalized)
+            if closed_dt.tzinfo is None:
+                closed_dt = closed_dt.replace(tzinfo=timezone.utc)
+            closed_ts = closed_dt.timestamp()
         except ValueError:
             continue
         if closed_ts >= cutoff_ts:
@@ -246,18 +292,42 @@ def find_recent_closed(repo, check_id, sig, days):
     return out
 
 
+def resolve_label_ids(repo, names):
+    """Resolve label names to IDs, creating any that don't exist (with a default color).
+    Returns a list of int IDs in the order given.
+    Gitea's POST /issues requires label IDs (int) in the body, not names.
+    """
+    existing = gitea_api('GET', '/repos/' + repo + '/labels', query={'limit': '200'}) or []
+    by_name = {L.get('name', ''): L.get('id') for L in existing}
+    ids = []
+    for name in names:
+        if name in by_name:
+            ids.append(by_name[name])
+            continue
+        # Create missing label with neutral gray color.
+        created = gitea_api('POST', '/repos/' + repo + '/labels',
+                            body={'name': name, 'color': '#cccccc',
+                                  'description': 'auto-created by hygiene filer'})
+        if created and 'id' in created:
+            by_name[name] = created['id']
+            ids.append(created['id'])
+    return ids
+
+
 def create_issue(repo, title, body, labels):
-    args = ['issue', 'create', '-R', repo, '-t', title, '-b', body]
-    for lab in labels:
-        args.extend(['-l', lab])
-    proc = gh_run(args)
-    url = (proc.stdout or '').strip().split('\n')[-1]
-    num = url.rsplit('/', 1)[-1]
+    label_ids = resolve_label_ids(repo, labels)
+    payload = {'title': title, 'body': body, 'labels': label_ids}
+    created = gitea_api('POST', '/repos/' + repo + '/issues', body=payload)
+    if not created:
+        raise RuntimeError('Gitea returned empty response on issue create')
+    num = str(created.get('number', ''))
+    url = created.get('html_url', '')
     return num, url
 
 
 def reopen_issue(repo, number):
-    gh_run(['issue', 'reopen', str(number), '-R', repo])
+    gitea_api('PATCH', '/repos/' + repo + '/issues/' + str(number),
+              body={'state': 'open'})
 
 
 def main():
@@ -299,6 +369,10 @@ def main():
     repo = os.environ.get('GITHUB_REPOSITORY', '').strip()
     if not repo:
         log('GITHUB_REPOSITORY not set')
+        return 1
+
+    if not gitea_token():
+        log('GITEA_TOKEN (or GITHUB_TOKEN fallback) not set')
         return 1
 
     status_issue = os.environ.get('STATUS_ISSUE_NUMBER', '').strip()
@@ -355,10 +429,8 @@ def main():
         return 0
 
     # Step 4.5: defensive recheck before create.
-    # gh issue list (REST) has ~3s cache lag — back-to-back invocations could
-    # both miss a just-created Issue and produce duplicates. Workflow concurrency
-    # serializes the production path, but direct CLI callers don't get that gate.
-    # Sleep + recheck closes the window cheaply (one create-path penalty).
+    # Gitea list-issues can have brief indexing lag between write and read. Sleep + recheck
+    # closes the duplicate window cheaply (one create-path penalty).
     recheck_seconds = env_int('FILER_PRECREATE_RECHECK_SECONDS', 4)
     if recheck_seconds > 0:
         import time

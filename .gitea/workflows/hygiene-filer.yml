@@ -1,11 +1,14 @@
-# .github/workflows/hygiene-filer.yml
+# .gitea/workflows/hygiene-filer.yml
 # Reusable filer workflow — accepts a finding JSON and invokes file_hygiene_issue.py.
 # Called by:
-#   - Hygiene workflows via `gh workflow run hygiene-filer.yml -f finding='<json>'`
-#   - workflow_call from another workflow (same inputs)
-#   - workflow_dispatch for manual testing
+#   - workflow_call from another Gitea workflow (same inputs)
+#   - workflow_dispatch for manual testing via Gitea UI / API
 # Concurrency: single-writer across all callers — prevents duplicate Issues
 #   when two hygiene workflows detect the same finding within the same window.
+#
+# Ported from .github/workflows/ on 2026-04-20 (PORT wave Batch 4a, Refs #7).
+# Transport: file_hygiene_issue.py now uses Gitea REST API (stdlib urllib) instead
+# of the `gh` CLI. Token env renamed GH_TOKEN -> GITEA_TOKEN.
 
 name: Hygiene Filer (reusable)
 
@@ -52,7 +55,8 @@ jobs:
 
       - name: Invoke filer
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_API_URL: ${{ github.server_url }}/api/v1
           GITHUB_REPOSITORY: ${{ github.repository }}
           AUTOMATION_ENABLED: ${{ vars.AUTOMATION_ENABLED }}
           HYGIENE_ISSUE_CREATION_ENABLED: ${{ vars.HYGIENE_ISSUE_CREATION_ENABLED }}
