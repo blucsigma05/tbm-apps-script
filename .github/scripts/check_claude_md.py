@@ -3,7 +3,7 @@
 Purpose:   Analyze CLAUDE.md for line bloat, new sections, duplicate phrases,
            and dead file references. Posts findings to PR comment + Pushover
            when thresholds are breached.
-Called by: .github/workflows/hyg-04-claude-md-bloat.yml
+Called by: .gitea/workflows/hyg-04-claude-md-bloat.yml
 Env vars:  CLAUDE_MD_PATH        Path to CLAUDE.md (default: CLAUDE.md)
            BASELINE_PATH         Path to claude-md-baseline.json
            LINE_DELTA_THRESHOLD  Max line growth before alerting (default: 30)

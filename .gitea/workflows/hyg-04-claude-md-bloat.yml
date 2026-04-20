@@ -1,0 +1,121 @@
+# .gitea/workflows/hyg-04-claude-md-bloat.yml
+# CLAUDE.md Bloat Check — runs on any PR that touches CLAUDE.md.
+# Posts a comment if line growth, new sections, duplicate phrases, or dead file refs are found.
+# Sends Pushover at priority=0 (normal) if findings are severe.
+# Called by: pull_request on CLAUDE.md + workflow_dispatch
+# Env vars required: GITEA_TOKEN (auto), PUSHOVER_USER_KEY, PUSHOVER_APP_TOKEN
+# Ported from .github/workflows 2026-04-20 (PORT wave Batch 4c, Refs #7).
+# Note: check_claude_md.py is pure file analysis — no API calls — so only
+# the PR-comment step needs the gh -> Gitea REST swap. The analysis script
+# is unchanged.
+
+name: HYG-04 CLAUDE.md Bloat Check
+
+on:
+  pull_request:
+    paths:
+      - 'CLAUDE.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  bloat-check:
+    name: CLAUDE.md Bloat Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run bloat analysis
+        id: analysis
+        env:
+          CLAUDE_MD_PATH: CLAUDE.md
+          BASELINE_PATH: claude-md-baseline.json
+          LINE_DELTA_THRESHOLD: '30'
+          REPO_ROOT: .
+        run: python3 .github/scripts/check_claude_md.py
+
+      - name: Post PR comment
+        if: steps.analysis.outputs.has_findings == 'true' && github.event_name == 'pull_request'
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_API_URL: ${{ github.server_url }}/api/v1
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ ! -f hyg04-comment.md ]; then
+            echo "No hyg04-comment.md to post — skipping."
+            exit 0
+          fi
+          # Inline Python: list comments, find marker, PATCH or POST.
+          # Uses stdlib only (urllib) — no jq/gh dependency on the runner.
+          python3 - <<'PYEOF'
+          import json, os, sys, urllib.request, urllib.error
+          MARKER = '<!-- hyg-04-bloat-check -->'
+          api = os.environ['GITEA_API_URL'].rstrip('/')
+          token = os.environ['GITEA_TOKEN']
+          repo = os.environ['REPO']
+          pr = os.environ['PR_NUMBER']
+          with open('hyg04-comment.md') as fh:
+              body = MARKER + '\n' + fh.read()
+
+          def call(method, path, payload=None):
+              url = api + path
+              data = json.dumps(payload).encode('utf-8') if payload is not None else None
+              req = urllib.request.Request(url, data=data, method=method)
+              req.add_header('Authorization', 'token ' + token)
+              req.add_header('Accept', 'application/json')
+              if payload is not None:
+                  req.add_header('Content-Type', 'application/json')
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  text = resp.read().decode('utf-8')
+                  return json.loads(text) if text else None
+
+          # List comments, find marker match
+          comments = call('GET', '/repos/' + repo + '/issues/' + pr + '/comments') or []
+          existing = None
+          for c in comments:
+              if (c.get('body') or '').startswith(MARKER):
+                  existing = c.get('id')
+                  break
+          if existing:
+              call('PATCH', '/repos/' + repo + '/issues/comments/' + str(existing),
+                   payload={'body': body})
+              print('Updated comment ' + str(existing))
+          else:
+              call('POST', '/repos/' + repo + '/issues/' + pr + '/comments',
+                   payload={'body': body})
+              print('Created new comment on PR #' + pr)
+          PYEOF
+
+      - name: Pushover — severe findings
+        if: steps.analysis.outputs.severe == 'true'
+        env:
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
+        run: |
+          if [ -z "$PUSHOVER_USER_KEY" ] || [ -z "$PUSHOVER_APP_TOKEN" ]; then
+            echo "Pushover secrets not set — skipping notification."
+            exit 0
+          fi
+          PR_NUM="${{ github.event.pull_request.number }}"
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          MSG="CLAUDE.md bloat detected"
+          if [ -n "$PR_NUM" ]; then
+            MSG="$MSG in PR #${PR_NUM}"
+          fi
+          MSG="$MSG — line delta or dead refs found. Review before merge."
+          curl -sS \
+            --form-string "token=${PUSHOVER_APP_TOKEN}" \
+            --form-string "user=${PUSHOVER_USER_KEY}" \
+            --form-string "title=HYG-04: CLAUDE.md Bloat ⚠️" \
+            --form-string "message=${MSG}" \
+            --form-string "url=${RUN_URL}" \
+            --form-string "url_title=View run" \
+            --form-string "priority=0" \
+            https://api.pushover.net/1/messages.json
