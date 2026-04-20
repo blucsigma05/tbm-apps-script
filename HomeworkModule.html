@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="homework-module">
-<meta name="tbm-version" content="v26">
+<meta name="tbm-version" content="v27">
 <title>Wolfkid Training Module</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1162,7 +1162,7 @@ var MODULE = null;
 // v24 (#426): server-injected at serve time by Code.gs doGet(); null when served
 // without template (local testing or non-GAS context). If non-null, loadCurriculumContent
 // uses this directly and skips the client-side google.script.run round-trip (~2000ms).
-var _INJECTED_RESPONSE = <?= moduleDataJson ?>;
+var _INJECTED_RESPONSE = <?!= moduleDataJson ?>;
 
 // v17 (#348) — Badge removed and _usingFallback dead-code stripped. Curriculum-or-error.
 
