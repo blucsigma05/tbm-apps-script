@@ -24,6 +24,14 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 
 ---
 
+## Reviewer onboarding (Codex, Anthropic, human auditors)
+
+If you're **reviewing** code rather than building it, read **[`ops/readme-for-codex-reviewers.md`](./ops/readme-for-codex-reviewers.md) first**. It is the Gitea-era reviewer onboarding doc: current source-of-truth table, tiered reading list, and known stale references (places that still mention GitHub even though the migration flipped 2026-04-19).
+
+Do not assume GitHub conventions apply unless a doc explicitly says they do — GitHub is archive-only since the account suspension. PRs, Issues, CI, and the deploy pipeline all live on Gitea (`git.thompsonfams.com/blucsigma05/tbm-apps-script`).
+
+---
+
 ## Session Start
 
 **Mandatory first command for any Sonnet build thread (run before anything else):**
