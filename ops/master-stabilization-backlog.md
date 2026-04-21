@@ -1,8 +1,18 @@
 # TBM Master Stabilization Backlog — CP-5
-<!-- control-plane v1 — 105 items from expressive-bubbling-diffie.md plan -->
+<!-- control-plane v1 — originally 105 items from expressive-bubbling-diffie.md plan -->
+<!-- Reconciled 2026-04-21: +6 items folded in from open Gitea issues (see reconciliation note) -->
 <!-- P0 items 1-27 + Codex additions 101-105 are explicitly spec'd in the plan -->
 <!-- P1-P8 items are derived from band descriptions in the plan; expand each band before executing -->
 <!-- Status values: Open / In Progress / Done / Blocked / [awaiting-device-verify] -->
+
+> **THIS IS THE CANONICAL STABILIZATION LIST.** Any open Gitea issue that describes stabilization work is reflected here. Percent-complete reporting uses this file's denominator (originally 105; post-reconciliation 111).
+
+## 2026-04-21 reconciliation note (post-Gitea migration)
+
+- **Forge canon:** Gitea (`git.thompsonfams.com/blucsigma05/tbm-apps-script`) has been canonical since 2026-04-19. GitHub is archive-only (account suspended). **Any `#NNN` reference in this file refers to the GitHub archive unless explicitly prefixed `Gitea #`.** Items 1-11 in particular reference pre-migration `gh` commands + PR #351; re-plan when executing, the intent survives but the toolchain changed.
+- **Infra debt ≠ stabilization progress.** The PORT wave (17 PRs), Phase C merges (7 PRs), Phase D deep-audit build (Gitea #2), and cf-events-worker cleanup do NOT move this backlog's count. They are tracked separately. This file measures P0-P8 stabilization work only.
+- **New items folded in from open Gitea issues:** items 22 (Gitea #26 KidsHub write-verify), 27a (Gitea #25 CalendarSync), 34a (Gitea #34 letter-E audio), 58 absorbs Gitea #35 (JJ audio coverage audit), 81a (Gitea #37 Claude Design pilot), 88a (Gitea #23 rail watchdog). **Six new items. Total denominator: 111.**
+- **Honest completion as of 2026-04-21:** Done 6 / 111 = **5.4%**. In-motion (Done + In Progress + awaiting-device-verify) = 14 / 111 = **12.6%**.
 
 ## Summary
 
@@ -54,6 +64,8 @@
 | 25 | P0 | Truth discipline — create verify-before-assert template for any claim about deployed state | Template Issue created with format: claim → grep evidence → Logger evidence → source verified | Template exists as Issue; all agents adopt it | Open |
 | 26 | P0 | Apply truth discipline retroactively: audit all open Issues for unverified claims; grep-verify each; update or close | All open Issues checked; unverified claims flagged with `needs:verification` | All open Issues have verified or flagged claims | Open |
 | 27 | P0 | Verify truth discipline is stable: next 3 PRs include grep evidence for every function/file claim | PR comments show grep output for each claim | 3 PRs with verified claims merged | Open |
+| 27a | P0 (truth-discipline) | **Gitea #25 — CalendarSync hardcoded school calendar bypasses canonical sheet-backed model.** `loadNanceSchoolCalendar()` in `CalendarSync.js:946-957` hardcodes 3 school years of dates and writes directly to Google Calendar, creating a second source of truth with no reconciliation. Move calendar data into the canonical sheet model; make CalendarSync read from the sheet, not from an inline literal. | Grep `loadNanceSchoolCalendar`; confirm no literal date arrays remain; diff against canonical sheet | CalendarSync reads from sheet; no inline date literals; reconciliation path exists | Open |
+| 22 | P0 | **Gitea #26 — KidsHub approval/override write-verify is incomplete.** `Kidshub.js:1525-1545` `khApproveTask()` only reads-back `Parent_Approved` after a multi-field `setValues()`; partial failures leave rows in inconsistent state while the function returns success. Audit + fix all KH write paths to verify every field written. | Grep `setValues` in Kidshub.js; each call site must have matching full read-back + assertion | All KH_ write paths verify every mutated field; partial-failure path fires ErrorLog + no-success return | Open |
 | ~~105~~ | ~~P0~~ | ~~Define fallback behavior policy per critical surface: what happens when getTodayContent returns null/empty? When KH data fails to load? When DE payload is stale?~~ | ~~One policy per surface in verification-matrix or dedicated Issue~~ | ~~DONE — ops/fallback-policy.md shipped in PR #365 (closes #364) [verified-main]~~ | ~~Open~~ **Closed #364** |
 | 28 | P1 | Binary check: /buggsy — loads, chore board renders, task completion fires | `/buggsy` 200; chore list visible; complete button works | PASS or FAIL with specific finding filed as Issue | Open |
 | 29 | P1 | Binary check: /jj — loads, sparkle stars render, task completion fires | `/jj` 200; star board visible; complete button works | PASS or FAIL with finding | Open |
@@ -62,6 +74,7 @@
 | 32 | P1 | Binary check: /sparkle — loads, first activity renders, answer records | `/sparkle` 200; activity visible; correct answer awards rings | PASS or FAIL with finding | Open |
 | 33 | P1 | Binary check: /sparkle-free — loads, freeplay mode active, no homework gate | `/sparkle-free` 200; freeplay badge visible; no gate prompt | PASS or FAIL with finding | Open |
 | 34 | P1 | Binary check: /reading — loads, passage renders, question displays | `/reading` 200; passage text visible; question renders | PASS or FAIL with finding | Open |
+| 34a | P1 (content) | **Gitea #34 — `jj_letter_phrase_E.mp3` plays wrong text** ("Excellent" instead of "E is for Elephant"). `phrases.json` spec is correct; either the ElevenLabs generation used the wrong text or the MP3 on Drive is stale. Regenerate or re-upload the clip. | Play clip; confirm audio matches `text` field in phrases.json | Clip audio matches phrases.json spec | Open |
 | 35 | P1 | Binary check: /writing — loads, prompt renders, submit works | `/writing` 200; writing prompt visible; submission recorded | PASS or FAIL with finding | Open |
 | 36 | P1 | Binary check: /wolfkid — loads, CER writing surface renders | `/wolfkid` 200; writing surface visible | PASS or FAIL with finding | Open |
 | 37 | P1 | Binary check: /facts — loads, drill renders, answer records | `/facts` 200; math fact displays; answer input works | PASS or FAIL with finding | Open |
@@ -85,7 +98,7 @@
 | 55 | P2 | Extend adhd-accommodations skill: add Buggsy-specific accommodation checks | Skill diff reviewed | Extended skill runs on HomeworkModule | Open |
 | 56 | P2 | Extend grading-review-pipeline skill: add step for Gemini first-pass quality gate | Skill diff reviewed | Extended skill produces grading pipeline audit | Open |
 | 57 | P2 | Extend parent-reporting skill: add ProgressReport verification pass | Skill diff reviewed | Extended skill runs on /progress | Open |
-| 58 | P2 | Extend audio-pipeline skill: add ElevenLabs batch verify step | Skill diff reviewed | Extended skill confirms audio clip coverage | Open |
+| 58 | P2 | Extend audio-pipeline skill: add ElevenLabs batch verify step — covers **Gitea #35 JJ SparkleLearning audio coverage audit** (reduce Web Speech TTS fallback / 'robo voice'). Identify call sites that leak to the fallback path; confirm every audioKey used by SparkleLearning has a cached Nia clip. | Skill diff reviewed; grep audioKey references across SparkleLearning.html | Extended skill produces per-call-site audio coverage report; fallback-leak call sites flagged | Open |
 | 59 | P2 | Extend game-design skill: add FireOS compatibility check (no backdrop-filter, ES5) | Skill diff reviewed | Extended skill flags FireOS incompatibilities | Open |
 | 60 | P2 | Extend qa-walkthrough skill: add device viewport matrix check | Skill diff reviewed | Extended skill produces viewport checklist | Open |
 | 61 | P2 | Extend route-contracts skill: add QA route parity check | Skill diff reviewed | Extended skill validates QA_ROUTES mirrors PATH_ROUTES | Open |
@@ -111,6 +124,7 @@
 | 79 | P5 | Update Integration Map DB (Notion 33acea3cd9e881888295e3ab98be3fc4): flag entries past review date | Notion fetch; identify stale entries | Stale entries flagged; updated or archived | Open |
 | 80 | P5 | Archive stale Notion items: Parking Lot items > 30 days with no action | Notion Parking Lot fetch; items to LT for confirm | Stale items archived or converted to Issues | Open |
 | 81 | P5 | Add pointer to `ops/` control plane files in CLAUDE.md File Map section | CLAUDE.md edit; posttool-write.sh PASS | CLAUDE.md references ops/ surface-map, dependency-map, verification-matrix, work-doctrine | Open |
+| 81a | P5 (tooling) | **Gitea #37 — pilot Claude Design for TBM wireframe lane.** Global Memory mandates "wireframe before code" but the process is manual. Evaluate whether Claude Design (Opus 4.7) can formalize the wireframe lane for TBM education surfaces. Non-goal: production HTML (ES5 + Fire Stick rules that out). | Run pilot on 1 education surface rework; produce write-up | Pilot report: adopt / adapt / reject, with evidence | Open |
 | 82 | P6 | Inventory all GAS scheduled triggers: function name, schedule, purpose, owner | GAS editor Triggers list + AuditTrigger.gs + CLAUDE.md GAS Triggers section | Complete trigger inventory document | Open |
 | 83 | P6 | Classify each trigger: is this signal (actionable output) or theater (fires but output ignored)? | Opus model; check each trigger's actual output usage | Each trigger classified; theater triggers flagged for removal or repurpose | Open |
 | 84 | P6 | Audit hygiene-filer.yml (HYG-06 version drift check): false positive rate over last 30 runs | gh workflow run list; count false positives | False positive rate documented; threshold decision made | Open |
@@ -118,6 +132,7 @@
 | 86 | P6 | Calibrate alert priority constants: verify every sendPush_ caller uses correct PUSHOVER_PRIORITY value | Grep all sendPush_ calls; compare to PUSHOVER_PRIORITY table in CLAUDE.md | All priorities correct; no bare integer args remain | Open |
 | 87 | P6 | Verify Tiller freshness cron (HYG-09) fires correctly — check wrangler.toml cron schedule and execution log | wrangler.toml cron entry verified; CF Worker scheduled event log shows recent fire | HYG-09 fired within expected window | Open |
 | 88 | P6 | Document automation health state: which automations are signal, which are theater, which are retired | Summary document or Notion page | Automation inventory document exists | Open |
+| 88a | P6 (automation) | **Gitea #23 — rail watchdog redesign for Gitea.** `.github/workflows/rail-watchdog.yml` was deleted during the PORT wave (Batch 7) rather than ported — inline Python was too tightly coupled to GitHub's Actions API schema. Redesign fresh as a Gitea-native watchdog (rail list, heuristic, window, notification channel). Interim coverage from `hyg-08-dead-workflows` is acceptable; rail-watchdog catches intermittent-broken, not just silent. | Fresh spec written; implementation PRed | `.gitea/workflows/rail-watchdog.yml` + supporting script land on main with spec artifact | Open |
 | 89 | P7 | Deploy without LT present — JT operates the system for one full day independently | JT can access ThePulse, Parent Hub, approve chores; LT not contacted | JT confirms 1-day independent operation [device-verified] | Open |
 | 90 | P7 | JT completes end-to-end chore approval flow: child completes → JT approves → ring balance updates | Parent Hub approval recorded; KH_History row written; ring balance correct | JT device-verified | Open |
 | 91 | P7 | JT accesses ThePulse on S25 without LT help: PIN entry, data loads, no undefined values | ThePulse 200 behind PIN; KPIs visible; JT can read the dashboard | JT device-verified | Open |
@@ -137,18 +152,37 @@
 ## Execution Order
 
 ```
-PARALLEL (current):
-  ├── P0 items 1-11 (education fix deploy pipeline — Track A, BLOCKED on PR #351 merge)
-  └── Control Plane build (CP-1 through CP-5 — this file)
+2026-04-21 rearrangement (post-migration, post-reconciliation):
 
-THEN (after CP complete + PR #351 merged + deployed):
-  P0 items 101, 102 → then 12-16 (Play skills — Opus)
-  P0 items 17-20 (JT alerts + ops card)
-  P0 items 103, 21-24 (freeze + mutation inventory)
-  P0 items 25-27 (truth discipline)
-  P0 item 105 (fallback policy)
-  P1 items 28-50 (binary sweep — using surface-map.md)
-  P2-P8 (in priority order, parallelizable within bands)
+BLOCKED pre-migration items (items 1-11 referenced GitHub PR #351 deploy):
+  → Re-plan when picked up. Intent survives, gh/clasp chain changed.
+  → Do NOT re-open PR #351; it lives in GitHub archive only.
+  → The actual deploy-pipeline work now uses Gitea Actions
+    (.gitea/workflows/deploy-and-notify.yml) — toolchain shift, same goal.
+
+CURRENT HIGH-SIGNAL P0 (pull from here next):
+  ├── 22  (Gitea #26 KidsHub write-verify)     — silent row drift, real bug
+  ├── 27a (Gitea #25 CalendarSync hardcoded)   — canonical sheet violation
+  ├── 21-24 (deploy freeze — In Progress)      — finish the in-flight work
+  └── 25-27 (truth discipline template)        — multiplies correctness on every later item
+
+THEN (P0 Play gates):
+  P0 101, 102 MVSS → 12-16 (Play skills, Opus) → 34a (Gitea #34 letter-E audio as first finding)
+  P0 17-20 (JT alerts + ops card)
+  P0 103 + 21-24 (freeze + mutation inventory) — 103 already Done
+  P0 105 fallback (Done)
+
+THEN P1 binary sweep (items 28-50):
+  Execute in surface-map.md order; items 34a (letter-E audio) folds into /sparkle findings.
+
+THEN P2-P8 in priority order:
+  P2 skill extensions (51-62c) — 58 absorbs Gitea #35 audio coverage audit
+  P3 security (63-68)
+  P4 drift/phantom (69-73)
+  P5 architecture (74-81) + 81a (Gitea #37 Claude Design pilot)
+  P6 automation (82-88) + 88a (Gitea #23 rail watchdog redesign)
+  P7 operational stability (89-95 + 104)
+  P8 finance stability + March close (96-100)
 ```
 
 ## Legend
@@ -156,3 +190,14 @@ THEN (after CP complete + PR #351 merged + deployed):
 - **[verified-device]**: Closed only after device verification confirmed
 - **Blocks Stable Use**: Item must be Done before "stable unattended use" can be declared
 - **(derived from band description)**: Item detail inferred from plan band description — verify with mastermind before executing
+- **Gitea #N prefix**: References open Gitea issue (canonical since 2026-04-19)
+- **Bare #N (no prefix)**: References GitHub archive PR/issue. Do not re-open; re-plan if resuming the work.
+
+## Infra work explicitly NOT in this backlog
+
+These are tracked as separate Gitea issues because they are forge/infra, not TBM product stabilization:
+- **Gitea #2** — Phase D auto-escalate INCONCLUSIVE Codex verdicts to deep-audit lane
+- **Umbrella #7** (closed) — PORT wave, 17 PRs (completed 2026-04-21)
+- **Phase C feature merges** — adapter-interface + cf-events-worker (completed 2026-04-21)
+
+These infra items matter — they're the plumbing that makes the stabilization backlog movable — but they do NOT count against the 111 denominator here. Report their progress separately.
