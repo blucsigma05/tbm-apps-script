@@ -11,8 +11,10 @@
 
 - **Forge canon:** Gitea (`git.thompsonfams.com/blucsigma05/tbm-apps-script`) has been canonical since 2026-04-19. GitHub is archive-only (account suspended). **Any `#NNN` reference in this file refers to the GitHub archive unless explicitly prefixed `Gitea #`.** Items 1-11 in particular reference pre-migration `gh` commands + PR #351; re-plan when executing, the intent survives but the toolchain changed.
 - **Infra debt ≠ stabilization progress.** The PORT wave (17 PRs), Phase C merges (7 PRs), Phase D deep-audit build (Gitea #2), and cf-events-worker cleanup do NOT move this backlog's count. They are tracked separately. This file measures P0-P8 stabilization work only.
-- **New items folded in from open Gitea issues:** items 22 (Gitea #26 KidsHub write-verify), 27a (Gitea #25 CalendarSync), 34a (Gitea #34 letter-E audio), 58 absorbs Gitea #35 (JJ audio coverage audit), 81a (Gitea #37 Claude Design pilot), 88a (Gitea #23 rail watchdog). **Six new items. Total denominator: 111.**
-- **Honest completion as of 2026-04-21:** Done 6 / 111 = **5.4%**. In-motion (Done + In Progress + awaiting-device-verify) = 14 / 111 = **12.6%**.
+- **New items folded in from open Gitea issues:** items 22a (Gitea #26 KidsHub write-verify — renumbered from 22 to avoid collision), 27a (Gitea #25 CalendarSync), 34a (Gitea #34 letter-E audio), 58 absorbs Gitea #35 (JJ audio coverage audit), 81a (Gitea #37 Claude Design pilot), 88a (Gitea #23 rail watchdog). **Six new items. Total denominator: 111.**
+- **Honest completion as of 2026-04-21 (post-reconciliation + status sweep):** Done **10** / 111 = **9.0%**. In-motion (Done + In Progress + awaiting-device-verify) = **13** / 111 = **11.7%**.
+  - Items newly marked Done 2026-04-21 after verify-before-assert audit: **21, 22, 24, 25** (code was live before migration but backlog showed them as In Progress against GitHub-archive issues #368-#371).
+  - Item 22 renumbered to **22a** to eliminate the duplicate-number collision introduced during the 2026-04-21 reconciliation (original 22 is deploy-freeze audit-source check; 22a is Gitea #26 KidsHub write-verify).
 
 ## Summary
 
@@ -57,15 +59,15 @@
 | 19 | P0 | Create/update JT ops card — what JT needs to operate TBM without LT | Ops card Issue created; covers: what each surface does, how to approve chores, how to access ThePulse | Ops card exists as Issue + Notion page; JT can find it independently | Open |
 | 20 | P0 | Verify JT can operate end-to-end: approve chore, access ThePulse, handle a reward redemption | JT walks through flow on S25 without LT guidance | JT completes all 3 operations [device-verified] | Open |
 | ~~103~~ | ~~P0 (before #21)~~ | ~~Inventory every path that can modify production state: scheduled triggers, manual editor runs, clasp push, webhook, direct sheet edits~~ | ~~Grep GASHardening, AuditTrigger, Code.js, triggers list; produce explicit list of mutation paths~~ | ~~DONE — ops/mutation-paths.md shipped in PR #363 (closes #362) [verified-main]~~ | ~~Open~~ **Closed #362** |
-| 21 | P0 | Implement deploy freeze: Script Property gate `DEPLOY_FREEZE=1` blocks all mutation paths not on allowlist | audit-source.sh checks property; gate logs Pushover if blocked | Freeze property set → blocked mutation attempt fires Pushover to LT | **In Progress** (#368) |
-| 22 | P0 | Add DEPLOY_FREEZE check to audit-source.sh pre-push gate | audit-source.sh fails fast when freeze is active + deploy attempted | audit-source.sh FAIL message mentions freeze status | **In Progress** (#369) |
-| 23 | P0 | Test freeze: attempt deploy while freeze active → confirm gate fires and blocks | EMERGENCY=1 bypass works correctly; normal deploy blocked | Freeze blocks normal deploy; EMERGENCY=1 passes | **In Progress** (#370) |
-| 24 | P0 | Document freeze policy in CLAUDE.md and ops/ — when to set, how to lift, who can override | CLAUDE.md has freeze section; work-doctrine.md references it | Both docs updated in same PR | **In Progress** (#371) |
-| 25 | P0 | Truth discipline — create verify-before-assert template for any claim about deployed state | Template Issue created with format: claim → grep evidence → Logger evidence → source verified | Template exists as Issue; all agents adopt it | Open |
+| ~~21~~ | ~~P0~~ | ~~Implement deploy freeze: Script Property gate `DEPLOY_FREEZE=1` blocks all mutation paths not on allowlist~~ | ~~audit-source.sh checks property; gate logs Pushover if blocked~~ | ~~DONE — `assertNotFrozen_('freeze-critical', <fn>)` calls exist in Code.js mutation paths (verified 2026-04-21: Code.js:1012 logHomeworkCompletionSafe, :1066 logSparkleProgressSafe); Script Property gate + allowlist live~~ | ~~In Progress~~ **Done [verified-main]** |
+| ~~22~~ | ~~P0~~ | ~~Add DEPLOY_FREEZE check to audit-source.sh pre-push gate~~ | ~~audit-source.sh fails fast when freeze is active + deploy attempted~~ | ~~DONE — audit-source.sh Check 6 (lines 421+) reads freeze via `clasp run getFreezeState_`, fail-closed on clasp/jq error or non-JSON output, emits clear FAIL with reason+expiry; EMERGENCY=1 bypass wired~~ | ~~In Progress~~ **Done [verified-main]** |
+| 23 | P0 | Test freeze: attempt deploy while freeze active → confirm gate fires and blocks | EMERGENCY=1 bypass works correctly; normal deploy blocked | Freeze blocks normal deploy; EMERGENCY=1 passes | **Open [needs-runtime-verify]** — code path exists; runtime evidence not captured post-migration |
+| ~~24~~ | ~~P0~~ | ~~Document freeze policy in CLAUDE.md and ops/ — when to set, how to lift, who can override~~ | ~~CLAUDE.md has freeze section; work-doctrine.md references it~~ | ~~DONE — CLAUDE.md has full freeze section (line 192+, references `ops/deploy-freeze.md`); `ops/deploy-freeze.md` exists (13.6k, last touched 2026-04-16)~~ | ~~In Progress~~ **Done [verified-main]** |
+| ~~25~~ | ~~P0~~ | ~~Truth discipline — create verify-before-assert template for any claim about deployed state~~ | ~~Template Issue created with format: claim → grep evidence → Logger evidence → source verified~~ | ~~DONE — Gitea Issue #49 filed 2026-04-21 + `ops/templates/verify-before-assert.md` canonical file landed in PR #50; CLAUDE.md Verify-Before-Assert section links to it~~ | ~~Open~~ **Done (PR #50)** |
 | 26 | P0 | Apply truth discipline retroactively: audit all open Issues for unverified claims; grep-verify each; update or close | All open Issues checked; unverified claims flagged with `needs:verification` | All open Issues have verified or flagged claims | Open |
 | 27 | P0 | Verify truth discipline is stable: next 3 PRs include grep evidence for every function/file claim | PR comments show grep output for each claim | 3 PRs with verified claims merged | Open |
 | 27a | P0 (truth-discipline) | **Gitea #25 — CalendarSync hardcoded school calendar bypasses canonical sheet-backed model.** `loadNanceSchoolCalendar()` in `CalendarSync.js:946-957` hardcodes 3 school years of dates and writes directly to Google Calendar, creating a second source of truth with no reconciliation. Move calendar data into the canonical sheet model; make CalendarSync read from the sheet, not from an inline literal. | Grep `loadNanceSchoolCalendar`; confirm no literal date arrays remain; diff against canonical sheet | CalendarSync reads from sheet; no inline date literals; reconciliation path exists | Open |
-| 22 | P0 | **Gitea #26 — KidsHub approval/override write-verify is incomplete.** `Kidshub.js:1525-1545` `khApproveTask()` only reads-back `Parent_Approved` after a multi-field `setValues()`; partial failures leave rows in inconsistent state while the function returns success. Audit + fix all KH write paths to verify every field written. | Grep `setValues` in Kidshub.js; each call site must have matching full read-back + assertion | All KH_ write paths verify every mutated field; partial-failure path fires ErrorLog + no-success return | Open |
+| 22a | P0 | **Gitea #26 — KidsHub approval/override write-verify is incomplete.** `Kidshub.js:1525-1545` `khApproveTask()` only reads-back `Parent_Approved` after a multi-field `setValues()`; partial failures leave rows in inconsistent state while the function returns success. Audit + fix all KH write paths to verify every field written. (Renumbered from 22 → 22a on 2026-04-21 to avoid collision with original item 22 which is now Done.) | Grep `setValues` in Kidshub.js; each call site must have matching full read-back + assertion | All KH_ write paths verify every mutated field; partial-failure path fires ErrorLog + no-success return | **In Progress (PR #51)** |
 | ~~105~~ | ~~P0~~ | ~~Define fallback behavior policy per critical surface: what happens when getTodayContent returns null/empty? When KH data fails to load? When DE payload is stale?~~ | ~~One policy per surface in verification-matrix or dedicated Issue~~ | ~~DONE — ops/fallback-policy.md shipped in PR #365 (closes #364) [verified-main]~~ | ~~Open~~ **Closed #364** |
 | 28 | P1 | Binary check: /buggsy — loads, chore board renders, task completion fires | `/buggsy` 200; chore list visible; complete button works | PASS or FAIL with specific finding filed as Issue | Open |
 | 29 | P1 | Binary check: /jj — loads, sparkle stars render, task completion fires | `/jj` 200; star board visible; complete button works | PASS or FAIL with finding | Open |
@@ -160,11 +162,12 @@ BLOCKED pre-migration items (items 1-11 referenced GitHub PR #351 deploy):
   → The actual deploy-pipeline work now uses Gitea Actions
     (.gitea/workflows/deploy-and-notify.yml) — toolchain shift, same goal.
 
-CURRENT HIGH-SIGNAL P0 (pull from here next):
-  ├── 22  (Gitea #26 KidsHub write-verify)     — silent row drift, real bug
-  ├── 27a (Gitea #25 CalendarSync hardcoded)   — canonical sheet violation
-  ├── 21-24 (deploy freeze — In Progress)      — finish the in-flight work
-  └── 25-27 (truth discipline template)        — multiplies correctness on every later item
+CURRENT HIGH-SIGNAL P0 (pull from here next, as of 2026-04-21 status sweep):
+  ├── 22a (Gitea #26 KidsHub write-verify)     — In Progress (PR #51); fix: signoff pending
+  ├── 23   (deploy freeze runtime test)        — code live, needs one device-verify run
+  ├── 26   (truth-discipline retroactive sweep)— now unblocked (template merged via #50)
+  ├── 27   (truth-discipline next-3-PR gate)   — rolling — counts adoption; #50/#51 are first 2
+  └── 27a  (Gitea #25 CalendarSync hardcoded)  — canonical sheet violation, not acutely broken
 
 THEN (P0 Play gates):
   P0 101, 102 MVSS → 12-16 (Play skills, Opus) → 34a (Gitea #34 letter-E audio as first finding)
