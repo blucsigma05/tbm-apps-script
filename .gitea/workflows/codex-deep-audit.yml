@@ -1,0 +1,204 @@
+# .gitea/workflows/codex-deep-audit.yml
+#
+# ⚠️ STUB — Phase D Q9 closeout artifact. Do NOT merge until iterated.
+#
+# Purpose: deep-audit lane (Phase D α trigger — PR shallow-review INCONCLUSIVE
+# → escalate to reasoning-tier model). Resolves against the empirical findings
+# in ops/migration/phase-d-q9-codex-cli-verification.md.
+#
+# This stub covers the α (PR-diff) trigger only. β (spec-stage) and γ (on-demand)
+# are deferred to v2 per phase-d-deep-audit-design.md.
+#
+# ───────────────────────────────────────────────────────────────────────────
+# Prereqs on the runner host (tbm-primary) — all already verified in Q9:
+#   - /usr/bin/codex installed (npm @openai/codex, currently v0.122.0)
+#   - bubblewrap installed
+#   - CODEX_HOME=/var/lib/codex owned by act_runner, 0700
+#   - `codex login --device-auth` completed by LT (ChatGPT Plus tier)
+#   - `codex login status` reports the Plus account
+#
+# Required repo secrets:
+#   ANTHROPIC_API_KEY — fallback provider, already set per handoff 2026-04-17
+#   GITEA_TOKEN (auto-provided by Gitea) — for PR comment + label operations
+#
+# Required repo variables:
+#   DEEP_AUDIT_PROVIDER = "codex" (default) | "anthropic"
+#   DEEP_AUDIT_ENABLED = "true" | "false" (kill switch)
+#
+# ───────────────────────────────────────────────────────────────────────────
+# TODO before first merge:
+#   1. [RESOLVED] Runner label confirmed as `ubuntu-latest` (with `:host`
+#      suffix on act_runner's registration). See jobs.deep-audit.runs-on
+#      comment block for rationale.
+#   2. Decide final trigger: label-based (below) vs. workflow_run chained off
+#      Codex PR Review outcome. Label-based ships first, chain wiring comes
+#      once shallow-review emits a machine-readable verdict file.
+#   3. Write scripts/deep-audit-anthropic.sh (fallback path — currently a stub
+#      comment, not a real script).
+#   4. [IN FLIGHT] Schema file at ops/schemas/deep-audit-verdict.json lands
+#      via PR #32. Once merged, uncomment the --output-schema line in the
+#      codex review step + replace the PR-comment stub with a jq template
+#      that reads the schema-constrained final message.
+#   5. Decide daily-cap store: this stub uses a file on the runner. If the
+#      runner fleet ever grows past 1 host, migrate the counter to a shared
+#      store (Notion DB, Gitea Actions variable, or a tiny worker endpoint).
+# ───────────────────────────────────────────────────────────────────────────
+
+name: Codex Deep Audit
+
+on:
+  pull_request:
+    types: [labeled]
+  # Hook for later: chain off Codex PR Review completion
+  # workflow_run:
+  #   workflows: ["Codex PR Review"]
+  #   types: [completed]
+
+concurrency:
+  # One deep audit per PR at a time — subsequent labelings cancel the older run.
+  group: deep-audit-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  deep-audit:
+    name: Codex Deep Audit (reasoning tier)
+    if: |
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'deep-audit-requested' &&
+      vars.DEEP_AUDIT_ENABLED == 'true'
+    # tbm-runner-1 registers with labels `ubuntu-latest:host` and
+    # `ubuntu-22.04:host` (confirmed from /var/lib/act_runner/.runner).
+    # `ubuntu-latest` matches the first and is the idiom used by every
+    # other workflow in this repo. The `:host` suffix means act_runner
+    # runs the job directly on the VPS (no container) — which is
+    # required because the codex CLI + auth live on the host, not in a
+    # container image.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CODEX_HOME: /var/lib/codex
+      DEEP_AUDIT_PROVIDER: ${{ vars.DEEP_AUDIT_PROVIDER || 'codex' }}
+      DAILY_CAP: '20'
+      DAILY_COUNT_FILE: /var/lib/codex/daily-count.txt
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0  # full history so codex review --base works
+
+      - name: Verify codex CLI + auth on runner
+        if: env.DEEP_AUDIT_PROVIDER == 'codex'
+        run: |
+          set -e
+          codex --version
+          # `codex login status` exits 0 when authed; non-zero + "Not logged in" otherwise.
+          if ! codex login status | grep -Eq 'signed in|logged in|Plus|Pro|Team|Business|Edu|Enterprise'; then
+            echo "::error::Codex CLI not authenticated on runner — LT must run `codex login --device-auth`"
+            exit 2
+          fi
+
+      - name: Enforce 20-runs/day cap
+        id: cap
+        run: |
+          set -e
+          TODAY=$(date -u +%Y-%m-%d)
+          mkdir -p "$(dirname "$DAILY_COUNT_FILE")"
+          touch "$DAILY_COUNT_FILE"
+          STORED_DATE=$(awk -F= 'NR==1{print $1}' "$DAILY_COUNT_FILE" 2>/dev/null || echo "")
+          STORED_COUNT=$(awk -F= 'NR==1{print $2}' "$DAILY_COUNT_FILE" 2>/dev/null || echo 0)
+          if [ "$STORED_DATE" != "$TODAY" ]; then
+            STORED_COUNT=0
+          fi
+          NEW_COUNT=$((STORED_COUNT + 1))
+          if [ "$NEW_COUNT" -gt "$DAILY_CAP" ]; then
+            echo "::error::Daily deep-audit cap ($DAILY_CAP) exceeded. Current: $STORED_COUNT on $TODAY."
+            exit 3
+          fi
+          echo "$TODAY=$NEW_COUNT" > "$DAILY_COUNT_FILE"
+          echo "count=$NEW_COUNT" >> "$GITHUB_OUTPUT"
+          echo "Deep-audit run $NEW_COUNT of $DAILY_CAP for $TODAY"
+
+      - name: Run deep audit (Codex CLI)
+        id: codex
+        if: env.DEEP_AUDIT_PROVIDER == 'codex'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -e
+          mkdir -p /tmp/deep-audit
+          # TODO: create ops/schemas/deep-audit-verdict.json — required for
+          # --output-schema to enforce verdict shape. Until then, schema flag
+          # is commented out and output is free-form.
+          timeout 600 codex review \
+            --base "$BASE_REF" \
+            --title "PR #$PR_NUMBER: $PR_TITLE" \
+            -c model="gpt-5.3-codex" \
+            -c model_reasoning_effort='"high"' \
+            > /tmp/deep-audit/events.jsonl 2> /tmp/deep-audit/stderr.log \
+            || (echo "::warning::Codex CLI non-zero exit — capturing stderr"; cat /tmp/deep-audit/stderr.log; exit 4)
+          # Final message extraction — the review subcommand's last event
+          # carries the verdict summary. Parse with jq once schema lands.
+          tail -n1 /tmp/deep-audit/events.jsonl > /tmp/deep-audit/final.json
+          echo "events_file=/tmp/deep-audit/events.jsonl" >> "$GITHUB_OUTPUT"
+          echo "final_file=/tmp/deep-audit/final.json" >> "$GITHUB_OUTPUT"
+
+      - name: Run deep audit (Anthropic fallback)
+        if: env.DEEP_AUDIT_PROVIDER == 'anthropic'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          # TODO: scripts/deep-audit-anthropic.sh does not exist yet.
+          # Phase D fallback spec lives in phase-d-deep-audit-design.md §"Model
+          # choice — fallback". Build as separate PR.
+          echo "::error::Anthropic fallback not yet implemented (scripts/deep-audit-anthropic.sh missing)"
+          exit 5
+
+      - name: Upload raw events as artifact
+        if: always() && steps.codex.outputs.events_file != ''
+        uses: actions/upload-artifact@v3
+        with:
+          name: codex-deep-audit-events-pr${{ github.event.pull_request.number }}
+          path: /tmp/deep-audit/
+
+      - name: Post verdict comment on PR
+        if: always() && steps.codex.outputs.final_file != ''
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          # TODO: proper formatting once schema-constrained output is wired.
+          # Stub just posts the raw final JSON event so LT can see the model
+          # response end-to-end on the first real run.
+          FINAL=$(cat /tmp/deep-audit/final.json | head -c 8000)
+          BODY=$(jq -Rn --arg f "$FINAL" --arg run "${{ steps.cap.outputs.count }}/${{ env.DAILY_CAP }}" \
+            '{body: ("## Codex Deep Audit — gpt-5.3-codex @ reasoning=high\n\nRun \($run) today.\n\n```json\n" + $f + "\n```\n\n_Stub output — verdict parsing pending schema file._")}')
+          curl -sS -X POST \
+            -H "Authorization: token $GITEA_TOKEN" \
+            -H "Content-Type: application/json" \
+            "https://git.thompsonfams.com/api/v1/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            -d "$BODY"
+
+      - name: Remove trigger label + add complete label
+        if: always()
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Best-effort — failures here don't block the workflow conclusion.
+          curl -sS -X DELETE \
+            -H "Authorization: token $GITEA_TOKEN" \
+            "https://git.thompsonfams.com/api/v1/repos/${REPO}/issues/${PR_NUMBER}/labels/deep-audit-requested" \
+            || true
+          curl -sS -X POST \
+            -H "Authorization: token $GITEA_TOKEN" \
+            -H "Content-Type: application/json" \
+            "https://git.thompsonfams.com/api/v1/repos/${REPO}/issues/${PR_NUMBER}/labels" \
+            -d '{"labels":["deep-audit-complete"]}' \
+            || true
