@@ -59,6 +59,8 @@ This loads `.claude/settings.local.json` (repo-scoped MCP + Bash allowances). Wi
 - Subagent summaries are leads, not facts. Verify field names, object shapes, and signatures against the actual construction site (`var result = {}` or `return {}` block).
 - **The test:** "Can I point to grep output or Logger output proving this?" If no → stop and verify. If yes → proceed.
 
+**Canonical template:** [`ops/templates/verify-before-assert.md`](./ops/templates/verify-before-assert.md) (stabilization backlog item 25, Gitea #49). Every claim about current state in a PR description, commit message, or Issue comment uses the four-section format: **Claim → Source evidence (grep) → Runtime evidence (Logger) → Source verified (file:line) → Claim status**. Reviewers reject claims missing the template. Item 26 sweeps retroactively; item 27 verifies the next 3 PRs adopt it.
+
 ### Output self-review (MANDATORY)
 After every file modification, re-read the changed region. Verify: (1) edit applied correctly, (2) no side effects in surrounding code, (3) versions updated. "Done" = verified correct, not "write operation completed."
 
