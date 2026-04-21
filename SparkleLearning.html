@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v22">
+  <meta name="tbm-version" content="v23">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -1802,10 +1802,10 @@ function buildSparkleLoadingScreen() {
   }
   var cartwheelWrap = document.createElement('div');
   cartwheelWrap.style.cssText = 'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:0;height:0;z-index:15;';
-  // JJ cartwheel — inline SVG, mid-cartwheel pose with flowing hair + tutu
+  // JJ cartwheel — Gemini-illustrated PNG (hosted), inline SVG kept as onerror fallback (#33)
   var cartwheelEl = document.createElement('div');
   cartwheelEl.style.cssText = 'position:absolute;left:-65px;top:-65px;width:130px;height:130px;filter:drop-shadow(0 0 14px #ff80ff) drop-shadow(0 0 28px rgba(255,128,255,0.5));animation:skCartwheelArc 2.4s ease-in-out 0s infinite;';
-  cartwheelEl.innerHTML = '<svg viewBox="0 0 140 140" width="130" height="130">' +
+  var CARTWHEEL_SVG_FALLBACK = '<svg viewBox="0 0 140 140" width="130" height="130">' +
     /* head */
     '<circle cx="70" cy="32" r="15" fill="#FBBF24"/>' +
     /* hair — flowing upward (mid-flip) */
@@ -1843,6 +1843,11 @@ function buildSparkleLoadingScreen() {
     '<circle cx="112" cy="58" r="2" fill="#ffdd44" opacity="0.7"><animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite"/></circle>' +
     '<path d="M22 18 l3 -6 l3 6 M25 15 l-6 3 l6 3" fill="#E879F9" opacity="0.6"><animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.8s" repeatCount="indefinite"/></path>' +
     '</svg>';
+  cartwheelEl.innerHTML = '<img src="https://i.ibb.co/k2sWCnvH/Gemini-Generated-Image-8uhoc98uhoc98uho.png" alt="JJ cartwheel" style="width:130px;height:auto;display:block;">';
+  var _jjCartwheelImg = cartwheelEl.firstChild;
+  if (_jjCartwheelImg) {
+    _jjCartwheelImg.onerror = function() { cartwheelEl.innerHTML = CARTWHEEL_SVG_FALLBACK; };
+  }
   var skCwDir = 0;
   cartwheelEl.addEventListener('animationiteration', function() {
     skCwDir = 1 - skCwDir;
