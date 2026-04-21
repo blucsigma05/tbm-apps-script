@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://git.thompsonfams.com/blucsigma05/tbm-apps-script/ops/schemas/deep-audit-verdict.json",
+  "title": "Codex Deep-Audit Verdict",
+  "description": "Structured output contract for Phase D deep-audit runs (Codex CLI primary, Anthropic fallback). Passed to `codex exec --output-schema` / `codex review --output-schema` to constrain the final model message. Runner workflow parses the resulting JSON to (a) gate merge, (b) post a formatted PR comment, (c) file per-finding issues for P1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict", "summary", "findings"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["PASS", "FAIL", "INCONCLUSIVE"],
+      "description": "Terminal outcome. PASS = diff is safe to merge. FAIL = one or more P1/P2 issues that should block merge. INCONCLUSIVE = model could not reach a confident verdict (e.g., diff too large, context insufficient, CLI errored). INCONCLUSIVE never blocks merge by itself — it routes to human review."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "description": "One-to-three-paragraph plain-language summary of what the diff does and why the verdict landed where it did. Rendered verbatim at the top of the PR comment. Do not repeat the findings list here."
+    },
+    "findings": {
+      "type": "array",
+      "description": "Zero-or-more specific issues surfaced by the audit. Empty array is valid only when verdict=PASS. Order is preserved in downstream rendering, so the model should list highest-severity first.",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "model": {
+      "type": "string",
+      "description": "Self-reported model identifier (e.g., `gpt-5.3-codex`, `claude-opus-4-7`). Optional — the runner also captures this from invocation metadata, but the model-reported value is useful for catching silent routing."
+    },
+    "reasoning_effort": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "xhigh", "minimal"],
+      "description": "Self-reported reasoning effort level used. Optional; runner also captures from flags."
+    },
+    "tokens": {
+      "type": "object",
+      "description": "Optional token accounting. Populated when the CLI surfaces it in the final event. Not authoritative — the runner's own event-stream parse is the source of truth for cost telemetry.",
+      "additionalProperties": false,
+      "properties": {
+        "input": { "type": "integer", "minimum": 0 },
+        "output": { "type": "integer", "minimum": 0 },
+        "reasoning": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "description": "Optional free-form diagnostics block for the runner to capture unusual conditions (truncated diff, base-branch missing, etc.). Does not affect verdict rendering.",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["severity", "category", "title", "body"],
+      "properties": {
+        "severity": {
+          "type": "string",
+          "enum": ["P1", "P2", "P3"],
+          "description": "P1 = merge-blocking (correctness bug, security hole, data-loss risk, policy violation). P2 = should fix but not blocking (design smell, missing guard that has a narrow failure mode, test gap). P3 = nit (style, naming, minor duplication). Only P1 auto-files a Gitea issue; P2/P3 stay in the PR comment."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "correctness",
+            "security",
+            "data_integrity",
+            "performance",
+            "concurrency",
+            "error_handling",
+            "api_contract",
+            "schema_drift",
+            "es5_compat",
+            "gas_standards",
+            "testing",
+            "style",
+            "documentation",
+            "architecture",
+            "other"
+          ],
+          "description": "Broad classification. `es5_compat` and `gas_standards` are TBM-specific — included because the audit is scoped to this codebase. `other` is a catch-all; runner flags frequent `other` use for schema expansion."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 140,
+          "description": "One-line headline. Renders as the finding's bullet-header in the PR comment and, for P1, as the auto-filed issue title."
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000,
+          "description": "Detailed explanation: what the problem is, why it matters, and either a concrete fix or the information the reviewer needs to make the fix call. Markdown allowed."
+        },
+        "file": {
+          "type": "string",
+          "description": "Repo-relative path of the primary file the finding points at. Optional — some findings are cross-cutting (e.g., architecture). When present, used to permalink to the file in the PR comment."
+        },
+        "line_start": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-indexed line number where the issue begins. Optional. Requires `file` to be set."
+        },
+        "line_end": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1-indexed line number where the issue ends. Optional. If omitted and `line_start` is set, the finding is treated as pointing at a single line. Requires `file` to be set."
+        },
+        "suggestion": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Optional concrete patch suggestion (snippet or prose). Rendered in a collapsible block under the finding body in the PR comment."
+        },
+        "confidence": {
+          "type": "string",
+          "enum": ["high", "medium", "low"],
+          "description": "Model self-assessed confidence. Optional but recommended. Runner uses `confidence=low` to gate issue auto-filing (low-confidence P1s go to the PR comment only, never to a durable issue, to avoid backlog noise from speculative findings)."
+        },
+        "references": {
+          "type": "array",
+          "description": "Optional list of cross-references: other files/lines, design docs, prior issues. Rendered as a bullet list under the finding body.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "value"],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": ["file", "issue", "pr", "url", "doc"]
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1
+              },
+              "note": {
+                "type": "string",
+                "maxLength": 200
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["line_start"] },
+          "then": { "required": ["file"] }
+        },
+        {
+          "if": { "required": ["line_end"] },
+          "then": { "required": ["file", "line_start"] }
+        }
+      ]
+    }
+  }
+}
