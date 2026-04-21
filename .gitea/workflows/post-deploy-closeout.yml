@@ -93,7 +93,6 @@ jobs:
         env:
           NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
           PM_VERSIONS_DB_ID: ${{ secrets.PM_VERSIONS_DB_ID }}
-          DEPLOY_PAGE_ID: ${{ secrets.DEPLOY_PAGE_ID }}
           THREAD_ARCHIVE_ID: "322cea3cd9e881bb8afcd560fe772481"
           PUSHOVER_APP_TOKEN: ${{ secrets.PUSHOVER_APP_TOKEN }}
           PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}

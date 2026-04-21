@@ -11,7 +11,6 @@ Steps:
 Required env vars:
   NOTION_API_KEY         — token for Notion integration
   PM_VERSIONS_DB_ID      — Notion database ID for PM Active Versions DB
-  DEPLOY_PAGE_ID         — Notion page ID for the deploy page (title update)
   THREAD_ARCHIVE_ID      — Notion page ID for Thread Handoff Archive
   PUSHOVER_APP_TOKEN     — Pushover application token
   PUSHOVER_USER_KEY      — Pushover user key
@@ -288,7 +287,6 @@ def main():
     user_key = os.environ['PUSHOVER_USER_KEY']
     base_url = os.environ['TBM_BASE_URL']
     db_id = os.environ.get('PM_VERSIONS_DB_ID', '')
-    deploy_page_id = os.environ.get('DEPLOY_PAGE_ID', '')
     archive_page_id = os.environ.get('THREAD_ARCHIVE_ID', '322cea3cd9e881bb8afcd560fe772481')
     sha = os.environ.get('GITHUB_SHA', '')
     ref = os.environ.get('GITHUB_REF_NAME', 'main')
