@@ -1,30 +1,67 @@
 #!/bin/bash
-# TBM commit-msg hook — enforces EMERGENCY: prefix when bypassing the freeze gate.
-# Install once per clone: bash scripts/setup-hooks.sh
+# TBM commit-msg hook — two enforcements:
 #
-# When EMERGENCY=1 is set at commit time, the commit message MUST start with
-# "EMERGENCY: <reason>" to guarantee an audit trail for every freeze bypass.
-# Without this hook the bypass was print-only — no enforcement.
+#   1. EMERGENCY: prefix required when EMERGENCY=1 is set (audit trail for
+#      freeze-gate bypass).
+#   2. Standard commits require either an issue ref (#N, Closes #N, Fixes #N,
+#      Refs #N) OR an override prefix (CHORE: / DOCS: / CONFIG: / WIP:).
 #
-# Called by git with $1 = path to the file containing the commit message.
-
-if [[ "${EMERGENCY:-0}" != "1" ]]; then
-  exit 0
-fi
+# (2) also exists in the global Claude-harness hook ~/.claude/hooks/pretool-bash.sh,
+# but that only inspects the `git commit -m "..."` command string — heredocs,
+# editor flows, and agents running without LT's global profile escape it.
+# This git-native hook inspects the actual commit-message file, so it's
+# independent of the caller and agent.
+#
+# Install: bash scripts/setup-hooks.sh
+# Called by git with $1 = path to the commit-message file.
 
 COMMIT_MSG_FILE="$1"
 COMMIT_MSG=$(head -1 "$COMMIT_MSG_FILE")
 
-if [[ "$COMMIT_MSG" != EMERGENCY:* ]]; then
-  echo ""
-  echo "❌ commit-msg: BLOCKED -- EMERGENCY=1 bypass requires the commit message"
-  echo "   to start with 'EMERGENCY: <reason>' to create an audit trail."
-  echo ""
-  echo "   Got:      $COMMIT_MSG"
-  echo "   Required: EMERGENCY: <your reason>"
-  echo ""
-  echo "   Re-run: EMERGENCY=1 git commit -m 'EMERGENCY: <reason>'"
-  exit 1
+# Merge/revert/fixup commits have their own format; don't gate them.
+if [[ "$COMMIT_MSG" == Merge\ * || "$COMMIT_MSG" == Revert\ * || "$COMMIT_MSG" == fixup!\ * || "$COMMIT_MSG" == squash!\ * ]]; then
+  exit 0
 fi
 
-exit 0
+# (1) EMERGENCY bypass audit trail.
+if [[ "${EMERGENCY:-0}" == "1" ]]; then
+  if [[ "$COMMIT_MSG" != EMERGENCY:* ]]; then
+    echo ""
+    echo "❌ commit-msg: BLOCKED -- EMERGENCY=1 bypass requires the commit message"
+    echo "   to start with 'EMERGENCY: <reason>' to create an audit trail."
+    echo ""
+    echo "   Got:      $COMMIT_MSG"
+    echo "   Required: EMERGENCY: <your reason>"
+    echo ""
+    echo "   Re-run: EMERGENCY=1 git commit -m 'EMERGENCY: <reason>'"
+    exit 1
+  fi
+  # EMERGENCY: prefix present — accepted, skip the standard check.
+  exit 0
+fi
+
+# (2) Standard commit format. Match any of:
+#     - an issue reference: #N, Closes #N, Fixes #N, Refs #N anywhere in the first line
+#     - an override prefix at the start: CHORE: / DOCS: / CONFIG: / WIP:
+#     - (EMERGENCY: also accepted here for consistency, though §1 already handles it)
+if echo "$COMMIT_MSG" | grep -qE '(#[0-9]+|Closes #|Fixes #|Refs #|^(CHORE|DOCS|CONFIG|WIP|EMERGENCY):)'; then
+  exit 0
+fi
+
+echo ""
+echo "❌ commit-msg: BLOCKED -- missing issue ref or override prefix."
+echo ""
+echo "   Got: $COMMIT_MSG"
+echo ""
+echo "   Every commit must either reference a GitHub issue (per CLAUDE.md §2):"
+echo "     git commit -m 'feat(#NNN): short description'"
+echo "     git commit -m 'fix(NNN): ...'  (also accepted via #NNN match)"
+echo ""
+echo "   OR use an override prefix for non-feature commits:"
+echo "     CHORE:  — tooling / build / meta work"
+echo "     DOCS:   — docs-only changes"
+echo "     CONFIG: — config / settings changes"
+echo "     WIP:    — work-in-progress (squash before merge)"
+echo ""
+echo "   To bypass (freeze emergency only): EMERGENCY=1 git commit -m 'EMERGENCY: <reason>'"
+exit 1
