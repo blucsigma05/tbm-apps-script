@@ -4,7 +4,7 @@
     {
       "name": "tbm-preview",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["preview-proxy.js"],
+      "runtimeArgs": [".claude/preview-proxy.js"],
       "port": 3456
     }
   ],
