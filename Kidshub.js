@@ -1,11 +1,11 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// KidsHub.gs v76 — Kids Hub Server Backend (TBM Consolidated)
+// KidsHub.gs v77 — Kids Hub Server Backend (TBM Consolidated)
 // WRITES TO: 🧹📅 KH_Chores, 🧹📅 KH_History, 🧹📅 KH_Rewards, 🧹📅 KH_Redemptions, 🧹📅 KH_Requests, 🧹📅 KH_ScreenTime, 🧹📅 KH_Grades, 🧹📅 KH_Education, 🧹📅 KH_PowerScan, 🧹📅 KH_MissionState, 🧹📅 KH_LessonRuns, 💻 Curriculum, 💻 QuestionLog, 💻 MealPlan
 // READS FROM: 🧹📅 KH_* (all KH tabs), 💻🧮 Helpers, 💻 Curriculum
 // ════════════════════════════════════════════════════════════════════
 
-function getKidsHubVersion() { return 76; }
+function getKidsHubVersion() { return 77; }
 
 // ── TAB NAMES (logical → resolved via TAB_MAP in DataEngine) ─────
 var KH_TABS = {
@@ -1492,6 +1492,93 @@ function khCompleteTaskWithBonus(rowIndex, multiplier, expectedTaskID) {
 }
 
 
+// ── khWriteRowWithVerify_ (v77) — shared full-row write-verify helper ──
+// Used by every KH_Chores approval/override/reject path. Earlier revisions
+// (v25-v76) either had no verify (khUncompleteTask / khOverrideTask /
+// khRejectTask / khApproveWithBonus) or single-field verify (khApproveTask
+// only checked Parent_Approved). When a multi-field setValues() partially
+// failed, the caller returned 'ok' while the row sat in an inconsistent
+// state. Silent row drift in the Parent Hub is the resulting user-visible
+// bug — JT approves a chore, UI reports success, but one of the written
+// fields didn't land. See Gitea #26 + stabilization backlog item 22.
+//
+// Contract:
+//   - Do the batch setValues write.
+//   - Re-read the full row.
+//   - Compare every field against the value we tried to write, using
+//     khCellsEqual_ for Sheets normalization (Date objects, boolean/"TRUE"
+//     string duality, empty vs null vs undefined equivalence).
+//   - For each divergent field, fire a single-cell setValue to repair
+//     (same pattern the old khApproveTask v36 code used for Parent_Approved).
+//   - Re-verify after repair.
+//   - Log KH_VERIFY_FAIL on initial divergence; KH_VERIFY_FAIL_AFTER_REPAIR
+//     if the repair itself did not stick.
+//   - Return { ok, divergent, repaired } so the caller can decide to
+//     surface a verify-fail status to the UI if needed.
+function khWriteRowWithVerify_(sheet, rowIndex, row, headers, fnName) {
+  sheet.getRange(rowIndex, 1, 1, headers.length).setValues([row]);
+  var readBack = sheet.getRange(rowIndex, 1, 1, headers.length).getValues()[0];
+  var divergent = [];
+  for (var i = 0; i < headers.length; i++) {
+    if (!khCellsEqual_(row[i], readBack[i])) {
+      divergent.push(headers[i]);
+    }
+  }
+  if (divergent.length === 0) return { ok: true, divergent: [], repaired: [] };
+
+  console.log('KH_VERIFY_FAIL', JSON.stringify({
+    fn: fnName, rowIndex: rowIndex, divergent: divergent, timestamp: getNowISO_()
+  }));
+  for (var j = 0; j < divergent.length; j++) {
+    var colIdx = headers.indexOf(divergent[j]);
+    if (colIdx >= 0) {
+      sheet.getRange(rowIndex, colIdx + 1).setValue(row[colIdx]);
+    }
+  }
+  var readBack2 = sheet.getRange(rowIndex, 1, 1, headers.length).getValues()[0];
+  var stillDivergent = [];
+  for (var k = 0; k < headers.length; k++) {
+    if (!khCellsEqual_(row[k], readBack2[k])) {
+      stillDivergent.push(headers[k]);
+    }
+  }
+  if (stillDivergent.length > 0) {
+    console.log('KH_VERIFY_FAIL_AFTER_REPAIR', JSON.stringify({
+      fn: fnName, rowIndex: rowIndex, stillDivergent: stillDivergent,
+      timestamp: getNowISO_()
+    }));
+    return { ok: false, divergent: stillDivergent, repaired: [] };
+  }
+  return { ok: true, divergent: [], repaired: divergent };
+}
+
+// Normalize Sheets-returned cell shapes so a boolean we wrote doesn't
+// compare unequal to a "TRUE" string Sheets returned, a Date we wrote
+// doesn't compare unequal to the ISO string Sheets round-trips, and
+// empty/null/undefined are treated as the same empty state. Keep this
+// minimal — we only handle the shape drift we actually observe on
+// KH_Chores, not a generic deep-equals.
+function khCellsEqual_(wrote, readBack) {
+  // Empty-ish: '', null, undefined are all equivalent
+  if ((wrote === '' || wrote == null) && (readBack === '' || readBack == null)) {
+    return true;
+  }
+  // Boolean <-> "TRUE"/"FALSE" string duality
+  if (typeof wrote === 'boolean' && typeof readBack === 'string') {
+    return (wrote === true) === (readBack.toUpperCase() === 'TRUE');
+  }
+  if (typeof readBack === 'boolean' && typeof wrote === 'string') {
+    return (readBack === true) === (wrote.toUpperCase() === 'TRUE');
+  }
+  // Date objects: compare by yyyy-mm-dd prefix (KH_Chores date columns
+  // don't carry time-of-day precision)
+  if (wrote instanceof Date) wrote = wrote.toISOString().substring(0, 10);
+  if (readBack instanceof Date) readBack = readBack.toISOString().substring(0, 10);
+  // Number-string drift (Sheets can return a string for typed-number cells)
+  return String(wrote) === String(readBack);
+}
+
+
 function khApproveTask(rowIndex, expectedTaskID) {
   var lk = acquireLock_();
   if (!lk.acquired) return JSON.stringify({ status: 'locked', message: 'Another approval is in progress. Try again.' });
@@ -1522,7 +1609,6 @@ function khApproveTask(rowIndex, expectedTaskID) {
     var basePoints = Number(row[khCol_(h, 'Points')]) || 0;
     var mult = Math.max(1, parseFloat(row[khCol_(h, 'Bonus_Multiplier')]) || 1);
     var earnedPoints = Math.round(basePoints * mult);
-    // v25: Batch write — modify row in memory, single writeback
     row[khCol_(h, 'Parent_Approved')] = true;
     row[khCol_(h, 'Completed_Date')] = today;
     // v18: Auto-deactivate One-Time tasks after approval so they don't reappear
@@ -1530,21 +1616,19 @@ function khApproveTask(rowIndex, expectedTaskID) {
     if (freq === 'one-time') {
       row[khCol_(h, 'Active')] = false;
     }
-    sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
-    // v36: Verify write persisted (diagnostic for task-revert bug)
-    var verifyRow = sheet.getRange(rowIndex, 1, 1, h.length).getValues()[0];
-    var verifyApproved = verifyRow[khCol_(h, 'Parent_Approved')] === true ||
-      String(verifyRow[khCol_(h, 'Parent_Approved')]).toUpperCase() === 'TRUE';
-    if (!verifyApproved) {
-      console.log('KH_VERIFY_FAIL', JSON.stringify({
-        fn: 'khApproveTask', taskID: taskID, rowIndex: rowIndex,
-        wrote: true, readBack: verifyRow[khCol_(h, 'Parent_Approved')],
-        timestamp: getNowISO_()
-      }));
-      sheet.getRange(rowIndex, khCol_(h, 'Parent_Approved') + 1).setValue(true);
+    // v77: full-row write-verify (item 22 / Gitea #26) replaces v36 single-field verify
+    var verify = khWriteRowWithVerify_(sheet, rowIndex, row, h, 'khApproveTask');
+    if (!verify.ok) {
+      return JSON.stringify({
+        status: 'verify-fail', uid: approvalUID,
+        divergent: verify.divergent, rowIndex: rowIndex
+      });
     }
     appendHistory_(approvalUID, taskID, child, task, earnedPoints, basePoints, mult, 'approval', today, now);
-    console.log('KH_WRITE', JSON.stringify({ fn: 'khApproveTask', status: 'ok', uid: approvalUID, child: child, points: earnedPoints }));
+    console.log('KH_WRITE', JSON.stringify({
+      fn: 'khApproveTask', status: 'ok', uid: approvalUID, child: child,
+      points: earnedPoints, repaired: verify.repaired
+    }));
     var _result = JSON.stringify({ status: 'ok', uid: approvalUID, child: child, points: earnedPoints, rowIndex: rowIndex });
     stampKHHeartbeat_();
     return _result;
@@ -1564,12 +1648,22 @@ function khUncompleteTask(rowIndex, expectedTaskID) {
     if (expectedTaskID && !validateRowTaskID_(sheet, h, rowIndex, expectedTaskID)) {
       return JSON.stringify({ status: 'stale', message: 'Row has changed. Please refresh.' });
     }
-    // v25: Batch write — read row, modify in memory, single writeback
     var row = sheet.getRange(rowIndex, 1, 1, h.length).getValues()[0];
     row[khCol_(h, 'Completed')] = false;
     row[khCol_(h, 'Parent_Approved')] = false;
     row[khCol_(h, 'Completed_Date')] = '';
-    sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
+    // v77: full-row write-verify (item 22 / Gitea #26)
+    var verify = khWriteRowWithVerify_(sheet, rowIndex, row, h, 'khUncompleteTask');
+    if (!verify.ok) {
+      return JSON.stringify({
+        status: 'verify-fail', divergent: verify.divergent, rowIndex: rowIndex
+      });
+    }
+    if (verify.repaired && verify.repaired.length) {
+      console.log('KH_WRITE', JSON.stringify({
+        fn: 'khUncompleteTask', status: 'ok', repaired: verify.repaired
+      }));
+    }
     stampKHHeartbeat_();
     return JSON.stringify({ status: 'ok' });
   } finally {
@@ -1605,14 +1699,23 @@ function khOverrideTask(rowIndex, expectedTaskID, multiplier) {
       return JSON.stringify({ status: 'ok', already: true, uid: uid, rowIndex: rowIndex });
     }
 
-    // v25: Batch write — modify row in memory, single writeback
     row[khCol_(h, 'Completed')] = true;
     row[khCol_(h, 'Completed_Date')] = today;
     row[khCol_(h, 'Parent_Approved')] = true;
     row[khCol_(h, 'Bonus_Multiplier')] = validMult;
-    sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
+    // v77: full-row write-verify (item 22 / Gitea #26)
+    var verify = khWriteRowWithVerify_(sheet, rowIndex, row, h, 'khOverrideTask');
+    if (!verify.ok) {
+      return JSON.stringify({
+        status: 'verify-fail', uid: uid,
+        divergent: verify.divergent, rowIndex: rowIndex
+      });
+    }
     appendHistory_(uid, taskID, child, task, effectivePoints, basePoints, validMult, 'override', today, now);
-    console.log('KH_WRITE', JSON.stringify({ fn: 'khOverrideTask', status: 'ok', uid: uid, child: child, points: effectivePoints, mult: validMult }));
+    console.log('KH_WRITE', JSON.stringify({
+      fn: 'khOverrideTask', status: 'ok', uid: uid, child: child,
+      points: effectivePoints, mult: validMult, repaired: verify.repaired
+    }));
     var _result = JSON.stringify({ status: 'ok', uid: uid, child: child, rowIndex: rowIndex, points: effectivePoints, multiplier: validMult });
     stampKHHeartbeat_();
     return _result;
@@ -1642,12 +1745,18 @@ function khRejectTask(rowIndex, expectedTaskID) {
     var today      = getTodayISO_();
     var now        = getNowISO_();
     var uid = taskID + '_' + today + '_' + child.toLowerCase() + '_rejection';
-    // v25: Batch write — modify row in memory, single writeback
     row[khCol_(h, 'Completed')] = false;
     row[khCol_(h, 'Parent_Approved')] = false;
     row[khCol_(h, 'Completed_Date')] = '';
     row[khCol_(h, 'Bonus_Multiplier')] = 1;
-    sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
+    // v77: full-row write-verify (item 22 / Gitea #26)
+    var verify = khWriteRowWithVerify_(sheet, rowIndex, row, h, 'khRejectTask');
+    if (!verify.ok) {
+      return JSON.stringify({
+        status: 'verify-fail', uid: uid,
+        divergent: verify.divergent, rowIndex: rowIndex
+      });
+    }
     appendHistory_(uid, taskID, child, task, 0, 0, 1, 'rejection', today, now);
     var _result = JSON.stringify({ status: 'ok', uid: uid, reversedPoints: 0 });
     stampKHHeartbeat_();
@@ -1680,7 +1789,6 @@ function khApproveWithBonus(rowIndex, multiplier, expectedTaskID) {
     if (historyUIDExists_(approvalUID)) {
       return JSON.stringify({ status: 'duplicate', uid: approvalUID });
     }
-    // v25: Batch write — modify row in memory, single writeback
     row[khCol_(h, 'Bonus_Multiplier')] = validMult;
     row[khCol_(h, 'Parent_Approved')] = true;
     row[khCol_(h, 'Completed_Date')] = today;
@@ -1689,11 +1797,21 @@ function khApproveWithBonus(rowIndex, multiplier, expectedTaskID) {
     if (freq === 'one-time') {
       row[khCol_(h, 'Active')] = false;
     }
-    sheet.getRange(rowIndex, 1, 1, h.length).setValues([row]);
+    // v77: full-row write-verify (item 22 / Gitea #26)
+    var verify = khWriteRowWithVerify_(sheet, rowIndex, row, h, 'khApproveWithBonus');
+    if (!verify.ok) {
+      return JSON.stringify({
+        status: 'verify-fail', uid: approvalUID,
+        divergent: verify.divergent, rowIndex: rowIndex
+      });
+    }
     var totalPts = Math.round(basePoints * validMult);
     appendHistory_(approvalUID, taskID, child, task, totalPts, basePoints, validMult, 'approval', today, now);
     var totalAwarded = validMult > 1 ? Math.round(basePoints * validMult) : basePoints;
-    console.log('KH_WRITE', JSON.stringify({ fn: 'khApproveWithBonus', status: 'ok', uid: approvalUID, child: child, points: totalAwarded, mult: validMult }));
+    console.log('KH_WRITE', JSON.stringify({
+      fn: 'khApproveWithBonus', status: 'ok', uid: approvalUID, child: child,
+      points: totalAwarded, mult: validMult, repaired: verify.repaired
+    }));
     var _result = JSON.stringify({ status: 'ok', uid: approvalUID, child: child, points: totalAwarded, multiplier: validMult });
     stampKHHeartbeat_();
     return _result;
