@@ -203,7 +203,15 @@ fix-and-regression case is covered.
 
 **INCONCLUSIVE verdicts** (Codex CI truncated or errored) do NOT create
 Issues — they stay on the PR-check state surface handled by `review-watcher.js`.
-LT resolves them via a manual `audit N` in ChatGPT or an explicit waive.
+
+**Current fallback:** LT resolves them via a manual `audit N` in ChatGPT or an
+explicit waive.
+
+**Operating target:** `INCONCLUSIVE` or LT-requested stronger review must route
+to a deeper Codex audit lane without LT hand-carrying context between tools or
+threads. LT's role is to trigger the escalation on the canonical status surface,
+not to reconstruct the PR by hand. Until that control-plane lane exists on the
+destination stack, manual `audit N` remains fallback only.
 
 ---
 
@@ -232,7 +240,8 @@ These are all symptoms of "work drifting back into chat." Don't do them:
 ## Integration with existing systems
 
 - **Pushover notifications:** fire on terminal PR states (ready/stalled) via orchestration loop Phase 1. Issues don't notify by default.
-- **Codex PR review:** runs on every PR, posts findings as comments and applies `pipeline:*` labels. Blocker Issues are **not** auto-created — finding comments must be triaged manually and filed as Issues when the PR closes without resolution. (Future: auto-open blocker Issues from `codex-finding-listener.yml`.)
+- **Codex PR review:** runs on every PR, posts findings as comments, applies `pipeline:*` labels, and produces durable Issues through the automated bot path and the whitelisted manual path described above. `INCONCLUSIVE` remains a PR-state outcome today; it does not auto-file Issues.
+- **Stronger-review escalation:** the intended operating model is automatic escalation to a deeper Codex audit when the automated review is `INCONCLUSIVE` or when LT explicitly requests stronger review. Until that destination-side control-plane lane is wired, manual `audit N` remains fallback only.
 - **Branch hygiene:** `audit-source.sh` staleness gate catches PRs behind `origin/main` before push
 - **Pipeline labels:** `pipeline:ready` / `pipeline:fix-needed` / `pipeline:waiting` / `pipeline:stalled` are set by the orchestration loop, not by humans
 - **Notion:** project memory + thread handoffs stay in Notion as LT's long-form context. GitHub Issues are the operational layer.
