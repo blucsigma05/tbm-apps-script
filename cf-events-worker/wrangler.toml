@@ -1,0 +1,74 @@
+# TBM control-plane event-bus Worker config.
+# Deploy with: wrangler deploy (from this directory).
+#
+# The Worker is the transactional boundary for Work Queue state transitions —
+# see README.md + Migration Plan v4.1 §E.11.
+
+name = "tbm-cp-events"
+main = "src/index.js"
+compatibility_date = "2026-04-19"
+
+# Route — lives under the same apex as the rest of TBM's Cloudflare surface.
+# Separate path prefix from the main thompsonfams.com proxy (cloudflare-worker.js)
+# so the two Workers deploy + fail independently.
+#
+# Uncomment on production deploy after the DNS + zone are wired.
+# routes = [
+#   { pattern = "thompsonfams.com/events/*", zone_name = "thompsonfams.com" }
+# ]
+
+# KV namespace — stores processed idempotency keys (7-day TTL), replay payloads.
+# Provision with: wrangler kv namespace create tbm-cp-events-processed
+# Then paste the id here.
+[[kv_namespaces]]
+binding = "PROCESSED_EVENTS"
+id = "b961491eef51422c8caa8b0061dfb492"
+
+# Durable Object — serialization boundary per work_id.
+# One DO instance per work_id provides single-threaded write serialization,
+# which is how we implement CAS on top of Notion (which doesn't have native CAS).
+[[durable_objects.bindings]]
+name = "WORK_STATE_MACHINE"
+class_name = "WorkQueueStateMachine"
+
+# First-ever deploy — creates the DO class.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["WorkQueueStateMachine"]
+
+# Non-secret vars (discoverable in repo — OK for IDs, not for credentials).
+[vars]
+# Database ID for the TBM Work Queue (single-source DB). Used by the
+# heartbeat watcher's /databases/{id}/query call. Different from the
+# data source ID shown in notion-fetch output — the database ID comes
+# from the DB's public URL.
+NOTION_WORK_QUEUE_DB_ID = "b1c21d2691e64dba90e81944d2cd4862"
+
+# Secrets (set via `wrangler secret put <name>` — NOT in this file):
+#   NOTION_TOKEN              Notion integration token scoped to the Work Queue DB only
+#   HMAC_SECRET_NOTION        Shared secret for /events/notion signature verification
+#   HMAC_SECRET_FORGE_GITEA   Shared secret for /events/forge/gitea webhooks
+#                             (canonical forge since 2026-04-19; header: x-gitea-signature)
+#   HMAC_SECRET_FORGE_GITHUB  Shared secret for /events/forge/github webhooks
+#                             (legacy; only set if GitHub reactivates; header: x-hub-signature-256)
+#   HMAC_SECRET_OPENAI        OpenAI webhook signing secret (header: x-openai-signature)
+#                             — only used when Codex review goes async
+#   MANUAL_TRIGGER_TOKEN      Bearer token required for /events/heartbeat-tick and
+#                             /events/escalation-tick manual GETs. Fails closed when
+#                             unset — those routes return 401 with no token configured.
+#   PUSHOVER_USER_KEY         For exception-queue escalation notifications
+#   PUSHOVER_APP_TOKEN        Pushover app token
+# Optional env vars:
+#   ESCALATION_RETRY_TTL_SECONDS  Short-TTL dedup window when Pushover is skipped or
+#                                 fails (default 300s); long-TTL dedup = ESCALATION_DEDUP_HOURS.
+
+# Cron triggers — multiple patterns, dispatched by event.cron inside scheduled().
+#   */5 * * * *   — heartbeat watcher (§E.4) reclaims stale IN-PROGRESS claims.
+#   0 */4 * * *   — escalation watcher (§E.5) pages LT on stale BLOCKED rows.
+[triggers]
+crons = ["*/5 * * * *", "0 */4 * * *"]
+
+# Observability — structured logs go to Cloudflare Logpush if configured,
+# otherwise inspect via `wrangler tail`.
+[observability]
+enabled = true

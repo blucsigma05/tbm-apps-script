@@ -1,0 +1,19 @@
+{
+  "name": "tbm-cp-events",
+  "version": "0.1.0",
+  "description": "TBM control-plane event bus — Cloudflare Worker serialization boundary for Work Queue state transitions.",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "kv:create": "wrangler kv namespace create tbm-cp-events-processed",
+    "secret:set-notion": "wrangler secret put HMAC_SECRET_NOTION",
+    "secret:set-notion-token": "wrangler secret put NOTION_TOKEN"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
