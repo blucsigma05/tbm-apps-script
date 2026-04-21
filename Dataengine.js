@@ -224,6 +224,7 @@ var TAB_MAP = {
   'KH_LessonRuns':    '🧹📅 KH_LessonRuns',
   'KH_VocabExposures': '🧹📅 KH_VocabExposures',
   // 💻 Education + System
+  'SchoolCalendar':   '💻 SchoolCalendar',
   'Curriculum':       '💻 Curriculum',
   'QuestionLog':      '💻 QuestionLog',
   'Feedback':         '💻 Feedback',
