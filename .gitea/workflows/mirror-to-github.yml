@@ -1,0 +1,105 @@
+# .gitea/workflows/mirror-to-github.yml
+# Auto-mirror gitea/main to GitHub for DR + historical URL preservation.
+#
+# Canonical forge: Gitea (since 2026-04-19 migration, after GitHub account
+# suspension). GitHub account `blucsigma05` was unsuspended 2026-04-22; forge
+# canon was clarified to Gitea-primary + GitHub-auto-mirror (see Gitea Issue
+# #60, Item Θ in the audit-plan Wave 0). This workflow is the machine-enforced
+# half of that policy (Gitea Issue #61, Item Φ).
+#
+# Trigger: push to main OR tag creation. Fast-forward only — push fails if
+# divergence is accidentally introduced (should be impossible under "all writes
+# to Gitea" policy), which surfaces the problem rather than silently rewriting
+# GitHub history. **No `--force` / `--force-with-lease` flags** anywhere.
+#
+# Runner: `ubuntu-latest` (maps to tbm-runner-1:host on tbm-primary, same as
+# every other workflow in this repo). Zero GitHub Actions minutes consumed —
+# the push originates from the Gitea runner.
+#
+# Secrets required (Settings → Actions → Secrets):
+#   GITHUB_MIRROR_PAT — GitHub fine-grained PAT scoped to `contents:write` on
+#     blucsigma05/tbm-apps-script only. LT-provisioned. Separate from any
+#     build-time PAT, scoped only for mirror push. If the secret is unset, the
+#     job fails loudly (see "Configure GitHub remote" step) rather than
+#     silently skipping.
+#
+# One-time catchup (50-commit gap since 2026-04-19): run
+# `scripts/one-time-github-catchup.sh` locally once on LT's workstation. After
+# that, every push to main triggers this workflow automatically.
+
+name: Mirror gitea/main to GitHub
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "**"
+
+concurrency:
+  # Serialize mirror pushes so two concurrent pushes can't race the GitHub ref.
+  group: mirror-to-github
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    name: Fast-forward push gitea/main → github:main
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          # Full history so git can compute whether the push is a fast-forward.
+          # Shallow clone would break the ancestry check on GitHub's side.
+          fetch-depth: 0
+          # Do NOT persist Gitea credentials in .git/config — we set up our own
+          # GitHub-scoped remote in the next step using GITHUB_MIRROR_PAT.
+          persist-credentials: false
+
+      - name: Configure GitHub remote (auth via PAT)
+        env:
+          GH_PAT: ${{ secrets.GITHUB_MIRROR_PAT }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${GH_PAT:-}" ]; then
+            echo "::error::GITHUB_MIRROR_PAT secret is not set."
+            echo "LT must provision it at Settings → Actions → Secrets."
+            echo "Scope: contents:write on blucsigma05/tbm-apps-script (fine-grained)."
+            exit 1
+          fi
+
+          # Remove any leftover remote from a previous run (re-used runner hosts).
+          git remote remove github 2>/dev/null || true
+
+          # x-access-token is the GitHub-recommended username for PAT-authenticated
+          # pushes via HTTPS. Token never appears in logs (set-env masks it).
+          git remote add github "https://x-access-token:${GH_PAT}@github.com/blucsigma05/tbm-apps-script.git"
+
+      - name: Fast-forward push main (no force)
+        run: |
+          set -euo pipefail
+
+          HEAD_SHA="$(git rev-parse HEAD)"
+          echo "Pushing $HEAD_SHA to github:main (fast-forward only)..."
+
+          # Plain push — no --force, no --force-with-lease. If GitHub's main has
+          # diverged from what gitea/main thinks is ancestor, this command fails
+          # loudly with "Updates were rejected because a pushed branch tip is
+          # behind its remote counterpart." That failure is the signal — DO NOT
+          # add a force flag to make it go away without investigating.
+          git push github "HEAD:refs/heads/main"
+
+      - name: Push tags
+        run: |
+          set -euo pipefail
+          # --tags ships only annotated + lightweight tags that don't already exist
+          # on the remote. Safe to run every time.
+          git push github --tags
+
+      - name: Report
+        run: |
+          HEAD_SHA="$(git rev-parse HEAD)"
+          echo "::notice::Mirror push succeeded. gitea/main @ $HEAD_SHA → github:main"
