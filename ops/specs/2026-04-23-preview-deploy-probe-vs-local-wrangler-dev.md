@@ -17,7 +17,7 @@ Research only. No preview-probe workflow is wired yet.
 
 ## Problem
 
-TBM does not have one truthful non-production verification path for Cloudflare Worker changes.
+TBM does not have one truthful branch-local verification path for Cloudflare-side Worker changes.
 
 Current state is split three ways:
 
@@ -40,6 +40,7 @@ Repo state:
 - `tests/tbm/play-gate/play-gate.spec.js` defaults `PLAY_GATE_BASE_URL` to `http://localhost:8080`.
 - `cloudflare-worker.js` is the front-door Worker under `wrangler.toml`; it uses routes, cookies, and a hardcoded production GAS URL, but no Durable Object binding.
 - `cf-events-worker/wrangler.toml` binds a Durable Object (`WORK_STATE_MACHINE`), which matters because preview URL support is different there.
+- `uptime-worker.js` exposes only `/check` and `/`; it does not expose `/version`, education routes, or QA routes.
 - Root `package.json` has `@playwright/test` and `@babel/parser`, but no Wrangler; Wrangler is not installed at repo root.
 - `cf-events-worker/package.json` declares `"wrangler": "^3.0.0"`, but there is no checked-in local installation in the current tree.
 
@@ -71,22 +72,27 @@ The missing question is:
 
 - "Will this exact branch build and behave as a Cloudflare Worker without touching production?"
 
-That is the question a merge gate needs.
+For `cloudflare-worker.js`, the precise version is:
+
+- "Will this exact branch build and behave correctly at the Cloudflare edge without mutating the production `thompsonfams.com` route?"
+
+That is the question the merge gate needs to answer first. It is narrower than full end-to-end non-production truth, because the current smart proxy still calls the production GAS URL.
 
 ## What changes
 
 ### Decision
 
-Use a **preview-deploy probe** as the canonical branch-truth check for `cloudflare-worker.js` and `uptime-worker.js`.
+Use a **preview-deploy probe** as the canonical Cloudflare-edge branch-truth check for `cloudflare-worker.js`.
 
 Use **local `wrangler dev`** as the fast local development loop, not as the merge gate.
 
 ### Why preview-deploy probe wins for the gate
 
 - It produces a real non-production Worker version on Cloudflare, which is closer to deploy truth than localhost or `file://`.
-- It gives the branch a unique preview URL that CI or Playwright can probe without touching `thompsonfams.com` production.
+- It gives the branch a unique preview URL that CI or Playwright can probe without mutating the production `thompsonfams.com` route.
 - It matches the repo's actual need: branch-local verification of Worker build/output before merge.
 - It aligns with the parser approach being tracked under Gitea #67, but that parser currently lives in open PR #75 rather than on `gitea/main`.
+- In the current code, this is Cloudflare-edge truth only, not full non-production truth, because the preview Worker still builds upstream requests from the hardcoded production `GAS_URL`.
 
 ### Why local `wrangler dev` does not win the gate
 
@@ -97,12 +103,11 @@ Use **local `wrangler dev`** as the fast local development loop, not as the merg
 
 ### Scope boundary
 
-This recommendation applies to the Workers that do **not** use Durable Objects:
+This recommendation applies directly to `cloudflare-worker.js`.
 
-- `cloudflare-worker.js`
-- `uptime-worker.js`
+It does **not** apply directly to `uptime-worker.js` in this spec because the route-level probe suite below is specific to the smart proxy and does not fit the uptime worker's current surface (`/` and `/check` only).
 
-It does **not** apply to `cf-events-worker` in its current form because Cloudflare does not generate Preview URLs for Workers with Durable Objects. If TBM later needs non-production branch truth for `cf-events-worker`, use a separate strategy:
+It also does **not** apply to `cf-events-worker` in its current form because Cloudflare does not generate Preview URLs for Workers with Durable Objects. If TBM later needs branch truth for `cf-events-worker`, use a separate strategy:
 
 - local `wrangler dev` with the right local fixtures for fast work
 - `wrangler dev --remote` only when an edge-only behavior must be verified
@@ -112,13 +117,14 @@ It does **not** apply to `cf-events-worker` in its current form because Cloudfla
 1. Pin Wrangler explicitly in repo tooling before wiring the probe. Gitea #68 is already the natural dependency for this.
 2. Add `preview_urls = true` explicitly in the relevant Wrangler config instead of relying on dashboard defaults.
 3. In a non-production workflow, run `wrangler versions upload` instead of `wrangler deploy`.
-4. Capture the returned preview URL and run a probe suite against it:
+4. Capture the returned preview URL and run a smart-proxy probe suite against it:
    - `/version`
    - one education route
    - one QA route if relevant
-5. Once the parser from PR #75 lands, parse stdout + stderr with `.github/scripts/parse_wrangler_output.py` instead of trusting exit code alone.
-6. If Wrangler is pinned to `4.21.0+`, prefer a readable alias such as `pr-<number>` or `sha-<shortsha>` for operator ergonomics.
-7. Keep `wrangler dev` documented as the manual local loop for fast debug iterations.
+5. Treat those probes as Cloudflare-layer verification only until the worker has a non-production GAS target or an override hook for upstream requests.
+6. Once the parser from PR #75 lands, parse stdout + stderr with `.github/scripts/parse_wrangler_output.py` instead of trusting exit code alone.
+7. If Wrangler is pinned to `4.21.0+`, prefer a readable alias such as `pr-<number>` or `sha-<shortsha>` for operator ergonomics.
+8. Keep `wrangler dev` documented as the manual local loop for fast debug iterations.
 
 ## Unknowns
 
@@ -127,22 +133,24 @@ It does **not** apply to `cf-events-worker` in its current form because Cloudfla
 - Whether the first rollout should be PR-only, `workflow_dispatch` only, or both.
 - Whether alias cleanup needs its own maintenance rule once preview aliases are introduced.
 - Whether route-level features that depend on the zone hostname should later require a second thompsonfams.com-specific probe. Preview URLs run on `workers.dev`, not on the production route.
+- Whether smart-proxy preview should stay Cloudflare-layer only, or whether TBM wants a non-production GAS target or request override so the preview path becomes end-to-end non-production truth.
 
 ## LT decisions needed
 
 - Confirm the canonical recommendation: preview-deploy probe for gate truth, local `wrangler dev` for local loop.
 - Decide whether preview URLs must be Cloudflare-Access-protected before the first rollout.
-- Decide whether the first implementation should scope to `cloudflare-worker.js` only, or include `uptime-worker.js` in the same PR.
+- Decide whether the first implementation should stay scoped to `cloudflare-worker.js` only, or whether `uptime-worker.js` should get its own separate probe contract later.
 - Decide alias style if preview aliases are used: `pr-<number>` or `sha-<shortsha>`.
 
 ## Acceptance test
 
-1. A PR that changes `cloudflare-worker.js` or `wrangler.toml` can upload a non-production Worker version without mutating production routes.
+1. A PR that changes `cloudflare-worker.js` or `wrangler.toml` can upload a non-production Worker version without mutating the production `thompsonfams.com` route.
 2. The workflow captures a preview URL from Wrangler output and probes `/version` successfully.
 3. A bad Worker config or bad entry point fails the preview-probe workflow before merge.
 4. The workflow classifies Wrangler output via `.github/scripts/parse_wrangler_output.py`, not exit code only.
 5. Local developers still have a documented fast loop via `wrangler dev`.
-6. No one mistakes the live-site preview proxy for branch-local verification after the follow-up PR lands.
+6. The follow-up docs make explicit that preview probes for `cloudflare-worker.js` still call production GAS in the current code, so no one mistakes them for full end-to-end non-production truth.
+7. No one mistakes the live-site preview proxy for branch-local verification after the follow-up PR lands.
 
 ## Evidence after completion
 
