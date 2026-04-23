@@ -9,13 +9,16 @@ This file exists because the AGENTS.md convention is the ecosystem-standard entr
 
 ## Two-Lane Roles (MANDATORY)
 
-- **Builder lane** (Claude/Opus/Sonnet): scope, spec, implement, fix.
-- **Audit lane** (Codex): inspects the named PR or named current state only.
+- **Builder lane — Claude** (Opus/Sonnet): GAS app logic, HTML/ES5 surfaces, Notion-linked process work, deploy-pipeline-adjacent repo work. Scope, spec, implement, fix.
+- **Builder lane — Codex (pilot, 2026-04-22+)**: CI workflows (`.gitea/workflows/*`, `.github/workflows/*`), Wrangler config (`wrangler*.toml`), tool-version pinning (`package.json` / `package-lock.json`), Cloudflare deploy/test gating, `.github/scripts/*` CI helpers, `.github/tests/**` fixtures, `audit-source.sh` schema checks. Scope + mechanics: `ops/operating-memos/2026-04-22-codex-infra-build-pilot.md`.
+- **Audit lane** (cross-audit): Claude audits Codex-built infra PRs. Codex audits Claude-built app/UI PRs. Each lane meets the same evidence bar — no plan item without running the command or reading the exact file. Any single audit scope is ONE named PR or ONE named current state; does not silently extend scope.
 - **PR-scoped audits**: when LT names a PR, audit that PR alone unless LT explicitly says `stacked` or `after PR M`.
 - **Plain-English commands**: agents translate LT's natural-language instructions into repo state. LT does not own git terminology.
 - **Boardroom conversations become operating memos** in `ops/operating-memos/YYYY-MM-DD-<topic>.md` when they change how TBM operates.
 - **Re-audits are clean-slate + builder pre-audit mandatory on gate/test PRs**: see `ops/operating-memos/2026-04-21-builder-pre-audit-and-clean-slate-rereview.md` and `CLAUDE.md § Two-Lane Roles` / `ops/WORKFLOW.md § Audit scope rules` for the full rule.
 - **Handoff comments are optional**: use `<!-- tbm-handoff -->` only when a PR changes hands mid-flight or pauses with a clear next action. At most one active comment per PR, edited in place.
+
+**This list is a minimal subset for ecosystem tools that default-read AGENTS.md.** The full Two-Lane Roles rule set — including re-audit clean-slate, continuity, auditor's pass, and mandatory builder pre-audit on gate/test PRs — lives in [CLAUDE.md § Two-Lane Roles](CLAUDE.md). If you are an agent making a gate/test PR decision, read CLAUDE.md, not this section.
 
 See [ops/WORKFLOW.md § Two-Lane Handoff Rules](ops/WORKFLOW.md) for the command contract, trigger phrases, audit scope rules, and full examples. Visual companion: [ops/diagrams/two-lane-model.md](ops/diagrams/two-lane-model.md).
 

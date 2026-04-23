@@ -44,7 +44,7 @@ This loads `.claude/settings.local.json` (repo-scoped MCP + Bash allowances). Wi
 2. Run `clasp deployments` to confirm deployment ID
 3. Fetch PM Active Versions (Notion `2c8cea3cd9e8818eaf53df73cb5c2eee`) for current state
 4. Check the TBM Operations Project board and the "Needs Decision" column for anything blocked on LT input
-5. Check `gh issue list -l claude:inbox --state open` for pending Codex findings auto-filed by `codex-review-filer.yml`. If any exist, they are the priority queue — address before starting new work.
+5. Check for pending Codex findings auto-filed by the `codex-pr-review.yml` inline filer step (which runs `.github/scripts/file_codex_review_findings.py` — there is no separate `codex-review-filer.yml` workflow; the filing is inline in the review workflow per the Codex findings contract below). On Gitea: `curl.exe -s -H "Authorization: token <pat>" "https://git.thompsonfams.com/api/v1/repos/blucsigma05/tbm-apps-script/issues?state=open&labels=claude:inbox" | python3 -c "import sys,json; [print('#' + str(i['number']), i['title']) for i in json.load(sys.stdin) if 'pull_request' not in i]"`. If any Issues come back, they are the priority queue — address before starting new work. (Do not use `gh issue list` for this repo — since the GitHub account suspension on 2026-04-19, `gh` resolves to the archive and returns stale results.)
 6. Do NOT begin work until steps 1–5 are complete
 
 ---
@@ -77,7 +77,7 @@ After 10+ messages in a session, re-read any file before editing it. Do not trus
 
 **Object types — pick one when creating work:**
 
-| Type | Use when | GitHub form | Primary label |
+| Type | Use when | Form | Primary label |
 |------|----------|-------------|---------------|
 | Spec | A design decision that needs alignment before code | Issue + `specs/*.md` file | `kind:spec` |
 | Bug | Something is broken | Issue | `kind:bug` |
@@ -152,8 +152,9 @@ Common skills: `thompson-engineer` (GAS architecture), `game-design` (game UI), 
 
 ## Two-Lane Roles (MANDATORY)
 
-- **Builder lane** (Claude/Opus/Sonnet): scope, spec, implement, fix.
-- **Audit lane** (Codex): inspects the named PR or named current state only.
+- **Builder lane — Claude** (Opus/Sonnet): GAS app logic, HTML/ES5 surfaces, Notion-linked process work, deploy-pipeline-adjacent repo work. Scope, spec, implement, fix.
+- **Builder lane — Codex (pilot, 2026-04-22+)**: CI workflows (`.gitea/workflows/*`, `.github/workflows/*`), Wrangler config (`wrangler*.toml`), tool-version pinning (`package.json` / `package-lock.json`), Cloudflare deploy/test gating, `.github/scripts/*` CI helpers, `.github/tests/**` fixtures, `audit-source.sh` schema checks. Scope lives in `ops/operating-memos/2026-04-22-codex-infra-build-pilot.md`. Default mechanics pending LT confirmation: courier-with-evidence (Codex produces diff + captured command output; Claude commits).
+- **Audit lane** (cross-audit): Claude audits Codex-built infra PRs. Codex audits Claude-built app/UI PRs. Each lane meets the same evidence bar — no plan item without running the command or reading the exact file (ref: memory `feedback_no_unverified_plan_items.md`).
 - **PR-scoped audits**: when LT names a PR, audit that PR alone unless LT explicitly says `stacked` or `after PR M`.
 - **Re-audits are clean-slate**: `re-audit N` means current head of PR `N`, with prior findings treated as stale until re-anchored. Not patch validation.
 - **Builder pre-audit is mandatory on gate/test PRs**: do not hand back a test/gate/review-pipeline PR after only fixing named comments; run a clean-slate contract sweep first (registry/dispatch wiring, fail-closed `pass`/`surrogate` paths, whole touched family). See `ops/operating-memos/2026-04-21-builder-pre-audit-and-clean-slate-rereview.md`.
@@ -186,7 +187,7 @@ See `ops/WORKFLOW.md § Two-Lane Handoff Rules` for the command contract, trigge
 12. Pushing to GAS without `git commit` + `git push` after
 13. Pushing without running `audit-source.sh` first
 14. Using `clasp deploy` without `-i` flag
-15. Pushing a branch that is behind `origin/main` (staleness gate catches this)
+15. Pushing a branch that is behind `gitea/main` (staleness gate catches this; `origin/main` points at GitHub-archive and must not be used as the base since 2026-04-19)
 16. Embedding Python/bash heredocs in workflow YAML instead of using `.github/scripts/`
 
 ### Tier 3 — Causes Drift
@@ -234,10 +235,10 @@ Run steps 1–11 autonomously. Report results at end. LT's only action: review P
 5. **PRE-QA** → Run `diagPreQA()` from GASHardening.gs. ALL categories must show PASS. Any FAIL = stop, fix, re-push, re-run.
 6. **DEPLOY** → `clasp deploy -i <deploymentId>`
 7. **VERIFY** → Hit `?action=runTests` on PRODUCTION `/exec` URL. Assert structured JSON: `overall == "PASS"` AND `smoke.overall == "PASS"`. Check ErrorLog for new errors (last 5 min). NOTE: `/dev` URLs require Google auth — curl/fetch cannot reach them.
-8. **GIT** → Git Bash only (NOT PowerShell): `git checkout -b <branch>` → `git add <specific files>` → `git commit` → `git push origin <branch>` → Open PR with `Closes #NNN`
+8. **GIT** → Git Bash only (NOT PowerShell): `git checkout -b <branch> gitea/main` → `git add <specific files>` → `git commit` → `git push gitea <branch>` → Open PR via the Gitea API (`POST /repos/blucsigma05/tbm-apps-script/pulls` with body including `Closes #NNN`). The `origin` remote points at GitHub-archive and must not be pushed to since 2026-04-19.
 9. **NOTION** → Update PM Active Versions DB. Write thread handoff to Archive. Update deploy page title (version only, NOT icon).
 10. **CF VERIFY** → curl all CF proxy endpoints from route list, expect 200.
-11. **RELEASE** → `gh release create v<version> --notes "<summary>"`
+11. **RELEASE** → Create a Gitea release: `curl.exe -s -X POST -H "Authorization: token <pat>" -H "Content-Type: application/json" "https://git.thompsonfams.com/api/v1/repos/blucsigma05/tbm-apps-script/releases" -d '{"tag_name":"v<version>","name":"v<version>","body":"<summary>","target_commitish":"main"}'`. Do not use `gh release create` for this repo — since 2026-04-19 it resolves to the GitHub-archive account and fails or silently tags the wrong history.
 
 **Never stop at step 4 (PUSH).**
 
@@ -360,13 +361,13 @@ HTML modules served via Cloudflare use the `google.script.run` shim which POSTs 
 | Lock acquisition | `waitLock(30000)` — NEVER `tryLock()` |
 | Smoke + regression | Code.gs → `?action=runTests` returns combined JSON |
 | New `google.script.run` call | Must have `withFailureHandler()`. Must add Safe wrapper to smoke test check. Must run audit-source.sh. |
-| Hygiene finding → Issue | `.github/scripts/file_hygiene_issue.py` via `.github/workflows/hygiene-filer.yml`. Emitter passes structured finding JSON; filer dedups by marker and files or reopens. |
+| Hygiene finding → Issue | `.github/scripts/file_hygiene_issue.py` via `.gitea/workflows/hygiene-filer.yml` (the `.github/workflows/` path is empty post-port; the workflow was renamed into `.gitea/workflows/` during the 2026-04-20 migration). Emitter passes structured finding JSON; filer dedups by marker and files or reopens. |
 
 ---
 
 ## Hygiene Automation — Issue Filer (Phase 1)
 
-Hygiene workflows (HYG-*) that detect findings can file dedup'd GitHub Issues via the shared filer at `.github/workflows/hygiene-filer.yml`. The filer identifies findings by a signature hidden in the Issue body — **never** by title (titles are human-editable):
+Hygiene workflows (HYG-*) that detect findings can file dedup'd Gitea Issues via the shared filer at `.gitea/workflows/hygiene-filer.yml` (ported from `.github/workflows/` during the 2026-04-20 migration; the GitHub path is empty post-port and not live). The filer identifies findings by a signature hidden in the Issue body — **never** by title (titles are human-editable):
 
 ```
 <!-- auto-finding v=1 check=<check-id> sig=<16-hex> -->
@@ -547,7 +548,7 @@ thompsonfams.com/api/verify-pin   → PIN verification for finance surfaces
 
 ## CI/CD Pipeline
 
-### CI Checks (GitHub Actions — runs on every PR)
+### CI Checks (Gitea Actions — runs on every PR; the live CI lane since the 2026-04-20 port)
 | Order | Check | Workflow | Purpose |
 |-------|-------|----------|---------|
 | 1 | Workflow Lint | `workflow-lint.yml` | actionlint + py_compile + shellcheck — runs first |
@@ -555,13 +556,13 @@ thompsonfams.com/api/verify-pin   → PIN verification for finance surfaces
 | 2 | Playwright Regression | `playwright-regression.yml` | E2E + viewport screenshots |
 | 2 | Codex PR Review | `codex-pr-review.yml` | gpt-4o code review — has `needs: lint-gate`. Inlines the claude:inbox filer step after posting its review comment (#450 Phase 1 — runs `file_codex_review_findings.py`). |
 
-LT applies branch protection in GitHub Settings > Branches > Branch protection rules (UI action).
+LT applies branch protection via the Gitea admin UI at `git.thompsonfams.com/blucsigma05/tbm-apps-script/settings/branches` (Gitea's "Protected Branches" form). The pre-migration GitHub Settings > Branches surface is archive-only since 2026-04-19 and does not gate the live repo.
 
 **Auto-merge policy:** Currently **manual review required**. Auto-merge can be enabled when the pipeline runs cleanly on 5 consecutive PRs without false negatives. Status: not yet enabled.
 
 ### Autonomous Merge Authority
 
-Distinct from "Auto-merge policy" above (which concerns GitHub's CI-triggered auto-merge feature). This section governs when Claude Code may run `gh pr merge` directly during an interactive session.
+Distinct from "Auto-merge policy" above (which concerns the upstream CI-triggered auto-merge feature). This section governs when Claude Code may autonomously merge a PR on Gitea directly during an interactive session (via `POST /repos/blucsigma05/tbm-apps-script/pulls/<N>/merge`). `gh pr merge` is not usable for this repo since 2026-04-19.
 
 **Merge autonomously (green = go).** All of the following must hold:
 - Both CI AND Codex have explicit PASS verdicts on the PR
@@ -574,7 +575,7 @@ Distinct from "Auto-merge policy" above (which concerns GitHub's CI-triggered au
 - No active deploy freeze
 
 **Always confirm merge first (non-negotiable, no override).**
-- Hot files: `.github/workflows/**`, `.github/scripts/**`, `CLAUDE.md`, `audit-source.sh`, `cloudflare-worker.js`
+- Hot files: `.gitea/workflows/**` (live CI lane on Gitea Actions since the 2026-04-20 port), `.github/workflows/**` (mostly empty post-port; still hot for any surviving file), `.github/scripts/**`, `.gitea/scripts/**` (if present), `CLAUDE.md`, `AGENTS.md`, `ops/WORKFLOW.md`, `audit-source.sh`, `cloudflare-worker.js`
 - Freeze-critical paths (enumerated in `ops/mutation-paths.md`)
 - Schema migrations or `TAB_MAP` changes
 - Financial model changes (DataEngine calculators, debt cascade, close logic)
@@ -592,26 +593,30 @@ Distinct from "Auto-merge policy" above (which concerns GitHub's CI-triggered au
 
 **Autonomous overnight work is a separate contract.** The nightly grinder (#454) and any future unsupervised automation **merges nothing**. That is a different trust tier — no interactive LT to catch subtle wrongness. Interactive session authority above does not extend to lanes LT is not watching.
 
-**Evidence standard for "Claude says green."** Before an autonomous merge, Claude must have VERIFIED (not assumed):
-- `gh pr checks <N>` shows all required checks passing (not just "workflow_run success")
-- `gh api repos/<owner>/<repo>/issues/<N>/comments --jq '.[] | select(.body | contains("codex-pr-review"))'` shows a Codex comment with explicit `**Verdict:** PASS` AND `**Files Reviewed:**` section
-- **Unresolved review threads = 0**, queried via GraphQL (NOT `gh pr view` — that does not expose thread-level resolution state; it only surfaces `reviewDecision` / `reviews`, which summarize differently):
-  ```bash
-  gh api graphql -f query='{ repository(owner:"<owner>",name:"<repo>") { pullRequest(number:<N>) { reviewThreads(first:50) { nodes { isResolved } } } } }' \
-    --jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length'
+**Evidence standard for "Claude says green."** Before an autonomous merge, Claude must have VERIFIED (not assumed), via the Gitea API (this repo is on `git.thompsonfams.com`; GitHub is archive-only since 2026-04-19 and `gh` commands route to the wrong repo):
+
+- **All required Gitea status contexts are `success`** on the PR's HEAD commit:
   ```
-  Output must be `0`. Any other number blocks autonomous merge.
+  curl.exe -s -H "Authorization: token <pat>" "https://git.thompsonfams.com/api/v1/repos/blucsigma05/tbm-apps-script/commits/<head_sha>/statuses" | python3 -c "import sys,json; d=json.load(sys.stdin); [print(s['context'], s['status']) for s in d]"
+  ```
+  Every row's `status` must be `success` (the plural `/statuses` endpoint uses the key `status`, not `state` — verified 2026-04-23).
+- **Codex cross-audit comment present with PASS verdict**, per the two-shape contract in § Codex PR Audit Lane below. For Claude-built PRs the bot-authored comment shows the `<!-- codex-pr-review -->` marker + a first heading containing the stable text `Codex PR Review: PASS` (match on the stable text, not the emoji — the posting pipeline mojibakes the emoji; see § Codex PR Audit Lane for the byte-level detail) + a `**Files Reviewed:**` section. For Codex-built pilot PRs (per `ops/operating-memos/2026-04-22-codex-infra-build-pilot.md`) a Claude-authored manual comment shows `**Verdict:** PASS` + `**Files Reviewed:**` section. Fetch with `curl.exe -s -H "Authorization: token <pat>" "https://.../issues/<N>/comments"`.
+- **Unresolved review threads = 0.** Gitea reviews are fetched at `/pulls/<N>/reviews`; any review in state `REQUEST_CHANGES` or `PENDING` that is not dismissed blocks autonomous merge:
+  ```
+  curl.exe -s -H "Authorization: token <pat>" "https://git.thompsonfams.com/api/v1/repos/blucsigma05/tbm-apps-script/pulls/<N>/reviews" | python3 -c "import sys,json; rs=json.load(sys.stdin); blocking=[r for r in rs if r.get('state') in ('REQUEST_CHANGES','PENDING') and not r.get('dismissed')]; print('blocking reviews:', len(blocking))"
+  ```
+  Output must be `blocking reviews: 0`. Any other value blocks autonomous merge.
 
 "Looks green in the UI" is not evidence. Read the API response.
 
 ### Cloudflare Worker Deploy Verification (issue #403)
 
-There are two separate Cloudflare integrations on this repo — do not confuse them:
+There are two separate Cloudflare integrations to keep straight:
 
 | Integration | What it does | Authoritative? |
 |-------------|--------------|----------------|
-| `deploy-worker.yml` (TBM-owned GitHub Action) | Runs `wrangler deploy` on push to main — **this is what actually deploys the worker** | ✅ Yes |
-| Cloudflare GitHub App "Workers Build" status | Posts a CI status badge to PRs — cosmetic signal only, does not gate anything | ❌ No |
+| `.gitea/workflows/deploy-worker.yml` (TBM-owned Gitea Actions workflow — ported from `.github/workflows/` on 2026-04-20) | Runs `wrangler deploy` on push to `main` — **this is what actually deploys the worker** | ✅ Yes |
+| Cloudflare "Workers Build" GitHub App status | A pre-migration GitHub App that posted cosmetic CI status badges to PRs on the GitHub repo. Since the 2026-04-19 account suspension the GitHub repo is archive-only; Cloudflare has no equivalent Gitea integration, so this signal is not present on live PRs. Do not rely on it. | ❌ No |
 
 **When a Cloudflare worker change is pushed, the correct verification sequence is:**
 
@@ -619,14 +624,17 @@ There are two separate Cloudflare integrations on this repo — do not confuse t
 # Verify HTTP 200 and body — -f causes non-zero exit on 4xx/5xx
 curl -sf https://thompsonfams.com/version
 
-# Verify the correct run succeeded — --json exposes headSha and conclusion
-gh run list --workflow=deploy-worker.yml --branch main --limit 1 --json headSha,conclusion,status
-# expect: conclusion=="success", headSha matches the SHA you pushed
+# Verify the correct run succeeded — fetch Gitea statuses on the latest main commit and
+# look for the deploy-worker context. (gh run list is unusable for this repo since the
+# 2026-04-19 account suspension; it would resolve to the GitHub-archive account.)
+LATEST_SHA=$(curl.exe -s -H "Authorization: token <pat>" "https://git.thompsonfams.com/api/v1/repos/blucsigma05/tbm-apps-script/branches/main" | python3 -c "import sys,json; print(json.load(sys.stdin)['commit']['id'])")
+curl.exe -s -H "Authorization: token <pat>" "https://git.thompsonfams.com/api/v1/repos/blucsigma05/tbm-apps-script/commits/${LATEST_SHA}/statuses" | python3 -c "import sys,json; [print(s['context'], s['status']) for s in json.load(sys.stdin) if 'deploy-worker' in s['context'].lower()]"
+# expect: every deploy-worker context line shows status=success
 ```
 
-**Never ask LT to check the Cloudflare dashboard.** If `deploy-worker.yml` shows success and `curl -sf /version` exits 0, the worker is live — regardless of whether the "Workers Build" badge appears in the PR.
+**Never ask LT to check the Cloudflare dashboard.** If `.gitea/workflows/deploy-worker.yml` shows success and `curl -sf /version` exits 0, the worker is live — regardless of what any external badge says.
 
-If the Cloudflare GitHub App badge is missing or stale, ignore it. It is a reliability issue with Cloudflare's external integration, not a deploy failure.
+The Cloudflare "Workers Build" GitHub App is a pre-migration integration and only ever posted to the GitHub repo, which is archive-only since 2026-04-19. You will not see its badge on live Gitea PRs — that is expected, not a deploy failure. Ignore any stale/missing badge on the archived GitHub repo.
 
 ### Workflow Safety Rules
 1. **Workflow YAML should orchestrate only.** Real logic (Python, bash) belongs in `.github/scripts/`. No embedded heredocs. Each script gets a header comment: purpose, calling workflow, env vars expected.
@@ -638,31 +646,42 @@ If the Cloudflare GitHub App badge is missing or stale, ignore it. It is a relia
 
 ### Codex PR Audit Lane
 
-When Codex is asked to audit PRs:
-1. Prefer GitHub connector tools for posting PR comments/reviews.
-2. Use `gh`/`git` for PR diff, PR metadata, and local grep as needed.
-3. At the start of any review session, request reusable permission for the full audit lane — one batch, not per-command:
-   - `gh pr view`
-   - `gh pr diff`
-   - `gh pr comment`
-   - `gh api repos/blucsigma05/tbm-apps-script/pulls`
-   - `git fetch origin`
-4. Post findings directly to the PR thread via GitHub connector.
-5. Return only a short summary in chat with links to the posted comments.
+When Codex is asked to audit PRs on this repo:
+1. **Canonical host is Gitea** (`git.thompsonfams.com/blucsigma05/tbm-apps-script`). GitHub (`github.com/blucsigma05/tbm-apps-script`) is archive-only since the account suspension on 2026-04-19 — audit commands that silently route to GitHub succeed against the archived copy and return audits of the wrong PR. Do not use `gh pr view`, `gh pr diff`, `gh pr comment`, or `gh api repos/blucsigma05/...` for this repo. (`gh` may still be used for non-TBM repos on GitHub.)
+2. Use the Gitea REST API via `curl.exe` with a bearer token. Typical audit commands (all verified 2026-04-23 against the live repo):
+   - List open PRs: `curl.exe -s -H "Authorization: token <pat>" "https://git.thompsonfams.com/api/v1/repos/blucsigma05/tbm-apps-script/pulls?state=open"`
+   - PR metadata: `curl.exe -s -H "Authorization: token <pat>" "https://git.thompsonfams.com/api/v1/repos/blucsigma05/tbm-apps-script/pulls/<N>"`
+   - PR diff (machine-readable): append `.diff` to the PR URL — `"https://.../pulls/<N>.diff"`
+   - Post a PR comment: `curl.exe -s -X POST -H "Authorization: token <pat>" -H "Content-Type: application/json" "https://.../issues/<N>/comments" -d '{"body":"..."}'`
+   - Existing comments on a PR: `"https://.../issues/<N>/comments"` (note: PRs are issues in Gitea for the comments endpoint).
+3. `git` commands are unchanged, but the remote to fetch/push is `gitea`, not `origin`: `git fetch gitea main` / `git push gitea <branch>`. `origin` still points at GitHub-archive on most worktrees and must not receive new work.
+4. Post findings directly on the Gitea PR via the comments POST above, or edit in place via `PATCH /issues/comments/<comment_id>` to keep one durable audit comment per PR.
+5. Return only a short summary in chat with the Gitea comment URL.
 
-**Pass/fail standard (enforced by `codex-pr-review.yml`):**
-- **PASS** requires: explicit `**Verdict:** PASS` + `**Files Reviewed:**` section listing files seen. No P1 violations.
-- **FAIL** — explicit findings or `**Verdict:** FAIL`.
-- **INCONCLUSIVE** — anything else: usage-limit hit, truncated diff, missing diff, no verdict, `**Files Reviewed:**` absent, rubber-stamp phrases detected. INCONCLUSIVE blocks merge, same as FAIL.
-- "Looks good" / no explicit verdict / reviewer asks a question = INCONCLUSIVE. Not a pass.
+The `curl.exe` / `-H "Authorization: token <pat>"` / `curl.exe -X POST` shell-portability notes are the same as in `ops/operating-memos/2026-04-22-codex-infra-build-pilot.md` § Preflight — use the explicit `.exe` to bypass the PowerShell `curl` → `Invoke-WebRequest` alias, and use the bearer-token header (not `-u <pat>`) because the repo credential flow yields separate username + password fields.
+
+**Pass/fail standard (enforced by `codex-pr-review.yml` → `codex_review.py`):**
+
+The pass/fail signal has two shapes depending on who authored the comment:
+
+- **Bot-authored automated review** (from `.github/scripts/codex_review.py` posting via `codex-pr-review.yml`). The comment body starts with the HTML marker `<!-- codex-pr-review -->` and the first heading after the marker matches the pattern `## <emoji> Codex PR Review: <verdict>`. **Match on the stable text suffix, not the emoji.** `codex_review.py` intends `\u2705` for PASS (:848), `\u274c` for FAIL (:846), and `\u26a0\ufe0f` for INCONCLUSIVE (:844), but the bytes served by the Gitea API for this repo are double-encoded — the UTF-8 bytes for `\u2705` come back as if `\u2705` had been decoded as cp1252 (yielding the three chars `\u00e2\u0153\u2026`) and re-encoded as UTF-8 (the six bytes `\xc3\xa2\xc5\x93\xe2\x80\xa6`), which displays as `â œ …` / `?` / similar depending on the reader's terminal. Raw-byte dump of PR #73 comment 641 heading verified 2026-04-23. The bot encoding bug is tracked separately as a follow-up; the match contract below is mojibake-tolerant:
+  - **PASS** — the heading after the marker contains the stable text `Codex PR Review: PASS`, AND the body has a `**Files Reviewed:** <list>` line, AND no P1 violations in the findings JSON. (Heading emitted at `codex_review.py:851`, files line at `:927`.)
+  - **FAIL** — the heading contains the stable text `Codex PR Review: FAIL`, with findings listed in the body.
+  - **INCONCLUSIVE** — the heading contains the stable text `Codex PR Review: INCONCLUSIVE` followed by `— <reason>` (auth error, API error, malformed response, usage-limit hit, truncated diff, missing `**Files Reviewed:**`, rubber-stamp phrases). Emitted at `codex_review.py:820/826/833/967`. Blocks merge, same as FAIL.
+- **Claude-authored manual cross-audit comment** (posted via the Gitea API on Codex-built pilot PRs per `ops/operating-memos/2026-04-22-codex-infra-build-pilot.md`). The comment body explicitly states:
+  - **PASS** — `**Verdict:** PASS` + a `**Files Reviewed:**` section listing files seen. No blocker/critical findings.
+  - **FAIL** — `**Verdict:** FAIL` + listed findings.
+  - `**Verdict:**` token absent or not one of the above = INCONCLUSIVE (missing signal). Blocks merge.
+
+"Looks good" / no explicit verdict / reviewer asks a question = INCONCLUSIVE. Not a pass. Applies to both shapes.
 
 ### Branch Hygiene
-1. **Sync before push.** Mandatory `git fetch origin main` and rebase before any push. The staleness gate in audit-source.sh enforces this.
-2. **Branch from latest.** New branches must be created from `origin/main` after a fresh fetch.
-3. **No merge if behind.** Rebase on current main, then rerun checks before requesting merge.
+1. **Sync before push.** Mandatory `git fetch gitea main` and rebase on `gitea/main` before any push. The staleness gate in `audit-source.sh` enforces this. (`origin/main` points at the GitHub-archive and is stale since 2026-04-19 — do not rebase on it.)
+2. **Branch from latest.** New branches must be created from `gitea/main` after a fresh fetch (`git checkout -b <branch> gitea/main`).
+3. **No merge if behind.** Rebase on current `gitea/main`, then rerun checks before requesting merge.
 4. **No broad "take ours" on shared files.** During conflict resolution on workflow YAML, CLAUDE.md, audit-source.sh, or UI files, rebuild each conflicted file from intent. Inspect the final diff.
-5. **Hot file lock.** When a PR touches `.github/workflows/**`, `.github/scripts/**`, `CLAUDE.md`, or `audit-source.sh`, only ONE such PR may be in flight. Others wait, then rebase.
-6. **Pre-flight conflict check.** Run `git merge-tree origin/main HEAD` before opening a PR. Resolve conflicts locally.
+5. **Hot file lock.** When a PR touches `.gitea/workflows/**`, `.github/workflows/**`, `.github/scripts/**`, `CLAUDE.md`, `AGENTS.md`, `ops/WORKFLOW.md`, or `audit-source.sh`, only ONE such PR may be in flight. Others wait, then rebase on `gitea/main`.
+6. **Pre-flight conflict check.** Run `git merge-tree gitea/main HEAD` before opening a PR. Resolve conflicts locally.
 
 ### Merge Order
 When multiple PRs touch the same files, they merge sequentially. After each merge, other PRs touching those files rebase on new main and re-run checks.

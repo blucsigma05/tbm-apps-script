@@ -15,7 +15,7 @@ TBM is run by one human (LT) with 3 AI collaborators (Opus for design, Sonnet fo
 - "Where are we on the audio bug?" had to be reconstructed from conversation
 - Blocking Codex findings could vanish when a PR merged
 
-This workflow replaces all of that with GitHub primitives: Issues, PRs, labels, and the Project board.
+This workflow replaces all of that with Gitea primitives: Issues, PRs, labels, and the Project board (canonical since the 2026-04-19 migration; the pre-migration GitHub surface is archive-only).
 
 ---
 
@@ -242,9 +242,9 @@ These are all symptoms of "work drifting back into chat." Don't do them:
 - **Pushover notifications:** fire on terminal PR states (ready/stalled) via orchestration loop Phase 1. Issues don't notify by default.
 - **Codex PR review:** runs on every PR, posts findings as comments, applies `pipeline:*` labels, and produces durable Issues through the automated bot path and the whitelisted manual path described above. `INCONCLUSIVE` remains a PR-state outcome today; it does not auto-file Issues.
 - **Stronger-review escalation:** the intended operating model is automatic escalation to a deeper Codex audit when the automated review is `INCONCLUSIVE` or when LT explicitly requests stronger review. Until that destination-side control-plane lane is wired, manual `audit N` remains fallback only.
-- **Branch hygiene:** `audit-source.sh` staleness gate catches PRs behind `origin/main` before push
+- **Branch hygiene:** `audit-source.sh` staleness gate catches PRs behind `gitea/main` before push (`origin/main` is GitHub-archive and stale since 2026-04-19)
 - **Pipeline labels:** `pipeline:ready` / `pipeline:fix-needed` / `pipeline:waiting` / `pipeline:stalled` are set by the orchestration loop, not by humans
-- **Notion:** project memory + thread handoffs stay in Notion as LT's long-form context. GitHub Issues are the operational layer.
+- **Notion:** project memory + thread handoffs stay in Notion as LT's long-form context. Gitea Issues are the operational layer (the pre-migration GitHub Issues surface is archive-only since 2026-04-19).
 
 ---
 
@@ -260,8 +260,8 @@ The rule that makes this stick: **if Claude tells LT a thing will happen, the Is
 
 ## Getting started (first session using this)
 
-1. Make sure all labels exist (they do as of 2026-04-09 — see `gh label list`)
-2. Create the Project board manually in GitHub UI: Projects → New project → Table or Board layout → name "TBM Operations"
+1. Make sure all labels exist. Live label list on Gitea: `curl.exe -s -H "Authorization: token <pat>" "https://git.thompsonfams.com/api/v1/repos/blucsigma05/tbm-apps-script/labels?limit=100" | python3 -c "import sys,json; [print(l['name']) for l in json.load(sys.stdin)]"`. Do not use `gh label list` for this repo — since the 2026-04-19 account suspension `gh` resolves to the GitHub-archive account and returns the wrong labels.
+2. Create the Project board in the Gitea UI at `git.thompsonfams.com/blucsigma05/tbm-apps-script/projects` (Projects → New project → name "TBM Operations"). The pre-migration GitHub Projects UI is archive-only since 2026-04-19 and does not reflect live state.
 3. Add the six columns (Backlog, Needs Decision, Ready, In Progress, In Review, Done)
 4. Add all open Issues and open PRs as cards
 5. Check the board first thing each session. Fix any stale labels or missed routing.
@@ -270,12 +270,13 @@ The rule that makes this stick: **if Claude tells LT a thing will happen, the Is
 
 ## Two-Lane Handoff Rules
 
-**What this is.** TBM runs on one shared repo with two distinct roles. Builders and auditors do NOT share authority — they share filesystem only. This section is the canonical, detailed home for the rules. Short rule mirrors live in `AGENTS.md § Two-Lane Roles` and `CLAUDE.md § Two-Lane Roles`; this is where the nuance, examples, and command contract live.
+**What this is.** TBM runs on one shared repo with two distinct roles. Builders and auditors do NOT share authority — they share filesystem only. This section is the canonical, detailed home for the rules. The full rule list is also mirrored in `CLAUDE.md § Two-Lane Roles` (for code-side agents whose entry point is CLAUDE.md); a minimal pointer-subset lives in `AGENTS.md § Two-Lane Roles` (for ecosystem tools that default-read AGENTS.md — AGENTS.md is NOT a full mirror and explicitly points to CLAUDE.md for the complete rule set). This section below is authoritative when any of the three drift.
 
 ### Role boundaries
 
-- **Builder lane** — Claude / Opus / Sonnet. Owns scoping, specs, implementation, bug fixes, and the PR.
-- **Audit lane** — Codex. Inspects ONE named PR or ONE named current state as an independent reviewer. Does not continue the builder's train of thought; does not silently extend scope.
+- **Builder lane — Claude** (Opus/Sonnet). Owns scoping, specs, implementation, bug fixes, and the PR — for GAS app logic, HTML/ES5 surfaces, Notion-linked process work, deploy-pipeline-adjacent repo work.
+- **Builder lane — Codex (pilot, 2026-04-22+)**. Owns CI workflows (`.gitea/workflows/*`, `.github/workflows/*`), Wrangler config (`wrangler*.toml`), tool-version pinning (`package.json` / `package-lock.json`), Cloudflare deploy/test gating, `.github/scripts/*` CI helpers, `.github/tests/**` fixtures, `audit-source.sh` schema checks. Default mechanics: courier-with-evidence — Codex produces diff + captured command output as Gitea Issue comment; Claude commits. Pilot scope, preflight rules, exit metric, and revert path: `ops/operating-memos/2026-04-22-codex-infra-build-pilot.md`.
+- **Audit lane** — cross-audit. Claude audits Codex-built infra/CI PRs. Codex audits Claude-built app/UI PRs. Each lane meets the same evidence bar; no plan item without running the command or reading the exact file. Scope of any single audit is ONE named PR or ONE named current state as an independent reviewer — does not continue the builder's train of thought; does not silently extend scope.
 - **LT (operator)** — names the work in plain English, reviews results, approves or redirects. Does not own git terminology.
 
 ### Plain-English command contract
@@ -391,7 +392,7 @@ The Issue and the Project board are the canonical status surface. A handoff comm
 
 ### Cross-references
 
-- Short rule mirrors: `AGENTS.md § Two-Lane Roles` and `CLAUDE.md § Two-Lane Roles` (identical ~12-line blocks, hard rules only).
+- Short rule mirrors: `AGENTS.md § Two-Lane Roles` (~7-bullet minimal subset for ecosystem tools that default-read AGENTS.md) and `CLAUDE.md § Two-Lane Roles` (~11-bullet full rule set for code-side agents — includes re-audit clean-slate, continuity, auditor's pass, mandatory builder pre-audit). AGENTS is NOT a full mirror; it explicitly points to CLAUDE.md for the complete rule set. See the authoritative split statement on line 273 above; this section (in `ops/WORKFLOW.md`) is authoritative when any of the three drift.
 - Visual companion: `ops/diagrams/two-lane-model.md` (Mermaid diagram + house/contractor legend).
 - Seed example operating memo: `ops/operating-memos/2026-04-17-agent-roles-and-audit-scope.md`.
 - Shared-workspace hygiene baseline (worktree rules, scratch-dir policy, branch-prune cadence): follow-up Issue #446.

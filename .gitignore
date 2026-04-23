@@ -5,6 +5,7 @@ node_modules/
 .env
 .env.*
 .env.local
+config.json
 credentials.json
 credentials/
 *.pem
