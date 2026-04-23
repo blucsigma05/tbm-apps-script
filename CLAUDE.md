@@ -1,5 +1,19 @@
 # TBM (TillerBudgetMaster) — Project Rules
 
+## Forge Canon (MANDATORY — read before any git / CI operation)
+
+**Canonical forge: Gitea** (`git.thompsonfams.com/blucsigma05/tbm-apps-script`). All writes go here.
+
+**GitHub (`blucsigma05/tbm-apps-script`) = auto-mirror.** DR baseline + historical URL access + external-reader read-only. Pushed to automatically from `gitea/main` via `.gitea/workflows/mirror-to-github.yml` (fast-forward only, no `--force`). Mirror is one-way — **never push to `origin` directly**; that path is reserved for the mirror workflow. History: 2026-04-19 Gitea migration (GitHub account suspension); 2026-04-22 account unsuspended, forge canon clarified to Gitea-primary + GitHub-auto-mirror (Gitea Issue #60, Item Θ in Wave 0 audit plan).
+
+**Reading rule:** every `gh` CLI reference in this file is an **optional secondary op against the mirror**. The canonical equivalent uses the Gitea API (`POST /api/v1/repos/blucsigma05/tbm-apps-script/...`). In practice: agents that can hit the Gitea API should prefer it; `gh` invocations remain useful only for ad-hoc inspection of the mirrored history. Do not let a `gh pr create` / `gh pr merge` path become primary — that routes writes through the mirror instead of the canonical forge.
+
+**`#N` in commits / PR bodies = Gitea issue number.** Not GitHub. Same for branch-protection rules, auto-merge decisions, and all hook enforcement.
+
+**Credentials:** URL-scoped `wincred` helper for `git.thompsonfams.com` (PAT in Windows Credential Manager). NEVER invoke `git credential-manager get` directly — it overwrites the PAT with an expiring JWT. Retrieve PATs for API calls via `git credential fill` only.
+
+---
+
 ## Identity
 Google Apps Script + HtmlService system for household finance, kid chore management, and education dashboards. Google Sheets is the data layer, Tiller Money syncs bank data, HTML dashboards served via GAS web app, Cloudflare proxy at thompsonfams.com.
 
@@ -28,7 +42,7 @@ Tiller → Google Sheets → DataEngine.gs → Safe wrappers → HTML dashboards
 
 If you're **reviewing** code rather than building it, read **[`ops/readme-for-codex-reviewers.md`](./ops/readme-for-codex-reviewers.md) first**. It is the Gitea-era reviewer onboarding doc: current source-of-truth table, tiered reading list, and known stale references (places that still mention GitHub even though the migration flipped 2026-04-19).
 
-Do not assume GitHub conventions apply unless a doc explicitly says they do — GitHub is archive-only since the account suspension. PRs, Issues, CI, and the deploy pipeline all live on Gitea (`git.thompsonfams.com/blucsigma05/tbm-apps-script`).
+Do not assume GitHub conventions apply unless a doc explicitly says they do. PRs, Issues, CI, and the deploy pipeline all live on Gitea (`git.thompsonfams.com/blucsigma05/tbm-apps-script`). GitHub is an **auto-mirror** for DR + historical URL access only (see § Forge Canon at the top of this file); no new writes go through it.
 
 ---
 
