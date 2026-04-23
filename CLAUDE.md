@@ -64,6 +64,8 @@ This loads `.claude/settings.local.json` (repo-scoped MCP + Bash allowances). Wi
 ### Output self-review (MANDATORY)
 After every file modification, re-read the changed region. Verify: (1) edit applied correctly, (2) no side effects in surrounding code, (3) versions updated. "Done" = verified correct, not "write operation completed."
 
+For test/gate/review-pipeline PRs, "self-review" also means a **clean-slate builder pre-audit before re-review**: treat the current PR head as the first audit, not a patch validation. Sweep registry/dispatch wiring for every new criterion, fail-closed `pass`/`surrogate` paths, and the whole touched contract family — not just the last named findings. "Fixed the comments" is not a sufficient internal exit condition. Rationale: `ops/operating-memos/2026-04-21-builder-pre-audit-and-clean-slate-rereview.md`.
+
 ### Context decay
 After 10+ messages in a session, re-read any file before editing it. Do not trust memory of file contents from earlier in the conversation.
 
@@ -153,6 +155,8 @@ Common skills: `thompson-engineer` (GAS architecture), `game-design` (game UI), 
 - **Builder lane** (Claude/Opus/Sonnet): scope, spec, implement, fix.
 - **Audit lane** (Codex): inspects the named PR or named current state only.
 - **PR-scoped audits**: when LT names a PR, audit that PR alone unless LT explicitly says `stacked` or `after PR M`.
+- **Re-audits are clean-slate**: `re-audit N` means current head of PR `N`, with prior findings treated as stale until re-anchored. Not patch validation.
+- **Builder pre-audit is mandatory on gate/test PRs**: do not hand back a test/gate/review-pipeline PR after only fixing named comments; run a clean-slate contract sweep first (registry/dispatch wiring, fail-closed `pass`/`surrogate` paths, whole touched family). See `ops/operating-memos/2026-04-21-builder-pre-audit-and-clean-slate-rereview.md`.
 - **Plain-English commands**: agents translate LT's natural-language instructions into repo state. LT does not own git terminology.
 - **Boardroom conversations become operating memos** in `ops/operating-memos/YYYY-MM-DD-<topic>.md` when they change how TBM operates.
 - **Continuity is deliberate**: if a prompt, plan, process, or handoff must survive the thread, save it as a durable artifact in the same thread and name the exact path.

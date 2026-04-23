@@ -300,6 +300,15 @@ If LT's phrasing does not match a row above, ask a single-sentence clarifying qu
 - Ambient repo clutter (`.claude/`, `.agents/`, scratch files, nearby branches, unrelated worktrees) is context only, not audit scope.
 - Separate three things explicitly in any finding: code bug, PR-description drift, environment limitation. Do not collapse them into one.
 - If a prior finding may already be fixed, re-anchor to the current named PR state before repeating it.
+- **Re-audits are clean-slate inspections of the current PR head.** `re-audit N` means the current head of PR `N` with all prior findings treated as stale until re-anchored. The re-audit is not patch validation; it is a fresh inspection of the current state. Rationale: `ops/operating-memos/2026-04-21-builder-pre-audit-and-clean-slate-rereview.md`.
+- **Builder pre-audit is mandatory on test/gate/review-pipeline PRs** before asking for re-audit. "Fixed the comments" is not a sufficient internal exit condition. Before requesting re-audit on these PRs, the builder must explicitly sweep:
+  - registry or dispatch wiring for every new criterion,
+  - false-pass and false-surrogate paths,
+  - fail-closed behavior when proof is weak,
+  - the whole touched criterion family (not just the exact lines from the last findings),
+  - contract/rubric thresholds (not just plausibility of implementation).
+
+  This fits between the last fix-round and the re-audit request. For normal feature polish this rule is not required; for gate/test/review-pipeline code one weak branch corrupts the trustworthiness of the whole gate, so the rule is hard.
 
 ### Boardroom conversations become operating memos
 

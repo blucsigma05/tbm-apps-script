@@ -14,6 +14,7 @@ This file exists because the AGENTS.md convention is the ecosystem-standard entr
 - **PR-scoped audits**: when LT names a PR, audit that PR alone unless LT explicitly says `stacked` or `after PR M`.
 - **Plain-English commands**: agents translate LT's natural-language instructions into repo state. LT does not own git terminology.
 - **Boardroom conversations become operating memos** in `ops/operating-memos/YYYY-MM-DD-<topic>.md` when they change how TBM operates.
+- **Re-audits are clean-slate + builder pre-audit mandatory on gate/test PRs**: see `ops/operating-memos/2026-04-21-builder-pre-audit-and-clean-slate-rereview.md` and `CLAUDE.md § Two-Lane Roles` / `ops/WORKFLOW.md § Audit scope rules` for the full rule.
 - **Handoff comments are optional**: use `<!-- tbm-handoff -->` only when a PR changes hands mid-flight or pauses with a clear next action. At most one active comment per PR, edited in place.
 
 See [ops/WORKFLOW.md § Two-Lane Handoff Rules](ops/WORKFLOW.md) for the command contract, trigger phrases, audit scope rules, and full examples. Visual companion: [ops/diagrams/two-lane-model.md](ops/diagrams/two-lane-model.md).
