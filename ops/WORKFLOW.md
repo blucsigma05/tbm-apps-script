@@ -29,7 +29,7 @@ Epic      → long-running initiative (months to quarters)
 
 **Examples from the repo as of 2026-04-09:**
 
-- `#107 Orchestration Loop` — epic with phases shipped in #113, #114, and #111 (Phase 3 open)
+- `#107 Orchestration Loop` — epic with phases shipped in #113, #114, and #111 (current phase status: see [`ops/PHASES.md`](PHASES.md) § Orchestration Loop)
 - `#130 Audio race — voice switching Nia/robot` — bug issue, will be closed by a PR from Sonnet
 - `#133 Implement JJ Completion Contract Phase 1` — task issue, references `specs/jj-completion-contract.md`
 - `#132 INCONCLUSIVE downgrade vs CLAUDE.md` — decision issue blocked on LT

@@ -3,6 +3,14 @@
 **Status:** Design only (2026-04-19). No code, no workflow changes in
 this artifact. Issue tracker: Gitea Issue
 [#2](https://git.thompsonfams.com/blucsigma05/tbm-apps-script/issues/2).
+
+> ⚠️ **OPEN QUESTIONS BLOCKING RUNNER WIRING** (as of 2026-04-22, confirmed via Wave 0 Item Ψ):
+>
+> - **Q3** — Gitea branch-protection boolean-OR support for the merge-gate shape `(A success) OR (B success AND A != FAIL)`. Empirical test on Gitea 1.24.6 **NOT DONE**. Blocks Milestone 2 (merge-gate). See § 8 Q3.
+> - **Q9** — Codex CLI headless invocation feasibility on `tbm-runner-1` (model name, auth flow, deterministic-output flag, error codes). Empirical check **NOT DONE**. Blocks Milestone 1 (runner) only in the sense that it determines primary vs fallback provider; if Q9 fails the runner ships with Anthropic API as primary. See `ops/migration/phase-d-q9-codex-cli-verification.md` and § 8 Q9.
+>
+> Do NOT wire the runner or merge-gate against the placeholders (`codex-cli-reasoning`, `DAILY_COUNT_FILE=/var/lib/codex/daily-count.txt`) without resolving the corresponding open question first. Canonical phase-status index: [`ops/PHASES.md`](../PHASES.md).
+
 **Scope:** Auto-escalate `INCONCLUSIVE` verdicts from the shallow
 Codex PR review (`gpt-4o`, hunk-context) into a deeper audit lane
 backed by a stronger model, fed more context, so LT no longer
