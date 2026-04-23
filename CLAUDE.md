@@ -570,13 +570,20 @@ thompsonfams.com/api/verify-pin   → PIN verification for finance surfaces
 | 2 | Playwright Regression | `playwright-regression.yml` | E2E + viewport screenshots |
 | 2 | Codex PR Review | `codex-pr-review.yml` | gpt-4o code review — has `needs: lint-gate`. Inlines the claude:inbox filer step after posting its review comment (#450 Phase 1 — runs `file_codex_review_findings.py`). |
 
-LT applies branch protection via the Gitea admin UI at `git.thompsonfams.com/blucsigma05/tbm-apps-script/settings/branches` (Gitea's "Protected Branches" form). The pre-migration GitHub Settings > Branches surface is archive-only since 2026-04-19 and does not gate the live repo.
+Branch protection on Gitea `main` is intentionally absent — the enforcement surface is `.github/scripts/review-watcher.js` + the pipeline relay, not a branch rule. Gitea's native "Protected Branches" form at `git.thompsonfams.com/blucsigma05/tbm-apps-script/settings/branches` is where configuration would live if any were set. The pre-migration GitHub Settings > Branches surface is archive-only since 2026-04-19 and does not gate the live repo.
 
-**Auto-merge policy:** Currently **manual review required**. Auto-merge can be enabled when the pipeline runs cleanly on 5 consecutive PRs without false negatives. Status: not yet enabled.
+**Merge automation (live).** PRs on Gitea are merged by the **pipeline-relay automation**, not by LT manually. Flow:
+
+1. CI + Codex run on every PR.
+2. `.github/scripts/review-watcher.js` evaluates state each cycle; marks `READY_TO_MERGE` when **all** of: CI green, Codex verdict `PASS`, `0` unresolved review threads.
+3. Watcher POSTs to `PIPELINE_RELAY_URL` (repo secret) with `type: loop_complete`.
+4. The relay merges the PR via the Gitea API using LT's PAT — so `merged_by: LT` in Gitea is **automation attribution, not a human click.**
+
+Implication: telling LT "you'll need to review and merge each PR" is wrong framing. The relay handles it. LT's role is to review the diff beforehand for hot-file / UX-sensitive PRs that the "Always confirm" list below flags.
 
 ### Autonomous Merge Authority
 
-Distinct from "Auto-merge policy" above (which concerns the upstream CI-triggered auto-merge feature). This section governs when Claude Code may autonomously merge a PR on Gitea directly during an interactive session (via `POST /repos/blucsigma05/tbm-apps-script/pulls/<N>/merge`). `gh pr merge` is not usable for this repo since 2026-04-19.
+This section governs when Claude Code may autonomously merge a PR on Gitea **directly** during an interactive session (via `POST /repos/blucsigma05/tbm-apps-script/pulls/<N>/merge`), **bypassing the relay** described above. `gh pr merge` is not usable for this repo since 2026-04-19.
 
 **Merge autonomously (green = go).** All of the following must hold:
 - Both CI AND Codex have explicit PASS verdicts on the PR
