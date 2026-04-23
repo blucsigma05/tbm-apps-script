@@ -40,7 +40,7 @@ Repo state:
 - `tests/tbm/play-gate/play-gate.spec.js` defaults `PLAY_GATE_BASE_URL` to `http://localhost:8080`.
 - `cloudflare-worker.js` is the front-door Worker under `wrangler.toml`; it uses routes, cookies, and a hardcoded production GAS URL, but no Durable Object binding.
 - `cf-events-worker/wrangler.toml` binds a Durable Object (`WORK_STATE_MACHINE`), which matters because preview URL support is different there.
-- Root `package.json` has Playwright only; Wrangler is not installed at repo root.
+- Root `package.json` has `@playwright/test` and `@babel/parser`, but no Wrangler; Wrangler is not installed at repo root.
 - `cf-events-worker/package.json` declares `"wrangler": "^3.0.0"`, but there is no checked-in local installation in the current tree.
 
 Official Cloudflare docs checked on 2026-04-23:
@@ -86,7 +86,7 @@ Use **local `wrangler dev`** as the fast local development loop, not as the merg
 - It produces a real non-production Worker version on Cloudflare, which is closer to deploy truth than localhost or `file://`.
 - It gives the branch a unique preview URL that CI or Playwright can probe without touching `thompsonfams.com` production.
 - It matches the repo's actual need: branch-local verification of Worker build/output before merge.
-- It aligns with the parser work already landed for Wrangler output classification in Gitea #67.
+- It aligns with the parser approach being tracked under Gitea #67, but that parser currently lives in open PR #75 rather than on `gitea/main`.
 
 ### Why local `wrangler dev` does not win the gate
 
@@ -116,7 +116,7 @@ It does **not** apply to `cf-events-worker` in its current form because Cloudfla
    - `/version`
    - one education route
    - one QA route if relevant
-5. Parse stdout + stderr with `.github/scripts/parse_wrangler_output.py` from Gitea #67 instead of trusting exit code alone.
+5. Once the parser from PR #75 lands, parse stdout + stderr with `.github/scripts/parse_wrangler_output.py` instead of trusting exit code alone.
 6. If Wrangler is pinned to `4.21.0+`, prefer a readable alias such as `pr-<number>` or `sha-<shortsha>` for operator ergonomics.
 7. Keep `wrangler dev` documented as the manual local loop for fast debug iterations.
 
