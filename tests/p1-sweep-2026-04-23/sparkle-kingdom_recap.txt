@@ -1,0 +1,26 @@
+route: /sparkle-kingdom
+viewport: 1200x1920
+url: https://thompsonfams.com/sparkle-kingdom
+title: 
+bodyLen: 232
+consoleErrors: 0
+
+---
+THE SPARKLE KINGDOM
+KINDLEKID MAGIC ZONE
+⭐
+134
+1 ACTIVITIES TODAY! ✨
+Tap to see today's missions
+🌟
+TODAY'S MISSIONS
+JJ's learning games
+Let's Go! →
+✨
+MY SPARKLE JOBS
+Chores + stars
+Let's Go! →
+🎮
+SPARKLE GAMES
+Free play
+Let's Go! →

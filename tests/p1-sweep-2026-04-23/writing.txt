@@ -1,0 +1,22 @@
+route: /writing
+viewport: 1368x912
+url: https://thompsonfams.com/writing
+http: 200
+title: Writing Module - Buggsy
+htmlLen: 80237
+---
+✍️
+WRITING LAB
+BUGGSY
+00:00
+CER
+Persuasive
+POV Journal
+Edit/Revise
+🎯 PLAN YOUR ATTACK
+⏱ Time target: ~12 minutes
+✍️ I'M READY TO WRITE
+🏠 Chores
+✍️ Writing
+📚 Math/Sci
+💬

@@ -1,0 +1,43 @@
+route: /daily-missions
+viewport: 1368x912
+url: https://thompsonfams.com/daily-missions
+http: 200
+title: Daily Missions
+htmlLen: 103299
+---
+PLAN YOUR ATTACK
+
+Here are today's missions. Know what you're walking into.
+
+⏲ Estimated time: ~30 min
+MISSION
+Grammar Sprint (5Q)
+MISSION
+Wolfkid Episode CER/ECR
+MISSION
+Comic Studio
+I'm Ready — Show My Missions
+🎯
+DAILY MISSIONS
+THOMPSON EDUCATION
+Thursday, Apr 23
+Good morning, Wolfkid. Here's today's mission briefing.
+THURSDAY — READING + CREATIVE
+1
+Grammar Sprint (5Q)
+~3 min
+Reading + Creative
+LAUNCH
+2
+Wolfkid Episode CER/ECR
+~15 min
+Reading + Creative
+LAUNCH
+3
+Comic Studio
+~12 min
+Reading + Creative
+LAUNCH
+Total estimated time: ~30 min · 0/3 complete
+💭 Complete all missions for +10 bonus Rings
+💬

@@ -1,0 +1,141 @@
+route: /parent
+viewport: 412x915
+url: https://thompsonfams.com/parent
+title: Kids Hub v40
+bodyLen: 1763
+consoleErrors: 0
+
+---
+📈 The Pulse
+👨‍👩‍👧‍👦 Kids
+KIDS HUB / PARENT
+OPEN:
+318
+BUGGSY PTS
+⭐
+134
+JJ STARS
+💰
+$63.00
+BUGGSY BANK
+💰
+$27.00
+JJ BANK
+⏳ 1 pending
+✅ 0 approved
+▼
+EDUCATION
+📚 TODAY'S HOMEWORK
+Loading education data...
+Math/Science
+Wolfkid CER
+Reading
+Sparkle (JJ)
+Progress Report
+Daily Missions
+Investigation
+Baseline
+⏳ Pending (1)
+✅ Completed (0)
+📅 Weekly
+ BUGGSY
+3 must-do left
+⏳ PENDING APPROVALS (1)
+📖
+Reading and Social Studies
+75 pts · School
+✓
+⚡️1.5x
+⚡2x
+✕
+▸↪ MUST-DO (3)
+🪥
+Morning Routine (Brush Teeth, Comb Hair, Wash Face)
+Must-do · clear only · 0 pts
+↩ Clear
+🥪
+Prep snack or lunch item
+Must-do · clear only · 0 pts
+↩ Clear
+🛏️
+Make bed (sheets + pillows + comforter)
+Must-do · clear only · 0 pts
+↩ Clear
+⭐ JJ
+2 must-do left
+▸↪ MUST-DO (2)
+🪥
+Brush teeth sparkle clean in morning
+Must-do · clear only · 0 pts
+↩ Clear
+🛏️
+Make bed (pull up the covers)
+Must-do · clear only · 0 pts
+↩ Clear
+📚 STORY FACTORY
+⭐ JJ
+⭕ Buggsy
+👫 Both Kids
+👨‍👩‍👧‍👦 Whole Family
+😂 Funny
+⚔️ Adventure
+🌙 Cozy
+👻 Spooky
+📖 Create Bedtime Story
+Stories: 211 | API calls: 29434
+⚡ DEDUCTION
+⭕ Buggsy
+⭐ JJ
+⚡ Apply Deduction
+➕ ADD TASK
+Buggsy
+⭐ JJ
+Morning
+Afternoon
+Evening
+➕ Add Task
+📺 SCREEN TIME
+ Buggsy
+📺 TV: 114m
+🎮 Gaming: 30m
+📺 TV
+🎮 Game
+min
+Debit
+⭐ JJ
+📺 TV: 0m
+ 
+min TV
+Debit
+🍽 DINNER LOG
+JT cooked
+LT cooked
+Takeout
+Other
+Kids eating something different?
+🍽 Log Dinner
+⚙ RESET CONTROLS
+🔄 Buggsy Daily
+🔄 JJ Daily
+🔄 All Daily
+📅 Buggsy Weekly
+📅 JJ Weekly
+⚠ Full Reset
+📋 Sheet Guide — 8 KH Tabs
+KH_Chores
+— Task definitions + completion
+KH_History
+— Permanent audit log
+KH_Rewards
+— Reward tiers
+KH_Redemptions
+— Spend log
+KH_Streaks
+— Performance cache
+KH_Deductions
+— Negative consequences
+KH_Allowance
+— Weekly allowance config
+KH_Children
+— Child profiles + themes
+💬

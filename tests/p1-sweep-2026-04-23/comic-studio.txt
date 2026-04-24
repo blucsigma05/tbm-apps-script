@@ -1,0 +1,38 @@
+route: /comic-studio
+viewport: 1368x912
+url: https://thompsonfams.com/comic-studio
+http: 200
+title: Wolfkid Comic Studio
+htmlLen: 107777
+---
+📡
+COMIC STUDIO
+WOLFKID CREATIVE
+AUTOSAVE
+📚
+0 Rings
+Draw
+Caption
+Vocab
+Preview
+My Comics
+📡
+PLAN YOUR ATTACK
+
+Today you are the artist AND the storyteller. Build a Wolfkid comic strip!
+
+1
+Pick a panel layout (2, 3, or 4 panels)
+2
+Draw your scenes in each panel
+3
+Write captions for each panel
+4
+Use the bonus vocabulary word for extra rings
+5
+Preview your finished comic!
+LET'S CREATE!
+PANEL LAYOUT
+BRUSH
+TOOLS
+💬

@@ -1,0 +1,26 @@
+route: /baseline
+viewport: 1368x912
+url: https://thompsonfams.com/baseline
+http: 200
+title: Baseline Diagnostic - Thompson Education Platform
+htmlLen: 66352
+---
+📊
+BASELINE DIAGNOSTIC
+CALIBRATION ASSESSMENT
+Q 0/0
+📊
+PLAN YOUR ATTACK
+
+This diagnostic checks where you are right now. No grade, no pressure — just a starting point.
+
+⏲ About ~15 minutes
+MATH
+6 questions
+SCIENCE
+5 questions
+READING
+5 questions
+WRITING
+1 question
+I'm Ready — Start Diagnostic

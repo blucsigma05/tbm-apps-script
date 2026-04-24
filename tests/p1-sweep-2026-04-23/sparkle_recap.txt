@@ -1,0 +1,24 @@
+route: /sparkle
+title: SparkleLearn v3 — JJ's Learning Games
+bodyLen: 141
+errs: 0
+---
+THE SPARKLE KINGDOM
+KINDLEKID MAGIC ZONE
+🌟
+💜
+🌸
+🦋
+🌈
+💫
+🎀
+🍬
+Hi JJ! 🦄
+Getting your sparkles ready...
+⭐
+0
+✨
+
+Loading sparkle games...
+
+💬

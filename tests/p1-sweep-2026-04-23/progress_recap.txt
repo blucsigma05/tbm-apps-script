@@ -1,0 +1,48 @@
+route: /progress
+viewport: 1368x912
+url: https://thompsonfams.com/progress
+title: Weekly Progress Report
+bodyLen: 306
+consoleErrors: 0
+
+---
+📊
+PROGRESS REPORT
+WEEKLY SUMMARY
+Apr 20 - Apr 24
+Buggsy
+JJ
+Overview
+WEEKLY STATS
+0
+Rings This Week
+0
+Day Streak
+3/5
+Sessions
+4%
+MC Accuracy
+COMPLETION
+Weekly Completion
+60%
+BY SUBJECT
+Science & Math (2/2)
+100%
+RLA (1/1)
+100%
+DAILY LOG
+Mon
+Completed
+5%
+Tue
+Completed
+4%
+Wed
+Completed
+2%
+Thu
+--
+--
+Fri
+--
+--

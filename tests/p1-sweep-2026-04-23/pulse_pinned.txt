@@ -1,0 +1,156 @@
+route: /pulse
+viewport: 412x915
+http: 200
+title: The Pulse v64 — Thompson Household
+bodyLen: 2087
+waited: 30000ms
+---
+THOMPSON
+FAMILY
+The Pulse
+Command Center
+THE PULSE · V64
+Thompson Household
+April 2026 · Day 23
+Spending is ahead of pace.
+7 days left in the month. Spending $8,569 more than earned so far.
+KIDS HUB
+KIDS HUB
+Loading kids data...
+DINNER PLAN
+🍽️ Tonight's Dinner
+Meal
+Cook
+JT
+LT
+Notes
+Save
+Kids eating something different?
+MONTHLY CASH FLOW
++$53
+We’re keeping $53 more than we’re spending
+Money in
+$13,156
+−
+Money out
+$21,725
+=
+Surplus
++$53
+$8,622 of money out is debt payments
+DEBT-FREE DATE
+Dec 2029
+44 months to go
+CASH FLOW POSITIVE DATE
+Sep 2027
+Interest burn: $3,671/mo
+TOTAL DEBT (EXCL. MORTGAGE)
+▼
+DEBT ADDED SINCE JAN 2026
+$12,413
+✦
+$311,584 remaining
+Debt-free Dec 2029
+REMAINING
+$311,584
+MONTHS LEFT
+44
+INTEREST COST
+$105,063
+INTEREST BURN
+$3,671/mo
+CASH ON HAND
+$0
+▶
+PLAY WITH THE NUMBERS
+Extra monthly payment
+$0
+$250
+$500
+$1K
+$2.5K
+$5K
+⚠️ Exceeds budgeted margin of $7,831. You'd need extra income or spending cuts.
+One-time lump sum
+Type a number and click away to see the impact
+Attack strategy
+Our Plan ✦
+Highest Rate
+Smallest First
+Our Plan
+Dec 2029
++$1,550 more
+Highest Rate
+Nov 2029
+Lowest interest
+Smallest First
+Dec 2029
++$4,203 more
+Move the slider to compare
+THIS MONTH, FOCUS HERE
+Debt by Type · 6 groups
+▶
+💰
+Personal Loans
+2 accts
+$94,390
+Avg APR 18.43%
+▶
+💳
+Credit Cards
+12 accts
+$102,133
+Avg APR 21.63%
+▶
+🎓
+Student Loans
+2 accts
+$12,491
+Avg APR 5.81%
+▶
+🏦
+Lines of Credit
+2 accts
+$33,293
+Avg APR 13.69%
+▶
+🚗
+Auto
+1 acct
+$27,857
+Avg APR 3.9%
+▶
+☀️
+Solar
+1 acct
+$41,420
+Avg APR 1.99%
+WHERE WE STAND
+Income → Spending → Minimums = what's left
+Click any bucket to expand. 20 debts (excl. mortgage).
+Monthly income▼
+$13,156 / $11,775
+Fixed bills▼
+$4,233 / $4,553
+Living essentials▼
+$1,962 / $3,994
+Discretionary▼
+$4,905 / $2,520
+Interest & fees▼
+$1,731 / $400
+Unmapped spending
+$273
+Debt payments MTD (20 debts)▼
+$8,622 / $8,139
+What's left for extra debt payments
+−$8,569/mo
+Keep Going, Thompson
+Every dollar tracked is a decision made with intention.
+−$12,413
+ADDED
+0.0%
+PROGRESS
+Source: Tiller BudgetMaster · Synced 3:29 PM
+✅ Verified Apr 23
+Updated just now
+💬

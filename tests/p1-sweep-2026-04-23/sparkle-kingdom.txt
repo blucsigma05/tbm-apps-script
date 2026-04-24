@@ -1,0 +1,21 @@
+route: /sparkle-kingdom
+viewport: 1200x1920
+url: https://thompsonfams.com/sparkle-kingdom
+http: 200
+title: 
+htmlLen: 97047
+---
+THE SPARKLE KINGDOM
+KINDLEKID MAGIC ZONE
+⭐
+--
+🌟
+💜
+🌸
+🦋
+🌈
+💫
+🎀
+🍬
+Hi JJ! 🦄
+Getting your sparkles ready...

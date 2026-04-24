@@ -1,0 +1,38 @@
+route: /reading
+viewport: 1368x912
+url: https://thompsonfams.com/reading
+http: 200
+title: Wolfkid Reading Module
+htmlLen: 96752
+---
+PLAN YOUR ATTACK
+
+Scan the mission. Know what you're walking into.
+
+⏲ Estimated time: ~15 min
+READING
+The Mystery of the Bermuda Triangle
+COMPREHENSION
+4 questions
+I'm Ready — Start Mission
+🐺
+WOLFKID READING
+COLD PASSAGE MODULE
+FOCUS: INFORMATIONAL TEXT
+0/5 answered
+🌊 The Mystery of the Bermuda Triangle
+1
+The Bermuda Triangle is a region in the Atlantic Ocean between Miami, Bermuda, and Puerto Rico. Over the years, many ships and planes have mysteriously disappeared in this area.
+2
+Some people believe supernatural forces are at work. However, scientists have found more logical explanations.
+3
+The area has unpredictable weather, including sudden storms and waterspouts. The Gulf Stream, a powerful ocean current, can quickly carry wreckage far from where an accident occurred.
+4
+Human error and equipment failure also play a role. In fact, the number of disappearances in the Bermuda Triangle is not significantly higher than in other busy ocean regions.
+5
+Still, the mystery continues to fascinate people around the world.
+DONE READING →
+🏠 Chores
+📖 Reading
+📚 Math/Sci
+💬

@@ -1,0 +1,16 @@
+route: /investigation
+viewport: 1368x912
+url: https://thompsonfams.com/investigation
+http: 200
+title: Wolfkid Investigation Module
+htmlLen: 75774
+---
+🔬
+WOLFKID SCIENCE
+FIELD INVESTIGATION
+0/4
+Hypothesis
+Procedure
+Prediction
+Conclusion
+💬

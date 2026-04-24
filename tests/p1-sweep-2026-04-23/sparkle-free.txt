@@ -1,0 +1,33 @@
+route: /sparkle-free
+viewport: 1200x1920
+url: https://thompsonfams.com/sparkle-free
+http: 200
+title: SparkleLearn v3 — JJ's Learning Games
+htmlLen: 218678
+---
+THE SPARKLE KINGDOM
+KINDLEKID MAGIC ZONE
+⭐
+0
+✨
+JJ's Games
+Pick a game to play!
+🔄
+Find the Letter
+✏️
+Trace Letters
+🔊
+Sound Match
+✨
+Spell KINDLE
+🔢
+Count With Me
+🎨
+Color Hunt
+🔷
+Shape Match
+🧩
+What Comes Next?
+⚖️
+More or Less
+💬

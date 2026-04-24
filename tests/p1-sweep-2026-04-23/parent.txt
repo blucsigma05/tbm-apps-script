@@ -1,0 +1,13 @@
+route: /parent
+viewport: 412x915
+url: https://thompsonfams.com/parent
+http: 200
+title: Kids Hub v40
+htmlLen: 311914
+---
+📈 The Pulse
+👨‍👩‍👧‍👦 Kids
+KIDS HUB / PARENT
+OPEN:
+Loading dashboard...
+💬

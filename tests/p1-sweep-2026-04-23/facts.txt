@@ -1,0 +1,36 @@
+route: /facts
+viewport: 1368x912
+url: https://thompsonfams.com/facts
+http: 200
+title: Wolfkid Fact Sprint
+htmlLen: 88133
+---
+PLAN YOUR ATTACK
+
+Scan the mission. Know what you're walking into.
+
+⏲ Estimated time: ~5 min
+MATH SPRINT
+20 facts: +, −, ×, ÷, Fractions
+I'm Ready — Start Mission
+⚡
+FACT SPRINT
+WOLFKID TRAINING
+0:00
+🎯
+PLAN YOUR ATTACK
+
+20 rapid-fire math problems.
+Beat your best time. Stay sharp.
+
+--:--
+BEST TIME
+--
+BEST SCORE
+--
+BEST STREAK
+
+Addition • Subtraction • Multiplication • Division • Fractions
+
+GO!
+💬

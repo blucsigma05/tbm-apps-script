@@ -1,0 +1,45 @@
+route: /vein
+viewport: 1920x1080
+url: https://thompsonfams.com/vein
+http: 302
+title: The Thompsons · Family Management System
+htmlLen: 23262
+---
+THE THOMPSONS
+
+EVERY THOMPSON · EVERY DAY
+
+FAMILY
+🐺
+Buggsy
+Chore board
+✨
+JJ
+Chore board
+👨‍👩‍👧‍👦
+Parent Hub
+Approvals
+EDUCATION
+📚
+Homework
+Buggsy
+🌟
+SparkleLearn
+JJ
+🎯
+Daily Missions
+Progress and goals
+FINANCE
+PIN REQUIRED
+🔒
+🫀
+ThePulse
+Daily finance
+🔒
+🧠
+TheVein
+Command center
+TBM · THOMPSONFAMS.COM
+Enter PIN
+THEVEIN
+EnterCancel
