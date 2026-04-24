@@ -1,0 +1,73 @@
+# .gitea/workflows/weekly-notion-cleanup.yml
+# Weekly Friday 6am — Notion hygiene sweep (Gitea #72, routine 7 of 10).
+# Read-only. Complements HYG-05 (Parking Lot age) + HYG-11 (Trust Backlog age).
+#
+# SKILL.md defined 5 checks; this routine covers the 3 NOT already in HYG-*:
+#   1. Stale handoffs in Thread Handoff Archive > HANDOFF_DAYS
+#   2. DEFERRED — duplicate titles within 7d (fuzzy-match tuning risk; see
+#      follow-up Issue referenced in the #72 restoration thread)
+#   3. Empty placeholder pages among PM direct children
+# Checks 4+5 satisfied by HYG-05 + HYG-11 respectively.
+#
+# Triggers:
+#   - schedule: Fridays 11:00 UTC = 6:00am CDT
+#   - workflow_dispatch: manual
+#
+# Secrets required:
+#   NOTION_API_KEY — already set at owner scope
+
+name: Weekly Notion Cleanup
+
+on:
+  schedule:
+    - cron: '0 11 * * 5'
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    name: Weekly Notion Cleanup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACKER_ISSUE_NUMBER: '72'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Python stdlib
+        run: python3 -c "import urllib.request, json, sys; print('python', sys.version.split()[0])"
+
+      - name: Run weekly_notion_cleanup.py
+        id: cleanup
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          OUTPUT_FILE: review_comment.md
+          POST_ON_CLEAN: 'false'
+        run: python3 .github/scripts/weekly_notion_cleanup.py
+
+      - name: Post report to tracker Issue
+        if: steps.cleanup.outputs.has_comment == 'true'
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          REPO: ${{ github.repository }}
+          GITEA_HOST: https://git.thompsonfams.com
+        run: |
+          PAYLOAD=$(python3 -c "
+          import json
+          body = open('review_comment.md').read()
+          print(json.dumps({'body': body}))
+          ")
+          curl -sS -f -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${GITEA_HOST}/api/v1/repos/${REPO}/issues/${TRACKER_ISSUE_NUMBER}/comments" \
+            -d "${PAYLOAD}" > /dev/null
+          echo "Posted to ${REPO}#${TRACKER_ISSUE_NUMBER}"
+
+      - name: Summarize
+        if: always()
+        run: |
+          STALE="${{ steps.cleanup.outputs.stale_handoffs_count }}"
+          EMPTY="${{ steps.cleanup.outputs.empty_pages_count }}"
+          POSTED="${{ steps.cleanup.outputs.has_comment }}"
+          echo "stale_handoffs=${STALE} empty_pages=${EMPTY} posted=${POSTED}"
