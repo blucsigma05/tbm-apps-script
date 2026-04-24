@@ -20,8 +20,17 @@ on:
   pull_request:
     branches: [main]
     types: [opened, reopened, synchronize, ready_for_review]
+  # Run push-variant only on main so feature-branch pushes don't double-fire alongside
+  # the pull_request event on the same commit. Observed pattern on Gitea: the two
+  # runs end up adjacent (push succeeds, pull_request starts ~45s later hitting GAS
+  # in a broken post-run state and curl hangs with 0 bytes) — see Gitea #104 for two
+  # independent reproductions (#74 task 651, #85 task 765). The `concurrency:` block
+  # below is kept for defense-in-depth but not relied on for this fix — Gitea docs
+  # list concurrency as unsupported, so the only reliable remedy is not firing the
+  # duplicate event in the first place. Main-branch pushes still exercise the suite
+  # as part of the deploy-integration path.
   push:
-    branches-ignore: [main]
+    branches: [main]
   workflow_dispatch:
 
 # GAS PropertiesService is shared across all executions — concurrent test runs
