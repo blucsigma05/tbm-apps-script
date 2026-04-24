@@ -1,0 +1,90 @@
+# .gitea/workflows/spec-quality-gate.yml
+# Daily quality gate for Gitea Issues labeled kind:spec. Verifies each has
+# substantive Problem / Why / What changes / Acceptance test / Build Skills
+# sections. Ports the spec-quality-gate SKILL.md routine (Gitea #72) — second
+# of 10 routine restorations.
+#
+# SCOPE NOTE: The original SKILL.md targeted the Notion Parking Lot READY FOR
+# CODE items. This port targets Gitea Issues with `kind:spec` per the
+# Issue=Spec rule in CLAUDE.md. If `kind:spec` Issues don't exist yet (label
+# not adopted), the routine exits silently — no comment posted.
+#
+# Relationship to claude-md-review: same Anthropic-API pattern (see
+# .github/scripts/claude_md_review.py), different data source (Gitea Issues
+# vs local file) and rubric. No shared code — duplicated intentionally per
+# YAGNI; refactor when a 3rd LLM-routine lands.
+#
+# Triggers:
+#   - schedule: Daily 13:30 UTC = 8:30am CDT — matches SKILL.md's "Daily 8:30am"
+#   - workflow_dispatch: manual trigger
+#
+# Secrets required on the repo (Settings → Actions → Secrets):
+#   ANTHROPIC_API_KEY — Anthropic API token (owner-scope already satisfies).
+#   GITEA_TOKEN       — auto-provided by Actions runner.
+#
+# Output destination: tracker Issue #72 (configurable via TRACKER_ISSUE_NUMBER).
+
+name: Spec Quality Gate
+
+on:
+  schedule:
+    - cron: '30 13 * * *'
+  workflow_dispatch:
+
+jobs:
+  gate:
+    name: Spec Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACKER_ISSUE_NUMBER: '72'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Python stdlib available
+        run: python3 -c "import urllib.request, json, sys; print('python', sys.version.split()[0])"
+
+      - name: Run spec_quality_gate.py
+        id: gate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_HOST: https://git.thompsonfams.com
+          REPO: ${{ github.repository }}
+          SPEC_LABEL: kind:spec
+          MODEL: claude-sonnet-4-6
+          OUTPUT_FILE: review_comment.md
+          POST_ON_ZERO: 'false'
+        run: python3 .github/scripts/spec_quality_gate.py
+
+      - name: Post report to tracker Issue
+        if: steps.gate.outputs.has_comment == 'true'
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          REPO: ${{ github.repository }}
+          GITEA_HOST: https://git.thompsonfams.com
+        run: |
+          if [ ! -f review_comment.md ]; then
+            echo "No review_comment.md — nothing to post"
+            exit 0
+          fi
+          PAYLOAD=$(python3 -c "
+          import json
+          body = open('review_comment.md').read()
+          print(json.dumps({'body': body}))
+          ")
+          curl -sS -f -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${GITEA_HOST}/api/v1/repos/${REPO}/issues/${TRACKER_ISSUE_NUMBER}/comments" \
+            -d "${PAYLOAD}" > /dev/null
+          echo "Posted report to ${REPO}#${TRACKER_ISSUE_NUMBER}"
+
+      - name: Summarize result
+        if: always()
+        run: |
+          COUNT="${{ steps.gate.outputs.spec_count }}"
+          FINDINGS="${{ steps.gate.outputs.findings_count }}"
+          POSTED="${{ steps.gate.outputs.has_comment }}"
+          echo "spec_count=${COUNT} findings_count=${FINDINGS} posted=${POSTED}"
