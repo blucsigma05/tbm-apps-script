@@ -467,7 +467,8 @@ function getShimScript() {
 '    "getAssetRegistrySafe",\n' +
 '    "checkHomeworkGateSafe",\n' +
 '    "saveComicDraftSafe","loadComicDraftSafe","listComicDraftsSafe",\n' +
-'    "loadComicDraftByDateSafe","getComicStudioContextSafe","finishComicSafe"\n' +
+'    "loadComicDraftByDateSafe","getComicStudioContextSafe","finishComicSafe",\n' +
+'    "getFridayMakeupQueueSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +
@@ -609,7 +610,8 @@ function getQAShimScript() {
 '    "getAssetRegistrySafe",\n' +
 '    "checkHomeworkGateSafe",\n' +
 '    "saveComicDraftSafe","loadComicDraftSafe","listComicDraftsSafe",\n' +
-'    "loadComicDraftByDateSafe","getComicStudioContextSafe","finishComicSafe"\n' +
+'    "loadComicDraftByDateSafe","getComicStudioContextSafe","finishComicSafe",\n' +
+'    "getFridayMakeupQueueSafe"\n' +
 '  ];\n' +
 '\n' +
 '  for (var i = 0; i < FNS.length; i++) {\n' +
