@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="tbm-module" content="sparkle-learn">
-  <meta name="tbm-version" content="v23">
+  <meta name="tbm-version" content="v24">
   <title>SparkleLearn v3 — JJ's Learning Games</title>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -2018,6 +2018,33 @@ function init() {
     }, 1200);
     return;
   }
+
+  // v24 (#88): bootstrap safety timeout. The guided-mode boot chain
+  // (loadAssetRegistry -> loadProgressSafe -> loadContent -> loadAudioForGame)
+  // is four sequential google.script.run calls, each with both success + failure
+  // handlers. Prior to this, a silent stall at any link (e.g. a Drive-backed
+  // audio batch fetch that never resolves) left the #sparkle-loading overlay
+  // visible forever. JJ (Pre-K) has no way to recover — no retry, no error.
+  // This sets a 12s upper bound. Observed happy-path: /sparkle-free = 1.2s,
+  // guided-mode lazy-loads just the first activity's audio after content fetch,
+  // so 12s is ~4x the normal worst case without being abrupt enough to preempt
+  // a slow but healthy cold-start. If the bootstrap does complete before 12s,
+  // hideSparkleLoading or showFallback (inside showReadyScreen/showFallback)
+  // has already run — the timeout calls them a second time and exits harmless
+  // (getElementById null check + idempotent display:none).
+  var _bootstrapFinished = false;
+  var _origHide = hideSparkleLoading;
+  hideSparkleLoading = function() {
+    _bootstrapFinished = true;
+    _origHide.apply(null, arguments);
+  };
+  setTimeout(function() {
+    if (_bootstrapFinished) { return; }
+    if (typeof console !== 'undefined' && console.warn) {
+      console.warn('[TBM] Sparkle bootstrap >12s — forcing fallback (#88)');
+    }
+    showFallback();
+  }, 12000);
 
   // Load asset registry first, then fetch progress + content in sequence
   loadAssetRegistry(function() {
