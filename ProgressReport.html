@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="progress-report">
-<meta name="tbm-version" content="v5">
+<meta name="tbm-version" content="v7">
 <title>Weekly Progress Report</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Orbitron:wght@500;700;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -963,7 +963,7 @@ function showLoadError(err) {
       '<div class="load-error-icon">&#9888;</div>' +
       '<div class="load-error-title">Error loading weekly data &mdash; last attempt at ' + timeStr + '</div>' +
       '<div class="load-error-detail">' + errMsg + '</div>' +
-      '<button class="load-error-retry" onclick="loadData()">Retry</button>' +
+      '<button class="load-error-retry" onclick="retryLoad_()">Retry</button>' +
       '</div>';
     loadEl.className = 'loading-wrap';
   }
@@ -980,11 +980,59 @@ function onDataLoaded() {
   loadPendingReviews();
 }
 
+// === LOADER TIMEOUT CONTRACT (Refs #94) — inline copy, keep in sync across surfaces ===
+// Zero-touch watchdog. Polls #loading DOM state every 500ms. If the loader hasn't been
+// dismissed (className gains 'hidden' via onDataLoaded, OR innerHTML swaps to the
+// .load-error-block via showLoadError) within MAX_MS, synthesize a timeout failure
+// and route through the existing showLoadError() retry UI.
+//
+// 15s rationale: P1 sweep observed ~12s healthy cold-start on /progress with a 17s
+// upper tail. 15s = ~3s buffer over the healthy median. Sibling PR #110 uses 12s on
+// /sparkle because that surface's baseline is 1.2s, not 12s — do not normalize.
+function startLoaderWatchdog_() {
+  var MAX_MS = 15000;
+  var POLL_MS = 500;
+  var start = Date.now();
+  function isDone(el) {
+    if (!el) { return true; }
+    if (el.className && el.className.indexOf('hidden') !== -1) { return true; }
+    if (el.getElementsByClassName && el.getElementsByClassName('load-error-block').length > 0) { return true; }
+    return false;
+  }
+  function check() {
+    var el = document.getElementById('loading');
+    if (isDone(el)) { return; }
+    if (Date.now() - start >= MAX_MS) {
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn('[TBM] #loading >' + MAX_MS + 'ms on /progress — forcing fallback (#94)');
+      }
+      showLoadError({ message: 'No response in ' + (MAX_MS / 1000) + ' seconds. The backend may be slow.' });
+      return;
+    }
+    setTimeout(check, POLL_MS);
+  }
+  setTimeout(check, POLL_MS);
+}
+
+// Retry entry point used by the showLoadError() retry button. Restores the original
+// loading-spinner markup, re-fires loadData, and rearms the watchdog — otherwise a
+// second hung backend call would sit on the stale error UI forever with no timeout.
+function retryLoad_() {
+  var el = document.getElementById('loading');
+  if (el) {
+    el.className = 'loading-wrap';
+    el.innerHTML = '<div class="loading-spinner"></div><div class="loading-text">Loading progress data...</div>';
+  }
+  loadData();
+  startLoaderWatchdog_();
+}
+
 // Init
 function init() {
   createStars();
   document.getElementById('week-label').textContent = getWeekLabel();
   loadData();
+  startLoaderWatchdog_();
 }
 
 init();
