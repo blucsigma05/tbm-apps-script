@@ -53,8 +53,14 @@ jobs:
           CF_WORKER_URL: ${{ secrets.CF_WORKER_URL }}
         run: |
           if [ -z "$CF_WORKER_URL" ]; then
-            echo "::warning::CF_WORKER_URL not set — skipping front-door smoke. Set this secret to enable post-deploy verification."
-            exit 0
+            # Fail-closed: the deploy lane must not certify a Cloudflare push
+            # without front-door proof. Warning+exit 0 here was an adversarial
+            # false-pass — a typo or unset secret would let a broken deploy
+            # ship green. See Gitea #70.
+            echo "::error::CF_WORKER_URL is required for post-deploy verification."
+            echo "Set the CF_WORKER_URL repo secret to the public worker URL (e.g. https://thompsonfams.com)."
+            echo "If you need to ship an infra-only change that legitimately skips this check, set the secret to the empty-probe sentinel or open a separate Issue to discuss policy exemption."
+            exit 1
           fi
           BUILD_ID="${GITHUB_SHA:0:12}"
           echo "Probing ${CF_WORKER_URL}/version for build ${BUILD_ID}..."
