@@ -229,10 +229,11 @@ async function submitOpenEndedAnswer(page, section) {
 }
 
 // Shared helper: submit ALL unanswered questions (MC + open-ended) in a section.
-// Handles brain break dismissal between submissions.
+// Handles both brain-break and same-type-pause overlay dismissal between submissions.
 async function submitAllQuestionsInSection(page, section) {
   for (var i = 0; i < 12; i++) {
     await dismissBrainBreakIfVisible(page);
+    await dismissSameTypePauseIfVisible(page);
     var unansweredCard = '#section-' + section + ' .q-card:not(:has(.feedback-box)):not(:has(.es-feedback))';
     var remaining = await page.locator(unansweredCard).count();
     if (remaining === 0) break;
@@ -259,6 +260,25 @@ async function dismissBrainBreakIfVisible(page) {
   }
 }
 
+// Shared helper: dismiss same-type-pause overlay if visible (#100).
+// PR #441 introduced this overlay (z-index 9001) that fires after 3 same-type
+// answers in a row. Without dismissal the overlay intercepts every click and
+// Playwright retries to timeout. Uses the HomeworkModule global endSameTypePause()
+// (defined in HomeworkModule.html:1148) rather than clicking the button so the
+// dismissal is resilient to button-label or styling changes.
+async function dismissSameTypePauseIfVisible(page) {
+  var isShowing = await page.evaluate(function() {
+    var el = document.getElementById('same-type-pause-overlay');
+    return el ? (el.style.display !== 'none' && el.style.display !== '') : false;
+  }).catch(function() { return false; });
+  if (isShowing) {
+    await page.evaluate(function() {
+      if (typeof window.endSameTypePause === 'function') window.endSameTypePause();
+    }).catch(function() { /* no-op; overlay will also be clickable via its button */ });
+    await page.waitForTimeout(300);
+  }
+}
+
 test.describe('Homework: brain break fires after 4 answers', function() {
   test('brain-break overlay appears after answering 4 questions', async function({ page }) {
     test.setTimeout(90000);
@@ -281,7 +301,11 @@ test.describe('Homework: brain break fires after 4 answers', function() {
     // Answer 4 questions — each submitOneAnswer waits for feedback before returning.
     // _questionsSinceBrainBreak increments on each submitAnswer() call in HomeworkModule.
     // Brain break fires when counter reaches _brainBreakAfter (default: 4).
+    // Dismiss the same-type-pause overlay between submissions (#100): 3 same-type
+    // answers in a row trigger #same-type-pause-overlay (z-index 9001) added in
+    // PR #441; undismissed, it blocks clicks on the next question.
     for (var i = 0; i < 4; i++) {
+      await dismissSameTypePauseIfVisible(page);
       await submitOneAnswer(page, 'science');
     }
 
