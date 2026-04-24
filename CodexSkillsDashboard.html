@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="tbm-version" content="v1">
+<title>Codex Skills v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+--paper:#f6efe4;
+--panel:#fffaf2;
+--panel-strong:#f2e7d5;
+--ink:#1c2730;
+--muted:#5d6b75;
+--line:#d8c8af;
+--navy:#17374d;
+--navy-soft:#274c68;
+--gold:#d9a34a;
+--pass:#1f6a50;
+--pass-soft:#ddefe7;
+--warn:#9a630d;
+--warn-soft:#f8e5bf;
+--fail:#9d2e2e;
+--fail-soft:#f5d4d4;
+--neutral-soft:#dce8f2;
+--shadow:rgba(28,39,48,0.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+font-family:'DM Sans',sans-serif;
+color:var(--ink);
+background:
+linear-gradient(180deg,rgba(255,255,255,0.55),rgba(246,239,228,0.96)),
+repeating-linear-gradient(90deg,rgba(39,76,104,0.035) 0,rgba(39,76,104,0.035) 1px,transparent 1px,transparent 28px),
+var(--paper);
+min-height:100vh;
+}
+.top-nav{
+position:sticky;
+top:0;
+z-index:40;
+display:flex;
+align-items:center;
+justify-content:center;
+gap:4px;
+flex-wrap:wrap;
+padding:10px 12px;
+background:rgba(246,239,228,0.94);
+border-bottom:1px solid rgba(39,76,104,0.16);
+}
+.top-nav a{
+display:inline-block;
+padding:7px 14px;
+border-radius:999px;
+color:var(--muted);
+border:1px solid transparent;
+font-size:12px;
+font-weight:700;
+letter-spacing:0.03em;
+cursor:pointer;
+text-decoration:none;
+}
+.top-nav a:hover,.top-nav a.nav-on{
+color:var(--navy-soft);
+background:rgba(39,76,104,0.08);
+border-color:rgba(39,76,104,0.14);
+}
+.top-nav a.nav-accent{color:#8a6114}
+.shell{max-width:1400px;margin:0 auto;padding:28px 20px 40px}
+.hero{
+background:linear-gradient(135deg,#17374d,#2d556e 58%,#d9a34a 140%);
+color:#fff8ee;
+border:1px solid rgba(255,248,238,0.2);
+border-radius:24px;
+padding:24px;
+box-shadow:0 18px 45px var(--shadow);
+}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
+.hero h1{
+font-family:'Playfair Display',serif;
+font-size:42px;
+line-height:1.05;
+letter-spacing:0.02em;
+margin-bottom:8px;
+}
+.hero-sub{max-width:760px;font-size:16px;line-height:1.5;color:rgba(255,248,238,0.9)}
+.hero-stamp{
+min-width:260px;
+padding:14px 16px;
+border-radius:16px;
+background:rgba(255,248,238,0.12);
+border:1px solid rgba(255,248,238,0.18);
+font-family:'JetBrains Mono',monospace;
+font-size:13px;
+line-height:1.6;
+}
+.hero-meta{margin-top:18px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.meta-chip{
+background:rgba(255,248,238,0.14);
+border:1px solid rgba(255,248,238,0.18);
+border-radius:14px;
+padding:12px 14px;
+}
+.meta-label{
+display:block;
+font-size:11px;
+text-transform:uppercase;
+letter-spacing:0.12em;
+color:rgba(255,248,238,0.72);
+margin-bottom:4px;
+}
+.meta-value{
+font-family:'JetBrains Mono',monospace;
+font-size:13px;
+line-height:1.5;
+word-break:break-word;
+}
+.metrics{
+margin-top:22px;
+display:grid;
+grid-template-columns:repeat(5,minmax(0,1fr));
+gap:14px;
+}
+.metric-card{
+border-radius:18px;
+padding:16px;
+border:1px solid var(--line);
+background:var(--panel);
+box-shadow:0 12px 28px var(--shadow);
+}
+.metric-card.pass{background:var(--pass-soft);border-color:rgba(31,106,80,0.22)}
+.metric-card.warn{background:var(--warn-soft);border-color:rgba(154,99,13,0.22)}
+.metric-card.fail{background:var(--fail-soft);border-color:rgba(157,46,46,0.22)}
+.metric-card.neutral{background:var(--neutral-soft);border-color:rgba(39,76,104,0.2)}
+.metric-label{
+text-transform:uppercase;
+letter-spacing:0.1em;
+font-size:11px;
+color:var(--muted);
+margin-bottom:10px;
+}
+.metric-value{
+font-family:'Playfair Display',serif;
+font-size:34px;
+line-height:1;
+margin-bottom:8px;
+}
+.metric-detail{font-size:13px;color:var(--muted)}
+.main-grid{
+margin-top:24px;
+display:grid;
+grid-template-columns:minmax(0,2.1fr) minmax(290px,0.9fr);
+gap:18px;
+}
+.panel{
+border-radius:22px;
+border:1px solid var(--line);
+background:var(--panel);
+box-shadow:0 14px 32px var(--shadow);
+padding:20px;
+}
+.panel h2{
+font-family:'Playfair Display',serif;
+font-size:24px;
+line-height:1.1;
+margin-bottom:14px;
+}
+.panel-intro{
+font-size:14px;
+line-height:1.5;
+color:var(--muted);
+margin-bottom:16px;
+}
+.summary-list,.visibility-list{
+list-style:none;
+display:grid;
+gap:10px;
+}
+.summary-item,.visibility-item{
+padding:12px 14px;
+border-radius:14px;
+background:var(--panel-strong);
+border:1px solid var(--line);
+}
+.summary-item strong,.visibility-item .label{
+display:block;
+font-size:11px;
+text-transform:uppercase;
+letter-spacing:0.08em;
+color:var(--muted);
+margin-bottom:6px;
+}
+.summary-item span,.visibility-item .value{
+font-size:14px;
+line-height:1.5;
+word-break:break-word;
+}
+.skills-panel{margin-top:18px}
+.skill-grid{
+display:grid;
+grid-template-columns:repeat(3,minmax(0,1fr));
+gap:14px;
+}
+.skill-card{
+border-radius:18px;
+border:1px solid var(--line);
+background:var(--panel-strong);
+padding:16px;
+}
+.skill-card-top{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+gap:12px;
+margin-bottom:12px;
+}
+.skill-card h3{
+font-size:20px;
+line-height:1.1;
+margin-bottom:6px;
+}
+.skill-note{
+font-size:13px;
+line-height:1.4;
+color:var(--muted);
+}
+.skill-score-block{text-align:right;min-width:92px}
+.skill-score{
+font-family:'Playfair Display',serif;
+font-size:26px;
+line-height:1;
+margin-bottom:8px;
+}
+.status-pill{
+display:inline-block;
+border-radius:999px;
+padding:4px 10px;
+font-size:11px;
+font-weight:700;
+letter-spacing:0.08em;
+text-transform:uppercase;
+border:1px solid rgba(28,39,48,0.12);
+background:var(--pass-soft);
+color:var(--pass);
+}
+.skill-checks{list-style:none;display:grid;gap:8px}
+.skill-checks li{
+padding:8px 10px;
+border-radius:12px;
+background:rgba(255,250,242,0.75);
+border:1px solid var(--line);
+font-size:12px;
+line-height:1.45;
+}
+.skill-checks code,.footer-note code,.summary-item code,.visibility-item code{
+font-family:'JetBrains Mono',monospace;
+font-size:12px;
+}
+.footer-note{
+margin-top:18px;
+padding:14px 16px;
+border-radius:16px;
+background:rgba(39,76,104,0.08);
+border:1px solid rgba(39,76,104,0.12);
+font-size:13px;
+line-height:1.55;
+color:var(--muted);
+}
+@media(max-width:1100px){
+.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+.main-grid{grid-template-columns:1fr}
+.skill-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+.shell{padding:18px 14px 28px}
+.hero-top{display:block}
+.hero h1{font-size:34px}
+.hero-stamp{margin-top:14px}
+.hero-meta{grid-template-columns:1fr}
+.metrics{grid-template-columns:1fr}
+.skill-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<nav class="top-nav" id="tbm-nav">
+<a id="nav-pulse" onclick="tbmNav('pulse')">The Pulse</a>
+<a id="nav-vein" onclick="tbmNav('vein')">Command Center</a>
+<a id="nav-codex-skills" class="nav-on" onclick="tbmNav('codex-skills')">Skill Board</a>
+<a id="nav-kids" onclick="tbmNav('kidshub&view=parent')">Kids Dashboard</a>
+<a id="nav-vault" class="nav-accent" onclick="tbmNav('vault')">Vault</a>
+</nav>
+
+<main class="shell">
+<section class="hero">
+<div class="hero-top">
+<div>
+<h1>Codex Skill Board</h1>
+<p class="hero-sub">Routeable operator view for Codex skill audit health. This page brings the skill lane into TBM navigation so LT can reach it from The Vein and The Pulse without leaving the app shell.</p>
+</div>
+<div class="hero-stamp">
+snapshot: 2026-04-24 13:55 CDT<br>
+issue: #137<br>
+refresh: run Codex local skill audit
+</div>
+</div>
+<div class="hero-meta">
+<div class="meta-chip">
+<span class="meta-label">status</span>
+<span class="meta-value">Current audited snapshot: steady state</span>
+</div>
+<div class="meta-chip">
+<span class="meta-label">coverage</span>
+<span class="meta-value">Repo-managed TBM skill wrappers installed in Codex home</span>
+</div>
+<div class="meta-chip">
+<span class="meta-label">surface type</span>
+<span class="meta-value">Static route page backed by the latest verified audit snapshot</span>
+</div>
+</div>
+</section>
+
+<section class="metrics">
+<div class="metric-card neutral">
+<div class="metric-label">managed skills</div>
+<div class="metric-value">9</div>
+<div class="metric-detail">installed TBM wrappers in scope</div>
+</div>
+<div class="metric-card pass">
+<div class="metric-label">pass</div>
+<div class="metric-value">9</div>
+<div class="metric-detail">healthy wrappers in the latest audit</div>
+</div>
+<div class="metric-card warn">
+<div class="metric-label">warn</div>
+<div class="metric-value">0</div>
+<div class="metric-detail">non-blocking drift findings</div>
+</div>
+<div class="metric-card fail">
+<div class="metric-label">fail</div>
+<div class="metric-value">0</div>
+<div class="metric-detail">blocking audit failures</div>
+</div>
+<div class="metric-card neutral">
+<div class="metric-label">change state</div>
+<div class="metric-value">steady</div>
+<div class="metric-detail">no score or status changes in the last verified snapshot</div>
+</div>
+</section>
+
+<section class="main-grid">
+<section class="panel">
+<h2>Current Snapshot</h2>
+<p class="panel-intro">The latest verified run reported full pass status across the repo-managed skill set. This page is intentionally honest about its limits: it is a routeable summary surface, not a live local-file browser.</p>
+<ul class="summary-list">
+<li class="summary-item">
+<strong>latest verified result</strong>
+<span><code>9 PASS / 0 WARN / 0 FAIL</code> from the local audit snapshot captured on April 24, 2026.</span>
+</li>
+<li class="summary-item">
+<strong>what this page is for</strong>
+<span>Fast operator access from household dashboards so the skill lane is no longer stranded in the repo or Codex home.</span>
+</li>
+<li class="summary-item">
+<strong>what still refreshes outside TBM</strong>
+<span>The underlying audit artifacts are regenerated from Codex on the local machine, then this route page can be updated when the snapshot changes materially.</span>
+</li>
+<li class="summary-item">
+<strong>current scope</strong>
+<span>Installed wrappers: <code>tbm-audit</code>, <code>tbm-adhd-accommodations</code>, <code>tbm-infra-build</code>, <code>tbm-adversarial-review</code>, <code>tbm-adversarial-defender</code>, <code>tbm-prompt-auditor-pass</code>, <code>tbm-play-gate</code>, <code>tbm-play-jj</code>, <code>tbm-play-buggsy</code>.</span>
+</li>
+</ul>
+
+<section class="panel skills-panel">
+<h2>Skill Cards</h2>
+<p class="panel-intro">Static snapshot cards from the last verified audit run.</p>
+<div class="skill-grid" id="skillGrid"></div>
+</section>
+</section>
+
+<aside class="panel">
+<h2>Visibility Rail</h2>
+<p class="panel-intro">These are the canonical local artifacts and commands behind this routeable summary.</p>
+<ul class="visibility-list">
+<li class="visibility-item">
+<span class="label">refresh command</span>
+<span class="value"><code>python scripts/audit_repo_skills.py</code></span>
+</li>
+<li class="visibility-item">
+<span class="label">local dashboard artifact</span>
+<span class="value"><code>ops/evidence/codex-skills/dashboard.html</code></span>
+</li>
+<li class="visibility-item">
+<span class="label">local markdown drilldown</span>
+<span class="value"><code>ops/evidence/codex-skills/latest.md</code></span>
+</li>
+<li class="visibility-item">
+<span class="label">local json drilldown</span>
+<span class="value"><code>ops/evidence/codex-skills/latest.json</code></span>
+</li>
+<li class="visibility-item">
+<span class="label">history path</span>
+<span class="value"><code>ops/evidence/codex-skills/history/&lt;YYYY-MM-DD&gt;/</code></span>
+</li>
+<li class="visibility-item">
+<span class="label">audit issue</span>
+<span class="value"><code>#137</code> Wire Codex skill board into TBM navigation and route</span>
+</li>
+</ul>
+
+<div class="footer-note">This route page is intentionally static. It exists so the skill lane is reachable inside TBM. The detailed local audit artifacts still live outside the Apps Script route surface and refresh from Codex on the machine where the skill audit runs.</div>
+</aside>
+</section>
+</main>
+
+<script>
+function getParam_(name){var match=new RegExp('[?&]'+name+'=([^&#]*)').exec(window.location.search);return match?decodeURIComponent(match[1]):null;}
+var _tbmBaseUrl='';
+var _isPartnerMode=getParam_('jt')==='1';
+var SKILL_STATUS=[
+  {name:'tbm-audit',score:'100/100',note:'Audit wrapper validated cleanly.',checks:['manifest PASS','canonical PASS','repo validator PASS','installed sync PASS']},
+  {name:'tbm-adhd-accommodations',score:'100/100',note:'Wrapper and canonical handoff aligned.',checks:['manifest PASS','canonical PASS','repo validator PASS','installed sync PASS']},
+  {name:'tbm-infra-build',score:'100/100',note:'Infra wrapper passed full audit surface.',checks:['manifest PASS','canonical PASS','repo validator PASS','installed sync PASS']},
+  {name:'tbm-adversarial-review',score:'100/100',note:'Prompt-construction wrapper clean.',checks:['manifest PASS','canonical PASS','repo validator PASS','installed sync PASS']},
+  {name:'tbm-adversarial-defender',score:'100/100',note:'Defender wrapper clean.',checks:['manifest PASS','canonical PASS','repo validator PASS','installed sync PASS']},
+  {name:'tbm-prompt-auditor-pass',score:'100/100',note:'Prompt-audit wrapper clean.',checks:['manifest PASS','canonical PASS','repo validator PASS','installed sync PASS']},
+  {name:'tbm-play-gate',score:'100/100',note:'Play-gate wrapper clean.',checks:['manifest PASS','canonical PASS','repo validator PASS','installed sync PASS']},
+  {name:'tbm-play-jj',score:'100/100',note:'JJ alias wrapper clean.',checks:['manifest PASS','canonical PASS','repo validator PASS','installed sync PASS']},
+  {name:'tbm-play-buggsy',score:'100/100',note:'Buggsy alias wrapper clean.',checks:['manifest PASS','canonical PASS','repo validator PASS','installed sync PASS']}
+];
+function renderSkillCards_(){
+  var root=document.getElementById('skillGrid');
+  var html='';
+  var i,j,card,checkHtml;
+  for(i=0;i<SKILL_STATUS.length;i++){
+    card=SKILL_STATUS[i];
+    checkHtml='';
+    for(j=0;j<card.checks.length;j++){
+      checkHtml+='<li><code>'+card.checks[j]+'</code></li>';
+    }
+    html+='<article class="skill-card">'
+      +'<div class="skill-card-top">'
+      +'<div><h3>'+card.name+'</h3><div class="skill-note">'+card.note+'</div></div>'
+      +'<div class="skill-score-block"><div class="skill-score">'+card.score+'</div><span class="status-pill">PASS</span></div>'
+      +'</div>'
+      +'<ul class="skill-checks">'+checkHtml+'</ul>'
+      +'</article>';
+  }
+  root.innerHTML=html;
+}
+function tbmNav(page){
+  var suffix=_isPartnerMode?'&jt=1':'';
+  if(_tbmBaseUrl){
+    window.top.location.href=_tbmBaseUrl+'?page='+page+suffix;
+    return;
+  }
+  try{
+    google.script.run.withSuccessHandler(function(url){
+      window.top.location.href=url+'?page='+page+suffix;
+    }).withFailureHandler(function(e){
+      console.warn('tbmNav getScriptUrl failed:',e);
+    }).getScriptUrlSafe();
+  }catch(e){}
+}
+try{
+  google.script.run.withSuccessHandler(function(url){_tbmBaseUrl=url;}).withFailureHandler(function(e){console.warn('getScriptUrl failed:',e);}).getScriptUrlSafe();
+}catch(e){}
+renderSkillCards_();
+</script>
+</body>
+</html>

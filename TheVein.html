@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="tbm-version" content="v69">
-<title>The Vein v69 — Household Command Center</title>
-<!-- TheVein v69 — Version history tracked in Notion deploy page. No changelogs in this file. -->
+<meta name="tbm-version" content="v70">
+<title>The Vein v70 — Household Command Center</title>
+<!-- TheVein v70 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -569,6 +569,7 @@ h1{font-size:22px;} .cval{font-size:22px;}
 <div class="nav-tabs">
 <a class="tab" id="nav-pulse" onclick="tbmNav('pulse')">The Pulse</a>
 <a class="tab on" id="nav-vein" onclick="tbmNav('vein')">Command Center</a>
+<a class="tab" id="nav-codex-skills" onclick="tbmNav('codex-skills')">Skill Board</a>
 <a class="tab" id="nav-kids" onclick="tbmNav('kidshub&view=parent')">Kids Dashboard</a>
 <a class="tab" id="nav-vault" onclick="tbmNav('vault')" style="color:var(--gold)">⌚ Vault</a>
 </div>
@@ -1063,7 +1064,7 @@ REFRESH_MINS: 0,
 var IS_EMBEDDED=(function(){try{var g=google;return!!g.script.run;}catch(e){return false;}})();
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 // v62: Confidence Rail + Graceful Degradation
-var TBM_VERSION = 'v68';
+var TBM_VERSION = 'v70';
 var _veinLastFetch = null;
 var _veinLastGoodEngine = null;
 function markVeinFresh() {
