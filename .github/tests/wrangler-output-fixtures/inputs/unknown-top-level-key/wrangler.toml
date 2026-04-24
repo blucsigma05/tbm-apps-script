@@ -1,0 +1,6 @@
+name = "tbm-unknown-key"
+main = "index.js"
+compatibility_date = "2024-09-01"
+
+[[totally_unknown_binding]]
+foo = "bar"

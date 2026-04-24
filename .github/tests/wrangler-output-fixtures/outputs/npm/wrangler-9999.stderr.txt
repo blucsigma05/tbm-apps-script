@@ -1,0 +1,4 @@
+npm error code ETARGET
+npm error notarget No matching version found for wrangler@9999.0.0.
+npm error notarget In most cases you or one of your dependencies are requesting a package version that doesn't exist.
+npm error A complete log of this run can be found in: C:\Users\BluCs\AppData\Local\npm-cache\_logs\2026-04-23T04_58_42_616Z-debug-0.log

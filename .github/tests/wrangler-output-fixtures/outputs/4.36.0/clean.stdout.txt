@@ -1,0 +1,8 @@
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+
+ ⛅️ wrangler 4.36.0 (update available 4.84.1)
+─────────────────────────────────────────────
+Total Upload: 0.16 KiB / gzip: 0.14 KiB
+No bindings found.
+--dry-run: exiting now.

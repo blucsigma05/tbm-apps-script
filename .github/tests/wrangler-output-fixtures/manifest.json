@@ -1,0 +1,110 @@
+{
+  "captured_at": "2026-04-23T04:58:43Z",
+  "notes": [
+    "Primary comparison matrix: 4.36.0 (minimum documented rate-limit floor) and 4.84.1 (latest 4.x from npm view on 2026-04-23).",
+    "Historical add-on: 4.35.0 ratelimits fixture reproduces the PR 64 class where [[ratelimits]] is treated as an unexpected top-level key.",
+    "Raw outputs preserve ANSI codes and channel placement because stdout/stderr routing differs by Wrangler version."
+  ],
+  "fixtures": [
+    {
+      "id": "4.36.0-clean",
+      "version": "4.36.0",
+      "expected_classification": "clean",
+      "command": "npx wrangler@4.36.0 deploy --dry-run --config wrangler.toml",
+      "working_directory": "inputs/clean",
+      "stdout": "outputs/4.36.0/clean.stdout.txt",
+      "stderr": "outputs/4.36.0/clean.stderr.txt",
+      "exit_code": 0
+    },
+    {
+      "id": "4.36.0-unknown-top-level-key",
+      "version": "4.36.0",
+      "expected_classification": "unknown_top_level_key",
+      "command": "npx wrangler@4.36.0 deploy --dry-run --config wrangler.toml",
+      "working_directory": "inputs/unknown-top-level-key",
+      "stdout": "outputs/4.36.0/unknown-top-level-key.stdout.txt",
+      "stderr": "outputs/4.36.0/unknown-top-level-key.stderr.txt",
+      "exit_code": 0
+    },
+    {
+      "id": "4.36.0-missing-config",
+      "version": "4.36.0",
+      "expected_classification": "missing_config",
+      "command": "npx wrangler@4.36.0 deploy --dry-run --config missing.toml",
+      "working_directory": "inputs/missing-config",
+      "stdout": "outputs/4.36.0/missing-config.stdout.txt",
+      "stderr": "outputs/4.36.0/missing-config.stderr.txt",
+      "exit_code": 1
+    },
+    {
+      "id": "4.36.0-missing-entry-point",
+      "version": "4.36.0",
+      "expected_classification": "missing_entry_point",
+      "command": "npx wrangler@4.36.0 deploy --dry-run --config wrangler.toml",
+      "working_directory": "inputs/missing-entry-point",
+      "stdout": "outputs/4.36.0/missing-entry-point.stdout.txt",
+      "stderr": "outputs/4.36.0/missing-entry-point.stderr.txt",
+      "exit_code": -1073740791
+    },
+    {
+      "id": "4.84.1-clean",
+      "version": "4.84.1",
+      "expected_classification": "clean",
+      "command": "npx wrangler@4.84.1 deploy --dry-run --config wrangler.toml",
+      "working_directory": "inputs/clean",
+      "stdout": "outputs/4.84.1/clean.stdout.txt",
+      "stderr": "outputs/4.84.1/clean.stderr.txt",
+      "exit_code": 0
+    },
+    {
+      "id": "4.84.1-unknown-top-level-key",
+      "version": "4.84.1",
+      "expected_classification": "unknown_top_level_key",
+      "command": "npx wrangler@4.84.1 deploy --dry-run --config wrangler.toml",
+      "working_directory": "inputs/unknown-top-level-key",
+      "stdout": "outputs/4.84.1/unknown-top-level-key.stdout.txt",
+      "stderr": "outputs/4.84.1/unknown-top-level-key.stderr.txt",
+      "exit_code": 0
+    },
+    {
+      "id": "4.84.1-missing-config",
+      "version": "4.84.1",
+      "expected_classification": "missing_config",
+      "command": "npx wrangler@4.84.1 deploy --dry-run --config missing.toml",
+      "working_directory": "inputs/missing-config",
+      "stdout": "outputs/4.84.1/missing-config.stdout.txt",
+      "stderr": "outputs/4.84.1/missing-config.stderr.txt",
+      "exit_code": -1073740791
+    },
+    {
+      "id": "4.84.1-missing-entry-point",
+      "version": "4.84.1",
+      "expected_classification": "missing_entry_point",
+      "command": "npx wrangler@4.84.1 deploy --dry-run --config wrangler.toml",
+      "working_directory": "inputs/missing-entry-point",
+      "stdout": "outputs/4.84.1/missing-entry-point.stdout.txt",
+      "stderr": "outputs/4.84.1/missing-entry-point.stderr.txt",
+      "exit_code": -1073740791
+    },
+    {
+      "id": "4.35.0-ratelimits-historical",
+      "version": "4.35.0",
+      "expected_classification": "unknown_top_level_key",
+      "command": "npx wrangler@4.35.0 deploy --dry-run --config wrangler.toml",
+      "working_directory": "inputs/ratelimits-pre-4.36",
+      "stdout": "outputs/4.35.0/ratelimits-pre-4.36.stdout.txt",
+      "stderr": "outputs/4.35.0/ratelimits-pre-4.36.stderr.txt",
+      "exit_code": 0
+    },
+    {
+      "id": "npm-9999.0.0",
+      "version": "npm",
+      "expected_classification": "npm_layer_error",
+      "command": "npx wrangler@9999.0.0 --version",
+      "working_directory": "inputs/missing-config",
+      "stdout": "outputs/npm/wrangler-9999.stdout.txt",
+      "stderr": "outputs/npm/wrangler-9999.stderr.txt",
+      "exit_code": 1
+    }
+  ]
+}

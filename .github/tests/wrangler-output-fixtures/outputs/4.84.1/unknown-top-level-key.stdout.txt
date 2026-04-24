@@ -1,0 +1,6 @@
+
+ ⛅️ wrangler 4.84.1
+───────────────────
+Total Upload: 0.16 KiB / gzip: 0.14 KiB
+No bindings found.
+--dry-run: exiting now.
