@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v96 — Apps Script Router (TBM Consolidated)
+// Code.gs v97 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 96; }
+function getCodeVersion() { return 97; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -600,7 +600,8 @@ function serveData(e) {
         'gradeVocabUsageSafe': gradeVocabUsageSafe,
         'diagOpsTriggersSafe': diagOpsTriggersSafe,
         'diagFeedbackPipelineSafe': diagFeedbackPipelineSafe,
-        'diagStoryFactorySafe': diagStoryFactorySafe
+        'diagStoryFactorySafe': diagStoryFactorySafe,
+        'getFridayMakeupQueueSafe': getFridayMakeupQueueSafe
       };
 
       // v93 (#414, #379): Write admin functions require OPS_ADMIN_TOKEN shared-secret.
@@ -1987,4 +1988,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v96
+// END OF FILE — Code.gs v97
