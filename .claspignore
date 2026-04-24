@@ -1,5 +1,7 @@
 .claude/**
 .github/**
+.gitea/**
+cf-events-worker/**
 node_modules/**
 *.md
 *.jsx
