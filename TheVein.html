@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="tbm-version" content="v70">
-<title>The Vein v70 — Household Command Center</title>
-<!-- TheVein v70 — Version history tracked in Notion deploy page. No changelogs in this file. -->
+<meta name="tbm-version" content="v71">
+<title>The Vein v71 — Household Command Center</title>
+<!-- TheVein v71 — Version history tracked in Notion deploy page. No changelogs in this file. -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=JetBrains+Mono:wght@300;400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -415,7 +415,11 @@ h1{font-size:28px;} .period-val{font-size:22px;}
 .d-min,.d-pay{display:none;}
 .sub-grid{grid-template-columns:1fr;}
 .gate-grid{grid-template-columns:1fr;}
-.nav-tabs{display:none;} .nav{height:44px;padding:0 12px;}
+.nav{height:auto;padding:8px 12px;flex-wrap:wrap;justify-content:flex-start;gap:8px;}
+.brand-wrap{width:100%;}
+.nav-tabs{display:flex;flex-wrap:wrap;gap:6px;width:100%;}
+.tab{padding:5px 10px;font-size:12px;}
+.nav-right{display:none;}
 .burn-ring-wrap{flex-direction:column;align-items:center;}
 .promo-item{grid-template-columns:1fr auto;} .p-bal{display:none;}
 }
@@ -1038,7 +1042,7 @@ id="burnRing" style="transform:rotate(-90deg);transform-origin:center;transition
 <div class="footer">
 <span id="footerSrc">Source: Tiller BudgetMaster</span>
 <span id="veinReconcileBadge" style="font-size:10px;font-weight:600;letter-spacing:.05em;opacity:0.85;"></span>
-<span id="veinVersionTag">The Vein v69</span>
+<span id="veinVersionTag">The Vein v71</span>
 </div>
 
 </div>
@@ -1064,7 +1068,7 @@ REFRESH_MINS: 0,
 var IS_EMBEDDED=(function(){try{var g=google;return!!g.script.run;}catch(e){return false;}})();
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 // v62: Confidence Rail + Graceful Degradation
-var TBM_VERSION = 'v70';
+var TBM_VERSION = 'v71';
 var _veinLastFetch = null;
 var _veinLastGoodEngine = null;
 function markVeinFresh() {
