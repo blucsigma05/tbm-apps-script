@@ -8,13 +8,10 @@
  * element renders) is PR 2 work.
  */
 
-var fs = require('fs');
-var path = require('path');
+var helpers = require('./_helpers');
 
-var ROUTE_TO_HTML = {
-  '/sparkle': 'SparkleLearning.html',
-  '/homework': 'HomeworkModule.html'
-};
+// PR-2 update (Gitea #54): use shared _helpers.loadSurface so coverage
+// extends to all 15 play-gate routes (was only /sparkle + /homework in PR-1).
 
 var EMPTY_STATE_MARKERS = [
   /empty-state/i,
@@ -27,10 +24,9 @@ var EMPTY_STATE_MARKERS = [
 ];
 
 module.exports = async function U13(ctx) {
-  var htmlFile = ROUTE_TO_HTML[ctx.route];
-  if (!htmlFile) return { id: 'U13', status: 'skip', measurement: 'no HTML mapping' };
-  var abs = path.join(ctx.repoRoot, htmlFile);
-  var src = fs.readFileSync(abs, 'utf8');
+  var surface = helpers.loadSurface(ctx);
+  if (!surface) return { id: 'U13', status: 'skip', measurement: 'no HTML mapping' };
+  var src = surface.src;
   var matched = [];
   for (var i = 0; i < EMPTY_STATE_MARKERS.length; i++) {
     if (EMPTY_STATE_MARKERS[i].test(src)) matched.push(EMPTY_STATE_MARKERS[i].toString());
@@ -39,7 +35,7 @@ module.exports = async function U13(ctx) {
     return {
       id: 'U13',
       status: 'fail',
-      measurement: 'no empty-state marker found in ' + htmlFile,
+      measurement: 'no empty-state marker found in ' + surface.file,
       expected: 'at least one of: empty-state / no-content / all-done / come back / no homework'
     };
   }

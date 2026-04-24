@@ -10,13 +10,10 @@
  * names in the chain are the server callees that must end in "Safe".
  */
 
-var fs = require('fs');
-var path = require('path');
+var helpers = require('./_helpers');
 
-var ROUTE_TO_HTML = {
-  '/sparkle': 'SparkleLearning.html',
-  '/homework': 'HomeworkModule.html'
-};
+// PR-2 update (Gitea #54): use shared _helpers.loadSurface so coverage
+// extends to all 15 play-gate routes (was only /sparkle + /homework in PR-1).
 
 var HANDLER_METHODS = { withSuccessHandler: 1, withFailureHandler: 1, withUserObject: 1 };
 
@@ -73,15 +70,11 @@ function extractChainMethods(src, startIdx) {
 }
 
 module.exports = async function PRE_4(ctx) {
-  var htmlFile = ROUTE_TO_HTML[ctx.route];
-  if (!htmlFile) {
+  var surface = helpers.loadSurface(ctx);
+  if (!surface) {
     return { id: 'PRE-4', status: 'skip', measurement: 'no HTML mapping for route ' + ctx.route };
   }
-  var abs = path.join(ctx.repoRoot, htmlFile);
-  if (!fs.existsSync(abs)) {
-    return { id: 'PRE-4', status: 'fail', measurement: 'html file not found: ' + htmlFile };
-  }
-  var src = fs.readFileSync(abs, 'utf8');
+  var src = surface.src;
   var anchor = 'google.script.run';
   var searchFrom = 0;
   var nonSafe = [];

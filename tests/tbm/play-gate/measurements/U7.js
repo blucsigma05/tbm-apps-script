@@ -5,19 +5,15 @@
  * Marked `surrogate` when the surrogate is used.
  */
 
-var fs = require('fs');
-var path = require('path');
+var helpers = require('./_helpers');
 
-var ROUTE_TO_HTML = {
-  '/sparkle': 'SparkleLearning.html',
-  '/homework': 'HomeworkModule.html'
-};
+// PR-2 update (Gitea #54): use shared _helpers.loadSurface so coverage
+// extends to all 15 play-gate routes (was only /sparkle + /homework in PR-1).
 
 module.exports = async function U7(ctx) {
-  var htmlFile = ROUTE_TO_HTML[ctx.route];
-  if (!htmlFile) return { id: 'U7', status: 'skip', measurement: 'no HTML mapping' };
-  var abs = path.join(ctx.repoRoot, htmlFile);
-  var src = fs.readFileSync(abs, 'utf8');
+  var surface = helpers.loadSurface(ctx);
+  if (!surface) return { id: 'U7', status: 'skip', measurement: 'no HTML mapping' };
+  var src = surface.src;
   var runCalls = (src.match(/google\.script\.run/g) || []).length;
   var handlers = (src.match(/withFailureHandler/g) || []).length;
   // Rough density check: at least one handler per run call chain.

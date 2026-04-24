@@ -3,19 +3,15 @@
  * No native alert() as primary error UX, no empty withFailureHandler, no gate-check bypass.
  */
 
-var fs = require('fs');
-var path = require('path');
+var helpers = require('./_helpers');
 
-var ROUTE_TO_HTML = {
-  '/sparkle': 'SparkleLearning.html',
-  '/homework': 'HomeworkModule.html'
-};
+// PR-2 update (Gitea #54): use shared _helpers.loadSurface so coverage
+// extends to all 15 play-gate routes (was only /sparkle + /homework in PR-1).
 
 module.exports = async function U14(ctx) {
-  var htmlFile = ROUTE_TO_HTML[ctx.route];
-  if (!htmlFile) return { id: 'U14', status: 'skip', measurement: 'no HTML mapping' };
-  var abs = path.join(ctx.repoRoot, htmlFile);
-  var src = fs.readFileSync(abs, 'utf8');
+  var surface = helpers.loadSurface(ctx);
+  if (!surface) return { id: 'U14', status: 'skip', measurement: 'no HTML mapping' };
+  var src = surface.src;
 
   var alertMatches = src.match(/\balert\s*\(/g);
   var alertCount = alertMatches ? alertMatches.length : 0;
@@ -27,7 +23,7 @@ module.exports = async function U14(ctx) {
     return {
       id: 'U14',
       status: 'fail',
-      measurement: alertCount + ' alert() call(s) in ' + htmlFile,
+      measurement: alertCount + ' alert() call(s) in ' + surface.file,
       expected: 'no native alert() for primary errors (use in-surface UI)'
     };
   }
@@ -35,7 +31,7 @@ module.exports = async function U14(ctx) {
     return {
       id: 'U14',
       status: 'fail',
-      measurement: 'empty withFailureHandler detected in ' + htmlFile,
+      measurement: 'empty withFailureHandler detected in ' + surface.file,
       expected: 'non-empty handlers that surface error to user'
     };
   }
