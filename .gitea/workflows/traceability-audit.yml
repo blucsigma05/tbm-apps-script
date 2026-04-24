@@ -1,0 +1,74 @@
+# .gitea/workflows/traceability-audit.yml
+# Saturday 6am — Issue → PR → Release traceability audit.
+# Ports issue-pr-deploy-traceability SKILL.md (Gitea #72, routine 8 of 10).
+#
+# Part A: merged PRs in last 7d missing Closes/Fixes/Refs #N
+# Part B: open Issues older than 14d with no linked PR (skips epics + needs:lt-decision)
+# Part C: merged PRs in last 14d with no release tag after merge (Gitea releases,
+#   since GitHub is archive-only since 2026-04-19 per CLAUDE.md)
+#
+# Triggers:
+#   - schedule: Saturdays 11:00 UTC = 6:00am CDT
+#   - workflow_dispatch: manual
+#
+# Secrets:
+#   GITEA_TOKEN — auto-provided
+
+name: Traceability Audit
+
+on:
+  schedule:
+    - cron: '0 11 * * 6'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: Traceability Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACKER_ISSUE_NUMBER: '72'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Python stdlib
+        run: python3 -c "import urllib.request, json, re, sys; print('python', sys.version.split()[0])"
+
+      - name: Run traceability_audit.py
+        id: audit
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_HOST: https://git.thompsonfams.com
+          REPO: ${{ github.repository }}
+          OUTPUT_FILE: review_comment.md
+          POST_ON_CLEAN: 'false'
+        run: python3 .github/scripts/traceability_audit.py
+
+      - name: Post report to tracker Issue
+        if: steps.audit.outputs.has_comment == 'true'
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          REPO: ${{ github.repository }}
+          GITEA_HOST: https://git.thompsonfams.com
+        run: |
+          PAYLOAD=$(python3 -c "
+          import json
+          body = open('review_comment.md').read()
+          print(json.dumps({'body': body}))
+          ")
+          curl -sS -f -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${GITEA_HOST}/api/v1/repos/${REPO}/issues/${TRACKER_ISSUE_NUMBER}/comments" \
+            -d "${PAYLOAD}" > /dev/null
+          echo "Posted to ${REPO}#${TRACKER_ISSUE_NUMBER}"
+
+      - name: Summarize
+        if: always()
+        run: |
+          U="${{ steps.audit.outputs.unlinked_prs_count }}"
+          A="${{ steps.audit.outputs.aged_issues_count }}"
+          R="${{ steps.audit.outputs.no_release_count }}"
+          POSTED="${{ steps.audit.outputs.has_comment }}"
+          echo "unlinked=${U} aged=${A} no_release=${R} posted=${POSTED}"
