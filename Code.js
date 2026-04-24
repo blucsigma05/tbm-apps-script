@@ -1,6 +1,6 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// Code.gs v95 — Apps Script Router (TBM Consolidated)
+// Code.gs v96 — Apps Script Router (TBM Consolidated)
 // WRITES TO: (routes only — delegates to DataEngine, KidsHub, etc.)
 // READS FROM: (routes only — delegates to DataEngine, KidsHub, etc.)
 // ════════════════════════════════════════════════════════════════════
@@ -19,7 +19,7 @@ function isLessonRunsEnabled_() {
   } catch (e) { return false; }
 }
 
-function getCodeVersion() { return 95; }
+function getCodeVersion() { return 96; }
 
 // v37 FIX 5: ES5-safe left-pad helper — replaces String.padStart()
 function leftPad2_(n) {
@@ -349,6 +349,17 @@ function servePage(page, e) {
         .setTitle(route.title)
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
+    // v96 (#89): daily-missions — server-inject child context so CF Worker's clean-URL
+    // routes (/daily-adventures → child=jj) reach the client. The worker forwards
+    // ?child=jj to GAS, but the browser URL stays clean, so the HTML's URL-param parser
+    // doesn't see it. Inject INIT_CHILD via template so parseChildParam() can prefer it.
+    if (page === 'daily-missions') {
+      var dmTmpl = HtmlService.createTemplateFromFile(route.file);
+      dmTmpl.INIT_CHILD = (e && e.parameter && e.parameter.child === 'jj') ? 'jj' : '';
+      return dmTmpl.evaluate()
+        .setTitle(route.title)
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
     // v88: SparkleLearning inlined (split reverted — template include boundary bugs)
     return HtmlService.createHtmlOutputFromFile(route.file)
       .setTitle(route.title)
@@ -461,6 +472,14 @@ function serveData(e) {
             hwTmpl2.moduleDataJson = 'null';
           }
           content = hwTmpl2.evaluate().getContent();
+        } else if (page === 'daily-missions') {
+          // v96 (#89): mirror the servePage daily-missions branch — inject INIT_CHILD
+          // so clean-URL routes like /daily-adventures serve JJ context. Without this,
+          // the client-side parseChildParam() reads an empty location.search and falls
+          // back to the Buggsy default.
+          var dmTmpl2 = HtmlService.createTemplateFromFile('daily-missions');
+          dmTmpl2.INIT_CHILD = e.parameter.child === 'jj' ? 'jj' : '';
+          content = dmTmpl2.evaluate().getContent();
         } else {
           content = HtmlService.createHtmlOutputFromFile(filename).getContent();
         }
@@ -1968,4 +1987,4 @@ function getOpsHealthSafe() {
   });
 }
 
-// END OF FILE — Code.gs v95
+// END OF FILE — Code.gs v96

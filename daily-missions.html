@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tbm-module" content="daily-missions">
-<meta name="tbm-version" content="v24">
+<meta name="tbm-version" content="v25">
 <title>Daily Missions</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -763,6 +763,14 @@ body.jj-theme #launch-overlay .ov-sub { color: rgba(255,200,240,0.55) !important
 // ES5 STRICT — Daily Missions Landing Page
 // ============================================================
 
+// v25 (#89): server-injected child context for clean-URL routes.
+// CF Worker's /daily-adventures → child=jj rewrite is forwarded to GAS but not
+// visible in the browser location.search, so the URL-only parseChildParam() used
+// to default to Buggsy. Code.js now templates INIT_CHILD before render; this
+// constant propagates that value into the page's early detection path.
+// '<?= INIT_CHILD ?>' evaluates to 'jj' when served with child=jj, otherwise ''.
+var INIT_CHILD = '<?= INIT_CHILD ?>';
+
 // ── Themed Loading Screen (animated Mach Turbo Light) ──
 function showBuggsyLoader() {
   var el = document.createElement('div');
@@ -898,7 +906,9 @@ function hideJJLoader() {
   if (el) el.parentNode.removeChild(el);
 }
 function showDailyMissionsLoader() {
-  var isJJ = window.location.search.indexOf('child=jj') >= 0;
+  // v25 (#89): prefer server-injected INIT_CHILD over URL param so clean routes
+  // like /daily-adventures (no query string in browser URL) still load JJ loader.
+  var isJJ = INIT_CHILD === 'jj' || window.location.search.indexOf('child=jj') >= 0;
   if (isJJ) { showJJLoader(); } else { showBuggsyLoader(); }
 }
 function hideDailyMissionsLoader() {
@@ -1390,6 +1400,12 @@ function initLegacy_() {
 // URL PARAM PARSING (no URLSearchParams)
 // ============================================================
 function parseChildParam() {
+  // v25 (#89): server-injected INIT_CHILD wins when present (clean-URL routes like
+  // /daily-adventures). Falls back to URL param for direct ?child=jj calls.
+  if (INIT_CHILD === 'jj') {
+    currentChild = 'jj';
+    return;
+  }
   var search = window.location.search;
   if (!search || search.length < 2) return;
   var qs = search.substring(1);
@@ -2063,6 +2079,8 @@ init();
   var _fbShownOnce = false;
 
   function getUser() {
+    // v25 (#89): same INIT_CHILD preference as parseChildParam — clean-URL routes.
+    if (INIT_CHILD === 'jj') return 'jj';
     var search = window.location.search || '';
     var match = search.match(/[?&]child=([^&]+)/);
     if (match) return decodeURIComponent(match[1]);
