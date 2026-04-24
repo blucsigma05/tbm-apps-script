@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="tbm-module" content="the-pulse">
-<meta name="tbm-version" content="v64">
-<title>The Pulse v64 — Thompson Household</title>
+<meta name="tbm-version" content="v65">
+<title>The Pulse v65 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -846,8 +846,12 @@ function render(){
   var _debtPmtsCF = !showingCurrent ? Math.round(monthData.debtPaymentsMTD||0) : Math.round(DEBT_CONFIG._debtPaymentsMTD||0);
   var _moneyIn = Math.round(earnedIncome + bridgeCash);
   var _moneyOut = Math.round(opExpenses + _debtPmtsCF);
-  // v60: Prefer server-canonical netCF when available; fall back to client derivation
-  var _cfResult = (_serverNetCF != null) ? netCF : (_moneyIn - _moneyOut);
+  // v65 (Gitea #95): compute total from the displayed rows so the card always reconciles.
+  // The v60 _serverNetCF/netCF override was removed because the server netCF excludes
+  // debt payments while _moneyOut includes them — showing both in the same card made the
+  // equation Money-In minus Money-Out equals Surplus lie by ~$8,569. The footnote below
+  // (X of money out is debt payments) already exposes composition per the v47 design intent.
+  var _cfResult = _moneyIn - _moneyOut;
   var _cfSurplus = _cfResult >= 0;
   var cfCardHTML = '<div class="cf-eq-card'+(_cfSurplus?' surplus':'')+'">' +
     '<div class="pc-label">Monthly cash flow</div>' +
