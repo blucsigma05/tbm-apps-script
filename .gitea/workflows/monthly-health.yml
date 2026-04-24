@@ -1,0 +1,62 @@
+# .gitea/workflows/monthly-health.yml
+# Monthly 1st-of-month 6am — long-form system health audit.
+# Ports monthly-health-and-structure SKILL.md (Gitea #72, routine 10 of 10).
+#
+# Part A (architecture) ships.
+# Parts B + C deferred pending #83 (GAS endpoints) and a follow-up
+# Issue for Notion PM Active Versions DB audit contract.
+
+name: Monthly Health
+
+on:
+  schedule:
+    - cron: '0 11 1 * *'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: Monthly Health Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACKER_ISSUE_NUMBER: '72'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run monthly_health.py
+        id: audit
+        env:
+          REPO_ROOT: ${{ github.workspace }}
+          MAX_FUNCS_PER_FILE: '50'
+          OUTPUT_FILE: review_comment.md
+          POST_ON_CLEAN: 'true'
+        run: python3 .github/scripts/monthly_health.py
+
+      - name: Post report to tracker Issue
+        if: steps.audit.outputs.has_comment == 'true'
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          REPO: ${{ github.repository }}
+          GITEA_HOST: https://git.thompsonfams.com
+        run: |
+          PAYLOAD=$(python3 -c "
+          import json
+          body = open('review_comment.md').read()
+          print(json.dumps({'body': body}))
+          ")
+          curl -sS -f -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${GITEA_HOST}/api/v1/repos/${REPO}/issues/${TRACKER_ISSUE_NUMBER}/comments" \
+            -d "${PAYLOAD}" > /dev/null
+          echo "Posted to ${REPO}#${TRACKER_ISSUE_NUMBER}"
+
+      - name: Summarize
+        if: always()
+        run: |
+          O="${{ steps.audit.outputs.over_threshold }}"
+          D="${{ steps.audit.outputs.duplicate_fns }}"
+          DP="${{ steps.audit.outputs.dead_private_fns }}"
+          POSTED="${{ steps.audit.outputs.has_comment }}"
+          echo "over_threshold=${O} duplicates=${D} dead_privates=${DP} posted=${POSTED}"
