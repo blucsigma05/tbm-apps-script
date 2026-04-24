@@ -1,8 +1,9 @@
 # .gitea/workflows/deploy-worker.yml
 # Ported from .github/workflows 2026-04-20 (PORT wave Batch 5b, Refs #7).
-# cloudflare/wrangler-action@v3 was GitHub-only — replaced with inline
-# `wrangler deploy` using the CLI we already install below. Secrets are
-# environment-agnostic; pass them through as env vars.
+# cloudflare/wrangler-action@v3 was GitHub-only — replaced with repo-local
+# `npx wrangler deploy` after `npm ci` so CI and local tooling resolve the same
+# locked Wrangler version from package-lock.json. Secrets are environment-
+# agnostic; pass them through as env vars.
 
 name: Deploy Cloudflare Worker
 
@@ -35,14 +36,17 @@ jobs:
           sed -i "s/__BUILD_ID__/${BUILD_ID}/" cloudflare-worker.js
           echo "Stamped WORKER_BUILD=${BUILD_ID}"
 
-      - name: Install Wrangler
-        run: npm install -g wrangler
+      - name: Install repo tooling
+        run: npm ci
+
+      - name: Log pinned Wrangler version
+        run: npx wrangler --version
 
       - name: Deploy to Cloudflare Workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: wrangler deploy
+        run: npx wrangler deploy
 
       - name: Post-deploy smoke — front-door /version (F03/F04)
         env:
