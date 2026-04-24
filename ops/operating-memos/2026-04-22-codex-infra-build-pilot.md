@@ -43,6 +43,11 @@ The pain was concentrated in one class of work: **CI, Wrangler, workflow semanti
 
 ## Rules
 
+**Operational packaging:** Rules 1 + 2 below are baked into the `codex-audit` skill at
+`.claude/skills/codex-audit/SKILL.md` (Gitea #92). Invoke `/codex-audit #N` or use the
+skill's trigger phrases to run a cross-audit against this rule surface without
+re-deriving the methodology each round.
+
 1. **No plan item without verification.** (Codified to Claude memory 2026-04-22.) Applies to both lanes. A plan_diff bullet, spec item, Issue body claim, or audit finding is invalid unless the author has already run the command, read the exact file/line, or cited a verifiable source that makes it true. The bar each lane demands of the other it meets before writing.
 2. **For CI/Wrangler/workflow work, the build artifact is a tested branch or a verified issue comment with command output — not a prose rewrite.** No speculative `plan_diff` cycles. If an item cannot be demonstrated with captured output, it does not land.
 3. **Labels are load-bearing.** Pilot Issues are tagged `model:codex`. If an Issue's scope spans both lanes, the primary author gets the model tag and the cross-audit lane is named in the Issue body.
