@@ -1,0 +1,87 @@
+# .gitea/workflows/morning-health-check.yml
+# Daily morning TBM health digest. Ports morning-health-check SKILL.md
+# (Gitea #72, routine 4 of 10).
+#
+# Sub-checks in the port (4 of 5 from SKILL.md — step 4 deferred):
+#   1. bash audit-source.sh        (report FAIL/WARN)
+#   2. ?action=runTests            (report overall)
+#   3. Source vs deployed version  (drift table when off)
+#   4. ErrorLog 24h scan           DEFERRED — no public endpoint; follow-up needed
+#
+# Triggers:
+#   - schedule: 11:00 UTC = 6:00am CDT (matches SKILL.md's "Daily 6am")
+#   - workflow_dispatch: manual
+#
+# Secrets required:
+#   GAS_DEPLOY_URL — already set at owner scope
+#   GITEA_TOKEN    — auto-provided
+#
+# Output destination: tracker Issue #72. Daily digest — POST_ON_CLEAN=true
+# so LT sees the heartbeat every morning (one-line OK or findings list).
+
+name: Morning Health Check
+
+on:
+  schedule:
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+
+jobs:
+  health:
+    name: Morning Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACKER_ISSUE_NUMBER: '72'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify Python stdlib
+        run: python3 -c "import urllib.request, subprocess, re, json, sys; print('python', sys.version.split()[0])"
+
+      - name: Run morning_health_check.py
+        id: health
+        env:
+          GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
+          REPO_ROOT: ${{ github.workspace }}
+          AUDIT_SCRIPT: audit-source.sh
+          OUTPUT_FILE: review_comment.md
+          POST_ON_CLEAN: 'true'
+        run: python3 .github/scripts/morning_health_check.py
+
+      - name: Post digest to tracker Issue
+        if: steps.health.outputs.has_comment == 'true'
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          REPO: ${{ github.repository }}
+          GITEA_HOST: https://git.thompsonfams.com
+        run: |
+          if [ ! -f review_comment.md ]; then
+            echo "No review_comment.md — nothing to post"
+            exit 0
+          fi
+          PAYLOAD=$(python3 -c "
+          import json
+          body = open('review_comment.md').read()
+          print(json.dumps({'body': body}))
+          ")
+          curl -sS -f -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${GITEA_HOST}/api/v1/repos/${REPO}/issues/${TRACKER_ISSUE_NUMBER}/comments" \
+            -d "${PAYLOAD}" > /dev/null
+          echo "Posted digest to ${REPO}#${TRACKER_ISSUE_NUMBER}"
+
+      - name: Summarize result
+        if: always()
+        run: |
+          STATE="${{ steps.health.outputs.overall_state }}"
+          AF="${{ steps.health.outputs.audit_fail }}"
+          AW="${{ steps.health.outputs.audit_warn }}"
+          TO="${{ steps.health.outputs.tests_overall }}"
+          VD="${{ steps.health.outputs.version_drift }}"
+          POSTED="${{ steps.health.outputs.has_comment }}"
+          echo "state=${STATE} audit_fail=${AF} audit_warn=${AW} tests=${TO} drift=${VD} posted=${POSTED}"
