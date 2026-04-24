@@ -1,0 +1,78 @@
+# .gitea/workflows/stale-pr-check.yml
+# Daily stale-PR triage: flag open PRs older than STALE_HOURS, name blocker
+# for each. Ports stale-pr-check SKILL.md (Gitea #72, routine 5 of 10).
+#
+# Complements HYG-02 (5-day orphan sweep — longer horizon). This routine is
+# the daily "what did I forget yesterday" nag.
+#
+# Triggers:
+#   - schedule: 13:00 UTC = 8:00am CDT (matches SKILL.md's "Daily 8am")
+#   - workflow_dispatch: manual; allows STALE_HOURS override
+#
+# Secrets required:
+#   GITEA_TOKEN — auto-provided.
+#
+# Output destination: tracker Issue #72, only on stale findings.
+
+name: Stale PR Check
+
+on:
+  schedule:
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+    inputs:
+      stale_hours:
+        description: 'Hours since last update before a PR is stale (default: 24)'
+        required: false
+        default: '24'
+
+jobs:
+  check:
+    name: Stale PR Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TRACKER_ISSUE_NUMBER: '72'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Python stdlib
+        run: python3 -c "import urllib.request, json, sys; print('python', sys.version.split()[0])"
+
+      - name: Run stale_pr_check.py
+        id: check
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          GITEA_HOST: https://git.thompsonfams.com
+          REPO: ${{ github.repository }}
+          STALE_HOURS: ${{ inputs.stale_hours || '24' }}
+          OUTPUT_FILE: review_comment.md
+          POST_ON_CLEAN: 'false'
+        run: python3 .github/scripts/stale_pr_check.py
+
+      - name: Post report to tracker Issue
+        if: steps.check.outputs.has_comment == 'true'
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          REPO: ${{ github.repository }}
+          GITEA_HOST: https://git.thompsonfams.com
+        run: |
+          PAYLOAD=$(python3 -c "
+          import json
+          body = open('review_comment.md').read()
+          print(json.dumps({'body': body}))
+          ")
+          curl -sS -f -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${GITEA_HOST}/api/v1/repos/${REPO}/issues/${TRACKER_ISSUE_NUMBER}/comments" \
+            -d "${PAYLOAD}" > /dev/null
+          echo "Posted to ${REPO}#${TRACKER_ISSUE_NUMBER}"
+
+      - name: Summarize
+        if: always()
+        run: |
+          COUNT="${{ steps.check.outputs.stale_count }}"
+          POSTED="${{ steps.check.outputs.has_comment }}"
+          echo "stale_count=${COUNT} posted=${POSTED}"
