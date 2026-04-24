@@ -175,7 +175,7 @@ jobs:
 
       - name: Upload smoke response
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3.2.2
         with:
           name: smoke-response-${{ github.run_id }}
           path: smoke_response.txt

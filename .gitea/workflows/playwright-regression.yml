@@ -23,9 +23,14 @@
 # Changes vs the GitHub version:
 #   - `Post results comment on PR`: actions/github-script -> inline python3
 #     stdlib urllib, same marker-find-or-create pattern as Batch 6a ci.yml.
-#   - All actions/upload-artifact@v4 usages kept as-is (Gitea runner's
-#     action mirror surfaces this action; if-no-files-found: ignore makes
-#     them silent no-ops if the mirror disagrees).
+#   - actions/upload-artifact pinned to @v3.2.2 (Gitea #99). The act_runner does
+#     not implement the GHES 3.13 APIs that @v4+ requires — every v4 step
+#     emits GHESNotSupportedError and exits 1, killing the job even when the
+#     test step was wrapped `|| true`. Pinned to the specific GHES-supported
+#     patch (per actions/upload-artifact README — not the floating @v3 tag,
+#     which could drift to an unsupported commit if upstream re-tags).
+#     Do NOT bump to v4 until Gitea adds support; bump repo-wide at that
+#     point, not per-workflow.
 #   - paths-ignore unchanged (Gitea evaluates paths-ignore with the same
 #     "every changed file must match at least one pattern" semantics).
 
@@ -134,7 +139,7 @@ jobs:
       # reset test-results/education/, but uploading first is an extra safety belt.
       - name: Upload education failure artifacts
         if: steps.education.outputs.edu_exit != '0'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3.2.2
         with:
           name: education-traces-${{ github.run_id }}
           path: test-results/education/
@@ -175,7 +180,7 @@ jobs:
 
       - name: Upload screenshots (every PR)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3.2.2
         with:
           name: viewport-screenshots-${{ github.run_id }}
           path: test-results/screenshots/
@@ -184,7 +189,7 @@ jobs:
 
       - name: Upload education screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3.2.2
         with:
           name: education-screenshots-${{ github.run_id }}
           path: test-results/screenshots/education/
@@ -193,7 +198,7 @@ jobs:
 
       - name: Upload traces on failure
         if: steps.playwright.outputs.pw_exit != '0' || steps.education.outputs.edu_exit != '0'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3.2.2
         with:
           name: playwright-traces-${{ github.run_id }}
           path: test-results/
@@ -314,7 +319,7 @@ jobs:
 
       - name: Upload perf traces — Surface Pro 5
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3.2.2
         with:
           name: perf-traces-surface-pro5-${{ github.run_id }}
           path: test-results/perf-surface/
@@ -323,7 +328,7 @@ jobs:
 
       - name: Upload perf traces — Samsung S10 FE
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3.2.2
         with:
           name: perf-traces-s10-fe-${{ github.run_id }}
           path: test-results/perf-s10/
@@ -332,7 +337,7 @@ jobs:
 
       - name: Upload frame budget evidence JSON
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3.2.2
         with:
           name: frame-budget-evidence-${{ github.run_id }}
           path: ops/evidence/preview/

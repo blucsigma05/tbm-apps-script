@@ -6,7 +6,12 @@
 #
 # Ported from .github/workflows 2026-04-20 (PORT wave Batch 6c, Refs #7).
 # Pure relocation + path-comment update. No github-script steps, no forge
-# API calls, one actions/upload-artifact@v4 which is proven on Gitea.
+# API calls, one actions/upload-artifact pinned to @v3.2.2 (Gitea #99 — v4+
+# is GHES-incompatible with Gitea's act_runner; the original port claim
+# that v4 was "proven on Gitea" was wrong, every run has failed at the
+# upload step since the 2026-04-19 migration. Pinned to specific GHES-
+# supported patch rather than floating @v3 so upstream re-tags cannot
+# silently move this off the supported implementation).
 # Relies on the same act_runner sudoers grant as playwright-regression.yml
 # for `npx playwright install --with-deps chromium`.
 
@@ -90,7 +95,7 @@ jobs:
 
       - name: Upload verdict + evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3.2.2
         with:
           name: play-gate-verdict-${{ github.run_id }}
           path: ${{ steps.verdict.outputs.dir }}
