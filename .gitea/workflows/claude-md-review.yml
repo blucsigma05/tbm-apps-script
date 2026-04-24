@@ -1,0 +1,92 @@
+# .gitea/workflows/claude-md-review.yml
+# Weekly qualitative review of CLAUDE.md via the Anthropic API.
+# Restores the `claude-md-review` scheduled-task routine (Gitea #72) under the
+# Gitea-native port strategy. GitHub is archive-only; this workflow makes no
+# calls to api.github.com.
+#
+# Relationship to HYG-04 (.github/workflows/hyg-04-claude-md-bloat.yml):
+#   HYG-04 is the mechanical per-PR check (line count, dead refs, duplicate
+#   phrases). It runs only when a PR touches CLAUDE.md.
+#   THIS workflow is the qualitative periodic review (structure, bloat,
+#   ordering, staleness, completeness scored 1-10 with restructure plan when
+#   below threshold). They are complementary, not duplicates.
+#
+# Runs on tbm-runner-1 (host mode) — same pattern as codex-pr-review.yml.
+#
+# Triggers:
+#   - schedule: Mondays 14:00 UTC (9am Central) — weekly interpretation of
+#     "Periodic" in the SKILL.md. Monday so LT sees the findings at the start
+#     of the work week.
+#   - workflow_dispatch: manual invocation for testing and on-demand reviews.
+#
+# Secrets required on the repo (Settings → Actions → Secrets):
+#   ANTHROPIC_API_KEY — Anthropic API token with Messages API access.
+#
+# LT ACTION ITEM (first-run prerequisite): add ANTHROPIC_API_KEY to repo
+# secrets. Without it the script exits 1 and no comment is posted.
+#
+# Output destination: Issue #72 (restoration tracker). Configurable via
+# TRACKER_ISSUE_NUMBER env var at the job level if LT later wants a dedicated
+# per-routine tracker Issue.
+
+name: Claude MD Review
+
+on:
+  schedule:
+    - cron: '0 14 * * 1'
+  workflow_dispatch:
+
+jobs:
+  review:
+    name: Claude MD Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACKER_ISSUE_NUMBER: '72'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Python deps (stdlib only; urllib + json suffice)
+        run: python3 -c "import urllib.request, json, sys; print('python', sys.version.split()[0])"
+
+      - name: Run claude_md_review.py
+        id: review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MD_PATH: CLAUDE.md
+          MODEL: claude-sonnet-4-6
+          RESTRUCTURE_THRESHOLD: '8'
+          OUTPUT_FILE: review_comment.md
+        run: python3 .github/scripts/claude_md_review.py
+
+      - name: Post review comment to tracker Issue
+        if: always() && steps.review.outcome == 'success'
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          REPO: ${{ github.repository }}
+          GITEA_HOST: https://git.thompsonfams.com
+        run: |
+          if [ ! -f review_comment.md ]; then
+            echo "No review_comment.md — nothing to post"
+            exit 0
+          fi
+          PAYLOAD=$(python3 -c "
+          import json
+          body = open('review_comment.md').read()
+          print(json.dumps({'body': body}))
+          ")
+          curl -sS -f -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${GITEA_HOST}/api/v1/repos/${REPO}/issues/${TRACKER_ISSUE_NUMBER}/comments" \
+            -d "${PAYLOAD}" > /dev/null
+          echo "Posted review to ${REPO}#${TRACKER_ISSUE_NUMBER}"
+
+      - name: Summarize result
+        if: always()
+        run: |
+          SCORE="${{ steps.review.outputs.overall_score }}"
+          BELOW="${{ steps.review.outputs.below_threshold }}"
+          BYTES="${{ steps.review.outputs.bytes }}"
+          echo "overall_score=${SCORE} below_threshold=${BELOW} bytes=${BYTES}"
