@@ -1,0 +1,76 @@
+# .gitea/workflows/sheet-schema-drift.yml
+# Daily schema drift check — compares KH_SCHEMAS / TAB_MAP against live sheet
+# headers. Ports the sheet-schema-drift SKILL.md routine (Gitea #72, routine
+# 3 of 10). Pure data check — no LLM call. Reads from GAS `?action=runTests`
+# which already exposes the schema_check data via Tbmsmoketest.checkSchemas_().
+#
+# Triggers:
+#   - schedule: 11:30 UTC = 6:30am CDT (matches SKILL.md's "Daily 6:30am")
+#   - workflow_dispatch: manual
+#
+# Secrets required:
+#   GAS_DEPLOY_URL — GAS web app /exec URL (already set on repo)
+#   GITEA_TOKEN    — auto-provided
+#
+# Output destination: tracker Issue #72 on drift; silent on clean.
+
+name: Sheet Schema Drift
+
+on:
+  schedule:
+    - cron: '30 11 * * *'
+  workflow_dispatch:
+
+jobs:
+  drift:
+    name: Sheet Schema Drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      TRACKER_ISSUE_NUMBER: '72'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify Python stdlib
+        run: python3 -c "import urllib.request, json, sys; print('python', sys.version.split()[0])"
+
+      - name: Run sheet_schema_drift.py
+        id: drift
+        env:
+          GAS_DEPLOY_URL: ${{ secrets.GAS_DEPLOY_URL }}
+          OUTPUT_FILE: review_comment.md
+          POST_ON_CLEAN: 'false'
+        run: python3 .github/scripts/sheet_schema_drift.py
+
+      - name: Post report to tracker Issue
+        if: steps.drift.outputs.has_comment == 'true'
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          REPO: ${{ github.repository }}
+          GITEA_HOST: https://git.thompsonfams.com
+        run: |
+          if [ ! -f review_comment.md ]; then
+            echo "No review_comment.md — nothing to post"
+            exit 0
+          fi
+          PAYLOAD=$(python3 -c "
+          import json
+          body = open('review_comment.md').read()
+          print(json.dumps({'body': body}))
+          ")
+          curl -sS -f -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${GITEA_HOST}/api/v1/repos/${REPO}/issues/${TRACKER_ISSUE_NUMBER}/comments" \
+            -d "${PAYLOAD}" > /dev/null
+          echo "Posted report to ${REPO}#${TRACKER_ISSUE_NUMBER}"
+
+      - name: Summarize result
+        if: always()
+        run: |
+          STATUS="${{ steps.drift.outputs.schema_status }}"
+          DRIFT="${{ steps.drift.outputs.drift_count }}"
+          MISSING="${{ steps.drift.outputs.tabmap_missing }}"
+          POSTED="${{ steps.drift.outputs.has_comment }}"
+          echo "schema_status=${STATUS} drift_count=${DRIFT} tabmap_missing=${MISSING} posted=${POSTED}"
