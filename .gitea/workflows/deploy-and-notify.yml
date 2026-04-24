@@ -63,6 +63,12 @@ jobs:
         env:
           CLASP_CREDENTIALS_JSON: ${{ secrets.CLASP_CREDENTIALS_JSON }}
         run: |
+          # Host-mode Gitea act_runner (uid 111) cannot write to /usr/lib/node_modules.
+          # Install into $HOME/.npm-global and add to PATH. Works on GitHub-hosted
+          # ubuntu-latest too. See Gitea #130.
+          mkdir -p "$HOME/.npm-global"
+          npm config set prefix "$HOME/.npm-global"
+          echo "$HOME/.npm-global/bin" >> "$GITHUB_PATH"
           npm install -g @google/clasp
           printf '%s' "$CLASP_CREDENTIALS_JSON" > "$HOME/.clasprc.json"
           chmod 600 "$HOME/.clasprc.json"
