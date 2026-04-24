@@ -219,7 +219,10 @@ jobs:
             SMOKE_NOTE="Smoke test: PASS."
           fi
           # JSON-encode payload safely via python3 (stdlib).
-          PAYLOAD=$(python3 -c "
+          # Env-var prefix MUST come BEFORE python3 so the script's os.environ['TAG']
+          # call resolves. Putting them after sends them as positional args to sys.argv,
+          # which is the bug Gitea #139 fixed.
+          PAYLOAD=$(TAG="$TAG" SHA_SHORT="$SHA_SHORT" SMOKE_NOTE="$SMOKE_NOTE" python3 -c "
           import json, os
           print(json.dumps({
               'tag_name':          os.environ['TAG'],
@@ -229,7 +232,7 @@ jobs:
               'draft':             False,
               'prerelease':        False,
           }))
-          " TAG="$TAG" SHA_SHORT="$SHA_SHORT" SMOKE_NOTE="$SMOKE_NOTE")
+          ")
           HTTP_POST=$(curl -sS -o release_response.json -w '%{http_code}' \
             -X POST \
             -H "Authorization: token ${GITEA_TOKEN}" \
@@ -314,4 +317,9 @@ jobs:
             --form-string "url=${RUN_URL}" \
             --form-string "url_title=View failed run" \
             --form-string "priority=2" \
+            --form-string "retry=60" \
+            --form-string "expire=3600" \
             https://api.pushover.net/1/messages.json
+          # priority=2 (emergency) requires retry + expire per Pushover API.
+          # 60s retry, 1h expire = standard non-spammy emergency. LT acks within
+          # the hour or alert auto-clears. Fixed Gitea #139.
