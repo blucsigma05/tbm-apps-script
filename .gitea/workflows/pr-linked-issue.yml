@@ -35,6 +35,11 @@ jobs:
               labels = json.loads(labels_raw)
           except Exception:
               labels = []
+          # When a PR has 0 labels, toJSON(...) yields the string "null" which
+          # parses to Python None. `'x' in None` crashes with TypeError.
+          # Coerce None -> [] before membership checks. See Gitea #126.
+          if labels is None:
+              labels = []
 
           # Exempt: skip-issue-link label present
           if 'skip-issue-link' in labels:
