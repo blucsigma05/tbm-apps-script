@@ -30,16 +30,30 @@ jobs:
       # Pin tool versions for deterministic CI — no surprise failures from upstream updates.
       - name: Install actionlint v1.7.7
         run: |
+          # Install into $HOME/.local/bin, not /usr/local/bin.
+          # Self-hosted Gitea act_runner (user act_runner, uid 111) cannot write
+          # to root-owned /usr/local/bin; GitHub-hosted ubuntu-latest can via sudo.
+          # Writing to $HOME/.local/bin works on both. See Gitea #98.
           ACTIONLINT_VERSION="1.7.7"
+          mkdir -p "$HOME/.local/bin"
           curl -sL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
-            | tar xz -C /usr/local/bin actionlint
-          actionlint --version
+            | tar xz -C "$HOME/.local/bin" actionlint
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          "$HOME/.local/bin/actionlint" --version
 
-      - name: Verify shellcheck version
+      - name: Verify shellcheck version (best-effort)
         run: |
-          # Pre-installed on ubuntu-latest runners. Log version for audit trail.
-          SC_VERSION=$(shellcheck --version | grep '^version:' | awk '{print $2}')
-          echo "shellcheck $SC_VERSION"
+          # Pre-installed on real GitHub ubuntu-latest. Self-hosted Gitea act_runner
+          # (host-mode) does NOT pre-install shellcheck. Only warn if absent — the
+          # actual shell-script check step below has its own empty-glob guard, and
+          # the repo currently has zero .github/scripts/*.sh files. See Gitea #98.
+          if command -v shellcheck >/dev/null 2>&1; then
+            SC_VERSION=$(shellcheck --version | grep '^version:' | awk '{print $2}')
+            echo "shellcheck $SC_VERSION"
+          else
+            echo "WARN: shellcheck not installed on this runner — skipping version check"
+            echo "  (ok if no .sh files exist; the lint loop below is a no-op when the glob is empty)"
+          fi
 
       - name: Lint workflow YAML files
         run: |
@@ -55,7 +69,15 @@ jobs:
           if [ -z "$FILES" ]; then
             echo "No workflow YAML files found — skipping."
           else
-            actionlint $FILES
+            # Gitea act_runner still requires actions/upload-artifact@v3(.x) — the v4+
+            # line is GHES-incompatible (see feedback_upload_artifact_v4_gitea memory
+            # rule + Gitea #99 / PR #102). actionlint only knows GitHub-hosted policy
+            # and flags the v3 pin as "too old", exiting non-zero under set -e.
+            # Ignore that one specific false-positive. Any other actionlint error
+            # still fails the job.
+            actionlint \
+              -ignore 'the runner of "actions/upload-artifact@v3(\.[0-9]+\.[0-9]+)?" action is too old to run on GitHub Actions' \
+              $FILES
             echo "PASS: all workflow YAML files are valid"
           fi
 
@@ -148,7 +170,12 @@ jobs:
           # Only runs if either the rubric or the schema was changed (paths filter above).
           if [ -f "ops/play-gate-rubric.v1.json" ] && [ -f "ops/schemas/play-gate-rubric.schema.json" ]; then
             echo "--- rubric schema validation ---"
-            pip install --quiet jsonschema 2>&1 | tail -1
+            # Host-mode Gitea act_runner's system Python is PEP 668 ("externally-managed"),
+            # so plain `pip install jsonschema` fails with a hint-only error. Use --user
+            # scope and --break-system-packages to install under $HOME on this runner and
+            # on any host where the base image has similar protections. GitHub-hosted
+            # ubuntu-latest accepts this syntax too. See Gitea #98.
+            python3 -m pip install --user --quiet --break-system-packages jsonschema
             python3 - <<'PYEOF'
           import json, jsonschema, sys
 
