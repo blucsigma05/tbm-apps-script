@@ -1,0 +1,62 @@
+# .gitea/workflows/monday-drift-sweep.yml
+# Weekly Monday 6am — broad drift sweep. Ports monday-drift-sweep SKILL.md
+# (Gitea #72, routine 9 of 10).
+#
+# Part A ships fully (audit-source.sh)
+# Part B + C deferred pending GAS endpoints tracked in #83
+
+name: Monday Drift Sweep
+
+on:
+  schedule:
+    - cron: '0 11 * * 1'
+  workflow_dispatch:
+
+jobs:
+  sweep:
+    name: Monday Drift Sweep
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TRACKER_ISSUE_NUMBER: '72'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run monday_drift_sweep.py
+        id: sweep
+        env:
+          REPO_ROOT: ${{ github.workspace }}
+          AUDIT_SCRIPT: audit-source.sh
+          OUTPUT_FILE: review_comment.md
+          POST_ON_CLEAN: 'true'
+        run: python3 .github/scripts/monday_drift_sweep.py
+
+      - name: Post report to tracker Issue
+        if: steps.sweep.outputs.has_comment == 'true'
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }}
+          REPO: ${{ github.repository }}
+          GITEA_HOST: https://git.thompsonfams.com
+        run: |
+          PAYLOAD=$(python3 -c "
+          import json
+          body = open('review_comment.md').read()
+          print(json.dumps({'body': body}))
+          ")
+          curl -sS -f -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${GITEA_HOST}/api/v1/repos/${REPO}/issues/${TRACKER_ISSUE_NUMBER}/comments" \
+            -d "${PAYLOAD}" > /dev/null
+          echo "Posted to ${REPO}#${TRACKER_ISSUE_NUMBER}"
+
+      - name: Summarize
+        if: always()
+        run: |
+          F="${{ steps.sweep.outputs.audit_fail }}"
+          W="${{ steps.sweep.outputs.audit_warn }}"
+          POSTED="${{ steps.sweep.outputs.has_comment }}"
+          echo "audit_fail=${F} audit_warn=${W} posted=${POSTED}"
