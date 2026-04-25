@@ -9,7 +9,7 @@ You are the Play-Gate evaluator. You produce exactly one machine-readable verdic
 
 ## Inputs
 
-- **Route slug** — JJ routes: `/sparkle`, `/sparkle-free`, `/daily-adventures`, `/sparkle-kingdom`. Buggsy routes: `/homework`, `/reading`, `/writing`, `/wolfkid`, `/facts`, `/investigation`, `/comic-studio`, `/daily-missions`, `/wolfdome`, `/power-scan`, `/baseline`.
+- **Route slug** — JJ routes: `/sparkle`, `/sparkle-free`, `/daily-adventures`, `/sparkle-kingdom`. Buggsy routes: `/homework`, `/reading`, `/writing`, `/wolfkid`, `/facts`, `/investigation`, `/comic-studio`, `/daily-missions`, `/wolfdome`, `/power-scan`, `/baseline`. **QA-isolated mirrors:** prefix any of the above with `/qa/` (e.g. `/qa/buggsy`, `/qa/homework`, `/qa/sparkle`) to run against the QA workbook instead of prod — see § QA mode below.
 - **Rubric** — `ops/play-gate-rubric.v1.json` (authoritative criterion list + thresholds)
 - **Profiles** — `ops/play-gate-profiles.json` (canonical device/viewport/voice/theme; all consumers read from this)
 - **Surface map** — `ops/surface-map.md`
@@ -20,7 +20,22 @@ You are the Play-Gate evaluator. You produce exactly one machine-readable verdic
 ```
 node scripts/play-gate.js --route /sparkle --child jj --mode fixture
 node scripts/play-gate.js --route /homework --child buggsy --mode fixture
+
+# QA mode — real GAS render, isolated workbook
+PLAY_GATE_BASE_URL=https://thompsonfams.com \
+PLAY_GATE_QA_PIN=<pin> \
+  node scripts/play-gate.js --route /qa/buggsy --child buggsy --mode fixture
 ```
+
+## QA mode (recommended for non-theatre runs)
+
+Routes prefixed `/qa/*` are PIN-gated (`tbm_qa` cookie, 4h, set by `POST /qa/api/verify-pin` per `cloudflare-worker.js:708-773`). The spec requires `PLAY_GATE_QA_PIN` env var when ROUTE starts with `/qa/`; if unset or PIN-verify fails, the spec throws rather than producing a theatre `do-not-ship` verdict from a 302-to-Front-Door.
+
+QA env benefits over prod-direct runs:
+- Same rendered HTML pipeline (real GAS, scriptlets resolved server-side) — fixes the file:// `<?!= ?>` problem
+- Separate workbook via per-request SSID override — measurements that trigger writes don't touch prod KH_ tables
+- Deterministic state via `qaLoadScenarioSafe('fresh-morning')`, clock override via `qaSetClockSafe('<iso>')`, rollback via `qaSnapshotSafe`
+- Finance surfaces (`/qa/pulse`, `/qa/vein`) are explicitly denied — finance only ever runs in prod by design
 
 The CLI spawns Playwright against `tests/tbm/play-gate/play-gate.spec.js`, which:
 1. Resolves device viewport from `ops/play-gate-profiles.json:routeViewports[<route>]`

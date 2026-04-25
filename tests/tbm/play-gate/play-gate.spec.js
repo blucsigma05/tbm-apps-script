@@ -111,6 +111,23 @@ test('play-gate: ' + ROUTE + ' (' + CHILD + ', ' + MODE + ')', async function({ 
     if (msg.type() === 'error') consoleErrors.push(msg.text());
   });
 
+  // QA PIN auth prelude — required when ROUTE is /qa/* (cookie-gated per
+  // cloudflare-worker.js handleVerifyPin). Without this the nav lands on the
+  // Front Door 302 → produces a do-not-ship verdict that reflects auth, not
+  // the surface. Theatre fail; refuse it. PIN read from PLAY_GATE_QA_PIN env.
+  if (ROUTE.indexOf('/qa/') === 0) {
+    var qaPin = process.env.PLAY_GATE_QA_PIN || '';
+    if (!qaPin) {
+      throw new Error('play-gate: route ' + ROUTE + ' is QA-gated but PLAY_GATE_QA_PIN env var is not set');
+    }
+    var verifyResp = await page.request.post(BASE_URL + '/qa/api/verify-pin', {
+      data: { pin: qaPin, returnTo: ROUTE }
+    });
+    if (verifyResp.status() !== 200) {
+      throw new Error('play-gate: QA PIN verify failed (HTTP ' + verifyResp.status() + ') — refusing theatre fallback');
+    }
+  }
+
   // Navigate (BASE_URL is the local http-server of the repo root; the route
   // resolves via Cloudflare-worker-equivalent routing on the dev server, or
   // directly to the HTML file for static preview).
