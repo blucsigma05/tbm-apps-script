@@ -1,12 +1,12 @@
 // Version history tracked in Notion deploy page. Do not add version comments here.
 // ════════════════════════════════════════════════════════════════════
-// AlertEngine.gs v12 — Push Notifications via Pushover API
+// AlertEngine.gs v13 — Push Notifications via Pushover API
 // WRITES TO: (Pushover API only — no sheet writes)
 // READS FROM: 💻🧮 Helpers (for config)
 // Replaces dead AT&T email-to-SMS gateway (killed June 17, 2025)
 // ════════════════════════════════════════════════════════════════════
 
-function getAlertEngineVersion() { return 12; }
+function getAlertEngineVersion() { return 13; }
 
 // v4: openById migration — trigger-safe spreadsheet accessor
 var _aeSS = null;
@@ -399,17 +399,17 @@ function removeAlertTriggers() {
 // ════════════════════════════════════════════════════════════════════
 
 function testPushoverLT() {
-  var ok = sendPush_('TBM Test', 'Pushover is working — ' + new Date().toLocaleTimeString(), 'LT', 0);
+  var ok = sendPush_('TBM Test', 'Pushover is working — ' + new Date().toLocaleTimeString(), 'LT', PUSHOVER_PRIORITY.CHORE_APPROVAL);
   Logger.log('Test push to LT: ' + (ok ? 'SUCCESS' : 'FAILED'));
 }
 
 function testPushoverJT() {
-  var ok = sendPush_('TBM Test', 'Pushover is working — ' + new Date().toLocaleTimeString(), 'JT', 0);
+  var ok = sendPush_('TBM Test', 'Pushover is working — ' + new Date().toLocaleTimeString(), 'JT', PUSHOVER_PRIORITY.CHORE_APPROVAL);
   Logger.log('Test push to JT: ' + (ok ? 'SUCCESS' : 'FAILED'));
 }
 
 function testPushoverBoth() {
-  var ok = sendPush_('TBM Test', 'Pushover is working — ' + new Date().toLocaleTimeString(), 'BOTH', 0);
+  var ok = sendPush_('TBM Test', 'Pushover is working — ' + new Date().toLocaleTimeString(), 'BOTH', PUSHOVER_PRIORITY.CHORE_APPROVAL);
   Logger.log('Test push to BOTH: ' + (ok ? 'SUCCESS' : 'FAILED'));
 }
 
@@ -746,5 +746,5 @@ function checkTillerFreshness_() {
 }
 
 // ════════════════════════════════════════════════════════════════════
-// END OF FILE — AlertEngine v12
+// END OF FILE — AlertEngine v13
 // ════════════════════════════════════════════════════════════════════
