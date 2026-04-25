@@ -20,6 +20,15 @@ This file exists because the AGENTS.md convention is the ecosystem-standard entr
 
 **This list is a minimal subset for ecosystem tools that default-read AGENTS.md.** The full Two-Lane Roles rule set — including re-audit clean-slate, continuity, auditor's pass, and mandatory builder pre-audit on gate/test PRs — lives in [CLAUDE.md § Two-Lane Roles](CLAUDE.md). If you are an agent making a gate/test PR decision, read CLAUDE.md, not this section.
 
+### Multi-Model Build Loop (mirror from `ops/operating-memos/2026-04-25-multi-model-build-loop-and-artifact-discipline.md`)
+
+- Education design work uses **one canonical spec for JJ + Buggsy**, not per-surface carve-outs. (Tracked: Gitea #157 spec, #158 demotion, #159 coherence audits.)
+- **Multi-model work shares artifacts, not implicit context.** Builder and auditor exchange paths, verdicts, screenshots, spec sections, file refs — not chat summaries.
+- **One bounded work packet per PR or audit step**: one builder, one auditor, one evidence trail per packet.
+- **Stale docs lose authority** until corrected or demoted. A doc carrying a stale exemption (e.g. "already polished") cannot be cited as planning truth until fixed.
+
+This block is duplicated in [CLAUDE.md § Two-Lane Roles → Multi-Model Build Loop](CLAUDE.md). When this rule changes, update **both** files. Per `ops/WORKFLOW.md:332`, the rule lives in both entrypoints precisely because pointer-only inheritance is not reliable.
+
 See [ops/WORKFLOW.md § Two-Lane Handoff Rules](ops/WORKFLOW.md) for the command contract, trigger phrases, audit scope rules, and full examples. Visual companion: [ops/diagrams/two-lane-model.md](ops/diagrams/two-lane-model.md).
 
 ## Where to find things
