@@ -37,7 +37,7 @@ TBM will treat "shared context" as a discipline problem:
 - agents may not rely on shared vibes, implied memory, or unlogged chat conclusions
 
 ## Canonical Rule Location
-This memo is the canonical record for this operating rule set until the hard-rule subset is mirrored into `ops/WORKFLOW.md` and, if needed, short mirrors in `AGENTS.md` or `CLAUDE.md`.
+This memo is the canonical record for the operating rule set with full context. The hard-rule subset is mirrored into `CLAUDE.md § Two-Lane Roles` in this PR. `AGENTS.md` already declares (line 21) that the full Two-Lane Roles rule set lives in CLAUDE.md, so the existing AGENTS.md pointer covers the mirror requirement of `ops/WORKFLOW.md:332` without duplication. CLAUDE.md bloat against the HYG-04 baseline is tracked separately as Gitea #160 (slim pass).
 
 ## What Stays Flexible
 - which model plays the builder or auditor role on a given packet, as long as the roles stay separate
@@ -80,10 +80,12 @@ It rejects the failure mode:
 **Done**
 - Patch Play-Gate QA-route normalization and add regression coverage before relying on `/qa/*` wide sweeps. **Landed in PR #151 (`f787769`, 2026-04-25):** `tests/tbm/play-gate/measurements/_helpers.js` adds `normalizeRoute()` that strips `/qa/` and falls through to the prod-route lookup; `tests/ci/play-gate-regression.test.js` adds 10 D7 cases covering /qa/sparkle parity, /qa/sparkle-kingdom + /qa/homework cross-kid resolution, /qa/pulse + /qa/vein finance denial-by-absence, /qa/<unmapped> still null, prod routes unchanged, and `normalizeRoute` exported.
 
-**Open**
-- Create `specs/education-visual-system.md` as the canonical cross-kid education design-system spec.
-- Demote `specs/sparkle-visual-system.md` to a superseded pointer once the new spec exists.
-- Run coherence audits for JJ and Buggsy against the new artifact discipline.
+**Tracked as Issues** (per `ops/WORKFLOW.md:331` — memo work is not memo-body backlog):
+- Gitea #157 — Create `specs/education-visual-system.md` as canonical cross-kid education design-system spec
+- Gitea #158 — Demote `specs/sparkle-visual-system.md` to superseded pointer (blocked by #157)
+- Gitea #159 — Run JJ + Buggsy coherence audits against new artifact discipline (blocked by #157)
+
+These are also added as rows 62d / 62e / 62f in `ops/master-stabilization-backlog.md` so the routine backlog scrub catches them if the Issue queue gets buried.
 
 ## Source Conversation
 - LT and Codex conversation on 2026-04-25 about learning from multi-model failure patterns and turning that into TBM operating rules for education work.
@@ -91,7 +93,7 @@ It rejects the failure mode:
 ## Repo Rules To Mirror
 - Education design work uses one canonical spec for JJ + Buggsy, not per-surface carve-outs.
 - Multi-model work shares artifacts, not implicit context.
-- One bounded work packet at a time: one builder, one auditor, one evidence trail.
+- One bounded work packet per PR or audit step: one builder, one auditor, one evidence trail per packet.
 - Stale docs lose authority until corrected or demoted.
 
 ## Notes

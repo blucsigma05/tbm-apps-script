@@ -178,6 +178,13 @@ Common skills: `thompson-engineer` (GAS architecture), `game-design` (game UI), 
 - **Auditor's pass is real**: reusable prompts, plans, and templates get a rubric-based self-audit plus revision before handoff. No unsupported theater scores.
 - **Handoff comments are optional**: use `<!-- tbm-handoff -->` only when a PR changes hands mid-flight or pauses with a clear next action. At most one active comment per PR, edited in place.
 
+### Multi-Model Build Loop (mirror from `ops/operating-memos/2026-04-25-multi-model-build-loop-and-artifact-discipline.md`)
+
+- Education design work uses **one canonical spec for JJ + Buggsy**, not per-surface carve-outs. (Tracked: Gitea #157 spec creation, #158 sparkle-visual-system demotion, #159 coherence audits.)
+- **Multi-model work shares artifacts, not implicit context.** Builder and auditor exchange paths, verdicts, screenshots, spec sections, and file refs — not chat summaries.
+- **One bounded work packet per PR or audit step**: one builder, one auditor, one evidence trail per packet.
+- **Stale docs lose authority** until corrected or demoted. A doc carrying a stale exemption (e.g. "already polished") cannot be cited as planning truth until fixed.
+
 See `ops/WORKFLOW.md § Two-Lane Handoff Rules` for the command contract, trigger phrases, and full examples.
 
 ---
