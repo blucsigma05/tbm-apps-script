@@ -37,7 +37,11 @@ TBM will treat "shared context" as a discipline problem:
 - agents may not rely on shared vibes, implied memory, or unlogged chat conclusions
 
 ## Canonical Rule Location
-This memo is the canonical record for the operating rule set with full context. The hard-rule subset is mirrored into `CLAUDE.md § Two-Lane Roles` in this PR. `AGENTS.md` already declares (line 21) that the full Two-Lane Roles rule set lives in CLAUDE.md, so the existing AGENTS.md pointer covers the mirror requirement of `ops/WORKFLOW.md:332` without duplication. CLAUDE.md bloat against the HYG-04 baseline is tracked separately as Gitea #160 (slim pass).
+This memo is the canonical record for the operating rule set with full context. The hard-rule subset is mirrored into **both** entrypoints in this PR:
+- `CLAUDE.md § Two-Lane Roles → Multi-Model Build Loop`
+- `AGENTS.md § Two-Lane Roles → Multi-Model Build Loop`
+
+Pointer-only inheritance ("AGENTS.md says go read CLAUDE.md, so the rule is implicitly there too") is not reliable — the same drift `ops/WORKFLOW.md:331` rejects for memo follow-ups also applies to entrypoint rules. `ops/WORKFLOW.md:332` says **both** files, deliberately. CLAUDE.md bloat against the HYG-04 baseline is tracked separately as Gitea #160 (slim pass).
 
 ## What Stays Flexible
 - which model plays the builder or auditor role on a given packet, as long as the roles stay separate
