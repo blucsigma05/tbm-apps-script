@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="tbm-module" content="the-pulse">
-<meta name="tbm-version" content="v65">
-<title>The Pulse v65 — Thompson Household</title>
+<meta name="tbm-version" content="v66">
+<title>The Pulse v66 — Thompson Household</title>
 <!-- Version history tracked in Notion deploy page. Do not add version comments here. -->
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -509,6 +509,7 @@ input[type=range]::-webkit-slider-thumb{width:36px;height:36px}
 <div id="tbm-nav" style="position:sticky;top:0;z-index:1000;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;padding:6px 12px;background:rgba(183,110,121,0.95);border-bottom:1px solid rgba(255,255,255,0.15);font-family:'DM Sans',sans-serif;font-size:11px;letter-spacing:0.4px;">
 <a id="nav-pulse" onclick="tbmNav('pulse')" style="padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.6);transition:all 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.9)';this.style.background='rgba(255,255,255,0.1)'" onmouseout="if(!this.classList.contains('tbm-active')){this.style.color='rgba(255,255,255,0.6)';this.style.background='transparent'}"><span style="display:inline-flex;align-items:center;gap:6px;"><img src="https://i.ibb.co/FLDTT6QH/1774020751171.png" alt="Thompson crest" style="width:24px;height:24px;object-fit:contain;vertical-align:middle;margin-right:6px;opacity:0.85;border-radius:50%" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'"><span class="pulse-crest-chip" style="display:none" aria-hidden="true"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.5 18.5 5v6c0 4.4-2.7 8.1-6.5 10-3.8-1.9-6.5-5.6-6.5-10V5Z" fill="#1E3A8A" stroke="#C9A84C" stroke-width="1.4"/><path d="M12 7.5v8" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/><path d="M9.4 7.5h5.2" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>The Pulse</span></span></a>
 <a id="nav-vein" onclick="tbmNav('vein')" style="padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.6);transition:all 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.9)';this.style.background='rgba(255,255,255,0.1)'" onmouseout="if(!this.classList.contains('tbm-active')){this.style.color='rgba(255,255,255,0.6)';this.style.background='transparent'}">Command Center</a>
+<a id="nav-codex-skills" onclick="tbmNav('codex-skills')" style="padding:5px 14px;border-radius:6px;cursor:pointer;text-decoration:none;color:rgba(255,255,255,0.6);transition:all 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.9)';this.style.background='rgba(255,255,255,0.1)'" onmouseout="if(!this.classList.contains('tbm-active')){this.style.color='rgba(255,255,255,0.6)';this.style.background='transparent'}">Skill Board</a>
 </div>
 <script>
 function _getParam(n){var m=new RegExp('[?&]'+n+'=([^&]*)').exec(window.location.search);return m?decodeURIComponent(m[1]):null;}
@@ -549,7 +550,7 @@ function tbmNav(p){var suffix=_isPartnerMode?'&jt=1':'';if(_tbmBaseUrl)window.to
 <div id="confidenceRail" style="position:fixed;bottom:8px;left:12px;font-size:11px;color:#94a3b8;z-index:100;"></div>
 
 <script>
-var TBM_VERSION = 'v64';
+var TBM_VERSION = 'v66';
 function closest_(el, sel) { while (el && el !== document) { if ((el.matches || el.msMatchesSelector || el.webkitMatchesSelector || function(){return false;}).call(el, sel)) return el; el = el.parentElement; } return null; }
 var _lastFetchTime = null;
 var _lastGoodSim = null;

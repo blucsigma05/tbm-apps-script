@@ -40,3 +40,9 @@ playwright-report/
 # Claude Code local settings (per-machine, not shared)
 .claude/settings.local.json
 __pycache__/
+
+# Local Codex skill audit artifacts (generated, not shared)
+ops/evidence/codex-skills/dashboard.html
+ops/evidence/codex-skills/latest.md
+ops/evidence/codex-skills/latest.json
+ops/evidence/codex-skills/history/

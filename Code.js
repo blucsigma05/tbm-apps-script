@@ -278,6 +278,7 @@ function doGet(e) {
 function servePage(page, e) {
   var routes = {
     'vein':     { file: 'TheVein',         title: 'The Vein — Thompson Household Command Center' },
+    'codex-skills': { file: 'CodexSkillsDashboard', title: 'Codex Skills — TBM Ops' },
     'pulse':    { file: 'ThePulse',        title: 'The Pulse — Thompson Household' },
     'vault':    { file: 'Vault',          title: 'LT Watch Vault' },
     'kidshub':  { file: 'KidsHub',        title: 'Kids Hub — Ring Quest' },
@@ -424,7 +425,7 @@ function serveData(e) {
     if (action === 'htmlSource') {
       var page = (e.parameter.page || 'pulse').toLowerCase();
       var routes = {
-        'vein': 'TheVein', 'pulse': 'ThePulse', 'vault': 'Vault',
+        'vein': 'TheVein', 'codex-skills': 'CodexSkillsDashboard', 'pulse': 'ThePulse', 'vault': 'Vault',
         'kidshub': 'KidsHub', 'spine': 'TheSpine', 'soul': 'TheSoul',
         'debt': 'ThePulse', 'jt': 'ThePulse', 'weekly': 'ThePulse',
         'parent': 'KidsHub', 'story-library': 'StoryLibrary',
@@ -1380,7 +1381,7 @@ function healthCheck() {
   }
 
   Logger.log('─── HTML Files (2-Surface Architecture) ───');
-  var activeFiles = ['TheVein', 'ThePulse', 'Vault', 'KidsHub', 'TheSpine', 'TheSoul', 'StoryLibrary',
+  var activeFiles = ['TheVein', 'CodexSkillsDashboard', 'ThePulse', 'Vault', 'KidsHub', 'TheSpine', 'TheSoul', 'StoryLibrary',
     'HomeworkModule', 'SparkleLearning', 'fact-sprint', 'reading-module', 'writing-module',
     'wolfkid-power-scan', 'investigation-module', 'daily-missions', 'BaselineDiagnostic',
     'StoryReader', 'ComicStudio', 'ProgressReport', 'WolfkidCER', 'DesignDashboard', 'JJHome'];
@@ -1865,7 +1866,7 @@ function getOpsHealth_() {
 
   // ── 2. SURFACE HEALTH (route existence + backing files) ─────
   var surfaceMap = {
-    pulse: 'ThePulse', vein: 'TheVein', kidshub: 'KidsHub',
+    pulse: 'ThePulse', vein: 'TheVein', 'codex-skills': 'CodexSkillsDashboard', kidshub: 'KidsHub',
     soul: 'TheSoul', spine: 'TheSpine', sparkle: 'SparkleLearning',
     homework: 'HomeworkModule', wolfkid: 'WolfkidCER',
     'daily-missions': 'daily-missions', 'fact-sprint': 'fact-sprint',
