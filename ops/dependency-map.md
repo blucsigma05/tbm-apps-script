@@ -1,6 +1,135 @@
 # TBM Dependency / Blast Radius Map — CP-2
 <!-- control-plane v1 — sourced from Code.js v90, DataEngine.js v96, Kidshub.js v71, cloudflare-worker.js v3.6, CLAUDE.md File Map -->
 <!-- update this file in every PR that changes a component's feeds, dependencies, or shared state (Work Doctrine rule 14) -->
+<!-- DIAGRAM SYNC RULE: the Mermaid flowchart below and the tables below it must be updated together — any PR that changes a Feeds/Depends-On relationship must update both (Work Doctrine rule 14) -->
+
+## Blast Radius Flowchart
+
+```mermaid
+flowchart LR
+  classDef vhigh fill:#dc2626,color:#fff,stroke:#991b1b,font-weight:bold
+  classDef high  fill:#ea580c,color:#fff,stroke:#9a3412
+  classDef med   fill:#d97706,color:#000,stroke:#92400e
+  classDef low   fill:#16a34a,color:#fff,stroke:#166534
+  classDef leaf  fill:#475569,color:#fff,stroke:#334155,stroke-dasharray:4 2
+
+  subgraph FOUND["⚓ Foundation"]
+    TBMCfg["TBMConfig.gs\nSSID global — all workbook access"]
+    TABMAP["TAB_MAP\nglobal var in DataEngine.js"]
+  end
+
+  subgraph INFRA["🌐 Infra / Proxy"]
+    CFW["cloudflare-worker.js v3.6\nfront door · PIN gate · QA isolation"]
+    SHIM["google.script.run shim\ninjected by CF Worker into every page"]
+  end
+
+  subgraph HARD["🛡 Hardening & Alerts"]
+    GASHard["GASHardening.js\nlogError_ · withMonitor_ · getDeployedVersions"]
+    Alert["AlertEngine.js\nPushover · PUSHOVER_PRIORITY constants"]
+  end
+
+  subgraph DATA["📊 Data & Computation"]
+    DE["DataEngine.js v96\nfinance KPIs · all getData*"]
+    Cascade["CascadeEngine.js\ndebt cascade simulation"]
+    Monitor["MonitorEngine.js\nMER gates · stampCloseMonth"]
+  end
+
+  subgraph BIZ["⚙️ Business Logic"]
+    Code["Code.js v90\nrouter · safe wrappers · cache layer"]
+    KH["Kidshub.js v71\nchore · reward · education backend"]
+    CE["ContentEngine.js\nGemini grading · content gen"]
+    SF["StoryFactory.js\nkid story generation"]
+    QAOp["QAOperatorSafe.js\nQA signed-token · /qa/* isolation"]
+    Cal["CalendarSync.js\nGoogle Calendar sync"]
+  end
+
+  subgraph SURF["📱 Consumer Surfaces"]
+    FinSurf([ThePulse · TheVein · TheSpine · TheSoul · Vault])
+    KidSurf([KidsHub · HomeworkModule · SparkleLearning\n+ 14 education surfaces])
+    StorySurf([StoryLibrary · StoryReader · ComicStudio])
+    QAR([/qa/* routes])
+  end
+
+  %% TBMConfig → all .gs files (SSID is global)
+  TBMCfg --> Code
+  TBMCfg --> DE
+  TBMCfg --> KH
+  TBMCfg --> CE
+  TBMCfg --> GASHard
+  TBMCfg --> Alert
+  TBMCfg --> Cascade
+  TBMCfg --> Monitor
+  TBMCfg --> SF
+  TBMCfg --> QAOp
+  TBMCfg --> Cal
+
+  %% TAB_MAP → all .gs files that call getSheetByName()
+  TABMAP --> Code
+  TABMAP --> DE
+  TABMAP --> KH
+  TABMAP --> CE
+  TABMAP --> GASHard
+  TABMAP --> Cascade
+  TABMAP --> Monitor
+  TABMAP --> SF
+  TABMAP --> QAOp
+
+  %% CF Worker → shim + all surfaces
+  CFW --> SHIM
+  CFW --> Code
+  CFW --> FinSurf
+  CFW --> KidSurf
+  CFW --> StorySurf
+  CFW --> QAR
+
+  %% Shim → all HTML surfaces
+  SHIM --> FinSurf
+  SHIM --> KidSurf
+  SHIM --> StorySurf
+
+  %% GASHardening → all .gs callers
+  GASHard --> Code
+  GASHard --> KH
+  GASHard --> CE
+  GASHard --> Alert
+  GASHard --> Cascade
+  GASHard --> Monitor
+  GASHard --> SF
+  GASHard --> QAOp
+  GASHard --> Cal
+
+  %% AlertEngine → MonitorEngine (sendPush_ called by Monitor)
+  Alert --> Monitor
+
+  %% Data layer
+  DE --> FinSurf
+  DE --> Cascade
+  Cascade --> FinSurf
+  Monitor --> FinSurf
+
+  %% Business logic
+  CE --> KH
+  Code --> FinSurf
+  Code --> KidSurf
+  Code --> StorySurf
+  KH --> KidSurf
+  KH --> StorySurf
+  SF --> StorySurf
+  Cal --> FinSurf
+  QAOp --> QAR
+
+  class CFW,TBMCfg,TABMAP,Code vhigh
+  class DE,KH,CE,Monitor,SHIM high
+  class GASHard,Alert,Cascade,QAOp med
+  class SF,Cal low
+  class FinSurf,KidSurf,StorySurf,QAR leaf
+```
+
+**Blast radius key:** 🔴 Very High — 🟠 High — 🟡 Medium — 🟢 Low — ⬛ Consumer surface (leaf)
+
+> **How to read this:** Find your component, follow the arrows to see what breaks downstream. Red/orange nodes = verify all downstream routes after any change.
+
+---
 
 ## Server-Side Components
 
