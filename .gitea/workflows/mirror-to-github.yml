@@ -17,11 +17,14 @@
 # the push originates from the Gitea runner.
 #
 # Secrets required (Settings → Actions → Secrets):
-#   GITHUB_MIRROR_PAT — GitHub fine-grained PAT scoped to `contents:write` on
+#   GH_MIRROR_PAT — GitHub fine-grained PAT scoped to `contents:write` on
 #     blucsigma05/tbm-apps-script only. LT-provisioned. Separate from any
 #     build-time PAT, scoped only for mirror push. If the secret is unset, the
 #     job fails loudly (see "Configure GitHub remote" step) rather than
 #     silently skipping.
+#     Naming note: Gitea Actions blocks secret names that start with `GITHUB_`
+#     or `GITEA_` (reserved prefixes). The `GH_` prefix is the equivalent
+#     unambiguous shorthand.
 #
 # One-time catchup (50-commit gap since 2026-04-19): run
 # `scripts/one-time-github-catchup.sh` locally once on LT's workstation. After
@@ -55,17 +58,17 @@ jobs:
           # Shallow clone would break the ancestry check on GitHub's side.
           fetch-depth: 0
           # Do NOT persist Gitea credentials in .git/config — we set up our own
-          # GitHub-scoped remote in the next step using GITHUB_MIRROR_PAT.
+          # GitHub-scoped remote in the next step using GH_MIRROR_PAT.
           persist-credentials: false
 
       - name: Configure GitHub remote (auth via PAT)
         env:
-          GH_PAT: ${{ secrets.GITHUB_MIRROR_PAT }}
+          GH_PAT: ${{ secrets.GH_MIRROR_PAT }}
         run: |
           set -euo pipefail
 
           if [ -z "${GH_PAT:-}" ]; then
-            echo "::error::GITHUB_MIRROR_PAT secret is not set."
+            echo "::error::GH_MIRROR_PAT secret is not set."
             echo "LT must provision it at Settings → Actions → Secrets."
             echo "Scope: contents:write on blucsigma05/tbm-apps-script (fine-grained)."
             exit 1
