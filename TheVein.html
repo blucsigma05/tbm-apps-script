@@ -2414,6 +2414,25 @@ function renderTxFeed(data) {
     html += '<td style="padding:3px 6px;white-space:nowrap;">' + (badges || '<span style="color:var(--text-dim);font-size:9px;">\u2014</span>') + '</td>';
     html += '<td style="padding:3px 6px;text-align:center;"><button id="txBtn_' + tx.row + '" onclick="toggleTxReview(' + tx.row + ')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:0 2px;color:' + (reviewed ? '#22c55e' : 'var(--text-muted)') + ';" title="' + (reviewed ? 'Mark unreviewed' : 'Mark reviewed') + '">' + (reviewed ? '\u2713' : '\u25cb') + '</button></td>';
     html += '</tr>';
+
+    // Amazon item detail (#321) — render as a sub-row when matchAmazonToTiller
+    // has joined this Tiller transaction back to Amazon_Detail entries.
+    if (tx.amazonItems && tx.amazonItems.length > 0) {
+      var itemsHtml = '';
+      for (var ai = 0; ai < tx.amazonItems.length; ai++) {
+        var it = tx.amazonItems[ai];
+        var qtyPart = it.qty > 1 ? (it.qty + '\u00d7 ') : '';
+        itemsHtml += '<div style="padding:1px 0;color:var(--text-muted);">' +
+          '<span style="color:var(--text-dim);">\u2937 </span>' +
+          escapeHtml(qtyPart) + escapeHtml(it.desc) +
+          '<span style="float:right;color:var(--text-dim);">$' + fmt(it.price) + '</span>' +
+          '</div>';
+      }
+      html += '<tr' + (reviewed ? ' style="opacity:0.55;"' : '') + '>';
+      html += '<td></td>';
+      html += '<td colspan="6" style="padding:2px 6px 6px 18px;font-size:10px;background:rgba(99,102,241,0.04);">' + itemsHtml + '</td>';
+      html += '</tr>';
+    }
   }
   html += '</table>';
 

@@ -1,10 +1,10 @@
 // ════════════════════════════════════════════════════════════════════
-// DATA ENGINE v96 — Dynamic KPI Computation from Raw Tiller Data
+// DATA ENGINE v97 — Dynamic KPI Computation from Raw Tiller Data
 // WRITES TO: 💻🧮 Dashboard_Export, 💻🧮 Debt_Export, 💻🧮 DebtModel, 💻🧮 Cascade Proof, 💻🧮 Cascade Month-by-Month, 💻🧮 Cascade Payoff Schedule, 📋 Board_Config
 // READS FROM: 🔒 Transactions, 🔒 Balance History, 🔒 Categories, 💻🧮 Budget_Data, 💻🧮 Helpers, 💻🧮 DebtModel, 💻🧮 BankRec, 💻🧮 Budget_Rules, 💻 MealPlan
 // ════════════════════════════════════════════════════════════════════
 
-function getDataEngineVersion() { return 96; }
+function getDataEngineVersion() { return 97; }
 
 // ════════════════════════════════════════════════════════════════════
 //
@@ -3542,6 +3542,37 @@ function de_buildSoulMoment_(boardPayload, kidsPayload) {
  * @param {number} [days=5] Number of days to look back.
  * @returns {Object} { transactions: [], summary: {} }
  */
+/**
+ * Build a map of tillerRow → [items] from the Amazon_Detail tab. Each item is
+ * { qty, desc, price }. Used to enrich the recent-tx feed (#321 — Amazon
+ * charges show item detail when matched to a Tiller transaction).
+ *
+ * Amazon_Detail schema (matchAmazonToTiller in Utility.js):
+ *   col A=OrderID, B=Date, C=Qty, D=ItemDesc(≤60), E=Price/unit,
+ *   col H=tillerRow (write target after match), I=neg amount, J=category.
+ *
+ * Returns {} if the tab is missing — caller treats absence as "no enrichment."
+ */
+function _buildAmazonItemMap_() {
+  var ss = SpreadsheetApp.openById(SSID);
+  var sheet = ss.getSheetByName('Amazon_Detail');
+  if (!sheet) return {};
+  var data = sheet.getDataRange().getValues();
+  if (!data || data.length < 2) return {};
+  var map = {};
+  for (var i = 1; i < data.length; i++) {
+    var tillerRow = parseInt(data[i][7], 10);
+    if (!tillerRow) continue;
+    if (!map[tillerRow]) map[tillerRow] = [];
+    map[tillerRow].push({
+      qty: parseInt(data[i][2], 10) || 1,
+      desc: String(data[i][3] || ''),
+      price: Math.round((parseFloat(data[i][4]) || 0) * 100) / 100
+    });
+  }
+  return map;
+}
+
 function getRecentTransactions_(days) {
   days = days || 5;
   var ss = SpreadsheetApp.openById(SSID);
@@ -3554,6 +3585,9 @@ function getRecentTransactions_(days) {
   var tz = Session.getScriptTimeZone();
   var now = new Date();
   var cutoff = new Date(now.getTime() - (days * 86400000));
+
+  // Amazon enrichment map (#321) — best-effort; absence is silent.
+  var amazonItems = _buildAmazonItemMap_();
 
   var txList = [];
   var totalIn = 0;
@@ -3571,16 +3605,21 @@ function getRecentTransactions_(days) {
     var cat = String(data[i][3] || 'Uncategorized').trim();
     var desc = String(data[i][2] || '').trim();
     var acct = String(data[i][5] || '').trim();
+    var rowNum = i + 1;
 
-    txList.push({
+    var entry = {
       date: Utilities.formatDate(txDate, tz, 'yyyy-MM-dd'),
       dateDisplay: Utilities.formatDate(txDate, tz, 'EEE MMM d'),
       description: desc.length > 80 ? desc.substring(0, 77) + '...' : desc,
       amount: amt,
       category: cat,
       account: acct,
-      row: i + 1
-    });
+      row: rowNum
+    };
+    if (amazonItems[rowNum] && amazonItems[rowNum].length > 0) {
+      entry.amazonItems = amazonItems[rowNum];
+    }
+    txList.push(entry);
 
     if (amt > 0) totalIn += amt;
     if (amt < 0) totalOut += Math.abs(amt);
@@ -3859,4 +3898,4 @@ function getCloseProofSafe(monthLabel) {
   });
 }
 
-// END OF FILE — DataEngine v96
+// END OF FILE — DataEngine v97
