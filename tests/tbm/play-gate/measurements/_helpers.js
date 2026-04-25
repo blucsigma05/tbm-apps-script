@@ -40,11 +40,25 @@ var ROUTE_TO_HTML = {
   '/baseline': 'BaselineDiagnostic.html'
 };
 
+// Normalizes a play-gate route for ROUTE_TO_HTML lookup. /qa/<slug> mirrors the
+// prod route; the QA workbook + per-request token isolation lives in the worker
+// (cloudflare-worker.js) and GAS layer, not here. The HTML body served to the
+// browser is the same either way, so the static-source resolver returns the
+// same file for both. Finance surfaces (/pulse, /vein) are excluded by absence:
+// they are not in ROUTE_TO_HTML, so /qa/pulse normalizes to /pulse which is
+// still unmapped → null. No separate finance guard needed.
+function normalizeRoute(route) {
+  if (typeof route !== 'string') return route;
+  if (route.indexOf('/qa/') === 0) return '/' + route.slice(4);
+  return route;
+}
+
 // Returns { file, src, abs } for the route, or null if route is unmapped or
 // the file does not exist on disk. Measurements use this to short-circuit
 // to `skip` cleanly.
 function loadSurface(ctx) {
-  var file = ROUTE_TO_HTML[ctx.route];
+  var route = normalizeRoute(ctx.route);
+  var file = ROUTE_TO_HTML[route];
   if (!file) return null;
   var abs = path.join(ctx.repoRoot, file);
   if (!fs.existsSync(abs)) return null;
@@ -83,6 +97,7 @@ function maxInstructionWords(src, markers) {
 
 module.exports = {
   ROUTE_TO_HTML: ROUTE_TO_HTML,
+  normalizeRoute: normalizeRoute,
   loadSurface: loadSurface,
   getCanonicalVoice: getCanonicalVoice,
   maxInstructionWords: maxInstructionWords

@@ -13,7 +13,8 @@
  *   Determinism    — canonical-verdict.js in diff mode yields MATCH on two copies of one verdict
  *
  * D2 (profile sync) and D6 (fixture imports) are Python CI scripts and run separately.
- * D4 (rubric measurement_method append-only) and D7 (post-PR-2 inline map) are PR-2 scope.
+ * D4 (rubric measurement_method append-only) is PR-2 scope.
+ * D7 (route resolver normalizes /qa/<slug>) is covered by testD7() below.
  *
  * Usage:
  *   node tests/ci/play-gate-regression.test.js
@@ -290,6 +291,66 @@ function testDeterminism() {
   [a, b, c, d].forEach(function(p) { try { fs.unlinkSync(p); } catch (e) {} });
 }
 
+// ── D7 ───────────────────────────────────────────────────────────────────────
+// /qa/<slug> route normalization in measurements/_helpers.js loadSurface().
+// The QA mirror (per surface-map.md) renders the same HTML as the prod route;
+// per-request workbook isolation lives in the worker + GAS layer, not in the
+// static-source resolver. So loadSurface({ route: '/qa/sparkle' }) must return
+// the same { file } as loadSurface({ route: '/sparkle' }). Finance surfaces
+// (/pulse, /vein) are denied by absence — they are not in ROUTE_TO_HTML, so
+// /qa/pulse normalizes to /pulse which is still unmapped → null.
+function testD7() {
+  process.stdout.write('[D7] /qa/<slug> route normalization in loadSurface\n');
+
+  var helpers = require(path.join(REPO_ROOT, 'tests', 'tbm', 'play-gate', 'measurements', '_helpers.js'));
+
+  // /qa/sparkle parity with /sparkle
+  var qaSparkle = helpers.loadSurface({ route: '/qa/sparkle', repoRoot: REPO_ROOT });
+  var prodSparkle = helpers.loadSurface({ route: '/sparkle', repoRoot: REPO_ROOT });
+  if (qaSparkle && prodSparkle && qaSparkle.file === prodSparkle.file) pass('D7a: /qa/sparkle parity with /sparkle');
+  else fail('D7a: /qa/sparkle parity with /sparkle', '/qa/sparkle.file=' + (qaSparkle && qaSparkle.file) + ' /sparkle.file=' + (prodSparkle && prodSparkle.file));
+
+  // /qa/sparkle-kingdom resolves to JJHome.html (non-trivial slug)
+  var qaKingdom = helpers.loadSurface({ route: '/qa/sparkle-kingdom', repoRoot: REPO_ROOT });
+  if (qaKingdom && qaKingdom.file === 'JJHome.html') pass('D7b: /qa/sparkle-kingdom resolves to JJHome.html');
+  else fail('D7b: /qa/sparkle-kingdom resolves to JJHome.html', 'got ' + (qaKingdom && qaKingdom.file));
+
+  // /qa/homework (Buggsy) resolves to HomeworkModule.html — cross-kid scope coverage
+  var qaHomework = helpers.loadSurface({ route: '/qa/homework', repoRoot: REPO_ROOT });
+  if (qaHomework && qaHomework.file === 'HomeworkModule.html') pass('D7c: /qa/homework (Buggsy) resolves to HomeworkModule.html');
+  else fail('D7c: /qa/homework (Buggsy) resolves to HomeworkModule.html', 'got ' + (qaHomework && qaHomework.file));
+
+  // Finance denial-by-absence — /qa/pulse and /qa/vein → null
+  var qaPulse = helpers.loadSurface({ route: '/qa/pulse', repoRoot: REPO_ROOT });
+  if (qaPulse === null) pass('D7d: /qa/pulse denied (finance excluded from ROUTE_TO_HTML)');
+  else fail('D7d: /qa/pulse denied', 'expected null, got ' + JSON.stringify(qaPulse));
+
+  var qaVein = helpers.loadSurface({ route: '/qa/vein', repoRoot: REPO_ROOT });
+  if (qaVein === null) pass('D7e: /qa/vein denied');
+  else fail('D7e: /qa/vein denied', 'expected null, got ' + JSON.stringify(qaVein));
+
+  // Unknown /qa/<garbage> still null (preserves "unmapped → null" semantics)
+  var qaGarbage = helpers.loadSurface({ route: '/qa/nonsense-route-that-does-not-exist', repoRoot: REPO_ROOT });
+  if (qaGarbage === null) pass('D7f: /qa/<unmapped> returns null');
+  else fail('D7f: /qa/<unmapped> returns null', 'expected null, got ' + JSON.stringify(qaGarbage));
+
+  // Prod routes unchanged (no regression on existing callers)
+  var prodKingdom = helpers.loadSurface({ route: '/sparkle-kingdom', repoRoot: REPO_ROOT });
+  if (prodKingdom && prodKingdom.file === 'JJHome.html') pass('D7g: prod /sparkle-kingdom unchanged');
+  else fail('D7g: prod /sparkle-kingdom unchanged', 'got ' + (prodKingdom && prodKingdom.file));
+
+  // normalizeRoute exported (forward-looking — measurements may want to derive canonical route)
+  if (typeof helpers.normalizeRoute === 'function') pass('D7h: normalizeRoute exported');
+  else fail('D7h: normalizeRoute exported', 'helpers.normalizeRoute is ' + typeof helpers.normalizeRoute);
+
+  // normalizeRoute behavior
+  if (helpers.normalizeRoute('/qa/sparkle') === '/sparkle') pass('D7i: normalizeRoute /qa/sparkle → /sparkle');
+  else fail('D7i: normalizeRoute /qa/sparkle → /sparkle', 'got ' + helpers.normalizeRoute('/qa/sparkle'));
+
+  if (helpers.normalizeRoute('/sparkle') === '/sparkle') pass('D7j: normalizeRoute non-/qa unchanged');
+  else fail('D7j: normalizeRoute non-/qa unchanged', 'got ' + helpers.normalizeRoute('/sparkle'));
+}
+
 // ── main ─────────────────────────────────────────────────────────────────────
 function main() {
   process.stdout.write('Play-Gate regression suite (PR-1 scope)\n');
@@ -300,6 +361,8 @@ function main() {
   testD3();
   process.stdout.write('\n');
   testD5();
+  process.stdout.write('\n');
+  testD7();
   process.stdout.write('\n');
   testRegistryCoverage();
   process.stdout.write('\n');
