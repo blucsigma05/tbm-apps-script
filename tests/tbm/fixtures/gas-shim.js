@@ -164,6 +164,12 @@ var EDUCATION_FIXTURES = {
   submitHomeworkSafe: { status: 'ok' },
   logScaffoldEventSafe: { success: true },
   getAudioBatchSafe: {},
+  // logQuestionResultSafe: added to HomeworkModule on 2026-04-11 but never
+  // shimmed. Without this entry, every per-question submission in the
+  // answer-loop tests (brain-break / Monday journal / Friday reflection)
+  // fell through route.continue() to real production GAS via Cloudflare and
+  // accumulated latency past the 90s test timeout. See #486.
+  logQuestionResultSafe: { success: true },
 
   // getWeekProgressSafe: empty completedDays so the catch-up banner renders all
   // missed days in tests (no server-side completions assumed in test fixtures).
