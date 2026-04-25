@@ -37,8 +37,11 @@ build/
 test-results/
 playwright-report/
 
-# Claude Code local settings (per-machine, not shared)
+# Claude Code local settings + scratch (per-machine, not shared)
 .claude/settings.local.json
+.claude/*.lock
+.claude/scheduled_tasks.lock
+.claude/worktrees/
 __pycache__/
 
 # Local Codex skill audit artifacts (generated, not shared)
