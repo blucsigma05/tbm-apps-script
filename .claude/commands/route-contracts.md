@@ -99,9 +99,65 @@ User -> thompsonfams.com/sparkle
 
 ---
 
+## QA Route Parity (`/qa/*` namespace)
+
+`cloudflare-worker.js` defines a parallel `QA_ROUTES` allowlist that mirrors `PATH_ROUTES` minus finance surfaces, plus `/qa/operator`. Parity is contractual — if a new prod route lands without a `/qa/` mirror, QA Operator Mode can't exercise it without falling back to direct GAS access (which doesn't carry the QA SSID override).
+
+### The parity contract
+
+| Set | Source | Count at HEAD `b878a02` |
+|---|---|---|
+| PATH_ROUTES (all prod routes) | `cloudflare-worker.js:13-42` | 27 |
+| QA_ROUTES (all `/qa/*` routes) | `cloudflare-worker.js:46-73` | 26 |
+| QA_DENIED (finance, intentionally absent from QA_ROUTES) | `cloudflare-worker.js:75` | 2 (`/qa/pulse`, `/qa/vein`) |
+| `/qa/operator` (QA-only, no prod equivalent) | `cloudflare-worker.js:72` | 1 |
+
+**Expected invariant:** `len(QA_ROUTES) == len(PATH_ROUTES) - len(QA_DENIED) + 1` → `27 - 2 + 1 = 26` ✓
+
+### Parity check script (reproducible)
+
+```bash
+PATH_KEYS=$(sed -n '/const PATH_ROUTES = {/,/^};/p' cloudflare-worker.js \
+  | grep -oE "'/[a-z-]+'" | tr -d "'" | sort -u)
+
+QA_KEYS=$(sed -n '/const QA_ROUTES = {/,/^};/p' cloudflare-worker.js \
+  | grep -oE "'/qa/[a-z-]+'" | sed 's|/qa/|/|' | tr -d "'" | sort -u)
+
+QA_DENIED_KEYS=$(grep -oE "'/qa/[a-z-]+': true" cloudflare-worker.js \
+  | sed -E "s|'/qa/([a-z-]+)': true|/\\1|" | sort -u)
+
+# Routes in PATH_ROUTES but not mirrored in QA_ROUTES (excluding finance):
+echo "MISSING qa mirrors:"
+comm -23 <(echo "$PATH_KEYS") <(echo "$QA_KEYS") | grep -v -F -f <(echo "$QA_DENIED_KEYS" | sed 's|/||')
+
+# Routes in QA_ROUTES with no prod equivalent (only /qa/operator should appear):
+echo "QA-only routes:"
+comm -13 <(echo "$PATH_KEYS") <(echo "$QA_KEYS")
+```
+
+### When to invoke
+
+- **Before merging any PR that adds a `PATH_ROUTES` entry.** The new entry must have a corresponding `QA_ROUTES` entry (or be added to `QA_DENIED` if it's a finance/sensitive surface).
+- **Before merging any PR that removes a route.** Both `PATH_ROUTES` AND `QA_ROUTES` must be updated; orphan entries in either become silent dead routes.
+- **As part of the standing route-integrity check.** `audit-source.sh` already validates `PATH_ROUTES` page targets resolve to backing HTML; the parity check above complements that with a presence check across the two route tables.
+
+### Verified-clean status at HEAD `b878a02` (2026-04-25)
+
+- PATH_ROUTES count: **27** (verified `ops/phantom-route-audit-2026-04-25.md`)
+- QA_ROUTES count: **26** (`/qa/operator` + 25 mirrors of non-finance PATH_ROUTES)
+- QA_DENIED: **2** (`/qa/pulse`, `/qa/vein`)
+- Invariant check: `27 - 2 + 1 = 26` ✓
+- Missing QA mirrors: **0**
+- QA-only routes (expected: just `/qa/operator`): **1** ✓
+
+(Reference: backlog item 73 PR #170 documented the PATH_ROUTES side; this section formalizes the QA_ROUTES parity rule that was implicit in the worker's "25-entry allowlist mirrors PATH_ROUTES minus finance surfaces" comment.)
+
+---
+
 ## Guardrails
 
 - Never add a CF route without a matching GAS case
 - Never rename an HTML file without updating the GAS router
 - Never deploy CF worker changes without verifying all routes return 200
+- **Never add a `PATH_ROUTES` entry without either a `QA_ROUTES` mirror or a `QA_DENIED` entry** — orphan prod routes break QA Operator Mode silently
 - The route map is the contract — if it is not in the table, it does not exist
