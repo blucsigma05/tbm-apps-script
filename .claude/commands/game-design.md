@@ -186,6 +186,61 @@ All animations use CSS @keyframes — never JS animation libraries.
 
 ---
 
+## FireOS / Fire Stick Compatibility Check
+
+Education games render on multiple devices, but the lowest-common-denominator runtime is **Fully Kiosk Browser on Fire TV / Fire Stick** (older Android WebView). Anything that "works on Surface Pro Chrome" can still silently fail on Fire Stick. Run this checklist before any visual change ships to a kid-facing surface.
+
+### Banned constructs (silent failures on Fire TV WebView)
+
+| Construct | Why it breaks | Fix |
+|---|---|---|
+| `let` / `const` | ES6 not supported | `var` |
+| Arrow functions `=>` | ES6 | `function(x) {}` |
+| Template literals `` ` `` | ES6 | string concatenation |
+| `??` (nullish coalescing) | ES2020 | ternary or `\|\|` |
+| `?.` (optional chaining) | ES2020 | explicit null checks |
+| `async / await` | ES2017+ | `google.script.run` callbacks |
+| `Array.includes()` | ES2016 | `indexOf() !== -1` |
+| `Array.find()` | ES6 | `for` loop |
+| `URLSearchParams` | not supported | manual `location.search` parsing |
+| `Object.entries()` / `Object.values()` | ES2017 | `Object.keys() + map` |
+| Spread `...` | ES6 | `Array.prototype.slice.call()` |
+| Destructuring `{a,b} = obj` | ES6 | `var a = obj.a` |
+| `backdrop-filter` CSS | Fire TV WebView ignores it | flat semi-transparent fill |
+| `gap` in flex (older WebView) | partial support | `margin` on children |
+| `aspect-ratio` CSS | older WebView | explicit `height` + `width` |
+
+### Allowed constructs (verified safe in Fully Kiosk 4.x+ / Fire TV Silk / Samsung Internet 4+)
+
+`Object.keys()`, `Array.isArray()`, `JSON.parse()/stringify()`, `indexOf()`, `forEach()`, `map()`, `filter()`, `trim()`, `addEventListener`, CSS `transform`, CSS `transition`, CSS `animation`, CSS `@keyframes`, SVG with inline gradients, `<canvas>` 2d context, `requestAnimationFrame`, `localStorage` / `sessionStorage`.
+
+### Standing gates that catch Fire TV breakage
+
+1. **`audit-source.sh` ES5 compliance check** — fails the push on any banned construct in `.html` files. Runs on every commit.
+2. **Playwright viewport screenshots** — capture at the Fire Stick viewport (`/spine` and `/soul` at `980x551`) and visually diff. CI artifact upload.
+3. **Manual Fire Stick verification** — required for any kid-facing visual change [device-verified]. Chrome at viewport size is proof-of-life only, not a Fire-Stick PASS.
+
+### Reproduce locally
+
+```bash
+# Grep banned constructs in .html files (excluding worktrees)
+for pat in "let " "const " "=>" '\\?\\?' '\\?\\.' "async " "await " "\\.includes(" "\\.find(" "URLSearchParams" "Object\\.entries" "Object\\.values" "backdrop-filter"; do
+  echo "=== $pat ==="
+  grep -nE "$pat" *.html 2>/dev/null | grep -v "//.*$pat" | head -5
+done
+
+# Confirm audit-source.sh ES5 check is the standing gate
+bash audit-source.sh 2>&1 | grep -A 1 "ES5 Compliance"
+```
+
+### Verified status at HEAD `b878a02` (2026-04-25)
+
+`audit-source.sh` ES5 Compliance check: **PASSED**. (Anti-patterns in `.html` files: 0.)
+
+(Reference: CLAUDE.md § ES5 Enforcement carries the same banned list; this section ports it into the game-design skill so visual reviewers don't need to context-switch into CLAUDE.md.)
+
+---
+
 ## Quality Checklist (Before Shipping Any Game Screen)
 
 - [ ] Background is themed (not plain solid color)
@@ -198,6 +253,7 @@ All animations use CSS @keyframes — never JS animation libraries.
 - [ ] Loading state shown while audio fetches
 - [ ] Minimum 48px touch targets on all interactive elements
 - [ ] Tested at device viewport (JJ: 1200x1920 S10 FE, Buggsy: 800x1340 A9)
+- [ ] FireOS compatibility check passes (see § FireOS / Fire Stick Compatibility Check above)
 - [ ] Theme matches loading screen aesthetic
 - [ ] Idle animations active on interactive elements
 - [ ] Celebration screen has confetti + audio + star count animation
