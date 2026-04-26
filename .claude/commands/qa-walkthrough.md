@@ -138,6 +138,49 @@ Full walkthrough of the target surface. For each screen/state:
 
 ---
 
+## Device Viewport Matrix
+
+QA at the wrong viewport gives false negatives — a surface that looks fine on desktop Chrome can break on Fire Stick. Each surface has ONE canonical viewport that matches its real device. Always test there first; then sanity-check at desktop.
+
+### Canonical viewports by route (source: `CLAUDE.md § Device Viewport Map` — verify against `cloudflare-worker.js` PATH_ROUTES on drift)
+
+| Route | Viewport | Real device | Why this size |
+|---|---|---|---|
+| `/spine` | 980×551 | Office Fire Stick (48" Sony TV) | Fire TV WebView native render area at 1080p with system bar overhead |
+| `/soul` | 980×551 | Kitchen Fire Stick (32" RCA TV) | Same Fire TV constraint as /spine |
+| `/parent` | 412×915 | JT's Samsung S25 (portrait) | Phone-sized parent dashboard; PIN gate must fit in viewport |
+| `/pulse` | 412×915 | JT's Samsung S25 (portrait) | Finance dashboard mobile; debt slider must remain reachable |
+| `/vein` | 1920×1080 | LT desktop (24" external) | Full command center; multi-column layout requires width |
+| `/buggsy` | 800×1340 | A9 Tablet (portrait) | Buggsy's chore tablet; touch targets sized for child fingers |
+| `/jj` | 800×1340 | A7 Tablet (portrait) | JJ's chore tablet; same form factor as A9 |
+| `/daily-missions` | 1368×912 | Buggsy's Surface Pro 5 | Homework device; landscape with keyboard option |
+| `/daily-missions?child=jj` | 1200×1920 | JJ's S10 FE (portrait) | Pre-K tablet; large vertical for finger reach |
+| `/sparkle` | 1200×1920 | JJ's S10 FE | Same as JJ daily-adventures |
+| `/homework` | 1368×912 | Buggsy's Surface Pro 5 | Same as daily-missions |
+| `/wolfkid`, `/reading`, `/writing`, `/facts`, `/investigation`, `/baseline`, `/comic-studio`, `/wolfdome` | 1368×912 | Buggsy's Surface Pro 5 | All Buggsy education surfaces share this viewport |
+| `/sparkle-kingdom`, `/JJHome`, `/wolfkid-power-scan` | 1200×1920 | JJ S10 FE / Buggsy Surface Pro per kid | Per-kid hub matches the kid's primary device |
+| `/progress` | 412×915 | JT's S25 (parent view) | Weekly digest readable at phone size |
+| `/api`, `/api/verify-pin`, `/version`, `/webhook/github` | n/a | (system endpoints — no UI) | Validate via curl, not viewport |
+
+### How to test at viewport
+
+**1. Claude Preview (fastest, in-conversation)** — open `/preview` at the configured device emulation. `.claude/launch.json` ships `surface-pro-5` (1368×912) and `samsung-s10-fe` (1200×1920) presets. Other viewports require manual override.
+
+**2. Playwright (automated, repeatable)** — `playwright.config.js` has device profiles per the matrix above. Run `npx playwright test --grep <surface>` and inspect the screenshot artifact.
+
+**3. Chrome DevTools (manual fallback)** — F12 → Toggle device toolbar → enter exact viewport from the table. **Note:** Chrome at viewport size is NOT a Fire Stick PASS — it only proves layout. Fire Stick adds the WebView quirks (no `backdrop-filter`, ES5-only runtime, slower JS engine). For `/spine` and `/soul`, manual on-device verification is required for any visual change.
+
+### Viewport drift check
+
+```bash
+# Verify CLAUDE.md Device Viewport Map matches what's currently deployed
+diff <(grep -E "^\| /[a-z-]+ \|" CLAUDE.md | sort) <(grep -oE "'/[a-z-]+'" cloudflare-worker.js | sort -u)
+```
+
+If routes appear in cloudflare-worker.js without a viewport entry in CLAUDE.md, file as a follow-up Issue (route exists but QA viewport unclear).
+
+---
+
 ## Post-Deploy QA Checklist
 
 After every deploy, minimum verification:
