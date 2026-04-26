@@ -354,6 +354,89 @@ function reviewWithGemini(studentResponse, rubric, teksCode) {
 
 ---
 
+## GAS Anti-Pattern Detection
+
+Three GAS-specific anti-patterns are silent killers in TBM. They compile and run, but break under scheduled triggers, multi-user contention, or when `google.script.run` calls fail. Each has a hard pre-push gate in `audit-source.sh` plus the verification grep below.
+
+### 1. `tryLock(N)` — never use; always `waitLock(30000)`
+
+**Why it matters:** `tryLock(N)` returns `false` immediately when the lock is busy and your function silently no-ops or corrupts state. `waitLock(30000)` blocks for up to 30 seconds, succeeds in nearly every real-world contention case, and throws on actual deadlock so the failure is loud.
+
+**Reference incident:** BUG-006 (CascadeEngine + KidsHub). Pre-fix: `CascadeEngine.js` v7 used `tryLock(15000)`; `Kidshub.js` used `tryLock(10000)`. Both produced silent partial writes under trigger contention. Fixed in `CascadeEngine.js` v9 + `Kidshub.js` v26 by replacing with `waitLock(30000)` per the GAS Standards Kit.
+
+**Verification grep** (run anytime; expect zero non-comment matches):
+```bash
+grep -nE "tryLock\(" *.js | grep -v "^\\s*//"
+# Expected: empty. Comments referencing the BUG-006 history are allowed,
+# active call sites are not.
+```
+
+**Standing gate:** `audit-source.sh` flags any `.tryLock(` call site as part of the GAS anti-pattern check.
+
+### 2. `SpreadsheetApp.getActiveSpreadsheet()` — never use; always `openById(SSID)`
+
+**Why it matters:** `getActiveSpreadsheet()` returns the bound spreadsheet of the script's container. **Scheduled triggers run without an "active" container** and return `null`, so any function in the trigger-call path that reaches `getActiveSpreadsheet()` silently fails. `openById('1_jn-...')` works in every context: editor runs, web app handlers, scheduled triggers, library calls.
+
+**Pattern:** every module that needs the workbook caches its handle behind a private getter:
+```javascript
+var _modSS = null;
+function getModSS_() {
+  if (!_modSS) _modSS = SpreadsheetApp.openById('1_jn-I4IfsqgnVOFiS38SVVzNJ0MAJtu2645iU5k0U9c');
+  return _modSS;
+}
+```
+
+**Verification grep:**
+```bash
+grep -nE "getActiveSpreadsheet\(\)" *.js
+# Expected: empty across all canonical .js files.
+```
+
+**Standing gate:** `audit-source.sh` "Trigger-Safe Spreadsheet Access" check fails the push on any non-comment hit.
+
+### 3. Missing `withFailureHandler()` on every `google.script.run` call
+
+**Why it matters:** without `withFailureHandler()`, a server-side exception in the called function is dropped silently — the success handler never fires, no error surfaces in the client UI, and the user sees a frozen page. With it, you can show an error, log to MonitorEngine, or retry.
+
+**Pattern:** every `google.script.run.fnSafe()` call has both handlers:
+```javascript
+google.script.run
+  .withSuccessHandler(function(result) { /* render */ })
+  .withFailureHandler(function(err) { /* show error toast + log */ })
+  .someFunctionSafe(arg1, arg2);
+```
+
+**Pre-flight contract** when adding a new `google.script.run` call:
+1. Add the matching `<fn>Safe()` server function in `Code.js` (or appropriate module).
+2. Wire `withFailureHandler` on every call site (CLAUDE.md hard rule).
+3. Add the `Safe` wrapper to the smoke-test wiring check.
+4. Run `bash audit-source.sh` — must report `withFailureHandler() wiring PASSED`.
+
+**Verification grep:**
+```bash
+# Find all google.script.run.<fn>() calls and confirm each has withFailureHandler nearby.
+# audit-source.sh's "google.script.run Failure Handler Wiring" check does this systematically.
+grep -nE "google\\.script\\.run\\.[a-zA-Z]+\\(" *.html
+```
+
+**Standing gate:** `audit-source.sh` "google.script.run Failure Handler Wiring" check inspects every HTML file for this pattern and fails the push on any orphan call.
+
+### One-shot: run all three checks
+
+```bash
+bash audit-source.sh 2>&1 | grep -E "Trigger-Safe|Failure Handler|Lock acquisition|tryLock|getActive"
+```
+If `audit-source.sh` reports OK on Trigger-Safe Spreadsheet Access AND Failure Handler Wiring, and `grep -nE "tryLock\\(" *.js | grep -v "//"` is empty, the codebase is clean of these three anti-patterns at HEAD.
+
+**Verified clean at gitea/main `b878a02` (2026-04-25):**
+- `tryLock(` non-comment hits: 0
+- `getActiveSpreadsheet()` hits in canonical `.js`: 0
+- `withFailureHandler` wiring check: PASSED via `audit-source.sh`
+
+(Reference: backlog item 72 Pattern Registry verify, PR #156. The Pattern Registry's "use waitLock(30000) — NEVER tryLock()" and "openById(SSID) — NEVER getActiveSpreadsheet()" rules were grep-confirmed there. This skill section makes the same verification reproducible by anyone editing education modules.)
+
+---
+
 ## GAS HtmlService Constraints
 
 ### Comment Stripping
