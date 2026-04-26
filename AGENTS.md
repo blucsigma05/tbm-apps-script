@@ -40,6 +40,7 @@ See [ops/WORKFLOW.md § Two-Lane Handoff Rules](ops/WORKFLOW.md) for the command
 | Visual model of the builder/auditor flow | [ops/diagrams/two-lane-model.md](ops/diagrams/two-lane-model.md) |
 | Operating memo template | [ops/operating-memo-template.md](ops/operating-memo-template.md) |
 | Seed example memo (2026-04-17 two-lane decision) | [ops/operating-memos/2026-04-17-agent-roles-and-audit-scope.md](ops/operating-memos/2026-04-17-agent-roles-and-audit-scope.md) |
+| One-off next-thread prompt drafts | [ops/thread-handoffs/README.md](ops/thread-handoffs/README.md) |
 | Optional PR handoff comment template | [.github/PR_COMMENT_TEMPLATES/handoff.md](.github/PR_COMMENT_TEMPLATES/handoff.md) |
 | Operating framework index (scorecard, roadmap, drift ledger, dashboards) | [ops/README.md](ops/README.md) |
 

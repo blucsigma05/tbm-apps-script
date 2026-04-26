@@ -357,7 +357,7 @@ agents must treat that as an instruction to do more than answer in chat.
 - Reusable execution behavior -> repo-local skill in `.claude/skills/`
 - Repo workflow or policy rule -> this file, with short mirrors in `AGENTS.md` and `CLAUDE.md`
 - Boardroom/process decision -> `ops/operating-memos/YYYY-MM-DD-<topic>.md`
-- One-off artifact for follow-on work -> durable repo file with an explicit path
+- One-off next-thread prompt or handoff brief -> `ops/thread-handoffs/YYYY-MM-DD-<topic>.md`
 
 **Auditor's pass rule:**
 
